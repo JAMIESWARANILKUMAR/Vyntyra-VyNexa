@@ -1,10 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireCloudflareAuth } from "@/integrations/supabase/auth-middleware";
-import { db } from "@/db";
-import { applications, applicationProjects, siteSettings } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
-import { uploadFileToR2, getSignedUrlForR2 } from "@/lib/storage";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const projectSchema = z.object({
   title: z.string().trim().min(1).max(200),
@@ -44,47 +40,51 @@ const submitSchema = z.object({
 export const submitApplication = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => submitSchema.parse(data))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     // Enforce the "Accepting Applications" toggle server-side
-    const settings = await db.select({ value: siteSettings.value }).from(siteSettings).where(eq(siteSettings.key, "applications_open"));
-    
-    const setting = settings[0];
+    const { data: setting } = await supabaseAdmin
+      .from("site_settings")
+      .select("value")
+      .eq("key", "applications_open")
+      .maybeSingle();
     const enabled = ((setting?.value ?? {}) as { enabled?: boolean }).enabled !== false;
     if (!enabled) {
       throw new Error("Applications are currently closed. Please check back soon.");
     }
-    
     const insert = {
-      fullName: data.full_name,
+      full_name: data.full_name,
       email: data.email.toLowerCase(),
       phone: data.phone,
-      roleApplied: data.role_applied,
+      role_applied: data.role_applied,
       message: data.message || null,
       company: data.company || null,
       position: data.position || null,
-      linkedinUrl: data.linkedin_url || null,
-      yearsExperience: data.years_experience || null,
-      portfolioUrl: data.portfolio_url || null,
+      linkedin_url: data.linkedin_url || null,
+      years_experience: data.years_experience || null,
+      portfolio_url: data.portfolio_url || null,
       availability: data.availability || null,
-      resumePath: data.resume_path || null,
-      jobPostingId: data.job_posting_id || null,
+      resume_path: data.resume_path || null,
+      job_posting_id: data.job_posting_id || null,
       state: data.state || null,
       college: data.college || null,
-      graduationYear: data.graduation_year ?? null,
-      hodName: data.hod_name || null,
-      hodContact: data.hod_contact || null,
-      hodEmail: data.hod_email ? data.hod_email.toLowerCase() : null,
-      tpOfficerName: data.tp_officer_name || null,
-      tpOfficerContact: data.tp_officer_contact || null,
-      tpOfficerEmail: data.tp_officer_email ? data.tp_officer_email.toLowerCase() : null,
-      agreementAccepted: true,
-      agreementVersion: "1.0",
-      status: "new" as const,
+      graduation_year: data.graduation_year ?? null,
+      hod_name: data.hod_name || null,
+      hod_contact: data.hod_contact || null,
+      hod_email: data.hod_email ? data.hod_email.toLowerCase() : null,
+      tp_officer_name: data.tp_officer_name || null,
+      tp_officer_contact: data.tp_officer_contact || null,
+      tp_officer_email: data.tp_officer_email ? data.tp_officer_email.toLowerCase() : null,
+      agreement_accepted: true,
     };
 
-    const insertedRows = await db.insert(applications).values(insert).returning({ id: applications.id });
-    const row = insertedRows[0];
+    const { data: row, error } = await supabaseAdmin
+      .from("applications")
+      .insert(insert)
+      .select("id")
+      .single();
 
-    if (!row) throw new Error("Failed to insert application");
+    if (error) throw new Error(error.message);
 
     // Log admin notification
     try {
@@ -101,17 +101,14 @@ export const submitApplication = createServerFn({ method: "POST" })
 
     if (data.projects && data.projects.length) {
       const rows = data.projects.map((p) => ({
-        applicationId: row.id,
+        application_id: row.id,
         title: p.title,
         summary: p.summary,
-        projectUrl: p.project_url || null,
-        documentPath: p.document_path || null,
+        project_url: p.project_url || null,
+        document_path: p.document_path || null,
       }));
-      try {
-        await db.insert(applicationProjects).values(rows);
-      } catch (pErr) {
-         console.warn("[applications] project insert skipped:", (pErr as Error).message);
-      }
+      const { error: pErr } = await supabaseAdmin.from("application_projects").insert(rows);
+      if (pErr) console.warn("[applications] project insert skipped:", pErr.message);
     }
 
     try {
@@ -148,27 +145,45 @@ export const submitApplication = createServerFn({ method: "POST" })
 const deleteSchema = z.object({ id: z.string().uuid() });
 
 export const deleteApplication = createServerFn({ method: "POST" })
-  .middleware([requireCloudflareAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => deleteSchema.parse(d))
   .handler(async ({ data, context }) => {
-    // We already requireCloudflareAuth. Usually you'd check role here against db.
-    await db.delete(applications).where(eq(applications.id, data.id));
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("applications").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 // List projects for an application (admin only)
 export const listApplicationProjects = createServerFn({ method: "POST" })
-  .middleware([requireCloudflareAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const rows = await db.select().from(applicationProjects).where(eq(applicationProjects.applicationId, data.id));
-    
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("application_projects")
+      .select("*")
+      .eq("application_id", data.id)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
     // Sign document URLs when present
     const signed = await Promise.all(
       (rows ?? []).map(async (r) => {
-        if (!r.documentPath) return { ...r, document_url: null };
-        const signedUrl = await getSignedUrlForR2(r.documentPath, 60 * 10);
-        return { ...r, document_url: signedUrl };
+        if (!r.document_path) return { ...r, document_url: null };
+        const { data: s } = await supabaseAdmin.storage
+          .from("project-docs")
+          .createSignedUrl(r.document_path, 60 * 10);
+        return { ...r, document_url: s?.signedUrl ?? null };
       }),
     );
     return signed;
@@ -177,52 +192,89 @@ export const listApplicationProjects = createServerFn({ method: "POST" })
 // ---------- Admin ----------
 
 export const listApplications = createServerFn({ method: "GET" })
-  .middleware([requireCloudflareAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const rows = await db.select().from(applications).orderBy(desc(applications.createdAt));
-    return rows;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("applications")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data ?? [];
   });
 
+// Status transitions live in workflow.functions.ts (require a note + log an event).
+// This function only updates internal admin notes.
 const updateNotesSchema = z.object({
   id: z.string().uuid(),
   admin_notes: z.string().max(2000),
 });
 
 export const updateAdminNotes = createServerFn({ method: "POST" })
-  .middleware([requireCloudflareAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => updateNotesSchema.parse(d))
   .handler(async ({ data, context }) => {
-    await db.update(applications).set({ adminNotes: data.admin_notes || null }).where(eq(applications.id, data.id));
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("applications")
+      .update({ admin_notes: data.admin_notes || null })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 const resumeSchema = z.object({ path: z.string().min(1) });
 
 export const getResumeSignedUrl = createServerFn({ method: "POST" })
-  .middleware([requireCloudflareAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => resumeSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const url = await getSignedUrlForR2(data.path, 60 * 10);
-    return { url };
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from("resumes")
+      .createSignedUrl(data.path, 60 * 10);
+    if (error) throw new Error(error.message);
+    return { url: signed.signedUrl };
   });
 
 // Admin: regenerate interview questions on demand
 const regenSchema = z.object({ id: z.string().uuid() });
 
 export const regenerateInterviewQuestions = createServerFn({ method: "POST" })
-  .middleware([requireCloudflareAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => regenSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const appRows = await db.select({
-      id: applications.id,
-      full_name: applications.fullName,
-      role_applied: applications.roleApplied,
-      resume_path: applications.resumePath,
-      years_experience: applications.yearsExperience
-    }).from(applications).where(eq(applications.id, data.id));
-    
-    const app = appRows[0];
-    if (!app) throw new Error("Not found");
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: app, error } = await supabaseAdmin
+      .from("applications")
+      .select("id, full_name, role_applied, resume_path, years_experience")
+      .eq("id", data.id)
+      .single();
+    if (error || !app) throw new Error(error?.message || "Not found");
 
     const { generateInterviewQuestions } = await import("./interview-questions.server");
     const text = await generateInterviewQuestions({

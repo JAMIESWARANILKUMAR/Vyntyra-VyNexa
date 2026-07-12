@@ -1,14 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { requireCloudflareAuth } from "@/integrations/supabase/auth-middleware";
-import { db } from "@/db";
-import { applications, applicantAccessTokens, applicationStatusEvents, statusEmailTemplates, ApplicationStatus } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // ---------- Transition rules ----------
 
-export type AppStatus = ApplicationStatus;
+export type AppStatus = "new" | "reviewing" | "shortlisted" | "rejected" | "hired";
 
 export const ALLOWED_TRANSITIONS: Record<AppStatus, AppStatus[]> = {
   new: ["reviewing", "rejected"],
@@ -21,6 +18,15 @@ export const ALLOWED_TRANSITIONS: Record<AppStatus, AppStatus[]> = {
 function isAllowed(from: AppStatus, to: AppStatus) {
   if (from === to) return true;
   return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+async function ensureAdmin(ctx: any) {
+  const { data: isAdmin, error } = await ctx.supabase.rpc("has_role", {
+    _user_id: ctx.userId,
+    _role: "admin",
+  });
+  if (error) throw new Error(error.message);
+  if (!isAdmin) throw new Error("Forbidden");
 }
 
 function originFromRequest() {
@@ -58,19 +64,18 @@ const changeSchema = z.object({
 });
 
 export const changeApplicationStatus = createServerFn({ method: "POST" })
-  .middleware([requireCloudflareAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => changeSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const appRows = await db.select({
-      id: applications.id,
-      full_name: applications.fullName,
-      email: applications.email,
-      role_applied: applications.roleApplied,
-      status: applications.status,
-    }).from(applications).where(eq(applications.id, data.id));
+    await ensureAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const app = appRows[0];
-    if (!app) throw new Error("Application not found");
+    const { data: app, error: fetchErr } = await supabaseAdmin
+      .from("applications")
+      .select("id, full_name, email, role_applied, status")
+      .eq("id", data.id)
+      .single();
+    if (fetchErr || !app) throw new Error(fetchErr?.message || "Application not found");
 
     const from = app.status as AppStatus;
     const to = data.status as AppStatus;
@@ -80,15 +85,22 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
     }
 
     if (from !== to) {
-      await db.update(applications).set({ status: to }).where(eq(applications.id, data.id));
+      const { error: updateErr } = await supabaseAdmin
+        .from("applications")
+        .update({ status: to })
+        .eq("id", data.id);
+      if (updateErr) throw new Error(updateErr.message);
 
-      await db.insert(applicationStatusEvents).values({
-        applicationId: data.id,
-        fromStatus: from,
-        toStatus: to,
-        note: data.note,
-        changedBy: context.userEmail,
-      });
+      const { error: eventErr } = await supabaseAdmin
+        .from("application_status_events")
+        .insert({
+          application_id: data.id,
+          from_status: from,
+          to_status: to,
+          note: data.note,
+          changed_by: context.userId,
+        });
+      if (eventErr) throw new Error(eventErr.message);
 
       // Insert admin notification for status change
       try {
@@ -108,18 +120,20 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
         const token = randomToken();
         const tokenHash = await sha256Hex(token);
         const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-        
-        await db.insert(applicantAccessTokens).values({
-          applicationId: data.id,
-          tokenHash: tokenHash,
-          expiresAt: expiresAt,
+        await supabaseAdmin.from("applicant_access_tokens").insert({
+          application_id: data.id,
+          token_hash: tokenHash,
+          expires_at: expiresAt,
         });
 
         const origin = originFromRequest();
         const portalLink = origin ? `${origin}/status/${token}` : `/status/${token}`;
 
-        const tplRows = await db.select().from(statusEmailTemplates).where(eq(statusEmailTemplates.status, to));
-        const tpl = tplRows[0];
+        const { data: tpl } = await supabaseAdmin
+          .from("status_email_templates")
+          .select("subject, html_body, enabled")
+          .eq("status", to)
+          .single();
 
         if (tpl?.enabled) {
           const { sendStatusChangeEmail } = await import("./status-email.server");
@@ -130,7 +144,7 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
             status: to,
             applicationId: data.id,
             portalLink,
-            template: { subject: tpl.subject, html_body: tpl.htmlBody },
+            template: { subject: tpl.subject, html_body: tpl.html_body },
             idempotencyKey: `status-${data.id}-${to}-${Date.now()}`,
           });
 
@@ -152,13 +166,16 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
       }
     } else {
       // Same status; still record the note in event log
-      await db.insert(applicationStatusEvents).values({
-        applicationId: data.id,
-        fromStatus: from,
-        toStatus: to,
-        note: data.note,
-        changedBy: context.userEmail,
-      });
+      const { error: eventErr } = await supabaseAdmin
+        .from("application_status_events")
+        .insert({
+          application_id: data.id,
+          from_status: from,
+          to_status: to,
+          note: data.note,
+          changed_by: context.userId,
+        });
+      if (eventErr) throw new Error(eventErr.message);
     }
 
     return { ok: true };
@@ -169,30 +186,33 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
 const listEventsSchema = z.object({ applicationId: z.string().uuid() });
 
 export const listStatusEvents = createServerFn({ method: "POST" })
-  .middleware([requireCloudflareAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => listEventsSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const rows = await db.select({
-      id: applicationStatusEvents.id,
-      from_status: applicationStatusEvents.fromStatus,
-      to_status: applicationStatusEvents.toStatus,
-      note: applicationStatusEvents.note,
-      created_at: applicationStatusEvents.createdAt,
-      changed_by: applicationStatusEvents.changedBy,
-    }).from(applicationStatusEvents)
-      .where(eq(applicationStatusEvents.applicationId, data.applicationId))
-      .orderBy(desc(applicationStatusEvents.createdAt));
-      
-    return rows;
+    await ensureAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("application_status_events")
+      .select("id, from_status, to_status, note, created_at, changed_by")
+      .eq("application_id", data.applicationId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
   });
 
 // ---------- Templates ----------
 
 export const listStatusTemplates = createServerFn({ method: "GET" })
-  .middleware([requireCloudflareAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const rows = await db.select().from(statusEmailTemplates);
-    return rows;
+    await ensureAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("status_email_templates")
+      .select("*")
+      .order("status");
+    if (error) throw new Error(error.message);
+    return data ?? [];
   });
 
 const updateTplSchema = z.object({
@@ -203,15 +223,20 @@ const updateTplSchema = z.object({
 });
 
 export const updateStatusTemplate = createServerFn({ method: "POST" })
-  .middleware([requireCloudflareAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => updateTplSchema.parse(d))
   .handler(async ({ data, context }) => {
-    await db.update(statusEmailTemplates).set({
-      subject: data.subject,
-      htmlBody: data.html_body,
-      enabled: data.enabled,
-      updatedBy: context.userEmail,
-    }).where(eq(statusEmailTemplates.status, data.status as ApplicationStatus));
-    
+    await ensureAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("status_email_templates")
+      .update({
+        subject: data.subject,
+        html_body: data.html_body,
+        enabled: data.enabled,
+        updated_by: context.userId,
+      })
+      .eq("status", data.status);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });

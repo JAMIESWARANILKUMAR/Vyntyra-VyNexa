@@ -1,35 +1,64 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireCloudflareAuth } from "@/integrations/supabase/auth-middleware";
-import { db } from "@/db";
-import { adminNotifications } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // ---------- Admin ----------
 
 export const listAdminNotifications = createServerFn({ method: "GET" })
-  .middleware([requireCloudflareAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const rows = await db.select().from(adminNotifications)
-      .orderBy(desc(adminNotifications.createdAt))
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("admin_notifications")
+      .select("*")
+      .order("created_at", { ascending: false })
       .limit(50);
-    return rows;
+    if (error) throw new Error(error.message);
+    return data ?? [];
   });
 
 const markReadSchema = z.object({ id: z.string().uuid() });
 
 export const markNotificationRead = createServerFn({ method: "POST" })
-  .middleware([requireCloudflareAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => markReadSchema.parse(d))
   .handler(async ({ data, context }) => {
-    await db.update(adminNotifications).set({ isRead: true }).where(eq(adminNotifications.id, data.id));
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("admin_notifications")
+      .update({ is_read: true })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const markAllNotificationsRead = createServerFn({ method: "POST" })
-  .middleware([requireCloudflareAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await db.update(adminNotifications).set({ isRead: true }).where(eq(adminNotifications.isRead, false));
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("admin_notifications")
+      .update({ is_read: true })
+      .eq("is_read", false);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
@@ -41,15 +70,15 @@ export async function insertNotification(params: {
   message: string;
   metadata?: Record<string, any>;
 }) {
-  try {
-    await db.insert(adminNotifications).values({
-      type: params.type,
-      title: params.title,
-      message: params.message,
-      metadata: params.metadata ?? null,
-    });
-  } catch (error: any) {
-    console.warn("[notifications] insert failed:", error?.message);
-    throw new Error(error?.message);
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin.from("admin_notifications").insert({
+    type: params.type,
+    title: params.title,
+    message: params.message,
+    metadata: params.metadata ?? null,
+  });
+  if (error) {
+    console.warn("[notifications] insert failed:", error.message);
+    throw new Error(error.message);
   }
 }
