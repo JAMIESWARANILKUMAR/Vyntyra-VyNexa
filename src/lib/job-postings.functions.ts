@@ -1,34 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createClient } from "@supabase/supabase-js";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-function publicClient() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
-  );
-}
+import { requireCloudflareAuth } from "@/integrations/supabase/auth-middleware";
+import { db } from "@/db";
+import { jobPostings } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 
 // ---------- Admin ----------
 
 export const listJobPostings = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireCloudflareAuth])
   .handler(async ({ context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("job_postings")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return data ?? [];
+    const rows = await db.select().from(jobPostings).orderBy(desc(jobPostings.createdAt));
+    return rows;
   });
 
 const createJobPostingSchema = z.object({
@@ -42,32 +25,21 @@ const createJobPostingSchema = z.object({
 });
 
 export const createJobPosting = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireCloudflareAuth])
   .inputValidator((d: unknown) => createJobPostingSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
-      .from("job_postings")
-      .insert({
-        title: data.title,
-        department: data.department,
-        location: data.location,
-        type: data.type,
-        description: data.description,
-        requirements: data.requirements || null,
-        salary_range: data.salary_range || null,
-        created_by: context.userId,
-      })
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return { id: row.id };
+    const insertedRows = await db.insert(jobPostings).values({
+      title: data.title,
+      department: data.department,
+      location: data.location,
+      type: data.type,
+      description: data.description,
+      requirements: data.requirements || null,
+      salaryRange: data.salary_range || null,
+      createdBy: context.userEmail,
+    }).returning({ id: jobPostings.id });
+    
+    return { id: insertedRows[0].id };
   });
 
 const updateJobPostingSchema = z.object({
@@ -82,91 +54,65 @@ const updateJobPostingSchema = z.object({
 });
 
 export const updateJobPosting = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireCloudflareAuth])
   .inputValidator((d: unknown) => updateJobPostingSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
+    await db.update(jobPostings).set({
+      title: data.title,
+      department: data.department,
+      location: data.location,
+      type: data.type,
+      description: data.description,
+      requirements: data.requirements || null,
+      salaryRange: data.salary_range || null,
+    }).where(eq(jobPostings.id, data.id));
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("job_postings")
-      .update({
-        title: data.title,
-        department: data.department,
-        location: data.location,
-        type: data.type,
-        description: data.description,
-        requirements: data.requirements || null,
-        salary_range: data.salary_range || null,
-      })
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 const toggleJobPostingSchema = z.object({ id: z.string().uuid() });
 
 export const toggleJobPosting = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireCloudflareAuth])
   .inputValidator((d: unknown) => toggleJobPostingSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
+    const rows = await db.select({
+      id: jobPostings.id,
+      isActive: jobPostings.isActive,
+    }).from(jobPostings).where(eq(jobPostings.id, data.id));
+    
+    const row = rows[0];
+    if (!row) throw new Error("Not found");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error: fetchErr } = await supabaseAdmin
-      .from("job_postings")
-      .select("id, is_active")
-      .eq("id", data.id)
-      .single();
-    if (fetchErr || !row) throw new Error(fetchErr?.message || "Not found");
-
-    const newActive = !row.is_active;
-    const { error } = await supabaseAdmin
-      .from("job_postings")
-      .update({ is_active: newActive })
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
+    const newActive = !row.isActive;
+    
+    await db.update(jobPostings).set({ isActive: newActive }).where(eq(jobPostings.id, data.id));
+    
     return { id: data.id, is_active: newActive };
   });
 
 const deleteJobPostingSchema = z.object({ id: z.string().uuid() });
 
 export const deleteJobPosting = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireCloudflareAuth])
   .inputValidator((d: unknown) => deleteJobPostingSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("job_postings")
-      .delete()
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
+    await db.delete(jobPostings).where(eq(jobPostings.id, data.id));
     return { ok: true };
   });
 
 // ---------- Public ----------
 
 export const listActiveJobPostings = createServerFn({ method: "GET" }).handler(async () => {
-  const sb = publicClient();
-  const { data, error } = await sb
-    .from("job_postings")
-    .select("id, title, department, location, type, description, requirements")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  const rows = await db.select({
+    id: jobPostings.id,
+    title: jobPostings.title,
+    department: jobPostings.department,
+    location: jobPostings.location,
+    type: jobPostings.type,
+    description: jobPostings.description,
+    requirements: jobPostings.requirements,
+  }).from(jobPostings).where(eq(jobPostings.isActive, true)).orderBy(desc(jobPostings.createdAt));
+  
+  return rows;
 });

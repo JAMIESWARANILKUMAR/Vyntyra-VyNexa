@@ -339,9 +339,12 @@ function AboutPage() {
           </div>
         </div>
         <div className="border-t border-primary-foreground/10">
-          <div className="mx-auto max-w-6xl px-6 py-4 text-xs text-primary-foreground/50 flex justify-between">
+          <div className="mx-auto max-w-6xl px-6 py-4 text-xs text-primary-foreground/50 flex flex-col sm:flex-row justify-between items-center gap-2">
             <span>© {new Date().getFullYear()} Vyntyra Consultancy Services</span>
-            <span>All rights reserved</span>
+            <div className="flex gap-4 items-center">
+              <span className="text-gold font-medium">Secured by Cloudflare | Cloudflare Security</span>
+              <span>All rights reserved</span>
+            </div>
           </div>
         </div>
       </footer>

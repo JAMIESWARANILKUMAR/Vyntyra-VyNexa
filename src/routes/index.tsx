@@ -997,7 +997,8 @@ function Footer() {
 
         <div className="mt-10 pt-6 border-t border-primary-foreground/10 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-primary-foreground/50">
           <div>© {new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.</div>
-          <div className="flex gap-5">
+          <div className="flex gap-5 items-center">
+            <span className="text-gold font-medium">Secured by Cloudflare | Cloudflare Security</span>
             <a href="/privacy" className="hover:text-gold">Privacy Notice</a>
             <a href="/terms" className="hover:text-gold">Applicant Terms</a>
             <a href="/about" className="hover:text-gold">About</a>

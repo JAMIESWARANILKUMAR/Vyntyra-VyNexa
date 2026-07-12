@@ -1,11 +1,10 @@
-// Public (unauthenticated) server functions powering the applicant portal.
-// - requestPortalLink: applicant supplies email + optional application ref,
-//   we email a one-time link. Always returns success (do not leak existence).
-// - checkPortalToken: applicant loads the /status/$token page; we validate,
-//   mark used, and return status + minimal metadata.
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { db } from "@/db";
+import { applications, applicantAccessTokens, applicationStatusEvents } from "@/db/schema";
+import { eq, desc, ilike, sql } from "drizzle-orm";
+import { getSignedUrlForR2 } from "@/lib/storage";
 
 function originFromRequest() {
   const proto = getRequestHeader("x-forwarded-proto") || "https";
@@ -37,17 +36,19 @@ const requestSchema = z.object({
 export const requestPortalLink = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => requestSchema.parse(d))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = data.email.toLowerCase();
 
-    const { data: apps } = await supabaseAdmin
-      .from("applications")
-      .select("id, full_name, role_applied, email")
-      .eq("email", email)
-      .order("created_at", { ascending: false })
+    const appRows = await db.select({
+      id: applications.id,
+      full_name: applications.fullName,
+      role_applied: applications.roleApplied,
+      email: applications.email,
+    }).from(applications)
+      .where(eq(applications.email, email))
+      .orderBy(desc(applications.createdAt))
       .limit(1);
 
-    const app = apps?.[0];
+    const app = appRows[0];
 
     // Always return success — do not reveal whether the email exists.
     if (!app) return { ok: true };
@@ -56,10 +57,11 @@ export const requestPortalLink = createServerFn({ method: "POST" })
       const token = randomToken();
       const tokenHash = await sha256Hex(token);
       const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-      await supabaseAdmin.from("applicant_access_tokens").insert({
-        application_id: app.id,
-        token_hash: tokenHash,
-        expires_at: expiresAt,
+      
+      await db.insert(applicantAccessTokens).values({
+        applicationId: app.id,
+        tokenHash: tokenHash,
+        expiresAt: expiresAt,
       });
 
       const origin = originFromRequest();
@@ -103,14 +105,16 @@ const checkSchema = z.object({ token: z.string().trim().min(32).max(128) });
 export const checkPortalToken = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => checkSchema.parse(d))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const tokenHash = await sha256Hex(data.token);
 
-    const { data: row } = await supabaseAdmin
-      .from("applicant_access_tokens")
-      .select("id, application_id, expires_at, used_at")
-      .eq("token_hash", tokenHash)
-      .maybeSingle();
+    const tokenRows = await db.select({
+      id: applicantAccessTokens.id,
+      application_id: applicantAccessTokens.applicationId,
+      expires_at: applicantAccessTokens.expiresAt,
+      used_at: applicantAccessTokens.usedAt,
+    }).from(applicantAccessTokens).where(eq(applicantAccessTokens.tokenHash, tokenHash));
+
+    const row = tokenRows[0];
 
     if (!row) return { ok: false as const, reason: "invalid" as const };
     if (row.used_at) return { ok: false as const, reason: "used" as const };
@@ -118,16 +122,19 @@ export const checkPortalToken = createServerFn({ method: "POST" })
       return { ok: false as const, reason: "expired" as const };
 
     // Mark used
-    await supabaseAdmin
-      .from("applicant_access_tokens")
-      .update({ used_at: new Date().toISOString() })
-      .eq("id", row.id);
+    await db.update(applicantAccessTokens).set({ usedAt: new Date().toISOString() }).where(eq(applicantAccessTokens.id, row.id));
 
-    const { data: app } = await supabaseAdmin
-      .from("applications")
-      .select("id, full_name, role_applied, status, created_at, updated_at, resume_path")
-      .eq("id", row.application_id)
-      .single();
+    const appRows = await db.select({
+      id: applications.id,
+      full_name: applications.fullName,
+      role_applied: applications.roleApplied,
+      status: applications.status,
+      created_at: applications.createdAt,
+      updated_at: applications.updatedAt,
+      resume_path: applications.resumePath,
+    }).from(applications).where(eq(applications.id, row.application_id));
+
+    const app = appRows[0];
 
     if (!app) return { ok: false as const, reason: "invalid" as const };
 
@@ -135,18 +142,17 @@ export const checkPortalToken = createServerFn({ method: "POST" })
     let resumeUrl: string | null = null;
     let resumeName: string | null = null;
     if (app.resume_path) {
-      const { data: signed } = await supabaseAdmin.storage
-        .from("resumes")
-        .createSignedUrl(app.resume_path, 60 * 30);
-      resumeUrl = signed?.signedUrl ?? null;
+      resumeUrl = await getSignedUrlForR2(app.resume_path, 60 * 30);
       resumeName = app.resume_path.split("/").pop() ?? "resume";
     }
 
-    const { data: events } = await supabaseAdmin
-      .from("application_status_events")
-      .select("from_status, to_status, created_at")
-      .eq("application_id", row.application_id)
-      .order("created_at", { ascending: true });
+    const events = await db.select({
+      from_status: applicationStatusEvents.fromStatus,
+      to_status: applicationStatusEvents.toStatus,
+      created_at: applicationStatusEvents.createdAt,
+    }).from(applicationStatusEvents)
+      .where(eq(applicationStatusEvents.applicationId, row.application_id))
+      .orderBy(applicationStatusEvents.createdAt);
 
     return {
       ok: true as const,
@@ -177,27 +183,35 @@ const lookupSchema = z.object({
 export const lookupApplicationStatus = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => lookupSchema.parse(d))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const ref = data.referenceId.trim().toLowerCase();
     const email = data.email.trim().toLowerCase();
 
-    const { data: apps } = await supabaseAdmin
-      .from("applications")
-      .select("id, full_name, role_applied, status, created_at, updated_at, email")
-      .ilike("email", email)
-      .filter("id::text", "ilike", `${ref}%`)
+    const appRows = await db.select({
+      id: applications.id,
+      full_name: applications.fullName,
+      role_applied: applications.roleApplied,
+      status: applications.status,
+      created_at: applications.createdAt,
+      updated_at: applications.updatedAt,
+      email: applications.email,
+    }).from(applications)
+      .where(
+        sql`lower(${applications.email}) = lower(${email}) and cast(${applications.id} as text) like ${ref + '%'}`
+      )
       .limit(1);
 
-    const app = apps?.[0];
+    const app = appRows[0];
     if (!app) {
       return { ok: false as const, reason: "not_found" as const };
     }
 
-    const { data: events } = await supabaseAdmin
-      .from("application_status_events")
-      .select("from_status, to_status, created_at")
-      .eq("application_id", app.id)
-      .order("created_at", { ascending: true });
+    const events = await db.select({
+      from_status: applicationStatusEvents.fromStatus,
+      to_status: applicationStatusEvents.toStatus,
+      created_at: applicationStatusEvents.createdAt,
+    }).from(applicationStatusEvents)
+      .where(eq(applicationStatusEvents.applicationId, app.id))
+      .orderBy(applicationStatusEvents.createdAt);
 
     return {
       ok: true as const,
@@ -212,4 +226,3 @@ export const lookupApplicationStatus = createServerFn({ method: "POST" })
       history: events ?? [],
     };
   });
-
