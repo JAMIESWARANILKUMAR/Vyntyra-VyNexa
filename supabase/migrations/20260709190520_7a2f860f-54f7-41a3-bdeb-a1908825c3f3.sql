@@ -1,0 +1,1 @@
+ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS interview_questions text; ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS interview_questions_generated_at timestamptz;
