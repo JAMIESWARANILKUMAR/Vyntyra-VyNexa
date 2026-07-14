@@ -282,7 +282,8 @@ CREATE POLICY "Admins can read projects" ON storage.objects FOR SELECT TO authen
 CREATE OR REPLACE FUNCTION public.tg_auto_grant_admin()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  IF NEW.email = 'hr@vyntyraconsultancyservices.in' THEN
+  -- Grant admin to hr@vyntyraconsultancyservices.in or any other preferred admin emails
+  IF NEW.email = 'hr@vyntyraconsultancyservices.in' OR NEW.email = 'admin@vyntyraconsultancyservices.in' THEN
     INSERT INTO public.user_roles (user_id, role) VALUES (NEW.id, 'admin') ON CONFLICT (user_id, role) DO NOTHING;
   END IF;
   RETURN NEW;

@@ -53,6 +53,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin Dashboard — Vyntyra Careers" }] }),
@@ -94,6 +96,9 @@ function AdminDashboard() {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+
+  // Bulk Actions
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Job posting dialog
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
@@ -164,6 +169,45 @@ function AdminDashboard() {
 
   const hasFilters = statusFilter !== "all" || search || dateFrom || dateTo;
 
+  // Bulk Action Helpers
+  const toggleAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((a: any) => a.id)));
+    }
+  };
+
+  const toggleOne = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+
+  const changeStatusMut = useMutation({
+    mutationFn: (args: { id: string; status: AppStatus; note: string }) =>
+      changeApplicationStatus({ data: args }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["applications"] }),
+  });
+
+  const handleBulkStatusChange = async (status: AppStatus) => {
+    const note = prompt(`Enter a note for bulk updating ${selectedIds.size} applications to '${status}':`);
+    if (!note) return;
+    const ids = Array.from(selectedIds);
+    let count = 0;
+    for (const id of ids) {
+      try {
+        await changeStatusMut.mutateAsync({ id, status, note });
+        count++;
+      } catch (e) {
+        console.error("Bulk update failed for", id, e);
+      }
+    }
+    toast.success(`Successfully updated ${count} applications to ${status}`);
+    setSelectedIds(new Set());
+  };
+
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
@@ -208,6 +252,23 @@ function AdminDashboard() {
     toast.success(`Exported ${filtered.length} application${filtered.length === 1 ? "" : "s"}`);
   }
 
+  function exportBulkCsv() {
+    if (selectedIds.size === 0) return;
+    const selectedApps = filtered.filter((a: any) => selectedIds.has(a.id));
+    const headers = ["ID", "Status", "Full Name", "Email", "Role Applied", "Resume Path"];
+    const rows = selectedApps.map((a: any) => [a.id, a.status, a.full_name, a.email, a.role_applied, a.resume_path ?? ""]);
+    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""').replace(/\r?\n/g, " ")}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `vynexa-bulk-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${selectedApps.length} applications`);
+    setSelectedIds(new Set());
+  }
+
   const stats = {
     total: apps.length,
     new: apps.filter((a: any) => a.status === "new").length,
@@ -216,6 +277,14 @@ function AdminDashboard() {
     hired: apps.filter((a: any) => a.status === "hired").length,
     rejected: apps.filter((a: any) => a.status === "rejected").length,
   };
+
+  const chartData = [
+    { name: 'New', count: stats.new, color: '#0ea5e9' },
+    { name: 'Reviewing', count: stats.reviewing, color: '#f59e0b' },
+    { name: 'Shortlisted', count: stats.shortlisted, color: '#10b981' },
+    { name: 'Hired', count: stats.hired, color: '#0A1F44' },
+    { name: 'Rejected', count: stats.rejected, color: '#ef4444' },
+  ];
 
   const unreadCount = (notifsQ.data ?? []).filter((n: any) => !n.is_read).length;
 
@@ -362,14 +431,34 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* ── Stats Grid (6 cards) ── */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          <Stat label="Total" value={stats.total} />
-          <Stat label="New" value={stats.new} tone="secondary" />
-          <Stat label="Reviewing" value={stats.reviewing} tone="amber" />
-          <Stat label="Shortlisted" value={stats.shortlisted} tone="emerald" />
-          <Stat label="Hired" value={stats.hired} tone="primary" />
-          <Stat label="Rejected" value={stats.rejected} tone="destructive" />
+        {/* ── Stats Grid & Analytics ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+          <div className="lg:col-span-2 rounded-md border border-border bg-card shadow-corp p-5 flex flex-col justify-center">
+             <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-secondary mb-4">Pipeline Analytics</div>
+             <div className="h-[200px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                    <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: 'var(--shadow-elev)' }} />
+                    <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Stat label="Total" value={stats.total} />
+            <Stat label="New" value={stats.new} tone="secondary" />
+            <Stat label="Reviewing" value={stats.reviewing} tone="amber" />
+            <Stat label="Shortlisted" value={stats.shortlisted} tone="emerald" />
+            <Stat label="Hired" value={stats.hired} tone="primary" />
+            <Stat label="Rejected" value={stats.rejected} tone="destructive" />
+          </div>
         </div>
 
         {/* ── Notifications Panel ── */}
@@ -466,15 +555,40 @@ function AdminDashboard() {
                 </Button>
               )}
               <Button variant="outline" size="sm" onClick={exportCsv}>
-                <FileDown className="h-4 w-4 mr-1.5" /> Export CSV
+                <FileDown className="h-4 w-4 mr-1.5" /> Export All
               </Button>
             </div>
           </div>
-          <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-            <Filter className="h-3 w-3" />
-            Showing <span className="font-medium text-foreground">{filtered.length}</span> of{" "}
-            <span className="font-medium text-foreground">{apps.length}</span> applications
+          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Filter className="h-3 w-3" />
+              Showing <span className="font-medium text-foreground">{filtered.length}</span> of{" "}
+              <span className="font-medium text-foreground">{apps.length}</span> applications
+            </div>
           </div>
+          
+          {/* Bulk Actions Toolbar */}
+          {selectedIds.size > 0 && (
+            <div className="mt-4 p-3 bg-secondary/5 border border-secondary/20 rounded-md flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
+              <div className="text-sm font-medium text-secondary">
+                {selectedIds.size} applicant{selectedIds.size > 1 ? 's' : ''} selected
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="outline" className="h-8 text-xs bg-white" onClick={() => handleBulkStatusChange('reviewing')}>
+                  Mark Reviewing
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200" onClick={() => handleBulkStatusChange('shortlisted')}>
+                  Shortlist
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 text-xs bg-destructive/5 text-destructive hover:bg-destructive/10 border-destructive/20" onClick={() => handleBulkStatusChange('rejected')}>
+                  Reject
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 text-xs ml-2" onClick={exportBulkCsv}>
+                  <Download className="h-3 w-3 mr-1" /> Export Selected
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {error && (
@@ -502,6 +616,13 @@ function AdminDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-surface text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+                    <th className="px-4 py-3 w-10">
+                      <Checkbox 
+                        checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                        onCheckedChange={toggleAll}
+                        className="rounded-[4px] border-muted-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                      />
+                    </th>
                     <th className="px-6 py-3 font-medium">Candidate</th>
                     <th className="px-6 py-3 font-medium">Role</th>
                     <th className="px-6 py-3 font-medium">Contact</th>
@@ -514,9 +635,20 @@ function AdminDashboard() {
                   {filtered.map((a: any) => (
                     <tr
                       key={a.id}
-                      className="border-b border-border last:border-0 hover:bg-surface cursor-pointer"
-                      onClick={() => setSelected(a)}
+                      className={`border-b border-border last:border-0 hover:bg-surface cursor-pointer transition-colors ${selectedIds.has(a.id) ? 'bg-secondary/5' : ''}`}
+                      onClick={(e) => {
+                        // Don't open dialog if clicking checkbox
+                        if ((e.target as HTMLElement).closest('.checkbox-cell')) return;
+                        setSelected(a);
+                      }}
                     >
+                      <td className="px-4 py-4 checkbox-cell" onClick={(e) => e.stopPropagation()}>
+                         <Checkbox 
+                           checked={selectedIds.has(a.id)}
+                           onCheckedChange={() => toggleOne(a.id)}
+                           className="rounded-[4px] border-muted-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                         />
+                      </td>
                       <td className="px-6 py-4">
                         <div className="font-medium text-foreground">{a.full_name}</div>
                         <div className="text-xs text-muted-foreground">{a.years_experience || "—"}</div>
