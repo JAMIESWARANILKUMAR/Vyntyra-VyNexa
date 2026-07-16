@@ -26,8 +26,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   // Never intercept API/server-function traffic
-  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_serverFn")) return;
-
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_server")) return;
   // NetworkFirst for HTML navigations
   if (req.mode === "navigate") {
     event.respondWith(
