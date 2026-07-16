@@ -37,29 +37,29 @@ const requestSchema = z.object({
 export const requestPortalLink = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => requestSchema.parse(d))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { adminDb } = await import("@/integrations/firebase/admin");
     const email = data.email.toLowerCase();
 
-    const { data: apps } = await supabaseAdmin
-      .from("applications")
-      .select("id, full_name, role_applied, email")
-      .eq("email", email)
-      .order("created_at", { ascending: false })
-      .limit(1);
-
-    const app = apps?.[0];
+    const snapshot = await adminDb!.collection("applications")
+      .where("email", "==", email)
+      .orderBy("created_at", "desc")
+      .limit(1)
+      .get();
 
     // Always return success — do not reveal whether the email exists.
-    if (!app) return { ok: true };
+    if (snapshot.empty) return { ok: true };
+    const appDoc = snapshot.docs[0];
+    const app = appDoc.data();
 
     try {
       const token = randomToken();
       const tokenHash = await sha256Hex(token);
       const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-      await supabaseAdmin.from("applicant_access_tokens").insert({
-        application_id: app.id,
+      await adminDb!.collection("applicant_access_tokens").add({
+        application_id: appDoc.id,
         token_hash: tokenHash,
         expires_at: expiresAt,
+        created_at: new Date().toISOString()
       });
 
       const origin = originFromRequest();
@@ -103,50 +103,54 @@ const checkSchema = z.object({ token: z.string().trim().min(32).max(128) });
 export const checkPortalToken = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => checkSchema.parse(d))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { adminDb, adminStorage } = await import("@/integrations/firebase/admin");
     const tokenHash = await sha256Hex(data.token);
 
-    const { data: row } = await supabaseAdmin
-      .from("applicant_access_tokens")
-      .select("id, application_id, expires_at, used_at")
-      .eq("token_hash", tokenHash)
-      .maybeSingle();
+    const tokenSnap = await adminDb!.collection("applicant_access_tokens")
+        .where("token_hash", "==", tokenHash)
+        .get();
 
-    if (!row) return { ok: false as const, reason: "invalid" as const };
+    if (tokenSnap.empty) return { ok: false as const, reason: "invalid" as const };
+    const rowDoc = tokenSnap.docs[0];
+    const row = rowDoc.data();
+
     if (row.used_at) return { ok: false as const, reason: "used" as const };
     if (new Date(row.expires_at).getTime() < Date.now())
       return { ok: false as const, reason: "expired" as const };
 
     // Mark used
-    await supabaseAdmin
-      .from("applicant_access_tokens")
-      .update({ used_at: new Date().toISOString() })
-      .eq("id", row.id);
+    await rowDoc.ref.update({ used_at: new Date().toISOString() });
 
-    const { data: app } = await supabaseAdmin
-      .from("applications")
-      .select("id, full_name, role_applied, status, created_at, updated_at, resume_path")
-      .eq("id", row.application_id)
-      .single();
-
-    if (!app) return { ok: false as const, reason: "invalid" as const };
+    const appDoc = await adminDb!.collection("applications").doc(row.application_id).get();
+    
+    if (!appDoc.exists) return { ok: false as const, reason: "invalid" as const };
+    const app = appDoc.data()!;
 
     // Short-lived signed URL so the applicant can download their own resume.
     let resumeUrl: string | null = null;
     let resumeName: string | null = null;
     if (app.resume_path) {
-      const { data: signed } = await supabaseAdmin.storage
-        .from("resumes")
-        .createSignedUrl(app.resume_path, 60 * 30);
-      resumeUrl = signed?.signedUrl ?? null;
-      resumeName = app.resume_path.split("/").pop() ?? "resume";
+        try {
+            const bucket = adminStorage!.bucket();
+            const file = bucket.file(app.resume_path);
+            const [url] = await file.getSignedUrl({
+                version: 'v4',
+                action: 'read',
+                expires: Date.now() + 60 * 30 * 1000 // 30 mins
+            });
+            resumeUrl = url;
+            resumeName = app.resume_path.split("/").pop() ?? "resume";
+        } catch(e) {
+            console.error("Failed to generate signed URL for resume", e);
+        }
     }
 
-    const { data: events } = await supabaseAdmin
-      .from("application_status_events")
-      .select("from_status, to_status, created_at")
-      .eq("application_id", row.application_id)
-      .order("created_at", { ascending: true });
+    const eventsSnap = await adminDb!.collection("application_status_events")
+        .where("application_id", "==", row.application_id)
+        .orderBy("created_at", "asc")
+        .get();
+
+    const events = eventsSnap.docs.map(doc => doc.data());
 
     return {
       ok: true as const,
@@ -177,32 +181,36 @@ const lookupSchema = z.object({
 export const lookupApplicationStatus = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => lookupSchema.parse(d))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { adminDb } = await import("@/integrations/firebase/admin");
     const ref = data.referenceId.trim().toLowerCase();
     const email = data.email.trim().toLowerCase();
 
-    const { data: apps } = await supabaseAdmin
-      .from("applications")
-      .select("id, full_name, role_applied, status, created_at, updated_at, email")
-      .ilike("email", email)
-      .filter("id::text", "ilike", `${ref}%`)
-      .limit(1);
+    // Since we don't have ilike and complex querying in Firestore, we will
+    // query by email and manually filter by ID prefix.
+    const snapshot = await adminDb!.collection("applications")
+        .where("email", "==", email)
+        .get();
 
-    const app = apps?.[0];
-    if (!app) {
+    const apps = snapshot.docs.filter(doc => doc.id.toLowerCase().startsWith(ref));
+    
+    if (apps.length === 0) {
       return { ok: false as const, reason: "not_found" as const };
     }
+    
+    const appDoc = apps[0];
+    const app = appDoc.data();
 
-    const { data: events } = await supabaseAdmin
-      .from("application_status_events")
-      .select("from_status, to_status, created_at")
-      .eq("application_id", app.id)
-      .order("created_at", { ascending: true });
+    const eventsSnap = await adminDb!.collection("application_status_events")
+        .where("application_id", "==", appDoc.id)
+        .orderBy("created_at", "asc")
+        .get();
+
+    const events = eventsSnap.docs.map(doc => doc.data());
 
     return {
       ok: true as const,
       application: {
-        reference_id: app.id.slice(0, 8).toUpperCase(),
+        reference_id: appDoc.id.slice(0, 8).toUpperCase(),
         full_name: app.full_name,
         role_applied: app.role_applied,
         status: app.status,
@@ -212,4 +220,3 @@ export const lookupApplicationStatus = createServerFn({ method: "POST" })
       history: events ?? [],
     };
   });
-

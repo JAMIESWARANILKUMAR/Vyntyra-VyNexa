@@ -1,50 +1,33 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createClient } from "@supabase/supabase-js";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 
-function publicClient() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
-  );
+async function checkIsAdmin(userId: string) {
+    const { adminDb } = await import("@/integrations/firebase/admin");
+    const rolesDoc = await adminDb!.collection("user_roles").where("user_id", "==", userId).where("role", "==", "admin").get();
+    return !rolesDoc.empty;
 }
 
 export const getApplicationsOpen = createServerFn({ method: "GET" }).handler(async () => {
-  const sb = publicClient();
-  const { data, error } = await sb
-    .from("site_settings")
-    .select("value")
-    .eq("key", "applications_open")
-    .maybeSingle();
-  if (error) return { enabled: true };
-  const v = (data?.value ?? {}) as { enabled?: boolean };
-  return { enabled: v.enabled !== false };
+    const { adminDb } = await import("@/integrations/firebase/admin");
+    const doc = await adminDb!.collection("site_settings").doc("applications_open").get();
+    if (!doc.exists) return { enabled: true };
+    return { enabled: doc.data()?.enabled !== false };
 });
 
 export const setApplicationsOpen = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ enabled: z.boolean() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin, error: rErr } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (rErr) throw new Error(rErr.message);
-    if (!isAdmin) throw new Error("Forbidden");
+    if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { error } = await context.supabase
-      .from("site_settings")
-      .upsert(
-        {
-          key: "applications_open",
-          value: { enabled: data.enabled } as any,
-          updated_at: new Date().toISOString(),
-          updated_by: context.userId,
-        },
-        { onConflict: "key" },
-      );
-    if (error) throw new Error(error.message);
+    const { adminDb } = await import("@/integrations/firebase/admin");
+    
+    await adminDb!.collection("site_settings").doc("applications_open").set({
+        enabled: data.enabled,
+        updated_at: new Date().toISOString(),
+        updated_by: context.userId
+    }, { merge: true });
+    
     return { enabled: data.enabled };
   });

@@ -28,7 +28,8 @@ import {
   Clock,
   Menu,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { storage } from "@/integrations/firebase/client";
+import { ref, uploadBytes, deleteObject } from "firebase/storage";
 import { submitApplication } from "@/lib/applications.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,7 +169,10 @@ function ApplicationPage() {
   }
   function removeProject(i: number) {
     const p = projects[i];
-    if (p?.document_path) supabase.storage.from("project-docs").remove([p.document_path]).catch(() => {});
+    if (p?.document_path) {
+        const fileRef = ref(storage, p.document_path);
+        deleteObject(fileRef).catch(() => {});
+    }
     setProjects((s: ProjectEntry[]) => s.filter((_: ProjectEntry, idx: number) => idx !== i));
   }
   function updateProject(i: number, patch: Partial<ProjectEntry>) {
@@ -179,13 +183,15 @@ function ApplicationPage() {
     if (file.size > 10 * 1024 * 1024) { toast.error("Project document must be under 10 MB"); return; }
     updateProject(i, { uploading: true });
     const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = `${new Date().getFullYear()}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safe}`;
-    const { error } = await supabase.storage.from("project-docs").upload(path, file, {
-      upsert: false, contentType: file.type || "application/octet-stream",
-    });
-    if (error) { toast.error("Upload failed: " + error.message); updateProject(i, { uploading: false }); return; }
-    updateProject(i, { document_path: path, document_name: file.name, uploading: false });
-    toast.success("Project document uploaded");
+    const path = `project-docs/${new Date().getFullYear()}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safe}`;
+    try {
+        const fileRef = ref(storage, path);
+        await uploadBytes(fileRef, file, { contentType: file.type || "application/octet-stream" });
+        updateProject(i, { document_path: path, document_name: file.name, uploading: false });
+        toast.success("Project document uploaded");
+    } catch(error: any) {
+        toast.error("Upload failed: " + error.message); updateProject(i, { uploading: false }); return;
+    }
   }
 
   async function handleResume(file: File | null) {
@@ -197,22 +203,25 @@ function ApplicationPage() {
     }
     setUploading(true);
     const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = `${new Date().getFullYear()}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safe}`;
-    const { error } = await supabase.storage.from("resumes").upload(path, file, {
-      upsert: false,
-      contentType: file.type || "application/octet-stream",
-    });
-    setUploading(false);
-    if (error) { toast.error("Upload failed: " + error.message); return; }
-    setResumePath(path);
-    setResumeName(file.name);
-    setResumeSize(file.size);
-    toast.success("Resume uploaded securely");
+    const path = `resumes/${new Date().getFullYear()}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safe}`;
+    try {
+        const fileRef = ref(storage, path);
+        await uploadBytes(fileRef, file, { contentType: file.type || "application/octet-stream" });
+        setResumePath(path);
+        setResumeName(file.name);
+        setResumeSize(file.size);
+        toast.success("Resume uploaded securely");
+    } catch (error: any) {
+        toast.error("Upload failed: " + error.message); return;
+    } finally {
+        setUploading(false);
+    }
   }
 
   function removeResume() {
     if (resumePath) {
-      supabase.storage.from("resumes").remove([resumePath]).catch(() => {});
+        const fileRef = ref(storage, resumePath);
+        deleteObject(fileRef).catch(() => {});
     }
     setResumePath(""); setResumeName(""); setResumeSize(0);
   }

@@ -2,7 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2, Shield } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { auth } from "@/integrations/firebase/client";
+import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,19 +20,24 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/admin" });
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) navigate({ to: "/admin" });
     });
+    return () => unsubscribe();
   }, [navigate]);
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Welcome back");
-    navigate({ to: "/admin" });
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        toast.success("Welcome back");
+        navigate({ to: "/admin" });
+    } catch(error: any) {
+        toast.error(error.message);
+    } finally {
+        setLoading(false);
+    }
   }
 
   return (

@@ -1,48 +1,38 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 
 // ---------- Public ----------
 
 export const incrementVisitorCount = createServerFn({ method: "POST" }).handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { adminDb } = await import("@/integrations/firebase/admin");
 
-  const { data: existing } = await supabaseAdmin
-    .from("visitor_counts")
-    .select("count")
-    .eq("page_key", "home")
-    .maybeSingle();
+    const docRef = adminDb!.collection("visitor_counts").doc("home");
+    
+    const count = await adminDb!.runTransaction(async (transaction) => {
+        const doc = await transaction.get(docRef);
+        const newCount = (doc.exists ? (doc.data()?.count || 0) : 0) + 1;
+        transaction.set(docRef, { count: newCount, updated_at: new Date().toISOString() }, { merge: true });
+        return newCount;
+    });
 
-  const currentCount = existing?.count ?? 0;
-
-  const { data: row, error } = await supabaseAdmin
-    .from("visitor_counts")
-    .upsert(
-      { page_key: "home", count: currentCount + 1 },
-      { onConflict: "page_key" },
-    )
-    .select("count")
-    .single();
-  if (error) throw new Error(error.message);
-  return { count: row.count };
+    return { count };
 });
 
 // ---------- Admin ----------
 
-export const getVisitorCount = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
+async function checkIsAdmin(userId: string) {
+    const { adminDb } = await import("@/integrations/firebase/admin");
+    const rolesDoc = await adminDb!.collection("user_roles").where("user_id", "==", userId).where("role", "==", "admin").get();
+    return !rolesDoc.empty;
+}
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("visitor_counts")
-      .select("count")
-      .eq("page_key", "home")
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    return { count: data?.count ?? 0 };
+export const getVisitorCount = createServerFn({ method: "GET" })
+  .middleware([requireFirebaseAuth])
+  .handler(async ({ context }) => {
+    if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
+
+    const { adminDb } = await import("@/integrations/firebase/admin");
+    const doc = await adminDb!.collection("visitor_counts").doc("home").get();
+    
+    return { count: doc.exists ? (doc.data()?.count || 0) : 0 };
   });

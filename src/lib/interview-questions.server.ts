@@ -17,26 +17,30 @@ export async function generateInterviewQuestions(args: Args): Promise<string> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { adminDb, adminStorage } = await import("@/integrations/firebase/admin");
 
   // Load resume if PDF (only PDF is reliably supported multimodal). For other
   // types, fall back to role-only generation.
   let filePart: any = null;
   if (args.resumePath && /\.pdf$/i.test(args.resumePath)) {
-    const { data: blob } = await supabaseAdmin.storage.from("resumes").download(args.resumePath);
-    if (blob) {
-      const buf = new Uint8Array(await blob.arrayBuffer());
-      // Base64 encode
-      let bin = "";
-      for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
-      const b64 = btoa(bin);
-      filePart = {
-        type: "file",
-        file: {
-          filename: "resume.pdf",
-          file_data: `data:application/pdf;base64,${b64}`,
-        },
-      };
+    try {
+        const bucket = adminStorage!.bucket();
+        const file = bucket.file(args.resumePath);
+        const [buffer] = await file.download();
+        
+        // Base64 encode
+        let bin = "";
+        for (let i = 0; i < buffer.length; i++) bin += String.fromCharCode(buffer[i]);
+        const b64 = btoa(bin);
+        filePart = {
+            type: "file",
+            file: {
+            filename: "resume.pdf",
+            file_data: `data:application/pdf;base64,${b64}`,
+            },
+        };
+    } catch (e) {
+        console.warn("Failed to load resume for interview questions:", e);
     }
   }
 
@@ -81,13 +85,13 @@ Keep it concise, direct, and interview-ready. No preamble.`;
   const text: string = json?.choices?.[0]?.message?.content ?? "";
   if (!text.trim()) throw new Error("Empty response from AI");
 
-  await supabaseAdmin
-    .from("applications")
+  await adminDb!
+    .collection("applications")
+    .doc(args.applicationId)
     .update({
       interview_questions: text,
       interview_questions_generated_at: new Date().toISOString(),
-    })
-    .eq("id", args.applicationId);
+    });
 
   return text;
 }
