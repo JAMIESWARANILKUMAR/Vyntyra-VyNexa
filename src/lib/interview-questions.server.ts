@@ -1,6 +1,7 @@
 // Server-only helper that uses Lovable AI Gateway to generate tailored
 // interview questions from an applicant's resume + role.
 // Called fire-and-forget after submission and on-demand from the admin panel.
+import { supabase } from "@/integrations/supabase/client";
 
 interface Args {
   applicationId: string;
@@ -17,20 +18,23 @@ export async function generateInterviewQuestions(args: Args): Promise<string> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
-  const { adminDb, adminStorage } = await import("@/integrations/firebase/admin");
-
   // Load resume if PDF (only PDF is reliably supported multimodal). For other
   // types, fall back to role-only generation.
   let filePart: any = null;
   if (args.resumePath && /\.pdf$/i.test(args.resumePath)) {
     try {
-        const bucket = adminStorage!.bucket();
-        const file = bucket.file(args.resumePath);
-        const [buffer] = await file.download();
+        const { data, error } = await supabase.storage.from('default').download(args.resumePath);
+        
+        if (error || !data) {
+            throw new Error(error?.message || "File download failed");
+        }
+
+        const buffer = await data.arrayBuffer();
+        const uint8Array = new Uint8Array(buffer);
         
         // Base64 encode
         let bin = "";
-        for (let i = 0; i < buffer.length; i++) bin += String.fromCharCode(buffer[i]);
+        for (let i = 0; i < uint8Array.length; i++) bin += String.fromCharCode(uint8Array[i]);
         const b64 = btoa(bin);
         filePart = {
             type: "file",
@@ -85,13 +89,13 @@ Keep it concise, direct, and interview-ready. No preamble.`;
   const text: string = json?.choices?.[0]?.message?.content ?? "";
   if (!text.trim()) throw new Error("Empty response from AI");
 
-  await adminDb!
-    .collection("applications")
-    .doc(args.applicationId)
+  await supabase
+    .from("applications")
     .update({
       interview_questions: text,
       interview_questions_generated_at: new Date().toISOString(),
-    });
+    })
+    .eq('id', args.applicationId);
 
   return text;
 }

@@ -1,58 +1,60 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabase } from "@/integrations/supabase/client";
 
 async function checkIsAdmin(userId: string) {
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const rolesDoc = await adminDb!.collection("user_roles").where("user_id", "==", userId).where("role", "==", "admin").get();
-    return !rolesDoc.empty;
+    const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('role', 'admin');
+    return !error && data && data.length > 0;
 }
 
 // ---------- Admin ----------
 
 export const listAdminNotifications = createServerFn({ method: "GET" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const snapshot = await adminDb!.collection("admin_notifications")
-      .orderBy("created_at", "desc")
-      .limit(50)
-      .get();
-      
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const { data, error } = await supabase
+        .from("admin_notifications")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+        
+    if (error) throw new Error("Failed to fetch notifications");
+    return data;
   });
 
 const markReadSchema = z.object({ id: z.string() });
 
 export const markNotificationRead = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => markReadSchema.parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    await adminDb!.collection("admin_notifications").doc(data.id).update({ is_read: true });
+    await supabase
+        .from("admin_notifications")
+        .update({ is_read: true })
+        .eq("id", data.id);
+        
     return { ok: true };
   });
 
 export const markAllNotificationsRead = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const snapshot = await adminDb!.collection("admin_notifications")
-        .where("is_read", "==", false)
-        .get();
+    await supabase
+        .from("admin_notifications")
+        .update({ is_read: true })
+        .eq("is_read", false);
         
-    const batch = adminDb!.batch();
-    snapshot.docs.forEach((doc) => {
-        batch.update(doc.ref, { is_read: true });
-    });
-    await batch.commit();
-
     return { ok: true };
   });
 
@@ -64,16 +66,14 @@ export async function insertNotification(params: {
   message: string;
   metadata?: Record<string, any>;
 }) {
-  const { adminDb } = await import("@/integrations/firebase/admin");
   try {
-      await adminDb!.collection("admin_notifications").add({
+      await supabase.from("admin_notifications").insert([{
         type: params.type,
         title: params.title,
         message: params.message,
         metadata: params.metadata ?? null,
         is_read: false,
-        created_at: new Date().toISOString()
-      });
+      }]);
   } catch (error: any) {
     console.warn("[notifications] insert failed:", error.message);
     throw new Error(error.message);

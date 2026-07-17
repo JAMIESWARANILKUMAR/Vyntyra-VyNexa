@@ -1,7 +1,8 @@
 import { createMiddleware } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
+import { supabase } from './client';
 
-export const requireFirebaseAuth = createMiddleware({ type: 'function' }).server(
+export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
     const request = getRequest();
 
@@ -24,24 +25,21 @@ export const requireFirebaseAuth = createMiddleware({ type: 'function' }).server
       throw new Error('Unauthorized: No token provided');
     }
 
-    // Dynamic import to avoid loading Firebase Admin on the client
-    const { adminAuth } = await import('@/integrations/firebase/admin');
-    
-    if (!adminAuth) {
-        throw new Error('Internal Server Error: Firebase Admin not initialized');
-    }
-
     try {
-        const decodedToken = await adminAuth.verifyIdToken(token);
+        const { data: { user }, error } = await supabase.auth.getUser(token);
         
+        if (error || !user) {
+           throw new Error('Unauthorized: Invalid token');
+        }
+
         return next({
             context: {
-                userId: decodedToken.uid,
-                claims: decodedToken,
+                userId: user.id,
+                user: user,
             },
         });
     } catch (error) {
-        console.error("Firebase auth verification error", error);
+        console.error("Supabase auth verification error", error);
         throw new Error('Unauthorized: Invalid token');
     }
   },

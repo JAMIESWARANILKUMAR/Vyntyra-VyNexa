@@ -1,38 +1,51 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabase } from "@/integrations/supabase/client";
 
 // ---------- Public ----------
 
 export const incrementVisitorCount = createServerFn({ method: "POST" }).handler(async () => {
-    const { adminDb } = await import("@/integrations/firebase/admin");
-
-    const docRef = adminDb!.collection("visitor_counts").doc("home");
+    // Simple fetch and update. For a true atomic increment, a Postgres RPC is recommended.
+    const { data: doc, error: fetchError } = await supabase
+        .from("visitor_counts")
+        .select("count")
+        .eq("id", "home")
+        .single();
+        
+    const newCount = (!fetchError && doc ? doc.count : 0) + 1;
     
-    const count = await adminDb!.runTransaction(async (transaction) => {
-        const doc = await transaction.get(docRef);
-        const newCount = (doc.exists ? (doc.data()?.count || 0) : 0) + 1;
-        transaction.set(docRef, { count: newCount, updated_at: new Date().toISOString() }, { merge: true });
-        return newCount;
-    });
-
-    return { count };
+    await supabase
+        .from("visitor_counts")
+        .upsert({
+            id: "home",
+            count: newCount,
+            updated_at: new Date().toISOString()
+        });
+        
+    return { count: newCount };
 });
 
 // ---------- Admin ----------
 
 async function checkIsAdmin(userId: string) {
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const rolesDoc = await adminDb!.collection("user_roles").where("user_id", "==", userId).where("role", "==", "admin").get();
-    return !rolesDoc.empty;
+    const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('role', 'admin');
+    return !error && data && data.length > 0;
 }
 
 export const getVisitorCount = createServerFn({ method: "GET" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const doc = await adminDb!.collection("visitor_counts").doc("home").get();
+    const { data, error } = await supabase
+        .from("visitor_counts")
+        .select("count")
+        .eq("id", "home")
+        .single();
     
-    return { count: doc.exists ? (doc.data()?.count || 0) : 0 };
+    return { count: !error && data ? data.count : 0 };
   });

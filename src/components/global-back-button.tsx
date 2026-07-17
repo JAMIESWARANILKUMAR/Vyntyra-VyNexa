@@ -4,8 +4,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/integrations/firebase/client";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -40,13 +39,12 @@ export default function GlobalBackButton() {
     
     setIsLoading(true);
     try {
-      const user = auth.currentUser;
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user?.email) throw new Error("No active user session found");
 
       // Verify password by attempting to sign in
-      try {
-        await signInWithEmailAndPassword(auth, user.email, password);
-      } catch (error) {
+      const { error } = await supabase.auth.signInWithPassword({ email: user.email, password });
+      if (error) {
         toast.error("Incorrect password");
         setIsLoading(false);
         return;
@@ -55,7 +53,7 @@ export default function GlobalBackButton() {
       // Password is correct, sign out and go home
       await qc.cancelQueries();
       qc.clear();
-      await signOut(auth);
+      await supabase.auth.signOut();
       window.location.href = "/";
     } catch (error: any) {
       toast.error(error.message || "An error occurred");

@@ -28,8 +28,7 @@ import {
   Clock,
   Menu,
 } from "lucide-react";
-import { storage } from "@/integrations/firebase/client";
-import { ref, uploadBytes, deleteObject } from "firebase/storage";
+import { supabase } from "@/integrations/supabase/client";
 import { submitApplication } from "@/lib/applications.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -170,8 +169,7 @@ function ApplicationPage() {
   function removeProject(i: number) {
     const p = projects[i];
     if (p?.document_path) {
-        const fileRef = ref(storage, p.document_path);
-        deleteObject(fileRef).catch(() => {});
+        supabase.storage.from("default").remove([p.document_path]).catch(() => {});
     }
     setProjects((s: ProjectEntry[]) => s.filter((_: ProjectEntry, idx: number) => idx !== i));
   }
@@ -185,8 +183,8 @@ function ApplicationPage() {
     const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `project-docs/${new Date().getFullYear()}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safe}`;
     try {
-        const fileRef = ref(storage, path);
-        await uploadBytes(fileRef, file, { contentType: file.type || "application/octet-stream" });
+        const { error } = await supabase.storage.from("default").upload(path, file, { contentType: file.type || "application/octet-stream" });
+        if (error) throw error;
         updateProject(i, { document_path: path, document_name: file.name, uploading: false });
         toast.success("Project document uploaded");
     } catch(error: any) {
@@ -205,8 +203,8 @@ function ApplicationPage() {
     const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `resumes/${new Date().getFullYear()}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safe}`;
     try {
-        const fileRef = ref(storage, path);
-        await uploadBytes(fileRef, file, { contentType: file.type || "application/octet-stream" });
+        const { error } = await supabase.storage.from("default").upload(path, file, { contentType: file.type || "application/octet-stream" });
+        if (error) throw error;
         setResumePath(path);
         setResumeName(file.name);
         setResumeSize(file.size);
@@ -220,8 +218,7 @@ function ApplicationPage() {
 
   function removeResume() {
     if (resumePath) {
-        const fileRef = ref(storage, resumePath);
-        deleteObject(fileRef).catch(() => {});
+        supabase.storage.from("default").remove([resumePath]).catch(() => {});
     }
     setResumePath(""); setResumeName(""); setResumeSize(0);
   }

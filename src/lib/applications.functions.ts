@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabase } from "@/integrations/supabase/client";
 
 const projectSchema = z.object({
   title: z.string().trim().min(1).max(200),
@@ -38,19 +39,25 @@ const submitSchema = z.object({
 });
 
 async function checkIsAdmin(userId: string) {
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const rolesDoc = await adminDb!.collection("user_roles").where("user_id", "==", userId).where("role", "==", "admin").get();
-    return !rolesDoc.empty;
+    const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('role', 'admin');
+    return !error && data && data.length > 0;
 }
 
 export const submitApplication = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => submitSchema.parse(data))
   .handler(async ({ data }) => {
-    const { adminDb } = await import("@/integrations/firebase/admin");
-
     // Enforce the "Accepting Applications" toggle server-side
-    const settingsDoc = await adminDb!.collection("site_settings").doc("applications_open").get();
-    const enabled = settingsDoc.exists ? settingsDoc.data()?.enabled !== false : true;
+    const { data: settingsData } = await supabase
+        .from("site_settings")
+        .select("*")
+        .eq("id", "applications_open")
+        .single();
+        
+    const enabled = settingsData ? settingsData.enabled !== false : true;
     
     if (!enabled) {
       throw new Error("Applications are currently closed. Please check back soon.");
@@ -80,11 +87,18 @@ export const submitApplication = createServerFn({ method: "POST" })
       tp_officer_contact: data.tp_officer_contact || null,
       tp_officer_email: data.tp_officer_email ? data.tp_officer_email.toLowerCase() : null,
       agreement_accepted: true,
-      created_at: new Date().toISOString(),
       status: 'new'
     };
 
-    const docRef = await adminDb!.collection("applications").add(insert);
+    const { data: insertedApp, error: insertError } = await supabase
+        .from("applications")
+        .insert([insert])
+        .select()
+        .single();
+
+    if (insertError || !insertedApp) {
+        throw new Error("Failed to submit application");
+    }
 
     // Log admin notification
     try {
@@ -93,32 +107,27 @@ export const submitApplication = createServerFn({ method: "POST" })
         type: "new_application",
         title: "New Application Received",
         message: `${data.full_name} applied for ${data.role_applied}`,
-        metadata: { applicationId: docRef.id, email: data.email, role: data.role_applied },
+        metadata: { applicationId: insertedApp.id, email: data.email, role: data.role_applied },
       });
     } catch (e) {
       console.warn("[applications] notification insert skipped:", (e as Error)?.message);
     }
 
     if (data.projects && data.projects.length) {
-      const batch = adminDb!.batch();
-      for(const p of data.projects) {
-          const pRef = adminDb!.collection("application_projects").doc();
-          batch.set(pRef, {
-            application_id: docRef.id,
+        const projectInserts = data.projects.map(p => ({
+            application_id: insertedApp.id,
             title: p.title,
             summary: p.summary,
             project_url: p.project_url || null,
             document_path: p.document_path || null,
-            created_at: new Date().toISOString()
-          });
-      }
-      await batch.commit();
+        }));
+        await supabase.from("application_projects").insert(projectInserts);
     }
 
     try {
       const { notifyAdminOfApplication } = await import("./notify.server");
       await notifyAdminOfApplication({
-        applicationId: docRef.id,
+        applicationId: insertedApp.id,
         fullName: data.full_name,
         email: data.email,
         phone: data.phone,
@@ -132,7 +141,7 @@ export const submitApplication = createServerFn({ method: "POST" })
     try {
       const { generateInterviewQuestions } = await import("./interview-questions.server");
       await generateInterviewQuestions({
-        applicationId: docRef.id,
+        applicationId: insertedApp.id,
         resumePath: data.resume_path || null,
         roleApplied: data.role_applied,
         fullName: data.full_name,
@@ -142,52 +151,47 @@ export const submitApplication = createServerFn({ method: "POST" })
       console.warn("[applications] AI questions skipped:", (e as Error)?.message);
     }
 
-    return { id: docRef.id };
+    return { id: insertedApp.id };
   });
 
 // Delete application (admin only)
 const deleteSchema = z.object({ id: z.string() });
 
 export const deleteApplication = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => deleteSchema.parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    await adminDb!.collection("applications").doc(data.id).delete();
+    await supabase.from("applications").delete().eq('id', data.id);
     return { ok: true };
   });
 
 // List projects for an application (admin only)
 export const listApplicationProjects = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
-    const { adminDb } = await import("@/integrations/firebase/admin");
     
-    const snapshot = await adminDb!.collection("application_projects")
-      .where("application_id", "==", data.id)
-      .orderBy("created_at", "asc")
-      .get();
-      
-    const rows = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-    
-    const { adminStorage } = await import("@/integrations/firebase/admin");
+    const { data: rows, error } = await supabase
+        .from("application_projects")
+        .select("*")
+        .eq("application_id", data.id)
+        .order("created_at", { ascending: true });
+        
+    if (error || !rows) return [];
     
     // Sign document URLs when present
     const signed = await Promise.all(
-      rows.map(async (r) => {
+      rows.map(async (r: any) => {
         if (!r.document_path) return { ...r, document_url: null };
         try {
-            const bucket = adminStorage!.bucket();
-            const file = bucket.file(r.document_path);
-            const [url] = await file.getSignedUrl({
-                version: 'v4',
-                action: 'read',
-                expires: Date.now() + 60 * 10 * 1000 // 10 minutes
-            });
-            return { ...r, document_url: url };
+            const { data: urlData } = await supabase
+              .storage
+              .from('default') // assuming 'default' bucket, we may need to check storage later
+              .createSignedUrl(r.document_path, 60 * 10); // 10 minutes
+              
+            return { ...r, document_url: urlData?.signedUrl || null };
         } catch(e) {
             return { ...r, document_url: null };
         }
@@ -199,16 +203,17 @@ export const listApplicationProjects = createServerFn({ method: "POST" })
 // ---------- Admin ----------
 
 export const listApplications = createServerFn({ method: "GET" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const snapshot = await adminDb!.collection("applications")
-      .orderBy("created_at", "desc")
-      .get();
-      
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const { data, error } = await supabase
+        .from("applications")
+        .select("*")
+        .order("created_at", { ascending: false });
+        
+    if (error) throw new Error("Failed to list applications");
+    return data;
   });
 
 const updateNotesSchema = z.object({
@@ -217,55 +222,57 @@ const updateNotesSchema = z.object({
 });
 
 export const updateAdminNotes = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => updateNotesSchema.parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    await adminDb!.collection("applications").doc(data.id).update({
-        admin_notes: data.admin_notes || null
-    });
+    await supabase
+        .from("applications")
+        .update({ admin_notes: data.admin_notes || null })
+        .eq('id', data.id);
     return { ok: true };
   });
 
 const resumeSchema = z.object({ path: z.string().min(1) });
 
 export const getResumeSignedUrl = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => resumeSchema.parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminStorage } = await import("@/integrations/firebase/admin");
-    const bucket = adminStorage!.bucket();
-    const file = bucket.file(data.path);
-    const [url] = await file.getSignedUrl({
-        version: 'v4',
-        action: 'read',
-        expires: Date.now() + 60 * 10 * 1000 // 10 minutes
-    });
-    return { url };
+    const { data: urlData, error } = await supabase
+        .storage
+        .from('default')
+        .createSignedUrl(data.path, 60 * 10);
+        
+    if (error || !urlData) {
+        throw new Error("Failed to get signed URL");
+    }
+    return { url: urlData.signedUrl };
   });
 
 // Admin: regenerate interview questions on demand
 const regenSchema = z.object({ id: z.string() });
 
 export const regenerateInterviewQuestions = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => regenSchema.parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const appDoc = await adminDb!.collection("applications").doc(data.id).get();
+    const { data: app, error } = await supabase
+        .from("applications")
+        .select("*")
+        .eq('id', data.id)
+        .single();
     
-    if (!appDoc.exists) throw new Error("Not found");
-    const app = appDoc.data()!;
+    if (error || !app) throw new Error("Not found");
 
     const { generateInterviewQuestions } = await import("./interview-questions.server");
     const text = await generateInterviewQuestions({
-      applicationId: appDoc.id,
+      applicationId: app.id,
       resumePath: app.resume_path,
       roleApplied: app.role_applied,
       fullName: app.full_name,

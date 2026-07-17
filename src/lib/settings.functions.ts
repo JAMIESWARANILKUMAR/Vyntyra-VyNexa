@@ -1,33 +1,43 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabase } from "@/integrations/supabase/client";
 
 async function checkIsAdmin(userId: string) {
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const rolesDoc = await adminDb!.collection("user_roles").where("user_id", "==", userId).where("role", "==", "admin").get();
-    return !rolesDoc.empty;
+    const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('role', 'admin');
+    return !error && data && data.length > 0;
 }
 
 export const getApplicationsOpen = createServerFn({ method: "GET" }).handler(async () => {
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const doc = await adminDb!.collection("site_settings").doc("applications_open").get();
-    if (!doc.exists) return { enabled: true };
-    return { enabled: doc.data()?.enabled !== false };
+    const { data, error } = await supabase
+        .from("site_settings")
+        .select("enabled")
+        .eq("id", "applications_open")
+        .single();
+        
+    if (error || !data) return { enabled: true };
+    return { enabled: data.enabled !== false };
 });
 
 export const setApplicationsOpen = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ enabled: z.boolean() }).parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    
-    await adminDb!.collection("site_settings").doc("applications_open").set({
-        enabled: data.enabled,
-        updated_at: new Date().toISOString(),
-        updated_by: context.userId
-    }, { merge: true });
+    // Supabase upsert
+    await supabase
+        .from("site_settings")
+        .upsert({
+            id: "applications_open",
+            enabled: data.enabled,
+            updated_at: new Date().toISOString(),
+            updated_by: context.userId
+        });
     
     return { enabled: data.enabled };
   });

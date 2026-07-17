@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabase } from "@/integrations/supabase/client";
 
 // ---------- Transition rules ----------
 
@@ -21,9 +22,12 @@ function isAllowed(from: AppStatus, to: AppStatus) {
 }
 
 async function checkIsAdmin(userId: string) {
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const rolesDoc = await adminDb!.collection("user_roles").where("user_id", "==", userId).where("role", "==", "admin").get();
-    return !rolesDoc.empty;
+    const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('role', 'admin');
+    return !error && data && data.length > 0;
 }
 
 async function ensureAdmin(ctx: any) {
@@ -65,17 +69,18 @@ const changeSchema = z.object({
 });
 
 export const changeApplicationStatus = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => changeSchema.parse(d))
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
-    const { adminDb } = await import("@/integrations/firebase/admin");
 
-    const appDocRef = adminDb!.collection("applications").doc(data.id);
-    const appDoc = await appDocRef.get();
+    const { data: app, error: appError } = await supabase
+        .from("applications")
+        .select("*")
+        .eq('id', data.id)
+        .single();
     
-    if (!appDoc.exists) throw new Error("Application not found");
-    const app = appDoc.data()!;
+    if (appError || !app) throw new Error("Application not found");
 
     const from = app.status as AppStatus;
     const to = data.status as AppStatus;
@@ -85,16 +90,15 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
     }
 
     if (from !== to) {
-      await appDocRef.update({ status: to });
+      await supabase.from("applications").update({ status: to }).eq('id', data.id);
 
-      await adminDb!.collection("application_status_events").add({
+      await supabase.from("application_status_events").insert([{
           application_id: data.id,
           from_status: from,
           to_status: to,
           note: data.note,
           changed_by: context.userId,
-          created_at: new Date().toISOString()
-      });
+      }]);
 
       // Insert admin notification for status change
       try {
@@ -114,18 +118,20 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
         const token = randomToken();
         const tokenHash = await sha256Hex(token);
         const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-        await adminDb!.collection("applicant_access_tokens").add({
+        await supabase.from("applicant_access_tokens").insert([{
           application_id: data.id,
           token_hash: tokenHash,
           expires_at: expiresAt,
-          created_at: new Date().toISOString()
-        });
+        }]);
 
         const origin = originFromRequest();
         const portalLink = origin ? `${origin}/status/${token}` : `/status/${token}`;
 
-        const tplDoc = await adminDb!.collection("status_email_templates").doc(to).get();
-        const tpl = tplDoc.data();
+        const { data: tpl } = await supabase
+            .from("status_email_templates")
+            .select("*")
+            .eq("id", to)
+            .single();
 
         if (tpl?.enabled) {
           const { sendStatusChangeEmail } = await import("./status-email.server");
@@ -158,14 +164,13 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
       }
     } else {
       // Same status; still record the note in event log
-      await adminDb!.collection("application_status_events").add({
+      await supabase.from("application_status_events").insert([{
           application_id: data.id,
           from_status: from,
           to_status: to,
           note: data.note,
           changed_by: context.userId,
-          created_at: new Date().toISOString()
-      });
+      }]);
     }
 
     return { ok: true };
@@ -176,29 +181,34 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
 const listEventsSchema = z.object({ applicationId: z.string() });
 
 export const listStatusEvents = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => listEventsSchema.parse(d))
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
-    const { adminDb } = await import("@/integrations/firebase/admin");
     
-    const snapshot = await adminDb!.collection("application_status_events")
-      .where("application_id", "==", data.applicationId)
-      .orderBy("created_at", "desc")
-      .get();
+    const { data: events, error } = await supabase
+      .from("application_status_events")
+      .select("*")
+      .eq("application_id", data.applicationId)
+      .order("created_at", { ascending: false });
       
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (error) throw new Error("Failed to fetch events");
+    return events;
   });
 
 // ---------- Templates ----------
 
 export const listStatusTemplates = createServerFn({ method: "GET" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await ensureAdmin(context);
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const snapshot = await adminDb!.collection("status_email_templates").get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    const { data: templates, error } = await supabase
+        .from("status_email_templates")
+        .select("*");
+        
+    if (error) throw new Error("Failed to fetch templates");
+    return templates;
   });
 
 const updateTplSchema = z.object({
@@ -209,19 +219,21 @@ const updateTplSchema = z.object({
 });
 
 export const updateStatusTemplate = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => updateTplSchema.parse(d))
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
-    const { adminDb } = await import("@/integrations/firebase/admin");
     
-    await adminDb!.collection("status_email_templates").doc(data.status).set({
-        subject: data.subject,
-        html_body: data.html_body,
-        enabled: data.enabled,
-        updated_by: context.userId,
-        updated_at: new Date().toISOString()
-    }, { merge: true });
+    await supabase
+        .from("status_email_templates")
+        .upsert({
+            id: data.status,
+            subject: data.subject,
+            html_body: data.html_body,
+            enabled: data.enabled,
+            updated_by: context.userId,
+            updated_at: new Date().toISOString()
+        });
     
     return { ok: true };
   });

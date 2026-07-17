@@ -32,8 +32,7 @@ import {
   Building2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { auth } from "@/integrations/firebase/client";
-import { signOut as firebaseSignOut } from "firebase/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { listApplications, updateAdminNotes, getResumeSignedUrl, regenerateInterviewQuestions, listApplicationProjects, deleteApplication } from "@/lib/applications.functions";
 import { getApplicationsOpen, setApplicationsOpen } from "@/lib/settings.functions";
 import { listJobPostings, createJobPosting, updateJobPosting, toggleJobPosting, deleteJobPosting } from "@/lib/job-postings.functions";
@@ -212,7 +211,7 @@ function AdminDashboard() {
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
-    await firebaseSignOut(auth);
+    await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
 

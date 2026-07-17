@@ -1,26 +1,31 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabase } from "@/integrations/supabase/client";
 
 async function checkIsAdmin(userId: string) {
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const rolesDoc = await adminDb!.collection("user_roles").where("user_id", "==", userId).where("role", "==", "admin").get();
-    return !rolesDoc.empty;
+    const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('role', 'admin');
+    return !error && data && data.length > 0;
 }
 
 // ---------- Admin ----------
 
 export const listJobPostings = createServerFn({ method: "GET" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const snapshot = await adminDb!.collection("job_postings")
-      .orderBy("created_at", "desc")
-      .get();
-      
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const { data, error } = await supabase
+        .from("job_postings")
+        .select("*")
+        .order("created_at", { ascending: false });
+        
+    if (error) throw new Error("Failed to fetch job postings");
+    return data;
   });
 
 const createJobPostingSchema = z.object({
@@ -34,13 +39,11 @@ const createJobPostingSchema = z.object({
 });
 
 export const createJobPosting = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => createJobPostingSchema.parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    
     const insert = {
         title: data.title,
         department: data.department,
@@ -51,11 +54,16 @@ export const createJobPosting = createServerFn({ method: "POST" })
         salary_range: data.salary_range || null,
         created_by: context.userId,
         is_active: true,
-        created_at: new Date().toISOString()
     };
     
-    const docRef = await adminDb!.collection("job_postings").add(insert);
-    return { id: docRef.id };
+    const { data: inserted, error } = await supabase
+        .from("job_postings")
+        .insert([insert])
+        .select()
+        .single();
+        
+    if (error || !inserted) throw new Error("Failed to create job posting");
+    return { id: inserted.id };
   });
 
 const updateJobPostingSchema = z.object({
@@ -70,41 +78,52 @@ const updateJobPostingSchema = z.object({
 });
 
 export const updateJobPosting = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => updateJobPostingSchema.parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    await adminDb!.collection("job_postings").doc(data.id).update({
-        title: data.title,
-        department: data.department,
-        location: data.location,
-        type: data.type,
-        description: data.description,
-        requirements: data.requirements || null,
-        salary_range: data.salary_range || null,
-        updated_at: new Date().toISOString()
-    });
+    const { error } = await supabase
+        .from("job_postings")
+        .update({
+            title: data.title,
+            department: data.department,
+            location: data.location,
+            type: data.type,
+            description: data.description,
+            requirements: data.requirements || null,
+            salary_range: data.salary_range || null,
+        })
+        .eq("id", data.id);
+        
+    if (error) throw new Error("Failed to update job posting");
     return { ok: true };
   });
 
 const toggleJobPostingSchema = z.object({ id: z.string() });
 
 export const toggleJobPosting = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => toggleJobPostingSchema.parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const docRef = adminDb!.collection("job_postings").doc(data.id);
-    const doc = await docRef.get();
+    const { data: doc, error: fetchError } = await supabase
+        .from("job_postings")
+        .select("is_active")
+        .eq("id", data.id)
+        .single();
     
-    if (!doc.exists) throw new Error("Not found");
+    if (fetchError || !doc) throw new Error("Not found");
     
-    const newActive = !doc.data()!.is_active;
-    await docRef.update({ is_active: newActive });
+    const newActive = !doc.is_active;
+    
+    const { error: updateError } = await supabase
+        .from("job_postings")
+        .update({ is_active: newActive })
+        .eq("id", data.id);
+        
+    if (updateError) throw new Error("Failed to toggle job posting");
     
     return { id: data.id, is_active: newActive };
   });
@@ -112,24 +131,29 @@ export const toggleJobPosting = createServerFn({ method: "POST" })
 const deleteJobPostingSchema = z.object({ id: z.string() });
 
 export const deleteJobPosting = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => deleteJobPostingSchema.parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    await adminDb!.collection("job_postings").doc(data.id).delete();
+    const { error } = await supabase
+        .from("job_postings")
+        .delete()
+        .eq("id", data.id);
+        
+    if (error) throw new Error("Failed to delete job posting");
     return { ok: true };
   });
 
 // ---------- Public ----------
 
 export const listActiveJobPostings = createServerFn({ method: "GET" }).handler(async () => {
-    const { adminDb } = await import("@/integrations/firebase/admin");
-    const snapshot = await adminDb!.collection("job_postings")
-        .where("is_active", "==", true)
-        .orderBy("created_at", "desc")
-        .get();
+    const { data, error } = await supabase
+        .from("job_postings")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
         
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (error) throw new Error("Failed to fetch active job postings");
+    return data;
 });
