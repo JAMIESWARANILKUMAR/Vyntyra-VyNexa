@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabase } from "@/integrations/supabase/client";
+import { getAdminClient } from "@/integrations/supabase/admin";
+const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
 // ---------- Public ----------
 

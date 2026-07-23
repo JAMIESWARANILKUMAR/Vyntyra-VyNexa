@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabase } from "@/integrations/supabase/client";
+import { getAdminClient } from "@/integrations/supabase/admin";
+const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
 async function checkIsAdmin(userId: string) {
     const { data, error } = await supabase
