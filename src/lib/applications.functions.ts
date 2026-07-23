@@ -63,7 +63,10 @@ export const submitApplication = createServerFn({ method: "POST" })
       throw new Error("Applications are currently closed. Please check back soon.");
     }
     
+    const appId = crypto.randomUUID();
+    
     const insert = {
+      id: appId,
       full_name: data.full_name,
       email: data.email.toLowerCase(),
       phone: data.phone,
@@ -90,15 +93,15 @@ export const submitApplication = createServerFn({ method: "POST" })
       status: 'new'
     };
 
-    const { data: insertedApp, error: insertError } = await supabase
+    const { error: insertError } = await supabase
         .from("applications")
-        .insert([insert])
-        .select()
-        .single();
+        .insert([insert]);
 
-    if (insertError || !insertedApp) {
-        throw new Error(`Failed to submit application: ${insertError?.message || "Unknown error"}`);
+    if (insertError) {
+        throw new Error(`Failed to submit application: ${insertError.message}`);
     }
+
+    const insertedApp = { id: appId };
 
     // Log admin notification
     try {
