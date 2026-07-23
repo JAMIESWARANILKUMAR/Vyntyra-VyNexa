@@ -97,7 +97,7 @@ export const submitApplication = createServerFn({ method: "POST" })
         .single();
 
     if (insertError || !insertedApp) {
-        throw new Error("Failed to submit application");
+        throw new Error(`Failed to submit application: ${insertError?.message || "Unknown error"}`);
     }
 
     // Log admin notification
