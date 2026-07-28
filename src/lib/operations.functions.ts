@@ -374,14 +374,14 @@ export const claimPoolTask = createServerFn({ method: "POST" })
 
 const profileUpdateSchema = z.object({
   id: z.string().uuid(),
-  full_name: z.string().optional(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  intern_id: z.string().optional(),
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
-  offer_letter_url: z.string().optional(),
-  avatar_url: z.string().optional(),
+  full_name: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  intern_id: z.string().optional().nullable(),
+  start_date: z.string().optional().nullable(),
+  end_date: z.string().optional().nullable(),
+  offer_letter_url: z.string().optional().nullable(),
+  avatar_url: z.string().optional().nullable(),
 });
 
 export const updateUserProfile = createServerFn({ method: "POST" })
@@ -389,7 +389,7 @@ export const updateUserProfile = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => profileUpdateSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { id, ...updates } = data;
-    const { error } = await supabase.from("profiles").update(updates).eq("id", id);
+    const { error } = await supabase.from("profiles").upsert({ id, ...updates });
     if (error) throw new Error(error.message);
     return { success: true };
   });

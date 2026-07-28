@@ -1067,17 +1067,19 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
+    const cleanValue = (val: string | undefined | null) => (val === "" ? null : val);
+    
     try {
       await doUpdateProfile({ data: { 
         id: user.id, 
-        full_name: form.full_name,
-        phone: form.phone,
-        address: form.address,
-        intern_id: form.intern_id,
-        start_date: form.start_date,
-        end_date: form.end_date,
-        avatar_url: form.avatar_url,
-        offer_letter_url: form.offer_letter_url
+        full_name: cleanValue(form.full_name),
+        phone: cleanValue(form.phone),
+        address: cleanValue(form.address),
+        intern_id: cleanValue(form.intern_id),
+        start_date: cleanValue(form.start_date),
+        end_date: cleanValue(form.end_date),
+        avatar_url: cleanValue(form.avatar_url),
+        offer_letter_url: cleanValue(form.offer_letter_url)
       } });
       toast.success("Profile updated successfully");
       qc.invalidateQueries({ queryKey: ["team-members"] });
