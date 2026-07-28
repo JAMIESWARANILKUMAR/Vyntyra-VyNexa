@@ -66,7 +66,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export const Route = createFileRoute("/_authenticated/admin/")({
+export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Super Admin Dashboard — Vyntyra Careers" }] }),
   component: AdminDashboard,
 });
@@ -95,7 +95,12 @@ function AdminDashboard() {
   const blocker = useBlocker({
     shouldBlockFn: ({ next }) => {
       // Don't block navigation to internal admin paths
-      if (next.fullPath === "/cms" || next.fullPath === "/templates") return false;
+      if (
+        next.fullPath === "/cms" ||
+        next.fullPath === "/templates" ||
+        next.fullPath === "/admin/operations" ||
+        next.fullPath?.startsWith("/admin")
+      ) return false;
       return true;
     },
     withResolver: true,
