@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2, CheckCircle2, XCircle, Clock, Download } from "lucide-react";
 import { checkPortalToken } from "@/lib/portal.functions";
 import { WorldClocks } from "@/components/world-clocks";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/status/$token")({
   ssr: false,
@@ -46,17 +47,22 @@ function StatusView() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b border-border bg-card">
-        <div className="mx-auto max-w-5xl px-6 h-16 flex items-center gap-3">
-          <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-10 w-auto" />
-          <div className="border-l border-border pl-3">
-            <div className="text-sm font-semibold text-primary leading-none">Vyntyra Careers</div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Applicant Portal</div>
+        <div className="mx-auto max-w-5xl px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-10 w-auto" />
+            <div className="border-l border-border pl-3">
+              <div className="text-sm font-semibold text-primary leading-none">Vyntyra Careers</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Applicant Portal</div>
+            </div>
           </div>
+          <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground">
+            <Link to="/">Go back to Home</Link>
+          </Button>
         </div>
       </header>
 
-      <main className="flex-1 px-6 py-16">
-        <div className="mx-auto max-w-3xl space-y-6">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-16">
+        <div className="w-full max-w-3xl space-y-6">
           <WorldClocks />
           {isLoading && (
             <div className="rounded-xl border border-border bg-card p-12 text-center shadow-corp">
