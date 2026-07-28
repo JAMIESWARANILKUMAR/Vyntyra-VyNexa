@@ -4,11 +4,11 @@ import {
   ShieldAlert, Loader2, AlertCircle, UserCheck, UserX, Clock,
   CheckCircle2, Circle, AlertTriangle, ChevronDown, ArrowLeft,
   Shield, GraduationCap, Briefcase, CalendarDays, RefreshCw,
-  Video, FileText, UploadCloud
+  Video, FileText, UploadCloud, MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -18,7 +18,7 @@ import {
   listSchedules, createSchedule, deleteSchedule,
   listMeetings, createMeeting, deleteMeeting,
   listResources, createResource, deleteResource,
-  getPresignedUrl
+  getPresignedUrl, updateUserProfile, listFeedbacks, markFeedbackRead
 } from "@/lib/operations.functions";
 import { toast } from "sonner";
 import {
@@ -100,6 +100,9 @@ function OperationsDashboard() {
   const doCreateResource = useServerFn(createResource);
   const doDeleteResource = useServerFn(deleteResource);
   const doGetUploadUrl = useServerFn(getPresignedUrl);
+  const doUpdateProfile = useServerFn(updateUserProfile);
+  const fetchFeedbacks = useServerFn(listFeedbacks);
+  const doMarkFeedbackRead = useServerFn(markFeedbackRead);
 
   // Dialog states
   const [provisionOpen, setProvisionOpen] = useState(false);
@@ -112,12 +115,13 @@ function OperationsDashboard() {
   // Form states
   const [provisionForm, setProvisionForm] = useState({ full_name: "", email: "", password: "", role: "employee" as "employee" | "intern" });
   const [announcementForm, setAnnouncementForm] = useState({ title: "", body: "", target_role: "all" as "employee" | "intern" | "all" });
-  const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium" as "low" | "medium" | "high" });
+  const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium" as "low" | "medium" | "high", is_pool_task: false });
   const [scheduleForm, setScheduleForm] = useState({ title: "", description: "", event_date: "", event_time: "", target_role: "all" as "employee" | "intern" | "all" });
   const [meetingForm, setMeetingForm] = useState({ title: "", meeting_link: "", start_time: "", target_role: "all" as "employee" | "intern" | "all" });
   const [resourceForm, setResourceForm] = useState({ title: "", type: "document" as "document" | "video" | "link" | "template" | "guide", description: "", target_role: "all" as "employee" | "intern" | "all" });
   const [resourceFile, setResourceFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   // Queries
   const teamQ = useQuery({ queryKey: ["team-members"], queryFn: () => fetchTeam() });
@@ -126,6 +130,7 @@ function OperationsDashboard() {
   const schedulesQ = useQuery({ queryKey: ["schedules"], queryFn: () => fetchSchedules() });
   const meetingsQ = useQuery({ queryKey: ["meetings"], queryFn: () => fetchMeetings() });
   const resourcesQ = useQuery({ queryKey: ["resources"], queryFn: () => fetchResources() });
+  const feedbacksQ = useQuery({ queryKey: ["feedbacks"], queryFn: () => fetchFeedbacks() });
 
   const team: any[] = teamQ.data || [];
   const employees = team.filter((m: any) => m.role === "employee");
@@ -184,7 +189,7 @@ function OperationsDashboard() {
       await doCreateTask({ data: taskForm });
       toast.success("Task assigned successfully!");
       setTaskOpen(false);
-      setTaskForm({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium" });
+      setTaskForm({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium", is_pool_task: false });
       qc.invalidateQueries({ queryKey: ["tasks"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to assign task");
@@ -384,7 +389,7 @@ function OperationsDashboard() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" /> Team Roster
+              <Users className="h-5 w-5 text-primary" /> Users / Directory
             </h2>
             <Button variant="outline" size="sm" onClick={() => teamQ.refetch()} className="gap-1.5 text-xs">
               <RefreshCw className={`h-3.5 w-3.5 ${teamQ.isFetching ? "animate-spin" : ""}`} /> Refresh
@@ -410,7 +415,7 @@ function OperationsDashboard() {
                   <EmptyState icon={<Briefcase className="h-6 w-6" />} message="No employees provisioned yet" />
                 ) : (
                   employees.map((m: any) => (
-                    <MemberRow key={m.id} member={m} onRevoke={handleRevoke} />
+                    <MemberRow key={m.id} member={m} onRevoke={handleRevoke} onClick={() => setSelectedUser(m)} />
                   ))
                 )}
               </div>
@@ -434,7 +439,7 @@ function OperationsDashboard() {
                   <EmptyState icon={<GraduationCap className="h-6 w-6" />} message="No interns provisioned yet" />
                 ) : (
                   interns.map((m: any) => (
-                    <MemberRow key={m.id} member={m} onRevoke={handleRevoke} />
+                    <MemberRow key={m.id} member={m} onRevoke={handleRevoke} onClick={() => setSelectedUser(m)} />
                   ))
                 )}
               </div>
@@ -555,10 +560,14 @@ function OperationsDashboard() {
                       <Label>Description <span className="text-muted-foreground text-xs">(optional)</span></Label>
                       <Textarea rows={3} value={taskForm.description} onChange={e => setTaskForm({ ...taskForm, description: e.target.value })} placeholder="Detailed instructions..." />
                     </div>
+                    <div className="flex items-center space-x-2 pb-2">
+                      <input type="checkbox" id="pool_task" checked={taskForm.is_pool_task} onChange={e => setTaskForm({...taskForm, is_pool_task: e.target.checked, assigned_to: e.target.checked ? "" : taskForm.assigned_to})} className="rounded border-gray-300 h-4 w-4" />
+                      <Label htmlFor="pool_task" className="cursor-pointer">Add to Intern Pool (Bulk Claimable)</Label>
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <Label>Assign To</Label>
-                        <Select required value={taskForm.assigned_to} onValueChange={v => setTaskForm({ ...taskForm, assigned_to: v })}>
+                        <Select disabled={taskForm.is_pool_task} required={!taskForm.is_pool_task} value={taskForm.assigned_to} onValueChange={v => setTaskForm({ ...taskForm, assigned_to: v })}>
                           <SelectTrigger><SelectValue placeholder="Select member" /></SelectTrigger>
                           <SelectContent>
                             {employees.length > 0 && <SelectItem value="__header_emp" disabled className="text-xs text-muted-foreground font-semibold">— Employees —</SelectItem>}
@@ -586,7 +595,7 @@ function OperationsDashboard() {
                     </div>
                     <DialogFooter>
                       <Button type="button" variant="ghost" onClick={() => setTaskOpen(false)}>Cancel</Button>
-                      <Button type="submit" disabled={!taskForm.assigned_to}>Assign Task</Button>
+                      <Button type="submit" disabled={!taskForm.assigned_to && !taskForm.is_pool_task}>Assign Task</Button>
                     </DialogFooter>
                   </form>
                 </DialogContent>
@@ -608,7 +617,11 @@ function OperationsDashboard() {
                         <div className="flex flex-wrap items-center gap-2 mt-1.5">
                           <span className={`text-[10px] px-1.5 py-0.5 rounded border font-semibold uppercase tracking-wide ${priorityStyles[t.priority] || priorityStyles.medium}`}>{t.priority}</span>
                           <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium capitalize ${taskStatusStyles[t.status] || taskStatusStyles.pending}`}>{(t.status || "pending").replace("_", " ")}</span>
-                          <span className="text-xs text-muted-foreground">→ {t.profiles?.full_name || getMemberName(t.assigned_to)}</span>
+                          {t.is_pool_task ? (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-semibold">INTERN POOL</span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">→ {t.profiles?.full_name || getMemberName(t.assigned_to)}</span>
+                          )}
                           {t.due_date && <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{new Date(t.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>}
                         </div>
                         {t.description && <p className="text-xs text-muted-foreground mt-1.5 line-clamp-1">{t.description}</p>}
@@ -936,51 +949,215 @@ function OperationsDashboard() {
 
         </div>
 
+        {/* ── Feedback Inbox ── */}
+        <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b flex items-center justify-between">
+            <h2 className="font-semibold text-sm flex items-center gap-2"><MessageSquare className="h-4 w-4 text-purple-500" /> Feedback Inbox</h2>
+          </div>
+          <div className="divide-y max-h-[380px] overflow-y-auto">
+            {feedbacksQ.isLoading ? (
+              <div className="p-8 flex items-center justify-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading feedbacks...</div>
+            ) : feedbacksQ.isError ? (
+              <ErrorState message="Could not load feedbacks." onRetry={() => feedbacksQ.refetch()} />
+            ) : (feedbacksQ.data || []).length === 0 ? (
+              <EmptyState icon={<MessageSquare className="h-6 w-6" />} message="No feedback submitted yet." />
+            ) : (
+              (feedbacksQ.data as any[]).map((f: any) => (
+                <div key={f.id} className={`p-4 hover:bg-slate-50 transition-colors ${!f.is_read ? "bg-purple-50/30" : ""}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-sm">{f.profiles?.full_name || f.intern_id || "Anonymous"}</span>
+                        {!f.is_read && <span className="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">New</span>}
+                        <span className="text-xs text-muted-foreground">{new Date(f.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                      </div>
+                      <p className="text-sm mt-1 text-slate-700 whitespace-pre-wrap">{f.content}</p>
+                    </div>
+                    {!f.is_read && (
+                      <Button variant="outline" size="sm" onClick={async () => {
+                        try {
+                          await doMarkFeedbackRead({ data: { id: f.id } });
+                          qc.invalidateQueries({ queryKey: ["feedbacks"] });
+                          toast.success("Marked as read");
+                        } catch (err: any) {
+                          toast.error("Failed to mark read");
+                        }
+                      }}>
+                        Mark Read
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
       </main>
+      
+      {/* ── User Profile Drawer / Dialog ── */}
+      <UserProfileDialog 
+        user={selectedUser} 
+        open={!!selectedUser} 
+        onOpenChange={(open: boolean) => !open && setSelectedUser(null)} 
+        doUpdateProfile={doUpdateProfile} 
+        doGetUploadUrl={doGetUploadUrl} 
+        qc={qc} 
+      />
     </div>
   );
 }
 
-function MemberRow({ member, onRevoke }: { member: any; onRevoke: (id: string, name: string) => void }) {
+function MemberRow({ member, onRevoke, onClick }: { member: any; onRevoke: (id: string, name: string) => void; onClick: () => void }) {
   const roleStyles = member.role === "employee"
     ? "bg-blue-100 text-blue-800"
     : "bg-emerald-100 text-emerald-800";
 
   return (
-    <div className="px-5 py-3.5 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
+    <div className="px-5 py-3.5 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors cursor-pointer group" onClick={onClick}>
       <div className="flex items-center gap-3 min-w-0">
-        <div className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${member.role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
-          {(member.full_name || member.email || "?")[0].toUpperCase()}
+        <div className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${member.role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"} bg-cover bg-center`} style={member.avatar_url ? { backgroundImage: `url(${member.avatar_url})` } : {}}>
+          {!member.avatar_url && (member.full_name || member.email || "?")[0].toUpperCase()}
         </div>
         <div className="min-w-0">
-          <div className="font-medium text-sm truncate">{member.full_name || "—"}</div>
+          <div className="font-medium text-sm truncate group-hover:text-primary transition-colors">{member.full_name || "—"}</div>
           <div className="text-xs text-muted-foreground truncate">{member.email}</div>
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide ${roleStyles}`}>{member.role}</span>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/40 hover:text-destructive hover:bg-destructive/10">
-              <UserX className="h-3.5 w-3.5" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-destructive" /> Revoke Access?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete <strong>{member.full_name}</strong>'s account (<em>{member.email}</em>). They will lose all access immediately. This cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => onRevoke(member.id, member.full_name)} className="bg-destructive hover:bg-destructive/90">
-                Revoke Access
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <div onClick={(e) => e.stopPropagation()}>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/40 hover:text-destructive hover:bg-destructive/10">
+                <UserX className="h-3.5 w-3.5" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-destructive" /> Revoke Access?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete <strong>{member.full_name}</strong>'s account (<em>{member.email}</em>). They will lose all access immediately. This cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onRevoke(member.id, member.full_name)} className="bg-destructive hover:bg-destructive/90">
+                  Revoke Access
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
     </div>
+  );
+}
+
+function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUploadUrl, qc }: any) {
+  const [form, setForm] = useState(user || {});
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingLetter, setUploadingLetter] = useState(false);
+
+  useEffect(() => {
+    if (user) setForm(user);
+  }, [user]);
+
+  if (!user) return null;
+
+  async function handleUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      await doUpdateProfile({ data: { 
+        userId: user.id, 
+        updates: {
+          full_name: form.full_name,
+          phone: form.phone,
+          address: form.address,
+          intern_id: form.intern_id,
+          start_date: form.start_date,
+          end_date: form.end_date,
+          avatar_url: form.avatar_url,
+          offer_letter_url: form.offer_letter_url
+        } 
+      } });
+      toast.success("Profile updated successfully");
+      qc.invalidateQueries({ queryKey: ["team-members"] });
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update profile");
+    }
+  }
+
+  async function handleFileUpload(file: File, type: "avatar" | "letter") {
+    const isAvatar = type === "avatar";
+    isAvatar ? setUploadingAvatar(true) : setUploadingLetter(true);
+    try {
+      const uploadInfo = await doGetUploadUrl({ data: { filename: file.name, contentType: file.type } });
+      await fetch(uploadInfo.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+      setForm((prev: any) => ({ ...prev, [isAvatar ? "avatar_url" : "offer_letter_url"]: uploadInfo.fileUrl }));
+      toast.success(isAvatar ? "Avatar uploaded" : "Offer letter uploaded");
+    } catch (err: any) {
+      toast.error("Upload failed");
+    } finally {
+      isAvatar ? setUploadingAvatar(false) : setUploadingLetter(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Profile: {user.full_name}</DialogTitle>
+          <DialogDescription>{user.email}</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleUpdate} className="space-y-4 py-2">
+          <div className="grid grid-cols-2 gap-4">
+             <div className="space-y-1.5"><Label>Full Name</Label><Input value={form.full_name || ""} onChange={e => setForm({...form, full_name: e.target.value})} /></div>
+             <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone || ""} onChange={e => setForm({...form, phone: e.target.value})} /></div>
+             <div className="col-span-2 space-y-1.5"><Label>Address</Label><Input value={form.address || ""} onChange={e => setForm({...form, address: e.target.value})} /></div>
+             <div className="space-y-1.5"><Label>Intern ID</Label><Input value={form.intern_id || ""} onChange={e => setForm({...form, intern_id: e.target.value})} /></div>
+             <div className="space-y-1.5"><Label>Start Date</Label><Input type="date" value={form.start_date || ""} onChange={e => setForm({...form, start_date: e.target.value})} /></div>
+             <div className="space-y-1.5"><Label>End Date</Label><Input type="date" value={form.end_date || ""} onChange={e => setForm({...form, end_date: e.target.value})} /></div>
+          </div>
+          
+          <div className="space-y-1.5">
+            <Label>Avatar URL</Label>
+            <div className="flex gap-2">
+              <Input value={form.avatar_url || ""} onChange={e => setForm({...form, avatar_url: e.target.value})} placeholder="https://..." />
+              <div className="relative shrink-0">
+                <Button type="button" variant="outline" disabled={uploadingAvatar} className="w-[100px]">
+                  {uploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload"}
+                </Button>
+                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "avatar"); }} />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Offer Letter URL</Label>
+            <div className="flex gap-2">
+              <Input value={form.offer_letter_url || ""} onChange={e => setForm({...form, offer_letter_url: e.target.value})} placeholder="https://..." />
+              <div className="relative shrink-0">
+                <Button type="button" variant="outline" disabled={uploadingLetter} className="w-[100px]">
+                  {uploadingLetter ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload"}
+                </Button>
+                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="application/pdf,image/*" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "letter"); }} />
+              </div>
+            </div>
+            {form.offer_letter_url && (
+              <a href={form.offer_letter_url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
+                <FileText className="h-3 w-3" /> View Offer Letter
+              </a>
+            )}
+          </div>
+
+          <DialogFooter className="pt-4">
+             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+             <Button type="submit">Save Changes</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { MeetingsSection } from "@/components/meetings-section";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
-import { listTasks, listMeetings, listSchedules, listAnnouncements, listResources } from "@/lib/operations.functions";
+import { listTasks, listMeetings, listSchedules, listAnnouncements, listResources, listNotes, createNote, deleteNote, createFeedback, claimPoolTask } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
   head: () => ({ meta: [{ title: "Intern Dashboard — Vyntyra" }] }),
@@ -37,7 +37,9 @@ const RESOURCE_ICONS: Record<string, { icon: React.ReactNode; color: string }> =
 
 function InternDashboard() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "tasks" | "meetings" | "resources" | "announcements">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "tasks" | "meetings" | "resources" | "announcements" | "notes" | "feedback">("overview");
+  const [newNote, setNewNote] = useState("");
+  const [feedback, setFeedback] = useState("");
 
   const sessionQ = useQuery({
     queryKey: ["session"],
@@ -52,14 +54,21 @@ function InternDashboard() {
   const fetchSchedules = useServerFn(listSchedules);
   const fetchAnnouncements = useServerFn(listAnnouncements);
   const fetchResources = useServerFn(listResources);
+  const fetchNotes = useServerFn(listNotes);
+  const doCreateNote = useServerFn(createNote);
+  const doDeleteNote = useServerFn(deleteNote);
+  const doCreateFeedback = useServerFn(createFeedback);
+  const doClaimPoolTask = useServerFn(claimPoolTask);
 
   const tasksQ = useQuery({ queryKey: ["my-tasks"], queryFn: () => fetchTasks() });
   const meetingsQ = useQuery({ queryKey: ["my-meetings"], queryFn: () => fetchMeetings() });
   const schedulesQ = useQuery({ queryKey: ["my-schedules"], queryFn: () => fetchSchedules() });
   const announcementsQ = useQuery({ queryKey: ["my-announcements"], queryFn: () => fetchAnnouncements() });
   const resourcesQ = useQuery({ queryKey: ["my-resources"], queryFn: () => fetchResources() });
+  const notesQ = useQuery({ queryKey: ["my-notes"], queryFn: () => fetchNotes() });
 
   const tasks: any[] = tasksQ.data || [];
+  const notes: any[] = notesQ.data || [];
   const meetings: any[] = meetingsQ.data || [];
   const schedules: any[] = schedulesQ.data || [];
   const announcements: any[] = announcementsQ.data || [];
@@ -69,9 +78,11 @@ function InternDashboard() {
   const email = session?.user?.email || "";
   const displayName = email.split("@")[0] || "Intern";
 
-  const pendingTasks = tasks.filter((t) => t.status === "pending" || t.status === "in_progress");
-  const completedTasks = tasks.filter((t) => t.status === "completed");
-  const progress = tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
+  const poolTasks = tasks.filter((t: any) => t.is_pool_task === true && !t.assigned_to);
+  const myTasks = tasks.filter((t: any) => !(t.is_pool_task === true && !t.assigned_to));
+  const pendingTasks = myTasks.filter((t) => t.status === "pending" || t.status === "in_progress");
+  const completedTasks = myTasks.filter((t) => t.status === "completed");
+  const progress = myTasks.length > 0 ? Math.round((completedTasks.length / myTasks.length) * 100) : 0;
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -90,6 +101,8 @@ function InternDashboard() {
     { id: "meetings",       label: "Meetings" },
     { id: "resources",      label: `Resources (${resources.length})` },
     { id: "announcements",  label: `News (${announcements.length})` },
+    { id: "notes",          label: "Notes" },
+    { id: "feedback",       label: "Feedback" },
   ] as const;
 
   return (
@@ -146,7 +159,7 @@ function InternDashboard() {
                 </div>
                 <div className="flex gap-4">
                   <div className="text-center bg-white/10 rounded-xl px-4 py-2">
-                    <div className="text-3xl font-bold">{tasks.length}</div>
+                    <div className="text-3xl font-bold">{myTasks.length}</div>
                     <div className="text-xs opacity-60 uppercase tracking-wider">Tasks</div>
                   </div>
                   <div className="text-center bg-white/10 rounded-xl px-4 py-2">
@@ -155,12 +168,12 @@ function InternDashboard() {
                   </div>
                 </div>
               </div>
-              {tasks.length > 0 && (
+              {myTasks.length > 0 && (
                 <div className="mt-4">
                   <div className="h-2 bg-white/20 rounded-full overflow-hidden">
                     <div className="h-full bg-white rounded-full transition-all duration-700" style={{ width: `${progress}%` }} />
                   </div>
-                  <div className="text-xs opacity-60 mt-1">{completedTasks.length}/{tasks.length} tasks completed</div>
+                  <div className="text-xs opacity-60 mt-1">{completedTasks.length}/{myTasks.length} tasks completed</div>
                 </div>
               )}
             </div>
@@ -201,7 +214,7 @@ function InternDashboard() {
                       <div className="p-8 text-center text-slate-400 text-sm">No tasks assigned yet</div>
                     ) : (
                       <div className="divide-y">
-                        {tasks.slice(0, 4).map((task: any) => {
+                        {myTasks.slice(0, 4).map((task: any) => {
                           const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
                           return (
                             <div key={task.id} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50">
@@ -256,20 +269,47 @@ function InternDashboard() {
 
         {/* ─── TASKS ─── */}
         {activeTab === "tasks" && (
-          <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b flex items-center justify-between">
-              <h2 className="font-semibold flex items-center gap-2"><ClipboardList className="h-5 w-5 text-emerald-600" />My Tasks</h2>
-              <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-tasks"] })} className="gap-1.5">
-                <RefreshCw className={`h-3.5 w-3.5 ${tasksQ.isFetching ? "animate-spin" : ""}`} />Refresh
-              </Button>
-            </div>
-            {tasksQ.isLoading ? (
-              <div className="p-12 flex items-center justify-center gap-2 text-slate-400"><Loader2 className="h-5 w-5 animate-spin" />Loading tasks...</div>
-            ) : tasks.length === 0 ? (
-              <div className="p-12 text-center text-slate-400"><ClipboardList className="h-10 w-10 mx-auto mb-3 opacity-20" />No tasks assigned yet</div>
-            ) : (
-              <div className="divide-y">
-                {tasks.map((task: any) => {
+          <div className="space-y-6">
+            {poolTasks.length > 0 && (
+              <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b flex items-center justify-between bg-amber-50">
+                  <h2 className="font-semibold flex items-center gap-2 text-amber-800"><ClipboardList className="h-5 w-5 text-amber-600" />Available Pool Tasks</h2>
+                </div>
+                <div className="divide-y">
+                  {poolTasks.map((task: any) => (
+                    <div key={task.id} className="p-5 hover:bg-slate-50 transition-colors flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm">{task.title}</h3>
+                        {task.description && <p className="text-sm text-slate-500 mt-1 line-clamp-2">{task.description}</p>}
+                      </div>
+                      <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white" onClick={async () => {
+                        try {
+                          await doClaimPoolTask({ data: { taskId: task.id } });
+                          toast.success("Task claimed!");
+                          qc.invalidateQueries({ queryKey: ["my-tasks"] });
+                        } catch (err) {
+                          toast.error("Failed to claim task");
+                        }
+                      }}>Claim Task</Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b flex items-center justify-between">
+                <h2 className="font-semibold flex items-center gap-2"><ClipboardList className="h-5 w-5 text-emerald-600" />My Tasks</h2>
+                <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-tasks"] })} className="gap-1.5">
+                  <RefreshCw className={`h-3.5 w-3.5 ${tasksQ.isFetching ? "animate-spin" : ""}`} />Refresh
+                </Button>
+              </div>
+              {tasksQ.isLoading ? (
+                <div className="p-12 flex items-center justify-center gap-2 text-slate-400"><Loader2 className="h-5 w-5 animate-spin" />Loading tasks...</div>
+              ) : myTasks.length === 0 ? (
+                <div className="p-12 text-center text-slate-400"><ClipboardList className="h-10 w-10 mx-auto mb-3 opacity-20" />No tasks assigned yet</div>
+              ) : (
+                <div className="divide-y">
+                  {myTasks.map((task: any) => {
                   const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
                   return (
                     <div key={task.id} className="p-5 hover:bg-slate-50 transition-colors">
@@ -382,6 +422,81 @@ function InternDashboard() {
                 </div>
               ))
             )}
+          </div>
+        )}
+
+        {/* ─── NOTES ─── */}
+        {activeTab === "notes" && (
+          <div className="rounded-xl border bg-white shadow-sm p-6 space-y-6">
+            <h2 className="font-semibold flex items-center gap-2 text-slate-700"><FileText className="h-5 w-5 text-emerald-600" />My Notes</h2>
+            <div className="flex gap-2">
+              <textarea 
+                className="flex-1 rounded-md border border-slate-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Write a note..." 
+                value={newNote} 
+                onChange={(e) => setNewNote(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <Button onClick={async () => {
+              if (!newNote.trim()) return;
+              try {
+                await doCreateNote({ data: { content: newNote } });
+                setNewNote("");
+                toast.success("Note saved!");
+                qc.invalidateQueries({ queryKey: ["my-notes"] });
+              } catch (err) {
+                toast.error("Failed to save note");
+              }
+            }}>Save Note</Button>
+
+            <div className="mt-8 space-y-4">
+              {notesQ.isLoading ? (
+                <div className="text-slate-500 text-sm">Loading notes...</div>
+              ) : notes.length === 0 ? (
+                <div className="text-slate-400 text-sm">No notes yet.</div>
+              ) : (
+                notes.map((note: any) => (
+                  <div key={note.id} className="p-4 rounded-lg bg-slate-50 border flex justify-between gap-4">
+                    <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+                    <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50 shrink-0" onClick={async () => {
+                      try {
+                        await doDeleteNote({ data: { noteId: note.id } });
+                        toast.success("Note deleted");
+                        qc.invalidateQueries({ queryKey: ["my-notes"] });
+                      } catch (err) {
+                        toast.error("Failed to delete note");
+                      }
+                    }}>Delete</Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ─── FEEDBACK ─── */}
+        {activeTab === "feedback" && (
+          <div className="rounded-xl border bg-white shadow-sm p-6 max-w-2xl mx-auto space-y-6">
+            <h2 className="font-semibold flex items-center gap-2 text-slate-700"><Mail className="h-5 w-5 text-emerald-600" />Submit Feedback</h2>
+            <p className="text-sm text-slate-500">We value your thoughts! Let us know how we can improve your intern experience.</p>
+            <textarea 
+              className="w-full rounded-md border border-slate-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="Your feedback..." 
+              value={feedback} 
+              onChange={(e) => setFeedback(e.target.value)}
+              rows={5}
+            />
+            <Button onClick={async () => {
+              if (!feedback.trim()) return;
+              try {
+                await doCreateFeedback({ data: { content: feedback } });
+                setFeedback("");
+                toast.success("Feedback submitted! Thank you.");
+              } catch (err) {
+                toast.error("Failed to submit feedback");
+              }
+            }}>Submit Feedback</Button>
           </div>
         )}
 

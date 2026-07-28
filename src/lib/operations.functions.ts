@@ -147,9 +147,11 @@ export const deleteAnnouncement = createServerFn({ method: "POST" })
 const taskSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
-  assigned_to: z.string().uuid(),
+  assigned_to: z.string().uuid().nullable().optional(),
   due_date: z.string().optional(),
   priority: z.enum(["low", "medium", "high"]).default("medium"),
+  is_pool_task: z.boolean().optional().default(false),
+  target_role: z.enum(["employee", "intern", "all"]).optional(),
 });
 
 export const listTasks = createServerFn({ method: "GET" })
@@ -182,6 +184,8 @@ export const createTask = createServerFn({ method: "POST" })
       due_date: data.due_date,
       priority: data.priority,
       status: "pending",
+      is_pool_task: data.is_pool_task,
+      target_role: data.target_role,
       created_by: context.userId,
     });
     if (error) throw new Error(error.message);
@@ -353,3 +357,258 @@ export const getPresignedUrl = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     return await generateUploadUrl(data.filename, data.contentType);
   });
+
+export const claimPoolTask = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase
+      .from("tasks")
+      .update({ assigned_to: context.userId, is_pool_task: false })
+      .eq("id", data.id)
+      .eq("is_pool_task", true);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+const profileUpdateSchema = z.object({
+  id: z.string().uuid(),
+  full_name: z.string().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  intern_id: z.string().optional(),
+  end_date: z.string().optional(),
+  offer_letter_url: z.string().optional(),
+  avatar_url: z.string().optional(),
+});
+
+export const updateUserProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => profileUpdateSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { id, ...updates } = data;
+    const { error } = await supabase.from("profiles").update(updates).eq("id", id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Notes ────────────────────────────────────────────────────────
+
+const noteSchema = z.object({
+  title: z.string().min(1),
+  content: z.string().optional(),
+});
+
+export const listNotes = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("notes")
+      .select("*")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const createNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => noteSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("notes").insert({
+      title: data.title,
+      content: data.content,
+      user_id: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const deleteNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("notes").delete().eq("id", data.id).eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Feedbacks ────────────────────────────────────────────────────
+
+const feedbackSchema = z.object({
+  content: z.string().min(1),
+  target_user_id: z.string().uuid(),
+});
+
+export const listFeedbacks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("feedbacks")
+      .select("*, profiles!feedbacks_created_by_fkey(full_name)")
+      .eq("target_user_id", context.userId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const createFeedback = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => feedbackSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("feedbacks").insert({
+      content: data.content,
+      target_user_id: data.target_user_id,
+      created_by: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const markFeedbackRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase
+      .from("feedbacks")
+      .update({ is_read: true })
+      .eq("id", data.id)
+      .eq("target_user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+// ─── Profile ──────────────────────────────────────────────────────
+const profileSchema = z.object({
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  intern_id: z.string().optional(),
+  end_date: z.string().optional(),
+  offer_letter_url: z.string().optional(),
+});
+
+export const updateUserProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => profileSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("profiles").update(data).eq("id", context.userId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Notes ────────────────────────────────────────────────────────
+const noteSchema = z.object({
+  title: z.string().min(1),
+  content: z.string().min(1),
+});
+
+export const listNotes = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("notes")
+      .select("*")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const createNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => noteSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("notes").insert({
+      title: data.title,
+      content: data.content,
+      user_id: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const deleteNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase
+      .from("notes")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Feedback ─────────────────────────────────────────────────────
+const feedbackSchema = z.object({
+  target_user_id: z.string().uuid(),
+  content: z.string().min(1),
+  type: z.enum(["general", "performance", "behavioral"]).default("general"),
+});
+
+export const listFeedbacks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("feedbacks")
+      .select("*, profiles!feedbacks_created_by_fkey(full_name)")
+      .eq("target_user_id", context.userId)
+      .order("created_at", { ascending: false });
+    if (error) {
+      const { data: plain, error: e2 } = await supabase
+        .from("feedbacks")
+        .select("*")
+        .eq("target_user_id", context.userId)
+        .order("created_at", { ascending: false });
+      if (e2) throw new Error(e2.message);
+      return plain || [];
+    }
+    return data || [];
+  });
+
+export const createFeedback = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => feedbackSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("feedbacks").insert({
+      target_user_id: data.target_user_id,
+      content: data.content,
+      type: data.type,
+      created_by: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const markFeedbackRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase
+      .from("feedbacks")
+      .update({ is_read: true })
+      .eq("id", data.id)
+      .eq("target_user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Pool Tasks ───────────────────────────────────────────────────
+export const claimPoolTask = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase
+      .from("tasks")
+      .update({
+        assigned_to: context.userId,
+        is_pool_task: false,
+      })
+      .eq("id", data.id)
+      .eq("is_pool_task", true)
+      .is("assigned_to", null);
+    
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+

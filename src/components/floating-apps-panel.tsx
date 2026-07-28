@@ -7,7 +7,7 @@ import {
 interface AppItem {
   id: string;
   name: string;
-  icon: string;
+  iconUrl: string;
   url: string;
   color: string;
   description: string;
@@ -17,7 +17,7 @@ const AI_APPS: AppItem[] = [
   {
     id: "gemini",
     name: "Gemini",
-    icon: "✦",
+    iconUrl: "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",
     url: "https://gemini.google.com",
     color: "from-blue-500 to-purple-600",
     description: "Google's AI assistant",
@@ -25,7 +25,7 @@ const AI_APPS: AppItem[] = [
   {
     id: "chatgpt",
     name: "ChatGPT",
-    icon: "◆",
+    iconUrl: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg",
     url: "https://chatgpt.com",
     color: "from-emerald-500 to-teal-600",
     description: "OpenAI's chat AI",
@@ -33,7 +33,7 @@ const AI_APPS: AppItem[] = [
   {
     id: "perplexity",
     name: "Perplexity",
-    icon: "⊕",
+    iconUrl: "https://s3.amazonaws.com/www-inside-design/uploads/2019/05/perplexity-icon.png",
     url: "https://www.perplexity.ai",
     color: "from-cyan-500 to-blue-600",
     description: "AI-powered search",
@@ -44,7 +44,7 @@ const GOOGLE_APPS: AppItem[] = [
   {
     id: "drive",
     name: "Drive",
-    icon: "▲",
+    iconUrl: "https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg",
     url: "https://drive.google.com",
     color: "from-yellow-400 to-orange-500",
     description: "Cloud storage",
@@ -52,7 +52,7 @@ const GOOGLE_APPS: AppItem[] = [
   {
     id: "docs",
     name: "Docs",
-    icon: "📄",
+    iconUrl: "https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg",
     url: "https://docs.google.com",
     color: "from-blue-400 to-blue-600",
     description: "Word processing",
@@ -60,48 +60,48 @@ const GOOGLE_APPS: AppItem[] = [
   {
     id: "sheets",
     name: "Sheets",
-    icon: "📊",
-    url: "https://sheets.google.com",
-    color: "from-green-400 to-green-600",
+    iconUrl: "https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg",
+    url: "https://docs.google.com/spreadsheets",
+    color: "from-emerald-400 to-emerald-600",
     description: "Spreadsheets",
   },
   {
     id: "slides",
     name: "Slides",
-    icon: "📑",
-    url: "https://slides.google.com",
-    color: "from-orange-400 to-red-500",
+    iconUrl: "https://upload.wikimedia.org/wikipedia/commons/1/1e/Google_Slides_logo_%282014-2020%29.svg",
+    url: "https://docs.google.com/presentation",
+    color: "from-yellow-500 to-amber-500",
     description: "Presentations",
   },
   {
     id: "gmail",
     name: "Gmail",
-    icon: "✉",
+    iconUrl: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg",
     url: "https://mail.google.com",
     color: "from-red-400 to-red-600",
-    description: "Email",
+    description: "Email client",
   },
   {
     id: "meet",
     name: "Meet",
-    icon: "📹",
+    iconUrl: "https://upload.wikimedia.org/wikipedia/commons/8/8b/Google_Meet_icon_%282020%29.svg",
     url: "https://meet.google.com",
-    color: "from-green-500 to-emerald-600",
-    description: "Video calls",
+    color: "from-teal-500 to-emerald-500",
+    description: "Video meetings",
   },
 ];
 
-function openApp(url: string, name: string) {
+function openApp(app: AppItem) {
   const w = 1100, h = 700;
   const left = Math.max(0, (window.screen.width - w) / 2);
   const top = Math.max(0, (window.screen.height - h) / 2);
   const popup = window.open(
-    url,
-    `app_${name.toLowerCase()}`,
+    app.url,
+    `app_${app.name.toLowerCase()}`,
     `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes,toolbar=no,menubar=no`
   );
   if (!popup || popup.closed) {
-    window.open(url, "_blank");
+    window.open(app.url, "_blank");
   }
 }
 
@@ -206,11 +206,13 @@ export function FloatingAppsPanel() {
 function AppCard({ app }: { app: AppItem }) {
   return (
     <button
-      onClick={() => openApp(app.url, app.name)}
+      onClick={() => openApp(app)}
       className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/15 transition-all text-left group"
     >
-      <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${app.color} flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-lg`}>
-        {app.icon}
+      <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${app.color} p-[1px] flex items-center justify-center shadow-lg`}>
+        <div className="h-full w-full rounded-[10px] bg-slate-900 flex items-center justify-center overflow-hidden">
+          <img src={app.iconUrl} alt={app.name} className="h-5 w-5 object-contain" />
+        </div>
       </div>
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-sm">{app.name}</div>
