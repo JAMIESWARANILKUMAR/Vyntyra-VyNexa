@@ -79,13 +79,13 @@ export function Footer() {
               Secure Portals
             </h3>
             <div className="flex flex-col gap-3">
-              <Button variant="outline" className="w-full sm:w-auto justify-center bg-blue-500/10 border-blue-500/20 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 hover:border-blue-500/30 transition-all duration-300 text-sm font-medium h-10 px-6 rounded-sm shadow-sm" asChild>
+              <Button variant="ghost" className="w-full sm:w-auto justify-start text-primary-foreground/70 hover:text-white hover:bg-primary-foreground/5 transition-all duration-300 text-[13px] font-medium h-9 px-4 rounded-sm border border-transparent hover:border-primary-foreground/10" asChild>
                 <Link to="/auth/employee">Employee Dashboard</Link>
               </Button>
-              <Button variant="outline" className="w-full sm:w-auto justify-center bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/30 transition-all duration-300 text-sm font-medium h-10 px-6 rounded-sm shadow-sm" asChild>
+              <Button variant="ghost" className="w-full sm:w-auto justify-start text-primary-foreground/70 hover:text-white hover:bg-primary-foreground/5 transition-all duration-300 text-[13px] font-medium h-9 px-4 rounded-sm border border-transparent hover:border-primary-foreground/10" asChild>
                 <Link to="/auth/intern">Intern Dashboard</Link>
               </Button>
-              <Button variant="outline" className="w-full sm:w-auto justify-center bg-gold/10 border-gold/20 text-gold hover:bg-gold/20 hover:text-gold hover:border-gold/40 transition-all duration-300 text-sm font-medium h-10 px-6 rounded-sm shadow-[0_0_15px_rgba(212,175,55,0.1)]" asChild>
+              <Button variant="ghost" className="w-full sm:w-auto justify-start text-gold/70 hover:text-gold hover:bg-gold/5 transition-all duration-300 text-[13px] font-medium h-9 px-4 rounded-sm border border-transparent hover:border-gold/20" asChild>
                 <Link to="/auth/admin">Super Admin</Link>
               </Button>
             </div>

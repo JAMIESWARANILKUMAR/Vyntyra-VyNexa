@@ -155,6 +155,30 @@ function InternDashboard() {
         </div>
       </header>
 
+      {/* Marquee Notifications */}
+      {announcements.length > 0 && (
+        <div className="bg-slate-900 text-white text-xs py-2 overflow-hidden flex whitespace-nowrap border-b border-slate-800">
+          <div className="animate-marquee flex gap-12 shrink-0 min-w-full">
+            {announcements.map((a: any) => (
+              <span key={a.id} className="inline-flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                <span className="font-semibold uppercase tracking-wider text-emerald-400">{a.type || 'Update'}</span>
+                <span className="opacity-90">{a.title}</span>
+              </span>
+            ))}
+          </div>
+          <div className="animate-marquee flex gap-12 shrink-0 min-w-full ml-12">
+            {announcements.map((a: any) => (
+              <span key={a.id} className="inline-flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                <span className="font-semibold uppercase tracking-wider text-emerald-400">{a.type || 'Update'}</span>
+                <span className="opacity-90">{a.title}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
         {/* ─── OVERVIEW ─── */}

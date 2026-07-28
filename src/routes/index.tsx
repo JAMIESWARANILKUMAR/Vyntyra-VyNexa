@@ -758,9 +758,9 @@ function TopBar({ live = true }: { live?: boolean }) {
             <a href="#form" className="px-3 py-2 text-muted-foreground hover:text-primary hover:bg-surface rounded-sm">Careers</a>
             <a href="/status" className="px-3 py-2 text-muted-foreground hover:text-primary hover:bg-surface rounded-sm">Track Status</a>
             <div className="flex items-center gap-2 ml-2">
-              <a href="/auth/employee" className="px-3 py-1.5 text-xs font-semibold bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-500/20 rounded-sm transition-colors">Employee</a>
-              <a href="/auth/intern" className="px-3 py-1.5 text-xs font-semibold bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-sm transition-colors">Intern</a>
-              <a href="/auth/admin" className="px-3 py-1.5 text-xs font-semibold bg-gold/10 text-gold hover:bg-gold/20 border border-gold/20 rounded-sm transition-colors">Super Admin</a>
+              <a href="/auth/employee" className="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors">Employee</a>
+              <a href="/auth/intern" className="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors">Intern</a>
+              <a href="/auth/admin" className="px-3 py-1.5 text-xs font-medium text-gold/80 hover:text-gold transition-colors">Super Admin</a>
             </div>
             <div className="w-px h-5 bg-border mx-2" />
             <a href="#form" className="group relative inline-flex items-center gap-1.5 bg-primary hover:bg-secondary text-primary-foreground px-4 py-2 rounded-sm text-sm font-medium transition-colors overflow-hidden">
@@ -827,9 +827,9 @@ function TopBar({ live = true }: { live?: boolean }) {
             <a href="#form" onClick={() => setMenuOpen(false)} className="px-2 py-2.5 border-b border-border text-primary hover:bg-surface rounded-sm transition-colors">Careers</a>
             <a href="/status" onClick={() => setMenuOpen(false)} className="px-2 py-2.5 border-b border-border text-primary hover:bg-surface rounded-sm transition-colors">Track Status</a>
             <div className="flex flex-col gap-2 pt-4 px-2">
-              <a href="/auth/employee" onClick={() => setMenuOpen(false)} className="px-3 py-2 text-sm text-center font-semibold bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-500/20 rounded-sm transition-colors">Employee</a>
-              <a href="/auth/intern" onClick={() => setMenuOpen(false)} className="px-3 py-2 text-sm text-center font-semibold bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-sm transition-colors">Intern</a>
-              <a href="/auth/admin" onClick={() => setMenuOpen(false)} className="px-3 py-2 text-sm text-center font-semibold bg-gold/10 text-gold hover:bg-gold/20 border border-gold/20 rounded-sm transition-colors">Super Admin</a>
+              <a href="/auth/employee" onClick={() => setMenuOpen(false)} className="px-3 py-2 text-sm text-center font-medium text-slate-500 hover:text-slate-900 transition-colors border border-transparent hover:bg-slate-50 rounded-sm">Employee</a>
+              <a href="/auth/intern" onClick={() => setMenuOpen(false)} className="px-3 py-2 text-sm text-center font-medium text-slate-500 hover:text-slate-900 transition-colors border border-transparent hover:bg-slate-50 rounded-sm">Intern</a>
+              <a href="/auth/admin" onClick={() => setMenuOpen(false)} className="px-3 py-2 text-sm text-center font-medium text-gold/80 hover:text-gold transition-colors border border-transparent hover:bg-gold/5 rounded-sm">Super Admin</a>
             </div>
           </div>
         </div>
