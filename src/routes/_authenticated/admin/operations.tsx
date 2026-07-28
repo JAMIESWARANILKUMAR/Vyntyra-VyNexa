@@ -1127,16 +1127,8 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
           </div>
 
           <div className="space-y-1.5">
-            <Label>Offer Letter URL</Label>
-            <div className="flex gap-2">
-              <Input value={form.offer_letter_url || ""} onChange={e => setForm({...form, offer_letter_url: e.target.value})} placeholder="https://..." />
-              <div className="relative shrink-0">
-                <Button type="button" variant="outline" disabled={uploadingLetter} className="w-[100px]">
-                  {uploadingLetter ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload"}
-                </Button>
-                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="application/pdf,image/*" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "letter"); }} />
-              </div>
-            </div>
+            <Label>Offer Letter URL (Public Link)</Label>
+            <Input value={form.offer_letter_url || ""} onChange={e => setForm({...form, offer_letter_url: e.target.value})} placeholder="https://example.com/letter.pdf" />
             {form.offer_letter_url && (
               <a href={form.offer_letter_url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
                 <FileText className="h-3 w-3" /> View Offer Letter
