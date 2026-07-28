@@ -30,7 +30,7 @@ function TemplatesPage() {
       <header className="border-b border-border bg-card sticky top-0 z-40">
         <div className="mx-auto max-w-5xl px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/_authenticated/admin" className="text-muted-foreground hover:text-foreground">
+            <Link to="/admin" className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div>
