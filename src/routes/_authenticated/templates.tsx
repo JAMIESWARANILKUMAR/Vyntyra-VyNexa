@@ -72,7 +72,7 @@ function TemplatesPage() {
               ))}
             </TabsList>
             {STATUSES.map((s) => {
-              const tpl = tpls.find((t: any) => t.status === s);
+              const tpl = tpls.find((t: any) => t.id === s);
               return (
                 <TabsContent key={s} value={s} className="mt-6">
                   {tpl ? (
@@ -101,12 +101,12 @@ function TemplateEditor({ tpl }: { tpl: any }) {
     setSubject(tpl.subject);
     setBody(tpl.html_body);
     setEnabled(tpl.enabled);
-  }, [tpl.status]);
+  }, [tpl.id]);
 
   const mut = useMutation({
     mutationFn: () =>
       update({
-        data: { status: tpl.status, subject, html_body: body, enabled },
+        data: { status: tpl.id, subject, html_body: body, enabled },
       }),
     onSuccess: () => {
       toast.success("Template saved");
@@ -120,7 +120,7 @@ function TemplateEditor({ tpl }: { tpl: any }) {
       <div className="flex items-center justify-between">
         <div>
           <div className="text-xs uppercase tracking-widest text-muted-foreground">Status</div>
-          <div className="font-serif text-xl font-bold text-primary capitalize">{tpl.status}</div>
+          <div className="font-serif text-xl font-bold text-primary capitalize">{tpl.id}</div>
         </div>
         <label className="flex items-center gap-2 text-sm">
           <Switch checked={enabled} onCheckedChange={setEnabled} />
