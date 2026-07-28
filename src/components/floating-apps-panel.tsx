@@ -33,7 +33,7 @@ const AI_APPS: AppItem[] = [
   {
     id: "perplexity",
     name: "Perplexity",
-    iconUrl: "https://s3.amazonaws.com/www-inside-design/uploads/2019/05/perplexity-icon.png",
+    iconUrl: "https://www.google.com/s2/favicons?domain=perplexity.ai&sz=128",
     url: "https://www.perplexity.ai",
     color: "from-cyan-500 to-blue-600",
     description: "AI-powered search",
@@ -84,7 +84,7 @@ const GOOGLE_APPS: AppItem[] = [
   {
     id: "meet",
     name: "Meet",
-    iconUrl: "https://upload.wikimedia.org/wikipedia/commons/8/8b/Google_Meet_icon_%282020%29.svg",
+    iconUrl: "https://www.google.com/s2/favicons?domain=meet.google.com&sz=128",
     url: "https://meet.google.com",
     color: "from-teal-500 to-emerald-500",
     description: "Video meetings",
