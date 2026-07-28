@@ -140,7 +140,10 @@ function InternDashboard() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <div className="text-xs text-slate-500 hidden sm:block">{email}</div>
+            <div className="flex items-center gap-2 hidden sm:flex">
+              <ProfileAvatar url={profile?.avatar_url} name={displayName} />
+              <div className="text-xs text-slate-500">{email}</div>
+            </div>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5 text-slate-600 hover:text-red-600">
               <LogOut className="h-4 w-4" /><span className="hidden sm:inline">Sign Out</span>
             </Button>

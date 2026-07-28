@@ -1,9 +1,14 @@
+import { useState } from "react";
+
 export function ProfileAvatar({ url, name }: { url?: string | null; name?: string }) {
-  if (url) {
+  const [error, setError] = useState(false);
+
+  if (url && !error) {
     return (
       <img 
         src={url} 
         alt={name || "User"} 
+        onError={() => setError(true)}
         className="w-14 h-14 rounded-full border-[3px] border-white/20 object-cover shadow-lg shrink-0"
       />
     );
