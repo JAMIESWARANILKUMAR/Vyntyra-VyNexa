@@ -22,6 +22,12 @@ export function AnalogClock() {
   const minuteDegrees = ((minutes + seconds / 60) / 60) * 360;
   const hourDegrees = ((hours + minutes / 60) / 12) * 360;
 
+  const digitalTime = istTime.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
   return (
     <div className="flex flex-col items-center justify-center gap-1.5 shrink-0">
       <div className="relative w-14 h-14 rounded-full border-[3px] border-white/20 bg-black/10 backdrop-blur-md shadow-inner flex items-center justify-center">
@@ -57,7 +63,10 @@ export function AnalogClock() {
           />
         ))}
       </div>
-      <div className="text-[9px] uppercase tracking-widest font-semibold opacity-75">Visakhapatnam</div>
+      <div className="flex flex-col items-center">
+        <div className="text-[11px] font-bold tracking-wide">{digitalTime}</div>
+        <div className="text-[8px] uppercase tracking-widest font-semibold opacity-70">Visakhapatnam</div>
+      </div>
     </div>
   );
 }
