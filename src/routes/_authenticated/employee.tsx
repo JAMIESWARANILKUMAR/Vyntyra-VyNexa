@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Briefcase, ClipboardList, Clock, Mail, Bell, LogOut, Loader2,
   CheckCircle2, Circle, AlertCircle, TrendingUp, Video, CalendarDays,
-  User, BarChart3, RefreshCw
+  User, BarChart3, RefreshCw, Phone, MapPin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -178,7 +178,12 @@ function EmployeeDashboard() {
                   <div>
                     <div className="text-xs uppercase tracking-widest opacity-70 mb-1">Welcome back</div>
                     <h1 className="text-2xl font-bold capitalize">{displayName} 👋</h1>
-                    <p className="text-sm opacity-75 mt-1">{new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
+                    <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs opacity-90">
+                      {profile?.phone && <span className="flex items-center gap-1.5"><Phone className="h-3 w-3 opacity-70"/> {profile.phone}</span>}
+                      {profile?.address && <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3 opacity-70"/> {profile.address}</span>}
+                      <span className="flex items-center gap-1.5"><Mail className="h-3 w-3 opacity-70"/> {email}</span>
+                    </div>
+                    <p className="text-xs opacity-75 mt-1.5">{new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
