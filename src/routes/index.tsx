@@ -683,7 +683,7 @@ function UtilityBar() {
           <span className="opacity-40 hidden sm:inline">|</span>
           <a href="/status" className="hover:text-gold">Track</a>
           <span className="opacity-40">|</span>
-          <a href="/auth" className="hover:text-gold">Employee</a>
+          <a href="/auth/admin" className="hover:text-gold">Super Admin</a>
         </div>
       </div>
     </div>
