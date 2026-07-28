@@ -757,6 +757,8 @@ function TopBar({ live = true }: { live?: boolean }) {
             <a href="/about" className="px-3 py-2 text-muted-foreground hover:text-primary hover:bg-surface rounded-sm">About</a>
             <a href="#form" className="px-3 py-2 text-muted-foreground hover:text-primary hover:bg-surface rounded-sm">Careers</a>
             <a href="/status" className="px-3 py-2 text-muted-foreground hover:text-primary hover:bg-surface rounded-sm">Track Status</a>
+            <a href="/auth" className="px-3 py-2 text-muted-foreground hover:text-primary hover:bg-surface rounded-sm">Employee Portal</a>
+            <a href="/auth" className="px-3 py-2 text-muted-foreground hover:text-primary hover:bg-surface rounded-sm">Intern Portal</a>
             <div className="w-px h-5 bg-border mx-2" />
             <a href="#form" className="group relative inline-flex items-center gap-1.5 bg-primary hover:bg-secondary text-primary-foreground px-4 py-2 rounded-sm text-sm font-medium transition-colors overflow-hidden">
               <span className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out" />
@@ -821,7 +823,8 @@ function TopBar({ live = true }: { live?: boolean }) {
             <a href="/about" onClick={() => setMenuOpen(false)} className="px-2 py-2.5 border-b border-border text-primary hover:bg-surface rounded-sm transition-colors">About</a>
             <a href="#form" onClick={() => setMenuOpen(false)} className="px-2 py-2.5 border-b border-border text-primary hover:bg-surface rounded-sm transition-colors">Careers</a>
             <a href="/status" onClick={() => setMenuOpen(false)} className="px-2 py-2.5 border-b border-border text-primary hover:bg-surface rounded-sm transition-colors">Track Status</a>
-            <a href="/auth" onClick={() => setMenuOpen(false)} className="px-2 py-2.5 text-muted-foreground hover:text-primary hover:bg-surface rounded-sm transition-colors">Employee Sign-in</a>
+            <a href="/auth" onClick={() => setMenuOpen(false)} className="px-2 py-2.5 border-b border-border text-muted-foreground hover:text-primary hover:bg-surface rounded-sm transition-colors">Employee Dashboard</a>
+            <a href="/auth" onClick={() => setMenuOpen(false)} className="px-2 py-2.5 text-muted-foreground hover:text-primary hover:bg-surface rounded-sm transition-colors">Intern Dashboard</a>
           </div>
         </div>
       </div>

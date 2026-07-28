@@ -79,8 +79,9 @@ export function Footer() {
               Secure Portals
             </h3>
             <ul className="space-y-3.5 text-[13px] text-primary-foreground/60 font-medium mb-6">
-              <li><Link to="/auth" className="hover:text-white hover:translate-x-1 inline-block transition-transform duration-300">Employee Workspace</Link></li>
-              <li><Link to="/auth" className="hover:text-white hover:translate-x-1 inline-block transition-transform duration-300">Admin Dashboard</Link></li>
+              <li><Link to="/auth" className="hover:text-white hover:translate-x-1 inline-block transition-transform duration-300">Employee Dashboard</Link></li>
+              <li><Link to="/auth" className="hover:text-white hover:translate-x-1 inline-block transition-transform duration-300">Intern Dashboard</Link></li>
+              <li><Link to="/auth" className="hover:text-white hover:translate-x-1 inline-block transition-transform duration-300">Super Admin</Link></li>
             </ul>
             
             <div className="mt-6">
