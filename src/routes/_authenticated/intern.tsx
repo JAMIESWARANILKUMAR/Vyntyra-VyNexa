@@ -326,7 +326,7 @@ function InternDashboard() {
                       </div>
                       <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white" onClick={async () => {
                         try {
-                          await doClaimPoolTask({ data: { taskId: task.id } });
+                          await doClaimPoolTask({ data: { id: task.id } });
                           toast.success("Task claimed!");
                           qc.invalidateQueries({ queryKey: ["my-tasks"] });
                         } catch (err) {
