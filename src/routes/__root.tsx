@@ -151,16 +151,26 @@ function PageLoadingIndicator() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // Hide public chrome on dashboard pages
+  const isDashboard = 
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/employee") ||
+    pathname.startsWith("/intern") ||
+    pathname.startsWith("/cms") ||
+    pathname.startsWith("/templates");
+
   return (
     <QueryClientProvider client={queryClient}>
       <PwaRegister />
       <PageLoadingIndicator />
-      <div className="flex min-h-screen flex-col flex-1 w-full relative pb-14 md:pb-0">
+      <div className={`flex min-h-screen flex-col flex-1 w-full relative ${!isDashboard ? "pb-14 md:pb-0" : ""}`}>
         <main className="flex-1 flex flex-col">
           <Outlet />
         </main>
-        <Footer />
-        <MobileNav />
+        {!isDashboard && <Footer />}
+        {!isDashboard && <MobileNav />}
       </div>
       <Toaster position="top-center" richColors />
     </QueryClientProvider>

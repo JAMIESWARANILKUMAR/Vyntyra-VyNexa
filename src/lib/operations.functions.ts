@@ -240,3 +240,108 @@ export const deleteSchedule = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { success: true };
   });
+
+// ─── Meetings ────────────────────────────────────────────────
+const meetingSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  meeting_link: z.string().url(),
+  scheduled_at: z.string(),
+  duration_minutes: z.number().optional(),
+  target_role: z.enum(['employee', 'intern', 'all']),
+});
+
+export const listMeetings = createServerFn({ method: 'GET' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    // Get the user's role
+    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
+    const role = roleData?.role || 'employee';
+
+    let query = supabase.from('meetings').select('*').order('scheduled_at', { ascending: true });
+
+    // Admins see all meetings
+    if (role !== 'admin') {
+      query = query.or(`target_role.eq.all,target_role.eq.${role}`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const createMeeting = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => meetingSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from('meetings').insert({
+      title: data.title,
+      description: data.description,
+      meeting_link: data.meeting_link,
+      scheduled_at: data.scheduled_at,
+      duration_minutes: data.duration_minutes,
+      target_role: data.target_role,
+      created_by: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const deleteMeeting = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase.from('meetings').delete().eq('id', data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Resources (Intern) ───────────────────────────────────────
+const resourceSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  url: z.string().min(1),
+  type: z.enum(['document', 'video', 'link', 'template', 'guide']),
+  target_role: z.enum(['employee', 'intern', 'all']),
+});
+
+export const listResources = createServerFn({ method: 'GET' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
+    const role = roleData?.role || 'intern';
+
+    let query = supabase.from('resources').select('*').order('created_at', { ascending: false });
+    if (role !== 'admin') {
+      query = query.or(`target_role.eq.all,target_role.eq.${role}`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const createResource = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => resourceSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from('resources').insert({
+      title: data.title,
+      description: data.description,
+      url: data.url,
+      type: data.type,
+      target_role: data.target_role,
+      created_by: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const deleteResource = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase.from('resources').delete().eq('id', data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
