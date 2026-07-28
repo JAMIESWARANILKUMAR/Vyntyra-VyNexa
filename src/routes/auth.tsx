@@ -55,7 +55,7 @@ function AuthPage() {
       <div className="w-full max-w-md relative z-10" style={{ animation: 'fadeInUp 0.8s ease-out forwards' }}>
         <a href="/" className="flex flex-col items-center justify-center mb-8 group">
           <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-            <img src="/favicon.png" alt="Vyntyra" className="h-14 w-auto drop-shadow-md" />
+            <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-14 w-auto drop-shadow-md" />
           </div>
           <span className="mt-4 text-white/50 tracking-[0.2em] uppercase text-[10px] font-bold group-hover:text-white/90 transition-colors duration-300">Vyntyra Connect</span>
         </a>

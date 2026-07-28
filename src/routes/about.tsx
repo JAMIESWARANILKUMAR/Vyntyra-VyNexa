@@ -95,7 +95,7 @@ function AboutPage() {
       <header className="border-b border-border bg-card sticky top-0 z-40 backdrop-blur">
         <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
           <a href="/" className="flex items-center gap-3">
-            <img src="/favicon.png" alt="Vyntyra Consultancy Services" className="h-11 w-auto" />
+            <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra Consultancy Services" className="h-11 w-auto" />
           </a>
           <nav className="hidden md:flex items-center gap-1 text-sm">
             <a href="/about" className="px-3 py-2 text-primary font-medium rounded-sm bg-surface">About</a>
@@ -315,7 +315,7 @@ function AboutPage() {
         <div className="mx-auto max-w-6xl px-6 py-10 grid md:grid-cols-3 gap-8 text-sm">
           <div>
             <div className="flex items-center gap-3 mb-3">
-              <img src="/favicon.png" alt="Vyntyra" className="h-10 w-auto brightness-0 invert" />
+              <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-10 w-auto brightness-0 invert" />
             </div>
             <p className="text-primary-foreground/60 leading-relaxed">
               Innovation-driven IT consultancy, hiring, branding and R&D. Headquartered in Visakhapatnam, India.

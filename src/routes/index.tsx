@@ -734,7 +734,7 @@ function TopBar({ live = true }: { live?: boolean }) {
     <header className="border-b border-border bg-card sticky top-0 z-40 backdrop-blur">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
         <a href="/" className="flex items-center gap-3 min-w-0 shrink">
-          <img src="/favicon.png" alt="Vyntyra Consultancy Services" className="h-8 sm:h-11 w-auto shrink-0" />
+          <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra Consultancy Services" className="h-8 sm:h-11 w-auto shrink-0" />
         </a>
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {live ? (
@@ -830,7 +830,8 @@ function TopBar({ live = true }: { live?: boolean }) {
 
 function Hero() {
   return (
-    <section className="relative min-h-[700px] flex flex-col justify-center overflow-hidden bg-slate-950 text-white">
+    <section className="relative min-h-[700px] flex flex-col justify-center overflow-hidden bg-gradient-hero text-primary-foreground">
+      <div className="absolute inset-0 corporate-grid" />
       {/* Animated Background Orbs (Corporate Theme) */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/30 blur-[120px] animate-pulse" style={{ animationDuration: '4s' }} />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gold/15 blur-[120px] animate-pulse" style={{ animationDuration: '6s' }} />
@@ -841,7 +842,7 @@ function Hero() {
       <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6 z-10">
         <div className="grid lg:grid-cols-[1.5fr_1fr] gap-12 lg:gap-16 items-center">
           <div className="space-y-8 animate-fade-in-up" style={{ animation: 'fadeInUp 0.8s ease-out forwards' }}>
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-xs font-semibold text-white uppercase tracking-[0.2em] backdrop-blur-md shadow-[0_0_15px_rgba(255,255,255,0.15)]">
+            <div className="inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[11px] font-medium text-gold uppercase tracking-[0.18em]">
               Now Hiring · Founding Team
             </div>
             
@@ -850,15 +851,15 @@ function Hero() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gold to-white">Intelligent Search.</span>
             </h1>
             
-            <p className="text-lg lg:text-xl text-slate-300 max-w-2xl leading-relaxed font-light">
+            <p className="text-lg lg:text-xl text-primary-foreground/75 max-w-2xl leading-relaxed font-light">
               Experience the next generation of search powered by Vyntyra. We build highly intelligent, ambient systems that cut through the noise. Apply securely through our corporate careers portal.
             </p>
             
             <div className="flex flex-wrap gap-4 pt-4">
-              <a href="#form" className="inline-flex items-center justify-center gap-2 bg-gold hover:bg-gold/90 text-gold-foreground px-8 py-4 rounded-xl text-sm font-semibold transition-all duration-300 shadow-[0_0_20px_rgba(201,162,39,0.3)] hover:shadow-[0_0_30px_rgba(201,162,39,0.5)] hover:-translate-y-0.5">
+              <a href="#form" className="inline-flex items-center gap-2 bg-gold hover:bg-gold/90 text-gold-foreground px-6 py-3 rounded-sm text-sm font-semibold transition-colors">
                 Apply Now <ArrowRight className="h-4 w-4" />
               </a>
-              <a href="/about" className="inline-flex items-center justify-center gap-2 border border-white/20 bg-white/5 hover:bg-white/10 text-white px-8 py-4 rounded-xl text-sm font-medium backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5">
+              <a href="/about" className="inline-flex items-center gap-2 border border-primary-foreground/30 hover:bg-primary-foreground/10 text-primary-foreground px-6 py-3 rounded-sm text-sm font-medium transition-colors">
                 About Vyntyra
               </a>
             </div>
@@ -866,8 +867,8 @@ function Hero() {
 
           {/* Right-side Glassmorphism Info Card */}
           <div className="hidden lg:block animate-fade-in-up" style={{ animation: 'fadeInUp 1s ease-out forwards' }}>
-            <div className="backdrop-blur-2xl bg-white/5 border border-white/10 rounded-3xl shadow-2xl p-8 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none" />
+            <div className="backdrop-blur-md bg-card/10 border border-primary-foreground/10 rounded-sm shadow-2xl p-8 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-foreground/5 via-transparent to-transparent pointer-events-none" />
               
               <div className="relative z-10">
                 <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold mb-6 flex items-center gap-2">
@@ -875,22 +876,22 @@ function Hero() {
                 </div>
                 
                 <dl className="space-y-6">
-                  <div className="pb-4 border-b border-white/10 group-hover:border-gold/30 transition-colors">
-                    <dt className="text-[10px] uppercase tracking-widest text-slate-400 mb-1.5">Locations</dt>
-                    <dd className="text-sm font-medium text-slate-200 leading-relaxed">
+                  <div className="pb-4 border-b border-primary-foreground/10 group-hover:border-gold/30 transition-colors">
+                    <dt className="text-[10px] uppercase tracking-widest text-primary-foreground/60 mb-1.5">Locations</dt>
+                    <dd className="text-sm font-medium text-primary-foreground/90 leading-relaxed">
                       India — Visakhapatnam, Bengaluru, Hyderabad, Uttar Pradesh
                       <span className="text-gold block mt-1">· Remote Available</span>
                     </dd>
                   </div>
-                  <div className="flex justify-between items-baseline pb-4 border-b border-white/10 group-hover:border-gold/30 transition-colors">
-                    <dt className="text-[10px] uppercase tracking-widest text-slate-400">Response Time</dt>
-                    <dd className="text-3xl font-semibold text-white tracking-tight">5–7 <span className="text-sm font-normal text-slate-400">days</span></dd>
+                  <div className="flex justify-between items-baseline pb-4 border-b border-primary-foreground/10 group-hover:border-gold/30 transition-colors">
+                    <dt className="text-[10px] uppercase tracking-widest text-primary-foreground/60">Response Time</dt>
+                    <dd className="text-3xl font-semibold text-primary-foreground tracking-tight">5–7 <span className="text-sm font-normal text-primary-foreground/60">days</span></dd>
                   </div>
                   <div>
-                    <dt className="text-[10px] uppercase tracking-widest text-slate-400 mb-1.5">Data Handling</dt>
-                    <dd className="text-sm font-medium text-slate-200 leading-relaxed">
+                    <dt className="text-[10px] uppercase tracking-widest text-primary-foreground/60 mb-1.5">Data Handling</dt>
+                    <dd className="text-sm font-medium text-primary-foreground/90 leading-relaxed">
                       Secured by Cloudflare Technologies
-                      <span className="block text-xs text-slate-400 mt-2 font-mono">ISO-aligned · NASSCOM Verified</span>
+                      <span className="block text-xs text-primary-foreground/60 mt-2 font-mono">ISO-aligned · NASSCOM Verified</span>
                     </dd>
                   </div>
                 </dl>
@@ -911,12 +912,12 @@ function Hero() {
 
 function WhyJoinUs() {
   return (
-    <section className="py-24 px-4 sm:px-6 max-w-6xl mx-auto bg-transparent text-white border-t border-white/5">
+    <section className="py-24 px-4 sm:px-6 max-w-6xl mx-auto border-t border-border bg-background">
       <div className="grid lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
-          <span className="text-white text-[10px] font-bold uppercase tracking-[0.2em]">Innovation Labs</span>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">Redefining Search through Deep Intelligence</h2>
-          <p className="text-slate-400 text-lg leading-relaxed font-light">
+          <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-secondary">Innovation Labs</span>
+          <h2 className="text-3xl font-semibold text-primary tracking-tight">Redefining Search through Deep Intelligence</h2>
+          <p className="text-muted-foreground leading-relaxed">
             At Vyntyra, we navigate the boundary between pure research and practical engineering. Our systems are built on principles of optical precision and atmospheric depth, ensuring that every interaction feels effortless yet authoritative.
           </p>
           <ul className="space-y-4 pt-4">
@@ -925,8 +926,8 @@ function WhyJoinUs() {
               "Ambient Neural Architectures",
               "Ultra-low Latency Retrieval"
             ].map((item, i) => (
-              <li key={i} className="flex items-center gap-3 text-slate-300 font-medium text-sm">
-                <CheckCircle2 className="h-5 w-5 text-white shrink-0" />
+              <li key={i} className="flex items-center gap-3 text-foreground font-medium text-sm">
+                <CheckCircle2 className="h-5 w-5 text-secondary shrink-0" />
                 {item}
               </li>
             ))}
@@ -934,11 +935,10 @@ function WhyJoinUs() {
         </div>
         
         <div className="relative group animate-fade-in-up" style={{ animationDelay: '0.4s', animationFillMode: 'both' }}>
-          <div className="absolute inset-0 bg-primary/20 rounded-3xl blur-2xl group-hover:bg-primary/30 transition-all duration-500" />
-          <div className="relative rounded-3xl overflow-hidden backdrop-blur-md bg-white/5 border border-white/10 aspect-[4/3] flex items-center justify-center p-8">
-             {/* Abstract visualization replacing image */}
-             <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
-             <div className="relative z-10 w-full h-full border border-gold/20 rounded-2xl bg-primary/20 flex items-center justify-center shadow-[0_0_50px_rgba(201,162,39,0.1)]">
+          <div className="absolute inset-0 bg-secondary/10 rounded-sm blur-2xl transition-all duration-500" />
+          <div className="relative rounded-sm overflow-hidden bg-card border border-border aspect-[4/3] flex items-center justify-center p-8">
+             <div className="absolute inset-0 corporate-grid opacity-50" />
+             <div className="relative z-10 w-full h-full border border-border rounded-sm bg-surface flex items-center justify-center shadow-corp">
                 <div className="w-32 h-32 rounded-full border-4 border-t-gold border-r-primary border-b-secondary border-l-transparent animate-spin" style={{ animationDuration: '8s' }} />
                 <div className="absolute w-24 h-24 rounded-full border-4 border-b-gold/70 border-l-primary/70 border-t-secondary/70 border-r-transparent animate-spin" style={{ animationDuration: '4s', animationDirection: 'reverse' }} />
              </div>
@@ -1048,7 +1048,7 @@ function Footer() {
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-white rounded-sm p-2">
-                <img src="/favicon.png" alt="Vyntyra" className="h-10 w-auto" />
+                <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-10 w-auto" />
               </div>
               <div>
                 <div className="font-semibold text-lg leading-tight">Vyntyra Consultancy Services</div>

@@ -52,7 +52,7 @@ export function InstallPwaButton({ className = "" }: { className?: string }) {
       }
       aria-label="Install VyNexa App"
     >
-      <img src="/favicon.png" alt="VyNexa Logo" className="h-3.5 w-3.5 object-contain rounded-sm" />
+      <img src="https://vyntyraconsultancyservices.in/logo.png" alt="VyNexa Logo" className="h-3.5 w-3.5 object-contain rounded-sm" />
       <span className="hidden sm:inline">Install VyNexa App</span>
       <span className="sm:hidden">Install</span>
     </button>

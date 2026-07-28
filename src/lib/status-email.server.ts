@@ -28,7 +28,7 @@ function stripHtml(h: string) {
   return h.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
-const LOGO_URL = "https://careers.vyntyraconsultancyservices.in/favicon.png";
+const LOGO_URL = 'https://vyntyraconsultancyservices.in/logo.png';
 
 function shell(innerHtml: string) {
   return `<!doctype html><html><body style="margin:0;background:#F9FAFB;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;padding:40px 16px;">

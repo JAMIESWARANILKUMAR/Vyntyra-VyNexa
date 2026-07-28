@@ -39,7 +39,7 @@ function StatusRequestPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b border-border bg-card">
         <div className="mx-auto max-w-5xl px-6 h-16 flex items-center gap-3">
-          <img src="/favicon.png" alt="Vyntyra" className="h-10 w-auto" />
+          <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-10 w-auto" />
           <div className="border-l border-border pl-3">
             <div className="text-sm font-semibold text-primary leading-none">Vyntyra Careers</div>
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Applicant Portal</div>
