@@ -289,7 +289,7 @@ function ApplicationPage() {
             </div>
           </div>
         </div>
-        <Footer />
+
       </div>
     );
   }
@@ -659,7 +659,7 @@ function ApplicationPage() {
         </div>
       </main>
 
-      <Footer />
+
       <AgreementDialog open={agreementOpen} onOpenChange={setAgreementOpen}
         onAccept={() => { setAgreed(true); setAgreementOpen(false); }} />
     </div>
@@ -1053,61 +1053,6 @@ function Field({ label, required, children, className = "" }: { label: string; r
   );
 }
 
-function Footer() {
-  return (
-    <footer className="bg-primary text-primary-foreground">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-10 sm:py-12">
-        <div className="grid md:grid-cols-4 gap-8">
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-white rounded-sm p-2">
-                <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-10 w-auto" />
-              </div>
-              <div>
-                <div className="font-semibold text-lg leading-tight">Vyntyra Consultancy Services</div>
-                <div className="text-[10px] uppercase tracking-[0.18em] text-primary-foreground/60 mt-0.5">
-                  Building Project VyNexa
-                </div>
-              </div>
-            </div>
-            <p className="text-sm text-primary-foreground/70 leading-relaxed max-w-md">
-              A technology consultancy engineering the next generation of intelligent search infrastructure.
-              Our team spans engineering, research, product and enterprise delivery.
-            </p>
-          </div>
-
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-gold font-medium mb-3">Company</div>
-            <ul className="space-y-2 text-sm text-primary-foreground/70">
-              <li><a href="https://vyntyraconsultancyservices.in" target="_blank" rel="noreferrer" className="hover:text-gold">About Vyntyra</a></li>
-              <li><a href="#form" className="hover:text-gold">Careers</a></li>
-              <li><a href="/status" className="hover:text-gold">Track Application</a></li>
-              <li><a href="/auth" className="hover:text-gold">Employee Portal</a></li>
-            </ul>
-          </div>
-
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-gold font-medium mb-3">Contact</div>
-            <ul className="space-y-2 text-sm text-primary-foreground/70">
-              <li className="flex items-start gap-2"><Mail className="h-4 w-4 mt-0.5 text-gold/70" /> hr@vyntyraconsultancyservices.in</li>
-              <li className="flex items-start gap-2"><Phone className="h-4 w-4 mt-0.5 text-gold/70" /> Contact via website</li>
-              <li className="flex items-start gap-2"><MapPin className="h-4 w-4 mt-0.5 text-gold/70" /> India · Global Delivery</li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-10 pt-6 border-t border-primary-foreground/10 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-primary-foreground/50">
-          <div>© {new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.</div>
-          <div className="flex gap-5">
-            <a href="/privacy" className="hover:text-gold">Privacy Notice</a>
-            <a href="/terms" className="hover:text-gold">Applicant Terms</a>
-            <a href="/about" className="hover:text-gold">About</a>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-}
 
 function AgreementDialog({ open, onOpenChange, onAccept }: { open: boolean; onOpenChange: (v: boolean) => void; onAccept: () => void }) {
   return (

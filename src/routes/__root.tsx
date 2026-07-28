@@ -13,6 +13,7 @@ import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { PwaRegister } from "@/components/pwa-register";
+import { Footer } from "@/components/footer";
 
 function NotFoundComponent() {
   return (
@@ -154,7 +155,10 @@ function RootComponent() {
       <PwaRegister />
       <PageLoadingIndicator />
       <div className="flex min-h-screen flex-col flex-1 w-full relative">
-        <Outlet />
+        <main className="flex-1 flex flex-col">
+          <Outlet />
+        </main>
+        <Footer />
       </div>
       <Toaster position="top-center" richColors />
     </QueryClientProvider>

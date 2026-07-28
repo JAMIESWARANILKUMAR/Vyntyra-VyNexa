@@ -310,41 +310,7 @@ function AboutPage() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-primary text-primary-foreground/80 mt-12">
-        <div className="mx-auto max-w-6xl px-6 py-10 grid md:grid-cols-3 gap-8 text-sm">
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-10 w-auto brightness-0 invert" />
-            </div>
-            <p className="text-primary-foreground/60 leading-relaxed">
-              Innovation-driven IT consultancy, hiring, branding and R&D. Headquartered in Visakhapatnam, India.
-            </p>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-widest text-gold mb-3">Company</div>
-            <ul className="space-y-1.5">
-              <li><a href="/about" className="hover:text-gold">About</a></li>
-              <li><a href="/" className="hover:text-gold">Careers</a></li>
-              <li><a href="/status" className="hover:text-gold">Track Application</a></li>
-            </ul>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-widest text-gold mb-3">Contact</div>
-            <ul className="space-y-1.5 text-primary-foreground/70">
-              <li className="inline-flex items-center gap-2"><Building2 className="h-3.5 w-3.5" /> Dwaraka Nagar, Visakhapatnam</li>
-              <li className="inline-flex items-center gap-2"><Phone className="h-3.5 w-3.5" /> +91 93905 15106</li>
-              <li className="inline-flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> info@vyntyraconsultancyservices.in</li>
-            </ul>
-          </div>
-        </div>
-        <div className="border-t border-primary-foreground/10">
-          <div className="mx-auto max-w-6xl px-6 py-4 text-xs text-primary-foreground/50 flex justify-between">
-            <span>© {new Date().getFullYear()} Vyntyra Consultancy Services</span>
-            <span>All rights reserved</span>
-          </div>
-        </div>
-      </footer>
+
     </div>
   );
 }
