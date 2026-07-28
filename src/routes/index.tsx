@@ -911,10 +911,10 @@ function Hero() {
 
 function WhyJoinUs() {
   return (
-    <section className="py-24 px-4 sm:px-6 max-w-6xl mx-auto bg-slate-950 text-white border-t border-white/5">
+    <section className="py-24 px-4 sm:px-6 max-w-6xl mx-auto bg-transparent text-white border-t border-white/5">
       <div className="grid lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
-          <span className="text-gold text-[10px] font-bold uppercase tracking-[0.2em]">Innovation Labs</span>
+          <span className="text-white text-[10px] font-bold uppercase tracking-[0.2em]">Innovation Labs</span>
           <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">Redefining Search through Deep Intelligence</h2>
           <p className="text-slate-400 text-lg leading-relaxed font-light">
             At Vyntyra, we navigate the boundary between pure research and practical engineering. Our systems are built on principles of optical precision and atmospheric depth, ensuring that every interaction feels effortless yet authoritative.
@@ -926,7 +926,7 @@ function WhyJoinUs() {
               "Ultra-low Latency Retrieval"
             ].map((item, i) => (
               <li key={i} className="flex items-center gap-3 text-slate-300 font-medium text-sm">
-                <CheckCircle2 className="h-5 w-5 text-gold shrink-0" />
+                <CheckCircle2 className="h-5 w-5 text-white shrink-0" />
                 {item}
               </li>
             ))}
