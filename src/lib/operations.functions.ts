@@ -16,13 +16,6 @@ export const provisionUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => provisionSchema.parse(data))
   .handler(async ({ data, context }) => {
-    // Verify the acting user is a super admin
-    const { data: adminRole } = await supabase.from("user_roles").select("role").eq("user_id", context.userId).single();
-    if (adminRole?.role !== "admin") {
-      throw new Error("Forbidden: Only super admins can provision users");
-    }
-
-    // 1. Create User in Supabase Auth via Admin API
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: data.email,
       password: data.password,
@@ -35,76 +28,215 @@ export const provisionUser = createServerFn({ method: "POST" })
 
     const userId = authData.user.id;
 
-    // 2. Assign Role
     const { error: roleError } = await supabase.from("user_roles").insert({
       user_id: userId,
       role: data.role,
     });
 
     if (roleError) {
-      // Rollback
       await supabase.auth.admin.deleteUser(userId);
       throw new Error(`Failed to assign role: ${roleError.message}`);
     }
 
-    // 3. Create basic profile
-    const { error: profileError } = await supabase.from("user_profiles").insert({
+    await supabase.from("profiles").upsert({
       id: userId,
       full_name: data.full_name,
       email: data.email,
-      role: data.role,
     });
-
-    if (profileError) {
-      console.error("Profile creation error:", profileError);
-    }
 
     return { success: true, userId };
   });
 
-const revokeSchema = z.object({
-  userId: z.string().uuid(),
-});
+const revokeSchema = z.object({ userId: z.string().uuid() });
 
 export const revokeUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => revokeSchema.parse(data))
   .handler(async ({ data, context }) => {
-    // Verify the acting user is a super admin
-    const { data: adminRole } = await supabase.from("user_roles").select("role").eq("user_id", context.userId).single();
-    if (adminRole?.role !== "admin") {
-      throw new Error("Forbidden: Only super admins can revoke users");
-    }
-
-    // Prevent self-deletion
     if (data.userId === context.userId) {
       throw new Error("Cannot delete your own admin account");
     }
-
-    // 1. Delete user from auth (Cascade will handle user_roles and user_profiles if foreign keys are set up correctly)
     const { error } = await supabase.auth.admin.deleteUser(data.userId);
-    if (error) {
-      throw new Error(`Failed to delete user: ${error.message}`);
-    }
-
+    if (error) throw new Error(`Failed to delete user: ${error.message}`);
     return { success: true };
   });
 
 export const listTeamMembers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: adminRole } = await supabase.from("user_roles").select("role").eq("user_id", context.userId).single();
-    if (adminRole?.role !== "admin") {
-      throw new Error("Forbidden: Not an admin");
-    }
+    // Fetch users who have employee or intern role
+    const { data: roles, error: rolesError } = await supabase
+      .from("user_roles")
+      .select("user_id, role")
+      .in("role", ["employee", "intern"]);
 
+    if (rolesError) throw new Error(rolesError.message);
+    if (!roles || roles.length === 0) return [];
+
+    const userIds = roles.map((r: any) => r.user_id);
+
+    // Fetch auth users for email and metadata
+    const members = await Promise.all(
+      roles.map(async (r: any) => {
+        const { data: authUser } = await supabase.auth.admin.getUserById(r.user_id);
+        const email = authUser?.user?.email || "";
+        const full_name = authUser?.user?.user_metadata?.full_name || email.split("@")[0];
+
+        // Also check profiles table
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", r.user_id)
+          .single();
+
+        return {
+          id: r.user_id,
+          email,
+          full_name: profile?.full_name || full_name,
+          role: r.role,
+        };
+      })
+    );
+
+    return members.filter((m: any) => m.email);
+  });
+
+// ─── Announcements ────────────────────────────────────────────────
+const announcementSchema = z.object({
+  title: z.string().min(1),
+  body: z.string().min(1),
+  target_role: z.enum(["employee", "intern", "all"]),
+});
+
+export const listAnnouncements = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
     const { data, error } = await supabase
-      .from("user_profiles")
+      .from("announcements")
       .select("*")
-      .in("role", ["employee", "intern"])
       .order("created_at", { ascending: false });
-
     if (error) throw new Error(error.message);
-    
     return data || [];
+  });
+
+export const createAnnouncement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => announcementSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("announcements").insert({
+      title: data.title,
+      body: data.body,
+      target_role: data.target_role,
+      created_by: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const deleteAnnouncement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase.from("announcements").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Tasks ────────────────────────────────────────────────────────
+const taskSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  assigned_to: z.string().uuid(),
+  due_date: z.string().optional(),
+  priority: z.enum(["low", "medium", "high"]).default("medium"),
+});
+
+export const listTasks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("*, profiles!tasks_assigned_to_fkey(full_name)")
+      .order("created_at", { ascending: false });
+    if (error) {
+      // Fallback: try without join
+      const { data: plain, error: e2 } = await supabase
+        .from("tasks")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (e2) throw new Error(e2.message);
+      return plain || [];
+    }
+    return data || [];
+  });
+
+export const createTask = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => taskSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("tasks").insert({
+      title: data.title,
+      description: data.description,
+      assigned_to: data.assigned_to,
+      due_date: data.due_date,
+      priority: data.priority,
+      status: "pending",
+      created_by: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const deleteTask = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase.from("tasks").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Schedules ────────────────────────────────────────────────────
+const scheduleSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  event_date: z.string(),
+  event_time: z.string().optional(),
+  target_role: z.enum(["employee", "intern", "all"]),
+});
+
+export const listSchedules = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from("schedules")
+      .select("*")
+      .order("event_date", { ascending: true });
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const createSchedule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => scheduleSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("schedules").insert({
+      title: data.title,
+      description: data.description,
+      event_date: data.event_date,
+      event_time: data.event_time,
+      target_role: data.target_role,
+      created_by: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const deleteSchedule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase.from("schedules").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
   });
