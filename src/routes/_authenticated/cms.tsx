@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 export const Route = createFileRoute("/_authenticated/cms")({
   head: () => ({ meta: [{ title: "CMS | Vyntyra Admin" }] }),
@@ -104,7 +105,21 @@ function AnnouncementsTab() {
         <CardHeader><CardTitle>Create Announcement</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <Input placeholder="Announcement Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <Textarea placeholder="Content" value={content} onChange={(e) => setContent(e.target.value)} />
+          <div className="grid grid-cols-2 gap-4">
+            <Textarea 
+              placeholder="Content (Markdown supported - use for images and links)" 
+              value={content} 
+              onChange={(e) => setContent(e.target.value)} 
+              className="min-h-[150px]"
+            />
+            <div className="border rounded-md p-4 min-h-[150px] bg-muted/20 overflow-y-auto prose prose-sm dark:prose-invert">
+              {content ? (
+                <ReactMarkdown>{content}</ReactMarkdown>
+              ) : (
+                <span className="text-muted-foreground text-sm italic">Markdown preview...</span>
+              )}
+            </div>
+          </div>
           <select value={severity} onChange={(e) => setSeverity(e.target.value as any)} className="w-full p-2 border rounded-md">
             <option value="info">Info</option>
             <option value="warning">Warning</option>
