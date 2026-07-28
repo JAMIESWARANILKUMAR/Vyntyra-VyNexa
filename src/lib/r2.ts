@@ -35,6 +35,8 @@ export async function generateUploadUrl(filename: string, contentType: string) {
   });
 
   // URL expires in 15 minutes
+  const url = await getSignedUrl(S3, command, { expiresIn: 900 });
+  
   // Fallback to the known public dev URL if the env var is missing
   const publicUrl = process.env.VITE_CLOUDFLARE_PUBLIC_URL || "https://pub-31cdacf0ce134d38bfc7490b92bbcb00.r2.dev";
 
