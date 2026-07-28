@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/cms")({
   head: () => ({ meta: [{ title: "CMS | Vyntyra Admin" }] }),
@@ -19,8 +20,27 @@ export const Route = createFileRoute("/_authenticated/cms")({
 
 function CMSPage() {
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Content Management</h1>
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-card sticky top-0 z-40">
+        <div className="mx-auto max-w-5xl px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground mr-2">
+              <Link to="/admin">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Go Back to Admin
+              </Link>
+            </Button>
+            <div>
+              <div className="font-serif text-lg font-bold text-primary leading-none">Content Management</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">
+                Manage News and Announcements
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-6 py-8">
       <Tabs defaultValue="news">
         <TabsList className="mb-4">
           <TabsTrigger value="news">News & Updates</TabsTrigger>
@@ -29,6 +49,7 @@ function CMSPage() {
         <TabsContent value="news"><NewsTab /></TabsContent>
         <TabsContent value="announcements"><AnnouncementsTab /></TabsContent>
       </Tabs>
+      </main>
     </div>
   );
 }
