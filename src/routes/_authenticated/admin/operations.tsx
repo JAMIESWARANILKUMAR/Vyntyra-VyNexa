@@ -1120,16 +1120,8 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
           </div>
           
           <div className="space-y-1.5">
-            <Label>Avatar URL</Label>
-            <div className="flex gap-2">
-              <Input value={form.avatar_url || ""} onChange={e => setForm({...form, avatar_url: e.target.value})} placeholder="https://..." />
-              <div className="relative shrink-0">
-                <Button type="button" variant="outline" disabled={uploadingAvatar} className="w-[100px]">
-                  {uploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload"}
-                </Button>
-                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "avatar"); }} />
-              </div>
-            </div>
+            <Label>Avatar URL (Public Link)</Label>
+            <Input value={form.avatar_url || ""} onChange={e => setForm({...form, avatar_url: e.target.value})} placeholder="https://example.com/image.png" />
           </div>
 
           <div className="space-y-1.5">

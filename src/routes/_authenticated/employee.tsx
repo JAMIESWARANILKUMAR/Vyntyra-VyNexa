@@ -80,7 +80,7 @@ function EmployeeDashboard() {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
-    window.location.href = "/auth";
+    window.location.href = "/";
   }
 
   async function markTaskStatus(taskId: string, status: string) {
