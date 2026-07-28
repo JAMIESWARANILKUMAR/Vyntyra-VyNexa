@@ -86,15 +86,16 @@ export const listTeamMembers = createServerFn({ method: "GET" })
         // Also check profiles table
         const { data: profile } = await supabase
           .from("profiles")
-          .select("full_name")
+          .select("*")
           .eq("id", r.user_id)
           .single();
 
         return {
           id: r.user_id,
           email,
-          full_name: profile?.full_name || full_name,
           role: r.role,
+          ...profile,
+          full_name: profile?.full_name || full_name,
         };
       })
     );
@@ -377,6 +378,7 @@ const profileUpdateSchema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   intern_id: z.string().optional(),
+  start_date: z.string().optional(),
   end_date: z.string().optional(),
   offer_letter_url: z.string().optional(),
   avatar_url: z.string().optional(),
