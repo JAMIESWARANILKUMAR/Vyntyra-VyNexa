@@ -14,7 +14,6 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { PwaRegister } from "@/components/pwa-register";
 import { Footer } from "@/components/footer";
-import { MobileNav } from "@/components/mobile-nav";
 
 function NotFoundComponent() {
   return (
@@ -170,7 +169,6 @@ function RootComponent() {
           <Outlet />
         </main>
         {!isDashboard && <Footer />}
-        {!isDashboard && <MobileNav />}
       </div>
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
