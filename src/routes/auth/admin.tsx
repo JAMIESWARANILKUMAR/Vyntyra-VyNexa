@@ -35,7 +35,10 @@ function AdminAuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ 
+          email: email.trim(), 
+          password: password.trim() 
+        });
         if (error) throw error;
         toast.success("Welcome back, Administrator");
         

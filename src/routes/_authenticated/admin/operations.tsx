@@ -140,7 +140,11 @@ function OperationsDashboard() {
   async function handleProvision(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await doProvision({ data: provisionForm });
+      await doProvision({ data: {
+        ...provisionForm,
+        email: provisionForm.email.trim(),
+        password: provisionForm.password.trim(),
+      } });
       toast.success(`${provisionForm.role === "employee" ? "Employee" : "Intern"} account created for ${provisionForm.full_name}`);
       setProvisionOpen(false);
       setProvisionForm({ full_name: "", email: "", password: "", role: "employee" });
