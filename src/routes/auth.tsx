@@ -20,8 +20,15 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) navigate({ to: "/admin" });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        // Fetch role to determine routing
+        const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', session.user.id);
+        const role = roles?.[0]?.role;
+        if (role === 'employee') navigate({ to: "/employee" });
+        else if (role === 'intern') navigate({ to: "/intern" });
+        else navigate({ to: "/admin" });
+      }
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
@@ -35,9 +42,13 @@ function AuthPage() {
             password
         });
         if (error) throw error;
-        
+        const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+        const role = roles?.[0]?.role;
         toast.success("Welcome back");
-        navigate({ to: "/admin" });
+        
+        if (role === 'employee') navigate({ to: "/employee" });
+        else if (role === 'intern') navigate({ to: "/intern" });
+        else navigate({ to: "/admin" });
     } catch(error: any) {
         toast.error(error.message);
     } finally {

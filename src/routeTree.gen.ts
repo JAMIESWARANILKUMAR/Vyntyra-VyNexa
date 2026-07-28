@@ -19,8 +19,11 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StatusTokenRouteImport } from './routes/status.$token'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
+import { Route as AuthenticatedInternRouteImport } from './routes/_authenticated/intern'
+import { Route as AuthenticatedEmployeeRouteImport } from './routes/_authenticated/employee'
 import { Route as AuthenticatedCmsRouteImport } from './routes/_authenticated/cms'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAdminOperationsRouteImport } from './routes/_authenticated/admin/operations'
 
 const TrackRoute = TrackRouteImport.update({
   id: '/track',
@@ -71,6 +74,16 @@ const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
   path: '/templates',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInternRoute = AuthenticatedInternRouteImport.update({
+  id: '/intern',
+  path: '/intern',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEmployeeRoute = AuthenticatedEmployeeRouteImport.update({
+  id: '/employee',
+  path: '/employee',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCmsRoute = AuthenticatedCmsRouteImport.update({
   id: '/cms',
   path: '/cms',
@@ -81,6 +94,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminOperationsRoute =
+  AuthenticatedAdminOperationsRouteImport.update({
+    id: '/operations',
+    path: '/operations',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -90,10 +109,13 @@ export interface FileRoutesByFullPath {
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/cms': typeof AuthenticatedCmsRoute
+  '/employee': typeof AuthenticatedEmployeeRoute
+  '/intern': typeof AuthenticatedInternRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/status/$token': typeof StatusTokenRoute
+  '/admin/operations': typeof AuthenticatedAdminOperationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -103,10 +125,13 @@ export interface FileRoutesByTo {
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/cms': typeof AuthenticatedCmsRoute
+  '/employee': typeof AuthenticatedEmployeeRoute
+  '/intern': typeof AuthenticatedInternRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/status/$token': typeof StatusTokenRoute
+  '/admin/operations': typeof AuthenticatedAdminOperationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -118,10 +143,13 @@ export interface FileRoutesById {
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/cms': typeof AuthenticatedCmsRoute
+  '/_authenticated/employee': typeof AuthenticatedEmployeeRoute
+  '/_authenticated/intern': typeof AuthenticatedInternRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/status/$token': typeof StatusTokenRoute
+  '/_authenticated/admin/operations': typeof AuthenticatedAdminOperationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -135,8 +163,11 @@ export interface FileRouteTypes {
     | '/track'
     | '/admin'
     | '/cms'
+    | '/employee'
+    | '/intern'
     | '/templates'
     | '/status/$token'
+    | '/admin/operations'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -148,8 +179,11 @@ export interface FileRouteTypes {
     | '/track'
     | '/admin'
     | '/cms'
+    | '/employee'
+    | '/intern'
     | '/templates'
     | '/status/$token'
+    | '/admin/operations'
   id:
     | '__root__'
     | '/'
@@ -162,8 +196,11 @@ export interface FileRouteTypes {
     | '/track'
     | '/_authenticated/admin'
     | '/_authenticated/cms'
+    | '/_authenticated/employee'
+    | '/_authenticated/intern'
     | '/_authenticated/templates'
     | '/status/$token'
+    | '/_authenticated/admin/operations'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -249,6 +286,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/intern': {
+      id: '/_authenticated/intern'
+      path: '/intern'
+      fullPath: '/intern'
+      preLoaderRoute: typeof AuthenticatedInternRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/employee': {
+      id: '/_authenticated/employee'
+      path: '/employee'
+      fullPath: '/employee'
+      preLoaderRoute: typeof AuthenticatedEmployeeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/cms': {
       id: '/_authenticated/cms'
       path: '/cms'
@@ -263,18 +314,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/operations': {
+      id: '/_authenticated/admin/operations'
+      path: '/operations'
+      fullPath: '/admin/operations'
+      preLoaderRoute: typeof AuthenticatedAdminOperationsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminOperationsRoute: typeof AuthenticatedAdminOperationsRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminOperationsRoute: AuthenticatedAdminOperationsRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedCmsRoute: typeof AuthenticatedCmsRoute
+  AuthenticatedEmployeeRoute: typeof AuthenticatedEmployeeRoute
+  AuthenticatedInternRoute: typeof AuthenticatedInternRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedCmsRoute: AuthenticatedCmsRoute,
+  AuthenticatedEmployeeRoute: AuthenticatedEmployeeRoute,
+  AuthenticatedInternRoute: AuthenticatedInternRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
 }
 

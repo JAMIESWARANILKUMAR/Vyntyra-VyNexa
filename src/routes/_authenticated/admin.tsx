@@ -67,7 +67,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin Dashboard — Vyntyra Careers" }] }),
+  head: () => ({ meta: [{ title: "Super Admin Dashboard — Vyntyra Careers" }] }),
   component: AdminDashboard,
 });
 
@@ -328,13 +328,19 @@ function AdminDashboard() {
             <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-8 sm:h-10 w-auto shrink-0" />
             <div className="border-l border-border pl-3 min-w-0 hidden xs:block sm:block">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
-                Admin
+                Super Admin
               </div>
               <div className="text-sm font-semibold text-primary truncate">Vyntyra Careers</div>
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <InstallPwaButton />
+            <Link
+              to="/admin/operations"
+              className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
+            >
+              <Users className="h-4 w-4" /> <span className="hidden sm:inline">Operations</span>
+            </Link>
             <Link
               to="/cms"
               className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
@@ -364,7 +370,7 @@ function AdminDashboard() {
               <div>
                 <div className="inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[10px] font-medium text-gold uppercase tracking-[0.18em] mb-4">
                   <span className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse" />
-                  Admin Panel
+                  Super Admin Dashboard
                 </div>
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight leading-tight">
                   Hello, <span className="text-gold">Recruiter</span>
@@ -744,13 +750,13 @@ function AdminDashboard() {
           <AlertDialogHeader>
             <AlertDialogTitle>Would you like to end the session?</AlertDialogTitle>
             <AlertDialogDescription>
-              Navigating away will close the admin page and redirect you to the home page. Do you wish to proceed?
+              Navigating away will close the Super Admin Dashboard and redirect you to the home page. Do you wish to proceed?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => {
               if (blocker.status === 'blocked') blocker.reset();
-            }}>Stay in Admin</AlertDialogCancel>
+            }}>Stay in Dashboard</AlertDialogCancel>
             <AlertDialogAction onClick={() => {
               if (blocker.status === 'blocked') blocker.proceed();
             }}>End Session</AlertDialogAction>
