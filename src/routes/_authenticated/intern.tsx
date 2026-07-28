@@ -346,10 +346,11 @@ function InternDashboard() {
               </div>
             )}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ─── MEETINGS ─── */}
-        {activeTab === "meetings" && (
+      {/* ─── MEETINGS ─── */}
+      {activeTab === "meetings" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2"><CalendarDays className="h-4 w-4" />Calendar</h2>
