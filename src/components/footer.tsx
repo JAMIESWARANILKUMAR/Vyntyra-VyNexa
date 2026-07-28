@@ -79,14 +79,14 @@ export function Footer() {
               Secure Portals
             </h3>
             <ul className="space-y-3.5 text-[13px] text-primary-foreground/60 font-medium mb-6">
-              <li><Link to="/auth" className="hover:text-white hover:translate-x-1 inline-block transition-transform duration-300">Employee Dashboard</Link></li>
-              <li><Link to="/auth" className="hover:text-white hover:translate-x-1 inline-block transition-transform duration-300">Intern Dashboard</Link></li>
-              <li><Link to="/auth" className="hover:text-white hover:translate-x-1 inline-block transition-transform duration-300">Super Admin</Link></li>
+              <li><Link to="/auth/employee" className="hover:text-white hover:translate-x-1 inline-block transition-transform duration-300">Employee Dashboard</Link></li>
+              <li><Link to="/auth/intern" className="hover:text-white hover:translate-x-1 inline-block transition-transform duration-300">Intern Dashboard</Link></li>
+              <li><Link to="/auth/admin" className="hover:text-white hover:translate-x-1 inline-block transition-transform duration-300">Super Admin</Link></li>
             </ul>
             
             <div className="mt-6">
               <Button variant="outline" className="w-full sm:w-auto bg-primary-foreground/[0.03] border-primary-foreground/20 hover:bg-gold hover:border-gold hover:text-primary transition-all duration-300 text-sm font-medium h-10 px-6 rounded-sm shadow-sm" asChild>
-                <Link to="/auth">Authenticate</Link>
+                <Link to="/auth/employee">Authenticate</Link>
               </Button>
             </div>
           </div>

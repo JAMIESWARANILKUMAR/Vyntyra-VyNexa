@@ -1,19 +1,18 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Loader2, Shield, Mail, Lock, ArrowRight } from "lucide-react";
+import { Shield, Mail, Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 
-export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Admin Sign In — Vyntyra Careers" }] }),
-  component: AuthPage,
+export const Route = createFileRoute("/auth/admin")({
+  head: () => ({ meta: [{ title: "Super Admin Sign In — Vyntyra" }] }),
+  component: AdminAuthPage,
 });
 
-function AuthPage() {
+function AdminAuthPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +21,6 @@ function AuthPage() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        // Fetch role to determine routing
         const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', session.user.id);
         const role = roles?.[0]?.role;
         if (role === 'employee') navigate({ to: "/employee" });
@@ -37,18 +35,11 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-        });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', (await supabase.auth.getUser()).data.user?.id);
-        const role = roles?.[0]?.role;
-        toast.success("Welcome back");
+        toast.success("Welcome back, Administrator");
         
-        if (role === 'employee') navigate({ to: "/employee" });
-        else if (role === 'intern') navigate({ to: "/intern" });
-        else navigate({ to: "/admin" });
+        // Navigation is handled by onAuthStateChange listener
     } catch(error: any) {
         toast.error(error.message);
     } finally {
@@ -72,15 +63,14 @@ function AuthPage() {
         </a>
 
         <div className="backdrop-blur-2xl bg-slate-900/40 border border-white/10 rounded-3xl shadow-2xl p-8 relative overflow-hidden">
-          {/* subtle inner glow */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none" />
 
           <div className="relative z-10">
             <div className="flex items-center justify-center gap-2 text-[10px] text-gold uppercase tracking-widest font-bold mb-6">
-              <Shield className="h-3.5 w-3.5" /> Secure Portal
+              <Shield className="h-3.5 w-3.5" /> Super Admin Portal
             </div>
-            <h1 className="font-serif text-3xl font-semibold text-white text-center mb-1">Admin Sign In</h1>
-            <p className="text-sm text-slate-400 text-center mb-8">Authorised HR personnel only</p>
+            <h1 className="font-serif text-3xl font-semibold text-white text-center mb-1">Authorised Sign In</h1>
+            <p className="text-sm text-slate-400 text-center mb-8">System operations and management</p>
 
             <form onSubmit={handleSignIn} className="space-y-5">
               <div className="space-y-1.5 group">
@@ -92,17 +82,14 @@ function AuthPage() {
                     required 
                     value={email} 
                     onChange={(e) => setEmail(e.target.value)} 
-                    autoComplete="email" 
-                    className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-gold/50 focus:ring-1 focus:ring-gold/50 transition-all rounded-xl h-14 pl-12 pr-4 shadow-inner text-base"
+                    className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-gold/50 focus:ring-1 focus:ring-gold/50 transition-all rounded-xl h-14 pl-12 pr-4 text-base"
                     placeholder="admin@vyntyra.in"
                   />
                 </div>
               </div>
+
               <div className="space-y-1.5 group">
-                <div className="flex justify-between items-center px-1">
-                  <Label className="text-[10px] uppercase tracking-widest text-slate-400 group-focus-within:text-gold transition-colors">Secure Password</Label>
-                  <a href="#" className="text-[10px] uppercase tracking-widest text-gold hover:text-gold/80 transition-colors">Forgot?</a>
-                </div>
+                <Label className="text-[10px] uppercase tracking-widest text-slate-400 group-focus-within:text-gold transition-colors ml-1">Password</Label>
                 <div className="relative flex items-center">
                   <Lock className="absolute left-4 h-5 w-5 text-slate-500 group-focus-within:text-gold transition-colors" />
                   <Input 
@@ -110,41 +97,23 @@ function AuthPage() {
                     required 
                     value={password} 
                     onChange={(e) => setPassword(e.target.value)} 
-                    autoComplete="current-password" 
-                    className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-gold/50 focus:ring-1 focus:ring-gold/50 transition-all rounded-xl h-14 pl-12 pr-4 shadow-inner text-base tracking-widest"
-                    placeholder="••••••••"
+                    className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-gold/50 focus:ring-1 focus:ring-gold/50 transition-all rounded-xl h-14 pl-12 pr-4 text-base"
+                    placeholder="••••••••••••"
                   />
                 </div>
               </div>
-              <div className="flex items-center gap-3 px-1 py-2">
-                <Checkbox id="remember" className="border-white/20 data-[state=checked]:bg-gold data-[state=checked]:border-gold data-[state=checked]:text-gold-foreground" />
-                <label htmlFor="remember" className="text-xs text-slate-400 cursor-pointer select-none hover:text-slate-300 transition-colors">
-                  Trust this device for 30 days
-                </label>
-              </div>
-              <Button type="submit" disabled={loading} className="w-full bg-gold hover:bg-gold/90 text-gold-foreground rounded-xl h-14 font-semibold tracking-wide transition-all duration-300 hover:shadow-[0_0_20px_rgba(201,162,39,0.3)] hover:-translate-y-0.5 mt-2 flex items-center justify-center gap-2 group">
-                {loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Authenticating…</> : <>Sign In <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></>}
+
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className="w-full h-14 mt-4 bg-gold hover:bg-gold/90 text-primary font-bold tracking-wide rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.2)] hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] transition-all duration-300"
+              >
+                {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Authenticate"}
               </Button>
             </form>
-
-            <p className="mt-8 text-[11px] uppercase tracking-widest text-slate-500 text-center border-t border-white/10 pt-6">
-              Protected by Enterprise Grade Security
-            </p>
           </div>
         </div>
-
-        <a href="/" className="block text-center mt-8 text-sm text-slate-400 hover:text-white transition-colors duration-300 flex items-center justify-center gap-2 group">
-          <span className="transform transition-transform duration-300 group-hover:-translate-x-1">←</span> Return to Careers
-        </a>
       </div>
-      
-      {/* Global CSS for fadeInUp */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}} />
     </div>
   );
 }

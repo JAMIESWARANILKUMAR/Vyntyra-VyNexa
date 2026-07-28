@@ -13,11 +13,13 @@ import { Route as TrackRouteImport } from './routes/track'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as StatusRouteImport } from './routes/status'
 import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StatusTokenRouteImport } from './routes/status.$token'
+import { Route as AuthInternRouteImport } from './routes/auth/intern'
+import { Route as AuthEmployeeRouteImport } from './routes/auth/employee'
+import { Route as AuthAdminRouteImport } from './routes/auth/admin'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as AuthenticatedInternRouteImport } from './routes/_authenticated/intern'
 import { Route as AuthenticatedEmployeeRouteImport } from './routes/_authenticated/employee'
@@ -45,11 +47,6 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -68,6 +65,21 @@ const StatusTokenRoute = StatusTokenRouteImport.update({
   id: '/$token',
   path: '/$token',
   getParentRoute: () => StatusRoute,
+} as any)
+const AuthInternRoute = AuthInternRouteImport.update({
+  id: '/auth/intern',
+  path: '/auth/intern',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthEmployeeRoute = AuthEmployeeRouteImport.update({
+  id: '/auth/employee',
+  path: '/auth/employee',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthAdminRoute = AuthAdminRouteImport.update({
+  id: '/auth/admin',
+  path: '/auth/admin',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
   id: '/templates',
@@ -104,7 +116,6 @@ const AuthenticatedAdminOperationsRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
@@ -114,13 +125,15 @@ export interface FileRoutesByFullPath {
   '/employee': typeof AuthenticatedEmployeeRoute
   '/intern': typeof AuthenticatedInternRoute
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/auth/admin': typeof AuthAdminRoute
+  '/auth/employee': typeof AuthEmployeeRoute
+  '/auth/intern': typeof AuthInternRoute
   '/status/$token': typeof StatusTokenRoute
   '/admin/operations': typeof AuthenticatedAdminOperationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
@@ -130,6 +143,9 @@ export interface FileRoutesByTo {
   '/employee': typeof AuthenticatedEmployeeRoute
   '/intern': typeof AuthenticatedInternRoute
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/auth/admin': typeof AuthAdminRoute
+  '/auth/employee': typeof AuthEmployeeRoute
+  '/auth/intern': typeof AuthInternRoute
   '/status/$token': typeof StatusTokenRoute
   '/admin/operations': typeof AuthenticatedAdminOperationsRoute
 }
@@ -138,7 +154,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
-  '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
@@ -148,6 +163,9 @@ export interface FileRoutesById {
   '/_authenticated/employee': typeof AuthenticatedEmployeeRoute
   '/_authenticated/intern': typeof AuthenticatedInternRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
+  '/auth/admin': typeof AuthAdminRoute
+  '/auth/employee': typeof AuthEmployeeRoute
+  '/auth/intern': typeof AuthInternRoute
   '/status/$token': typeof StatusTokenRoute
   '/_authenticated/admin/operations': typeof AuthenticatedAdminOperationsRoute
 }
@@ -156,7 +174,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
-    | '/auth'
     | '/privacy'
     | '/status'
     | '/terms'
@@ -166,13 +183,15 @@ export interface FileRouteTypes {
     | '/employee'
     | '/intern'
     | '/templates'
+    | '/auth/admin'
+    | '/auth/employee'
+    | '/auth/intern'
     | '/status/$token'
     | '/admin/operations'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
-    | '/auth'
     | '/privacy'
     | '/status'
     | '/terms'
@@ -182,6 +201,9 @@ export interface FileRouteTypes {
     | '/employee'
     | '/intern'
     | '/templates'
+    | '/auth/admin'
+    | '/auth/employee'
+    | '/auth/intern'
     | '/status/$token'
     | '/admin/operations'
   id:
@@ -189,7 +211,6 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/about'
-    | '/auth'
     | '/privacy'
     | '/status'
     | '/terms'
@@ -199,6 +220,9 @@ export interface FileRouteTypes {
     | '/_authenticated/employee'
     | '/_authenticated/intern'
     | '/_authenticated/templates'
+    | '/auth/admin'
+    | '/auth/employee'
+    | '/auth/intern'
     | '/status/$token'
     | '/_authenticated/admin/operations'
   fileRoutesById: FileRoutesById
@@ -207,11 +231,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
-  AuthRoute: typeof AuthRoute
   PrivacyRoute: typeof PrivacyRoute
   StatusRoute: typeof StatusRouteWithChildren
   TermsRoute: typeof TermsRoute
   TrackRoute: typeof TrackRoute
+  AuthAdminRoute: typeof AuthAdminRoute
+  AuthEmployeeRoute: typeof AuthEmployeeRoute
+  AuthInternRoute: typeof AuthInternRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -244,13 +270,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -278,6 +297,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/status/$token'
       preLoaderRoute: typeof StatusTokenRouteImport
       parentRoute: typeof StatusRoute
+    }
+    '/auth/intern': {
+      id: '/auth/intern'
+      path: '/auth/intern'
+      fullPath: '/auth/intern'
+      preLoaderRoute: typeof AuthInternRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/employee': {
+      id: '/auth/employee'
+      path: '/auth/employee'
+      fullPath: '/auth/employee'
+      preLoaderRoute: typeof AuthEmployeeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/admin': {
+      id: '/auth/admin'
+      path: '/auth/admin'
+      fullPath: '/auth/admin'
+      preLoaderRoute: typeof AuthAdminRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/templates': {
       id: '/_authenticated/templates'
@@ -369,11 +409,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
-  AuthRoute: AuthRoute,
   PrivacyRoute: PrivacyRoute,
   StatusRoute: StatusRouteWithChildren,
   TermsRoute: TermsRoute,
   TrackRoute: TrackRoute,
+  AuthAdminRoute: AuthAdminRoute,
+  AuthEmployeeRoute: AuthEmployeeRoute,
+  AuthInternRoute: AuthInternRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
