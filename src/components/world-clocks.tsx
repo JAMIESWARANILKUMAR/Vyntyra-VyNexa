@@ -128,13 +128,13 @@ export function WorldClocks({ variant = "light" }: { variant?: "light" | "dark" 
         {CITIES.map((c) => {
           const p = partsForTz(c.tz, now);
           return (
-            <div key={c.label} className={"flex items-center gap-2 sm:gap-3 rounded-sm border px-2 sm:px-3 py-2 " + (isDark ? "border-primary-foreground/10 bg-primary-foreground/[0.03] text-primary-foreground" : "border-border bg-surface text-foreground")}>
+            <div key={c.label} className={"flex items-center gap-2 sm:gap-2.5 rounded-sm border px-2 sm:px-2.5 py-2 " + (isDark ? "border-primary-foreground/10 bg-primary-foreground/[0.03] text-primary-foreground" : "border-border bg-surface text-foreground")}>
               <div className={isDark ? "text-primary-foreground/85" : "text-primary"}>
-                <AnalogClock h={p.h} m={p.m} s={p.s} size={isMobile ? 52 : 68} />
+                <AnalogClock h={p.h} m={p.m} s={p.s} size={isMobile ? 44 : 52} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold truncate">{c.label}</div>
-                <div className="font-mono text-base sm:text-lg leading-tight tabular-nums">{p.time}</div>
+                <div className="font-mono text-sm sm:text-[15px] tracking-tighter leading-tight tabular-nums">{p.time}</div>
                 <div className={"text-[9px] sm:text-[10px] mt-0.5 leading-tight " + (isDark ? "text-primary-foreground/55" : "text-muted-foreground")}>
                   <span className="hidden sm:inline">{p.date} · </span>{c.abbr}
                 </div>
