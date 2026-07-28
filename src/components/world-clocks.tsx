@@ -124,7 +124,7 @@ export function WorldClocks({ variant = "light" }: { variant?: "light" | "dark" 
           {Intl.DateTimeFormat().resolvedOptions().timeZone}
         </div>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 p-3 sm:p-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 p-3 sm:p-4">
         {CITIES.map((c) => {
           const p = partsForTz(c.tz, now);
           return (
@@ -134,7 +134,7 @@ export function WorldClocks({ variant = "light" }: { variant?: "light" | "dark" 
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold truncate">{c.label}</div>
-                <div className="font-mono text-sm sm:text-[15px] tracking-tighter leading-tight tabular-nums">{p.time}</div>
+                <div className="font-mono text-[13px] sm:text-sm tracking-tighter leading-tight tabular-nums">{p.time}</div>
                 <div className={"text-[9px] sm:text-[10px] mt-0.5 leading-tight " + (isDark ? "text-primary-foreground/55" : "text-muted-foreground")}>
                   <span className="hidden sm:inline">{p.date} · </span>{c.abbr}
                 </div>
