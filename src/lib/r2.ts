@@ -1,21 +1,25 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const accountId = process.env.CLOUDFLARE_ACCOUNT_ID!;
-const accessKeyId = process.env.CLOUDFLARE_ACCESS_KEY_ID!;
-const secretAccessKey = process.env.CLOUDFLARE_SECRET_ACCESS_KEY!;
-const bucketName = process.env.CLOUDFLARE_BUCKET_NAME!;
-
-const S3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId,
-    secretAccessKey,
-  },
-});
-
 export async function generateUploadUrl(filename: string, contentType: string) {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const accessKeyId = process.env.CLOUDFLARE_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.CLOUDFLARE_SECRET_ACCESS_KEY;
+  const bucketName = process.env.CLOUDFLARE_BUCKET_NAME;
+
+  if (!bucketName || !accountId || !accessKeyId || !secretAccessKey) {
+    throw new Error("Cloudflare R2 environment variables are missing. Please restart your dev server.");
+  }
+
+  const S3 = new S3Client({
+    region: "auto",
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+    },
+  });
+
   // Generate a unique path: year/month/random-filename
   const date = new Date();
   const year = date.getFullYear();
