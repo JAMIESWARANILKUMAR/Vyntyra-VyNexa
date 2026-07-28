@@ -938,9 +938,21 @@ function WhyJoinUs() {
           <div className="absolute inset-0 bg-secondary/10 rounded-sm blur-2xl transition-all duration-500" />
           <div className="relative rounded-sm overflow-hidden bg-card border border-border aspect-[4/3] flex items-center justify-center p-8">
              <div className="absolute inset-0 corporate-grid opacity-50" />
-             <div className="relative z-10 w-full h-full border border-border rounded-sm bg-surface flex items-center justify-center shadow-corp">
+             <div className="relative z-10 w-full h-full border border-border rounded-sm bg-surface flex items-center justify-center shadow-corp overflow-hidden">
                 <div className="w-32 h-32 rounded-full border-4 border-t-gold border-r-primary border-b-secondary border-l-transparent animate-spin" style={{ animationDuration: '8s' }} />
                 <div className="absolute w-24 h-24 rounded-full border-4 border-b-gold/70 border-l-primary/70 border-t-secondary/70 border-r-transparent animate-spin" style={{ animationDuration: '4s', animationDirection: 'reverse' }} />
+                
+                {/* Positive Core Element */}
+                <div className="absolute flex flex-col items-center justify-center animate-pulse" style={{ animationDuration: '3s' }}>
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-tr from-gold/20 to-secondary/20 flex items-center justify-center backdrop-blur-sm border border-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+                    <Sparkles className="h-6 w-6 text-gold drop-shadow-md" />
+                  </div>
+                </div>
+                
+                {/* Floating Particles for a magical/creative feel */}
+                <div className="absolute top-1/4 left-1/4 w-1.5 h-1.5 bg-secondary rounded-full animate-ping" style={{ animationDuration: '3s' }} />
+                <div className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-gold rounded-full animate-pulse" style={{ animationDuration: '2s' }} />
+                <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-primary rounded-full animate-ping" style={{ animationDuration: '4s', animationDelay: '1s' }} />
              </div>
           </div>
         </div>
