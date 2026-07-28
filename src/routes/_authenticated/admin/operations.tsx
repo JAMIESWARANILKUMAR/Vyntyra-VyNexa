@@ -3,7 +3,8 @@ import {
   Building2, Plus, Mail, ClipboardList, Calendar, Trash2, Users,
   ShieldAlert, Loader2, AlertCircle, UserCheck, UserX, Clock,
   CheckCircle2, Circle, AlertTriangle, ChevronDown, ArrowLeft,
-  Shield, GraduationCap, Briefcase, CalendarDays, RefreshCw
+  Shield, GraduationCap, Briefcase, CalendarDays, RefreshCw,
+  Video, FileText, UploadCloud
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,10 @@ import {
   listTeamMembers, provisionUser, revokeUser,
   listAnnouncements, createAnnouncement, deleteAnnouncement,
   listTasks, createTask, deleteTask,
-  listSchedules, createSchedule, deleteSchedule
+  listSchedules, createSchedule, deleteSchedule,
+  listMeetings, createMeeting, deleteMeeting,
+  listResources, createResource, deleteResource,
+  getPresignedUrl
 } from "@/lib/operations.functions";
 import { toast } from "sonner";
 import {
@@ -89,24 +93,39 @@ function OperationsDashboard() {
   const fetchSchedules = useServerFn(listSchedules);
   const doCreateSchedule = useServerFn(createSchedule);
   const doDeleteSchedule = useServerFn(deleteSchedule);
+  const fetchMeetings = useServerFn(listMeetings);
+  const doCreateMeeting = useServerFn(createMeeting);
+  const doDeleteMeeting = useServerFn(deleteMeeting);
+  const fetchResources = useServerFn(listResources);
+  const doCreateResource = useServerFn(createResource);
+  const doDeleteResource = useServerFn(deleteResource);
+  const doGetUploadUrl = useServerFn(getPresignedUrl);
 
   // Dialog states
   const [provisionOpen, setProvisionOpen] = useState(false);
   const [announcementOpen, setAnnouncementOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [meetingOpen, setMeetingOpen] = useState(false);
+  const [resourceOpen, setResourceOpen] = useState(false);
 
   // Form states
   const [provisionForm, setProvisionForm] = useState({ full_name: "", email: "", password: "", role: "employee" as "employee" | "intern" });
   const [announcementForm, setAnnouncementForm] = useState({ title: "", body: "", target_role: "all" as "employee" | "intern" | "all" });
   const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium" as "low" | "medium" | "high" });
   const [scheduleForm, setScheduleForm] = useState({ title: "", description: "", event_date: "", event_time: "", target_role: "all" as "employee" | "intern" | "all" });
+  const [meetingForm, setMeetingForm] = useState({ title: "", meeting_link: "", start_time: "", target_role: "all" as "employee" | "intern" | "all" });
+  const [resourceForm, setResourceForm] = useState({ title: "", category: "document" as "document" | "link" | "other", description: "", target_role: "all" as "employee" | "intern" | "all" });
+  const [resourceFile, setResourceFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Queries
   const teamQ = useQuery({ queryKey: ["team-members"], queryFn: () => fetchTeam() });
   const announcementsQ = useQuery({ queryKey: ["announcements"], queryFn: () => fetchAnnouncements() });
   const tasksQ = useQuery({ queryKey: ["tasks"], queryFn: () => fetchTasks() });
   const schedulesQ = useQuery({ queryKey: ["schedules"], queryFn: () => fetchSchedules() });
+  const meetingsQ = useQuery({ queryKey: ["meetings"], queryFn: () => fetchMeetings() });
+  const resourcesQ = useQuery({ queryKey: ["resources"], queryFn: () => fetchResources() });
 
   const team: any[] = teamQ.data || [];
   const employees = team.filter((m: any) => m.role === "employee");
@@ -202,6 +221,71 @@ function OperationsDashboard() {
       qc.invalidateQueries({ queryKey: ["schedules"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to remove event");
+    }
+  }
+
+  async function handleCreateMeeting(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      await doCreateMeeting({ data: meetingForm });
+      toast.success("Meeting scheduled!");
+      setMeetingOpen(false);
+      setMeetingForm({ title: "", meeting_link: "", start_time: "", target_role: "all" });
+      qc.invalidateQueries({ queryKey: ["meetings"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create meeting");
+    }
+  }
+
+  async function handleDeleteMeeting(id: string) {
+    try {
+      await doDeleteMeeting({ data: { id } });
+      toast.success("Meeting removed");
+      qc.invalidateQueries({ queryKey: ["meetings"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove meeting");
+    }
+  }
+
+  async function handleCreateResource(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      setIsUploading(true);
+      let fileUrl = "";
+      
+      if (resourceFile) {
+        const uploadInfo = await doGetUploadUrl({ data: { filename: resourceFile.name, contentType: resourceFile.type } });
+        
+        await fetch(uploadInfo.uploadUrl, {
+          method: "PUT",
+          body: resourceFile,
+          headers: {
+            "Content-Type": resourceFile.type,
+          },
+        });
+        fileUrl = uploadInfo.fileUrl;
+      }
+
+      await doCreateResource({ data: { ...resourceForm, url: fileUrl } });
+      toast.success("Resource added!");
+      setResourceOpen(false);
+      setResourceForm({ title: "", category: "document", description: "", target_role: "all" });
+      setResourceFile(null);
+      qc.invalidateQueries({ queryKey: ["resources"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add resource");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  async function handleDeleteResource(id: string) {
+    try {
+      await doDeleteResource({ data: { id } });
+      toast.success("Resource removed");
+      qc.invalidateQueries({ queryKey: ["resources"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove resource");
     }
   }
 
@@ -645,6 +729,210 @@ function OperationsDashboard() {
             )}
           </div>
         </section>
+
+        {/* ── Meetings + Resources ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* Meetings */}
+          <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b flex items-center justify-between">
+              <h2 className="font-semibold text-sm flex items-center gap-2"><Video className="h-4 w-4 text-indigo-500" /> Meetings</h2>
+              <Dialog open={meetingOpen} onOpenChange={setMeetingOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1.5 text-xs h-7 px-3"><Plus className="h-3.5 w-3.5" /> New Meeting</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2"><Video className="h-5 w-5 text-indigo-500" /> Schedule Meeting</DialogTitle>
+                    <DialogDescription>Add a new meeting for your team.</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleCreateMeeting} className="space-y-4 py-2">
+                    <div className="space-y-1.5">
+                      <Label>Title</Label>
+                      <Input required value={meetingForm.title} onChange={e => setMeetingForm({ ...meetingForm, title: e.target.value })} placeholder="e.g. Daily Standup" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Meeting Link</Label>
+                      <Input required type="url" value={meetingForm.meeting_link} onChange={e => setMeetingForm({ ...meetingForm, meeting_link: e.target.value })} placeholder="https://zoom.us/j/..." />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Start Time</Label>
+                      <Input required type="datetime-local" value={meetingForm.start_time} onChange={e => setMeetingForm({ ...meetingForm, start_time: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Target Audience</Label>
+                      <Select value={meetingForm.target_role} onValueChange={(v: any) => setMeetingForm({ ...meetingForm, target_role: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Everyone</SelectItem>
+                          <SelectItem value="employee">Employees Only</SelectItem>
+                          <SelectItem value="intern">Interns Only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <DialogFooter>
+                      <Button type="button" variant="ghost" onClick={() => setMeetingOpen(false)}>Cancel</Button>
+                      <Button type="submit">Schedule</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+            <div className="divide-y max-h-[380px] overflow-y-auto">
+              {meetingsQ.isLoading ? (
+                <div className="p-8 flex items-center justify-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
+              ) : meetingsQ.isError ? (
+                <ErrorState message="Could not load meetings." onRetry={() => meetingsQ.refetch()} />
+              ) : (meetingsQ.data || []).length === 0 ? (
+                <EmptyState icon={<Video className="h-6 w-6" />} message="No meetings scheduled." />
+              ) : (
+                (meetingsQ.data as any[]).map((m: any) => (
+                  <div key={m.id} className="p-4 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm truncate">{m.title}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${m.target_role === "all" ? "bg-slate-100 text-slate-600" : m.target_role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+                            {m.target_role === "all" ? "Everyone" : m.target_role}
+                          </span>
+                          <span className="text-xs text-muted-foreground">{new Date(m.start_time).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span>
+                        </div>
+                        <a href={m.meeting_link} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 hover:underline mt-2 block truncate">{m.meeting_link}</a>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/50 hover:text-destructive hover:bg-destructive/10 shrink-0">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Meeting?</AlertDialogTitle>
+                            <AlertDialogDescription>This will remove the meeting from all dashboards.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteMeeting(m.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          {/* Resources */}
+          <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b flex items-center justify-between">
+              <h2 className="font-semibold text-sm flex items-center gap-2"><FileText className="h-4 w-4 text-pink-500" /> Resources</h2>
+              <Dialog open={resourceOpen} onOpenChange={setResourceOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1.5 text-xs h-7 px-3"><Plus className="h-3.5 w-3.5" /> Add Resource</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-pink-500" /> Upload Resource</DialogTitle>
+                    <DialogDescription>Share documents or links with your team.</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleCreateResource} className="space-y-4 py-2">
+                    <div className="space-y-1.5">
+                      <Label>Title</Label>
+                      <Input required value={resourceForm.title} onChange={e => setResourceForm({ ...resourceForm, title: e.target.value })} placeholder="e.g. Employee Handbook" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Description <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                      <Textarea rows={2} value={resourceForm.description} onChange={e => setResourceForm({ ...resourceForm, description: e.target.value })} placeholder="Brief description..." />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label>Category</Label>
+                        <Select value={resourceForm.category} onValueChange={(v: any) => setResourceForm({ ...resourceForm, category: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="document">Document</SelectItem>
+                            <SelectItem value="link">Link</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Target Audience</Label>
+                        <Select value={resourceForm.target_role} onValueChange={(v: any) => setResourceForm({ ...resourceForm, target_role: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Everyone</SelectItem>
+                            <SelectItem value="employee">Employees Only</SelectItem>
+                            <SelectItem value="intern">Interns Only</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>File</Label>
+                      <Input type="file" required onChange={e => setResourceFile(e.target.files?.[0] || null)} />
+                    </div>
+                    <DialogFooter>
+                      <Button type="button" variant="ghost" onClick={() => setResourceOpen(false)} disabled={isUploading}>Cancel</Button>
+                      <Button type="submit" disabled={!resourceFile || isUploading}>
+                        {isUploading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Uploading...</> : "Upload"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+            <div className="divide-y max-h-[380px] overflow-y-auto">
+              {resourcesQ.isLoading ? (
+                <div className="p-8 flex items-center justify-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
+              ) : resourcesQ.isError ? (
+                <ErrorState message="Could not load resources." onRetry={() => resourcesQ.refetch()} />
+              ) : (resourcesQ.data || []).length === 0 ? (
+                <EmptyState icon={<FileText className="h-6 w-6" />} message="No resources uploaded." />
+              ) : (
+                (resourcesQ.data as any[]).map((r: any) => (
+                  <div key={r.id} className="p-4 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm truncate">{r.title}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${r.target_role === "all" ? "bg-slate-100 text-slate-600" : r.target_role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+                            {r.target_role === "all" ? "Everyone" : r.target_role}
+                          </span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium capitalize bg-gray-100 text-gray-700">{r.category}</span>
+                          <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                        </div>
+                        {r.description && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{r.description}</p>}
+                        <a href={r.url} target="_blank" rel="noreferrer" className="text-xs text-pink-600 hover:underline mt-2 flex items-center gap-1">
+                          <UploadCloud className="h-3 w-3" /> Download / View
+                        </a>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/50 hover:text-destructive hover:bg-destructive/10 shrink-0">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Resource?</AlertDialogTitle>
+                            <AlertDialogDescription>This will remove the resource from all dashboards.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteResource(r.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+        </div>
 
       </main>
     </div>

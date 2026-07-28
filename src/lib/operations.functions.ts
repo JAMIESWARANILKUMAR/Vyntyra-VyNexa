@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getAdminClient } from "@/integrations/supabase/admin";
+import { generateUploadUrl } from "./r2";
 
 const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
@@ -344,4 +345,11 @@ export const deleteResource = createServerFn({ method: 'POST' })
     const { error } = await supabase.from('resources').delete().eq('id', data.id);
     if (error) throw new Error(error.message);
     return { success: true };
+  });
+
+export const getPresignedUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ filename: z.string(), contentType: z.string() }).parse(d))
+  .handler(async ({ data }) => {
+    return await generateUploadUrl(data.filename, data.contentType);
   });
