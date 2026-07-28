@@ -76,31 +76,33 @@ export const listTeamMembers = createServerFn({ method: "GET" })
 
     const userIds = roles.map((r: any) => r.user_id);
 
-    // Fetch auth users for email and metadata
-    const members = await Promise.all(
-      roles.map(async (r: any) => {
-        const { data: authUser } = await supabase.auth.admin.getUserById(r.user_id);
-        const email = authUser?.user?.email || "";
-        const full_name = authUser?.user?.user_metadata?.full_name || email.split("@")[0];
+    // Bulk fetch profiles
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("*")
+      .in("id", userIds);
 
-        // Also check profiles table
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", r.user_id)
-          .single();
+    // Fetch all auth users to avoid rate limiting on getUserById
+    const { data: authData } = await supabase.auth.admin.listUsers();
+    const authUsers = authData?.users || [];
 
-        return {
-          id: r.user_id,
-          email,
-          role: r.role,
-          ...profile,
-          full_name: profile?.full_name || full_name,
-        };
-      })
-    );
+    const members = roles.map((r: any) => {
+      const authUser = authUsers.find((u) => u.id === r.user_id);
+      const profile = profiles?.find((p) => p.id === r.user_id) || {};
+      
+      const email = authUser?.email || profile.email || "";
+      const full_name = profile.full_name || authUser?.user_metadata?.full_name || email.split("@")[0];
 
-    return members.filter((m: any) => m.email);
+      return {
+        id: r.user_id,
+        role: r.role,
+        ...profile,
+        email,
+        full_name,
+      };
+    });
+
+    return members.filter((m: any) => m.email || m.full_name);
   });
 
 // ─── Announcements ────────────────────────────────────────────────
