@@ -115,7 +115,7 @@ function OperationsDashboard() {
   const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium" as "low" | "medium" | "high" });
   const [scheduleForm, setScheduleForm] = useState({ title: "", description: "", event_date: "", event_time: "", target_role: "all" as "employee" | "intern" | "all" });
   const [meetingForm, setMeetingForm] = useState({ title: "", meeting_link: "", start_time: "", target_role: "all" as "employee" | "intern" | "all" });
-  const [resourceForm, setResourceForm] = useState({ title: "", category: "document" as "document" | "link" | "other", description: "", target_role: "all" as "employee" | "intern" | "all" });
+  const [resourceForm, setResourceForm] = useState({ title: "", type: "document" as "document" | "video" | "link" | "template" | "guide", description: "", target_role: "all" as "employee" | "intern" | "all" });
   const [resourceFile, setResourceFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -269,7 +269,7 @@ function OperationsDashboard() {
       await doCreateResource({ data: { ...resourceForm, url: fileUrl } });
       toast.success("Resource added!");
       setResourceOpen(false);
-      setResourceForm({ title: "", category: "document", description: "", target_role: "all" });
+      setResourceForm({ title: "", type: "document", description: "", target_role: "all" });
       setResourceFile(null);
       qc.invalidateQueries({ queryKey: ["resources"] });
     } catch (err: any) {
@@ -847,13 +847,15 @@ function OperationsDashboard() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label>Category</Label>
-                        <Select value={resourceForm.category} onValueChange={(v: any) => setResourceForm({ ...resourceForm, category: v })}>
+                        <Label>Type</Label>
+                        <Select value={resourceForm.type} onValueChange={(v: any) => setResourceForm({ ...resourceForm, type: v })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="document">Document</SelectItem>
+                            <SelectItem value="video">Video</SelectItem>
                             <SelectItem value="link">Link</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
+                            <SelectItem value="template">Template</SelectItem>
+                            <SelectItem value="guide">Guide</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -900,7 +902,7 @@ function OperationsDashboard() {
                           <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${r.target_role === "all" ? "bg-slate-100 text-slate-600" : r.target_role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
                             {r.target_role === "all" ? "Everyone" : r.target_role}
                           </span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium capitalize bg-gray-100 text-gray-700">{r.category}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium capitalize bg-gray-100 text-gray-700">{r.type}</span>
                           <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
                         </div>
                         {r.description && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{r.description}</p>}
