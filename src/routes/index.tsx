@@ -841,7 +841,7 @@ function Hero() {
       <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6 z-10">
         <div className="grid lg:grid-cols-[1.5fr_1fr] gap-12 lg:gap-16 items-center">
           <div className="space-y-8 animate-fade-in-up" style={{ animation: 'fadeInUp 0.8s ease-out forwards' }}>
-            <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-xs font-semibold text-gold uppercase tracking-[0.2em] backdrop-blur-md shadow-[0_0_15px_rgba(201,162,39,0.15)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-xs font-semibold text-white uppercase tracking-[0.2em] backdrop-blur-md shadow-[0_0_15px_rgba(255,255,255,0.15)]">
               Now Hiring · Founding Team
             </div>
             
