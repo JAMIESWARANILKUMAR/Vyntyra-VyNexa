@@ -30,7 +30,7 @@ export function Footer() {
           <div className="lg:col-span-4 flex flex-col gap-6">
             <Link to="/" className="inline-block w-fit opacity-90 hover:opacity-100 transition-opacity">
               <img 
-                src="https://vyntyraconsultancyservices.in/logo.png" 
+                src="/icon-512.png" 
                 alt="Vyntyra" 
                 className="h-12 w-auto object-contain rounded-md drop-shadow-md"  
               />

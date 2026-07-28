@@ -54,7 +54,7 @@ function EmployeeAuthPage() {
       <div className="w-full max-w-md relative z-10" style={{ animation: 'fadeInUp 0.8s ease-out forwards' }}>
         <a href="/" className="flex flex-col items-center justify-center mb-8 group">
           <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:-rotate-2 group-hover:shadow-xl">
-            <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-14 w-auto drop-shadow-sm" />
+            <img src="/icon-512.png" alt="Vyntyra" className="h-14 w-auto drop-shadow-sm" />
           </div>
           <span className="mt-4 text-slate-500 tracking-[0.2em] uppercase text-[10px] font-bold group-hover:text-blue-600 transition-colors duration-300">Vyntyra Connect</span>
         </a>

@@ -20,7 +20,7 @@ function TermsPage() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 h-16 flex items-center justify-between">
           <a href="/" className="flex items-center gap-3">
-            <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-9 w-auto" />
+            <img src="/icon-512.png" alt="Vyntyra" className="h-9 w-auto" />
           </a>
           <a href="/" className="text-sm text-muted-foreground hover:text-primary">← Back to application</a>
         </div>

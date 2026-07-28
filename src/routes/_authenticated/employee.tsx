@@ -89,7 +89,7 @@ function EmployeeDashboard() {
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-8 w-auto" />
+            <img src="/icon-512.png" alt="Vyntyra" className="h-8 w-auto" />
             <div className="border-l border-slate-200 pl-3 hidden sm:block">
               <div className="text-[10px] uppercase tracking-widest text-slate-400 font-medium">Employee Portal</div>
               <div className="text-sm font-semibold text-slate-800 capitalize">{displayName}</div>

@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Body, Container, Head, Heading, Html, Img, Preview, Section, Text, Hr, Link } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
-const LOGO_URL = 'https://vyntyraconsultancyservices.in/logo.png'
+const LOGO_URL = '/icon-512.png'
 const INK = '#111827'
 const MUTED = '#4B5563'
 const LINE = '#E5E7EB'

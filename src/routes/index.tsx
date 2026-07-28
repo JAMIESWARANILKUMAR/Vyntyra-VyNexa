@@ -735,7 +735,7 @@ function TopBar({ live = true }: { live?: boolean }) {
     <header className="border-b border-border bg-card sticky top-0 z-40 backdrop-blur">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
         <a href="/" className="flex items-center gap-3 min-w-0 shrink">
-          <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra Consultancy Services" className="h-8 sm:h-11 w-auto shrink-0" />
+          <img src="/icon-512.png" alt="Vyntyra Consultancy Services" className="h-8 sm:h-11 w-auto shrink-0" />
         </a>
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {live ? (

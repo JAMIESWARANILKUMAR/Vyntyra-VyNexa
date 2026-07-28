@@ -56,7 +56,7 @@ function TrackPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b border-border bg-card">
         <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 h-14 sm:h-16 flex items-center gap-3">
-          <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-8 sm:h-10 w-auto" />
+          <img src="/icon-512.png" alt="Vyntyra" className="h-8 sm:h-10 w-auto" />
           <div className="border-l border-border pl-3">
             <div className="text-sm font-semibold text-primary leading-none">Vyntyra Careers</div>
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">

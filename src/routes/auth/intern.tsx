@@ -54,7 +54,7 @@ function InternAuthPage() {
       <div className="w-full max-w-md relative z-10" style={{ animation: 'fadeInUp 0.8s ease-out forwards' }}>
         <a href="/" className="flex flex-col items-center justify-center mb-8 group">
           <div className="bg-slate-800/80 backdrop-blur-md border border-emerald-500/30 rounded-2xl p-4 shadow-[0_0_20px_rgba(16,185,129,0.15)] transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-2 group-hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]">
-            <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-14 w-auto drop-shadow-sm" />
+            <img src="/icon-512.png" alt="Vyntyra" className="h-14 w-auto drop-shadow-sm" />
           </div>
           <span className="mt-4 text-emerald-400/60 tracking-[0.2em] uppercase text-[10px] font-bold group-hover:text-emerald-400 transition-colors duration-300">Vyntyra Connect</span>
         </a>

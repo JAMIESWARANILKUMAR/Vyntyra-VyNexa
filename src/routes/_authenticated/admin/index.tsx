@@ -330,7 +330,7 @@ function AdminDashboard() {
       <header className="border-b border-border bg-card sticky top-0 z-40">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <img src="https://vyntyraconsultancyservices.in/logo.png" alt="Vyntyra" className="h-8 sm:h-10 w-auto shrink-0" />
+            <img src="/icon-512.png" alt="Vyntyra" className="h-8 sm:h-10 w-auto shrink-0" />
             <div className="border-l border-border pl-3 min-w-0 hidden xs:block sm:block">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
                 Super Admin
