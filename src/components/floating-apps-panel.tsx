@@ -226,12 +226,14 @@ function AppCard({ app }: { app: AppItem }) {
 function GoogleAppIcon({ app }: { app: AppItem }) {
   return (
     <button
-      onClick={() => openApp(app.url, app.name)}
+      onClick={() => openApp(app)}
       className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all group"
       title={app.description}
     >
-      <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${app.color} flex items-center justify-center text-xl shadow-md group-hover:scale-110 transition-transform`}>
-        {app.icon}
+      <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${app.color} p-[1px] flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
+        <div className="h-full w-full rounded-[10px] bg-slate-900 flex items-center justify-center overflow-hidden">
+          <img src={app.iconUrl} alt={app.name} className="h-6 w-6 object-contain" />
+        </div>
       </div>
       <span className="text-[10px] font-medium text-white/60">{app.name}</span>
     </button>
