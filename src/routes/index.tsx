@@ -27,6 +27,7 @@ import {
   FileText,
   Clock,
   Menu,
+  Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { submitApplication } from "@/lib/applications.functions";
