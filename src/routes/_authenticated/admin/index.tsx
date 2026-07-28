@@ -66,7 +66,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export const Route = createFileRoute("/_authenticated/admin")({
+export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({ meta: [{ title: "Super Admin Dashboard — Vyntyra Careers" }] }),
   component: AdminDashboard,
 });
@@ -373,7 +373,7 @@ function AdminDashboard() {
                   Super Admin Dashboard
                 </div>
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight leading-tight">
-                  Hello, <span className="text-gold">Recruiter</span>
+                  Hello, <span className="text-gold">Super Admin</span>
                 </h1>
                 <p className="text-lg sm:text-xl text-primary-foreground/80 mt-1">
                   @ <span className="font-medium text-primary-foreground">Vyntyra Consultancy Services</span>
