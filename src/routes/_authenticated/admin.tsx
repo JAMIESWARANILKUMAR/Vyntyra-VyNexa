@@ -317,6 +317,12 @@ function AdminDashboard() {
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <InstallPwaButton />
             <Link
+              to="/_authenticated/cms"
+              className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
+            >
+              <Settings2 className="h-4 w-4" /> <span className="hidden sm:inline">CMS</span>
+            </Link>
+            <Link
               to="/_authenticated/templates"
               className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
             >

@@ -23,11 +23,9 @@ export async function notifyAdminOfApplication(p: AppNotifyPayload) {
   await Promise.allSettled([
     sendTemplateEmail('application-admin', 'hr@vyntyraconsultancyservices.in', {
       templateData,
-      idempotencyKey: `application-admin-${p.applicationId}`,
     }),
     sendTemplateEmail('application-applicant', p.email, {
       templateData,
-      idempotencyKey: `application-applicant-${p.applicationId}`,
     }),
   ])
 }

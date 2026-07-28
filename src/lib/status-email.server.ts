@@ -15,6 +15,7 @@ interface StatusEmailInput {
   portalLink: string;
   template: { subject: string; html_body: string };
   idempotencyKey: string;
+  attachmentUrl?: string | null;
 }
 
 function substitute(source: string, vars: Record<string, string>) {
@@ -86,6 +87,14 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
       subject,
       html,
       text,
+      ...(input.attachmentUrl ? {
+        attachments: [
+          {
+            filename: 'Offer_Letter.pdf',
+            path: input.attachmentUrl
+          }
+        ]
+      } : {})
     });
   } catch (err) {
     console.error("[status-email] failed to send email via Resend:", err);

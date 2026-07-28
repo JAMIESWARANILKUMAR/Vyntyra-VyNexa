@@ -19,6 +19,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StatusTokenRouteImport } from './routes/status.$token'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
+import { Route as AuthenticatedCmsRouteImport } from './routes/_authenticated/cms'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 
 const TrackRoute = TrackRouteImport.update({
@@ -70,6 +71,11 @@ const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
   path: '/templates',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCmsRoute = AuthenticatedCmsRouteImport.update({
+  id: '/cms',
+  path: '/cms',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/cms': typeof AuthenticatedCmsRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/status/$token': typeof StatusTokenRoute
 }
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/cms': typeof AuthenticatedCmsRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/status/$token': typeof StatusTokenRoute
 }
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/cms': typeof AuthenticatedCmsRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/status/$token': typeof StatusTokenRoute
 }
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/track'
     | '/admin'
+    | '/cms'
     | '/templates'
     | '/status/$token'
   fileRoutesByTo: FileRoutesByTo
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/track'
     | '/admin'
+    | '/cms'
     | '/templates'
     | '/status/$token'
   id:
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/track'
     | '/_authenticated/admin'
+    | '/_authenticated/cms'
     | '/_authenticated/templates'
     | '/status/$token'
   fileRoutesById: FileRoutesById
@@ -237,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/cms': {
+      id: '/_authenticated/cms'
+      path: '/cms'
+      fullPath: '/cms'
+      preLoaderRoute: typeof AuthenticatedCmsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -249,11 +268,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedCmsRoute: typeof AuthenticatedCmsRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedCmsRoute: AuthenticatedCmsRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
 }
 

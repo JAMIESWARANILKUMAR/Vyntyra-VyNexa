@@ -66,7 +66,7 @@ const ApplicantConfirm = ({ fullName = 'there', email = '', roleApplied = 'the r
               Application ID
             </Text>
             <Text style={{ margin: '4px 0 0', fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', fontSize: 14, color: INK, fontWeight: 600, wordBreak: 'break-all' }}>
-              {applicationId}
+              {applicationId.slice(0, 8).toUpperCase()}
             </Text>
           </div>
         </Section>

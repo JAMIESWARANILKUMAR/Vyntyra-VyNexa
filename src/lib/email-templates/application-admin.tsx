@@ -76,7 +76,7 @@ const AdminNotify = ({ fullName = 'Candidate', email = 'candidate@example.com', 
                 </tr>
                 <tr>
                   <td style={{ padding: '4px 0', color: MUTED }}><strong>ID:</strong></td>
-                  <td style={{ padding: '4px 0', color: INK }}>{applicationId}</td>
+                  <td style={{ padding: '4px 0', color: INK }}>{applicationId.slice(0, 8).toUpperCase()}</td>
                 </tr>
               </tbody>
             </table>

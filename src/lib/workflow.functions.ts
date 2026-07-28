@@ -135,17 +135,42 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
             .single();
 
         if (tpl?.enabled) {
-          const { sendStatusChangeEmail } = await import("./status-email.server");
-          await sendStatusChangeEmail({
-            toEmail: app.email,
-            fullName: app.full_name,
-            roleApplied: app.role_applied,
-            status: to,
-            applicationId: data.id,
-            portalLink,
-            template: { subject: tpl.subject, html_body: tpl.html_body },
-            idempotencyKey: `status-${data.id}-${to}-${Date.now()}`,
-          });
+          try {
+            let attachmentUrl = null;
+            
+            if (to === "hired") {
+               const { generateOfferLetterPDF } = await import("./pdf.server");
+               attachmentUrl = await generateOfferLetterPDF({
+                 fullName: app.full_name,
+                 roleApplied: app.role_applied,
+                 applicationId: data.id,
+               });
+            }
+  
+            const { sendStatusChangeEmail } = await import("./status-email.server");
+            await sendStatusChangeEmail({
+              toEmail: app.email,
+              fullName: app.full_name,
+              roleApplied: app.role_applied,
+              status: to,
+              applicationId: data.id,
+              portalLink,
+              template: { subject: tpl.subject, html_body: tpl.html_body },
+              idempotencyKey: `status-${data.id}-${to}-${Date.now()}`,
+              attachmentUrl, // Assume sendStatusChangeEmail accepts this
+            });
+  
+            // Enterprise Backup hook
+            try {
+              const { syncToReplica } = await import("./backup.server");
+              await syncToReplica("applications", { ...app, status: to }, app.id);
+            } catch (bkpErr) {
+              console.error("Backup failed", bkpErr);
+            }
+          } catch (emailErr) {
+            console.error("Failed to process email automation", emailErr);
+          }
+        }
 
           // Insert admin notification for email sent
           try {
@@ -159,10 +184,9 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
           } catch (e) {
             console.warn("[workflow] email notification skipped:", (e as Error).message);
           }
+        } catch (e) {
+          console.warn("[workflow] email/token skipped:", (e as Error).message);
         }
-      } catch (e) {
-        console.warn("[workflow] email/token skipped:", (e as Error).message);
-      }
     } else {
       // Same status; still record the note in event log
       await supabase.from("application_status_events").insert([{

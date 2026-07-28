@@ -295,9 +295,33 @@ function ApplicationPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {jobPostings.map((job) => (
+         <script type="application/ld+json" key={`ld-${job.id}`} dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "JobPosting",
+            title: job.title,
+            description: job.description || job.title,
+            datePosted: job.created_at,
+            employmentType: job.type === "Full-time" ? "FULL_TIME" : job.type === "Internship" ? "INTERN" : "OTHER",
+            hiringOrganization: {
+              "@type": "Organization",
+              name: "Vyntyra Consultancy Services",
+              sameAs: "https://vyntyraconsultancyservices.in"
+            },
+            jobLocation: {
+              "@type": "Place",
+              address: {
+                "@type": "PostalAddress",
+                addressLocality: job.location,
+                addressCountry: "IN"
+              }
+            }
+         })}} />
+      ))}
       <UtilityBar />
       <TopBar live={applicationsOpen} />
       <Hero />
+      <WhyJoinUs />
       <TrustStrip />
 
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-6 space-y-4">
@@ -806,60 +830,117 @@ function TopBar({ live = true }: { live?: boolean }) {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
-      <div className="absolute inset-0 corporate-grid" />
-      <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-gold/10 to-transparent hidden lg:block" />
-      <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6 py-14 sm:py-20 lg:py-28">
-        <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 lg:gap-10 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[11px] font-medium text-gold uppercase tracking-[0.18em]">
+    <section className="relative min-h-[700px] flex flex-col justify-center overflow-hidden bg-slate-950 text-white">
+      {/* Animated Background Orbs (Corporate Theme) */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/30 blur-[120px] animate-pulse" style={{ animationDuration: '4s' }} />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gold/15 blur-[120px] animate-pulse" style={{ animationDuration: '6s' }} />
+      <div className="absolute top-[40%] right-[-20%] w-[30%] h-[30%] rounded-full bg-secondary/20 blur-[120px] animate-pulse" style={{ animationDuration: '5s' }} />
+      
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+
+      <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6 z-10">
+        <div className="grid lg:grid-cols-[1.5fr_1fr] gap-12 lg:gap-16 items-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-xs font-semibold text-gold uppercase tracking-[0.2em] backdrop-blur-md shadow-[0_0_15px_rgba(201,162,39,0.15)]">
               Now Hiring · Founding Team
             </div>
-            <h1 className="mt-5 sm:mt-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.1] tracking-tight">
-              Build the next generation of{" "}
-              <span className="text-gold">intelligent search.</span>
+            
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight">
+              The Future of <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gold to-white">Intelligent Search.</span>
             </h1>
-            <p className="mt-6 text-base lg:text-lg text-primary-foreground/75 max-w-2xl leading-relaxed">
-              Vyntyra Consultancy Services is assembling a founding team for <span className="text-primary-foreground font-medium">Project VyNexa</span> —
-              a private, intelligent search engine designed for how people actually find things today.
-              Apply securely through our corporate careers portal.
+            
+            <p className="text-lg lg:text-xl text-slate-300 max-w-2xl leading-relaxed font-light">
+              Experience the next generation of search powered by Vyntyra. We build highly intelligent, ambient systems that cut through the noise. Apply securely through our corporate careers portal.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a href="#form" className="inline-flex items-center gap-2 bg-gold hover:bg-gold/90 text-gold-foreground px-6 py-3 rounded-full text-sm font-semibold transition-colors shadow-lg shadow-gold/20">
+            
+            <div className="flex flex-wrap gap-4 pt-4">
+              <a href="#form" className="inline-flex items-center justify-center gap-2 bg-gold hover:bg-gold/90 text-gold-foreground px-8 py-4 rounded-xl text-sm font-semibold transition-all duration-300 shadow-[0_0_20px_rgba(201,162,39,0.3)] hover:shadow-[0_0_30px_rgba(201,162,39,0.5)] hover:-translate-y-0.5">
                 Apply Now <ArrowRight className="h-4 w-4" />
               </a>
-              <a href="/about"
-                className="inline-flex items-center gap-2 border border-primary-foreground/30 hover:bg-primary-foreground/10 text-primary-foreground px-6 py-3 rounded-full text-sm font-medium transition-colors">
+              <a href="/about" className="inline-flex items-center justify-center gap-2 border border-white/20 bg-white/5 hover:bg-white/10 text-white px-8 py-4 rounded-xl text-sm font-medium backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5">
                 About Vyntyra
               </a>
             </div>
           </div>
 
-          {/* Right-side info card */}
-          <div className="hidden lg:block">
-            <div className="rounded-sm border border-primary-foreground/15 bg-primary-foreground/[0.04] backdrop-blur p-6">
-              <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold mb-4">At a Glance</div>
-              <dl className="space-y-4">
-                <div className="pb-3 border-b border-primary-foreground/10">
-                  <dt className="text-xs uppercase tracking-wider text-primary-foreground/60 mb-1.5">Locations</dt>
-                  <dd className="text-sm font-medium leading-relaxed">
-                    India — Visakhapatnam, Bengaluru, Hyderabad, Uttar Pradesh
-                    <span className="text-primary-foreground/60"> · Remote</span>
-                  </dd>
+          {/* Right-side Glassmorphism Info Card */}
+          <div className="hidden lg:block animate-fade-in-up" style={{ animation: 'fadeInUp 1s ease-out forwards' }}>
+            <div className="backdrop-blur-2xl bg-white/5 border border-white/10 rounded-3xl shadow-2xl p-8 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none" />
+              
+              <div className="relative z-10">
+                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold mb-6 flex items-center gap-2">
+                  <Shield className="h-4 w-4" /> At a Glance
                 </div>
-                <div className="flex justify-between items-baseline pb-3 border-b border-primary-foreground/10">
-                  <dt className="text-xs uppercase tracking-wider text-primary-foreground/60">Response Time</dt>
-                  <dd className="text-2xl font-semibold">5–7 days</dd>
-                </div>
-                <div>
-                  <dt className="text-xs uppercase tracking-wider text-primary-foreground/60 mb-1.5">Data Handling</dt>
-                  <dd className="text-sm font-medium leading-relaxed">
-                    Secured by Cloudflare Technologies
-                    <span className="block text-primary-foreground/70 mt-1">ISO-aligned · NASSCOM Verified · Registered under MSME</span>
-                  </dd>
-                </div>
-              </dl>
+                
+                <dl className="space-y-6">
+                  <div className="pb-4 border-b border-white/10 group-hover:border-gold/30 transition-colors">
+                    <dt className="text-[10px] uppercase tracking-widest text-slate-400 mb-1.5">Locations</dt>
+                    <dd className="text-sm font-medium text-slate-200 leading-relaxed">
+                      India — Visakhapatnam, Bengaluru, Hyderabad, Uttar Pradesh
+                      <span className="text-gold block mt-1">· Remote Available</span>
+                    </dd>
+                  </div>
+                  <div className="flex justify-between items-baseline pb-4 border-b border-white/10 group-hover:border-gold/30 transition-colors">
+                    <dt className="text-[10px] uppercase tracking-widest text-slate-400">Response Time</dt>
+                    <dd className="text-3xl font-semibold text-white tracking-tight">5–7 <span className="text-sm font-normal text-slate-400">days</span></dd>
+                  </div>
+                  <div>
+                    <dt className="text-[10px] uppercase tracking-widest text-slate-400 mb-1.5">Data Handling</dt>
+                    <dd className="text-sm font-medium text-slate-200 leading-relaxed">
+                      Secured by Cloudflare Technologies
+                      <span className="block text-xs text-slate-400 mt-2 font-mono">ISO-aligned · NASSCOM Verified</span>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
             </div>
+          </div>
+        </div>
+      </div>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}} />
+    </section>
+  );
+}
+
+function WhyJoinUs() {
+  return (
+    <section className="py-24 px-4 sm:px-6 max-w-6xl mx-auto bg-slate-950 text-white border-t border-white/5">
+      <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
+          <span className="text-gold text-[10px] font-bold uppercase tracking-[0.2em]">Innovation Labs</span>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">Redefining Search through Deep Intelligence</h2>
+          <p className="text-slate-400 text-lg leading-relaxed font-light">
+            At Vyntyra, we navigate the boundary between pure research and practical engineering. Our systems are built on principles of optical precision and atmospheric depth, ensuring that every interaction feels effortless yet authoritative.
+          </p>
+          <ul className="space-y-4 pt-4">
+            {[
+              "Rigorous Technical Grids",
+              "Ambient Neural Architectures",
+              "Ultra-low Latency Retrieval"
+            ].map((item, i) => (
+              <li key={i} className="flex items-center gap-3 text-slate-300 font-medium text-sm">
+                <CheckCircle2 className="h-5 w-5 text-gold shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+        
+        <div className="relative group animate-fade-in-up" style={{ animationDelay: '0.4s', animationFillMode: 'both' }}>
+          <div className="absolute inset-0 bg-primary/20 rounded-3xl blur-2xl group-hover:bg-primary/30 transition-all duration-500" />
+          <div className="relative rounded-3xl overflow-hidden backdrop-blur-md bg-white/5 border border-white/10 aspect-[4/3] flex items-center justify-center p-8">
+             {/* Abstract visualization replacing image */}
+             <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+             <div className="relative z-10 w-full h-full border border-gold/20 rounded-2xl bg-primary/20 flex items-center justify-center shadow-[0_0_50px_rgba(201,162,39,0.1)]">
+                <div className="w-32 h-32 rounded-full border-4 border-t-gold border-r-primary border-b-secondary border-l-transparent animate-spin" style={{ animationDuration: '8s' }} />
+                <div className="absolute w-24 h-24 rounded-full border-4 border-b-gold/70 border-l-primary/70 border-t-secondary/70 border-r-transparent animate-spin" style={{ animationDuration: '4s', animationDirection: 'reverse' }} />
+             </div>
           </div>
         </div>
       </div>
