@@ -1069,17 +1069,15 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
     e.preventDefault();
     try {
       await doUpdateProfile({ data: { 
-        userId: user.id, 
-        updates: {
-          full_name: form.full_name,
-          phone: form.phone,
-          address: form.address,
-          intern_id: form.intern_id,
-          start_date: form.start_date,
-          end_date: form.end_date,
-          avatar_url: form.avatar_url,
-          offer_letter_url: form.offer_letter_url
-        } 
+        id: user.id, 
+        full_name: form.full_name,
+        phone: form.phone,
+        address: form.address,
+        intern_id: form.intern_id,
+        start_date: form.start_date,
+        end_date: form.end_date,
+        avatar_url: form.avatar_url,
+        offer_letter_url: form.offer_letter_url
       } });
       toast.success("Profile updated successfully");
       qc.invalidateQueries({ queryKey: ["team-members"] });
