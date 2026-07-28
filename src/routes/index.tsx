@@ -949,16 +949,6 @@ function WhyJoinUs() {
           <div className="relative rounded-sm overflow-hidden bg-card border border-border aspect-[4/3] flex items-center justify-center p-8">
              <div className="absolute inset-0 corporate-grid opacity-50" />
              <div className="relative z-10 w-full h-full border border-border rounded-sm bg-surface flex items-center justify-center shadow-corp overflow-hidden">
-                <video 
-                  autoPlay 
-                  loop 
-                  muted 
-                  playsInline 
-                  className="absolute inset-0 w-full h-full object-cover opacity-60"
-                  src="https://videos.pexels.com/video-files/3129671/3129671-hd_1920_1080_30fps.mp4" 
-                />
-                <div className="absolute inset-0 bg-primary/20 mix-blend-multiply" />
-                
                 <div className="w-32 h-32 rounded-full border-4 border-t-gold border-r-primary border-b-secondary border-l-transparent animate-spin" style={{ animationDuration: '8s' }} />
                 <div className="absolute w-24 h-24 rounded-full border-4 border-b-gold/70 border-l-primary/70 border-t-secondary/70 border-r-transparent animate-spin" style={{ animationDuration: '4s', animationDirection: 'reverse' }} />
                 
