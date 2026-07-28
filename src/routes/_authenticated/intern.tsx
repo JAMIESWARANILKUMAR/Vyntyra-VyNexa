@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { MeetingsSection } from "@/components/meetings-section";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
+import { AnalogClock } from "@/components/analog-clock";
+import { ProfileAvatar } from "@/components/profile-avatar";
 import { listTasks, listMeetings, listSchedules, listAnnouncements, listResources, listNotes, createNote, deleteNote, createFeedback, claimPoolTask } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
@@ -76,7 +78,18 @@ function InternDashboard() {
 
   const session = sessionQ.data;
   const email = session?.user?.email || "";
-  const displayName = email.split("@")[0] || "Intern";
+  
+  const profileQ = useQuery({ 
+    queryKey: ["profile", session?.user?.id], 
+    queryFn: async () => { 
+      const { data } = await supabase.from('profiles').select('*').eq('id', session?.user?.id).single(); 
+      return data; 
+    }, 
+    enabled: !!session?.user?.id 
+  });
+  
+  const profile = profileQ.data;
+  const displayName = profile?.full_name || email.split("@")[0] || "Intern";
 
   const poolTasks = tasks.filter((t: any) => t.is_pool_task === true && !t.assigned_to);
   const myTasks = tasks.filter((t: any) => !(t.is_pool_task === true && !t.assigned_to));
@@ -150,14 +163,18 @@ function InternDashboard() {
             {/* Hero */}
             <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white p-6 shadow-lg">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <div className="text-xs uppercase tracking-widest opacity-70 mb-1 flex items-center gap-1.5">
-                    <GraduationCap className="h-3.5 w-3.5" /> Vyntyra Academy
+                <div className="flex items-center gap-4">
+                  <ProfileAvatar url={profile?.avatar_url} name={displayName} />
+                  <div>
+                    <div className="text-xs uppercase tracking-widest opacity-70 mb-1 flex items-center gap-1.5">
+                      <GraduationCap className="h-3.5 w-3.5" /> Vyntyra Academy
+                    </div>
+                    <h1 className="text-2xl font-bold capitalize">{displayName} 👋</h1>
+                    <p className="text-sm opacity-75 mt-1">{new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
                   </div>
-                  <h1 className="text-2xl font-bold capitalize">{displayName} 👋</h1>
-                  <p className="text-sm opacity-75 mt-1">{new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex items-center gap-4">
+                  <AnalogClock />
                   <div className="text-center bg-white/10 rounded-xl px-4 py-2">
                     <div className="text-3xl font-bold">{myTasks.length}</div>
                     <div className="text-xs opacity-60 uppercase tracking-wider">Tasks</div>
