@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin, ExternalLink, ShieldCheck, Github, Linkedin, Twitter, Users } from "lucide-react";
+import { Mail, Phone, MapPin, ExternalLink, ShieldCheck, Linkedin, Twitter, Instagram, Facebook, Globe, MessageSquare, Briefcase, Chrome, Users } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 
@@ -49,9 +49,18 @@ export function Footer() {
               Pioneering tomorrow's digital capabilities today.
             </p>
             
-            <div className="flex gap-4 mt-4">
-              {[Twitter, Linkedin, Github].map((Icon, i) => (
-                <a key={i} href="#" className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center hover:bg-gold hover:border-gold hover:text-[#0a1128] hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all duration-300 hover:-translate-y-1">
+            <div className="flex flex-wrap gap-4 mt-4">
+              {[
+                { Icon: Instagram, label: "Instagram" },
+                { Icon: Facebook, label: "Facebook" },
+                { Icon: Twitter, label: "Twitter" },
+                { Icon: Globe, label: "Website" },
+                { Icon: MessageSquare, label: "Discord" },
+                { Icon: Briefcase, label: "Glassdoor" },
+                { Icon: Linkedin, label: "LinkedIn" },
+                { Icon: Chrome, label: "Google" }
+              ].map(({ Icon, label }, i) => (
+                <a key={i} href="#" title={label} className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center hover:bg-gold hover:border-gold hover:text-[#0a1128] hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all duration-300 hover:-translate-y-1">
                   <Icon className="h-4 w-4" />
                 </a>
               ))}
