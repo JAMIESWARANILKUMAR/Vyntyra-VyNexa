@@ -1,25 +1,12 @@
 import { Mail, Phone, MapPin, ExternalLink, ShieldCheck, Github, Linkedin, Twitter, Users } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
 
 function VisitorCounter() {
-  // Mock visitor count, starts at a high number and increments slowly
-  const [count, setCount] = useState(384592);
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCount(c => c + Math.floor(Math.random() * 3));
-    }, 4500);
-    return () => clearInterval(interval);
-  }, []);
+  const count = 12459;
 
   return (
     <div className="flex items-center gap-2.5 text-xs text-primary-foreground/60 bg-primary-foreground/[0.03] hover:bg-primary-foreground/[0.05] transition-colors px-4 py-2 rounded-full border border-primary-foreground/10 cursor-default">
-      <div className="relative flex h-2 w-2">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-      </div>
       <Users className="h-3.5 w-3.5 text-primary-foreground/40" />
       <span className="font-medium tracking-wide">Total Visitors:</span> 
       <span className="text-white font-mono tracking-tight tabular-nums">{count.toLocaleString()}</span>
@@ -45,7 +32,7 @@ export function Footer() {
               <img 
                 src="https://vyntyraconsultancyservices.in/logo.png" 
                 alt="Vyntyra" 
-                className="h-9 w-auto object-contain brightness-0 invert drop-shadow-[0_2px_10px_rgba(255,255,255,0.15)]" 
+                className="h-12 w-auto object-contain rounded-md drop-shadow-md"  
               />
             </Link>
             <div>
