@@ -13,7 +13,6 @@ import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { PwaRegister } from "@/components/pwa-register";
-import GlobalBackButton from "@/components/global-back-button";
 
 function NotFoundComponent() {
   return (
@@ -135,10 +134,14 @@ function PageLoadingIndicator() {
   if (!isLoading) return null;
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-background/80 backdrop-blur-sm">
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="text-sm font-medium text-foreground animate-pulse">Loading content...</p>
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-background/95 backdrop-blur-md">
+      <div className="flex flex-col items-center gap-6">
+        <div className="relative flex items-center justify-center w-20 h-20">
+           <div className="absolute inset-0 rounded-full border-2 border-t-gold border-r-primary border-b-secondary border-l-transparent animate-spin" style={{ animationDuration: '3s' }} />
+           <div className="absolute inset-2 rounded-full border-2 border-b-gold/70 border-l-primary/70 border-t-secondary/70 border-r-transparent animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }} />
+           <img src="https://vyntyraconsultancyservices.in/logo.png" className="w-8 h-8 object-contain animate-pulse" alt="Loading" />
+        </div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold animate-pulse">Loading Workspace</p>
       </div>
     </div>
   );
@@ -149,7 +152,6 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <PwaRegister />
-      <GlobalBackButton />
       <PageLoadingIndicator />
       <div className="flex min-h-screen flex-col flex-1 w-full relative">
         <Outlet />
