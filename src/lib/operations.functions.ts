@@ -483,3 +483,115 @@ export const markFeedbackRead = createServerFn({ method: "POST" })
   });
 
 
+
+// ─── Leaves ───────────────────────────────────────────────────────
+const leaveSchema = z.object({
+  start_date: z.string(),
+  end_date: z.string(),
+  reason: z.string().min(1),
+});
+
+export const requestLeave = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => leaveSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("leave_requests").insert({
+      user_id: context.userId,
+      start_date: data.start_date,
+      end_date: data.end_date,
+      reason: data.reason,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const listMyLeaves = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("leave_requests")
+      .select("*")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+// ─── Payouts ──────────────────────────────────────────────────────
+export const listMyPayouts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("payouts")
+      .select("*")
+      .eq("user_id", context.userId)
+      .order("date", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+// ─── Attendance ───────────────────────────────────────────────────
+export const clockIn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Check if already clocked in today
+    const { data: existing } = await supabase
+      .from("attendance")
+      .select("id")
+      .eq("user_id", context.userId)
+      .eq("date", today)
+      .single();
+      
+    if (existing) {
+      throw new Error("Already clocked in for today");
+    }
+
+    const { error } = await supabase.from("attendance").insert({
+      user_id: context.userId,
+      date: today,
+      clock_in: new Date().toISOString(),
+      status: 'present'
+    });
+    
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const clockOut = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const { data: existing } = await supabase
+      .from("attendance")
+      .select("id, clock_in")
+      .eq("user_id", context.userId)
+      .eq("date", today)
+      .single();
+      
+    if (!existing) {
+      throw new Error("No clock in found for today");
+    }
+
+    const { error } = await supabase.from("attendance")
+      .update({ clock_out: new Date().toISOString() })
+      .eq("id", existing.id);
+      
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const getMyAttendance = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("attendance")
+      .select("*")
+      .eq("user_id", context.userId)
+      .order("date", { ascending: false });
+      
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
