@@ -252,7 +252,7 @@ function EmployeeDashboard() {
       const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Vyntyra Security' });
       if (error) throw error;
       setMfaFactorId(data.id);
-      setMfaQrCode(data.totp.qr_code);
+      setMfaQrCode(data.totp.uri); // Use the URI for QRCodeSVG, not the raw SVG string
     } catch (err: any) {
       toast.error(err.message || "Failed to enroll MFA");
       setMfaStatus("unenrolled");
