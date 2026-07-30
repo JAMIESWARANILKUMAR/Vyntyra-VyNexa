@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/templates")({
   component: TemplatesPage,
 });
 
-const STATUSES = ["new", "reviewing", "shortlisted", "rejected", "hired"] as const;
+const STATUSES = ["new", "reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected", "hired"] as const;
 
 function TemplatesPage() {
   const list = useServerFn(listStatusTemplates);
@@ -67,7 +67,7 @@ function TemplatesPage() {
           </div>
         ) : (
           <Tabs defaultValue="new">
-            <TabsList className="grid grid-cols-5">
+            <TabsList className="flex flex-wrap h-auto gap-1 bg-muted p-1">
               {STATUSES.map((s) => (
                 <TabsTrigger key={s} value={s} className="capitalize">
                   {s}

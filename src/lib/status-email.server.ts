@@ -16,6 +16,10 @@ interface StatusEmailInput {
   template: { subject: string; html_body: string };
   idempotencyKey: string;
   attachmentUrl?: string | null;
+  ccEmail?: string | null;
+  meetLink?: string | null;
+  meetingTime?: string | null;
+  interviewerName?: string | null;
 }
 
 function substitute(source: string, vars: Record<string, string>) {
@@ -28,7 +32,7 @@ function stripHtml(h: string) {
   return h.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
-const LOGO_URL = 'https://vyntyraconsultancyservices.in/logo.png';
+const LOGO_URL = 'https://careers.vyntyraconsultancyservices.in/icon-512.png';
 
 function shell(innerHtml: string) {
   return `<!doctype html><html><body style="margin:0;background:#F9FAFB;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;padding:40px 16px;">
@@ -74,6 +78,9 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
     status: input.status,
     application_id: input.applicationId,
     portal_link: input.portalLink,
+    meet_link: input.meetLink || "",
+    meeting_time: input.meetingTime ? new Date(input.meetingTime).toLocaleString() : "",
+    interviewer: input.interviewerName || "",
   };
   const subject = substitute(input.template.subject, vars);
   const body = substitute(input.template.html_body, vars);
@@ -87,6 +94,7 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
       subject,
       html,
       text,
+      ...(input.ccEmail ? { cc: input.ccEmail } : {}),
       ...(input.attachmentUrl ? {
         attachments: [
           {

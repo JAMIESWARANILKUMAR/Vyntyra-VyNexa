@@ -1017,6 +1017,10 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
   const [status, setStatus] = useState<AppStatus>((app?.status as AppStatus) ?? "new");
   const [note, setNote] = useState("");
   const [notes, setNotes] = useState(app?.admin_notes ?? "");
+  const [meetLink, setMeetLink] = useState("");
+  const [meetingTime, setMeetingTime] = useState("");
+  const [interviewerName, setInterviewerName] = useState("");
+  const [ccEmail, setCcEmail] = useState("");
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
   const [aiText, setAiText] = useState<string | null>(app?.interview_questions ?? null);
   const [regenerating, setRegenerating] = useState(false);
@@ -1030,6 +1034,10 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
       setNotes(app.admin_notes ?? "");
       setAiText(app.interview_questions ?? null);
       setResumeUrl(null);
+      setMeetLink(app.meet_link || "");
+      setMeetingTime(app.meeting_time ? new Date(app.meeting_time).toISOString().slice(0, 16) : "");
+      setInterviewerName(app.interviewer_name || "");
+      setCcEmail("");
       if (app.resume_path) {
         signed({ data: { path: app.resume_path } })
           .then((r) => setResumeUrl(r.url))
@@ -1039,8 +1047,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
   }, [app?.id]);
 
   const currentStatus = (app?.status as AppStatus) ?? "new";
-  const allowedNext = ALLOWED_TRANSITIONS[currentStatus] ?? [];
-  const options = Array.from(new Set([currentStatus, ...allowedNext]));
+  const options: AppStatus[] = ["new", "reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected", "hired"];
 
   const events = useQuery({
     queryKey: ["status-events", app?.id],
@@ -1056,7 +1063,17 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
   });
 
   const statusMut = useMutation({
-    mutationFn: () => changeStatus({ data: { id: app.id, status, note } }),
+    mutationFn: () => changeStatus({
+      data: {
+        id: app.id,
+        status,
+        note,
+        meetLink: status === "interview_scheduled" ? meetLink : null,
+        meetingTime: status === "interview_scheduled" ? meetingTime : null,
+        interviewerName: status === "interview_scheduled" ? interviewerName : null,
+        ccEmail: ccEmail || null
+      }
+    }),
     onSuccess: () => {
       toast.success(
         status === currentStatus
@@ -1152,6 +1169,17 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
               } />
             )}
           </div>
+
+          {app.status === "interview_scheduled" && (
+            <div className="rounded-md border border-border bg-muted/20 p-4 space-y-2">
+              <div className="text-sm font-semibold text-primary">Scheduled Interview Details</div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                <InfoRow label="Interviewer" value={app.interviewer_name || "—"} />
+                <InfoRow label="Meeting Time" value={app.meeting_time ? new Date(app.meeting_time).toLocaleString() : "—"} />
+                <InfoRow label="Meeting Link" value={app.meet_link ? <a href={app.meet_link} target="_blank" rel="noreferrer" className="text-secondary underline break-all">{app.meet_link}</a> : "—"} />
+              </div>
+            </div>
+          )}
 
           {(app.state || app.college || app.graduation_year || app.hod_name || app.tp_officer_name) && (
             <div className="rounded-md border border-border bg-surface p-4">
@@ -1280,7 +1308,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
                 <div className="text-base font-semibold text-primary">Change status</div>
                 <div className="text-xs text-muted-foreground">
                   Current: <span className="capitalize font-medium text-foreground">{currentStatus}</span>
-                  {isTerminal && " · terminal state (no further transitions)"}
+                  
                 </div>
               </div>
               <Link to="/templates" className="text-xs text-secondary underline">
@@ -1288,10 +1316,10 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Next status</label>
-                <Select value={status} onValueChange={(v) => setStatus(v as AppStatus)} disabled={isTerminal}>
+                <Select value={status} onValueChange={(v) => setStatus(v as AppStatus)} >
                   <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {options.map((s) => (
@@ -1302,7 +1330,53 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
                   </SelectContent>
                 </Select>
               </div>
+              
+              <div>
+                <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">CC Email (Optional)</label>
+                <Input 
+                  className="mt-1.5" 
+                  value={ccEmail} 
+                  onChange={(e) => setCcEmail(e.target.value)} 
+                  placeholder="interviewer@example.com" 
+                />
+              </div>
             </div>
+
+            {status === "interview_scheduled" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-border/50 pt-4">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Assigned Interviewer *</label>
+                  <Input 
+                    required
+                    className="mt-1.5" 
+                    value={interviewerName} 
+                    onChange={(e) => setInterviewerName(e.target.value)} 
+                    placeholder="e.g. Rahul Sen" 
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Meeting Time *</label>
+                  <Input 
+                    required
+                    type="datetime-local"
+                    className="mt-1.5" 
+                    value={meetingTime} 
+                    onChange={(e) => setMeetingTime(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Google Meet / Team Link *</label>
+                  <Input 
+                    required
+                    type="url"
+                    className="mt-1.5" 
+                    value={meetLink} 
+                    onChange={(e) => setMeetLink(e.target.value)} 
+                    placeholder="https://meet.google.com/..." 
+                  />
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
@@ -1314,7 +1388,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
 
             <div className="flex justify-end">
               <Button onClick={() => statusMut.mutate()}
-                disabled={statusMut.isPending || note.trim().length < 3 || isTerminal}
+                disabled={statusMut.isPending || note.trim().length < 3 }
                 className="bg-primary hover:bg-secondary">
                 {statusMut.isPending
                   ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving…</>

@@ -7,14 +7,17 @@ const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as a
 
 // ---------- Transition rules ----------
 
-export type AppStatus = "new" | "reviewing" | "shortlisted" | "rejected" | "hired";
+export type AppStatus = "new" | "reviewing" | "interview_scheduled" | "shortlisted" | "finalised" | "selected" | "rejected" | "hired";
 
 export const ALLOWED_TRANSITIONS: Record<AppStatus, AppStatus[]> = {
-  new: ["reviewing", "rejected"],
-  reviewing: ["shortlisted", "rejected"],
-  shortlisted: ["hired", "rejected"],
-  rejected: [],
-  hired: [],
+  new: ["reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected", "hired"],
+  reviewing: ["new", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected", "hired"],
+  interview_scheduled: ["new", "reviewing", "shortlisted", "finalised", "selected", "rejected", "hired"],
+  shortlisted: ["new", "reviewing", "interview_scheduled", "finalised", "selected", "rejected", "hired"],
+  finalised: ["new", "reviewing", "interview_scheduled", "shortlisted", "selected", "rejected", "hired"],
+  selected: ["new", "reviewing", "interview_scheduled", "shortlisted", "finalised", "rejected", "hired"],
+  rejected: ["new", "reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "hired"],
+  hired: ["new", "reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected"],
 };
 
 function isAllowed(from: AppStatus, to: AppStatus) {
@@ -65,8 +68,12 @@ function randomToken() {
 
 const changeSchema = z.object({
   id: z.string(),
-  status: z.enum(["new", "reviewing", "shortlisted", "rejected", "hired"]),
+  status: z.enum(["new", "reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected", "hired"]),
   note: z.string().trim().min(3, "Note is required (min 3 chars)").max(2000),
+  meetLink: z.string().optional().nullable(),
+  meetingTime: z.string().optional().nullable(),
+  interviewerName: z.string().optional().nullable(),
+  ccEmail: z.string().optional().nullable(),
 });
 
 export const changeApplicationStatus = createServerFn({ method: "POST" })
@@ -91,7 +98,13 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
     }
 
     if (from !== to) {
-      await supabase.from("applications").update({ status: to }).eq('id', data.id);
+      const updateData: any = { status: to, updated_at: new Date().toISOString() };
+      if (to === "interview_scheduled") {
+        updateData.meet_link = data.meetLink || null;
+        updateData.meeting_time = data.meetingTime || null;
+        updateData.interviewer_name = data.interviewerName || null;
+      }
+      await supabase.from("applications").update(updateData).eq('id', data.id);
 
       await supabase.from("application_status_events").insert([{
           application_id: data.id,
@@ -157,7 +170,11 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
               portalLink,
               template: { subject: tpl.subject, html_body: tpl.html_body },
               idempotencyKey: `status-${data.id}-${to}-${Date.now()}`,
-              attachmentUrl, // Assume sendStatusChangeEmail accepts this
+              attachmentUrl,
+              ccEmail: data.ccEmail || null,
+              meetLink: data.meetLink || null,
+              meetingTime: data.meetingTime || null,
+              interviewerName: data.interviewerName || null,
             });
   
             // Enterprise Backup hook
@@ -237,7 +254,7 @@ export const listStatusTemplates = createServerFn({ method: "GET" })
   });
 
 const updateTplSchema = z.object({
-  status: z.enum(["new", "reviewing", "shortlisted", "rejected", "hired"]),
+  status: z.enum(["new", "reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected", "hired"]),
   subject: z.string().trim().min(3).max(200),
   html_body: z.string().trim().min(10).max(20000),
   enabled: z.boolean(),

@@ -166,7 +166,7 @@ export const deleteApplication = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => deleteSchema.parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
-    await supabase.from("applications").delete().eq('id', data.id);
+    await supabase.from("applications").update({ deleted_at: new Date().toISOString() }).eq('id', data.id);
     return { ok: true };
   });
 
@@ -214,6 +214,7 @@ export const listApplications = createServerFn({ method: "GET" })
     const { data, error } = await supabase
         .from("applications")
         .select("*")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
         
     if (error) throw new Error("Failed to list applications");
