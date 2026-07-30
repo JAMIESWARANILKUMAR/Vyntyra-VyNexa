@@ -144,17 +144,18 @@ function BankAdCard({
           </div>
 
           {/* Autoplay Video Crop Container */}
-          <div className="relative overflow-hidden w-full aspect-video rounded-2xl shadow-md border border-slate-100/50 bg-black">
+          <div className="relative overflow-hidden w-full aspect-video rounded-2xl shadow-md border border-slate-100/50 bg-black z-0">
             <iframe 
-              src={`https://www.youtube.com/embed/${activeAd.videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${activeAd.videoId}&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&showinfo=0`} 
-              className="absolute top-[-14%] left-[-2%] w-[104%] h-[128%] pointer-events-none"
+              src={`https://www.youtube.com/embed/${activeAd.videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${activeAd.videoId}&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&showinfo=0&fs=0&autohide=1`} 
+              className="absolute top-[-25%] left-[-10%] w-[120%] h-[150%] pointer-events-none z-10"
               allow="autoplay; encrypted-media"
+              tabIndex={-1}
             />
-            {/* Click Blocker Overlay */}
-            <div className="absolute inset-0 bg-transparent pointer-events-none" />
+            {/* Click Blocker Overlay - Capture pointer-events so iframe never gets hover or touch events */}
+            <div className="absolute inset-0 bg-transparent z-20 pointer-events-auto" />
             
             {/* Custom Overlay Tag */}
-            <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/60 rounded-md text-[9px] text-white flex items-center gap-1 backdrop-blur-sm pointer-events-none uppercase tracking-wider font-semibold">
+            <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/60 rounded-md text-[9px] text-white flex items-center gap-1 backdrop-blur-sm pointer-events-none uppercase tracking-wider font-semibold z-30">
               <VolumeX className="w-3.5 h-3.5" /> Live Ad
             </div>
           </div>
