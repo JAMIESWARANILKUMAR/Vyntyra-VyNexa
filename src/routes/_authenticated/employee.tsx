@@ -22,6 +22,7 @@ import { FloatingAppsPanel } from "@/components/floating-apps-panel";
 import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 import { 
@@ -127,7 +128,37 @@ function EmployeeDashboard() {
 
   const [leaveForm, setLeaveForm] = useState({ start_date: "", end_date: "", reason: "" });
   const [feedbackForm, setFeedbackForm] = useState({ content: "" });
+
   const [isClocking, setIsClocking] = useState(false);
+
+  // Security States
+  const [passwordForm, setPasswordForm] = useState({ newPassword: "", confirmPassword: "" });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  
+  // MFA States
+  const [mfaStatus, setMfaStatus] = useState<"checking" | "enrolled" | "unenrolled" | "enrolling">("checking");
+  const [mfaQrCode, setMfaQrCode] = useState<string | null>(null);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+
+  useEffect(() => {
+    async function checkMfa() {
+      try {
+        const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (error) throw error;
+        if (data.currentLevel === 'aal2' || data.nextLevel === 'aal2') {
+          setMfaStatus('enrolled');
+        } else {
+          setMfaStatus('unenrolled');
+        }
+      } catch (err) {
+        console.error(err);
+        setMfaStatus('unenrolled');
+      }
+    }
+    checkMfa();
+  }, []);
+
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -185,6 +216,56 @@ function EmployeeDashboard() {
       setFeedbackForm({ content: "" });
     } catch (err: any) {
       toast.error(err.message || "Failed to submit feedback");
+    }
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      return toast.error("Passwords do not match");
+    }
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: passwordForm.newPassword });
+      if (error) throw error;
+      toast.success("Password updated successfully");
+      setPasswordForm({ newPassword: "", confirmPassword: "" });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update password");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  }
+
+  async function handleEnrollMfa() {
+    setMfaStatus("enrolling");
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+      if (error) throw error;
+      setMfaFactorId(data.id);
+      setMfaQrCode(data.totp.qr_code);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to enroll MFA");
+      setMfaStatus("unenrolled");
+    }
+  }
+
+  async function handleVerifyMfa(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaFactorId || !mfaCode) return;
+    try {
+      const challenge = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
+      if (challenge.error) throw challenge.error;
+      
+      const verify = await supabase.auth.mfa.verify({ factorId: mfaFactorId, challengeId: challenge.data.id, code: mfaCode });
+      if (verify.error) throw verify.error;
+
+      toast.success("Authenticator app successfully linked!");
+      setMfaStatus("enrolled");
+      setMfaQrCode(null);
+      setMfaCode("");
+    } catch (err: any) {
+      toast.error(err.message || "Invalid authenticator code");
     }
   }
 
@@ -660,6 +741,74 @@ function EmployeeDashboard() {
                   <h3 className="text-xl font-medium text-slate-900 mb-2">IT Support</h3>
                   <p className="text-slate-500 font-light mb-8">For technical issues or dashboard support.</p>
                   <a href="mailto:support@vyntyraconsultancyservices.in" className="text-sm font-semibold text-slate-900 underline underline-offset-4 decoration-slate-200 hover:decoration-black transition-colors">support@vyntyraconsultancyservices.in</a>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+
+          {activeTab === "security" && (
+            <motion.div key="security" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
+              <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Security Settings</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Change Password Card */}
+                <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-black/[0.04] transition-all">
+                  <h3 className="text-xl font-medium text-slate-900 mb-2">Change Password</h3>
+                  <p className="text-slate-500 font-light mb-6">Update your login password.</p>
+                  
+                  <form onSubmit={handleChangePassword} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>New Password</Label>
+                      <Input type="password" required minLength={6} value={passwordForm.newPassword} onChange={e => setPasswordForm({...passwordForm, newPassword: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Confirm New Password</Label>
+                      <Input type="password" required minLength={6} value={passwordForm.confirmPassword} onChange={e => setPasswordForm({...passwordForm, confirmPassword: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl" />
+                    </div>
+                    <Button type="submit" disabled={isChangingPassword} className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl">
+                      {isChangingPassword ? "Updating..." : "Update Password"}
+                    </Button>
+                  </form>
+                </div>
+
+                {/* MFA / 2FA Card */}
+                <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-black/[0.04] transition-all">
+                  <h3 className="text-xl font-medium text-slate-900 mb-2">Two-Factor Authentication</h3>
+                  <p className="text-slate-500 font-light mb-6">Enhance your account security using Microsoft or Google Authenticator.</p>
+                  
+                  {mfaStatus === "checking" ? (
+                    <div className="text-sm text-slate-500 flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Checking security status...</div>
+                  ) : mfaStatus === "enrolled" ? (
+                    <div className="bg-emerald-50 text-emerald-700 p-6 rounded-2xl border border-emerald-100 flex flex-col gap-2">
+                      <div className="font-medium flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5" /> 2FA is Enabled
+                      </div>
+                      <p className="text-sm font-light">Your account is secured with a TOTP Authenticator app.</p>
+                    </div>
+                  ) : mfaStatus === "enrolling" && mfaQrCode ? (
+                    <div className="space-y-6">
+                      <div className="text-center space-y-2">
+                        <p className="text-sm font-medium text-slate-900">Scan this QR Code</p>
+                        <p className="text-xs text-slate-500">Open Google or Microsoft Authenticator and scan.</p>
+                      </div>
+                      <div className="flex justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <QRCodeSVG value={mfaQrCode} size={160} />
+                      </div>
+                      <form onSubmit={handleVerifyMfa} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Verification Code</Label>
+                          <Input required type="text" placeholder="e.g. 123456" value={mfaCode} onChange={e => setMfaCode(e.target.value)} className="bg-slate-50 border-slate-100 rounded-xl text-center tracking-widest text-lg font-mono" />
+                        </div>
+                        <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl">Verify and Enable</Button>
+                      </form>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-sm text-slate-500 font-light">Your account is currently using standard password authentication. Enable 2FA for an extra layer of security.</p>
+                      <Button onClick={handleEnrollMfa} variant="outline" className="w-full rounded-xl border-slate-200">Set up Authenticator App</Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>
