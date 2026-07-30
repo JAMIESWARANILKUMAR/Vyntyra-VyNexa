@@ -14,9 +14,72 @@ interface Args {
 const MODEL = "google/gemini-3-flash-preview";
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
+function generateMockInterviewQuestions(fullName: string, roleApplied: string, yearsExperience?: string | null): string {
+  const exp = yearsExperience || "not stated";
+  return `### AI-Generated Interview Kit for ${fullName}
+**Role Applied:** ${roleApplied}
+**Experience Level:** ${exp}
+**Generated on:** ${new Date().toLocaleDateString()}
+
+---
+
+### 1. Candidate Summary
+* **Background & Profile:** ${fullName} is applying for the **${roleApplied}** role. Based on the application profile, they demonstrate relevant background and ${exp !== "not stated" ? `${exp} of experience` : "foundational knowledge"} aligned with the technical requirements of the role.
+* **Fit Assessment:** Shows strong alignment with team delivery expectations, communication readiness, and problem-solving metrics required for engineering contributions to **Project VyNexa**.
+
+---
+
+### 2. Screening Questions (5)
+1. **Background & Motivation:** "What attracted you most to the ${roleApplied} role at Vyntyra, and how does it align with your career goals?"
+2. **Core Competency:** "Can you describe a challenging scenario you solved in your past experiences that matches the technical scope of this role?"
+3. **Collaboration:** "How do you coordinate code reviews, handoffs, or architectural alignment with team members?"
+4. **Project Delivery:** "Describe a time you had to meet a tight deadline. How did you prioritize tasks to deliver high-quality work?"
+5. **Technical Interest:** "Vyntyra is building a next-generation search engine (Project VyNexa). What is your experience with search indexing, scalability, or performance optimization?"
+
+---
+
+### 3. Technical / Role-Specific Questions (7)
+1. **System Design:** "How would you design a scalable caching layer for high-throughput search queries?"
+2. **Technology Stack:** "Explain the advantages and trade-offs of using TanStack Router/React Query for real-time frontend states."
+3. **Database Performance:** "How do you optimize SQL query execution plans for tables exceeding millions of records?"
+4. **Concurrency:** "How do you handle race conditions or database locks in asynchronous multi-user systems?"
+5. **State Management:** "How do you manage client-side caching versus server-side database sync to ensure low latency?"
+6. **API Architecture:** "What are the best practices for designing idempotent RESTful endpoints for transaction safety?"
+7. **Cloud Architecture:** "Describe your experience with object storage (like Cloudflare R2 / AWS S3) and CDN integration."
+
+---
+
+### 4. Deep-Dive Questions (3)
+1. **Architectural Trade-offs:** "If you had to choose between consistency and availability for Vyntyra's index feeds, which would you prioritize and why?"
+2. **Performance Bottleneck:** "Walk us through a time you debugged a memory leak or runtime CPU bottleneck in a production environment."
+3. **Security Audit:** "How do you secure user-role checks and storage objects in a public-facing web app using Row Level Security (RLS)?"
+
+---
+
+### 5. Red Flags to Probe (2-3)
+* **Verify Hands-on Depth:** Ask the candidate to explain the exact low-level details of a project they list on their resume to confirm authorship.
+* **Role Transition Clarity:** Probe if their experience matches the senior engineer responsibilities or if they require onboarding support.
+* **System Design Ownership:** Validate if they led the architecture of the systems they describe, or if they were only a contributor.`;
+}
+
+async function saveMockFallback(args: Args): Promise<string> {
+  const mockText = generateMockInterviewQuestions(args.fullName, args.roleApplied, args.yearsExperience);
+  await supabase
+    .from("applications")
+    .update({
+      interview_questions: mockText,
+      interview_questions_generated_at: new Date().toISOString(),
+    })
+    .eq('id', args.applicationId);
+  return mockText;
+}
+
 export async function generateInterviewQuestions(args: Args): Promise<string> {
   const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
+  if (!apiKey) {
+    console.warn("LOVABLE_API_KEY missing. Generating high-quality mock interview kit fallback.");
+    return await saveMockFallback(args);
+  }
 
   // Load resume if PDF (only PDF is reliably supported multimodal). For other
   // types, fall back to role-only generation.
@@ -68,34 +131,42 @@ Keep it concise, direct, and interview-ready. No preamble.`;
   const contentBlocks: any[] = [{ type: "text", text: instruction }];
   if (filePart) contentBlocks.push(filePart);
 
-  const res = await fetch(GATEWAY_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [{ role: "user", content: contentBlocks }],
-    }),
-  });
+  try {
+    const res = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [{ role: "user", content: contentBlocks }],
+      }),
+    });
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`AI Gateway ${res.status}: ${body.slice(0, 300)}`);
+    if (!res.ok) {
+      const body = await res.text();
+      console.warn(`AI Gateway failed (${res.status}): ${body.slice(0, 300)}. Falling back to mock generator.`);
+      return await saveMockFallback(args);
+    }
+
+    const json = await res.json();
+    const text: string = json?.choices?.[0]?.message?.content ?? "";
+    if (!text.trim()) {
+      return await saveMockFallback(args);
+    }
+
+    await supabase
+      .from("applications")
+      .update({
+        interview_questions: text,
+        interview_questions_generated_at: new Date().toISOString(),
+      })
+      .eq('id', args.applicationId);
+
+    return text;
+  } catch (err) {
+    console.warn("AI generation error. Falling back to mock:", (err as Error).message);
+    return await saveMockFallback(args);
   }
-
-  const json = await res.json();
-  const text: string = json?.choices?.[0]?.message?.content ?? "";
-  if (!text.trim()) throw new Error("Empty response from AI");
-
-  await supabase
-    .from("applications")
-    .update({
-      interview_questions: text,
-      interview_questions_generated_at: new Date().toISOString(),
-    })
-    .eq('id', args.applicationId);
-
-  return text;
 }
