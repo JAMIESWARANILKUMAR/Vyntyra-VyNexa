@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { QRCodeSVG } from "qrcode.react";
@@ -11,7 +11,7 @@ import {
   CheckCircle2, Circle, AlertCircle, TrendingUp, Video, CalendarDays,
   User, BarChart3, RefreshCw, Phone, MapPin, CalendarX2, Users,
   IndianRupee, MessageSquare, BookOpen, Fingerprint, FileText, Send, Download,
-  Sparkles, Zap
+  Sparkles, Zap, Wallet, ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -631,22 +631,107 @@ function EmployeeDashboard() {
               <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Payouts</h2>
               <div className="space-y-4">
                 
-                {/* Bank Account Recommendation Section */}
-                <div className="mb-6 p-6 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl">
-                  <h3 className="text-lg font-medium text-blue-900 mb-2">Don't have a Bank Account?</h3>
-                  <p className="text-sm text-blue-700 mb-4">
-                    Company recommends opening an account for seamless and fast salary credits. Choose one of our preferred banking partners to open an account online instantly:
-                  </p>
-                  <div className="flex gap-4 flex-wrap">
-                    <a href="https://www.kotak.com/en/personal-banking/accounts/savings-account/811-savings-account.html" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">
-                      Kotak Bank
-                    </a>
-                    <a href="https://www.idfcfirstbank.com/personal-banking/accounts/savings-account" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-burgundy-600 text-white rounded-lg text-sm font-medium hover:bg-burgundy-700 transition-colors" style={{ backgroundColor: '#901235' }}>
-                      IDFC First Bank
-                    </a>
-                    <a href="https://www.axisbank.com/retail/accounts/savings-account" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-pink-700 text-white rounded-lg text-sm font-medium hover:bg-pink-800 transition-colors" style={{ backgroundColor: '#97144D' }}>
-                      Axis Bank
-                    </a>
+                {/* Premium Bank Account Recommendation Section */}
+                <div className="mb-8">
+                  <div className="flex flex-col mb-6">
+                    <h3 className="text-xl font-semibold text-slate-900">Don't have a Bank Account?</h3>
+                    <p className="text-sm text-slate-500 mt-1">
+                      VyNexa recommends opening a Zero Balance account for seamless and fast salary credits. Choose a premium banking partner below:
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Kotak 811 */}
+                    <motion.div 
+                      whileHover={{ y: -5, scale: 1.02 }}
+                      className="relative overflow-hidden rounded-2xl border border-red-100 bg-gradient-to-b from-red-50 to-white p-6 shadow-sm hover:shadow-md transition-all"
+                    >
+                      <div className="absolute top-0 right-0 p-4 opacity-10 text-red-600">
+                        <Wallet className="w-24 h-24 transform rotate-12 translate-x-4 -translate-y-4" />
+                      </div>
+                      <div className="relative z-10">
+                        <div className="h-12 w-12 rounded-xl bg-red-600 text-white flex items-center justify-center font-bold text-xl mb-4 shadow-inner">
+                          K
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-900">Kotak 811</h4>
+                        <p className="text-xs text-slate-500 mt-1 mb-6 h-8">Zero balance digital savings account. Open in 3 mins.</p>
+                        
+                        <a href="https://www.kotak811.bank.in/open-zero-balance-savings-account/zba-8?utm_source=GoogleSEMiQ&utm_medium=Paid&utm_campaign=iQ-Kotak811-PMax-03-25&gad_source=1&gad_campaignid=23479404668&gbraid=0AAAAACQ2IDljm3gMtRRPTAIrvNheMuWvK&gclid=CjwKCAjwyabTBhBFEiwAM3mNUEXJ3jfac5acjqCf7LlAslQGKKDLr6i4006q7RQWwhH_Uu14yzjtqxoC8bQQAvD_BwE" target="_self" className="block w-full">
+                          <motion.button 
+                            whileTap={{ scale: 0.95 }}
+                            whileHover={{ scale: 1.05 }}
+                            className="w-full py-2.5 rounded-lg bg-red-600 text-white font-medium text-sm hover:bg-red-700 transition-colors shadow-sm relative overflow-hidden group"
+                          >
+                            <span className="relative z-10 flex items-center justify-center gap-2">
+                              Open Account Now <ExternalLink className="w-3.5 h-3.5" />
+                            </span>
+                            <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                          </motion.button>
+                        </a>
+                      </div>
+                    </motion.div>
+
+                    {/* IDFC First Bank */}
+                    <motion.div 
+                      whileHover={{ y: -5, scale: 1.02 }}
+                      className="relative overflow-hidden rounded-2xl border border-rose-100 bg-gradient-to-b from-rose-50 to-white p-6 shadow-sm hover:shadow-md transition-all"
+                    >
+                      <div className="absolute top-0 right-0 p-4 opacity-10" style={{ color: '#901235' }}>
+                        <Wallet className="w-24 h-24 transform rotate-12 translate-x-4 -translate-y-4" />
+                      </div>
+                      <div className="relative z-10">
+                        <div className="h-12 w-12 rounded-xl text-white flex items-center justify-center font-bold text-xl mb-4 shadow-inner" style={{ backgroundColor: '#901235' }}>
+                          IDFC
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-900">IDFC First</h4>
+                        <p className="text-xs text-slate-500 mt-1 mb-6 h-8">Premium banking experience with monthly interest credits.</p>
+                        
+                        <a href="https://www.idfcfirst.bank.in/" target="_self" className="block w-full">
+                          <motion.button 
+                            whileTap={{ scale: 0.95 }}
+                            whileHover={{ scale: 1.05 }}
+                            className="w-full py-2.5 rounded-lg text-white font-medium text-sm transition-colors shadow-sm relative overflow-hidden group"
+                            style={{ backgroundColor: '#901235' }}
+                          >
+                            <span className="relative z-10 flex items-center justify-center gap-2">
+                              Open Account Now <ExternalLink className="w-3.5 h-3.5" />
+                            </span>
+                            <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                          </motion.button>
+                        </a>
+                      </div>
+                    </motion.div>
+
+                    {/* Axis Bank */}
+                    <motion.div 
+                      whileHover={{ y: -5, scale: 1.02 }}
+                      className="relative overflow-hidden rounded-2xl border border-pink-100 bg-gradient-to-b from-pink-50 to-white p-6 shadow-sm hover:shadow-md transition-all"
+                    >
+                      <div className="absolute top-0 right-0 p-4 opacity-10" style={{ color: '#97144D' }}>
+                        <Wallet className="w-24 h-24 transform rotate-12 translate-x-4 -translate-y-4" />
+                      </div>
+                      <div className="relative z-10">
+                        <div className="h-12 w-12 rounded-xl text-white flex items-center justify-center font-bold text-xl mb-4 shadow-inner" style={{ backgroundColor: '#97144D' }}>
+                          AXIS
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-900">Axis Bank</h4>
+                        <p className="text-xs text-slate-500 mt-1 mb-6 h-8">Easy access to funds and exclusive lifestyle benefits.</p>
+                        
+                        <a href="https://www.axis.bank.in/" target="_self" className="block w-full">
+                          <motion.button 
+                            whileTap={{ scale: 0.95 }}
+                            whileHover={{ scale: 1.05 }}
+                            className="w-full py-2.5 rounded-lg text-white font-medium text-sm transition-colors shadow-sm relative overflow-hidden group"
+                            style={{ backgroundColor: '#97144D' }}
+                          >
+                            <span className="relative z-10 flex items-center justify-center gap-2">
+                              Open Account Now <ExternalLink className="w-3.5 h-3.5" />
+                            </span>
+                            <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                          </motion.button>
+                        </a>
+                      </div>
+                    </motion.div>
                   </div>
                 </div>
 
