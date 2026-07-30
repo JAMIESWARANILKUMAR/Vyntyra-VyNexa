@@ -250,7 +250,11 @@ function EmployeeDashboard() {
       }
 
       const uniqueName = `Vyntyra Security ${Math.floor(Math.random() * 1000)}`;
-      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: uniqueName });
+      const { data, error } = await supabase.auth.mfa.enroll({ 
+        factorType: 'totp', 
+        friendlyName: uniqueName,
+        issuer: 'careers.vyntyraconsultancyservices.in'
+      });
       if (error) throw error;
       setMfaFactorId(data.id);
       setMfaQrCode(data.totp.uri); // Use the URI for QRCodeSVG, not the raw SVG string
