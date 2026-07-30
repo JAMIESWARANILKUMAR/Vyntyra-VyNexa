@@ -50,10 +50,17 @@ export async function sendTemplateEmail(
   const element = React.createElement(template.component, templateData)
   const html = await render(element)
   const text = await render(element, { plainText: true })
-  const subject =
+  let subject =
     typeof template.subject === 'function'
       ? template.subject(templateData)
       : template.subject
+
+  // Replace placeholders in subject string
+  if (typeof subject === 'string') {
+    Object.entries(templateData).forEach(([key, val]) => {
+      subject = (subject as string).replace(new RegExp(`\\{${key}\\}`, 'g'), String(val ?? ''))
+    })
+  }
 
   try {
     const { data, error } = await resend.emails.send({
