@@ -78,7 +78,9 @@ function BankAdCard({
   borderColor, 
   bgColor,
   accountType,
-  branches
+  branches,
+  bankSupport,
+  vyntyraManager = "Available Soon"
 }: { 
   bankName: string; 
   logoUrl: string; 
@@ -89,6 +91,8 @@ function BankAdCard({
   bgColor: string;
   accountType: string;
   branches: string[];
+  bankSupport: string;
+  vyntyraManager?: string;
 }) {
   const [activeAdIndex, setActiveAdIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -199,6 +203,16 @@ function BankAdCard({
               <div className="space-y-1">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Key Reward</div>
                 <div className="text-xs font-semibold text-slate-700">{activeAd.feature}</div>
+              </div>
+
+              <div className="space-y-1 border-t border-slate-200/50 pt-2">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Official Bank Support</div>
+                <div className="text-xs font-semibold text-slate-700">{bankSupport}</div>
+              </div>
+
+              <div className="space-y-1 border-t border-slate-200/50 pt-2">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Vyntyra Account Manager</div>
+                <div className="text-xs font-semibold text-slate-600 italic">{vyntyraManager}</div>
               </div>
 
               <div className="space-y-1 md:col-span-2 border-t border-slate-200/50 pt-2.5 mt-1">
@@ -819,6 +833,8 @@ function EmployeeDashboard() {
                       bgColor="from-red-50/30"
                       accountType="Salary / Zero Balance Digital Account"
                       branches={["Visakhapatnam", "Bengaluru", "Hyderabad", "Gujarat"]}
+                      bankSupport="1860 266 2666 (Local) / 1800 209 0000"
+                      vyntyraManager="Available Soon
                       ads={[
                         { videoId: "1qvcBjU_1Mk", title: "Kotak 811: Zero Balance Savings", slogan: "No maintenance charges. Open digitally using video KYC in 3 mins.", feature: "100% digital onboarding" },
                         { videoId: "5UenpW0G6Jk", title: "ActivMoney Automated Sweep-in", slogan: "Get FD-like interest rates up to 7% p.a. on your savings balance.", feature: "Up to 7% p.a. interest" },
@@ -842,6 +858,8 @@ function EmployeeDashboard() {
                       bgColor="from-rose-50/30"
                       accountType="Premium Salary Account / Savings Account"
                       branches={["Visakhapatnam", "Bengaluru", "Hyderabad", "Gujarat"]}
+                      bankSupport="1800 10 888 (Toll Free)"
+                      vyntyraManager="Available Soon
                       ads={[
                         { videoId: "tpKwQZ9_fEQ", title: "Monthly Interest Payouts", slogan: "Earn up to 7.25% p.a. and watch your savings compound every single month.", feature: "Compounded monthly interest" },
                         { videoId: "a7Sg-H2bWjE", title: "Zero Fee Banking Promise", slogan: "IDFC First Bank promises zero fee on 28 essential savings services.", feature: "Completely zero fee" },
@@ -865,6 +883,8 @@ function EmployeeDashboard() {
                       bgColor="from-pink-50/30"
                       accountType="Salary / ASAP Zero Balance Savings"
                       branches={["Visakhapatnam", "Bengaluru", "Hyderabad", "Gujarat"]}
+                      bankSupport="1860 419 5555 / 1860 500 5555"
+                      vyntyraManager="Available Soon
                       ads={[
                         { videoId: "xVi-fgAlrEs", title: "Axis ASAP Digital Savings", slogan: "Open instantly with zero paperwork and get a virtual debit card instantly.", feature: "Instant KYC validation" },
                         { videoId: "O8486c0t6uI", title: "Grab Deals Cashback Portal", slogan: "Enjoy flat 10% cashback on top brands like Flipkart, Amazon, and Swiggy.", feature: "Exclusive member benefits" },
