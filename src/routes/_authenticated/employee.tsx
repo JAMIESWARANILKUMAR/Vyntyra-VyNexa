@@ -243,7 +243,7 @@ function EmployeeDashboard() {
       // Clean up any unverified factors first
       const { data: factors } = await supabase.auth.mfa.listFactors();
       if (factors && factors.totp) {
-        const unverified = factors.totp.filter(f => f.status === 'unverified');
+        const unverified = factors.totp.filter((f: any) => f.status === 'unverified');
         for (const f of unverified) {
           await supabase.auth.mfa.unenroll({ factorId: f.id });
         }
