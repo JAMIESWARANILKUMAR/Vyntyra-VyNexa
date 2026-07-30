@@ -847,16 +847,16 @@ function EmployeeDashboard() {
                       bankSupport="1860 266 2666 (Local) / 1800 209 0000"
                       vyntyraManager="Available Soon"
                       ads={[
-                        { videoId: "1qvcBjU_1Mk", title: "Kotak 811: Zero Balance Savings", slogan: "No maintenance charges. Open digitally using video KYC in 3 mins.", feature: "100% digital onboarding" },
-                        { videoId: "5UenpW0G6Jk", title: "ActivMoney Automated Sweep-in", slogan: "Get FD-like interest rates up to 7% p.a. on your savings balance.", feature: "Up to 7% p.a. interest" },
-                        { videoId: "1qvcBjU_1Mk", title: "League Platinum Credit Card", slogan: "Lifetime free credit card with massive rewards on shopping.", feature: "Zero annual charges" },
-                        { videoId: "5UenpW0G6Jk", title: "Kotak Cherry Investments", slogan: "Invest in Mutual Funds, Stocks, and NPS seamlessly in one app.", feature: "One-click investment portal" },
-                        { videoId: "1qvcBjU_1Mk", title: "Everyday Savings Account", slogan: "Get flat 5% cashback on everyday spends using debit card.", feature: "Daily cashback rewards" },
-                        { videoId: "5UenpW0G6Jk", title: "Kotak Smart EMI Loans", slogan: "Instant approval for buying phones, appliances, and travel.", feature: "No-cost EMI offers" },
-                        { videoId: "1qvcBjU_1Mk", title: "Kotak Solitaire Premium", slogan: "Premium customized banking experience for business leaders.", feature: "Dedicated wealth manager" },
-                        { videoId: "5UenpW0G6Jk", title: "Kotak Home Loans", slogan: "Competitive interest rates with fast online processing.", feature: "Instant sanction letter" },
-                        { videoId: "1qvcBjU_1Mk", title: "Safe Banking Awareness", slogan: "Never share your OTP, PIN, or CVV. Bank safely online.", feature: "24/7 security monitoring" },
-                        { videoId: "5UenpW0G6Jk", title: "Kotak Grand Savings Account", slogan: "Exclusive privileges and lifestyle offers for senior citizens.", feature: "Senior priority banking" }
+                        { videoId: "/videos/kotak/kotak_ad_2.mp4", title: "Zero Balance Savings Account", slogan: "Open Kotak811 Zero Balance Account from anywhere digitally using Video KYC.", feature: "100% Digital Banking" },
+                        { videoId: "/videos/kotak/kotak_ad_1.mp4", title: "FD Wala Savings with ActivMoney", slogan: "Earn FD-like interest up to 7% p.a. on your standard savings account balance.", feature: "Up to 7% Interest Rate" },
+                        { videoId: "/videos/kotak/kotak_ad_3.mp4", title: "Scan, Pay and Earn Rewards", slogan: "Use the new Kotak811 Mobile Banking app to pay seamlessly and grab rewards.", feature: "Reward Points on Scan & Pay" },
+                        { videoId: "/videos/kotak/kotak_ad_2.mp4", title: "Zero Maintenance Fee Forever", slogan: "Zero balance account with absolutely no hidden maintenance fees.", feature: "No Maintenance Charges" },
+                        { videoId: "/videos/kotak/kotak_ad_1.mp4", title: "Flexibility to Withdraw Anytime", slogan: "Get high interest with ActivMoney sweep-in and withdraw without any penalty.", feature: "Flexible Sweep-in & Out" },
+                        { videoId: "/videos/kotak/kotak_ad_3.mp4", title: "League Platinum Credit Card", slogan: "Get a lifetime-free League credit card against a fixed deposit instantly.", feature: "Lifetime Free Card" },
+                        { videoId: "/videos/kotak/kotak_ad_2.mp4", title: "Instant Virtual Debit Card", slogan: "Get access to a virtual classic debit card immediately upon account opening.", feature: "Instant Online Shopping" },
+                        { videoId: "/videos/kotak/kotak_ad_1.mp4", title: "Smart Money Auto-Growth", slogan: "Watch your ideal funds grow automatically with daily interest compounding.", feature: "Daily Interest Accrual" },
+                        { videoId: "/videos/kotak/kotak_ad_3.mp4", title: "Kotak Security Promise", slogan: "Enjoy bank-grade security and instant transaction alerts with Kotak811.", feature: "24/7 Threat Protection" },
+                        { videoId: "/videos/kotak/kotak_ad_2.mp4", title: "Grand Savings Privileges", slogan: "Special priority banking channels and higher interest for premium accounts.", feature: "Priority Customer Support" }
                       ]}
                     />
 
