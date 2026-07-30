@@ -176,19 +176,19 @@ export const lookupApplicationStatus = createServerFn({ method: "POST" })
     const ref = data.referenceId.trim().toLowerCase();
     const email = data.email.trim().toLowerCase();
 
-    // Supabase has like/ilike so we can query prefix directly
     const { data: apps, error: appsError } = await supabase
         .from("applications")
         .select("*")
-        .eq("email", email)
-        .ilike("id", `${ref}%`)
-        .limit(1);
+        .ilike("email", email);
 
     if (appsError || !apps || apps.length === 0) {
       return { ok: false as const, reason: "not_found" as const };
     }
     
-    const app = apps[0];
+    const app = apps.find(a => a.id.slice(0, 8).toLowerCase() === ref);
+    if (!app) {
+      return { ok: false as const, reason: "not_found" as const };
+    }
 
     const { data: events, error: eventsError } = await supabase
         .from("application_status_events")
