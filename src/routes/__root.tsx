@@ -14,6 +14,7 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { PwaRegister } from "@/components/pwa-register";
 import { Footer } from "@/components/footer";
+import { Analytics } from "@vercel/analytics/react";
 
 function NotFoundComponent() {
   return (
@@ -171,6 +172,7 @@ function RootComponent() {
         {!isDashboard && <Footer />}
       </div>
       <Toaster position="top-center" richColors />
+      <Analytics />
     </QueryClientProvider>
   );
 }
