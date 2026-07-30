@@ -646,12 +646,16 @@ function EmployeeDashboard() {
                       whileHover={{ y: -5, scale: 1.02 }}
                       className="relative overflow-hidden rounded-2xl border border-red-100 bg-gradient-to-b from-red-50 to-white p-6 shadow-sm hover:shadow-md transition-all"
                     >
-                      <div className="absolute top-0 right-0 p-4 opacity-10 text-red-600">
-                        <Wallet className="w-24 h-24 transform rotate-12 translate-x-4 -translate-y-4" />
-                      </div>
                       <div className="relative z-10">
-                        <div className="h-12 w-12 rounded-xl bg-red-600 text-white flex items-center justify-center font-bold text-xl mb-4 shadow-inner">
-                          K
+                        <div className="mb-4 rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-black aspect-video relative">
+                          <iframe 
+                            src="https://www.youtube.com/embed/1qvcBjU_1Mk?autoplay=1&mute=1&controls=0&loop=1&playlist=1qvcBjU_1Mk&playsinline=1" 
+                            className="absolute inset-0 w-full h-full pointer-events-none"
+                            allow="autoplay; encrypted-media"
+                          />
+                        </div>
+                        <div className="h-8 mb-4">
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Kotak_Mahindra_Bank_logo.png" alt="Kotak Bank" className="h-full object-contain" />
                         </div>
                         <h4 className="text-lg font-bold text-slate-900">Kotak 811</h4>
                         <p className="text-xs text-slate-500 mt-1 mb-6 h-8">Zero balance digital savings account. Open in 3 mins.</p>
@@ -676,12 +680,16 @@ function EmployeeDashboard() {
                       whileHover={{ y: -5, scale: 1.02 }}
                       className="relative overflow-hidden rounded-2xl border border-rose-100 bg-gradient-to-b from-rose-50 to-white p-6 shadow-sm hover:shadow-md transition-all"
                     >
-                      <div className="absolute top-0 right-0 p-4 opacity-10" style={{ color: '#901235' }}>
-                        <Wallet className="w-24 h-24 transform rotate-12 translate-x-4 -translate-y-4" />
-                      </div>
                       <div className="relative z-10">
-                        <div className="h-12 w-12 rounded-xl text-white flex items-center justify-center font-bold text-xl mb-4 shadow-inner" style={{ backgroundColor: '#901235' }}>
-                          IDFC
+                        <div className="mb-4 rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-black aspect-video relative">
+                          <iframe 
+                            src="https://www.youtube.com/embed/tpKwQZ9_fEQ?autoplay=1&mute=1&controls=0&loop=1&playlist=tpKwQZ9_fEQ&playsinline=1" 
+                            className="absolute inset-0 w-full h-full pointer-events-none"
+                            allow="autoplay; encrypted-media"
+                          />
+                        </div>
+                        <div className="h-8 mb-4">
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/7/7b/IDFC_First_Bank_logo.jpg" alt="IDFC First Bank" className="h-full object-contain mix-blend-multiply" />
                         </div>
                         <h4 className="text-lg font-bold text-slate-900">IDFC First</h4>
                         <p className="text-xs text-slate-500 mt-1 mb-6 h-8">Premium banking experience with monthly interest credits.</p>
@@ -707,12 +715,16 @@ function EmployeeDashboard() {
                       whileHover={{ y: -5, scale: 1.02 }}
                       className="relative overflow-hidden rounded-2xl border border-pink-100 bg-gradient-to-b from-pink-50 to-white p-6 shadow-sm hover:shadow-md transition-all"
                     >
-                      <div className="absolute top-0 right-0 p-4 opacity-10" style={{ color: '#97144D' }}>
-                        <Wallet className="w-24 h-24 transform rotate-12 translate-x-4 -translate-y-4" />
-                      </div>
                       <div className="relative z-10">
-                        <div className="h-12 w-12 rounded-xl text-white flex items-center justify-center font-bold text-xl mb-4 shadow-inner" style={{ backgroundColor: '#97144D' }}>
-                          AXIS
+                        <div className="mb-4 rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-black aspect-video relative">
+                          <iframe 
+                            src="https://www.youtube.com/embed/xVi-fgAlrEs?autoplay=1&mute=1&controls=0&loop=1&playlist=xVi-fgAlrEs&playsinline=1" 
+                            className="absolute inset-0 w-full h-full pointer-events-none"
+                            allow="autoplay; encrypted-media"
+                          />
+                        </div>
+                        <div className="h-8 mb-4">
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/c/c8/Axis_Bank_logo.svg" alt="Axis Bank" className="h-full object-contain" />
                         </div>
                         <h4 className="text-lg font-bold text-slate-900">Axis Bank</h4>
                         <p className="text-xs text-slate-500 mt-1 mb-6 h-8">Easy access to funds and exclusive lifestyle benefits.</p>
