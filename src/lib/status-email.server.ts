@@ -50,7 +50,21 @@ function shell(innerHtml: string) {
       <div style="padding:40px;color:#374151;line-height:1.6;font-size:15px;">
         ${innerHtml}
       </div>
-      <div style="background:#F9FAFB;border-top:1px solid #F3F4F6;padding:24px 40px;color:#6B7280;font-size:12px;line-height:1.5;">
+      <div style="background:#F9FAFB;border-top:1px solid #E5E7EB;padding:32px 40px;color:#6B7280;font-size:12px;line-height:1.5;">
+        <div style="margin-bottom:16px;">
+          <strong>Questions?</strong> Contact our Talent Acquisition team at <a href="mailto:hr@vyntyraconsultancyservices.in" style="color:#0f172a;font-weight:600;text-decoration:underline;">hr@vyntyraconsultancyservices.in</a>.
+        </div>
+        
+        <div style="margin-bottom:16px;">
+          <a href="https://linkedin.com" style="color:#0f172a;font-weight:600;text-decoration:none;margin-right:12px;">LinkedIn</a>
+          <span style="color:#E5E7EB;">|</span>
+          <a href="https://instagram.com" style="color:#0f172a;font-weight:600;text-decoration:none;margin-left:12px;margin-right:12px;">Instagram</a>
+          <span style="color:#E5E7EB;">|</span>
+          <a href="https://twitter.com" style="color:#0f172a;font-weight:600;text-decoration:none;margin-left:12px;">Twitter</a>
+        </div>
+
+        <hr style="border:0;border-top:1px solid #E5E7EB;margin:16px 0;" />
+
         <div style="margin-bottom:12px;">
           This email was sent to you by Vyntyra Consultancy Services in relation to your application for Project VyNexa.
         </div>
@@ -59,7 +73,18 @@ function shell(innerHtml: string) {
           Visakhapatnam, AP, India<br/>
           ISO-aligned &middot; NASSCOM Verified &middot; MSME Registered
         </div>
-        <div>&copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.</div>
+        
+        <div style="margin-bottom:16px;">
+          <a href="https://careers.vyntyraconsultancyservices.in/privacy" style="color:#6B7280;text-decoration:underline;margin-right:12px;">Privacy Policy</a>
+          <span style="color:#E5E7EB;">|</span>
+          <a href="https://careers.vyntyraconsultancyservices.in/terms" style="color:#6B7280;text-decoration:underline;margin-left:12px;">Applicant Terms</a>
+        </div>
+
+        <div style="font-size:10px;color:#9CA3AF;font-style:italic;margin-top:16px;">
+          Disclaimer: This electronic mail message, including any attachments, is for the sole use of the intended recipient(s) and may contain confidential or privileged information. Any unauthorized review, use, disclosure, or distribution is prohibited. If you are not the intended recipient, please contact the sender by reply email and destroy all copies of the original message.
+        </div>
+        
+        <div style="margin-top:12px;">&copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.</div>
       </div>
     </div>
   </body></html>`;
