@@ -1145,6 +1145,9 @@ function OperationsDashboard() {
         doUpdateProfile={doUpdateProfile} 
         doGetUploadUrl={doGetUploadUrl} 
         qc={qc} 
+        team={team}
+        doAssignIntern={doAssignIntern}
+        doRemoveIntern={doRemoveIntern}
       />
     </div>
   );
@@ -1196,7 +1199,8 @@ function MemberRow({ member, onRevoke, onClick }: { member: any; onRevoke: (id: 
   );
 }
 
-function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUploadUrl, qc }: any) {
+function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUploadUrl, qc, team, doAssignIntern, doRemoveIntern }: any) {
+  const [selectedInternToAssign, setSelectedInternToAssign] = useState("");
   const [form, setForm] = useState(user || {});
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingLetter, setUploadingLetter] = useState(false);
@@ -1259,7 +1263,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
              <div className="space-y-1.5"><Label>Full Name</Label><Input value={form.full_name || ""} onChange={e => setForm({...form, full_name: e.target.value})} /></div>
              <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone || ""} onChange={e => setForm({...form, phone: e.target.value})} /></div>
              <div className="col-span-2 space-y-1.5"><Label>Address</Label><Input value={form.address || ""} onChange={e => setForm({...form, address: e.target.value})} /></div>
-             <div className="space-y-1.5"><Label>Intern ID</Label><Input value={form.intern_id || ""} onChange={e => setForm({...form, intern_id: e.target.value})} /></div>
+             <div className="space-y-1.5"><Label>{user.role === "employee" ? "Employee ID" : "Intern ID"}</Label><Input value={form.intern_id || ""} onChange={e => setForm({...form, intern_id: e.target.value})} /></div>
              <div className="space-y-1.5"><Label>Start Date</Label><Input type="date" value={form.start_date || ""} onChange={e => setForm({...form, start_date: e.target.value})} /></div>
              <div className="space-y-1.5"><Label>End Date</Label><Input type="date" value={form.end_date || ""} onChange={e => setForm({...form, end_date: e.target.value})} /></div>
           </div>
@@ -1294,6 +1298,110 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
               </a>
             )}
           </div>
+
+          {user.role === "employee" && team && (
+            <div className="border-t pt-4 mt-4 space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <GraduationCap className="h-4.5 w-4.5 text-emerald-600" />
+                  Assigned Interns
+                </h4>
+                <p className="text-xs text-slate-400 font-light mt-0.5">Manage interns mentored/supervised by this employee.</p>
+              </div>
+
+              {/* List of currently assigned interns */}
+              <div className="space-y-2">
+                {team.filter((m: any) => m.role === "intern" && m.mentor_id === user.id).length === 0 ? (
+                  <div className="text-xs text-slate-500 bg-slate-50 p-4 rounded-xl border border-dashed text-center">
+                    No interns assigned to this employee.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {team.filter((m: any) => m.role === "intern" && m.mentor_id === user.id).map((intern: any) => (
+                      <div key={intern.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div 
+                            className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0 bg-cover bg-center"
+                            style={intern.avatar_url ? { backgroundImage: `url(${intern.avatar_url})` } : {}}
+                          >
+                            {!intern.avatar_url && (intern.full_name || "?")[0].toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-semibold truncate text-slate-700">{intern.full_name}</div>
+                            <div className="text-[10px] text-slate-400 truncate">{intern.email}</div>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            if (confirm(`Remove ${intern.full_name} from this mentor?`)) {
+                              try {
+                                await doRemoveIntern({ data: { internId: intern.id } });
+                                toast.success("Intern removed successfully");
+                                qc.invalidateQueries({ queryKey: ["team-members"] });
+                              } catch (err: any) {
+                                toast.error("Failed to remove intern");
+                              }
+                            }
+                          }}
+                          className="h-7 px-2 text-[10px] font-semibold text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Dropdown to assign a new intern */}
+              <div className="flex gap-2 items-end">
+                <div className="flex-1 space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-600">Assign a new Intern</Label>
+                  <Select 
+                    value={selectedInternToAssign} 
+                    onValueChange={setSelectedInternToAssign}
+                  >
+                    <SelectTrigger className="bg-slate-50 border-slate-100 rounded-xl h-10">
+                      <SelectValue placeholder="Select an intern..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {team.filter((m: any) => m.role === "intern" && m.mentor_id !== user.id).length === 0 ? (
+                        <SelectItem value="none" disabled>No other interns available</SelectItem>
+                      ) : (
+                        team
+                          .filter((m: any) => m.role === "intern" && m.mentor_id !== user.id)
+                          .map((intern: any) => (
+                            <SelectItem key={intern.id} value={intern.id}>
+                              {intern.full_name} ({intern.email})
+                            </SelectItem>
+                          ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  type="button"
+                  disabled={!selectedInternToAssign || selectedInternToAssign === "none"}
+                  onClick={async () => {
+                    try {
+                      await doAssignIntern({ data: { internId: selectedInternToAssign, employeeId: user.id } });
+                      toast.success("Intern assigned successfully");
+                      setSelectedInternToAssign("");
+                      qc.invalidateQueries({ queryKey: ["team-members"] });
+                    } catch (err: any) {
+                      toast.error("Failed to assign intern");
+                    }
+                  }}
+                  className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-10 px-4 font-semibold text-xs border-0 shrink-0"
+                >
+                  Assign Intern
+                </Button>
+              </div>
+            </div>
+          )}
 
           <DialogFooter className="pt-4">
              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
