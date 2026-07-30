@@ -242,14 +242,15 @@ function EmployeeDashboard() {
     try {
       // Clean up any unverified factors first
       const { data: factors } = await supabase.auth.mfa.listFactors();
-      if (factors && factors.totp) {
-        const unverified = factors.totp.filter((f: any) => f.status === 'unverified');
+      if (factors && factors.all) {
+        const unverified = factors.all.filter((f: any) => f.status === 'unverified');
         for (const f of unverified) {
           await supabase.auth.mfa.unenroll({ factorId: f.id });
         }
       }
 
-      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Vyntyra Security' });
+      const uniqueName = `Vyntyra Security ${Math.floor(Math.random() * 1000)}`;
+      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: uniqueName });
       if (error) throw error;
       setMfaFactorId(data.id);
       setMfaQrCode(data.totp.uri); // Use the URI for QRCodeSVG, not the raw SVG string
