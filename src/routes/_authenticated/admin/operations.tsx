@@ -125,7 +125,7 @@ function OperationsDashboard() {
   const [resourceOpen, setResourceOpen] = useState(false);
 
   // Form states
-  const [provisionForm, setProvisionForm] = useState({ full_name: "", email: "", password: "", role: "employee" as "employee" | "intern" });
+  const [provisionForm, setProvisionForm] = useState({ full_name: "", email: "", password: "", role: "employee" as "employee" | "intern", department: "", position: "", bank_account_number: "", intern_id: "", duration_months: "" });
   const [announcementForm, setAnnouncementForm] = useState({ title: "", body: "", target_role: "all" as "employee" | "intern" | "all" });
   const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium" as "low" | "medium" | "high", is_pool_task: false });
   const [scheduleForm, setScheduleForm] = useState({ title: "", description: "", event_date: "", event_time: "", target_role: "all" as "employee" | "intern" | "all" });
@@ -208,12 +208,13 @@ function OperationsDashboard() {
     try {
       await doProvision({ data: {
         ...provisionForm,
+        duration_months: provisionForm.duration_months ? parseInt(provisionForm.duration_months as string) : undefined,
         email: provisionForm.email.trim(),
         password: provisionForm.password.trim(),
       } });
       toast.success(`${provisionForm.role === "employee" ? "Employee" : "Intern"} account created for ${provisionForm.full_name}`);
       setProvisionOpen(false);
-      setProvisionForm({ full_name: "", email: "", password: "", role: "employee" });
+      setProvisionForm({ full_name: "", email: "", password: "", role: "employee", department: "", position: "", bank_account_number: "", intern_id: "", duration_months: "" });
       qc.invalidateQueries({ queryKey: ["team-members"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to provision user");
@@ -468,6 +469,40 @@ function OperationsDashboard() {
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {provisionForm.role === 'employee' && (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label>Job Title / Position</Label>
+                      <Input value={provisionForm.position} onChange={e => setProvisionForm({ ...provisionForm, position: e.target.value })} placeholder="e.g. Software Engineer" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Department</Label>
+                      <Input value={provisionForm.department} onChange={e => setProvisionForm({ ...provisionForm, department: e.target.value })} placeholder="e.g. Engineering" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Bank Account Number</Label>
+                      <Input value={provisionForm.bank_account_number} onChange={e => setProvisionForm({ ...provisionForm, bank_account_number: e.target.value })} placeholder="Account Number for Payouts" />
+                    </div>
+                  </>
+                )}
+
+                {provisionForm.role === 'intern' && (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label>Intern ID</Label>
+                      <Input value={provisionForm.intern_id} onChange={e => setProvisionForm({ ...provisionForm, intern_id: e.target.value })} placeholder="e.g. INT-2024-001" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Department</Label>
+                      <Input value={provisionForm.department} onChange={e => setProvisionForm({ ...provisionForm, department: e.target.value })} placeholder="e.g. Design" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Duration (Months)</Label>
+                      <Input type="number" value={provisionForm.duration_months} onChange={e => setProvisionForm({ ...provisionForm, duration_months: e.target.value })} placeholder="e.g. 6" />
+                    </div>
+                  </>
+                )}
                 <DialogFooter>
                   <Button type="button" variant="ghost" onClick={() => setProvisionOpen(false)}>Cancel</Button>
                   <Button type="submit" className="gap-2"><UserCheck className="h-4 w-4" /> Create Account</Button>

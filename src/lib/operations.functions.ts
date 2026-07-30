@@ -7,10 +7,15 @@ import { generateUploadUrl } from "./r2";
 const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
 const provisionSchema = z.object({
+  full_name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(6),
-  role: z.enum(["employee", "intern"]),
-  full_name: z.string().min(2),
+  role: z.enum(['admin', 'employee', 'intern', 'recruiter', 'viewer']),
+  department: z.string().optional(),
+  position: z.string().optional(),
+  bank_account_number: z.string().optional(),
+  intern_id: z.string().optional(),
+  duration_months: z.number().optional()
 });
 
 export const provisionUser = createServerFn({ method: "POST" })
@@ -43,6 +48,11 @@ export const provisionUser = createServerFn({ method: "POST" })
       id: userId,
       full_name: data.full_name,
       email: data.email,
+      department: data.department,
+      position: data.position,
+      bank_account_number: data.bank_account_number,
+      intern_id: data.intern_id,
+      duration_months: data.duration_months
     });
 
     return { success: true, userId };

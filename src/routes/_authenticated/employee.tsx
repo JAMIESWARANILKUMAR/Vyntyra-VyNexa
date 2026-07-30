@@ -264,7 +264,8 @@ function EmployeeDashboard() {
     }
   }
 
-  async function handleVerifyMfa(e: React.FormEvent) {
+
+  async function handleVerifyMfa(e: React.FormEvent) {
     e.preventDefault();
     if (!mfaFactorId || !mfaCode) return;
     try {
@@ -629,6 +630,26 @@ function EmployeeDashboard() {
             <motion.div key="payouts" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-6">
               <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Payouts</h2>
               <div className="space-y-4">
+                
+                {/* Bank Account Recommendation Section */}
+                <div className="mb-6 p-6 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl">
+                  <h3 className="text-lg font-medium text-blue-900 mb-2">Don't have a Bank Account?</h3>
+                  <p className="text-sm text-blue-700 mb-4">
+                    Company recommends opening an account for seamless and fast salary credits. Choose one of our preferred banking partners to open an account online instantly:
+                  </p>
+                  <div className="flex gap-4 flex-wrap">
+                    <a href="https://www.kotak.com/en/personal-banking/accounts/savings-account/811-savings-account.html" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">
+                      Kotak Bank
+                    </a>
+                    <a href="https://www.idfcfirstbank.com/personal-banking/accounts/savings-account" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-burgundy-600 text-white rounded-lg text-sm font-medium hover:bg-burgundy-700 transition-colors" style={{ backgroundColor: '#901235' }}>
+                      IDFC First Bank
+                    </a>
+                    <a href="https://www.axisbank.com/retail/accounts/savings-account" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-pink-700 text-white rounded-lg text-sm font-medium hover:bg-pink-800 transition-colors" style={{ backgroundColor: '#97144D' }}>
+                      Axis Bank
+                    </a>
+                  </div>
+                </div>
+
                 {payouts.length === 0 ? (
                   <div className="py-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">No payouts recorded.</div>
                 ) : (
