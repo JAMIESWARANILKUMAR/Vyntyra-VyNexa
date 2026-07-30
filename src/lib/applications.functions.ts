@@ -297,3 +297,89 @@ export const regenerateInterviewQuestions = createServerFn({ method: "POST" })
     });
     return { text };
   });
+
+// ─── Interview Management ────────────────────────────────────
+
+export const listEmployees = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    // Select profiles. Admins can also be interviewers.
+    const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email");
+        
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const listAssignedInterviews = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+        .from("applications")
+        .select("*")
+        .eq("interviewer_id", context.userId)
+        .is("deleted_at", null)
+        .eq("status", "interview_scheduled");
+        
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+const feedbackSchema = z.object({
+  applicationId: z.string(),
+  summary: z.string().trim().min(5, "Summary must be at least 5 characters"),
+  remarks: z.string().trim().min(5, "Remarks must be at least 5 characters"),
+});
+
+export const submitInterviewFeedback = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => feedbackSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    // Verify the logged-in user is indeed the assigned interviewer
+    const { data: app, error: fetchError } = await supabase
+      .from("applications")
+      .select("interviewer_id, status, full_name, role_applied")
+      .eq("id", data.applicationId)
+      .single();
+      
+    if (fetchError || !app) throw new Error("Application not found");
+    if (app.interviewer_id !== context.userId) {
+      throw new Error("Unauthorized: You are not the assigned interviewer.");
+    }
+    
+    const { error: updateError } = await supabase
+      .from("applications")
+      .update({
+        interview_summary: data.summary,
+        interview_remarks: data.remarks,
+        interview_feedback_submitted_at: new Date().toISOString(),
+      })
+      .eq("id", data.applicationId);
+      
+    if (updateError) throw new Error(updateError.message);
+    
+    // Log the feedback submission to the status timeline
+    await supabase.from("application_status_events").insert([{
+        application_id: data.applicationId,
+        from_status: app.status,
+        to_status: app.status,
+        note: `[Interview Feedback Submitted]\nSummary: ${data.summary}\nRemarks: ${data.remarks}`,
+        changed_by: context.userId,
+    }]);
+
+    // Insert admin notification for feedback submission
+    try {
+      const { insertNotification } = await import("./notifications.functions");
+      await insertNotification({
+        type: "status_change",
+        title: "Interview Feedback Submitted",
+        message: `Feedback submitted by interviewer for ${app.full_name} (${app.role_applied})`,
+        metadata: { applicationId: data.applicationId, name: app.full_name },
+      });
+    } catch (e) {
+      console.warn("[interviews] notification insert failed:", (e as Error).message);
+    }
+    
+    return { ok: true };
+  });

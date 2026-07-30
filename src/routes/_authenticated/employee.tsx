@@ -1,5 +1,6 @@
+import { listAssignedInterviews, submitInterviewFeedback } from "@/lib/applications.functions";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
@@ -277,6 +278,9 @@ function EmployeeDashboard() {
 
   const sessionQ = useQuery({ queryKey: ["session"], queryFn: async () => (await supabase.auth.getSession()).data.session });
   
+  const fetchInterviews = useServerFn(listAssignedInterviews);
+  const sendFeedback = useServerFn(submitInterviewFeedback);
+
   const fetchTasks = useServerFn(listTasks);
   const fetchMeetings = useServerFn(listMeetings);
   const fetchSchedules = useServerFn(listSchedules);
@@ -313,6 +317,26 @@ function EmployeeDashboard() {
 
   const session = sessionQ.data;
   const email = session?.user?.email || "";
+  
+  const [interviewsFeedback, setInterviewsFeedback] = useState<Record<string, { summary: string; remarks: string }>>({});
+
+  const interviewsQ = useQuery({
+    queryKey: ["assigned-interviews"],
+    queryFn: () => fetchInterviews(),
+    enabled: !!session?.user?.id,
+  });
+  const assignedInterviews = interviewsQ.data || [];
+
+  const feedbackMut = useMutation({
+    mutationFn: (args: { applicationId: string; summary: string; remarks: string }) => sendFeedback({ data: args }),
+    onSuccess: () => {
+      toast.success("Interview feedback submitted successfully");
+      qc.invalidateQueries({ queryKey: ["assigned-interviews"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to submit feedback");
+    }
+  });
   
   const profileQ = useQuery({ 
     queryKey: ["profile", session?.user?.id], 
@@ -515,6 +539,7 @@ function EmployeeDashboard() {
     { id: "leave", label: "Leaves" },
     { id: "payouts", label: "Payouts" },
     { id: "meetings", label: "Meetings" },
+    { id: "interviews", label: "Interviews", badge: assignedInterviews.length },
     { id: "announcements", label: `News`, badge: announcements.length },
     { id: "team", label: "Team" },
     { id: "resources", label: "Resources" },
@@ -947,6 +972,148 @@ function EmployeeDashboard() {
           )}
 
           {/* ─── MEETINGS ─── */}
+          {activeTab === "interviews" && (
+            <motion.div {...pageVariants} className="space-y-8">
+              <div className="flex items-center justify-between border-b border-black/5 pb-5">
+                <div>
+                  <h2 className="font-serif text-2xl font-bold text-slate-900 tracking-tight">Assigned Interviews</h2>
+                  <p className="text-sm text-slate-500 mt-1">Review candidate details, join calls, and submit interview feedback.</p>
+                </div>
+              </div>
+
+              {assignedInterviews.length === 0 ? (
+                <div className="rounded-2xl border border-black/5 bg-white p-12 text-center text-slate-500 shadow-sm">
+                  No interviews assigned to you currently. Any scheduled candidate interviews where you are the interviewer will appear here.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-6">
+                  {assignedInterviews.map((app: any) => {
+                    const hasSubmitted = !!app.interview_summary || !!app.interview_remarks;
+                    const feedback = interviewsFeedback[app.id] || { summary: "", remarks: "" };
+                    
+                    return (
+                      <div key={app.id} className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm space-y-6 hover:shadow-md transition-shadow duration-300">
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                          <div>
+                            <h3 className="font-serif text-lg font-bold text-slate-900">{app.full_name}</h3>
+                            <div className="text-sm font-medium text-slate-500 mt-0.5">{app.role_applied}</div>
+                          </div>
+                          
+                          <div className="flex flex-col items-end gap-1.5">
+                            <span className="text-xs font-mono bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200">
+                              Ref: {app.id.slice(0, 8).toUpperCase()}
+                            </span>
+                            {hasSubmitted && (
+                              <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-2.5 py-0.5 rounded-full font-medium">
+                                Feedback Submitted
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm border-y border-black/5 py-4">
+                          <div>
+                            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold block">Meeting Time</span>
+                            <span className="font-medium text-slate-700 mt-1 block">
+                              {app.meeting_time ? new Date(app.meeting_time).toLocaleString() : "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold block">Meeting Link</span>
+                            {app.meet_link ? (
+                              <a href={app.meet_link} target="_blank" rel="noreferrer" className="text-indigo-600 hover:text-indigo-800 underline font-medium mt-1 block truncate">
+                                Join Video Call ↗
+                              </a>
+                            ) : (
+                              <span className="text-slate-500 mt-1 block">—</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold block">Contact Candidate</span>
+                            <span className="text-slate-700 mt-1 block truncate">
+                              {app.email} {app.phone ? `· ${app.phone}` : ""}
+                            </span>
+                          </div>
+                        </div>
+
+                        {!hasSubmitted ? (
+                          <div className="space-y-4 pt-2">
+                            <h4 className="text-sm font-semibold text-slate-900">Submit Interview Feedback & Remarks</h4>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor={`summary-${app.id}`} className="text-xs font-medium text-slate-500">Interview Summary / Topics Covered</Label>
+                                <Textarea 
+                                  id={`summary-${app.id}`}
+                                  className="mt-1.5 text-sm"
+                                  rows={4}
+                                  value={feedback.summary}
+                                  onChange={(e) => setInterviewsFeedback({
+                                    ...interviewsFeedback,
+                                    [app.id]: { ...feedback, summary: e.target.value }
+                                  })}
+                                  placeholder="e.g. Discussed search ranking, TF-IDF, vector search experience. Evaluated coding skills..."
+                                />
+                              </div>
+                              
+                              <div>
+                                <Label htmlFor={`remarks-${app.id}`} className="text-xs font-medium text-slate-500">Detailed Remarks / Recommendation</Label>
+                                <Textarea 
+                                  id={`remarks-${app.id}`}
+                                  className="mt-1.5 text-sm"
+                                  rows={4}
+                                  value={feedback.remarks}
+                                  onChange={(e) => setInterviewsFeedback({
+                                    ...interviewsFeedback,
+                                    [app.id]: { ...feedback, remarks: e.target.value }
+                                  })}
+                                  placeholder="e.g. Recommended for final super-admin review. Candidate exhibits solid grasp of MLE principles..."
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex justify-end">
+                              <Button 
+                                onClick={() => feedbackMut.mutate({ 
+                                  applicationId: app.id, 
+                                  summary: feedback.summary, 
+                                  remarks: feedback.remarks 
+                                })}
+                                disabled={feedbackMut.isPending || !feedback.summary.trim() || !feedback.remarks.trim()}
+                                className="bg-black hover:bg-slate-800 text-white rounded-full px-6"
+                              >
+                                {feedbackMut.isPending ? "Submitting..." : "Submit Remarks to Super Admin"}
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-slate-50 rounded-xl p-4 border border-black/5 space-y-3">
+                            <h4 className="text-xs uppercase tracking-wider text-slate-400 font-bold">Your Submitted Remarks</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="font-semibold text-slate-600 block">Summary</span>
+                                <p className="text-slate-700 mt-1 whitespace-pre-wrap">{app.interview_summary}</p>
+                              </div>
+                              <div>
+                                <span className="font-semibold text-slate-600 block">Remarks & Recommendations</span>
+                                <p className="text-slate-700 mt-1 whitespace-pre-wrap">{app.interview_remarks}</p>
+                              </div>
+                            </div>
+                            {app.interview_feedback_submitted_at && (
+                              <div className="text-[10px] text-slate-400 italic text-right">
+                                Submitted on {new Date(app.interview_feedback_submitted_at).toLocaleString()}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+          )}
+
           {activeTab === "meetings" && (
             <motion.div key="meetings" variants={pageVariants} initial="initial" animate="animate" exit="exit">
               <MeetingsSection meetings={meetings} isLoading={meetingsQ.isLoading} isError={meetingsQ.isError} />

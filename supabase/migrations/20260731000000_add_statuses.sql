@@ -21,6 +21,12 @@ ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS interviewer_name TEXT;
 ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS meet_link TEXT;
 ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS meeting_time TIMESTAMP WITH TIME ZONE;
 
+-- New interview assignment and summary fields
+ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS interviewer_id UUID REFERENCES auth.users(id);
+ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS interview_summary TEXT;
+ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS interview_remarks TEXT;
+ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS interview_submitted_at TIMESTAMP WITH TIME ZONE;
+
 -- 5. Insert default templates for the new statuses
 INSERT INTO public.status_email_templates (status, subject, html_body, enabled) VALUES
 ('interview_scheduled', 'Interview Scheduled: {{role_applied}} | Vyntyra', '<p>Dear {{full_name}},</p><p>We are pleased to invite you for an interview for the <strong>{{role_applied}}</strong> position at Vyntyra Consultancy Services.</p><p><strong>Interviewer:</strong> {{interviewer}}</p><p><strong>Date & Time:</strong> {{meeting_time}}</p><p><strong>Meeting Link:</strong> <a href="{{meet_link}}">{{meet_link}}</a></p><p>Best regards,<br>Vyntyra Talent Acquisition</p>', true),

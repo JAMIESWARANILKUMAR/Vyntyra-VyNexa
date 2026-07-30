@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { listApplications, updateAdminNotes, getResumeSignedUrl, regenerateInterviewQuestions, listApplicationProjects, deleteApplication } from "@/lib/applications.functions";
+import { listApplications, updateAdminNotes, getResumeSignedUrl, regenerateInterviewQuestions, listApplicationProjects, deleteApplication, listEmployees } from "@/lib/applications.functions";
 import { getApplicationsOpen, setApplicationsOpen } from "@/lib/settings.functions";
 import { listJobPostings, createJobPosting, updateJobPosting, toggleJobPosting, deleteJobPosting } from "@/lib/job-postings.functions";
 import { listAdminNotifications, markAllNotificationsRead } from "@/lib/notifications.functions";
@@ -1020,6 +1020,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
   const [meetLink, setMeetLink] = useState("");
   const [meetingTime, setMeetingTime] = useState("");
   const [interviewerName, setInterviewerName] = useState("");
+  const [interviewerId, setInterviewerId] = useState("");
   const [ccEmail, setCcEmail] = useState("");
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
   const [aiText, setAiText] = useState<string | null>(app?.interview_questions ?? null);
@@ -1037,6 +1038,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
       setMeetLink(app.meet_link || "");
       setMeetingTime(app.meeting_time ? new Date(app.meeting_time).toISOString().slice(0, 16) : "");
       setInterviewerName(app.interviewer_name || "");
+      setInterviewerId(app.interviewer_id || "");
       setCcEmail("");
       if (app.resume_path) {
         signed({ data: { path: app.resume_path } })
@@ -1062,6 +1064,13 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
     enabled: !!app,
   });
 
+  const fetchEmployees = useServerFn(listEmployees);
+  const employeesQ = useQuery({
+    queryKey: ["employees-list"],
+    queryFn: () => fetchEmployees(),
+  });
+  const employees = employeesQ.data || [];
+
   const statusMut = useMutation({
     mutationFn: () => changeStatus({
       data: {
@@ -1070,7 +1079,8 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         note,
         meetLink: status === "interview_scheduled" ? meetLink : null,
         meetingTime: status === "interview_scheduled" ? meetingTime : null,
-        interviewerName: status === "interview_scheduled" ? interviewerName : null,
+        interviewerId: status === "interview_scheduled" ? interviewerId : null,
+        interviewerName: status === "interview_scheduled" ? (employees.find((e: any) => e.id === interviewerId)?.full_name || "") : null,
         ccEmail: ccEmail || null
       }
     }),
@@ -1178,6 +1188,26 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
                 <InfoRow label="Meeting Time" value={app.meeting_time ? new Date(app.meeting_time).toLocaleString() : "—"} />
                 <InfoRow label="Meeting Link" value={app.meet_link ? <a href={app.meet_link} target="_blank" rel="noreferrer" className="text-secondary underline break-all">{app.meet_link}</a> : "—"} />
               </div>
+              {(app.interview_summary || app.interview_remarks) && (
+                <div className="border-t border-border/50 pt-2 mt-2 space-y-2">
+                  <div className="text-[11px] font-semibold text-primary uppercase tracking-wider">Interviewer Remarks</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-xs text-muted-foreground uppercase font-medium">Summary</span>
+                      <p className="mt-1 text-slate-700 whitespace-pre-wrap">{app.interview_summary}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground uppercase font-medium">Remarks / Recommendation</span>
+                      <p className="mt-1 text-slate-700 whitespace-pre-wrap">{app.interview_remarks}</p>
+                    </div>
+                  </div>
+                  {app.interview_feedback_submitted_at && (
+                    <div className="text-[9px] text-muted-foreground italic text-right mt-1">
+                      Submitted on {new Date(app.interview_feedback_submitted_at).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -1346,13 +1376,16 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-border/50 pt-4">
                 <div>
                   <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Assigned Interviewer *</label>
-                  <Input 
-                    required
-                    className="mt-1.5" 
-                    value={interviewerName} 
-                    onChange={(e) => setInterviewerName(e.target.value)} 
-                    placeholder="e.g. Rahul Sen" 
-                  />
+                  <Select value={interviewerId} onValueChange={setInterviewerId}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select interviewer..." /></SelectTrigger>
+                    <SelectContent>
+                      {employees.map((e: any) => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {e.full_name || e.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Meeting Time *</label>

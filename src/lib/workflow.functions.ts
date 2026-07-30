@@ -73,6 +73,7 @@ const changeSchema = z.object({
   meetLink: z.string().optional().nullable(),
   meetingTime: z.string().optional().nullable(),
   interviewerName: z.string().optional().nullable(),
+  interviewerId: z.string().optional().nullable(),
   ccEmail: z.string().optional().nullable(),
 });
 
@@ -103,6 +104,7 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
         updateData.meet_link = data.meetLink || null;
         updateData.meeting_time = data.meetingTime || null;
         updateData.interviewer_name = data.interviewerName || null;
+        updateData.interviewer_id = data.interviewerId || null;
       }
       await supabase.from("applications").update(updateData).eq('id', data.id);
 
