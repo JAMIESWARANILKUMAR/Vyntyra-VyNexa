@@ -834,7 +834,7 @@ function EmployeeDashboard() {
                       accountType="Salary / Zero Balance Digital Account"
                       branches={["Visakhapatnam", "Bengaluru", "Hyderabad", "Gujarat"]}
                       bankSupport="1860 266 2666 (Local) / 1800 209 0000"
-                      vyntyraManager="Available Soon
+                      vyntyraManager="Available Soon"
                       ads={[
                         { videoId: "1qvcBjU_1Mk", title: "Kotak 811: Zero Balance Savings", slogan: "No maintenance charges. Open digitally using video KYC in 3 mins.", feature: "100% digital onboarding" },
                         { videoId: "5UenpW0G6Jk", title: "ActivMoney Automated Sweep-in", slogan: "Get FD-like interest rates up to 7% p.a. on your savings balance.", feature: "Up to 7% p.a. interest" },
@@ -859,7 +859,7 @@ function EmployeeDashboard() {
                       accountType="Premium Salary Account / Savings Account"
                       branches={["Visakhapatnam", "Bengaluru", "Hyderabad", "Gujarat"]}
                       bankSupport="1800 10 888 (Toll Free)"
-                      vyntyraManager="Available Soon
+                      vyntyraManager="Available Soon"
                       ads={[
                         { videoId: "tpKwQZ9_fEQ", title: "Monthly Interest Payouts", slogan: "Earn up to 7.25% p.a. and watch your savings compound every single month.", feature: "Compounded monthly interest" },
                         { videoId: "a7Sg-H2bWjE", title: "Zero Fee Banking Promise", slogan: "IDFC First Bank promises zero fee on 28 essential savings services.", feature: "Completely zero fee" },
@@ -884,7 +884,7 @@ function EmployeeDashboard() {
                       accountType="Salary / ASAP Zero Balance Savings"
                       branches={["Visakhapatnam", "Bengaluru", "Hyderabad", "Gujarat"]}
                       bankSupport="1860 419 5555 / 1860 500 5555"
-                      vyntyraManager="Available Soon
+                      vyntyraManager="Available Soon"
                       ads={[
                         { videoId: "xVi-fgAlrEs", title: "Axis ASAP Digital Savings", slogan: "Open instantly with zero paperwork and get a virtual debit card instantly.", feature: "Instant KYC validation" },
                         { videoId: "O8486c0t6uI", title: "Grab Deals Cashback Portal", slogan: "Enjoy flat 10% cashback on top brands like Flipkart, Amazon, and Swiggy.", feature: "Exclusive member benefits" },
