@@ -821,7 +821,14 @@ function EmployeeDashboard() {
                       ads={[
                         { videoId: "1qvcBjU_1Mk", title: "Kotak 811: Zero Balance Savings", slogan: "No maintenance charges. Open digitally using video KYC in 3 mins.", feature: "100% digital onboarding" },
                         { videoId: "5UenpW0G6Jk", title: "ActivMoney Automated Sweep-in", slogan: "Get FD-like interest rates up to 7% p.a. on your savings balance.", feature: "Up to 7% p.a. interest" },
-                        { videoId: "O-fDk4lI09E", title: "League Platinum Credit Card", slogan: "Lifetime free credit card with massive rewards on shopping.", feature: "Zero annual charges" }
+                        { videoId: "O-fDk4lI09E", title: "League Platinum Credit Card", slogan: "Lifetime free credit card with massive rewards on shopping.", feature: "Zero annual charges" },
+                        { videoId: "e_VfK2YgY0w", title: "Kotak Cherry Investments", slogan: "Invest in Mutual Funds, Stocks, and NPS seamlessly in one app.", feature: "One-click investment portal" },
+                        { videoId: "L-L6qW_LqD4", title: "Everyday Savings Account", slogan: "Get flat 5% cashback on everyday spends using debit card.", feature: "Daily cashback rewards" },
+                        { videoId: "rWd34S4kO1Y", title: "Kotak Smart EMI Loans", slogan: "Instant approval for buying phones, appliances, and travel.", feature: "No-cost EMI offers" },
+                        { videoId: "k0vUu_QkQ68", title: "Kotak Solitaire Premium", slogan: "Premium customized banking experience for business leaders.", feature: "Dedicated wealth manager" },
+                        { videoId: "U_yP-8gqPsk", title: "Kotak Home Loans", slogan: "Competitive interest rates with fast online processing.", feature: "Instant sanction letter" },
+                        { videoId: "5UenpW0G6Jk", title: "Safe Banking Awareness", slogan: "Never share your OTP, PIN, or CVV. Bank safely online.", feature: "24/7 security monitoring" },
+                        { videoId: "1qvcBjU_1Mk", title: "Kotak Grand Savings Account", slogan: "Exclusive privileges and lifestyle offers for senior citizens.", feature: "Senior priority banking" }
                       ]}
                     />
 
@@ -837,7 +844,14 @@ function EmployeeDashboard() {
                       ads={[
                         { videoId: "tpKwQZ9_fEQ", title: "Monthly Interest Payouts", slogan: "Earn up to 7.25% p.a. and watch your savings compound every single month.", feature: "Compounded monthly interest" },
                         { videoId: "a7Sg-H2bWjE", title: "Zero Fee Banking Promise", slogan: "IDFC First Bank promises zero fee on 28 essential savings services.", feature: "Completely zero fee" },
-                        { videoId: "2XoQ0z4fIks", title: "Premium Visa Signature Card", slogan: "Get complimentary airport lounge access and fuel surcharge waivers.", feature: "Visa Signature rewards" }
+                        { videoId: "2XoQ0z4fIks", title: "Premium Visa Signature Card", slogan: "Get complimentary airport lounge access and fuel surcharge waivers.", feature: "Visa Signature rewards" },
+                        { videoId: "d3rYtB34UaU", title: "FIRST Wealth Account", slogan: "Unlock specialized investment advisory and wealth management tools.", feature: "Expert wealth guidance" },
+                        { videoId: "tpKwQZ9_fEQ", title: "IDFC First Mobile App", slogan: "Track all your accounts, loans, and credit cards with a single login.", feature: "Award-winning mobile UI" },
+                        { videoId: "a7Sg-H2bWjE", title: "First Power Credit Card", slogan: "Save up to Rs 7,000 annually on fuel, groceries, and utility bills.", feature: "Co-branded HPCL card" },
+                        { videoId: "2XoQ0z4fIks", title: "FIRST Select Credit Card", slogan: "Buy 1 Get 1 free movie tickets on Paytm & massive reward points.", feature: "Exclusive lifestyle perks" },
+                        { videoId: "d3rYtB34UaU", title: "Fastag Automatic Recharge", slogan: "Instant tolls payments and seamless reload through bank account.", feature: "Auto-debit capability" },
+                        { videoId: "tpKwQZ9_fEQ", title: "Always First Service", slogan: "Skip the automated queue and connect directly to a live banker.", feature: "24/7 priority support" },
+                        { videoId: "a7Sg-H2bWjE", title: "Paperless Account Opening", slogan: "Open a premium bank account online with zero paperwork.", feature: "100% digital KYC" }
                       ]}
                     />
 
@@ -853,7 +867,14 @@ function EmployeeDashboard() {
                       ads={[
                         { videoId: "xVi-fgAlrEs", title: "Axis ASAP Digital Savings", slogan: "Open instantly with zero paperwork and get a virtual debit card instantly.", feature: "Instant KYC validation" },
                         { videoId: "O8486c0t6uI", title: "Grab Deals Cashback Portal", slogan: "Enjoy flat 10% cashback on top brands like Flipkart, Amazon, and Swiggy.", feature: "Exclusive member benefits" },
-                        { videoId: "Z8eW-U46C0A", title: "Automated Sweep-in Savings", slogan: "Get higher interest on excess funds while keeping high liquidity.", feature: "Flexible returns" }
+                        { videoId: "Z8eW-U46C0A", title: "Automated Sweep-in Savings", slogan: "Get higher interest on excess funds while keeping high liquidity.", feature: "Flexible returns" },
+                        { videoId: "9Wf9pP4t4Yk", title: "Axis Neo Credit Card", slogan: "Get flat 40% off on Zomato and 10% off on BookMyShow ticket bookings.", feature: "Zero joining fee card" },
+                        { videoId: "8V5d4R3UaPs", title: "Axis Bank Home Loans", slogan: "Turn your dream home into reality with low interest rate loans.", feature: "Flexible repayment schemes" },
+                        { videoId: "xVi-fgAlrEs", title: "Axis Burgundy Private", slogan: "Bespose wealth management for high net worth individuals.", feature: "Exclusive lifestyle concierge" },
+                        { videoId: "O8486c0t6uI", title: "Axis Mobile Banking App", slogan: "Secure, intuitive banking with over 250+ instant digital features.", feature: "Highest rated bank app" },
+                        { videoId: "Z8eW-U46C0A", title: "Axis My Zone Card", slogan: "Complimentary SonyLIV premium annual subscription with your card.", feature: "Complimentary OTT access" },
+                        { videoId: "9Wf9pP4t4Yk", title: "Safe Digital Payments", slogan: "Always verify the receiver's details before making UPI transfers.", feature: "Axis Safe Pay security" },
+                        { videoId: "8V5d4R3UaPs", title: "Axis Bank Personal Loan", slogan: "Get pre-approved instant personal loans up to Rs 40 Lakhs digitally.", feature: "Zero physical document" }
                       ]}
                     />
                   </div>
