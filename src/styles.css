@@ -138,3 +138,21 @@
     linear-gradient(90deg, oklch(1 0 0 / 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
 }
+
+@keyframes lightning-border {
+  0%, 100% {
+    border-color: var(--glow-color, rgba(144, 18, 53, 0.4));
+    box-shadow: 0 0 8px var(--glow-color, rgba(144, 18, 53, 0.25)), 
+                inset 0 0 4px var(--glow-color, rgba(144, 18, 53, 0.1));
+  }
+  50% {
+    border-color: var(--glow-color, rgba(144, 18, 53, 1));
+    box-shadow: 0 0 25px var(--glow-color, rgba(144, 18, 53, 0.7)), 
+                0 0 10px var(--glow-color, rgba(144, 18, 53, 0.35)),
+                inset 0 0 10px var(--glow-color, rgba(144, 18, 53, 0.25));
+  }
+}
+
+@utility lightning-glow {
+  animation: lightning-border 1.5s infinite ease-in-out;
+}

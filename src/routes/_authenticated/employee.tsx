@@ -148,7 +148,10 @@ function BankAdCard({
           </div>
 
           {/* Autoplay Video Crop Container */}
-          <div className="relative overflow-hidden w-full aspect-video rounded-2xl shadow-md border border-slate-100/50 bg-black z-0">
+          <div 
+            className="relative overflow-hidden w-full aspect-video rounded-2xl shadow-md border border-slate-100/50 bg-black z-0 lightning-glow"
+            style={{ '--glow-color': themeColor } as React.CSSProperties}
+          >
             {activeAd.videoId.endsWith(".mp4") || activeAd.videoId.startsWith("/videos/") ? (
               <video 
                 src={activeAd.videoId}
@@ -849,14 +852,7 @@ function EmployeeDashboard() {
                       ads={[
                         { videoId: "/videos/kotak/kotak_ad_2.mp4", title: "Zero Balance Savings Account", slogan: "Open Kotak811 Zero Balance Account from anywhere digitally using Video KYC.", feature: "100% Digital Banking" },
                         { videoId: "/videos/kotak/kotak_ad_1.mp4", title: "FD Wala Savings with ActivMoney", slogan: "Earn FD-like interest up to 7% p.a. on your standard savings account balance.", feature: "Up to 7% Interest Rate" },
-                        { videoId: "/videos/kotak/kotak_ad_3.mp4", title: "Scan, Pay and Earn Rewards", slogan: "Use the new Kotak811 Mobile Banking app to pay seamlessly and grab rewards.", feature: "Reward Points on Scan & Pay" },
-                        { videoId: "/videos/kotak/kotak_ad_2.mp4", title: "Zero Maintenance Fee Forever", slogan: "Zero balance account with absolutely no hidden maintenance fees.", feature: "No Maintenance Charges" },
-                        { videoId: "/videos/kotak/kotak_ad_1.mp4", title: "Flexibility to Withdraw Anytime", slogan: "Get high interest with ActivMoney sweep-in and withdraw without any penalty.", feature: "Flexible Sweep-in & Out" },
-                        { videoId: "/videos/kotak/kotak_ad_3.mp4", title: "League Platinum Credit Card", slogan: "Get a lifetime-free League credit card against a fixed deposit instantly.", feature: "Lifetime Free Card" },
-                        { videoId: "/videos/kotak/kotak_ad_2.mp4", title: "Instant Virtual Debit Card", slogan: "Get access to a virtual classic debit card immediately upon account opening.", feature: "Instant Online Shopping" },
-                        { videoId: "/videos/kotak/kotak_ad_1.mp4", title: "Smart Money Auto-Growth", slogan: "Watch your ideal funds grow automatically with daily interest compounding.", feature: "Daily Interest Accrual" },
-                        { videoId: "/videos/kotak/kotak_ad_3.mp4", title: "Kotak Security Promise", slogan: "Enjoy bank-grade security and instant transaction alerts with Kotak811.", feature: "24/7 Threat Protection" },
-                        { videoId: "/videos/kotak/kotak_ad_2.mp4", title: "Grand Savings Privileges", slogan: "Special priority banking channels and higher interest for premium accounts.", feature: "Priority Customer Support" }
+                        { videoId: "/videos/kotak/kotak_ad_3.mp4", title: "Scan, Pay and Earn Rewards", slogan: "Use the new Kotak811 Mobile Banking app to pay seamlessly and grab rewards.", feature: "Reward Points on Scan & Pay" }
                       ]}
                     />
 
@@ -872,16 +868,8 @@ function EmployeeDashboard() {
                       bankSupport="1800 10 888 (Toll Free)"
                       vyntyraManager="Available Soon"
                       ads={[
-                        { videoId: "tpKwQZ9_fEQ", title: "Monthly Interest Payouts", slogan: "Earn up to 7.25% p.a. and watch your savings compound every single month.", feature: "Compounded monthly interest" },
-                        { videoId: "a7Sg-H2bWjE", title: "Zero Fee Banking Promise", slogan: "IDFC First Bank promises zero fee on 28 essential savings services.", feature: "Completely zero fee" },
-                        { videoId: "tpKwQZ9_fEQ", title: "Premium Visa Signature Card", slogan: "Get complimentary airport lounge access and fuel surcharge waivers.", feature: "Visa Signature rewards" },
-                        { videoId: "a7Sg-H2bWjE", title: "FIRST Wealth Account", slogan: "Unlock specialized investment advisory and wealth management tools.", feature: "Expert wealth guidance" },
-                        { videoId: "tpKwQZ9_fEQ", title: "IDFC First Mobile App", slogan: "Track all your accounts, loans, and credit cards with a single login.", feature: "Award-winning mobile UI" },
-                        { videoId: "a7Sg-H2bWjE", title: "First Power Credit Card", slogan: "Save up to Rs 7,000 annually on fuel, groceries, and utility bills.", feature: "Co-branded HPCL card" },
-                        { videoId: "tpKwQZ9_fEQ", title: "FIRST Select Credit Card", slogan: "Buy 1 Get 1 free movie tickets on Paytm & massive reward points.", feature: "Exclusive lifestyle perks" },
-                        { videoId: "a7Sg-H2bWjE", title: "Fastag Automatic Recharge", slogan: "Instant tolls payments and seamless reload through bank account.", feature: "Auto-debit capability" },
-                        { videoId: "tpKwQZ9_fEQ", title: "Always First Service", slogan: "Skip the automated queue and connect directly to a live banker.", feature: "24/7 priority support" },
-                        { videoId: "a7Sg-H2bWjE", title: "Paperless Account Opening", slogan: "Open a premium bank account online with zero paperwork.", feature: "100% digital KYC" }
+                        { videoId: "/videos/idfc/idfc_ad_2.mp4", title: "Open Savings Account in 5 Mins", slogan: "Open your IDFC FIRST Bank Savings Account online in just 5 mins.", feature: "5-Minute Online Setup" },
+                        { videoId: "/videos/idfc/idfc_ad_1.mp4", title: "Lifetime Free Credit Cards", slogan: "Enjoy premium credit cards with zero annual fees and robust rewards.", feature: "No Annual Fee Cards" }
                       ]}
                     />
 
@@ -899,14 +887,7 @@ function EmployeeDashboard() {
                       ads={[
                         { videoId: "/videos/axis/axis_ad_2.mp4", title: "Digital Savings Account", slogan: "Make every moment special with an Axis Bank Digital Savings Account.", feature: "Open in 4 Easy Steps" },
                         { videoId: "/videos/axis/axis_ad_3.mp4", title: "Open Account in 4 Steps", slogan: "Experience paperless account opening instantly using Video KYC.", feature: "100% Digital Setup" },
-                        { videoId: "/videos/axis/axis_ad_1.mp4", title: "Dil Se Open Celebrations", slogan: "Celebrate every moment with exclusive rewards and lifestyle benefits.", feature: "Dil Se Open Privileges" },
-                        { videoId: "/videos/axis/axis_ad_2.mp4", title: "Grab Deals Cashback Portal", slogan: "Enjoy flat 10% cashback on Flipkart, Amazon, and Swiggy daily.", feature: "Flat 10% Cashback" },
-                        { videoId: "/videos/axis/axis_ad_3.mp4", title: "Zero Paperwork Onboarding", slogan: "Get your virtual debit card instantly upon quick Video KYC validation.", feature: "Instant Debit Card" },
-                        { videoId: "/videos/axis/axis_ad_1.mp4", title: "Axis My Zone Credit Card", slogan: "Get complimentary SonyLIV premium subscription and movies discounts.", feature: "Free OTT Benefits" },
-                        { videoId: "/videos/axis/axis_ad_2.mp4", title: "Burgundy Wealth Management", slogan: "Bespoke customized banking privileges for senior leaders and managers.", feature: "Concierge Services" },
-                        { videoId: "/videos/axis/axis_ad_3.mp4", title: "Everyday Reward Points", slogan: "Earn eEdge reward points on your online card spends and dining.", feature: "eEdge Spending Points" },
-                        { videoId: "/videos/axis/axis_ad_1.mp4", title: "Safe Digital Transfers", slogan: "Experience secure UPI transfers backed by Axis 24/7 fraud monitoring.", feature: "Axis Safe Pay Security" },
-                        { videoId: "/videos/axis/axis_ad_2.mp4", title: "Axis Bank Personal Loans", slogan: "Get instant digital loans with zero physical documents up to Rs 40 Lakhs.", feature: "Instant Pre-approval" }
+                        { videoId: "/videos/axis/axis_ad_1.mp4", title: "Dil Se Open Celebrations", slogan: "Celebrate every moment with exclusive rewards and lifestyle benefits.", feature: "Dil Se Open Privileges" }
                       ]}
                     />
                   </div>
