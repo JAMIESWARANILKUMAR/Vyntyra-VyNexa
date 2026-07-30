@@ -149,13 +149,24 @@ function BankAdCard({
 
           {/* Autoplay Video Crop Container */}
           <div className="relative overflow-hidden w-full aspect-video rounded-2xl shadow-md border border-slate-100/50 bg-black z-0">
-            <iframe 
-              src={`https://www.youtube.com/embed/${activeAd.videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${activeAd.videoId}&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&showinfo=0&fs=0&autohide=1`} 
-              className="absolute top-[-25%] left-[-10%] w-[120%] h-[150%] pointer-events-none z-10"
-              allow="autoplay; encrypted-media"
-              tabIndex={-1}
-            />
-            {/* Click Blocker Overlay - Capture pointer-events so iframe never gets hover or touch events */}
+            {activeAd.videoId.endsWith(".mp4") || activeAd.videoId.startsWith("/videos/") ? (
+              <video 
+                src={activeAd.videoId}
+                autoPlay 
+                muted 
+                loop 
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover z-10"
+              />
+            ) : (
+              <iframe 
+                src={`https://www.youtube.com/embed/${activeAd.videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${activeAd.videoId}&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&showinfo=0&fs=0&autohide=1`} 
+                className="absolute top-[-25%] left-[-10%] w-[120%] h-[150%] pointer-events-none z-10"
+                allow="autoplay; encrypted-media"
+                tabIndex={-1}
+              />
+            )}
+            {/* Click Blocker Overlay - Capture pointer-events so video/iframe never gets hover or touch events */}
             <div className="absolute inset-0 bg-transparent z-20 pointer-events-auto" />
             
             {/* Custom Overlay Tag */}
@@ -886,16 +897,16 @@ function EmployeeDashboard() {
                       bankSupport="1860 419 5555 / 1860 500 5555"
                       vyntyraManager="Available Soon"
                       ads={[
-                        { videoId: "xVi-fgAlrEs", title: "Axis ASAP Digital Savings", slogan: "Open instantly with zero paperwork and get a virtual debit card instantly.", feature: "Instant KYC validation" },
-                        { videoId: "O8486c0t6uI", title: "Grab Deals Cashback Portal", slogan: "Enjoy flat 10% cashback on top brands like Flipkart, Amazon, and Swiggy.", feature: "Exclusive member benefits" },
-                        { videoId: "xVi-fgAlrEs", title: "Automated Sweep-in Savings", slogan: "Get higher interest on excess funds while keeping high liquidity.", feature: "Flexible returns" },
-                        { videoId: "O8486c0t6uI", title: "Axis Neo Credit Card", slogan: "Get flat 40% off on Zomato and 10% off on BookMyShow ticket bookings.", feature: "Zero joining fee card" },
-                        { videoId: "xVi-fgAlrEs", title: "Axis Bank Home Loans", slogan: "Turn your dream home into reality with low interest rate loans.", feature: "Flexible repayment schemes" },
-                        { videoId: "O8486c0t6uI", title: "Axis Burgundy Private", slogan: "Bespose wealth management for high net worth individuals.", feature: "Exclusive lifestyle concierge" },
-                        { videoId: "xVi-fgAlrEs", title: "Axis Mobile Banking App", slogan: "Secure, intuitive banking with over 250+ instant digital features.", feature: "Highest rated bank app" },
-                        { videoId: "O8486c0t6uI", title: "Axis My Zone Card", slogan: "Complimentary SonyLIV premium annual subscription with your card.", feature: "Complimentary OTT access" },
-                        { videoId: "xVi-fgAlrEs", title: "Safe Digital Payments", slogan: "Always verify the receiver's details before making UPI transfers.", feature: "Axis Safe Pay security" },
-                        { videoId: "O8486c0t6uI", title: "Axis Bank Personal Loan", slogan: "Get pre-approved instant personal loans up to Rs 40 Lakhs digitally.", feature: "Zero physical document" }
+                        { videoId: "/videos/axis/axis_ad_2.mp4", title: "Digital Savings Account", slogan: "Make every moment special with an Axis Bank Digital Savings Account.", feature: "Open in 4 Easy Steps" },
+                        { videoId: "/videos/axis/axis_ad_3.mp4", title: "Open Account in 4 Steps", slogan: "Experience paperless account opening instantly using Video KYC.", feature: "100% Digital Setup" },
+                        { videoId: "/videos/axis/axis_ad_1.mp4", title: "Dil Se Open Celebrations", slogan: "Celebrate every moment with exclusive rewards and lifestyle benefits.", feature: "Dil Se Open Privileges" },
+                        { videoId: "/videos/axis/axis_ad_2.mp4", title: "Grab Deals Cashback Portal", slogan: "Enjoy flat 10% cashback on Flipkart, Amazon, and Swiggy daily.", feature: "Flat 10% Cashback" },
+                        { videoId: "/videos/axis/axis_ad_3.mp4", title: "Zero Paperwork Onboarding", slogan: "Get your virtual debit card instantly upon quick Video KYC validation.", feature: "Instant Debit Card" },
+                        { videoId: "/videos/axis/axis_ad_1.mp4", title: "Axis My Zone Credit Card", slogan: "Get complimentary SonyLIV premium subscription and movies discounts.", feature: "Free OTT Benefits" },
+                        { videoId: "/videos/axis/axis_ad_2.mp4", title: "Burgundy Wealth Management", slogan: "Bespoke customized banking privileges for senior leaders and managers.", feature: "Concierge Services" },
+                        { videoId: "/videos/axis/axis_ad_3.mp4", title: "Everyday Reward Points", slogan: "Earn eEdge reward points on your online card spends and dining.", feature: "eEdge Spending Points" },
+                        { videoId: "/videos/axis/axis_ad_1.mp4", title: "Safe Digital Transfers", slogan: "Experience secure UPI transfers backed by Axis 24/7 fraud monitoring.", feature: "Axis Safe Pay Security" },
+                        { videoId: "/videos/axis/axis_ad_2.mp4", title: "Axis Bank Personal Loans", slogan: "Get instant digital loans with zero physical documents up to Rs 40 Lakhs.", feature: "Instant Pre-approval" }
                       ]}
                     />
                   </div>
