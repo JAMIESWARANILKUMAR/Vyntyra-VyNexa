@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { User } from "lucide-react";
 
-export function ProfileAvatar({ url, name }: { url?: string | null; name?: string }) {
+export function ProfileAvatar({ url, name, className }: { url?: string | null; name?: string; className?: string }) {
   const [error, setError] = useState(false);
 
   if (url && !error) {

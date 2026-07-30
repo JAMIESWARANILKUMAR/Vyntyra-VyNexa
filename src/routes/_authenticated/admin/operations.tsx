@@ -18,7 +18,9 @@ import {
   listSchedules, createSchedule, deleteSchedule,
   listMeetings, createMeeting, deleteMeeting,
   listResources, createResource, deleteResource,
-  getPresignedUrl, updateUserProfile, listFeedbacks, markFeedbackRead
+  getPresignedUrl, updateUserProfile, listFeedbacks, markFeedbackRead,
+  listAllLeaves, updateLeaveStatus, listAllAttendance, listAllPayouts, createPayout,
+  assignIntern, removeIntern, adminResetPassword
 } from "@/lib/operations.functions";
 import { toast } from "sonner";
 import {
@@ -104,6 +106,16 @@ function OperationsDashboard() {
   const fetchFeedbacks = useServerFn(listFeedbacks);
   const doMarkFeedbackRead = useServerFn(markFeedbackRead);
 
+  const fetchAllLeaves = useServerFn(listAllLeaves);
+  const doUpdateLeaveStatus = useServerFn(updateLeaveStatus);
+  const fetchAllAttendance = useServerFn(listAllAttendance);
+  const fetchAllPayouts = useServerFn(listAllPayouts);
+  const doCreatePayout = useServerFn(createPayout);
+  const doAssignIntern = useServerFn(assignIntern);
+  const doRemoveIntern = useServerFn(removeIntern);
+  const doAdminResetPassword = useServerFn(adminResetPassword);
+
+
   // Dialog states
   const [provisionOpen, setProvisionOpen] = useState(false);
   const [announcementOpen, setAnnouncementOpen] = useState(false);
@@ -123,6 +135,17 @@ function OperationsDashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
+  const [payoutOpen, setPayoutOpen] = useState(false);
+  const [payoutForm, setPayoutForm] = useState({ user_id: "", amount: 0, type: "Salary", status: "paid" as "paid" | "pending" });
+
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [resetPasswordForm, setResetPasswordForm] = useState({ userId: "", newPassword: "" });
+  const [resetUserTarget, setResetUserTarget] = useState<any>(null);
+
+  const [assignInternOpen, setAssignInternOpen] = useState(false);
+  const [assignInternForm, setAssignInternForm] = useState({ internId: "", employeeId: "" });
+
+
   // Queries
   const teamQ = useQuery({ queryKey: ["team-members"], queryFn: () => fetchTeam() });
   const announcementsQ = useQuery({ queryKey: ["announcements"], queryFn: () => fetchAnnouncements() });
@@ -132,9 +155,52 @@ function OperationsDashboard() {
   const resourcesQ = useQuery({ queryKey: ["resources"], queryFn: () => fetchResources() });
   const feedbacksQ = useQuery({ queryKey: ["feedbacks"], queryFn: () => fetchFeedbacks() });
 
+  const leavesQ = useQuery({ queryKey: ["admin-leaves"], queryFn: () => fetchAllLeaves() });
+  const attendanceQ = useQuery({ queryKey: ["admin-attendance"], queryFn: () => fetchAllAttendance() });
+  const payoutsQ = useQuery({ queryKey: ["admin-payouts"], queryFn: () => fetchAllPayouts() });
+
   const team: any[] = teamQ.data || [];
   const employees = team.filter((m: any) => m.role === "employee");
   const interns = team.filter((m: any) => m.role === "intern");
+
+  async function handleAdminResetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!resetUserTarget) return;
+    try {
+      await doAdminResetPassword({ data: { userId: resetUserTarget.id, newPassword: resetPasswordForm.newPassword } });
+      toast.success("Password reset successfully for " + resetUserTarget.full_name);
+      setResetPasswordOpen(false);
+      setResetPasswordForm({ userId: "", newPassword: "" });
+      setResetUserTarget(null);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to reset password");
+    }
+  }
+
+  async function handleAssignIntern(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      await doAssignIntern({ data: { internId: assignInternForm.internId, employeeId: assignInternForm.employeeId } });
+      toast.success("Intern assigned successfully!");
+      setAssignInternOpen(false);
+      setAssignInternForm({ internId: "", employeeId: "" });
+      qc.invalidateQueries({ queryKey: ["team-members"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to assign intern");
+    }
+  }
+
+  async function handleRemoveIntern(internId: string) {
+    try {
+      await doRemoveIntern({ data: { internId } });
+      toast.success("Intern removed from employee successfully!");
+      qc.invalidateQueries({ queryKey: ["team-members"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove intern");
+    }
+  }
+
+  const tasks = tasksQ.data || [];
 
   // Mutations
   async function handleProvision(e: React.FormEvent) {
@@ -151,6 +217,39 @@ function OperationsDashboard() {
       qc.invalidateQueries({ queryKey: ["team-members"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to provision user");
+    }
+  }
+
+
+  async function handleMarkFeedbackRead(id: string) {
+    try {
+      await doMarkFeedbackRead({ data: { id } });
+      qc.invalidateQueries({ queryKey: ["feedbacks"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update feedback");
+    }
+  }
+
+  async function handleUpdateLeave(id: string, status: "approved" | "rejected") {
+    try {
+      await doUpdateLeaveStatus({ data: { id, status } });
+      toast.success(`Leave ${status}!`);
+      qc.invalidateQueries({ queryKey: ["admin-leaves"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update leave");
+    }
+  }
+
+  async function handleCreatePayout(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      await doCreatePayout({ data: { ...payoutForm, amount: Number(payoutForm.amount) } });
+      toast.success("Payout issued!");
+      setPayoutOpen(false);
+      setPayoutForm({ user_id: "", amount: 0, type: "Salary", status: "paid" });
+      qc.invalidateQueries({ queryKey: ["admin-payouts"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to issue payout");
     }
   }
 
@@ -971,7 +1070,7 @@ function OperationsDashboard() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">{f.profiles?.full_name || f.intern_id || "Anonymous"}</span>
+                        <span className="font-medium text-sm">{f.profiles?.full_name || "Unknown User" || f.intern_id || "Anonymous"}</span>
                         {!f.is_read && <span className="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">New</span>}
                         <span className="text-xs text-muted-foreground">{new Date(f.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
                       </div>
@@ -1092,6 +1191,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
       toast.error(err.message || "Failed to update profile");
     }
   }
+
 
   async function handleFileUpload(file: File, type: "avatar" | "letter") {
     const isAvatar = type === "avatar";

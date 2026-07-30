@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
+
+
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Briefcase, ClipboardList, Clock, Mail, Bell, LogOut, Loader2,
@@ -43,13 +46,13 @@ const TASK_STATUS_STYLES: Record<string, { badge: string; label: string }> = {
 // Animation variants
 const pageVariants = {
   initial: { opacity: 0, y: 15, filter: "blur(4px)" },
-  animate: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
-  exit: { opacity: 0, y: -10, filter: "blur(2px)", transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } }
+  animate: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.5,  } },
+  exit: { opacity: 0, y: -10, filter: "blur(2px)", transition: { duration: 0.3,  } }
 };
 
 const itemVariants = {
   initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
+  animate: { opacity: 1, y: 0, transition: { duration: 0.4,  } }
 };
 
 const staggerContainer = {
@@ -200,6 +203,7 @@ function EmployeeDashboard() {
     { id: "resources", label: "Resources" },
     { id: "feedbacks", label: "Feedback" },
     { id: "contact", label: "Contact" },
+    { id: "security", label: "Security" },
   ] as const;
 
   return (
@@ -251,7 +255,7 @@ function EmployeeDashboard() {
                   )}
                   <span className="relative z-10 flex items-center gap-2">
                     {t.label}
-                    {t.badge !== undefined && t.badge > 0 && (
+                    {('badge' in t && t.badge !== undefined) && (t as any).badge > 0 && (
                       <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"}`}>
                         {t.badge}
                       </span>

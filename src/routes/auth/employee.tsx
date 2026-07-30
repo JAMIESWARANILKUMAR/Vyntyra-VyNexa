@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Briefcase, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import { Briefcase, Mail, Lock, Loader2, ArrowRight, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,25 @@ function EmployeeAuthPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const [showMfa, setShowMfa] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+
+
+useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
+        // Check MFA
+        const { data: level } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (level && level.nextLevel === 'aal2' && level.currentLevel !== 'aal2') {
+           setShowMfa(true);
+           // Find the TOTP factor id
+           const factors = session.user.factors || [];
+           const totp = factors.find(f => f.factor_type === 'totp' && f.status === 'verified');
+           if (totp) setMfaFactorId(totp.id);
+           return;
+        }
+
         const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', session.user.id);
         const role = roles?.[0]?.role;
         if (role === 'intern') navigate({ to: "/intern" });
@@ -31,16 +47,36 @@ function EmployeeAuthPage() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  async function handleSignIn(e: React.FormEvent) {
+
+  async function handleVerifyMfa(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaFactorId || !mfaCode) return;
+    setLoading(true);
+    try {
+      const challenge = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
+      if (challenge.error) throw challenge.error;
+      const verify = await supabase.auth.mfa.verify({ factorId: mfaFactorId, challengeId: challenge.data.id, code: mfaCode });
+      if (verify.error) throw verify.error;
+      
+      toast.success("Welcome back to your workspace");
+      // The onAuthStateChange will pick up the new AAL level and redirect
+    } catch(err: any) {
+      toast.error(err.message || "Invalid authenticator code");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
-        const { error } = await supabase.auth.signInWithPassword({ 
+        const { error, data } = await supabase.auth.signInWithPassword({ 
           email: email.trim(), 
           password: password.trim() 
         });
         if (error) throw error;
-        toast.success("Welcome back to your workspace");
+        // The onAuthStateChange will handle the rest (MFA check & redirect)
     } catch(error: any) {
         toast.error(error.message);
     } finally {
@@ -70,7 +106,44 @@ function EmployeeAuthPage() {
             <h1 className="font-serif text-3xl font-bold text-slate-900 text-center mb-1">Welcome Back</h1>
             <p className="text-sm text-slate-500 text-center mb-8">Sign in to access your dashboard</p>
 
+  
+          {showMfa ? (
+            <form onSubmit={handleVerifyMfa} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Authenticator Code</label>
+                <div className="relative group">
+                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Enter 6-digit code"
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value)}
+                  />
+                </div>
+                <p className="text-xs text-slate-500">Open your Authenticator app to get the code.</p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition-all shadow-[0_4px_14px_0_rgb(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:-translate-y-0 disabled:hover:shadow-[0_4px_14px_0_rgb(37,99,235,0.39)]"
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Verify Code"}
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setShowMfa(false)}
+                className="w-full text-sm text-slate-500 hover:text-slate-800 transition-colors"
+              >
+                Cancel
+              </button>
+            </form>
+          ) : (
             <form onSubmit={handleSignIn} className="space-y-5">
+
               <div className="space-y-1.5 group">
                 <Label className="text-[10px] uppercase tracking-widest text-slate-500 group-focus-within:text-blue-600 transition-colors ml-1">Email Address</Label>
                 <div className="relative flex items-center">
@@ -109,6 +182,7 @@ function EmployeeAuthPage() {
                 {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Sign In to Workspace"}
               </Button>
             </form>
+          )}
 
             {/* Support Contact */}
             <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col items-center text-center">

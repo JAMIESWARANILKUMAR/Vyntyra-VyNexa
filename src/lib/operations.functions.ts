@@ -87,8 +87,8 @@ export const listTeamMembers = createServerFn({ method: "GET" })
     const authUsers = authData?.users || [];
 
     const members = roles.map((r: any) => {
-      const authUser = authUsers.find((u) => u.id === r.user_id);
-      const profile = profiles?.find((p) => p.id === r.user_id) || {};
+      const authUser = authUsers.find((u: any) => u.id === r.user_id);
+      const profile = profiles?.find((p: any) => p.id === r.user_id) || {};
       
       const email = authUser?.email || profile.email || "";
       const full_name = profile.full_name || authUser?.user_metadata?.full_name || email.split("@")[0];
@@ -594,4 +594,117 @@ export const getMyAttendance = createServerFn({ method: "GET" })
       
     if (error) throw new Error(error.message);
     return data || [];
+  });
+// ─── Super Admin Operations ──────────────────────────────────────────
+
+export const listAllLeaves = createServerFn({ method: 'GET' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
+    if (roleData?.role !== 'admin') throw new Error('Unauthorized');
+
+    const { data, error } = await supabase
+      .from('leave_requests')
+      .select('*, profiles(full_name, email)')
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const updateLeaveStatus = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(['approved', 'rejected']) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
+    if (roleData?.role !== 'admin') throw new Error('Unauthorized');
+
+    const { error } = await supabase.from('leave_requests').update({ status: data.status, updated_at: new Date().toISOString() }).eq('id', data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const listAllAttendance = createServerFn({ method: 'GET' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
+    if (roleData?.role !== 'admin') throw new Error('Unauthorized');
+
+    const { data, error } = await supabase
+      .from('attendance')
+      .select('*, profiles(full_name, email)')
+      .order('date', { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const listAllPayouts = createServerFn({ method: 'GET' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
+    if (roleData?.role !== 'admin') throw new Error('Unauthorized');
+
+    const { data, error } = await supabase
+      .from('payouts')
+      .select('*, profiles(full_name, email)')
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const createPayout = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ user_id: z.string().uuid(), amount: z.number().min(1), type: z.string(), status: z.enum(['paid', 'pending']) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
+    if (roleData?.role !== 'admin') throw new Error('Unauthorized');
+
+    const { error } = await supabase.from('payouts').insert({
+      user_id: data.user_id,
+      amount: data.amount,
+      type: data.type,
+      status: data.status,
+      date: new Date().toISOString().split('T')[0]
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Team Assignments (Admin) ────────────────────────────────────────
+
+export const assignIntern = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ internId: z.string().uuid(), employeeId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
+    if (roleData?.role !== 'admin') throw new Error("Unauthorized");
+
+    const { error } = await supabase.from("profiles").update({ mentor_id: data.employeeId }).eq("id", data.internId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const removeIntern = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ internId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
+    if (roleData?.role !== 'admin') throw new Error("Unauthorized");
+
+    const { error } = await supabase.from("profiles").update({ mentor_id: null }).eq("id", data.internId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Security Admin ────────────────────────────────────────────────
+
+export const adminResetPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ userId: z.string().uuid(), newPassword: z.string().min(6) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
+    if (roleData?.role !== 'admin') throw new Error("Unauthorized");
+
+    const { error } = await supabase.auth.admin.updateUserById(data.userId, { password: data.newPassword });
+    if (error) throw new Error(error.message);
+    return { success: true };
   });
