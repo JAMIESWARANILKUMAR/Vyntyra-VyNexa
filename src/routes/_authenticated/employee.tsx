@@ -154,11 +154,18 @@ function BankAdCard({
           >
             {activeAd.videoId.endsWith(".mp4") || activeAd.videoId.startsWith("/videos/") ? (
               <video 
+                key={activeAd.videoId}
                 src={activeAd.videoId}
                 autoPlay 
                 muted 
                 loop 
                 playsInline
+                ref={(el) => {
+                  if (el) {
+                    el.muted = true;
+                    el.play().catch(() => {});
+                  }
+                }}
                 className="absolute inset-0 w-full h-full object-cover z-10"
               />
             ) : (
