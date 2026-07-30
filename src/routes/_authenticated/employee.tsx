@@ -61,6 +61,7 @@ const staggerContainer = {
 };
 
 
+
 interface BankAd {
   videoId: string;
   title: string;
@@ -75,7 +76,9 @@ function BankAdCard({
   link, 
   themeColor, 
   borderColor, 
-  bgColor 
+  bgColor,
+  accountType,
+  branches
 }: { 
   bankName: string; 
   logoUrl: string; 
@@ -83,10 +86,13 @@ function BankAdCard({
   link: string; 
   themeColor: string; 
   borderColor: string; 
-  bgColor: string; 
+  bgColor: string;
+  accountType: string;
+  branches: string[];
 }) {
   const [activeAdIndex, setActiveAdIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     setProgress(0);
@@ -96,7 +102,7 @@ function BankAdCard({
           setActiveAdIndex((prevIndex) => (prevIndex + 1) % ads.length);
           return 0;
         }
-        return prev + 1.25; // 80 * 1.25 = 100, which is exactly 8 seconds
+        return prev + 1.25; // 8 seconds per ad (100 / 1.25 * 100ms)
       });
     }, 100);
 
@@ -107,13 +113,23 @@ function BankAdCard({
 
   return (
     <motion.div 
-      whileHover={{ y: -5, scale: 1.02 }}
-      className={`relative overflow-hidden rounded-2xl border ${borderColor} bg-gradient-to-b ${bgColor} to-white p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-[480px]`}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      className={`relative overflow-hidden rounded-3xl border ${borderColor} bg-gradient-to-br ${bgColor} to-white p-6 md:p-8 shadow-sm hover:shadow-lg transition-all duration-300 w-full`}
     >
-      <div className="relative z-10 w-full flex flex-col h-full justify-between">
-        <div>
-          {/* Stories Indicators */}
-          <div className="flex gap-1 mb-4">
+      {/* Decorative background blur */}
+      <div 
+        className="absolute top-0 right-0 w-72 h-72 rounded-full filter blur-[100px] opacity-10 pointer-events-none"
+        style={{ backgroundColor: themeColor }}
+      />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+        
+        {/* Left Side: YouTube Embed (Cropped to hide UI controls and titles) */}
+        <div className="lg:col-span-5 flex flex-col justify-center w-full">
+          {/* Stories indicators */}
+          <div className="flex gap-1.5 mb-3 px-1">
             {ads.map((_, index) => (
               <div key={index} className="h-1 flex-1 bg-slate-200/50 rounded-full overflow-hidden">
                 <div 
@@ -127,46 +143,91 @@ function BankAdCard({
             ))}
           </div>
 
-          {/* Autoplay Video Ads */}
-          <div className="mb-4 rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-black aspect-video relative">
+          {/* Autoplay Video Crop Container */}
+          <div className="relative overflow-hidden w-full aspect-video rounded-2xl shadow-md border border-slate-100/50 bg-black">
             <iframe 
-              src={`https://www.youtube.com/embed/${activeAd.videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${activeAd.videoId}&playsinline=1&rel=0`} 
-              className="absolute inset-0 w-full h-full pointer-events-none scale-105"
+              src={`https://www.youtube.com/embed/${activeAd.videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${activeAd.videoId}&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&showinfo=0`} 
+              className="absolute top-[-14%] left-[-2%] w-[104%] h-[128%] pointer-events-none"
               allow="autoplay; encrypted-media"
             />
-            {/* Visual Overlays / Mute Indicator */}
-            <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 rounded text-[9px] text-white flex items-center gap-1 backdrop-blur-sm pointer-events-none uppercase tracking-wider font-semibold">
-              <VolumeX className="w-3 h-3" /> Playing Ad
+            {/* Click Blocker Overlay */}
+            <div className="absolute inset-0 bg-transparent pointer-events-none" />
+            
+            {/* Custom Overlay Tag */}
+            <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/60 rounded-md text-[9px] text-white flex items-center gap-1 backdrop-blur-sm pointer-events-none uppercase tracking-wider font-semibold">
+              <VolumeX className="w-3.5 h-3.5" /> Live Ad
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Premium Details, Instructions, and Call to Action */}
+        <div className="lg:col-span-7 flex flex-col justify-between h-full space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="h-10 flex items-center">
+                {logoError ? (
+                  <div className="text-xl font-black tracking-tight" style={{ color: themeColor }}>
+                    {bankName.toUpperCase()}
+                  </div>
+                ) : (
+                  <img 
+                    src={logoUrl} 
+                    alt={bankName} 
+                    className="h-full object-contain" 
+                    onError={() => setLogoError(true)} 
+                  />
+                )}
+              </div>
+              <span className="text-[9px] px-2.5 py-1 bg-slate-100 text-slate-600 font-bold uppercase tracking-wider rounded-full border border-slate-200/60">
+                Preferred Partner
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              <h4 className="text-lg font-bold text-slate-900 tracking-tight transition-all duration-300">{activeAd.title}</h4>
+              <p className="text-xs text-slate-500 leading-relaxed transition-all duration-300">{activeAd.slogan}</p>
+            </div>
+
+            {/* Instruction Grid Panel */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/80 backdrop-blur-sm p-4 rounded-2xl border border-slate-100">
+              <div className="space-y-1">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account Type</div>
+                <div className="text-xs font-semibold text-slate-700">{accountType}</div>
+              </div>
+              
+              <div className="space-y-1">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Key Reward</div>
+                <div className="text-xs font-semibold text-slate-700">{activeAd.feature}</div>
+              </div>
+
+              <div className="space-y-1 md:col-span-2 border-t border-slate-200/50 pt-2.5 mt-1">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Available Branch Locations</div>
+                <div className="text-xs text-slate-600 font-medium leading-relaxed">
+                  {branches.join(", ")}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center h-8 mb-4">
-            <img src={logoUrl} alt={bankName} className="h-full object-contain max-w-[140px]" />
-          </div>
-
-          <h4 className="text-base font-bold text-slate-900 line-clamp-1">{activeAd.title}</h4>
-          <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed min-h-[32px]">{activeAd.slogan}</p>
-          <div className="mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">{activeAd.feature}</div>
+          <a href={link} target="_self" className="block w-full sm:w-fit sm:min-w-[200px]">
+            <motion.button 
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.03 }}
+              className="w-full py-3 px-6 rounded-xl text-white font-medium text-sm transition-colors shadow-md relative overflow-hidden group flex items-center justify-center gap-2"
+              style={{ backgroundColor: themeColor }}
+            >
+              <span className="relative z-10 flex items-center gap-2 font-semibold">
+                Open Account Now <ExternalLink className="w-4 h-4" />
+              </span>
+              <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+            </motion.button>
+          </a>
         </div>
 
-        <a href={link} target="_self" className="block w-full mt-6">
-          <motion.button 
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.03 }}
-            className="w-full py-2.5 rounded-lg text-white font-medium text-sm transition-colors shadow-sm relative overflow-hidden group"
-            style={{ backgroundColor: themeColor }}
-          >
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              Open Account Now <ExternalLink className="w-3.5 h-3.5" />
-            </span>
-            <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-          </motion.button>
-        </a>
       </div>
     </motion.div>
   );
 }
-
 function EmployeeDashboard() {
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<string>("overview");
@@ -747,42 +808,48 @@ function EmployeeDashboard() {
                     </p>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-8 max-w-5xl mx-auto">
                     <BankAdCard 
                       bankName="Kotak Mahindra Bank"
-                      logoUrl="https://upload.wikimedia.org/wikipedia/commons/8/8c/Kotak_Mahindra_Group_logo.svg"
+                      logoUrl="https://www.logo.wine/a/logo/Kotak_Mahindra_Bank/Kotak_Mahindra_Bank-Logo.wine.svg"
                       link="https://www.kotak811.bank.in/open-zero-balance-savings-account/zba-8?utm_source=GoogleSEMiQ&utm_medium=Paid&utm_campaign=iQ-Kotak811-PMax-03-25&gad_source=1&gad_campaignid=23479404668&gbraid=0AAAAACQ2IDljm3gMtRRPTAIrvNheMuWvK&gclid=CjwKCAjwyabTBhBFEiwAM3mNUEXJ3jfac5acjqCf7LlAslQGKKDLr6i4006q7RQWwhH_Uu14yzjtqxoC8bQQAvD_BwE"
                       themeColor="#e61a22"
                       borderColor="border-red-100"
-                      bgColor="from-red-50/50"
+                      bgColor="from-red-50/30"
+                      accountType="Salary / Zero Balance Digital Account"
+                      branches={["Visakhapatnam", "Bengaluru", "Hyderabad", "Gujarat"]}
                       ads={[
-                        { videoId: "1qvcBjU_1Mk", title: "Kotak 811: Zero Balance", slogan: "No maintenance charges. Open digitally using video KYC in 3 mins.", feature: "100% digital onboarding" },
-                        { videoId: "5UenpW0G6Jk", title: "Earn Higher Interest", slogan: "Get FD-like interest rates up to 7% p.a. on your savings balance.", feature: "ActivMoney auto-sweep" },
-                        { videoId: "O-fDk4lI09E", title: "Kotak League Credit Card", slogan: "Lifetime free credit card with massive rewards on shopping.", feature: "Zero annual charges" }
+                        { videoId: "1qvcBjU_1Mk", title: "Kotak 811: Zero Balance Savings", slogan: "No maintenance charges. Open digitally using video KYC in 3 mins.", feature: "100% digital onboarding" },
+                        { videoId: "5UenpW0G6Jk", title: "ActivMoney Automated Sweep-in", slogan: "Get FD-like interest rates up to 7% p.a. on your savings balance.", feature: "Up to 7% p.a. interest" },
+                        { videoId: "O-fDk4lI09E", title: "League Platinum Credit Card", slogan: "Lifetime free credit card with massive rewards on shopping.", feature: "Zero annual charges" }
                       ]}
                     />
 
                     <BankAdCard 
                       bankName="IDFC First Bank"
-                      logoUrl="https://upload.wikimedia.org/wikipedia/commons/e/ec/Logo_of_IDFC_First_Bank.svg"
+                      logoUrl="https://www.logo.wine/a/logo/IDFC_First_Bank/IDFC_First_Bank-Logo.wine.svg"
                       link="https://www.idfcfirst.bank.in/"
                       themeColor="#901235"
                       borderColor="border-rose-100"
-                      bgColor="from-rose-50/50"
+                      bgColor="from-rose-50/30"
+                      accountType="Premium Salary Account / Savings Account"
+                      branches={["Visakhapatnam", "Bengaluru", "Hyderabad", "Gujarat"]}
                       ads={[
                         { videoId: "tpKwQZ9_fEQ", title: "Monthly Interest Payouts", slogan: "Earn up to 7.25% p.a. and watch your savings compound every single month.", feature: "Compounded monthly interest" },
                         { videoId: "a7Sg-H2bWjE", title: "Zero Fee Banking Promise", slogan: "IDFC First Bank promises zero fee on 28 essential savings services.", feature: "Completely zero fee" },
-                        { videoId: "2XoQ0z4fIks", title: "Premium Visa Debit Card", slogan: "Get complimentary airport lounge access and fuel surcharge waivers.", feature: "Visa Signature rewards" }
+                        { videoId: "2XoQ0z4fIks", title: "Premium Visa Signature Card", slogan: "Get complimentary airport lounge access and fuel surcharge waivers.", feature: "Visa Signature rewards" }
                       ]}
                     />
 
                     <BankAdCard 
                       bankName="Axis Bank"
-                      logoUrl="https://upload.wikimedia.org/wikipedia/commons/c/c8/Axis_Bank_logo.svg"
+                      logoUrl="https://www.logo.wine/a/logo/Axis_Bank/Axis_Bank-Logo.wine.svg"
                       link="https://www.axis.bank.in/"
                       themeColor="#97144D"
                       borderColor="border-pink-100"
-                      bgColor="from-pink-50/50"
+                      bgColor="from-pink-50/30"
+                      accountType="Salary / ASAP Zero Balance Savings"
+                      branches={["Visakhapatnam", "Bengaluru", "Hyderabad", "Gujarat"]}
                       ads={[
                         { videoId: "xVi-fgAlrEs", title: "Axis ASAP Digital Savings", slogan: "Open instantly with zero paperwork and get a virtual debit card instantly.", feature: "Instant KYC validation" },
                         { videoId: "O8486c0t6uI", title: "Grab Deals Cashback Portal", slogan: "Enjoy flat 10% cashback on top brands like Flipkart, Amazon, and Swiggy.", feature: "Exclusive member benefits" },
