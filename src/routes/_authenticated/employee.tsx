@@ -264,7 +264,7 @@ function EmployeeDashboard() {
     }
   }
 
-  async function handleVerifyMfa(e: React.FormEvent) {
+  async function handleVerifyMfa(e: React.FormEvent) {
     e.preventDefault();
     if (!mfaFactorId || !mfaCode) return;
     try {
@@ -280,6 +280,23 @@ function EmployeeDashboard() {
       setMfaCode("");
     } catch (err: any) {
       toast.error(err.message || "Invalid authenticator code");
+    }
+  }
+
+
+  async function handleDisableMfa() {
+    if (!window.confirm("Are you sure you want to disable 2FA? This will make your account less secure.")) return;
+    try {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      if (factors && factors.all) {
+        for (const f of factors.all) {
+          await supabase.auth.mfa.unenroll({ factorId: f.id });
+        }
+      }
+      toast.success("2FA has been disabled");
+      setMfaStatus("unenrolled");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to disable 2FA");
     }
   }
 
@@ -794,11 +811,14 @@ function EmployeeDashboard() {
                   {mfaStatus === "checking" ? (
                     <div className="text-sm text-slate-500 flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Checking security status...</div>
                   ) : mfaStatus === "enrolled" ? (
-                    <div className="bg-emerald-50 text-emerald-700 p-6 rounded-2xl border border-emerald-100 flex flex-col gap-2">
-                      <div className="font-medium flex items-center gap-2">
-                        <CheckCircle2 className="h-5 w-5" /> 2FA is Enabled
+                    <div className="space-y-4">
+                      <div className="bg-emerald-50 text-emerald-700 p-6 rounded-2xl border border-emerald-100 flex flex-col gap-2">
+                        <div className="font-medium flex items-center gap-2">
+                          <CheckCircle2 className="h-5 w-5" /> 2FA is Enabled
+                        </div>
+                        <p className="text-sm font-light">Your account is secured with a TOTP Authenticator app.</p>
                       </div>
-                      <p className="text-sm font-light">Your account is secured with a TOTP Authenticator app.</p>
+                      <Button onClick={handleDisableMfa} variant="outline" className="w-full rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">Disable 2FA</Button>
                     </div>
                   ) : mfaStatus === "enrolling" && mfaQrCode ? (
                     <div className="space-y-6">
