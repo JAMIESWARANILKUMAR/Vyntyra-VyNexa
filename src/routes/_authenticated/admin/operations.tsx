@@ -125,7 +125,7 @@ function OperationsDashboard() {
   const [resourceOpen, setResourceOpen] = useState(false);
 
   // Form states
-  const [provisionForm, setProvisionForm] = useState({ full_name: "", email: "", password: "", role: "employee" as "employee" | "intern", department: "", position: "", bank_account_number: "", intern_id: "", duration_months: "" });
+  const [provisionForm, setProvisionForm] = useState({ full_name: "", email: "", password: "", role: "employee" as "employee" | "intern", department: "", position: "", bank_account_number: "", employee_id: "", intern_id: "", duration_months: "" });
   const [announcementForm, setAnnouncementForm] = useState({ title: "", body: "", target_role: "all" as "employee" | "intern" | "all" });
   const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium" as "low" | "medium" | "high", is_pool_task: false });
   const [scheduleForm, setScheduleForm] = useState({ title: "", description: "", event_date: "", event_time: "", target_role: "all" as "employee" | "intern" | "all" });
@@ -214,7 +214,7 @@ function OperationsDashboard() {
       } });
       toast.success(`${provisionForm.role === "employee" ? "Employee" : "Intern"} account created for ${provisionForm.full_name}`);
       setProvisionOpen(false);
-      setProvisionForm({ full_name: "", email: "", password: "", role: "employee", department: "", position: "", bank_account_number: "", intern_id: "", duration_months: "" });
+      setProvisionForm({ full_name: "", email: "", password: "", role: "employee", department: "", position: "", bank_account_number: "", employee_id: "", intern_id: "", duration_months: "" });
       qc.invalidateQueries({ queryKey: ["team-members"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to provision user");
@@ -472,6 +472,10 @@ function OperationsDashboard() {
                 
                 {provisionForm.role === 'employee' && (
                   <>
+                    <div className="space-y-1.5">
+                      <Label>Employee ID</Label>
+                      <Input value={provisionForm.employee_id} onChange={e => setProvisionForm({ ...provisionForm, employee_id: e.target.value })} placeholder="e.g. EMP-2024-001" />
+                    </div>
                     <div className="space-y-1.5">
                       <Label>Job Title / Position</Label>
                       <Input value={provisionForm.position} onChange={e => setProvisionForm({ ...provisionForm, position: e.target.value })} placeholder="e.g. Software Engineer" />

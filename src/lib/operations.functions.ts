@@ -14,6 +14,7 @@ const provisionSchema = z.object({
   department: z.string().optional(),
   position: z.string().optional(),
   bank_account_number: z.string().optional(),
+  employee_id: z.string().optional(),
   intern_id: z.string().optional(),
   duration_months: z.number().optional()
 });
@@ -51,6 +52,7 @@ export const provisionUser = createServerFn({ method: "POST" })
       department: data.department,
       position: data.position,
       bank_account_number: data.bank_account_number,
+      employee_id: data.employee_id,
       intern_id: data.intern_id,
       duration_months: data.duration_months
     });
