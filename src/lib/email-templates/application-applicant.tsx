@@ -85,7 +85,21 @@ const ApplicantConfirm = ({ fullName = 'there', email = '', roleApplied = 'the r
         </Section>
 
         {/* Footer */}
-        <Section style={{ background: CANVAS, borderTop: `1px solid ${LINE}`, padding: '24px 40px', color: MUTED, fontSize: 12, lineHeight: 1.5 }}>
+        <Section style={{ background: CANVAS, borderTop: `1px solid ${LINE}`, padding: '32px 40px', color: MUTED, fontSize: 12, lineHeight: 1.5 }}>
+          <div style={{ marginBottom: 16 }}>
+            <strong>Questions?</strong> Contact our Talent Acquisition team at <Link href="mailto:hr@vyntyraconsultancyservices.in" style={{ color: BRAND, fontWeight: 600, textDecoration: 'underline' }}>hr@vyntyraconsultancyservices.in</Link>.
+          </div>
+          
+          <div style={{ marginBottom: 16 }}>
+            <Link href="https://linkedin.com" style={{ color: BRAND, fontWeight: 600, textDecoration: 'none', marginRight: '12px' }}>LinkedIn</Link>
+            <span style={{ color: LINE }}>|</span>
+            <Link href="https://instagram.com" style={{ color: BRAND, fontWeight: 600, textDecoration: 'none', marginLeft: '12px', marginRight: '12px' }}>Instagram</Link>
+            <span style={{ color: LINE }}>|</span>
+            <Link href="https://twitter.com" style={{ color: BRAND, fontWeight: 600, textDecoration: 'none', marginLeft: '12px' }}>Twitter</Link>
+          </div>
+
+          <Hr style={{ borderColor: LINE, margin: '16px 0' }} />
+
           <div style={{ marginBottom: 12 }}>
             This email was sent to you by Vyntyra Consultancy Services in relation to your application for Project VyNexa.
           </div>
@@ -94,7 +108,18 @@ const ApplicantConfirm = ({ fullName = 'there', email = '', roleApplied = 'the r
             Visakhapatnam, AP, India<br/>
             ISO-aligned &middot; NASSCOM Verified &middot; MSME Registered
           </div>
-          <div>&copy; {new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.</div>
+          
+          <div style={{ marginBottom: 16 }}>
+            <Link href="https://careers.vyntyraconsultancyservices.in/privacy" style={{ color: MUTED, textDecoration: 'underline', marginRight: '12px' }}>Privacy Policy</Link>
+            <span style={{ color: LINE }}>|</span>
+            <Link href="https://careers.vyntyraconsultancyservices.in/terms" style={{ color: MUTED, textDecoration: 'underline', marginLeft: '12px' }}>Applicant Terms</Link>
+          </div>
+
+          <div style={{ fontSize: 10, color: '#9CA3AF', fontStyle: 'italic', marginTop: 16 }}>
+            Disclaimer: This electronic mail message, including any attachments, is for the sole use of the intended recipient(s) and may contain confidential or privileged information. Any unauthorized review, use, disclosure, or distribution is prohibited. If you are not the intended recipient, please contact the sender by reply email and destroy all copies of the original message.
+          </div>
+          
+          <div style={{ marginTop: 12 }}>&copy; {new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.</div>
         </Section>
       </Container>
     </Body>
