@@ -11,7 +11,7 @@ import {
   CheckCircle2, Circle, AlertCircle, TrendingUp, Video, CalendarDays,
   User, BarChart3, RefreshCw, Phone, MapPin, CalendarX2, Users,
   IndianRupee, MessageSquare, BookOpen, Fingerprint, FileText, Send, Download,
-  Sparkles, Zap, Wallet, ExternalLink
+  Sparkles, Zap, Wallet, ExternalLink, VolumeX
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -59,6 +59,113 @@ const itemVariants = {
 const staggerContainer = {
   animate: { transition: { staggerChildren: 0.08 } }
 };
+
+
+interface BankAd {
+  videoId: string;
+  title: string;
+  slogan: string;
+  feature: string;
+}
+
+function BankAdCard({ 
+  bankName, 
+  logoUrl, 
+  ads, 
+  link, 
+  themeColor, 
+  borderColor, 
+  bgColor 
+}: { 
+  bankName: string; 
+  logoUrl: string; 
+  ads: BankAd[]; 
+  link: string; 
+  themeColor: string; 
+  borderColor: string; 
+  bgColor: string; 
+}) {
+  const [activeAdIndex, setActiveAdIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    setProgress(0);
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          setActiveAdIndex((prevIndex) => (prevIndex + 1) % ads.length);
+          return 0;
+        }
+        return prev + 1.25; // 80 * 1.25 = 100, which is exactly 8 seconds
+      });
+    }, 100);
+
+    return () => clearInterval(progressInterval);
+  }, [activeAdIndex, ads.length]);
+
+  const activeAd = ads[activeAdIndex];
+
+  return (
+    <motion.div 
+      whileHover={{ y: -5, scale: 1.02 }}
+      className={`relative overflow-hidden rounded-2xl border ${borderColor} bg-gradient-to-b ${bgColor} to-white p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-[480px]`}
+    >
+      <div className="relative z-10 w-full flex flex-col h-full justify-between">
+        <div>
+          {/* Stories Indicators */}
+          <div className="flex gap-1 mb-4">
+            {ads.map((_, index) => (
+              <div key={index} className="h-1 flex-1 bg-slate-200/50 rounded-full overflow-hidden">
+                <div 
+                  className="h-full transition-all duration-100"
+                  style={{ 
+                    width: index === activeAdIndex ? `${progress}%` : index < activeAdIndex ? '100%' : '0%',
+                    backgroundColor: themeColor
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Autoplay Video Ads */}
+          <div className="mb-4 rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-black aspect-video relative">
+            <iframe 
+              src={`https://www.youtube.com/embed/${activeAd.videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${activeAd.videoId}&playsinline=1&rel=0`} 
+              className="absolute inset-0 w-full h-full pointer-events-none scale-105"
+              allow="autoplay; encrypted-media"
+            />
+            {/* Visual Overlays / Mute Indicator */}
+            <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 rounded text-[9px] text-white flex items-center gap-1 backdrop-blur-sm pointer-events-none uppercase tracking-wider font-semibold">
+              <VolumeX className="w-3 h-3" /> Playing Ad
+            </div>
+          </div>
+
+          <div className="flex items-center h-8 mb-4">
+            <img src={logoUrl} alt={bankName} className="h-full object-contain max-w-[140px]" />
+          </div>
+
+          <h4 className="text-base font-bold text-slate-900 line-clamp-1">{activeAd.title}</h4>
+          <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed min-h-[32px]">{activeAd.slogan}</p>
+          <div className="mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">{activeAd.feature}</div>
+        </div>
+
+        <a href={link} target="_self" className="block w-full mt-6">
+          <motion.button 
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.03 }}
+            className="w-full py-2.5 rounded-lg text-white font-medium text-sm transition-colors shadow-sm relative overflow-hidden group"
+            style={{ backgroundColor: themeColor }}
+          >
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              Open Account Now <ExternalLink className="w-3.5 h-3.5" />
+            </span>
+            <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+          </motion.button>
+        </a>
+      </div>
+    </motion.div>
+  );
+}
 
 function EmployeeDashboard() {
   const qc = useQueryClient();
@@ -641,109 +748,47 @@ function EmployeeDashboard() {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Kotak 811 */}
-                    <motion.div 
-                      whileHover={{ y: -5, scale: 1.02 }}
-                      className="relative overflow-hidden rounded-2xl border border-red-100 bg-gradient-to-b from-red-50 to-white p-6 shadow-sm hover:shadow-md transition-all"
-                    >
-                      <div className="relative z-10">
-                        <div className="mb-4 rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-black aspect-video relative">
-                          <iframe 
-                            src="https://www.youtube.com/embed/1qvcBjU_1Mk?autoplay=1&mute=1&controls=0&loop=1&playlist=1qvcBjU_1Mk&playsinline=1" 
-                            className="absolute inset-0 w-full h-full pointer-events-none"
-                            allow="autoplay; encrypted-media"
-                          />
-                        </div>
-                        <div className="h-8 mb-4">
-                          <img src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Kotak_Mahindra_Bank_logo.png" alt="Kotak Bank" className="h-full object-contain" />
-                        </div>
-                        <h4 className="text-lg font-bold text-slate-900">Kotak 811</h4>
-                        <p className="text-xs text-slate-500 mt-1 mb-6 h-8">Zero balance digital savings account. Open in 3 mins.</p>
-                        
-                        <a href="https://www.kotak811.bank.in/open-zero-balance-savings-account/zba-8?utm_source=GoogleSEMiQ&utm_medium=Paid&utm_campaign=iQ-Kotak811-PMax-03-25&gad_source=1&gad_campaignid=23479404668&gbraid=0AAAAACQ2IDljm3gMtRRPTAIrvNheMuWvK&gclid=CjwKCAjwyabTBhBFEiwAM3mNUEXJ3jfac5acjqCf7LlAslQGKKDLr6i4006q7RQWwhH_Uu14yzjtqxoC8bQQAvD_BwE" target="_self" className="block w-full">
-                          <motion.button 
-                            whileTap={{ scale: 0.95 }}
-                            whileHover={{ scale: 1.05 }}
-                            className="w-full py-2.5 rounded-lg bg-red-600 text-white font-medium text-sm hover:bg-red-700 transition-colors shadow-sm relative overflow-hidden group"
-                          >
-                            <span className="relative z-10 flex items-center justify-center gap-2">
-                              Open Account Now <ExternalLink className="w-3.5 h-3.5" />
-                            </span>
-                            <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                          </motion.button>
-                        </a>
-                      </div>
-                    </motion.div>
+                    <BankAdCard 
+                      bankName="Kotak Mahindra Bank"
+                      logoUrl="https://upload.wikimedia.org/wikipedia/commons/8/8c/Kotak_Mahindra_Group_logo.svg"
+                      link="https://www.kotak811.bank.in/open-zero-balance-savings-account/zba-8?utm_source=GoogleSEMiQ&utm_medium=Paid&utm_campaign=iQ-Kotak811-PMax-03-25&gad_source=1&gad_campaignid=23479404668&gbraid=0AAAAACQ2IDljm3gMtRRPTAIrvNheMuWvK&gclid=CjwKCAjwyabTBhBFEiwAM3mNUEXJ3jfac5acjqCf7LlAslQGKKDLr6i4006q7RQWwhH_Uu14yzjtqxoC8bQQAvD_BwE"
+                      themeColor="#e61a22"
+                      borderColor="border-red-100"
+                      bgColor="from-red-50/50"
+                      ads={[
+                        { videoId: "1qvcBjU_1Mk", title: "Kotak 811: Zero Balance", slogan: "No maintenance charges. Open digitally using video KYC in 3 mins.", feature: "100% digital onboarding" },
+                        { videoId: "5UenpW0G6Jk", title: "Earn Higher Interest", slogan: "Get FD-like interest rates up to 7% p.a. on your savings balance.", feature: "ActivMoney auto-sweep" },
+                        { videoId: "O-fDk4lI09E", title: "Kotak League Credit Card", slogan: "Lifetime free credit card with massive rewards on shopping.", feature: "Zero annual charges" }
+                      ]}
+                    />
 
-                    {/* IDFC First Bank */}
-                    <motion.div 
-                      whileHover={{ y: -5, scale: 1.02 }}
-                      className="relative overflow-hidden rounded-2xl border border-rose-100 bg-gradient-to-b from-rose-50 to-white p-6 shadow-sm hover:shadow-md transition-all"
-                    >
-                      <div className="relative z-10">
-                        <div className="mb-4 rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-black aspect-video relative">
-                          <iframe 
-                            src="https://www.youtube.com/embed/tpKwQZ9_fEQ?autoplay=1&mute=1&controls=0&loop=1&playlist=tpKwQZ9_fEQ&playsinline=1" 
-                            className="absolute inset-0 w-full h-full pointer-events-none"
-                            allow="autoplay; encrypted-media"
-                          />
-                        </div>
-                        <div className="h-8 mb-4">
-                          <img src="https://upload.wikimedia.org/wikipedia/commons/7/7b/IDFC_First_Bank_logo.jpg" alt="IDFC First Bank" className="h-full object-contain mix-blend-multiply" />
-                        </div>
-                        <h4 className="text-lg font-bold text-slate-900">IDFC First</h4>
-                        <p className="text-xs text-slate-500 mt-1 mb-6 h-8">Premium banking experience with monthly interest credits.</p>
-                        
-                        <a href="https://www.idfcfirst.bank.in/" target="_self" className="block w-full">
-                          <motion.button 
-                            whileTap={{ scale: 0.95 }}
-                            whileHover={{ scale: 1.05 }}
-                            className="w-full py-2.5 rounded-lg text-white font-medium text-sm transition-colors shadow-sm relative overflow-hidden group"
-                            style={{ backgroundColor: '#901235' }}
-                          >
-                            <span className="relative z-10 flex items-center justify-center gap-2">
-                              Open Account Now <ExternalLink className="w-3.5 h-3.5" />
-                            </span>
-                            <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                          </motion.button>
-                        </a>
-                      </div>
-                    </motion.div>
+                    <BankAdCard 
+                      bankName="IDFC First Bank"
+                      logoUrl="https://upload.wikimedia.org/wikipedia/commons/e/ec/Logo_of_IDFC_First_Bank.svg"
+                      link="https://www.idfcfirst.bank.in/"
+                      themeColor="#901235"
+                      borderColor="border-rose-100"
+                      bgColor="from-rose-50/50"
+                      ads={[
+                        { videoId: "tpKwQZ9_fEQ", title: "Monthly Interest Payouts", slogan: "Earn up to 7.25% p.a. and watch your savings compound every single month.", feature: "Compounded monthly interest" },
+                        { videoId: "a7Sg-H2bWjE", title: "Zero Fee Banking Promise", slogan: "IDFC First Bank promises zero fee on 28 essential savings services.", feature: "Completely zero fee" },
+                        { videoId: "2XoQ0z4fIks", title: "Premium Visa Debit Card", slogan: "Get complimentary airport lounge access and fuel surcharge waivers.", feature: "Visa Signature rewards" }
+                      ]}
+                    />
 
-                    {/* Axis Bank */}
-                    <motion.div 
-                      whileHover={{ y: -5, scale: 1.02 }}
-                      className="relative overflow-hidden rounded-2xl border border-pink-100 bg-gradient-to-b from-pink-50 to-white p-6 shadow-sm hover:shadow-md transition-all"
-                    >
-                      <div className="relative z-10">
-                        <div className="mb-4 rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-black aspect-video relative">
-                          <iframe 
-                            src="https://www.youtube.com/embed/xVi-fgAlrEs?autoplay=1&mute=1&controls=0&loop=1&playlist=xVi-fgAlrEs&playsinline=1" 
-                            className="absolute inset-0 w-full h-full pointer-events-none"
-                            allow="autoplay; encrypted-media"
-                          />
-                        </div>
-                        <div className="h-8 mb-4">
-                          <img src="https://upload.wikimedia.org/wikipedia/commons/c/c8/Axis_Bank_logo.svg" alt="Axis Bank" className="h-full object-contain" />
-                        </div>
-                        <h4 className="text-lg font-bold text-slate-900">Axis Bank</h4>
-                        <p className="text-xs text-slate-500 mt-1 mb-6 h-8">Easy access to funds and exclusive lifestyle benefits.</p>
-                        
-                        <a href="https://www.axis.bank.in/" target="_self" className="block w-full">
-                          <motion.button 
-                            whileTap={{ scale: 0.95 }}
-                            whileHover={{ scale: 1.05 }}
-                            className="w-full py-2.5 rounded-lg text-white font-medium text-sm transition-colors shadow-sm relative overflow-hidden group"
-                            style={{ backgroundColor: '#97144D' }}
-                          >
-                            <span className="relative z-10 flex items-center justify-center gap-2">
-                              Open Account Now <ExternalLink className="w-3.5 h-3.5" />
-                            </span>
-                            <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                          </motion.button>
-                        </a>
-                      </div>
-                    </motion.div>
+                    <BankAdCard 
+                      bankName="Axis Bank"
+                      logoUrl="https://upload.wikimedia.org/wikipedia/commons/c/c8/Axis_Bank_logo.svg"
+                      link="https://www.axis.bank.in/"
+                      themeColor="#97144D"
+                      borderColor="border-pink-100"
+                      bgColor="from-pink-50/50"
+                      ads={[
+                        { videoId: "xVi-fgAlrEs", title: "Axis ASAP Digital Savings", slogan: "Open instantly with zero paperwork and get a virtual debit card instantly.", feature: "Instant KYC validation" },
+                        { videoId: "O8486c0t6uI", title: "Grab Deals Cashback Portal", slogan: "Enjoy flat 10% cashback on top brands like Flipkart, Amazon, and Swiggy.", feature: "Exclusive member benefits" },
+                        { videoId: "Z8eW-U46C0A", title: "Automated Sweep-in Savings", slogan: "Get higher interest on excess funds while keeping high liquidity.", feature: "Flexible returns" }
+                      ]}
+                    />
                   </div>
                 </div>
 
