@@ -211,14 +211,26 @@ export const listApplications = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    const { data, error } = await supabase
+    let result = await supabase
         .from("applications")
         .select("*")
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
         
-    if (error) throw new Error("Failed to list applications");
-    return data;
+    if (result.error) {
+      console.warn("Failed to query with deleted_at filter, falling back:", result.error.message);
+      // Fallback query in case the migration column is not yet applied
+      const fallbackResult = await supabase
+          .from("applications")
+          .select("*")
+          .order("created_at", { ascending: false });
+      if (fallbackResult.error) {
+        throw new Error("Failed to list applications: " + fallbackResult.error.message);
+      }
+      return fallbackResult.data;
+    }
+    
+    return result.data;
   });
 
 const updateNotesSchema = z.object({
