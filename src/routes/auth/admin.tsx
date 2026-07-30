@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Shield, Mail, Lock, Loader2 } from "lucide-react";
+import { Shield, Mail, Lock, Loader2, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,10 +17,23 @@ function AdminAuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showMfa, setShowMfa] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
+        // Check MFA levels
+        const { data: level } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (level && level.nextLevel === 'aal2' && level.currentLevel !== 'aal2') {
+           setShowMfa(true);
+           const factors = session.user.factors || [];
+           const totp = factors.find(f => f.factor_type === 'totp' && f.status === 'verified');
+           if (totp) setMfaFactorId(totp.id);
+           return;
+        }
+
         const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', session.user.id);
         const role = roles?.[0]?.role;
         if (role === 'employee') navigate({ to: "/employee" });
@@ -30,6 +43,24 @@ function AdminAuthPage() {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  async function handleVerifyMfa(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaFactorId || !mfaCode) return;
+    setLoading(true);
+    try {
+      const challenge = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
+      if (challenge.error) throw challenge.error;
+      const verify = await supabase.auth.mfa.verify({ factorId: mfaFactorId, challengeId: challenge.data.id, code: mfaCode });
+      if (verify.error) throw verify.error;
+      
+      toast.success("Welcome back, Administrator");
+    } catch(err: any) {
+      toast.error(err.message || "Invalid authenticator code");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
@@ -75,45 +106,82 @@ function AdminAuthPage() {
             <h1 className="font-serif text-3xl font-semibold text-white text-center mb-1">Authorised Sign In</h1>
             <p className="text-sm text-slate-400 text-center mb-8">System operations and management</p>
 
-            <form onSubmit={handleSignIn} className="space-y-5">
-              <div className="space-y-1.5 group">
-                <Label className="text-[10px] uppercase tracking-widest text-slate-400 group-focus-within:text-gold transition-colors ml-1">Email Address</Label>
-                <div className="relative flex items-center">
-                  <Mail className="absolute left-4 h-5 w-5 text-slate-500 group-focus-within:text-gold transition-colors" />
-                  <Input 
-                    type="email" 
-                    required 
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
-                    className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-gold/50 focus:ring-1 focus:ring-gold/50 transition-all rounded-xl h-14 pl-12 pr-4 text-base"
-                    placeholder="admin@vyntyra.in"
-                  />
+            {showMfa ? (
+              <form onSubmit={handleVerifyMfa} className="space-y-5">
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-slate-400 ml-1">Authenticator Code</Label>
+                  <div className="relative flex items-center group">
+                    <KeyRound className="absolute left-4 h-5 w-5 text-slate-500 group-focus-within:text-gold transition-colors" />
+                    <Input
+                      type="text"
+                      required
+                      placeholder="Enter 6-digit code"
+                      className="bg-black/40 border-white/10 text-white text-center text-lg font-mono tracking-widest h-14 pl-12 pr-4 focus:border-gold/50 focus:ring-1 focus:ring-gold/50 rounded-xl"
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value)}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 ml-1">Open your Microsoft or Google Authenticator app.</p>
                 </div>
-              </div>
 
-              <div className="space-y-1.5 group">
-                <Label className="text-[10px] uppercase tracking-widest text-slate-400 group-focus-within:text-gold transition-colors ml-1">Password</Label>
-                <div className="relative flex items-center">
-                  <Lock className="absolute left-4 h-5 w-5 text-slate-500 group-focus-within:text-gold transition-colors" />
-                  <Input 
-                    type="password" 
-                    required 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-gold/50 focus:ring-1 focus:ring-gold/50 transition-all rounded-xl h-14 pl-12 pr-4 text-base"
-                    placeholder="••••••••••••"
-                  />
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-14 bg-gold hover:bg-gold/90 text-primary font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(212,175,55,0.2)]"
+                >
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Verify 2FA Code"}
+                </Button>
+                
+                <Button
+                  type="button"
+                  onClick={() => setShowMfa(false)}
+                  variant="ghost"
+                  className="w-full text-slate-500 hover:text-white"
+                >
+                  Cancel
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleSignIn} className="space-y-5">
+                <div className="space-y-1.5 group">
+                  <Label className="text-[10px] uppercase tracking-widest text-slate-400 group-focus-within:text-gold transition-colors ml-1">Email Address</Label>
+                  <div className="relative flex items-center">
+                    <Mail className="absolute left-4 h-5 w-5 text-slate-500 group-focus-within:text-gold transition-colors" />
+                    <Input 
+                      type="email" 
+                      required 
+                      value={email} 
+                      onChange={(e) => setEmail(e.target.value)} 
+                      className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-gold/50 focus:ring-1 focus:ring-gold/50 transition-all rounded-xl h-14 pl-12 pr-4 text-base"
+                      placeholder="admin@vyntyra.in"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <Button 
-                type="submit" 
-                disabled={loading}
-                className="w-full h-14 mt-4 bg-gold hover:bg-gold/90 text-primary font-bold tracking-wide rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.2)] hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] transition-all duration-300"
-              >
-                {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Authenticate"}
-              </Button>
-            </form>
+                <div className="space-y-1.5 group">
+                  <Label className="text-[10px] uppercase tracking-widest text-slate-400 group-focus-within:text-gold transition-colors ml-1">Password</Label>
+                  <div className="relative flex items-center">
+                    <Lock className="absolute left-4 h-5 w-5 text-slate-500 group-focus-within:text-gold transition-colors" />
+                    <Input 
+                      type="password" 
+                      required 
+                      value={password} 
+                      onChange={(e) => setPassword(e.target.value)} 
+                      className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-gold/50 focus:ring-1 focus:ring-gold/50 transition-all rounded-xl h-14 pl-12 pr-4 text-base"
+                      placeholder="••••••••••••"
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full h-14 mt-4 bg-gold hover:bg-gold/90 text-primary font-bold tracking-wide rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.2)] hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] transition-all duration-300"
+                >
+                  {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Authenticate"}
+                </Button>
+              </form>
+            )}
           </div>
         </div>
       </div>

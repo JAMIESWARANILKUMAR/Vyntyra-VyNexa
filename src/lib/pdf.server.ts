@@ -5,32 +5,179 @@ export interface IOfferDetails {
   fullName: string;
   roleApplied: string;
   applicationId: string;
+  salary?: string;
+  joiningDate?: string;
+  jobLocation?: string;
 }
 
 export async function generateOfferLetterPDF(details: IOfferDetails): Promise<string> {
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
   const supabase = getAdminClient();
 
-  // Brand Header
-  doc.setFontSize(24);
-  doc.setTextColor(41, 128, 185);
-  doc.text("Vyntyra Consultancy Services", 105, 30, { align: "center" });
+  const primaryColor = [15, 32, 67]; // Dark Navy (#0F2043)
+  const secondaryColor = [212, 175, 55]; // Gold (#D4AF37)
+  const textColor = [51, 51, 51]; // Charcoal (#333333)
+  const lightGrey = [248, 249, 250]; // Off-white
+  const borderGrey = [222, 226, 230]; // Border grey
 
-  // Offer Letter Title
-  doc.setFontSize(18);
-  doc.setTextColor(0, 0, 0);
-  doc.text("OFFER OF EMPLOYMENT", 105, 50, { align: "center" });
+  // ─── PAGE HEADER (Accent Top Banner) ───
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.rect(0, 0, 210, 14, "F");
+  doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+  doc.rect(0, 14, 210, 3, "F");
 
-  // Content
-  doc.setFontSize(12);
-  const date = new Date().toLocaleDateString();
+  // ─── CORPORATE LETTERHEAD ───
+  // Typographic Brand Logo (Left)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("VYNTYRA", 20, 33);
   
-  doc.text(`Date: ${date}`, 20, 70);
-  doc.text(`Dear ${details.fullName},`, 20, 90);
-  
-  const body = `We are thrilled to offer you the position of ${details.roleApplied} at Vyntyra Consultancy Services.\n\nWe were incredibly impressed by your background and would love to welcome you to the team. This document serves as your official offer letter.\n\nPlease sign and return this document to accept the offer.\n\nSincerely,\nHR Department\nVyntyra Consultancy Services`;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+  doc.text("CONSULTANCY SERVICES", 20, 38);
 
-  doc.text(body, 20, 105, { maxWidth: 170 });
+  // Address and Contact Details (Right, aligned right)
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(110, 110, 110);
+  doc.text("Vyntyra Tower, Tech Zone", 190, 28, { align: "right" });
+  doc.text("Bangalore, Karnataka - 560103", 190, 33, { align: "right" });
+  doc.text("Email: careers@vyntyraconsultancyservices.in", 190, 38, { align: "right" });
+  doc.text("Web: www.vyntyraconsultancyservices.in", 190, 43, { align: "right" });
+
+  // Thin Elegant Divider
+  doc.setDrawColor(borderGrey[0], borderGrey[1], borderGrey[2]);
+  doc.setLineWidth(0.4);
+  doc.line(20, 48, 190, 48);
+
+  // ─── METADATA (Reference & Date) ───
+  const refNo = `Ref: VCS/OL/2026/${details.applicationId.slice(0, 8).toUpperCase()}`;
+  const dateStr = `Date: ${new Date().toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })}`;
+  
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text(refNo, 20, 56);
+  
+  doc.setFont("helvetica", "normal");
+  doc.text(dateStr, 190, 56, { align: "right" });
+
+  // ─── RECIPIENT INFORMATION ───
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(110, 110, 110);
+  doc.text("TO:", 20, 66);
+  
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+  doc.text(details.fullName, 20, 71);
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  doc.setTextColor(80, 80, 80);
+  doc.text("Subject: Letter of Offer & Appointment", 20, 77);
+
+  // Divider
+  doc.line(20, 83, 190, 83);
+
+  // ─── GREETING & INTRO ───
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10.5);
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+  doc.text(`Dear ${details.fullName},`, 20, 91);
+
+  const introText = "We are delighted to extend this formal offer of appointment for the position of " + details.roleApplied + " at Vyntyra Consultancy Services. Following your outstanding performance in our recruitment and interview rounds, we are confident that you will bring significant value, expertise, and innovative thinking to our organization.";
+  
+  const splitIntro = doc.splitTextToSize(introText, 170);
+  doc.text(splitIntro, 20, 97);
+
+  // ─── JOB DETAILS CARD (Structured Premium Table Layout) ───
+  const cardY = 120;
+  doc.setFillColor(lightGrey[0], lightGrey[1], lightGrey[2]);
+  doc.rect(20, cardY, 170, 48, "F");
+  doc.setDrawColor(borderGrey[0], borderGrey[1], borderGrey[2]);
+  doc.rect(20, cardY, 170, 48, "S");
+
+  // Table Headers / Lines
+  doc.setDrawColor(235, 235, 235);
+  doc.line(20, cardY + 12, 190, cardY + 12);
+  doc.line(20, cardY + 24, 190, cardY + 24);
+  doc.line(20, cardY + 36, 190, cardY + 36);
+
+  // Table content
+  doc.setFont("helvetica", "bold");
+  doc.text("Position / Title:", 25, cardY + 8);
+  doc.setFont("helvetica", "normal");
+  doc.text(details.roleApplied, 75, cardY + 8);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Total Compensation (CTC):", 25, cardY + 20);
+  doc.setFont("helvetica", "normal");
+  doc.text(details.salary || "As mutually agreed", 75, cardY + 20);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Date of Joining:", 25, cardY + 32);
+  doc.setFont("helvetica", "normal");
+  doc.text(details.joiningDate ? new Date(details.joiningDate).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "To be confirmed", 75, cardY + 32);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Job Location:", 25, cardY + 44);
+  doc.setFont("helvetica", "normal");
+  doc.text(details.jobLocation || "Bangalore / Remote", 75, cardY + 44);
+
+  // ─── SECONDARY TEXT (TERMS) ───
+  const termsY = 178;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+
+  const body2 = "This offer is subject to verification of your professional credentials and references. On your day of joining, please submit self-attested copies of your academic records, experience certificates, identity proof, and address proof for administrative filing.\n\nPlease note that the code of conduct, non-disclosure policies, and terms of service of the company will be detailed in your employment contract, which will be executed on your joining date.";
+  const splitBody2 = doc.splitTextToSize(body2, 170);
+  doc.text(splitBody2, 20, termsY);
+
+  const signInfo = "Kindly confirm your acceptance by signing this letter and returning a scanned copy within 7 business days, failing which this offer shall automatically expire.";
+  const splitSignInfo = doc.splitTextToSize(signInfo, 170);
+  doc.text(splitSignInfo, 20, termsY + 30);
+
+  // ─── SIGNATURE BLOCK ───
+  const signY = 228;
+  
+  // Vyntyra HR Signatory
+  doc.setFont("helvetica", "normal");
+  doc.text("For Vyntyra Consultancy Services,", 20, signY);
+  
+  // Space for signature (Typographic representation or blank space)
+  doc.setFont("courier", "italic");
+  doc.setFontSize(11);
+  doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+  doc.text("HR Department", 20, signY + 12);
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+  doc.line(20, signY + 16, 75, signY + 16);
+  doc.text("Authorized Signatory", 20, signY + 21);
+
+  // Candidate Acceptance
+  doc.text("Accepted and Agreed By:", 120, signY);
+  doc.line(120, signY + 16, 185, signY + 16);
+  doc.text("Candidate Signature & Date", 120, signY + 21);
+
+  // ─── FOOTER ───
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.rect(0, 287, 210, 10, "F");
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(255, 255, 255);
+  doc.text("Confidential · Vyntyra Consultancy Services © 2026. All rights reserved.", 105, 293, { align: "center" });
 
   // Generate PDF as Buffer
   const pdfBuffer = Buffer.from(doc.output("arraybuffer"));

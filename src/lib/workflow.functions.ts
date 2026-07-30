@@ -75,6 +75,9 @@ const changeSchema = z.object({
   interviewerName: z.string().optional().nullable(),
   interviewerId: z.string().optional().nullable(),
   ccEmail: z.string().optional().nullable(),
+  salary: z.string().optional().nullable(),
+  joiningDate: z.string().optional().nullable(),
+  jobLocation: z.string().optional().nullable(),
 });
 
 export const changeApplicationStatus = createServerFn({ method: "POST" })
@@ -106,7 +109,22 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
         updateData.interviewer_name = data.interviewerName || null;
         updateData.interviewer_id = data.interviewerId || null;
       }
-      await supabase.from("applications").update(updateData).eq('id', data.id);
+      if (to === "hired") {
+        updateData.salary = data.salary || null;
+        updateData.joining_date = data.joiningDate || null;
+        updateData.job_location = data.jobLocation || null;
+      }
+      
+      const { error: updateError } = await supabase.from("applications").update(updateData).eq('id', data.id);
+      if (updateError) {
+        console.warn("[workflow] update failed with full data, falling back to base status update:", updateError.message);
+        const fallbackData = { 
+          status: to, 
+          updated_at: new Date().toISOString() 
+        };
+        const { error: fallbackError } = await supabase.from("applications").update(fallbackData).eq('id', data.id);
+        if (fallbackError) throw new Error(fallbackError.message);
+      }
 
       await supabase.from("application_status_events").insert([{
           application_id: data.id,

@@ -1,3 +1,4 @@
+import { QRCodeSVG } from "qrcode.react";
 import { createFileRoute, Link, useNavigate, useBlocker } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -114,6 +115,104 @@ function AdminDashboard() {
   const markAllRead = useServerFn(markAllNotificationsRead);
   const fetchVisitorCount = useServerFn(getVisitorCount);
   const [selected, setSelected] = useState<any>(null);
+
+  // MFA / 2FA Security states & handlers
+  const [showMfaSetup, setShowMfaSetup] = useState(false);
+  const [mfaStatus, setMfaStatus] = useState<"checking" | "enrolled" | "unenrolled" | "enrolling">("checking");
+  const [mfaQrCode, setMfaQrCode] = useState<string | null>(null);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+
+  useEffect(() => {
+    checkMfa();
+  }, [showMfaSetup]);
+
+  async function checkMfa() {
+    try {
+      const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (error) throw error;
+      if (data && (data.currentLevel === 'aal2' || data.nextLevel === 'aal2')) {
+        setMfaStatus('enrolled');
+      } else {
+        // List verified factors
+        const { data: factors, error: factorsErr } = await supabase.auth.mfa.listFactors();
+        if (factorsErr) throw factorsErr;
+        const verified = factors?.totp?.find((f: any) => f.status === 'verified');
+        if (verified) {
+          setMfaStatus('enrolled');
+        } else {
+          setMfaStatus('unenrolled');
+        }
+      }
+    } catch (err) {
+      setMfaStatus('unenrolled');
+    }
+  }
+
+  async function handleEnrollMfa() {
+    setMfaStatus("enrolling");
+    try {
+      // Clean up previous unverified factors first
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      if (factors && factors.all) {
+        for (const f of factors.all) {
+          if (f.status === 'unverified') {
+            await supabase.auth.mfa.unenroll({ factorId: f.id });
+          }
+        }
+      }
+
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: "totp",
+        issuer: "Vyntyra Careers",
+        friendlyName: "Super Admin",
+      });
+
+      if (error || !data) throw error || new Error("MFA Enroll failed");
+      setMfaFactorId(data.id);
+      setMfaQrCode(data.totp.uri);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to enroll MFA");
+      setMfaStatus("unenrolled");
+    }
+  }
+
+  async function handleVerifyMfa(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaFactorId || !mfaCode) return;
+    try {
+      const challenge = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
+      if (challenge.error) throw challenge.error;
+      const verify = await supabase.auth.mfa.verify({
+        factorId: mfaFactorId,
+        challengeId: challenge.data.id,
+        code: mfaCode
+      });
+      if (verify.error) throw verify.error;
+
+      setMfaStatus("enrolled");
+      setMfaQrCode(null);
+      setMfaCode("");
+      toast.success("2FA enabled successfully using Authenticator app!");
+    } catch (err: any) {
+      toast.error(err.message || "Verification failed");
+    }
+  }
+
+  async function handleDisableMfa() {
+    try {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      if (factors && factors.all) {
+        for (const f of factors.all) {
+          await supabase.auth.mfa.unenroll({ factorId: f.id });
+        }
+      }
+      toast.success("2FA has been disabled");
+      setMfaStatus("unenrolled");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to disable 2FA");
+    }
+  }
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -358,6 +457,12 @@ function AdminDashboard() {
             >
               <Settings2 className="h-4 w-4" /> <span className="hidden sm:inline">Templates</span>
             </Link>
+            <Link
+              to="/admin/security"
+              className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
+            >
+              <Shield className="h-4 w-4" /> <span className="hidden sm:inline">Security</span>
+            </Link>
             <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Sign out</span>
             </Button>
@@ -442,28 +547,71 @@ function AdminDashboard() {
           </div>
         </div>
 
-        <div className="rounded-md border border-border bg-card shadow-corp p-4 sm:p-5 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className={`mt-0.5 h-9 w-9 rounded-sm flex items-center justify-center ${applicationsOpen ? "bg-destructive/10" : "bg-muted"}`}>
-              <span className={`h-2.5 w-2.5 rounded-full ${applicationsOpen ? "bg-destructive animate-pulse" : "bg-muted-foreground/50"}`} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Public Application Form Card */}
+          <div className="rounded-md border border-border bg-card shadow-corp p-4 sm:p-5 flex items-center justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className={`mt-0.5 h-9 w-9 rounded-sm flex items-center justify-center shrink-0 ${applicationsOpen ? "bg-destructive/10" : "bg-muted"}`}>
+                <span className={`h-2.5 w-2.5 rounded-full ${applicationsOpen ? "bg-destructive animate-pulse" : "bg-muted-foreground/50"}`} />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-secondary">Public Application Form</div>
+                <div className="text-sm font-semibold text-primary mt-0.5 truncate">
+                  {applicationsOpen ? "LIVE · Accepting" : "Paused · Closed"}
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                  Toggling updates the public form instantly.
+                </div>
+              </div>
             </div>
-            <div>
-              <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-secondary">Public Application Form</div>
-              <div className="text-sm font-semibold text-primary mt-0.5">
-                {applicationsOpen ? "LIVE · Accepting Applications" : "Paused · Not Accepting Applications"}
-              </div>
-              <div className="text-xs text-muted-foreground mt-0.5">
-                Toggling this instantly updates the public form and the LIVE badge — no deploy needed.
-              </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-xs text-muted-foreground">{applicationsOpen ? "On" : "Off"}</span>
+              <Switch
+                checked={applicationsOpen}
+                disabled={openQ.isLoading || toggleOpen.isPending}
+                onCheckedChange={(v) => toggleOpen.mutate(v)}
+              />
             </div>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <span className="text-xs text-muted-foreground">{applicationsOpen ? "On" : "Off"}</span>
-            <Switch
-              checked={applicationsOpen}
-              disabled={openQ.isLoading || toggleOpen.isPending}
-              onCheckedChange={(v) => toggleOpen.mutate(v)}
-            />
+
+          {/* Two-Factor Authentication Card */}
+          <div className="rounded-md border border-border bg-card shadow-corp p-4 sm:p-5 flex items-center justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="mt-0.5 h-9 w-9 rounded-sm flex items-center justify-center bg-gold/10 shrink-0">
+                <Shield className="h-4.5 w-4.5 text-gold" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-secondary">Super Admin 2FA</div>
+                <div className="text-sm font-semibold text-primary mt-0.5 truncate">
+                  {mfaStatus === "checking" ? "Checking Status..." : mfaStatus === "enrolled" ? "2FA Enabled" : "2FA Disabled"}
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {mfaStatus === "enrolled" ? "Account is secured with TOTP." : "Enhance account security using authenticator."}
+                </div>
+              </div>
+            </div>
+            <div className="shrink-0">
+              {mfaStatus === "checking" ? (
+                <Loader2 className="h-4 w-4 animate-spin text-gold" />
+              ) : mfaStatus === "enrolled" ? (
+                <Button 
+                  onClick={handleDisableMfa} 
+                  variant="outline" 
+                  size="sm"
+                  className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 h-9 font-semibold text-xs tracking-wider uppercase px-3 bg-transparent border hover:border-red-500"
+                >
+                  REMOVE 2FA
+                </Button>
+              ) : (
+                <Button 
+                  asChild
+                  size="sm"
+                  className="bg-gold hover:bg-gold/90 text-primary font-bold shadow-[0_0_10px_rgba(212,175,55,0.1)] h-9 text-xs tracking-wider uppercase px-3 border-0"
+                >
+                  <Link to="/admin/security" className="hover:no-underline">ADD 2FA</Link>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -775,6 +923,8 @@ function AdminDashboard() {
         onClose={() => { setJobDialogOpen(false); setEditingJob(null); }}
         editing={editingJob}
       />
+
+
     </div>
   );
 }
@@ -1022,6 +1172,9 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
   const [interviewerName, setInterviewerName] = useState("");
   const [interviewerId, setInterviewerId] = useState("");
   const [ccEmail, setCcEmail] = useState("");
+  const [salary, setSalary] = useState("");
+  const [joiningDate, setJoiningDate] = useState("");
+  const [jobLocation, setJobLocation] = useState("");
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
   const [aiText, setAiText] = useState<string | null>(app?.interview_questions ?? null);
   const [regenerating, setRegenerating] = useState(false);
@@ -1040,6 +1193,9 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
       setInterviewerName(app.interviewer_name || "");
       setInterviewerId(app.interviewer_id || "");
       setCcEmail("");
+      setSalary(app.salary || "");
+      setJoiningDate(app.joining_date || "");
+      setJobLocation(app.job_location || "");
       if (app.resume_path) {
         signed({ data: { path: app.resume_path } })
           .then((r) => setResumeUrl(r.url))
@@ -1081,7 +1237,10 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         meetingTime: status === "interview_scheduled" ? meetingTime : null,
         interviewerId: status === "interview_scheduled" ? interviewerId : null,
         interviewerName: status === "interview_scheduled" ? (employees.find((e: any) => e.id === interviewerId)?.full_name || "") : null,
-        ccEmail: ccEmail || null
+        ccEmail: ccEmail || null,
+        salary: status === "hired" ? salary : null,
+        joiningDate: status === "hired" ? joiningDate : null,
+        jobLocation: status === "hired" ? jobLocation : null,
       }
     }),
     onSuccess: () => {
@@ -1406,6 +1565,41 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
                     value={meetLink} 
                     onChange={(e) => setMeetLink(e.target.value)} 
                     placeholder="https://meet.google.com/..." 
+                  />
+                </div>
+              </div>
+            )}
+
+            {status === "hired" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-border/50 pt-4 bg-muted/10 p-3 rounded-md">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Monthly CTC / Annual Salary *</label>
+                  <Input 
+                    required
+                    className="mt-1.5 bg-background" 
+                    value={salary} 
+                    onChange={(e) => setSalary(e.target.value)} 
+                    placeholder="e.g. ₹8,00,000 per annum"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Joining Date *</label>
+                  <Input 
+                    required
+                    type="date"
+                    className="mt-1.5 bg-background" 
+                    value={joiningDate} 
+                    onChange={(e) => setJoiningDate(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Job Location *</label>
+                  <Input 
+                    required
+                    className="mt-1.5 bg-background" 
+                    value={jobLocation} 
+                    onChange={(e) => setJobLocation(e.target.value)} 
+                    placeholder="e.g. Bangalore / Remote"
                   />
                 </div>
               </div>
