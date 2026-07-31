@@ -1,5 +1,5 @@
 export async function verifyTurnstileToken(token: string, remoteIp?: string): Promise<boolean> {
-  const secretKey = process.env.TURNSTILE_SECRET_KEY || "1x0000000000000000000000000000000AA"; // Default dummy/test secret
+  const secretKey = process.env.TURNSTILE_SECRET_KEY || process.env.TURNSTILE_SECRET || "0x4AAAAAAAEcb5QNBNj8KPdzZhouVGPDzVtE";
 
   if (!token) {
     console.warn("[Turnstile] Missing token for verification");

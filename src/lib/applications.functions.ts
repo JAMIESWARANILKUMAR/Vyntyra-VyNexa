@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getAdminClient } from "@/integrations/supabase/admin";
+import { verifyTurnstileToken } from "./turnstile.server";
+
 const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
 const projectSchema = z.object({
@@ -40,6 +42,7 @@ const submitSchema = z.object({
   tp_officer_email: z.string().trim().max(255).optional().or(z.literal("")),
   projects: z.array(projectSchema).max(30).optional(),
   agreement_accepted: z.literal(true),
+  turnstile_token: z.string().optional(),
 });
 
 async function checkIsAdmin(userId: string) {
@@ -54,6 +57,14 @@ async function checkIsAdmin(userId: string) {
 export const submitApplication = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => submitSchema.parse(data))
   .handler(async ({ data }) => {
+    // Validate Cloudflare Turnstile token if provided
+    if (data.turnstile_token) {
+      const isValid = await verifyTurnstileToken(data.turnstile_token);
+      if (!isValid) {
+        throw new Error("Security verification failed. Please complete the Turnstile challenge.");
+      }
+    }
+
     // Enforce the "Accepting Applications" toggle server-side
     const { data: settingsData } = await supabase
         .from("site_settings")

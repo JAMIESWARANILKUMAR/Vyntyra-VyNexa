@@ -41,6 +41,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { COLLEGES, STATES, graduationYears, type StateName } from "@/lib/colleges";
 import { WorldClocks } from "@/components/world-clocks";
 import { InstallPwaButton } from "@/components/install-pwa-button";
+import { CloudflareTurnstile } from "@/components/cloudflare-turnstile";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -156,6 +157,7 @@ function ApplicationPage() {
   const [agreed, setAgreed] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
   const [resumePath, setResumePath] = useState("");
   const [resumeName, setResumeName] = useState("");
   const [resumeSize, setResumeSize] = useState(0);
@@ -312,6 +314,7 @@ function ApplicationPage() {
           project_url: p.project_url, document_path: p.document_path,
         })),
         agreement_accepted: true as const,
+        turnstile_token: turnstileToken,
       } });
       setSuccess(res.id);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -799,6 +802,17 @@ function ApplicationPage() {
               {!applicationsOpen && (
                 <div className="rounded-sm border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
                   Applications are currently paused. Please check back soon or track existing applications via the portal.
+                </div>
+              )}
+
+              {applicationsOpen && (
+                <div className="py-2 flex flex-col items-center justify-center border-t border-border/50">
+                  <div className="text-[11px] text-muted-foreground mb-1.5 font-medium flex items-center gap-1.5">
+                    <Shield className="h-3.5 w-3.5 text-secondary" /> Protected by Cloudflare Turnstile
+                  </div>
+                  <CloudflareTurnstile 
+                    onVerify={(token) => setTurnstileToken(token)}
+                  />
                 </div>
               )}
 

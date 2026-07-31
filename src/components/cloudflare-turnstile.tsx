@@ -32,7 +32,7 @@ interface TurnstileProps {
 }
 
 export function CloudflareTurnstile({
-  siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAAx1QZ0k92v3v9ZZ", // Fallback test key or env key
+  siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAAEcb5foYOyoT9BEw", // Cloudflare Site Key
   onVerify,
   onError,
   onExpire,
