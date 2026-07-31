@@ -16,7 +16,8 @@ const provisionSchema = z.object({
   bank_account_number: z.string().optional(),
   employee_id: z.string().optional(),
   intern_id: z.string().optional(),
-  duration_months: z.number().optional()
+  duration_months: z.number().optional(),
+  avatar_url: z.string().optional()
 });
 
 export const provisionUser = createServerFn({ method: "POST" })
@@ -54,7 +55,8 @@ export const provisionUser = createServerFn({ method: "POST" })
       bank_account_number: data.bank_account_number,
       employee_id: data.employee_id,
       intern_id: data.intern_id,
-      duration_months: data.duration_months
+      duration_months: data.duration_months,
+      avatar_url: data.avatar_url || null
     });
 
     return { success: true, userId };

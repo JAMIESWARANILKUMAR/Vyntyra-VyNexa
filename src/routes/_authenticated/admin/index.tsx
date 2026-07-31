@@ -1323,10 +1323,21 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <InfoRow icon={Mail} label="Email" value={app.email} />
             <InfoRow icon={Phone} label="Phone" value={app.phone} />
+            <InfoRow label="Opportunity Type" value={app.opportunity_type ? <span className="font-semibold text-secondary">{app.opportunity_type}</span> : "—"} />
+            <InfoRow label="Domain / Specialization" value={app.domain || "—"} />
             <InfoRow icon={Briefcase} label="Company" value={app.company || "—"} />
             <InfoRow icon={Briefcase} label="Position" value={app.position || "—"} />
             <InfoRow label="Experience" value={app.years_experience || "—"} />
             <InfoRow label="Availability" value={app.availability || "—"} />
+            {app.profile_photo_url && (
+              <div className="col-span-2 flex items-center gap-3 p-3 bg-secondary/5 border border-secondary/20 rounded-md">
+                <img src={app.profile_photo_url} alt={app.full_name} className="h-12 w-12 rounded-full object-cover border border-border shadow-sm" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-semibold text-primary">Candidate Profile Photo (Dashboard Avatar)</div>
+                  <a href={app.profile_photo_url} target="_blank" rel="noreferrer" className="text-xs text-secondary underline truncate block mt-0.5">{app.profile_photo_url}</a>
+                </div>
+              </div>
+            )}
             {app.linkedin_url && (
               <InfoRow icon={ExternalLink} label="LinkedIn" value={
                 <a href={app.linkedin_url} target="_blank" rel="noreferrer" className="text-secondary underline">Open</a>

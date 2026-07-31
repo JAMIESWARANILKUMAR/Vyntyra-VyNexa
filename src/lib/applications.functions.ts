@@ -25,6 +25,9 @@ const submitSchema = z.object({
   availability: z.string().trim().max(120).optional().or(z.literal("")),
   resume_path: z.string().trim().max(500).optional().or(z.literal("")),
   job_posting_id: z.string().optional().nullable(),
+  opportunity_type: z.string().trim().max(80).optional().or(z.literal("")),
+  domain: z.string().trim().max(160).optional().or(z.literal("")),
+  profile_photo_url: z.string().trim().max(600).optional().or(z.literal("")),
   // Academic details
   state: z.string().trim().max(80).optional().or(z.literal("")),
   college: z.string().trim().max(240).optional().or(z.literal("")),
@@ -90,16 +93,24 @@ export const submitApplication = createServerFn({ method: "POST" })
       tp_officer_name: data.tp_officer_name || null,
       tp_officer_contact: data.tp_officer_contact || null,
       tp_officer_email: data.tp_officer_email ? data.tp_officer_email.toLowerCase() : null,
+      opportunity_type: data.opportunity_type || null,
+      domain: data.domain || null,
+      profile_photo_url: data.profile_photo_url || null,
       agreement_accepted: true,
       status: 'new'
     };
 
-    const { error: insertError } = await supabase
+    let { error: insertError } = await supabase
         .from("applications")
         .insert([insert]);
 
     if (insertError) {
-        throw new Error(`Failed to submit application: ${insertError.message}`);
+        console.warn("[applications] Insert failed with extended schema, trying fallback:", insertError.message);
+        const { opportunity_type, domain, profile_photo_url, ...baseInsert } = insert;
+        const { error: fallbackErr } = await supabase.from("applications").insert([baseInsert]);
+        if (fallbackErr) {
+          throw new Error(`Failed to submit application: ${fallbackErr.message}`);
+        }
     }
 
     const insertedApp = { id: appId };

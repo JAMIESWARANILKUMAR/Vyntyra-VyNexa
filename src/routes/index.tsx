@@ -75,6 +75,31 @@ const ROLES = [
 const EXPERIENCE = ["0-1 years", "1-3 years", "3-5 years", "5-8 years", "8+ years"];
 const AVAILABILITY = ["Immediately", "Within 15 days", "Within 30 days", "Within 60 days", "Flexible"];
 
+const OPPORTUNITY_TYPES = ["Internship", "Full Time Role"] as const;
+
+const INTERNSHIP_DOMAINS = [
+  // B.Tech & BCA (Technology & Engineering)
+  "Computer Science & Software Engineering (B.Tech / BCA)",
+  "Artificial Intelligence & Machine Learning (B.Tech / BCA)",
+  "Data Science & Big Data Analytics (B.Tech / BCA)",
+  "Full Stack Web Development (B.Tech / BCA)",
+  "Mobile App Development — Flutter/React Native (B.Tech / BCA)",
+  "Cyber Security & Ethical Hacking (B.Tech / BCA)",
+  "Cloud Computing & DevOps (B.Tech / BCA)",
+  "Embedded Systems, IoT & Robotics (B.Tech)",
+  "Information Technology & Systems (B.Tech / BCA)",
+  
+  // MBA & BBA (Management & Business)
+  "Human Resources (HR) & Talent Acquisition (MBA / BBA)",
+  "Digital Marketing & Growth Hacking (MBA / BBA)",
+  "Financial Analytics & Corporate Finance (MBA / BBA)",
+  "Business Development & Sales Strategy (MBA / BBA)",
+  "Operations & Supply Chain Management (MBA / BBA)",
+  "Product Management & Market Research (MBA / BBA)",
+  "Brand Communications & Public Relations (MBA / BBA)",
+  "International Business & Corporate Strategy (MBA / BBA)",
+];
+
 const MAX_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_EXT = /\.(pdf|docx?|rtf)$/i;
 const ACCEPTED_MIME = new Set([
@@ -89,7 +114,10 @@ type ApplicationForm = {
   full_name: string;
   email: string;
   phone: string;
+  opportunity_type: "Internship" | "Full Time Role" | "";
+  domain: string;
   role_applied: string;
+  profile_photo_url: string;
   message: string;
   company: string;
   position: string;
@@ -127,6 +155,7 @@ function ApplicationPage() {
   const [agreementOpen, setAgreementOpen] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [resumePath, setResumePath] = useState("");
   const [resumeName, setResumeName] = useState("");
   const [resumeSize, setResumeSize] = useState(0);
@@ -150,7 +179,11 @@ function ApplicationPage() {
   }, [fetchOpen, fetchJobs, incrementVisit]);
 
   const [form, setForm] = useState<ApplicationForm>({
-    full_name: "", email: "", phone: "", role_applied: "", message: "",
+    full_name: "", email: "", phone: "",
+    opportunity_type: "Internship",
+    domain: "",
+    role_applied: "", message: "",
+    profile_photo_url: "",
     company: "", position: "", linkedin_url: "", years_experience: "",
     portfolio_url: "", availability: "",
     state: "" as StateName | "",
@@ -217,6 +250,26 @@ function ApplicationPage() {
     }
   }
 
+  async function handlePhotoUpload(file: File | null) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Photo must be under 5 MB"); return; }
+    setUploadingPhoto(true);
+    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `profile-photos/${new Date().getFullYear()}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safe}`;
+    try {
+      const { error } = await supabase.storage.from("default").upload(path, file, { contentType: file.type || "image/jpeg" });
+      if (error) throw error;
+      const { data: pubUrl } = supabase.storage.from("default").getPublicUrl(path);
+      const url = pubUrl?.publicUrl || path;
+      update("profile_photo_url")(url);
+      toast.success("Profile photo uploaded!");
+    } catch (error: any) {
+      toast.error("Photo upload failed: " + error.message);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
   function removeResume() {
     if (resumePath) {
         supabase.storage.from("default").remove([resumePath]).catch(() => {});
@@ -227,16 +280,30 @@ function ApplicationPage() {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!agreed) { setAgreementOpen(true); return; }
-    for (const k of ["full_name", "email", "phone", "role_applied"] as const) {
+    for (const k of ["full_name", "email", "phone"] as const) {
       if (!form[k].trim()) { toast.error("Please complete all required fields"); return; }
+    }
+    if (!form.opportunity_type) {
+      toast.error("Please select an Opportunity Type (Internship or Full Time Role)");
+      return;
+    }
+    if (form.opportunity_type === "Internship" && !form.domain && !form.role_applied) {
+      toast.error("Please select an Internship Domain");
+      return;
+    }
+    if (form.opportunity_type === "Full Time Role" && !form.role_applied) {
+      toast.error("Please select a Role");
+      return;
     }
     for (const p of projects) {
       if (!p.title.trim() || !p.summary.trim()) { toast.error("Each project needs a title and summary"); return; }
     }
+    const computedRole = form.role_applied || form.domain || (form.opportunity_type === "Internship" ? "Internship Applicant" : "Full Time Applicant");
     setSubmitting(true);
     try {
       const res = await submit({ data: {
         ...form,
+        role_applied: computedRole,
         graduation_year: form.graduation_year ? parseInt(form.graduation_year, 10) : null,
         resume_path: resumePath,
         job_posting_id: form.job_posting_id || null,
@@ -381,7 +448,7 @@ function ApplicationPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="px-4 sm:px-8 py-6 sm:py-8 space-y-8 sm:space-y-10">
-              <Section title="Personal Information" step="01">
+              <Section title="Personal Information & Role Choice" step="01">
                 <div className="grid md:grid-cols-2 gap-5">
                   <Field label="Full name" required>
                     <Input value={form.full_name} onChange={(e) => update("full_name")(e.target.value)} placeholder="John Doe" />
@@ -392,36 +459,130 @@ function ApplicationPage() {
                   <Field label="Phone number" required>
                     <Input value={form.phone} onChange={(e) => update("phone")(e.target.value)} placeholder="+91 98765 43210" />
                   </Field>
-                  {jobPostings.length > 0 ? (
-                    <Field label="Job Opening" required>
-                      <Select value={form.job_posting_id} onValueChange={(v) => {
-                        update("job_posting_id")(v);
-                        const job = jobPostings.find((j: any) => j.id === v);
-                        if (job) update("role_applied")(job.title);
-                      }}>
-                        <SelectTrigger><SelectValue placeholder="Select a job opening" /></SelectTrigger>
-                        <SelectContent>
-                          {jobPostings.map((j: any) => (
-                            <SelectItem key={j.id} value={j.id}>
-                              <div className="flex flex-col">
-                                <span>{j.title}</span>
-                                <span className="text-xs text-muted-foreground">{j.department} · {j.location} · {j.type}</span>
-                              </div>
-                            </SelectItem>
+
+                  {/* Opportunity Type: Internship vs Full Time Role */}
+                  <Field label="Opportunity Type (Applying for)" required>
+                    <Select 
+                      value={form.opportunity_type} 
+                      onValueChange={(val: "Internship" | "Full Time Role") => {
+                        update("opportunity_type")(val);
+                        if (val === "Full Time Role") {
+                          update("domain")("");
+                          if (!form.role_applied || form.role_applied.startsWith("Internship")) {
+                            update("role_applied")("Software Engineer — Search Infrastructure");
+                          }
+                        } else {
+                          if (form.domain) {
+                            update("role_applied")(`Internship — ${form.domain.split(" (")[0]}`);
+                          }
+                        }
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select Internship or Full Time Role" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Internship">🎓 Internship</SelectItem>
+                        <SelectItem value="Full Time Role">💼 Full Time Role</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+
+                  {/* Internship Domain Selection (B.Tech, BCA, MBA, BBA) */}
+                  {form.opportunity_type === "Internship" && (
+                    <Field label="Internship Domain / Specialization (B.Tech, BCA, MBA, BBA)" required className="md:col-span-2">
+                      <Select 
+                        value={form.domain} 
+                        onValueChange={(val) => {
+                          update("domain")(val);
+                          update("role_applied")(`Internship — ${val.split(" (")[0]}`);
+                        }}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select your branch / domain specialization" /></SelectTrigger>
+                        <SelectContent className="max-h-80">
+                          <div className="px-2 py-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Engineering & Computer Applications (B.Tech / BCA)</div>
+                          {INTERNSHIP_DOMAINS.filter(d => d.includes("B.Tech")).map((d) => (
+                            <SelectItem key={d} value={d}>{d}</SelectItem>
+                          ))}
+                          <div className="px-2 py-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider mt-2 border-t pt-2">Management & Business Studies (MBA / BBA)</div>
+                          {INTERNSHIP_DOMAINS.filter(d => d.includes("MBA")).map((d) => (
+                            <SelectItem key={d} value={d}>{d}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </Field>
-                  ) : (
-                    <Field label="Role you're applying for" required>
-                      <Select value={form.role_applied} onValueChange={update("role_applied")}>
-                        <SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger>
-                        <SelectContent>{ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </Field>
                   )}
+
+                  {/* Role selection for Full Time Role */}
+                  {form.opportunity_type === "Full Time Role" && (
+                    jobPostings.length > 0 ? (
+                      <Field label="Job Opening" required>
+                        <Select value={form.job_posting_id} onValueChange={(v) => {
+                          update("job_posting_id")(v);
+                          const job = jobPostings.find((j: any) => j.id === v);
+                          if (job) {
+                            update("role_applied")(job.title);
+                            update("domain")(job.department || job.title);
+                          }
+                        }}>
+                          <SelectTrigger><SelectValue placeholder="Select a job opening" /></SelectTrigger>
+                          <SelectContent>
+                            {jobPostings.map((j: any) => (
+                              <SelectItem key={j.id} value={j.id}>
+                                <div className="flex flex-col">
+                                  <span>{j.title}</span>
+                                  <span className="text-xs text-muted-foreground">{j.department} · {j.location} · {j.type}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                    ) : (
+                      <Field label="Role you're applying for" required>
+                        <Select value={form.role_applied} onValueChange={(v) => {
+                          update("role_applied")(v);
+                          update("domain")(v);
+                        }}>
+                          <SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger>
+                          <SelectContent>{ROLES.filter(r => !r.startsWith("Internship")).map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </Field>
+                    )
+                  )}
+
+                  {/* Profile Photo URL & Upload Field */}
+                  <Field label="Profile Photo URL (used for your Dashboard Avatar if selected)" className="md:col-span-2">
+                    <div className="space-y-2">
+                      <div className="flex gap-2 items-center">
+                        <Input 
+                          value={form.profile_photo_url} 
+                          onChange={(e) => update("profile_photo_url")(e.target.value)} 
+                          placeholder="https://example.com/my-photo.jpg (or upload below)" 
+                        />
+                        <label className="relative shrink-0 cursor-pointer">
+                          <Button type="button" variant="outline" size="sm" disabled={uploadingPhoto} className="gap-1.5 h-10">
+                            {uploadingPhoto ? <Loader2 className="h-4 w-4 animate-spin text-secondary" /> : <Upload className="h-4 w-4 text-secondary" />}
+                            <span>{uploadingPhoto ? "Uploading…" : "Upload Photo"}</span>
+                          </Button>
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={(e) => handlePhotoUpload(e.target.files?.[0] ?? null)} 
+                            disabled={uploadingPhoto} 
+                          />
+                        </label>
+                      </div>
+                      {form.profile_photo_url && (
+                        <div className="flex items-center gap-3 p-2.5 bg-secondary/5 border border-secondary/20 rounded-sm">
+                          <img src={form.profile_photo_url} alt="Profile Avatar Preview" className="h-9 w-9 rounded-full object-cover border border-border" />
+                          <div className="text-xs text-muted-foreground truncate flex-1">{form.profile_photo_url}</div>
+                          <span className="text-[10px] bg-secondary/10 text-secondary px-2 py-0.5 rounded font-medium">Dashboard Preview</span>
+                        </div>
+                      )}
+                    </div>
+                  </Field>
                 </div>
-                {jobPostings.length > 0 && form.job_posting_id && (() => {
+                {jobPostings.length > 0 && form.job_posting_id && form.opportunity_type === "Full Time Role" && (() => {
                   const selJob = jobPostings.find((j: any) => j.id === form.job_posting_id);
                   if (!selJob) return null;
                   return (

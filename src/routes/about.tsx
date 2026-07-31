@@ -64,10 +64,8 @@ const WHY = [
 
 const LEADERSHIP = [
   { name: "Jami Eswar Anil Kumar", role: "Founder & Director", note: "India Mentor · Udemy Instructor · Lead Educator" },
-  { name: "Anu Sri Metta", role: "Co-Founder", note: "R&D Manager · Director of Administration" },
-  { name: "Harshitha Patnana", role: "Co-Founder", note: "Relations Manager · Administration Associate" },
   { name: "Niveditha M", role: "Co-Founder", note: "Web Developer · Vyntyra Academy Curriculum Associate" },
-  { name: "Abhishek Pandey", role: "Co-Founder", note: "Backend Developer · Technical Trainee" },
+  { name: "Kashish Khilani", role: "Senior Advisor", note: "Strategic Advisor · Executive Advisory Board" },
 ];
 
 function AboutPage() {
