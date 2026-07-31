@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrackRouteImport } from './routes/track'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as StatusRouteImport } from './routes/status'
+import { Route as SecurityCheckRouteImport } from './routes/security-check'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -41,6 +42,11 @@ const TermsRoute = TermsRouteImport.update({
 const StatusRoute = StatusRouteImport.update({
   id: '/status',
   path: '/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SecurityCheckRoute = SecurityCheckRouteImport.update({
+  id: '/security-check',
+  path: '/security-check',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/privacy': typeof PrivacyRoute
+  '/security-check': typeof SecurityCheckRoute
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/privacy': typeof PrivacyRoute
+  '/security-check': typeof SecurityCheckRoute
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/privacy': typeof PrivacyRoute
+  '/security-check': typeof SecurityCheckRoute
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/privacy'
+    | '/security-check'
     | '/status'
     | '/terms'
     | '/track'
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/privacy'
+    | '/security-check'
     | '/status'
     | '/terms'
     | '/track'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/privacy'
+    | '/security-check'
     | '/status'
     | '/terms'
     | '/track'
@@ -245,6 +257,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   PrivacyRoute: typeof PrivacyRoute
+  SecurityCheckRoute: typeof SecurityCheckRoute
   StatusRoute: typeof StatusRouteWithChildren
   TermsRoute: typeof TermsRoute
   TrackRoute: typeof TrackRoute
@@ -274,6 +287,13 @@ declare module '@tanstack/react-router' {
       path: '/status'
       fullPath: '/status'
       preLoaderRoute: typeof StatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/security-check': {
+      id: '/security-check'
+      path: '/security-check'
+      fullPath: '/security-check'
+      preLoaderRoute: typeof SecurityCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -423,6 +443,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   PrivacyRoute: PrivacyRoute,
+  SecurityCheckRoute: SecurityCheckRoute,
   StatusRoute: StatusRouteWithChildren,
   TermsRoute: TermsRoute,
   TrackRoute: TrackRoute,
