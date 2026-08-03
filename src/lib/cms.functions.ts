@@ -51,12 +51,16 @@ export const createNews = createServerFn({ method: "POST" })
     if (error) throw new Error("Failed to create news");
 
     // Also sync to main announcements table for Dashboards
-    await supabase.from("announcements").insert([{
-      title: data.title,
-      body: data.content,
-      target_role: "all",
-      created_by: context.userId,
-    }]).catch((err: any) => console.warn("[cms] announcements sync error:", err.message));
+    try {
+      await supabase.from("announcements").insert([{
+        title: data.title,
+        body: data.content,
+        target_role: "all",
+        created_by: context.userId,
+      }]);
+    } catch (err: any) {
+      console.warn("[cms] announcements sync error:", err?.message);
+    }
 
     return { ok: true };
   });
@@ -74,7 +78,9 @@ export const deleteNews = createServerFn({ method: "POST" })
     if (error) throw new Error("Failed to delete news");
 
     if (item?.title) {
-      await supabase.from("announcements").delete().eq("title", item.title).catch(() => {});
+      try {
+        await supabase.from("announcements").delete().eq("title", item.title);
+      } catch (e) {}
     }
 
     return { ok: true };
@@ -97,12 +103,16 @@ export const createAnnouncement = createServerFn({ method: "POST" })
     if (error) throw new Error("Failed to create announcement");
 
     // Also sync to main announcements table for Dashboards
-    await supabase.from("announcements").insert([{
-      title: data.title,
-      body: data.content,
-      target_role: "all",
-      created_by: context.userId,
-    }]).catch((err: any) => console.warn("[cms] announcements sync error:", err.message));
+    try {
+      await supabase.from("announcements").insert([{
+        title: data.title,
+        body: data.content,
+        target_role: "all",
+        created_by: context.userId,
+      }]);
+    } catch (err: any) {
+      console.warn("[cms] announcements sync error:", err?.message);
+    }
 
     return { ok: true };
   });
@@ -120,7 +130,9 @@ export const deleteAnnouncement = createServerFn({ method: "POST" })
     if (error) throw new Error("Failed to delete announcement");
 
     if (item?.title) {
-      await supabase.from("announcements").delete().eq("title", item.title).catch(() => {});
+      try {
+        await supabase.from("announcements").delete().eq("title", item.title);
+      } catch (e) {}
     }
 
     return { ok: true };
