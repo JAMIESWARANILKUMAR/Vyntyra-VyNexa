@@ -764,15 +764,15 @@ function EmployeeDashboard() {
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-6 py-10 relative">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 relative">
         <AnimatePresence mode="wait">
           
           {/* ─── OVERVIEW ─── */}
           {activeTab === "overview" && (
-            <motion.div key="overview" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-12">
+            <motion.div key="overview" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-6">
               
               {/* Premium Hero Section */}
-              <div className="relative overflow-hidden rounded-[2rem] bg-white border border-slate-100 p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-100 p-6 sm:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
                 <div className="absolute top-0 right-0 p-32 bg-gradient-to-bl from-slate-100 to-transparent rounded-full opacity-50 blur-3xl pointer-events-none" />
                 
                 <div className="relative flex flex-col md:flex-row md:items-end justify-between gap-10">
@@ -820,30 +820,34 @@ function EmployeeDashboard() {
                 ))}
               </motion.div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <motion.div variants={itemVariants} initial="initial" animate="animate" className="lg:col-span-1">
-                  <div className="text-sm font-semibold tracking-wide text-slate-900 mb-4 uppercase">Calendar</div>
+                  <div className="text-sm font-semibold tracking-wide text-slate-900 mb-3 uppercase">Calendar</div>
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
                     <MonthlyCalendar events={schedules} />
                   </div>
                 </motion.div>
 
                 <motion.div variants={itemVariants} initial="initial" animate="animate" className="lg:col-span-2 space-y-6">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="text-sm font-semibold tracking-wide text-slate-900 uppercase">Recent Tasks</div>
                     <Button variant="link" className="text-xs text-slate-500 hover:text-black" onClick={() => setActiveTab("tasks")}>View All ↗</Button>
                   </div>
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-6">
                     <div className="divide-y divide-slate-50">
-                      {tasks.slice(0, 4).map((task: any) => {
-                        const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
-                        return (
-                          <div key={task.id} className="p-5 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
-                            <div className="text-sm font-medium text-slate-800">{task.title}</div>
-                            <span className={`text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider font-bold ${s.badge}`}>{s.label}</span>
-                          </div>
-                        );
-                      })}
+                      {tasks.length === 0 ? (
+                        <div className="p-4 text-center text-xs text-slate-400 font-light">No tasks assigned currently.</div>
+                      ) : (
+                        tasks.slice(0, 4).map((task: any) => {
+                          const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
+                          return (
+                            <div key={task.id} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
+                              <div className="text-sm font-medium text-slate-800">{task.title}</div>
+                              <span className={`text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider font-bold ${s.badge}`}>{s.label}</span>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
 
