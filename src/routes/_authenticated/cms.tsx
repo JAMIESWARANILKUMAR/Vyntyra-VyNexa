@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { listNews, createNews, listAnnouncements, createAnnouncement } from "@/lib/cms.functions";
+import { listNews, createNews, deleteNews, listAnnouncements, createAnnouncement, deleteAnnouncement } from "@/lib/cms.functions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Image as ImageIcon, Video as VideoIcon } from "lucide-react";
+import { Loader2, ArrowLeft, Image as ImageIcon, Video as VideoIcon, Trash2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { RichContentRenderer } from "@/components/rich-content-renderer";
 
@@ -100,11 +100,22 @@ function NewsTab() {
   const [isPublished, setIsPublished] = useState(false);
 
   const { data: news, isLoading } = useQuery({ queryKey: ["cms-news"], queryFn: () => listNews() });
-  const { mutate, isPending } = useMutation({
+  
+  const createNewsMut = useMutation({
     mutationFn: createNews,
     onSuccess: () => {
       toast.success("News published!");
       setTitle(""); setContent(""); setIsPublished(false);
+      qc.invalidateQueries({ queryKey: ["cms-news"] });
+      qc.invalidateQueries({ queryKey: ["announcements"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const deleteNewsMut = useMutation({
+    mutationFn: deleteNews,
+    onSuccess: () => {
+      toast.success("News deleted!");
       qc.invalidateQueries({ queryKey: ["cms-news"] });
       qc.invalidateQueries({ queryKey: ["announcements"] });
     },
@@ -134,21 +145,45 @@ function NewsTab() {
             <Switch checked={isPublished} onCheckedChange={setIsPublished} />
             <span>Publish Immediately</span>
           </div>
-          <Button onClick={() => mutate({ data: { title, content, is_published: isPublished } })} disabled={isPending || !title || !content}>
-            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Create News
+          <Button onClick={() => createNewsMut.mutate({ data: { title, content, is_published: isPublished } })} disabled={createNewsMut.isPending || !title || !content}>
+            {createNewsMut.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Create News
           </Button>
         </CardContent>
       </Card>
       <Card>
         <CardHeader><CardTitle>Recent News</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          {isLoading ? <Loader2 className="animate-spin" /> : news?.map(n => (
-            <div key={n.id} className="p-4 border rounded-md bg-card">
-              <h3 className="font-bold text-base">{n.title}</h3>
-              <p className="text-xs text-muted-foreground mb-2">{n.is_published ? "Published" : "Draft"}</p>
-              <RichContentRenderer content={n.content} />
-            </div>
-          ))}
+          {isLoading ? (
+            <Loader2 className="animate-spin" />
+          ) : news?.length === 0 ? (
+            <div className="text-sm text-muted-foreground italic">No news created yet.</div>
+          ) : (
+            news?.map(n => (
+              <div key={n.id} className="p-4 border rounded-md bg-card space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-bold text-base">{n.title}</h3>
+                    <p className="text-xs text-muted-foreground">{n.is_published ? "Published" : "Draft"}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-2 shrink-0"
+                    disabled={deleteNewsMut.isPending}
+                    onClick={() => {
+                      if (confirm(`Delete news "${n.title}"?`)) {
+                        deleteNewsMut.mutate({ data: { id: n.id } });
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                </div>
+                <RichContentRenderer content={n.content} />
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
     </div>
@@ -163,11 +198,22 @@ function AnnouncementsTab() {
   const [isActive, setIsActive] = useState(true);
 
   const { data: ann, isLoading } = useQuery({ queryKey: ["cms-announcements"], queryFn: () => listAnnouncements() });
-  const { mutate, isPending } = useMutation({
+  
+  const createAnnMut = useMutation({
     mutationFn: createAnnouncement,
     onSuccess: () => {
       toast.success("Announcement posted!");
       setTitle(""); setContent("");
+      qc.invalidateQueries({ queryKey: ["cms-announcements"] });
+      qc.invalidateQueries({ queryKey: ["announcements"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const deleteAnnMut = useMutation({
+    mutationFn: deleteAnnouncement,
+    onSuccess: () => {
+      toast.success("Announcement deleted!");
       qc.invalidateQueries({ queryKey: ["cms-announcements"] });
       qc.invalidateQueries({ queryKey: ["announcements"] });
     },
@@ -207,23 +253,45 @@ function AnnouncementsTab() {
             <Switch checked={isActive} onCheckedChange={setIsActive} />
             <span>Active</span>
           </div>
-          <Button onClick={() => mutate({ data: { title, content, severity, is_active: isActive } })} disabled={isPending || !title || !content}>
-            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Post Announcement
+          <Button onClick={() => createAnnMut.mutate({ data: { title, content, severity, is_active: isActive } })} disabled={createAnnMut.isPending || !title || !content}>
+            {createAnnMut.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Post Announcement
           </Button>
         </CardContent>
       </Card>
       <Card>
         <CardHeader><CardTitle>Active Announcements</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          {isLoading ? <Loader2 className="animate-spin" /> : ann?.map(a => (
-            <div key={a.id} className="p-4 border rounded-md bg-card">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-bold">{a.title}</h3>
-                <span className="text-xs px-2 py-0.5 rounded bg-secondary/10 text-secondary font-medium uppercase">{a.severity}</span>
+          {isLoading ? (
+            <Loader2 className="animate-spin" />
+          ) : ann?.length === 0 ? (
+            <div className="text-sm text-muted-foreground italic">No active announcements.</div>
+          ) : (
+            ann?.map(a => (
+              <div key={a.id} className="p-4 border rounded-md bg-card space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold">{a.title}</h3>
+                    <span className="text-xs px-2 py-0.5 rounded bg-secondary/10 text-secondary font-medium uppercase">{a.severity}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-2 shrink-0"
+                    disabled={deleteAnnMut.isPending}
+                    onClick={() => {
+                      if (confirm(`Delete announcement "${a.title}"?`)) {
+                        deleteAnnMut.mutate({ data: { id: a.id } });
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                </div>
+                <RichContentRenderer content={a.content} />
               </div>
-              <RichContentRenderer content={a.content} />
-            </div>
-          ))}
+            ))
+          )}
         </CardContent>
       </Card>
     </div>

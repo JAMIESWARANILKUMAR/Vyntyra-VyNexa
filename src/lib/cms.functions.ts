@@ -61,6 +61,25 @@ export const createNews = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const deleteNewsSchema = z.object({ id: z.string() });
+export const deleteNews = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => deleteNewsSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
+
+    const { data: item } = await supabase.from("news_updates").select("title").eq("id", data.id).single();
+
+    const { error } = await supabase.from("news_updates").delete().eq("id", data.id);
+    if (error) throw new Error("Failed to delete news");
+
+    if (item?.title) {
+      await supabase.from("announcements").delete().eq("title", item.title).catch(() => {});
+    }
+
+    return { ok: true };
+  });
+
 // Announcements API
 export const listAnnouncements = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabase.from("company_announcements").select("*").order("created_at", { ascending: false });
@@ -84,6 +103,25 @@ export const createAnnouncement = createServerFn({ method: "POST" })
       target_role: "all",
       created_by: context.userId,
     }]).catch((err: any) => console.warn("[cms] announcements sync error:", err.message));
+
+    return { ok: true };
+  });
+
+const deleteAnnouncementSchema = z.object({ id: z.string() });
+export const deleteAnnouncement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => deleteAnnouncementSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
+
+    const { data: item } = await supabase.from("company_announcements").select("title").eq("id", data.id).single();
+
+    const { error } = await supabase.from("company_announcements").delete().eq("id", data.id);
+    if (error) throw new Error("Failed to delete announcement");
+
+    if (item?.title) {
+      await supabase.from("announcements").delete().eq("title", item.title).catch(() => {});
+    }
 
     return { ok: true };
   });
