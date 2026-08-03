@@ -27,6 +27,7 @@ import { FloatingAppsPanel } from "@/components/floating-apps-panel";
 import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { PayslipModal } from "@/components/payslip-modal";
+import { IdCardModal } from "@/components/id-card-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -383,6 +384,7 @@ function EmployeeDashboard() {
   const [profileForm, setProfileForm] = useState({ phone: "", address: "", emergency_contact: "", bank_details: "" });
   const [selectedPayslip, setSelectedPayslip] = useState<any | null>(null);
   const [isPayslipOpen, setIsPayslipOpen] = useState(false);
+  const [isIdCardOpen, setIsIdCardOpen] = useState(false);
 
   function openPayslipModal(payout?: any) {
     const amt = payout?.amount || 75000;
@@ -1702,19 +1704,23 @@ function EmployeeDashboard() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Digital ID Badge */}
-                <div className="md:col-span-1 p-6 bg-gradient-to-b from-slate-900 to-black text-white rounded-[2rem] shadow-xl flex flex-col items-center text-center relative overflow-hidden">
+                <div className="md:col-span-1 p-6 bg-gradient-to-b from-slate-900 to-black text-white rounded-[2rem] shadow-xl flex flex-col items-center text-center relative overflow-hidden group">
                   <div className="absolute top-0 inset-x-0 h-1 bg-emerald-400" />
-                  <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 text-2xl mb-4 ring-4 ring-white/20 mt-2" />
+                  <div className="flex items-center gap-1.5 text-[9px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-0.5 rounded-full uppercase tracking-wider mb-2">
+                    <Radio className="h-3 w-3 animate-pulse" /> NFC & RFID Active
+                  </div>
+
+                  <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 text-2xl mb-2 ring-4 ring-white/20" />
                   <h3 className="font-bold text-lg text-white">{displayName}</h3>
-                  <p className="text-xs text-white/60 uppercase tracking-widest mt-1">Employee · VyNexa</p>
+                  <p className="text-xs text-white/60 uppercase tracking-widest mt-0.5">Employee · VyNexa</p>
                   <p className="text-[11px] text-emerald-400 font-mono mt-0.5">ID: {session?.user?.id?.slice(0, 8).toUpperCase()}</p>
                   
                   <div className="p-3 bg-white rounded-xl my-4">
-                    <QRCodeSVG value={`VY-EMP-${session?.user?.id}`} size={110} />
+                    <QRCodeSVG value={`VY-EMP-${session?.user?.id}`} size={105} />
                   </div>
                   
-                  <Button variant="outline" size="sm" onClick={() => window.print()} className="w-full text-xs text-slate-900 border-white/20 hover:bg-white hover:text-black rounded-xl gap-1.5">
-                    <Printer className="h-3.5 w-3.5" /> Print Digital ID Card
+                  <Button onClick={() => setIsIdCardOpen(true)} className="w-full text-xs text-slate-900 bg-emerald-400 hover:bg-emerald-300 rounded-xl gap-1.5 font-bold shadow-md">
+                    <Cpu className="h-3.5 w-3.5" /> View Smart NFC Badge
                   </Button>
                 </div>
 
@@ -1892,6 +1898,23 @@ function EmployeeDashboard() {
         </AnimatePresence>
       </main>
       <PayslipModal isOpen={isPayslipOpen} onClose={() => setIsPayslipOpen(false)} payslip={selectedPayslip} />
+      <IdCardModal 
+        isOpen={isIdCardOpen} 
+        onClose={() => setIsIdCardOpen(false)} 
+        employee={{
+          employeeId: session?.user?.id || 'VY-EMP-1001',
+          fullName: displayName,
+          email: email,
+          avatarUrl: profile?.avatar_url,
+          phone: profile?.phone,
+          emergencyContact: profile?.emergency_contact,
+          role: 'Software Engineer / Executive',
+          department: 'Engineering & Technology',
+          bloodGroup: 'O+ Positive',
+          securityLevel: 'L3 - Enterprise Access',
+          officeLocation: 'VyNexa IT Tower, Cyber Hills, Visakhapatnam, AP, 530045'
+        }} 
+      />
       <FloatingAppsPanel />
     </div>
   );
