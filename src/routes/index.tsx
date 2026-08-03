@@ -237,6 +237,7 @@ function ApplicationPage() {
     full_name: "", email: "", phone: "",
     opportunity_type: "Internship",
     domain: "",
+    sub_domain: "",
     role_applied: "", message: "",
     profile_photo_url: "",
     company: "", position: "", linkedin_url: "", years_experience: "",
