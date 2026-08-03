@@ -14,7 +14,7 @@ import {
   IndianRupee, MessageSquare, BookOpen, Fingerprint, FileText, Send, Download,
   Sparkles, Zap, Wallet, ExternalLink, VolumeX, ShieldCheck, Laptop, Receipt,
   LifeBuoy, Award, GraduationCap, FileCheck, HelpCircle, Layers, CreditCard,
-  Building2, Plus, ArrowUpRight, HeartHandshake, CheckSquare, FileUp, Printer
+  Building2, Plus, ArrowUpRight, HeartHandshake, CheckSquare, FileUp, Printer, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -379,6 +379,7 @@ function EmployeeDashboard() {
   const [expenseForm, setExpenseForm] = useState({ title: "", category: "Travel" as any, amount: "", date: "", receipt_url: "", notes: "" });
   const [ticketForm, setTicketForm] = useState({ category: "IT Support" as any, priority: "Medium" as any, subject: "", description: "" });
   const [kudosForm, setKudosForm] = useState({ receiver_id: "", badge: "Star Performer" as any, message: "" });
+  const [profileForm, setProfileForm] = useState({ phone: "", address: "", emergency_contact: "", bank_details: "" });
   const [isSubmittingExpense, setIsSubmittingExpense] = useState(false);
   const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
   const [isSubmittingKudos, setIsSubmittingKudos] = useState(false);
