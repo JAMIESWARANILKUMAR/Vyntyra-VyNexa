@@ -111,12 +111,65 @@ const ACCEPTED_MIME = new Set([
   "text/rtf",
 ]);
 
+const DOMAIN_SUBDOMAINS_MAP: Record<string, string[]> = {
+  "Engineering & Technology": [
+    "Full-Stack Development (React/Next.js + Node)",
+    "MERN Stack (MongoDB, Express, React, Node.js)",
+    "MEAN Stack (MongoDB, Express, Angular, Node.js)",
+    "Frontend Engineering (React, Next.js, Vue, UI/UX)",
+    "Backend Engineering (Node.js, Python, Go, PostgreSQL)",
+    "DevOps, Cloud & Infrastructure (AWS, Docker, K8s)",
+    "Mobile App Development (Flutter, React Native, iOS, Android)",
+    "Data Engineering & Pipeline Systems",
+    "QA & Automated Software Testing",
+    "Cybersecurity & Information Security"
+  ],
+  "Marketing & Growth": [
+    "Digital Marketing & Growth Hacking",
+    "Content Strategy & Copywriting",
+    "SEO & SEM Optimization",
+    "Social Media Strategy & Management",
+    "Performance Marketing & Paid Ads (Meta, Google)",
+    "Brand Strategy & Public Relations (PR)",
+    "Email Marketing & Lead Lifecycle Operations"
+  ],
+  "Customer Operations": [
+    "Customer Support & Helpdesk Specialist",
+    "Technical Support Engineer (L1/L2/L3)",
+    "Client Success & Account Management",
+    "Service Desk & SLA Operations",
+    "Customer Experience (CX) Specialist"
+  ],
+  "Research & Development (R&D)": [
+    "Artificial Intelligence & Machine Learning (AI/ML)",
+    "Deep Learning & LLM Fine-Tuning",
+    "Data Science & Predictive Analytics",
+    "Robotics & Embedded Hardware Systems",
+    "Applied Scientific Research & Prototyping"
+  ],
+  "Design & Product": [
+    "UI/UX Design & User Research",
+    "Product Design (Figma, Design Systems)",
+    "Graphic Design & Visual Branding",
+    "Motion Graphics & Video Production",
+    "Technical Product Management"
+  ],
+  "Finance & HR": [
+    "HR Operations & Talent Acquisition",
+    "Payroll & Compensation Specialist",
+    "Financial Analyst & Corporate Accounting",
+    "Legal, Regulatory & Compliance Specialist",
+    "Business Development & Corporate Strategy"
+  ]
+};
+
 type ApplicationForm = {
   full_name: string;
   email: string;
   phone: string;
   opportunity_type: "Internship" | "Full Time Role" | "";
   domain: string;
+  sub_domain: string;
   role_applied: string;
   profile_photo_url: string;
   message: string;
@@ -470,13 +523,12 @@ function ApplicationPage() {
                       onValueChange={(val: "Internship" | "Full Time Role") => {
                         update("opportunity_type")(val);
                         if (val === "Full Time Role") {
-                          update("domain")("");
                           if (!form.role_applied || form.role_applied.startsWith("Internship")) {
                             update("role_applied")("Software Engineer — Search Infrastructure");
                           }
                         } else {
                           if (form.domain) {
-                            update("role_applied")(`Internship — ${form.domain.split(" (")[0]}`);
+                            update("role_applied")(`Internship — ${form.domain}`);
                           }
                         }
                       }}
@@ -489,68 +541,86 @@ function ApplicationPage() {
                     </Select>
                   </Field>
 
-                  {/* Internship Domain Selection (B.Tech, BCA, MBA, BBA) */}
-                  {form.opportunity_type === "Internship" && (
-                    <Field label="Internship Domain / Specialization (B.Tech, BCA, MBA, BBA)" required className="md:col-span-2">
-                      <Select 
-                        value={form.domain} 
-                        onValueChange={(val) => {
-                          update("domain")(val);
-                          update("role_applied")(`Internship — ${val.split(" (")[0]}`);
-                        }}
-                      >
-                        <SelectTrigger><SelectValue placeholder="Select your branch / domain specialization" /></SelectTrigger>
+                  {/* Active Job Openings Dropdown (Synced with Admin Postings) */}
+                  {jobPostings.length > 0 && (
+                    <Field label="Active Job Openings (Synced)" className="md:col-span-2">
+                      <Select value={form.job_posting_id} onValueChange={(v) => {
+                        update("job_posting_id")(v);
+                        const job = jobPostings.find((j: any) => j.id === v);
+                        if (job) {
+                          update("role_applied")(job.title);
+                          const matchedDomain = Object.keys(DOMAIN_SUBDOMAINS_MAP).find(d => 
+                            job.department?.toLowerCase().includes(d.toLowerCase()) || 
+                            job.title?.toLowerCase().includes(d.toLowerCase())
+                          ) || "Engineering & Technology";
+                          update("domain")(matchedDomain);
+                        }
+                      }}>
+                        <SelectTrigger><SelectValue placeholder="-- Select from Live Posted Openings (Optional) --" /></SelectTrigger>
                         <SelectContent className="max-h-80">
-                          <div className="px-2 py-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Engineering & Computer Applications (B.Tech / BCA)</div>
-                          {INTERNSHIP_DOMAINS.filter(d => d.includes("B.Tech")).map((d) => (
-                            <SelectItem key={d} value={d}>{d}</SelectItem>
-                          ))}
-                          <div className="px-2 py-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider mt-2 border-t pt-2">Management & Business Studies (MBA / BBA)</div>
-                          {INTERNSHIP_DOMAINS.filter(d => d.includes("MBA")).map((d) => (
-                            <SelectItem key={d} value={d}>{d}</SelectItem>
+                          {jobPostings.map((j: any) => (
+                            <SelectItem key={j.id} value={j.id}>
+                              <div className="flex items-center justify-between gap-4 w-full">
+                                <span className="font-semibold text-foreground">{j.title}</span>
+                                <span className="text-xs text-secondary bg-secondary/10 px-2 py-0.5 rounded font-mono">{j.department} · {j.location}</span>
+                              </div>
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </Field>
                   )}
 
-                  {/* Role selection for Full Time Role */}
-                  {form.opportunity_type === "Full Time Role" && (
-                    jobPostings.length > 0 ? (
-                      <Field label="Job Opening" required>
-                        <Select value={form.job_posting_id} onValueChange={(v) => {
-                          update("job_posting_id")(v);
-                          const job = jobPostings.find((j: any) => j.id === v);
-                          if (job) {
-                            update("role_applied")(job.title);
-                            update("domain")(job.department || job.title);
-                          }
-                        }}>
-                          <SelectTrigger><SelectValue placeholder="Select a job opening" /></SelectTrigger>
-                          <SelectContent>
-                            {jobPostings.map((j: any) => (
-                              <SelectItem key={j.id} value={j.id}>
-                                <div className="flex flex-col">
-                                  <span>{j.title}</span>
-                                  <span className="text-xs text-muted-foreground">{j.department} · {j.location} · {j.type}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </Field>
-                    ) : (
-                      <Field label="Role you're applying for" required>
-                        <Select value={form.role_applied} onValueChange={(v) => {
-                          update("role_applied")(v);
-                          update("domain")(v);
-                        }}>
-                          <SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger>
-                          <SelectContent>{ROLES.filter(r => !r.startsWith("Internship")).map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </Field>
-                    )
-                  )}
+                  {/* Primary Domain Selection */}
+                  <Field label="Primary Domain / Department" required>
+                    <Select 
+                      value={form.domain} 
+                      onValueChange={(val) => {
+                        update("domain")(val);
+                        update("sub_domain")("");
+                        if (form.opportunity_type === "Internship") {
+                          update("role_applied")(`Internship — ${val}`);
+                        }
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select Primary Domain" /></SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(DOMAIN_SUBDOMAINS_MAP).map((d) => (
+                          <SelectItem key={d} value={d}>{d}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+
+                  {/* Sub-Domain / Track Selection */}
+                  <Field label="Sub-Domain / Specialization Track (MERN, Fullstack, DevOps, etc.)" required>
+                    <Select 
+                      value={form.sub_domain} 
+                      onValueChange={(val) => {
+                        update("sub_domain")(val);
+                      }}
+                      disabled={!form.domain}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={form.domain ? "Select Sub-Domain Track" : "First choose a Primary Domain"} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-80">
+                        {(DOMAIN_SUBDOMAINS_MAP[form.domain] || [
+                          "Full-Stack Development (React/Next.js + Node)",
+                          "MERN Stack (MongoDB, Express, React, Node.js)",
+                          "MEAN Stack (MongoDB, Express, Angular, Node.js)",
+                          "Frontend Engineering",
+                          "Backend Engineering",
+                          "DevOps & Cloud Infrastructure",
+                          "Marketing & Growth",
+                          "Customer Support & Operations",
+                          "R&D & Artificial Intelligence"
+                        ]).map((sub) => (
+                          <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
 
                   {/* Profile Photo URL & Upload Field */}
                   <Field label="Profile Photo URL (used for your Dashboard Avatar if selected)" className="md:col-span-2">

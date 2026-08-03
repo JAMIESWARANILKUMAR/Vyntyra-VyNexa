@@ -29,6 +29,7 @@ const submitSchema = z.object({
   job_posting_id: z.string().optional().nullable(),
   opportunity_type: z.string().trim().max(80).optional().or(z.literal("")),
   domain: z.string().trim().max(160).optional().or(z.literal("")),
+  sub_domain: z.string().trim().max(160).optional().or(z.literal("")),
   profile_photo_url: z.string().trim().max(600).optional().or(z.literal("")),
   // Academic details
   state: z.string().trim().max(80).optional().or(z.literal("")),
@@ -106,6 +107,7 @@ export const submitApplication = createServerFn({ method: "POST" })
       tp_officer_email: data.tp_officer_email ? data.tp_officer_email.toLowerCase() : null,
       opportunity_type: data.opportunity_type || null,
       domain: data.domain || null,
+      sub_domain: data.sub_domain || null,
       profile_photo_url: data.profile_photo_url || null,
       agreement_accepted: true,
       status: 'new'
