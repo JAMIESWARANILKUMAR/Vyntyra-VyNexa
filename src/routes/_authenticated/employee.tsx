@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { MeetingsSection } from "@/components/meetings-section";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
@@ -1123,16 +1124,30 @@ function EmployeeDashboard() {
           {/* ─── ANNOUNCEMENTS ─── */}
           {activeTab === "announcements" && (
             <motion.div key="announcements" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-3xl mx-auto">
-              <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Company News</h2>
-              <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-6">
-                {announcements.map((a: any) => (
-                  <motion.div variants={itemVariants} key={a.id} className="p-8 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">{new Date(a.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
-                    <h3 className="text-xl font-medium text-slate-900 mb-4">{a.title}</h3>
-                    <p className="text-slate-600 font-light leading-relaxed whitespace-pre-wrap">{a.body}</p>
-                  </motion.div>
-                ))}
-              </motion.div>
+              <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Company News & Updates</h2>
+              {announcements.length === 0 ? (
+                <div className="p-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">
+                  <Bell className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                  No news or announcements posted yet.
+                </div>
+              ) : (
+                <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-6">
+                  {announcements.map((a: any) => (
+                    <motion.div variants={itemVariants} key={a.id} className="p-8 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between gap-3 mb-3">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{new Date(a.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
+                        <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold uppercase tracking-wider">
+                          {a.source === "news" ? "News Update" : "Announcement"}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-medium text-slate-900 mb-4">{a.title}</h3>
+                      <div className="text-slate-600 font-light leading-relaxed prose prose-slate max-w-none dark:prose-invert">
+                        <ReactMarkdown>{a.body || ""}</ReactMarkdown>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
             </motion.div>
           )}
 

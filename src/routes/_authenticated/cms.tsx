@@ -67,6 +67,7 @@ function NewsTab() {
       toast.success("News published!");
       setTitle(""); setContent(""); setIsPublished(false);
       qc.invalidateQueries({ queryKey: ["cms-news"] });
+      qc.invalidateQueries({ queryKey: ["announcements"] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -116,6 +117,7 @@ function AnnouncementsTab() {
       toast.success("Announcement posted!");
       setTitle(""); setContent("");
       qc.invalidateQueries({ queryKey: ["cms-announcements"] });
+      qc.invalidateQueries({ queryKey: ["announcements"] });
     },
     onError: (err: Error) => toast.error(err.message),
   });

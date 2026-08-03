@@ -129,12 +129,63 @@ const announcementSchema = z.object({
 export const listAnnouncements = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    const { data, error } = await supabase
-      .from("announcements")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return data || [];
+    const [annRes, companyAnnRes, newsRes] = await Promise.all([
+      supabase.from("announcements").select("*").order("created_at", { ascending: false }),
+      supabase.from("company_announcements").select("*").order("created_at", { ascending: false }),
+      supabase.from("news_updates").select("*").order("created_at", { ascending: false }),
+    ]);
+
+    const items: any[] = [];
+    const seenTitles = new Set<string>();
+
+    if (annRes.data) {
+      for (const a of annRes.data) {
+        items.push({
+          id: a.id,
+          title: a.title,
+          body: a.body || a.content || "",
+          target_role: a.target_role || "all",
+          created_at: a.created_at,
+          source: "announcement"
+        });
+        if (a.title) seenTitles.add(a.title.trim().toLowerCase());
+      }
+    }
+
+    if (companyAnnRes.data) {
+      for (const ca of companyAnnRes.data) {
+        if (ca.is_active !== false && ca.title && !seenTitles.has(ca.title.trim().toLowerCase())) {
+          items.push({
+            id: ca.id,
+            title: ca.title,
+            body: ca.content || "",
+            target_role: "all",
+            created_at: ca.created_at,
+            source: "company_announcement"
+          });
+          seenTitles.add(ca.title.trim().toLowerCase());
+        }
+      }
+    }
+
+    if (newsRes.data) {
+      for (const n of newsRes.data) {
+        if (n.is_published !== false && n.title && !seenTitles.has(n.title.trim().toLowerCase())) {
+          items.push({
+            id: n.id,
+            title: n.title,
+            body: n.content || "",
+            target_role: "all",
+            created_at: n.created_at || n.published_at,
+            source: "news"
+          });
+          seenTitles.add(n.title.trim().toLowerCase());
+        }
+      }
+    }
+
+    items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return items;
   });
 
 export const createAnnouncement = createServerFn({ method: "POST" })

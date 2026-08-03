@@ -49,6 +49,15 @@ export const createNews = createServerFn({ method: "POST" })
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
     const { error } = await supabase.from("news_updates").insert([{ ...data, published_at: data.is_published ? new Date().toISOString() : null }]);
     if (error) throw new Error("Failed to create news");
+
+    // Also sync to main announcements table for Dashboards
+    await supabase.from("announcements").insert([{
+      title: data.title,
+      body: data.content,
+      target_role: "all",
+      created_by: context.userId,
+    }]).catch((err: any) => console.warn("[cms] announcements sync error:", err.message));
+
     return { ok: true };
   });
 
@@ -67,5 +76,14 @@ export const createAnnouncement = createServerFn({ method: "POST" })
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
     const { error } = await supabase.from("company_announcements").insert([data]);
     if (error) throw new Error("Failed to create announcement");
+
+    // Also sync to main announcements table for Dashboards
+    await supabase.from("announcements").insert([{
+      title: data.title,
+      body: data.content,
+      target_role: "all",
+      created_by: context.userId,
+    }]).catch((err: any) => console.warn("[cms] announcements sync error:", err.message));
+
     return { ok: true };
   });

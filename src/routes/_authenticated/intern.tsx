@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { MeetingsSection } from "@/components/meetings-section";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
@@ -462,15 +463,19 @@ function InternDashboard() {
               <div className="text-center py-12 text-slate-400"><Bell className="h-10 w-10 mx-auto mb-3 opacity-20" />No announcements yet</div>
             ) : (
               announcements.map((a: any) => (
-                <div key={a.id} className="rounded-xl border bg-white shadow-sm p-5">
+                <div key={a.id} className="rounded-xl border bg-white shadow-sm p-5 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-semibold">{a.title}</h3>
+                      <h3 className="font-semibold text-slate-900">{a.title}</h3>
                       <div className="text-xs text-slate-400 mt-0.5">{new Date(a.created_at).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</div>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold uppercase tracking-wide shrink-0">{a.target_role === "all" ? "Everyone" : a.target_role}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold uppercase tracking-wide shrink-0">
+                      {a.source === "news" ? "News" : a.target_role === "all" ? "Everyone" : a.target_role}
+                    </span>
                   </div>
-                  <p className="text-sm text-slate-600 mt-3 leading-relaxed">{a.body}</p>
+                  <div className="text-sm text-slate-600 leading-relaxed prose prose-sm max-w-none">
+                    <ReactMarkdown>{a.body || ""}</ReactMarkdown>
+                  </div>
                 </div>
               ))
             )}
