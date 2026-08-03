@@ -14,7 +14,7 @@ import {
   IndianRupee, MessageSquare, BookOpen, Fingerprint, FileText, Send, Download,
   Sparkles, Zap, Wallet, ExternalLink, VolumeX, ShieldCheck, Laptop, Receipt,
   LifeBuoy, Award, GraduationCap, FileCheck, HelpCircle, Layers, CreditCard,
-  Building2, Plus, ArrowUpRight, HeartHandshake, CheckSquare, FileUp, Printer, Shield
+  Building2, Plus, ArrowUpRight, HeartHandshake, CheckSquare, FileUp, Printer, Shield, Radio, Cpu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
