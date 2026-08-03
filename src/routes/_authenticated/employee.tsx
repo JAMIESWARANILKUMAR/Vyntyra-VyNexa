@@ -1906,17 +1906,19 @@ function EmployeeDashboard() {
         isOpen={isIdCardOpen} 
         onClose={() => setIsIdCardOpen(false)} 
         employee={{
-          employeeId: session?.user?.id || 'VY-EMP-1001',
+          employeeId: profile?.intern_id || session?.user?.id || 'VY-EMP-1001',
           fullName: displayName,
           email: email,
           avatarUrl: profile?.avatar_url,
           phone: profile?.phone,
-          emergencyContact: profile?.emergency_contact,
-          role: 'Software Engineer / Executive',
-          department: 'Engineering & Technology',
-          bloodGroup: 'O+ Positive',
-          securityLevel: 'L3 - Enterprise Access',
-          officeLocation: 'VyNexa IT Tower, Cyber Hills, Visakhapatnam, AP, 530045'
+          emergencyContact: profile?.emergency_contact || profile?.phone || "+91 98765 00000",
+          role: profile?.role || 'Software Engineer / Executive',
+          department: profile?.department || 'Engineering & Technology',
+          bloodGroup: profile?.blood_group || 'O+ Positive',
+          securityLevel: profile?.security_level || 'L3 - Enterprise Access',
+          dateOfJoining: profile?.start_date || '15 Jan 2026',
+          validUntil: profile?.end_date || '31 Dec 2028',
+          officeLocation: profile?.address || 'VyNexa IT Tower, Cyber Hills, Visakhapatnam, AP, 530045'
         }} 
       />
       <FloatingAppsPanel />

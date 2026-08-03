@@ -20,7 +20,8 @@ import {
   listResources, createResource, deleteResource,
   getPresignedUrl, updateUserProfile, listFeedbacks, markFeedbackRead,
   listAllLeaves, updateLeaveStatus, listAllAttendance, listAllPayouts, createPayout,
-  assignIntern, removeIntern, adminResetPassword
+  assignIntern, removeIntern, adminResetPassword,
+  listAllExpenses, updateExpenseStatus, listAllSupportTickets, updateSupportTicketStatus
 } from "@/lib/operations.functions";
 import { toast } from "sonner";
 import {
@@ -1225,7 +1226,12 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
         start_date: cleanValue(form.start_date),
         end_date: cleanValue(form.end_date),
         avatar_url: cleanValue(form.avatar_url),
-        offer_letter_url: cleanValue(form.offer_letter_url)
+        offer_letter_url: cleanValue(form.offer_letter_url),
+        blood_group: cleanValue(form.blood_group),
+        security_level: cleanValue(form.security_level),
+        emergency_contact: cleanValue(form.emergency_contact),
+        bank_details: cleanValue(form.bank_details),
+        department: cleanValue(form.department)
       } });
       toast.success("Profile updated successfully");
       qc.invalidateQueries({ queryKey: ["team-members"] });
@@ -1234,7 +1240,6 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
       toast.error(err.message || "Failed to update profile");
     }
   }
-
 
   async function handleFileUpload(file: File, type: "avatar" | "letter") {
     const isAvatar = type === "avatar";
@@ -1264,6 +1269,11 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
              <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone || ""} onChange={e => setForm({...form, phone: e.target.value})} /></div>
              <div className="col-span-2 space-y-1.5"><Label>Address</Label><Input value={form.address || ""} onChange={e => setForm({...form, address: e.target.value})} /></div>
              <div className="space-y-1.5"><Label>{user.role === "employee" ? "Employee ID" : "Intern ID"}</Label><Input value={form.intern_id || ""} onChange={e => setForm({...form, intern_id: e.target.value})} /></div>
+             <div className="space-y-1.5"><Label>Blood Group</Label><Input value={form.blood_group || ""} onChange={e => setForm({...form, blood_group: e.target.value})} placeholder="e.g. O+ Positive" /></div>
+             <div className="space-y-1.5"><Label>Security Clearance</Label><Input value={form.security_level || ""} onChange={e => setForm({...form, security_level: e.target.value})} placeholder="e.g. L3 - Enterprise Access" /></div>
+             <div className="space-y-1.5"><Label>Emergency Contact</Label><Input value={form.emergency_contact || ""} onChange={e => setForm({...form, emergency_contact: e.target.value})} placeholder="e.g. +91 98765 00000" /></div>
+             <div className="space-y-1.5"><Label>Department</Label><Input value={form.department || ""} onChange={e => setForm({...form, department: e.target.value})} placeholder="e.g. Engineering & IT" /></div>
+             <div className="col-span-2 space-y-1.5"><Label>Bank & Financial Details</Label><Input value={form.bank_details || ""} onChange={e => setForm({...form, bank_details: e.target.value})} placeholder="e.g. Kotak Mahindra Bank · A/C 882101923 · IFSC: KKBK0001823" /></div>
              <div className="space-y-1.5"><Label>Start Date</Label><Input type="date" value={form.start_date || ""} onChange={e => setForm({...form, start_date: e.target.value})} /></div>
              <div className="space-y-1.5"><Label>End Date</Label><Input type="date" value={form.end_date || ""} onChange={e => setForm({...form, end_date: e.target.value})} /></div>
           </div>
