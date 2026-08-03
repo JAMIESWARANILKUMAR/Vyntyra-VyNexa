@@ -26,6 +26,7 @@ import { MeetingsSection } from "@/components/meetings-section";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
 import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { PayslipModal } from "@/components/payslip-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -380,6 +381,35 @@ function EmployeeDashboard() {
   const [ticketForm, setTicketForm] = useState({ category: "IT Support" as any, priority: "Medium" as any, subject: "", description: "" });
   const [kudosForm, setKudosForm] = useState({ receiver_id: "", badge: "Star Performer" as any, message: "" });
   const [profileForm, setProfileForm] = useState({ phone: "", address: "", emergency_contact: "", bank_details: "" });
+  const [selectedPayslip, setSelectedPayslip] = useState<any | null>(null);
+  const [isPayslipOpen, setIsPayslipOpen] = useState(false);
+
+  function openPayslipModal(payout?: any) {
+    const amt = payout?.amount || 75000;
+    const basic = Math.round(amt * 0.5);
+    const hra = Math.round(amt * 0.3);
+    const special = amt - basic - hra;
+    setSelectedPayslip({
+      payoutId: payout?.id || "PAY-" + Math.floor(100000 + Math.random() * 900000),
+      employeeName: displayName,
+      employeeId: session?.user?.id?.slice(0, 8).toUpperCase() || "VY-EMP-1001",
+      designation: "Software Engineer / Senior Associate",
+      department: "Engineering & Technology",
+      email: email,
+      bankDetails: profile?.bank_details || "Kotak Mahindra Bank · A/C 882101923 · IFSC: KKBK0001823",
+      payPeriod: payout?.date ? new Date(payout.date).toLocaleDateString("en-IN", { month: "long", year: "numeric" }) : new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" }),
+      paymentDate: payout?.date ? new Date(payout.date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }),
+      basicSalary: basic,
+      hra: hra,
+      specialAllowance: special,
+      pfDeduction: 1800,
+      professionalTax: 200,
+      tds: Math.round(amt * 0.05),
+      netPay: amt
+    });
+    setIsPayslipOpen(true);
+  }
+
   const [isSubmittingExpense, setIsSubmittingExpense] = useState(false);
   const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
   const [isSubmittingKudos, setIsSubmittingKudos] = useState(false);
@@ -1018,11 +1048,14 @@ function EmployeeDashboard() {
           {/* ─── PAYOUTS & EXPENSES ─── */}
           {activeTab === "payouts" && (
             <motion.div key="payouts" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-light tracking-tight text-slate-900">Payroll, Compensation & Expenses</h2>
-                  <p className="text-sm text-slate-500 font-light mt-1">View your monthly payout history, download payslips, and submit expense reimbursements.</p>
+                  <h2 className="text-2xl font-light tracking-tight text-slate-900">Payroll, Compensation & Payslips</h2>
+                  <p className="text-sm text-slate-500 font-light mt-1">View your monthly payout history, download official PDF payslips, and submit expense reimbursements.</p>
                 </div>
+                <Button onClick={() => openPayslipModal()} className="bg-slate-900 hover:bg-black text-white rounded-xl h-11 px-5 text-xs font-semibold gap-2 shadow-md shrink-0">
+                  <FileText className="h-4 w-4 text-emerald-400" /> Generate Official Payslip
+                </Button>
               </div>
 
               {/* Expense Claim Submission Form */}
@@ -1160,7 +1193,12 @@ function EmployeeDashboard() {
                 </div>
 
                 {payouts.length === 0 ? (
-                  <div className="py-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">No payouts recorded.</div>
+                  <div className="py-10 bg-white rounded-2xl border border-slate-100 shadow-sm text-center space-y-4">
+                    <div className="text-slate-400 font-light">No historical payouts recorded yet.</div>
+                    <Button onClick={() => openPayslipModal()} variant="outline" className="rounded-xl text-xs gap-2 border-slate-200">
+                      <FileText className="h-4 w-4 text-emerald-600" /> Generate & View Current Month Payslip
+                    </Button>
+                  </div>
                 ) : (
                   payouts.map((payout: any) => (
                     <motion.div variants={itemVariants} initial="initial" animate="animate" key={payout.id} className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
@@ -1173,9 +1211,14 @@ function EmployeeDashboard() {
                           <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">{payout.type} • {new Date(payout.date).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-4">
                         <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${payout.status === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{payout.status}</span>
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-black hover:bg-slate-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><Download className="h-4 w-4" /></Button>
+                        <Button 
+                          onClick={() => openPayslipModal(payout)} 
+                          className="bg-slate-50 hover:bg-slate-900 hover:text-white text-slate-700 rounded-xl px-4 py-2 text-xs font-semibold gap-1.5 transition-all shadow-sm"
+                        >
+                          <FileText className="h-3.5 w-3.5 text-emerald-500" /> Payslip PDF
+                        </Button>
                       </div>
                     </motion.div>
                   ))
@@ -1848,6 +1891,7 @@ function EmployeeDashboard() {
 
         </AnimatePresence>
       </main>
+      <PayslipModal isOpen={isPayslipOpen} onClose={() => setIsPayslipOpen(false)} payslip={selectedPayslip} />
       <FloatingAppsPanel />
     </div>
   );
