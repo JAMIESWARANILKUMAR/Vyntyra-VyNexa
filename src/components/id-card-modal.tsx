@@ -133,11 +133,18 @@ export function IdCardModal({ isOpen, onClose, employee }: IdCardModalProps) {
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-white/10 pb-4">
                   <div className="flex items-center gap-2.5">
-                    <div className="h-8 w-8 bg-white text-black font-extrabold text-lg rounded-xl flex items-center justify-center shadow-lg">
-                      V
-                    </div>
+                    <img 
+                      src="/favicon.png" 
+                      alt="VyNexa Logo" 
+                      className="h-9 w-9 object-contain rounded-xl bg-white p-1 shadow-lg shrink-0" 
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = "none";
+                      }}
+                    />
                     <div>
-                      <div className="font-extrabold text-sm tracking-tight text-white leading-tight">VyNexa</div>
+                      <div className="font-extrabold text-sm tracking-tight text-white leading-tight flex items-center gap-1.5">
+                        VyNexa
+                      </div>
                       <div className="text-[8px] text-emerald-400 uppercase tracking-widest font-semibold">Consultancy Services</div>
                     </div>
                   </div>
@@ -229,10 +236,13 @@ export function IdCardModal({ isOpen, onClose, employee }: IdCardModalProps) {
                 </div>
 
                 {/* QR Code & NFC Antenna Signal */}
-                <div className="bg-white text-slate-900 p-4 rounded-2xl flex items-center justify-between gap-4 shadow-lg">
+                <div className="bg-white text-slate-900 p-4 rounded-2xl flex items-center justify-between gap-4 shadow-lg relative overflow-hidden">
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Scan to Verify</div>
-                    <div className="text-xs font-bold text-slate-900 mt-1">Instant HR Check</div>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <img src="/favicon.png" alt="VyNexa" className="h-4 w-4 object-contain" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Scan to Verify</span>
+                    </div>
+                    <div className="text-xs font-bold text-slate-900">Instant HR Check</div>
                     <div className="text-[9px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
                       <Radio className="h-3 w-3 animate-pulse" /> NFC Sensor Ready
                     </div>
