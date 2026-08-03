@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { RichContentRenderer } from "@/components/rich-content-renderer";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { MeetingsSection } from "@/components/meetings-section";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
@@ -1141,9 +1142,7 @@ function EmployeeDashboard() {
                         </span>
                       </div>
                       <h3 className="text-xl font-medium text-slate-900 mb-4">{a.title}</h3>
-                      <div className="text-slate-600 font-light leading-relaxed prose prose-slate max-w-none dark:prose-invert">
-                        <ReactMarkdown>{a.body || ""}</ReactMarkdown>
-                      </div>
+                      <RichContentRenderer content={a.body || ""} />
                     </motion.div>
                   ))}
                 </motion.div>

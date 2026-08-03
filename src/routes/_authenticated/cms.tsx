@@ -9,14 +9,53 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import { Loader2, ArrowLeft, Image as ImageIcon, Video as VideoIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { RichContentRenderer } from "@/components/rich-content-renderer";
 
 export const Route = createFileRoute("/_authenticated/cms")({
   head: () => ({ meta: [{ title: "CMS | Vyntyra Admin" }] }),
   component: CMSPage,
 });
+
+function MediaToolbar({ onInsertMedia }: { onInsertMedia: (tag: string) => void }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 pb-1 border-b border-border/50 mb-2">
+      <span className="text-xs text-muted-foreground font-medium mr-1">Insert Media:</span>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-7 text-xs gap-1.5"
+        onClick={() => {
+          const url = prompt("Enter Image URL (e.g. https://example.com/photo.jpg):");
+          if (url) {
+            onInsertMedia(`\n![Image](${url.trim()})\n`);
+          }
+        }}
+      >
+        <ImageIcon className="h-3.5 w-3.5 text-blue-500" />
+        Add Image URL
+      </Button>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-7 text-xs gap-1.5"
+        onClick={() => {
+          const url = prompt("Enter Video URL (YouTube, Vimeo, or MP4 video link):");
+          if (url) {
+            onInsertMedia(`\n![Video](${url.trim()})\n`);
+          }
+        }}
+      >
+        <VideoIcon className="h-3.5 w-3.5 text-red-500" />
+        Add Video URL
+      </Button>
+    </div>
+  );
+}
 
 function CMSPage() {
   return (
@@ -78,7 +117,19 @@ function NewsTab() {
         <CardHeader><CardTitle>Create News</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <Input placeholder="News Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <Textarea placeholder="News Content (Markdown supported)" value={content} onChange={(e) => setContent(e.target.value)} className="min-h-[150px]" />
+          <div>
+            <MediaToolbar onInsertMedia={(tag) => setContent((prev) => prev + tag)} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Textarea placeholder="News Content (Markdown, Image & Video URLs supported)" value={content} onChange={(e) => setContent(e.target.value)} className="min-h-[200px]" />
+              <div className="border rounded-md p-4 min-h-[200px] bg-muted/20 overflow-y-auto max-h-[300px]">
+                {content ? (
+                  <RichContentRenderer content={content} />
+                ) : (
+                  <span className="text-muted-foreground text-sm italic">Live Media & Markdown Preview...</span>
+                )}
+              </div>
+            </div>
+          </div>
           <div className="flex items-center space-x-2">
             <Switch checked={isPublished} onCheckedChange={setIsPublished} />
             <span>Publish Immediately</span>
@@ -90,11 +141,12 @@ function NewsTab() {
       </Card>
       <Card>
         <CardHeader><CardTitle>Recent News</CardTitle></CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {isLoading ? <Loader2 className="animate-spin" /> : news?.map(n => (
-            <div key={n.id} className="mb-4 p-4 border rounded-md">
-              <h3 className="font-bold">{n.title}</h3>
-              <p className="text-sm text-gray-500">{n.is_published ? "Published" : "Draft"}</p>
+            <div key={n.id} className="p-4 border rounded-md bg-card">
+              <h3 className="font-bold text-base">{n.title}</h3>
+              <p className="text-xs text-muted-foreground mb-2">{n.is_published ? "Published" : "Draft"}</p>
+              <RichContentRenderer content={n.content} />
             </div>
           ))}
         </CardContent>
@@ -128,22 +180,25 @@ function AnnouncementsTab() {
         <CardHeader><CardTitle>Create Announcement</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <Input placeholder="Announcement Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <div className="grid grid-cols-2 gap-4">
-            <Textarea 
-              placeholder="Content (Markdown supported - use for images and links)" 
-              value={content} 
-              onChange={(e) => setContent(e.target.value)} 
-              className="min-h-[150px]"
-            />
-            <div className="border rounded-md p-4 min-h-[150px] bg-muted/20 overflow-y-auto prose prose-sm dark:prose-invert">
-              {content ? (
-                <ReactMarkdown>{content}</ReactMarkdown>
-              ) : (
-                <span className="text-muted-foreground text-sm italic">Markdown preview...</span>
-              )}
+          <div>
+            <MediaToolbar onInsertMedia={(tag) => setContent((prev) => prev + tag)} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Textarea 
+                placeholder="Content (Markdown, Image & Video URLs supported)" 
+                value={content} 
+                onChange={(e) => setContent(e.target.value)} 
+                className="min-h-[200px]"
+              />
+              <div className="border rounded-md p-4 min-h-[200px] bg-muted/20 overflow-y-auto max-h-[300px]">
+                {content ? (
+                  <RichContentRenderer content={content} />
+                ) : (
+                  <span className="text-muted-foreground text-sm italic">Live Media & Markdown Preview...</span>
+                )}
+              </div>
             </div>
           </div>
-          <select value={severity} onChange={(e) => setSeverity(e.target.value as any)} className="w-full p-2 border rounded-md">
+          <select value={severity} onChange={(e) => setSeverity(e.target.value as any)} className="w-full p-2 border rounded-md bg-background">
             <option value="info">Info</option>
             <option value="warning">Warning</option>
             <option value="urgent">Urgent</option>
@@ -159,11 +214,14 @@ function AnnouncementsTab() {
       </Card>
       <Card>
         <CardHeader><CardTitle>Active Announcements</CardTitle></CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {isLoading ? <Loader2 className="animate-spin" /> : ann?.map(a => (
-            <div key={a.id} className="mb-4 p-4 border rounded-md">
-              <h3 className="font-bold">{a.title} ({a.severity})</h3>
-              <p className="text-sm text-gray-500">{a.is_active ? "Active" : "Inactive"}</p>
+            <div key={a.id} className="p-4 border rounded-md bg-card">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-bold">{a.title}</h3>
+                <span className="text-xs px-2 py-0.5 rounded bg-secondary/10 text-secondary font-medium uppercase">{a.severity}</span>
+              </div>
+              <RichContentRenderer content={a.content} />
             </div>
           ))}
         </CardContent>
@@ -171,3 +229,4 @@ function AnnouncementsTab() {
     </div>
   );
 }
+

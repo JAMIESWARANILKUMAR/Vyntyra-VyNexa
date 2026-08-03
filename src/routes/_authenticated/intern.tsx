@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { RichContentRenderer } from "@/components/rich-content-renderer";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { MeetingsSection } from "@/components/meetings-section";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
@@ -473,9 +474,7 @@ function InternDashboard() {
                       {a.source === "news" ? "News" : a.target_role === "all" ? "Everyone" : a.target_role}
                     </span>
                   </div>
-                  <div className="text-sm text-slate-600 leading-relaxed prose prose-sm max-w-none">
-                    <ReactMarkdown>{a.body || ""}</ReactMarkdown>
-                  </div>
+                  <RichContentRenderer content={a.body || ""} />
                 </div>
               ))
             )}
