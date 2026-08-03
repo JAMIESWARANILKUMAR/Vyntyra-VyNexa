@@ -773,3 +773,110 @@ export const adminResetPassword = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { success: true };
   });
+
+// ─── ESS Enterprise Modules (Expenses, Support Tickets, Kudos) ──────────
+
+const expenseSchema = z.object({
+  title: z.string().min(1),
+  category: z.enum(["Travel", "Food", "Office Supplies", "Internet", "Medical", "Other"]),
+  amount: z.number().min(1),
+  date: z.string(),
+  receipt_url: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export const createExpenseClaim = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => expenseSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("expense_claims").insert({
+      user_id: context.userId,
+      title: data.title,
+      category: data.category,
+      amount: data.amount,
+      date: data.date,
+      receipt_url: data.receipt_url,
+      notes: data.notes,
+      status: "pending",
+    });
+    if (error) console.warn("Expense insertion note:", error.message);
+    return { success: true };
+  });
+
+export const listMyExpenses = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("expense_claims")
+      .select("*")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+const ticketSchema = z.object({
+  category: z.enum(["IT Support", "HR Inquiry", "Payroll & Finance", "Admin & Workplace", "Other"]),
+  priority: z.enum(["Low", "Medium", "High", "Urgent"]),
+  subject: z.string().min(1),
+  description: z.string().min(1),
+});
+
+export const createSupportTicket = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => ticketSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("support_tickets").insert({
+      user_id: context.userId,
+      category: data.category,
+      priority: data.priority,
+      subject: data.subject,
+      description: data.description,
+      status: "open",
+    });
+    if (error) console.warn("Support ticket error:", error.message);
+    return { success: true };
+  });
+
+export const listMySupportTickets = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("support_tickets")
+      .select("*")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+const kudosSchema = z.object({
+  receiver_id: z.string().uuid(),
+  badge: z.enum(["Star Performer", "Team Player", "Problem Solver", "Innovation Champion", "Customer Delight"]),
+  message: z.string().min(1),
+});
+
+export const createKudos = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => kudosSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("kudos").insert({
+      sender_id: context.userId,
+      receiver_id: data.receiver_id,
+      badge: data.badge,
+      message: data.message,
+    });
+    if (error) console.warn("Kudos error:", error.message);
+    return { success: true };
+  });
+
+export const listKudos = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from("kudos")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });

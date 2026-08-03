@@ -12,7 +12,9 @@ import {
   CheckCircle2, Circle, AlertCircle, TrendingUp, Video, CalendarDays,
   User, BarChart3, RefreshCw, Phone, MapPin, CalendarX2, Users,
   IndianRupee, MessageSquare, BookOpen, Fingerprint, FileText, Send, Download,
-  Sparkles, Zap, Wallet, ExternalLink, VolumeX
+  Sparkles, Zap, Wallet, ExternalLink, VolumeX, ShieldCheck, Laptop, Receipt,
+  LifeBuoy, Award, GraduationCap, FileCheck, HelpCircle, Layers, CreditCard,
+  Building2, Plus, ArrowUpRight, HeartHandshake, CheckSquare, FileUp, Printer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -31,7 +33,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { 
   listTasks, listMeetings, listSchedules, listAnnouncements,
   requestLeave, listMyLeaves, listMyPayouts, clockIn, clockOut, getMyAttendance,
-  listTeamMembers, createFeedback, listResources
+  listTeamMembers, createFeedback, listResources, listMyExpenses, createExpenseClaim,
+  listMySupportTickets, createSupportTicket, listKudos, createKudos, updateUserProfile
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/employee")({
@@ -296,6 +299,13 @@ function EmployeeDashboard() {
   const fetchTeam = useServerFn(listTeamMembers);
   const doCreateFeedback = useServerFn(createFeedback);
   const fetchResources = useServerFn(listResources);
+  const fetchExpenses = useServerFn(listMyExpenses);
+  const doCreateExpense = useServerFn(createExpenseClaim);
+  const fetchTickets = useServerFn(listMySupportTickets);
+  const doCreateTicket = useServerFn(createSupportTicket);
+  const fetchKudos = useServerFn(listKudos);
+  const doCreateKudos = useServerFn(createKudos);
+  const doUpdateProfile = useServerFn(updateUserProfile);
 
   const tasksQ = useQuery({ queryKey: ["my-tasks"], queryFn: () => fetchTasks() });
   const meetingsQ = useQuery({ queryKey: ["my-meetings"], queryFn: () => fetchMeetings() });
@@ -306,6 +316,9 @@ function EmployeeDashboard() {
   const attendanceQ = useQuery({ queryKey: ["my-attendance"], queryFn: () => fetchAttendance() });
   const teamQ = useQuery({ queryKey: ["team-members"], queryFn: () => fetchTeam() });
   const resourcesQ = useQuery({ queryKey: ["resources"], queryFn: () => fetchResources() });
+  const expensesQ = useQuery({ queryKey: ["my-expenses"], queryFn: () => fetchExpenses() });
+  const ticketsQ = useQuery({ queryKey: ["my-tickets"], queryFn: () => fetchTickets() });
+  const kudosQ = useQuery({ queryKey: ["kudos-feed"], queryFn: () => fetchKudos() });
 
   const tasks: any[] = tasksQ.data || [];
   const meetings: any[] = meetingsQ.data || [];
@@ -316,6 +329,9 @@ function EmployeeDashboard() {
   const attendanceLogs: any[] = attendanceQ.data || [];
   const team: any[] = teamQ.data || [];
   const resources: any[] = resourcesQ.data || [];
+  const expenses: any[] = expensesQ.data || [];
+  const tickets: any[] = ticketsQ.data || [];
+  const kudosList: any[] = kudosQ.data || [];
 
   const session = sessionQ.data;
   const email = session?.user?.email || "";
@@ -358,6 +374,93 @@ function EmployeeDashboard() {
 
   const [leaveForm, setLeaveForm] = useState({ start_date: "", end_date: "", reason: "" });
   const [feedbackForm, setFeedbackForm] = useState({ content: "" });
+
+  // ESS Enterprise Form States
+  const [expenseForm, setExpenseForm] = useState({ title: "", category: "Travel" as any, amount: "", date: "", receipt_url: "", notes: "" });
+  const [ticketForm, setTicketForm] = useState({ category: "IT Support" as any, priority: "Medium" as any, subject: "", description: "" });
+  const [kudosForm, setKudosForm] = useState({ receiver_id: "", badge: "Star Performer" as any, message: "" });
+  const [isSubmittingExpense, setIsSubmittingExpense] = useState(false);
+  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+  const [isSubmittingKudos, setIsSubmittingKudos] = useState(false);
+
+  async function handleSubmitExpense(e: React.FormEvent) {
+    e.preventDefault();
+    if (!expenseForm.title || !expenseForm.amount || !expenseForm.date) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    setIsSubmittingExpense(true);
+    try {
+      await doCreateExpense({
+        data: {
+          title: expenseForm.title,
+          category: expenseForm.category,
+          amount: parseFloat(expenseForm.amount),
+          date: expenseForm.date,
+          receipt_url: expenseForm.receipt_url || undefined,
+          notes: expenseForm.notes || undefined,
+        }
+      });
+      toast.success("Expense claim submitted!");
+      setExpenseForm({ title: "", category: "Travel", amount: "", date: "", receipt_url: "", notes: "" });
+      qc.invalidateQueries({ queryKey: ["my-expenses"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to submit expense claim");
+    } finally {
+      setIsSubmittingExpense(false);
+    }
+  }
+
+  async function handleSubmitTicket(e: React.FormEvent) {
+    e.preventDefault();
+    if (!ticketForm.subject || !ticketForm.description) {
+      toast.error("Please fill in subject and description");
+      return;
+    }
+    setIsSubmittingTicket(true);
+    try {
+      await doCreateTicket({
+        data: {
+          category: ticketForm.category,
+          priority: ticketForm.priority,
+          subject: ticketForm.subject,
+          description: ticketForm.description,
+        }
+      });
+      toast.success("Helpdesk ticket raised successfully!");
+      setTicketForm({ category: "IT Support", priority: "Medium", subject: "", description: "" });
+      qc.invalidateQueries({ queryKey: ["my-tickets"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to submit ticket");
+    } finally {
+      setIsSubmittingTicket(false);
+    }
+  }
+
+  async function handleSubmitKudos(e: React.FormEvent) {
+    e.preventDefault();
+    if (!kudosForm.receiver_id || !kudosForm.message) {
+      toast.error("Please select a colleague and write an appreciation note");
+      return;
+    }
+    setIsSubmittingKudos(true);
+    try {
+      await doCreateKudos({
+        data: {
+          receiver_id: kudosForm.receiver_id,
+          badge: kudosForm.badge,
+          message: kudosForm.message,
+        }
+      });
+      toast.success("Kudos sent successfully! 🎉");
+      setKudosForm({ receiver_id: "", badge: "Star Performer", message: "" });
+      qc.invalidateQueries({ queryKey: ["kudos-feed"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send kudos");
+    } finally {
+      setIsSubmittingKudos(false);
+    }
+  }
 
   const [isClocking, setIsClocking] = useState(false);
 
@@ -537,17 +640,18 @@ function EmployeeDashboard() {
   const TABS = [
     { id: "overview", label: "Overview" },
     { id: "tasks", label: `Tasks`, badge: pendingTasks.length },
-    { id: "attendance", label: "Attendance" },
+    { id: "attendance", label: "Attendance & Time" },
     { id: "leave", label: "Leaves" },
-    { id: "payouts", label: "Payouts" },
+    { id: "payouts", label: "Payouts & Expenses" },
+    { id: "support", label: "Helpdesk Tickets", badge: tickets.filter((t: any) => t.status === "open").length },
     { id: "meetings", label: "Meetings" },
     { id: "interviews", label: "Interviews", badge: assignedInterviews.length },
     { id: "announcements", label: `News`, badge: announcements.length },
-    { id: "team", label: "Team" },
-    { id: "resources", label: "Resources" },
-    { id: "feedbacks", label: "Feedback" },
-    { id: "contact", label: "Contact" },
-    { id: "security", label: "Security" },
+    { id: "team", label: "Team & Kudos" },
+    { id: "resources", label: "Resources & LMS" },
+    { id: "locker", label: "Doc Locker" },
+    { id: "contact", label: "Profile (ESS)" },
+    { id: "security", label: "Security & NOC" },
   ] as const;
 
   return (
@@ -696,7 +800,7 @@ function EmployeeDashboard() {
                     <div className="text-sm font-semibold tracking-wide text-slate-900 uppercase">Recent Tasks</div>
                     <Button variant="link" className="text-xs text-slate-500 hover:text-black" onClick={() => setActiveTab("tasks")}>View All ↗</Button>
                   </div>
-                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-6">
                     <div className="divide-y divide-slate-50">
                       {tasks.slice(0, 4).map((task: any) => {
                         const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
@@ -707,6 +811,60 @@ function EmployeeDashboard() {
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+
+                  {/* Assigned Assets & Onboarding Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Assigned Hardware & Credentials */}
+                    <div className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-semibold text-slate-900 uppercase">Assigned Assets</div>
+                        <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold">Active</span>
+                      </div>
+                      <div className="space-y-3 text-xs">
+                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Laptop className="h-4 w-4 text-slate-500" />
+                            <div>
+                              <div className="font-semibold text-slate-800">MacBook Pro M3 Max</div>
+                              <div className="text-[10px] text-slate-400 font-mono">SN: VY-MAC-2026-981</div>
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-slate-500 font-medium">Assigned</span>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Shield className="h-4 w-4 text-indigo-500" />
+                            <div>
+                              <div className="font-semibold text-slate-800">YubiKey 5C NFC 2FA</div>
+                              <div className="text-[10px] text-slate-400 font-mono">SN: VY-KEY-4490</div>
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-emerald-600 font-medium">Enrolled</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Onboarding Checklist */}
+                    <div className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-semibold text-slate-900 uppercase">Onboarding Lifecycle</div>
+                        <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-bold">Completed</span>
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        {[
+                          "Company Email & Slack Setup",
+                          "Identity Verification & NDA Upload",
+                          "Bank Account & Salary Setup",
+                          "Security & Compliance Training"
+                        ].map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-slate-700">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                            <span>{item}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -856,12 +1014,85 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── PAYOUTS ─── */}
+          {/* ─── PAYOUTS & EXPENSES ─── */}
           {activeTab === "payouts" && (
-            <motion.div key="payouts" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-6">
-              <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Payouts</h2>
+            <motion.div key="payouts" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-light tracking-tight text-slate-900">Payroll, Compensation & Expenses</h2>
+                  <p className="text-sm text-slate-500 font-light mt-1">View your monthly payout history, download payslips, and submit expense reimbursements.</p>
+                </div>
+              </div>
+
+              {/* Expense Claim Submission Form */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                  <Receipt className="h-5 w-5 text-emerald-600" />
+                  Submit Out-of-Pocket Expense Claim
+                </h3>
+                <form onSubmit={handleSubmitExpense} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-xs">Expense Title</Label>
+                    <Input placeholder="e.g. Client Travel / Internet" value={expenseForm.title} onChange={e => setExpenseForm({...expenseForm, title: e.target.value})} required className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Category</Label>
+                    <select value={expenseForm.category} onChange={e => setExpenseForm({...expenseForm, category: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-100 rounded-xl text-sm">
+                      <option value="Travel">Travel</option>
+                      <option value="Food">Food</option>
+                      <option value="Office Supplies">Office Supplies</option>
+                      <option value="Internet">Internet</option>
+                      <option value="Medical">Medical</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Amount (₹)</Label>
+                    <Input type="number" step="0.01" placeholder="Amount" value={expenseForm.amount} onChange={e => setExpenseForm({...expenseForm, amount: e.target.value})} required className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Expense Date</Label>
+                    <Input type="date" value={expenseForm.date} onChange={e => setExpenseForm({...expenseForm, date: e.target.value})} required className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Receipt / Document URL (Optional)</Label>
+                    <Input placeholder="https://..." value={expenseForm.receipt_url} onChange={e => setExpenseForm({...expenseForm, receipt_url: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Notes</Label>
+                    <Input placeholder="Brief details" value={expenseForm.notes} onChange={e => setExpenseForm({...expenseForm, notes: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                  </div>
+                  <div className="col-span-full flex justify-end">
+                    <Button type="submit" disabled={isSubmittingExpense} className="bg-black hover:bg-slate-800 text-white rounded-xl h-10 px-6">
+                      {isSubmittingExpense ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                      Submit Reimbursement Claim
+                    </Button>
+                  </div>
+                </form>
+
+                {/* Submitted Expenses List */}
+                {expenses.length > 0 && (
+                  <div className="pt-4 border-t border-slate-100 space-y-3">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">My Expense Claims</h4>
+                    <div className="space-y-2">
+                      {expenses.map((exp: any) => (
+                        <div key={exp.id} className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-sm">
+                          <div>
+                            <div className="font-semibold text-slate-900">{exp.title} <span className="text-xs text-slate-400">({exp.category})</span></div>
+                            <div className="text-xs text-slate-500 font-light mt-0.5">{new Date(exp.date).toLocaleDateString("en-IN")} • {exp.notes || 'No notes'}</div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="font-bold text-slate-900">₹{exp.amount}</span>
+                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${exp.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{exp.status}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-4">
-                
                 {/* Premium Bank Account Recommendation Section */}
                 <div className="mb-8">
                   <div className="flex flex-col mb-6">
@@ -952,24 +1183,73 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── TEAM ─── */}
+          {/* ─── TEAM & KUDOS ─── */}
           {activeTab === "team" && (
-            <motion.div key="team" variants={pageVariants} initial="initial" animate="animate" exit="exit">
-              <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Team Directory</h2>
-              <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                {team.length === 0 ? (
-                  <div className="col-span-full py-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">Directory is empty.</div>
-                ) : (
-                  team.map((m: any) => (
-                    <motion.div variants={itemVariants} key={m.id} className="group p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm flex flex-col items-center text-center hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300">
-                      <ProfileAvatar url={m.avatar_url} name={m.full_name} className="h-24 w-24 text-3xl mb-5 shadow-inner ring-4 ring-slate-50 transition-transform duration-500 group-hover:scale-105" />
-                      <h3 className="font-semibold text-slate-900 text-lg">{m.full_name}</h3>
-                      <div className="text-sm text-slate-500 font-light mt-1">{m.email}</div>
-                      <div className="mt-5 text-[10px] font-bold px-3 py-1 bg-slate-100 text-slate-600 rounded-full uppercase tracking-widest">{m.role}</div>
-                    </motion.div>
-                  ))
-                )}
-              </motion.div>
+            <motion.div key="team" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-light tracking-tight text-slate-900">Team Directory & Peer Kudos</h2>
+                  <p className="text-sm text-slate-500 font-light mt-1">Connect with colleagues and recognize team achievements with peer shoutouts.</p>
+                </div>
+              </div>
+
+              {/* Give Kudos Section */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                  <Award className="h-5 w-5 text-amber-500" />
+                  Recognize a Colleague (Send Kudos)
+                </h3>
+                <form onSubmit={handleSubmitKudos} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-xs">Colleague</Label>
+                    <select value={kudosForm.receiver_id} onChange={e => setKudosForm({...kudosForm, receiver_id: e.target.value})} required className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-100 rounded-xl text-sm">
+                      <option value="">Select team member...</option>
+                      {team.map((m: any) => (
+                        <option key={m.id} value={m.id}>{m.full_name} ({m.role})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Badge</Label>
+                    <select value={kudosForm.badge} onChange={e => setKudosForm({...kudosForm, badge: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-100 rounded-xl text-sm">
+                      <option value="Star Performer">⭐ Star Performer</option>
+                      <option value="Team Player">🤝 Team Player</option>
+                      <option value="Problem Solver">💡 Problem Solver</option>
+                      <option value="Innovation Champion">🚀 Innovation Champion</option>
+                      <option value="Customer Delight">❤️ Customer Delight</option>
+                    </select>
+                  </div>
+                  <div className="sm:col-span-3">
+                    <Label className="text-xs">Appreciation Message</Label>
+                    <Input placeholder="Write a brief shoutout for their great work..." value={kudosForm.message} onChange={e => setKudosForm({...kudosForm, message: e.target.value})} required className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                  </div>
+                  <div className="sm:col-span-3 flex justify-end">
+                    <Button type="submit" disabled={isSubmittingKudos} className="bg-black hover:bg-slate-800 text-white rounded-xl h-10 px-6">
+                      {isSubmittingKudos ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Award className="h-4 w-4 mr-2 text-amber-400" />}
+                      Send Kudos
+                    </Button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Team Directory Grid */}
+              <div className="space-y-4">
+                <h3 className="text-base font-semibold text-slate-900">Organization Directory</h3>
+                <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                  {team.length === 0 ? (
+                    <div className="col-span-full py-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">Directory is empty.</div>
+                  ) : (
+                    team.map((m: any) => (
+                      <motion.div variants={itemVariants} key={m.id} className="group p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm flex flex-col items-center text-center hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300">
+                        <ProfileAvatar url={m.avatar_url} name={m.full_name} className="h-24 w-24 text-3xl mb-5 shadow-inner ring-4 ring-slate-50 transition-transform duration-500 group-hover:scale-105" />
+                        <h3 className="font-semibold text-slate-900 text-lg">{m.full_name}</h3>
+                        <div className="text-sm text-slate-500 font-light mt-1">{m.email}</div>
+                        <div className="mt-5 text-[10px] font-bold px-3 py-1 bg-slate-100 text-slate-600 rounded-full uppercase tracking-widest">{m.role}</div>
+                      </motion.div>
+                    ))
+                  )}
+                </motion.div>
+              </div>
             </motion.div>
           )}
 
@@ -1150,32 +1430,196 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── RESOURCES ─── */}
+          {/* ─── RESOURCES & LMS ─── */}
           {activeTab === "resources" && (
-            <motion.div key="resources" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto">
-              <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Resources & Documents</h2>
-              <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {resources.length === 0 ? (
-                  <div className="col-span-full py-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">No resources available.</div>
-                ) : (
-                  resources.map((r: any) => (
-                    <motion.div variants={itemVariants} key={r.id} className="group p-6 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-slate-200 transition-all flex items-start justify-between">
-                      <div className="flex gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                          <FileText className="h-5 w-5 text-slate-400" />
-                        </div>
+            <motion.div key="resources" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
+              <div>
+                <h2 className="text-2xl font-light tracking-tight text-slate-900">Knowledge Base, Handbooks & LMS</h2>
+                <p className="text-sm text-slate-500 font-light mt-1">Access official company handbooks, travel policies, SOPs, and complete mandatory learning & compliance courses.</p>
+              </div>
+
+              {/* LMS Courses Section */}
+              <div className="space-y-4">
+                <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                  <GraduationCap className="h-5 w-5 text-indigo-600" />
+                  Learning & Development (LMS) Courses
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { title: "Information Security & Data Privacy 2026", cat: "Mandatory Compliance", progress: 100, status: "Certified", badge: "🛡️ Security Champion" },
+                    { title: "Workplace Ethics & Code of Conduct", cat: "HR Policy", progress: 100, status: "Certified", badge: "⚖️ Ethics Leader" },
+                    { title: "Enterprise Cloud Security & Architecture", cat: "Technical Certification", progress: 65, status: "In Progress", badge: "☁️ Tech Explorer" },
+                    { title: "Agile Engineering & Development SOPs", cat: "Operations SOP", progress: 40, status: "In Progress", badge: "🚀 Agile Practitioner" },
+                  ].map((c, i) => (
+                    <div key={i} className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-4">
+                      <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="font-semibold text-slate-900">{r.title}</div>
-                          {r.description && <div className="text-xs text-slate-500 font-light mt-1 line-clamp-2">{r.description}</div>}
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{c.cat}</span>
+                          <h4 className="font-semibold text-slate-900 text-sm mt-0.5">{c.title}</h4>
+                        </div>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${c.status === 'Certified' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'}`}>{c.status}</span>
+                      </div>
+                      
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs font-medium text-slate-500">
+                          <span>Course Completion</span>
+                          <span>{c.progress}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${c.progress}%` }} />
                         </div>
                       </div>
-                      <a href={r.url} target="_blank" rel="noreferrer" className="shrink-0 h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-black hover:text-white transition-colors">
-                        <Download className="h-4 w-4" />
-                      </a>
-                    </motion.div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-50 text-xs">
+                        <span className="text-slate-500 font-light">{c.badge}</span>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs text-indigo-600 hover:text-indigo-800 p-0">
+                          {c.status === 'Certified' ? "View Certificate ↗" : "Continue Course →"}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Handbooks & Downloads */}
+              <div className="space-y-4">
+                <h3 className="text-base font-semibold text-slate-900">Company Policies & Handbooks</h3>
+                <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {resources.length === 0 ? (
+                    <div className="col-span-full py-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">No additional resource documents uploaded.</div>
+                  ) : (
+                    resources.map((r: any) => (
+                      <motion.div variants={itemVariants} key={r.id} className="group p-6 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-slate-200 transition-all flex items-start justify-between">
+                        <div className="flex gap-4">
+                          <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
+                            <FileText className="h-5 w-5 text-slate-400" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-slate-900">{r.title}</div>
+                            {r.description && <div className="text-xs text-slate-500 font-light mt-1 line-clamp-2">{r.description}</div>}
+                          </div>
+                        </div>
+                        <a href={r.url} target="_blank" rel="noreferrer" className="shrink-0 h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-black hover:text-white transition-colors">
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </motion.div>
+                    ))
+                  )}
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ─── HELPDESK TICKETS ─── */}
+          {activeTab === "support" && (
+            <motion.div key="support" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
+              <div>
+                <h2 className="text-2xl font-light tracking-tight text-slate-900">Service Desk & IT/HR Tickets</h2>
+                <p className="text-sm text-slate-500 font-light mt-1">Raise support requests for hardware, software access, payroll inquiries, or administrative assistance.</p>
+              </div>
+
+              {/* Create Ticket Form */}
+              <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm space-y-6">
+                <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                  <LifeBuoy className="h-5 w-5 text-indigo-600" />
+                  Raise New Ticket
+                </h3>
+                <form onSubmit={handleSubmitTicket} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs">Category</Label>
+                      <select value={ticketForm.category} onChange={e => setTicketForm({...ticketForm, category: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-100 rounded-xl text-sm">
+                        <option value="IT Support">IT Support (Hardware/Software)</option>
+                        <option value="HR Inquiry">HR Inquiry (Policies/Verification)</option>
+                        <option value="Payroll & Finance">Payroll & Finance (Salary/Tax)</option>
+                        <option value="Admin & Workplace">Admin & Workplace (Badge/Desk)</option>
+                        <option value="Other">Other Query</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Priority</Label>
+                      <select value={ticketForm.priority} onChange={e => setTicketForm({...ticketForm, priority: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-100 rounded-xl text-sm">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Urgent">Urgent (System Blocked)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Subject</Label>
+                    <Input placeholder="Short summary of the issue..." value={ticketForm.subject} onChange={e => setTicketForm({...ticketForm, subject: e.target.value})} required className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Detailed Description</Label>
+                    <Textarea rows={4} placeholder="Provide details, error messages, or requested items..." value={ticketForm.description} onChange={e => setTicketForm({...ticketForm, description: e.target.value})} required className="bg-slate-50 border-slate-100 rounded-xl mt-1 resize-none text-sm" />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button type="submit" disabled={isSubmittingTicket} className="bg-black hover:bg-slate-800 text-white rounded-xl h-11 px-8">
+                      {isSubmittingTicket ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                      Submit Ticket
+                    </Button>
+                  </div>
+                </form>
+              </div>
+
+              {/* My Support Tickets List */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-slate-900">My Support Tickets</h3>
+                {tickets.length === 0 ? (
+                  <div className="py-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">No support tickets raised.</div>
+                ) : (
+                  tickets.map((ticket: any) => (
+                    <div key={ticket.id} className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600">#{ticket.id.slice(0, 8).toUpperCase()}</span>
+                            <h4 className="font-semibold text-slate-900">{ticket.subject}</h4>
+                          </div>
+                          <div className="text-xs text-slate-500 font-light mt-1">{ticket.category} • Priority: <span className="font-semibold">{ticket.priority}</span> • Raised {new Date(ticket.created_at).toLocaleDateString()}</div>
+                        </div>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full ${ticket.status === 'open' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>{ticket.status}</span>
+                      </div>
+                      <p className="text-sm text-slate-600 font-light leading-relaxed">{ticket.description}</p>
+                    </div>
                   ))
                 )}
-              </motion.div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ─── DOCUMENT LOCKER ─── */}
+          {activeTab === "locker" && (
+            <motion.div key="locker" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
+              <div>
+                <h2 className="text-2xl font-light tracking-tight text-slate-900">Document Locker & Vault</h2>
+                <p className="text-sm text-slate-500 font-light mt-1">Upload and access your personal verification documents, ID proofs, degree certificates, and signed employment contracts.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[
+                  { name: "National ID / Aadhaar / PAN Card", category: "Government ID Proof", status: "Verified", date: "2026-01-15" },
+                  { name: "Passport / Birth Certificate", category: "Identity & Residency", status: "Verified", date: "2026-01-15" },
+                  { name: "Degree & Marksheet Certifications", category: "Education Qualification", status: "Verified", date: "2026-01-16" },
+                  { name: "Signed Offer Letter & NDA", category: "Legal & Employment", status: "Verified", date: "2026-01-10" },
+                  { name: "Form 16 / Tax Declaration Proofs", category: "Payroll & Finance", status: "Pending Action", date: "2026-03-01" },
+                ].map((doc, idx) => (
+                  <div key={idx} className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm flex items-start justify-between group hover:shadow-md transition-shadow">
+                    <div className="flex items-start gap-4">
+                      <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 text-slate-500">
+                        <FileCheck className="h-5 w-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-slate-900 text-sm">{doc.name}</div>
+                        <div className="text-xs text-slate-400 font-light mt-0.5">{doc.category}</div>
+                        <div className="text-[10px] text-slate-400 mt-2">Uploaded on {doc.date}</div>
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${doc.status === 'Verified' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{doc.status}</span>
+                  </div>
+                ))}
+              </div>
             </motion.div>
           )}
 
@@ -1204,41 +1648,120 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── CONTACT ─── */}
+          {/* ─── PROFILE & ESS ─── */}
           {activeTab === "contact" && (
-            <motion.div key="contact" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto">
-              <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Contact Directory</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="p-10 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-black/[0.04] transition-all group">
-                  <div className="h-16 w-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <User className="h-8 w-8 text-slate-700" />
+            <motion.div key="contact" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
+              <div>
+                <h2 className="text-2xl font-light tracking-tight text-slate-900">Profile & Employee Self-Service (ESS)</h2>
+                <p className="text-sm text-slate-500 font-light mt-1">Manage your personal contact details, emergency contacts, bank information, and print your Digital ID badge.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Digital ID Badge */}
+                <div className="md:col-span-1 p-6 bg-gradient-to-b from-slate-900 to-black text-white rounded-[2rem] shadow-xl flex flex-col items-center text-center relative overflow-hidden">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-emerald-400" />
+                  <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 text-2xl mb-4 ring-4 ring-white/20 mt-2" />
+                  <h3 className="font-bold text-lg text-white">{displayName}</h3>
+                  <p className="text-xs text-white/60 uppercase tracking-widest mt-1">Employee · VyNexa</p>
+                  <p className="text-[11px] text-emerald-400 font-mono mt-0.5">ID: {session?.user?.id?.slice(0, 8).toUpperCase()}</p>
+                  
+                  <div className="p-3 bg-white rounded-xl my-4">
+                    <QRCodeSVG value={`VY-EMP-${session?.user?.id}`} size={110} />
                   </div>
-                  <h3 className="text-xl font-medium text-slate-900 mb-2">Human Resources</h3>
-                  <p className="text-slate-500 font-light mb-8">For leave, payroll, and policy inquiries.</p>
-                  <a href="mailto:hr@vyntyraconsultancyservices.in" className="text-sm font-semibold text-slate-900 underline underline-offset-4 decoration-slate-200 hover:decoration-black transition-colors">hr@vyntyraconsultancyservices.in</a>
+                  
+                  <Button variant="outline" size="sm" onClick={() => window.print()} className="w-full text-xs text-slate-900 border-white/20 hover:bg-white hover:text-black rounded-xl gap-1.5">
+                    <Printer className="h-3.5 w-3.5" /> Print Digital ID Card
+                  </Button>
                 </div>
-                <div className="p-10 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-black/[0.04] transition-all group">
-                  <div className="h-16 w-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <AlertCircle className="h-8 w-8 text-slate-700" />
+
+                {/* ESS Personal Information Form */}
+                <div className="md:col-span-2 p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm space-y-6">
+                  <h3 className="text-lg font-semibold text-slate-900">Personal & Financial Information</h3>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!session?.user?.id) return;
+                    try {
+                      await doUpdateProfile({
+                        data: {
+                          id: session.user.id,
+                          phone: profileForm.phone || profile?.phone,
+                          address: profileForm.address || profile?.address,
+                        }
+                      });
+                      toast.success("Profile details updated!");
+                      qc.invalidateQueries({ queryKey: ["profile"] });
+                    } catch (err: any) {
+                      toast.error(err.message || "Failed to update profile");
+                    }
+                  }} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs">Full Name</Label>
+                        <Input value={displayName} disabled className="bg-slate-50 rounded-xl mt-1 text-sm font-medium" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Work Email</Label>
+                        <Input value={email} disabled className="bg-slate-50 rounded-xl mt-1 text-sm font-medium" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Phone Number</Label>
+                        <Input placeholder="+91 98765 43210" defaultValue={profile?.phone || ""} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl mt-1 text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Emergency Contact</Label>
+                        <Input placeholder="Name & Phone Number" defaultValue={profile?.emergency_contact || "+91 98765 00000"} onChange={e => setProfileForm({...profileForm, emergency_contact: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl mt-1 text-sm" />
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Residential Address</Label>
+                      <Input placeholder="Current residential address..." defaultValue={profile?.address || ""} onChange={e => setProfileForm({...profileForm, address: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl mt-1 text-sm" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Bank Account & IFSC / UPI Details</Label>
+                      <Input placeholder="HDFC Bank · A/C ****8821 · IFSC: HDFC0001234" defaultValue={profile?.bank_details || "Kotak Mahindra Bank · A/C 882101923 · IFSC: KKBK0001823"} onChange={e => setProfileForm({...profileForm, bank_details: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl mt-1 text-sm" />
+                    </div>
+                    <div className="flex justify-end pt-2">
+                      <Button type="submit" className="bg-black hover:bg-slate-800 text-white rounded-xl px-6">Save Profile Changes</Button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm flex items-start gap-4">
+                  <div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center shrink-0">
+                    <User className="h-6 w-6 text-slate-700" />
                   </div>
-                  <h3 className="text-xl font-medium text-slate-900 mb-2">IT Support</h3>
-                  <p className="text-slate-500 font-light mb-8">For technical issues or dashboard support.</p>
-                  <a href="mailto:support@vyntyraconsultancyservices.in" className="text-sm font-semibold text-slate-900 underline underline-offset-4 decoration-slate-200 hover:decoration-black transition-colors">support@vyntyraconsultancyservices.in</a>
+                  <div>
+                    <h3 className="text-lg font-medium text-slate-900 mb-1">Human Resources Helpdesk</h3>
+                    <p className="text-sm text-slate-500 font-light mb-3">For leave, payroll, and policy inquiries.</p>
+                    <a href="mailto:hr@vyntyraconsultancyservices.in" className="text-sm font-semibold text-slate-900 underline">hr@vyntyraconsultancyservices.in</a>
+                  </div>
+                </div>
+                <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm flex items-start gap-4">
+                  <div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center shrink-0">
+                    <AlertCircle className="h-6 w-6 text-slate-700" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-slate-900 mb-1">IT & System Support</h3>
+                    <p className="text-sm text-slate-500 font-light mb-3">For technical issues or dashboard access.</p>
+                    <a href="mailto:support@vyntyraconsultancyservices.in" className="text-sm font-semibold text-slate-900 underline">support@vyntyraconsultancyservices.in</a>
+                  </div>
                 </div>
               </div>
             </motion.div>
           )}
 
-
+          {/* ─── SECURITY & OFFBOARDING ─── */}
           {activeTab === "security" && (
             <motion.div key="security" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
-              <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Security Settings</h2>
+              <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Security & Offboarding Lifecycle</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Change Password Card */}
-                <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-black/[0.04] transition-all">
+                <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl transition-all">
                   <h3 className="text-xl font-medium text-slate-900 mb-2">Change Password</h3>
-                  <p className="text-slate-500 font-light mb-6">Update your login password.</p>
+                  <p className="text-slate-500 font-light mb-6">Update your portal login password.</p>
                   
                   <form onSubmit={handleChangePassword} className="space-y-4">
                     <div className="space-y-2">
@@ -1256,7 +1779,7 @@ function EmployeeDashboard() {
                 </div>
 
                 {/* MFA / 2FA Card */}
-                <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-black/[0.04] transition-all">
+                <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl transition-all">
                   <h3 className="text-xl font-medium text-slate-900 mb-2">Two-Factor Authentication</h3>
                   <p className="text-slate-500 font-light mb-6">Enhance your account security using Microsoft or Google Authenticator.</p>
                   
@@ -1295,6 +1818,28 @@ function EmployeeDashboard() {
                       <Button onClick={handleEnrollMfa} variant="outline" className="w-full rounded-xl border-slate-200">Set up Authenticator App</Button>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Offboarding & NOC Clearance Tracker */}
+              <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">Offboarding & No-Objection Certificate (NOC) Tracker</h3>
+                  <p className="text-sm text-slate-500 font-light mt-0.5">Track exit clearances across departments upon notice period submission.</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[
+                    { dept: "HR Clearance", status: "Active / No Pending Dues" },
+                    { dept: "IT Hardware NOC", status: "Active / Laptop Assigned" },
+                    { dept: "Finance Clearance", status: "Active / Salary Credit Clear" }
+                  ].map((noc, i) => (
+                    <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm">
+                      <div className="font-semibold text-slate-900">{noc.dept}</div>
+                      <div className="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> {noc.status}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </motion.div>
