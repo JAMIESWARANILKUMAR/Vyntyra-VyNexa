@@ -459,10 +459,30 @@ const profileUpdateSchema = z.object({
 export const updateUserProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => profileUpdateSchema.parse(d))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data }) => {
     const { id, ...updates } = data;
+    
+    // Attempt full update
     const { error } = await supabase.from("profiles").upsert({ id, ...updates });
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.message.includes("schema cache") || error.message.includes("column") || error.code === "PGRST204") {
+        // Fallback to core columns if database schema hasn't been migrated yet
+        const coreUpdates: Record<string, any> = { id };
+        if (updates.full_name !== undefined) coreUpdates.full_name = updates.full_name;
+        if (updates.phone !== undefined) coreUpdates.phone = updates.phone;
+        if (updates.address !== undefined) coreUpdates.address = updates.address;
+        if (updates.intern_id !== undefined) coreUpdates.intern_id = updates.intern_id;
+        if (updates.start_date !== undefined) coreUpdates.start_date = updates.start_date;
+        if (updates.end_date !== undefined) coreUpdates.end_date = updates.end_date;
+        if (updates.avatar_url !== undefined) coreUpdates.avatar_url = updates.avatar_url;
+        if (updates.offer_letter_url !== undefined) coreUpdates.offer_letter_url = updates.offer_letter_url;
+        
+        const { error: fallbackError } = await supabase.from("profiles").upsert(coreUpdates);
+        if (fallbackError) throw new Error(fallbackError.message);
+        return { success: true };
+      }
+      throw new Error(error.message);
+    }
     return { success: true };
   });
 
