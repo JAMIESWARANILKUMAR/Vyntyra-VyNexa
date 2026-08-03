@@ -18,7 +18,7 @@ import {
   listSchedules, createSchedule, deleteSchedule,
   listMeetings, createMeeting, deleteMeeting,
   listResources, createResource, deleteResource,
-  getPresignedUrl, updateUserProfile, listFeedbacks, markFeedbackRead,
+  getPresignedUrl, updateUserProfile, listFeedbacks, markFeedbackRead, listKudos,
   listAllLeaves, updateLeaveStatus, listAllAttendance, listAllPayouts, createPayout,
   assignIntern, removeIntern, adminResetPassword,
   listAllExpenses, updateExpenseStatus, listAllSupportTickets, updateSupportTicketStatus
@@ -116,6 +116,11 @@ function OperationsDashboard() {
   const doRemoveIntern = useServerFn(removeIntern);
   const doAdminResetPassword = useServerFn(adminResetPassword);
 
+  const fetchExpenses = useServerFn(listAllExpenses);
+  const doUpdateExpenseStatus = useServerFn(updateExpenseStatus);
+  const fetchTickets = useServerFn(listAllSupportTickets);
+  const doUpdateTicketStatus = useServerFn(updateSupportTicketStatus);
+  const fetchKudos = useServerFn(listKudos);
 
   // Dialog states
   const [provisionOpen, setProvisionOpen] = useState(false);
@@ -146,7 +151,6 @@ function OperationsDashboard() {
   const [assignInternOpen, setAssignInternOpen] = useState(false);
   const [assignInternForm, setAssignInternForm] = useState({ internId: "", employeeId: "" });
 
-
   // Queries
   const teamQ = useQuery({ queryKey: ["team-members"], queryFn: () => fetchTeam() });
   const announcementsQ = useQuery({ queryKey: ["announcements"], queryFn: () => fetchAnnouncements() });
@@ -155,6 +159,9 @@ function OperationsDashboard() {
   const meetingsQ = useQuery({ queryKey: ["meetings"], queryFn: () => fetchMeetings() });
   const resourcesQ = useQuery({ queryKey: ["resources"], queryFn: () => fetchResources() });
   const feedbacksQ = useQuery({ queryKey: ["feedbacks"], queryFn: () => fetchFeedbacks() });
+  const expensesQ = useQuery({ queryKey: ["admin-expenses"], queryFn: () => fetchExpenses() });
+  const ticketsQ = useQuery({ queryKey: ["admin-tickets"], queryFn: () => fetchTickets() });
+  const kudosQ = useQuery({ queryKey: ["admin-kudos"], queryFn: () => fetchKudos() });
 
   const leavesQ = useQuery({ queryKey: ["admin-leaves"], queryFn: () => fetchAllLeaves() });
   const attendanceQ = useQuery({ queryKey: ["admin-attendance"], queryFn: () => fetchAllAttendance() });
@@ -1129,6 +1136,169 @@ function OperationsDashboard() {
                         Mark Read
                       </Button>
                     )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* ── Expense Claims & Reimbursements Control ── */}
+        <section className="rounded-xl border bg-white shadow-sm overflow-hidden mt-6">
+          <div className="px-5 py-4 border-b flex items-center justify-between">
+            <h2 className="font-semibold text-sm flex items-center gap-2"><CreditCard className="h-4 w-4 text-emerald-600" /> Expense Claims & Reimbursements</h2>
+            <span className="text-xs text-slate-500 font-light">Manage employee expense claims</span>
+          </div>
+          <div className="divide-y max-h-[380px] overflow-y-auto">
+            {expensesQ.isLoading ? (
+              <div className="p-8 flex items-center justify-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading expense claims...</div>
+            ) : expensesQ.isError ? (
+              <ErrorState message="Could not load expense claims." onRetry={() => expensesQ.refetch()} />
+            ) : (expensesQ.data || []).length === 0 ? (
+              <EmptyState icon={<CreditCard className="h-6 w-6" />} message="No expense claims submitted." />
+            ) : (
+              (expensesQ.data as any[]).map((exp: any) => (
+                <div key={exp.id} className="p-4 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-slate-900 text-sm">{exp.title}</span>
+                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">₹{exp.amount}</span>
+                        <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600">{exp.category}</span>
+                      </div>
+                      <div className="text-xs text-slate-500 font-light mt-0.5">
+                        Claimed by: <span className="font-medium text-slate-800">{exp.profiles?.full_name || exp.user_id?.slice(0, 8)}</span> ({exp.profiles?.email}) • Date: {exp.date}
+                      </div>
+                      {exp.notes && <p className="text-xs text-slate-600 font-light mt-1.5">{exp.notes}</p>}
+                      {exp.receipt_url && (
+                        <a href={exp.receipt_url} target="_blank" rel="noreferrer" className="text-xs text-emerald-600 hover:underline mt-1.5 inline-flex items-center gap-1">
+                          <FileText className="h-3 w-3" /> View Uploaded Receipt
+                        </a>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${exp.status === 'approved' ? 'bg-blue-100 text-blue-800' : exp.status === 'paid' ? 'bg-emerald-100 text-emerald-800' : exp.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>
+                        {exp.status}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {exp.status !== 'approved' && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={async () => {
+                            try {
+                              await doUpdateExpenseStatus({ data: { id: exp.id, status: 'approved' } });
+                              toast.success("Expense approved");
+                              qc.invalidateQueries({ queryKey: ["admin-expenses"] });
+                            } catch (err: any) { toast.error("Failed to update status"); }
+                          }}>Approve</Button>
+                        )}
+                        {exp.status !== 'paid' && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={async () => {
+                            try {
+                              await doUpdateExpenseStatus({ data: { id: exp.id, status: 'paid' } });
+                              toast.success("Expense marked as paid");
+                              qc.invalidateQueries({ queryKey: ["admin-expenses"] });
+                            } catch (err: any) { toast.error("Failed to update status"); }
+                          }}>Mark Paid</Button>
+                        )}
+                        {exp.status !== 'rejected' && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-red-600 border-red-200 hover:bg-red-50" onClick={async () => {
+                            try {
+                              await doUpdateExpenseStatus({ data: { id: exp.id, status: 'rejected' } });
+                              toast.success("Expense rejected");
+                              qc.invalidateQueries({ queryKey: ["admin-expenses"] });
+                            } catch (err: any) { toast.error("Failed to update status"); }
+                          }}>Reject</Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* ── Helpdesk & IT/HR Tickets Control ── */}
+        <section className="rounded-xl border bg-white shadow-sm overflow-hidden mt-6">
+          <div className="px-5 py-4 border-b flex items-center justify-between">
+            <h2 className="font-semibold text-sm flex items-center gap-2"><LifeBuoy className="h-4 w-4 text-blue-600" /> Helpdesk & IT/HR Tickets</h2>
+            <span className="text-xs text-slate-500 font-light">Resolve employee support tickets</span>
+          </div>
+          <div className="divide-y max-h-[380px] overflow-y-auto">
+            {ticketsQ.isLoading ? (
+              <div className="p-8 flex items-center justify-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading support tickets...</div>
+            ) : ticketsQ.isError ? (
+              <ErrorState message="Could not load support tickets." onRetry={() => ticketsQ.refetch()} />
+            ) : (ticketsQ.data || []).length === 0 ? (
+              <EmptyState icon={<LifeBuoy className="h-6 w-6" />} message="No support tickets raised." />
+            ) : (
+              (ticketsQ.data as any[]).map((tick: any) => (
+                <div key={tick.id} className="p-4 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">#{tick.id.slice(0, 8).toUpperCase()}</span>
+                        <span className="font-semibold text-slate-900 text-sm">{tick.subject}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-700">{tick.category}</span>
+                      </div>
+                      <div className="text-xs text-slate-500 font-light mt-0.5">
+                        Raised by: <span className="font-medium text-slate-800">{tick.profiles?.full_name || tick.user_id?.slice(0, 8)}</span> ({tick.profiles?.email}) • Priority: <span className="font-bold text-slate-800">{tick.priority}</span>
+                      </div>
+                      <p className="text-sm text-slate-700 font-light mt-2 leading-relaxed">{tick.description}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${tick.status === 'resolved' ? 'bg-emerald-100 text-emerald-800' : tick.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>
+                        {tick.status}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {tick.status !== 'in_progress' && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={async () => {
+                            try {
+                              await doUpdateTicketStatus({ data: { id: tick.id, status: 'in_progress' } });
+                              toast.success("Ticket set to In Progress");
+                              qc.invalidateQueries({ queryKey: ["admin-tickets"] });
+                            } catch (err: any) { toast.error("Failed to update status"); }
+                          }}>In Progress</Button>
+                        )}
+                        {tick.status !== 'resolved' && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={async () => {
+                            try {
+                              await doUpdateTicketStatus({ data: { id: tick.id, status: 'resolved' } });
+                              toast.success("Ticket resolved");
+                              qc.invalidateQueries({ queryKey: ["admin-tickets"] });
+                            } catch (err: any) { toast.error("Failed to update status"); }
+                          }}>Resolve</Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* ── Organization Peer Kudos & Shoutouts Feed ── */}
+        <section className="rounded-xl border bg-white shadow-sm overflow-hidden mt-6">
+          <div className="px-5 py-4 border-b flex items-center justify-between">
+            <h2 className="font-semibold text-sm flex items-center gap-2"><Award className="h-4 w-4 text-amber-500" /> Peer Kudos & Appreciation Feed</h2>
+          </div>
+          <div className="divide-y max-h-[300px] overflow-y-auto">
+            {kudosQ.isLoading ? (
+              <div className="p-8 flex items-center justify-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading kudos feed...</div>
+            ) : (kudosQ.data || []).length === 0 ? (
+              <EmptyState icon={<Award className="h-6 w-6" />} message="No peer kudos sent yet." />
+            ) : (
+              (kudosQ.data as any[]).map((kud: any) => (
+                <div key={kud.id} className="p-4 hover:bg-slate-50 transition-colors flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 font-bold text-xs">
+                    <Award className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">{kud.badge}</span>
+                      <span className="text-xs text-slate-400">• {new Date(kud.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <p className="text-xs text-slate-700 font-light mt-1.5 italic">"{kud.message}"</p>
                   </div>
                 </div>
               ))
