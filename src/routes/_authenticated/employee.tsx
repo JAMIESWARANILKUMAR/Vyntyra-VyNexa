@@ -692,7 +692,7 @@ function EmployeeDashboard() {
       
       {/* Dynamic Header */}
       <header className={`sticky top-0 z-40 transition-all duration-300 ${scrolled ? "bg-white/80 backdrop-blur-xl border-b border-black/5 shadow-sm" : "bg-transparent"}`}>
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="h-9 w-9 bg-black rounded-lg shadow-md shadow-black/20 flex items-center justify-center text-white font-bold tracking-tighter">V</div>
             <div className="hidden lg:flex flex-col">
@@ -716,8 +716,8 @@ function EmployeeDashboard() {
         </div>
         
         {/* Premium Animated Tabs */}
-        <div className="w-full px-6 overflow-x-auto hide-scrollbar border-t border-black/5">
-          <div className="max-w-7xl mx-auto flex items-center gap-2 py-3 relative">
+        <div className="w-full px-4 sm:px-8 overflow-x-auto hide-scrollbar border-t border-black/5">
+          <div className="w-full max-w-[1800px] mx-auto flex items-center gap-2 py-3 relative">
             {TABS.map((t) => {
               const isActive = activeTab === t.id;
               return (
@@ -764,7 +764,7 @@ function EmployeeDashboard() {
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 relative">
+      <main className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 py-4 sm:py-6 relative">
         <AnimatePresence mode="wait">
           
           {/* ─── OVERVIEW ─── */}
@@ -911,7 +911,7 @@ function EmployeeDashboard() {
 
           {/* ─── TASKS ─── */}
           {activeTab === "tasks" && (
-            <motion.div key="tasks" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-6">
+            <motion.div key="tasks" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-2xl font-light tracking-tight text-slate-900">Task Management</h2>
               </div>
@@ -1053,7 +1053,7 @@ function EmployeeDashboard() {
 
           {/* ─── PAYOUTS & EXPENSES ─── */}
           {activeTab === "payouts" && (
-            <motion.div key="payouts" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
+            <motion.div key="payouts" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-8">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-2xl font-light tracking-tight text-slate-900">Payroll, Compensation & Payslips</h2>
@@ -1454,7 +1454,7 @@ function EmployeeDashboard() {
           
           {/* ─── ANNOUNCEMENTS ─── */}
           {activeTab === "announcements" && (
-            <motion.div key="announcements" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-3xl mx-auto">
+            <motion.div key="announcements" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Company News & Updates</h2>
               {announcements.length === 0 ? (
                 <div className="p-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">
@@ -1482,7 +1482,7 @@ function EmployeeDashboard() {
 
           {/* ─── RESOURCES & LMS ─── */}
           {activeTab === "resources" && (
-            <motion.div key="resources" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
+            <motion.div key="resources" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-8">
               <div>
                 <h2 className="text-2xl font-light tracking-tight text-slate-900">Knowledge Base, Handbooks & LMS</h2>
                 <p className="text-sm text-slate-500 font-light mt-1">Access official company handbooks, travel policies, SOPs, and complete mandatory learning & compliance courses.</p>
@@ -1562,7 +1562,7 @@ function EmployeeDashboard() {
 
           {/* ─── HELPDESK TICKETS ─── */}
           {activeTab === "support" && (
-            <motion.div key="support" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
+            <motion.div key="support" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-8">
               <div>
                 <h2 className="text-2xl font-light tracking-tight text-slate-900">Service Desk & IT/HR Tickets</h2>
                 <p className="text-sm text-slate-500 font-light mt-1">Raise support requests for hardware, software access, payroll inquiries, or administrative assistance.</p>
@@ -1641,7 +1641,7 @@ function EmployeeDashboard() {
 
           {/* ─── DOCUMENT LOCKER ─── */}
           {activeTab === "locker" && (
-            <motion.div key="locker" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
+            <motion.div key="locker" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-8">
               <div>
                 <h2 className="text-2xl font-light tracking-tight text-slate-900">Document Locker & Vault</h2>
                 <p className="text-sm text-slate-500 font-light mt-1">Upload and access your personal verification documents, ID proofs, degree certificates, and signed employment contracts.</p>
@@ -1675,7 +1675,7 @@ function EmployeeDashboard() {
 
           {/* ─── FEEDBACKS ─── */}
           {activeTab === "feedbacks" && (
-            <motion.div key="feedbacks" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-2xl mx-auto">
+            <motion.div key="feedbacks" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-5xl mx-auto">
               <div className="text-center mb-10">
                 <h2 className="text-3xl font-light tracking-tight text-slate-900 mb-3">Feedback</h2>
                 <p className="text-slate-500 font-light">Send direct, private feedback to the administration team.</p>
@@ -1700,7 +1700,7 @@ function EmployeeDashboard() {
 
           {/* ─── PROFILE & ESS ─── */}
           {activeTab === "contact" && (
-            <motion.div key="contact" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
+            <motion.div key="contact" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-8">
               <div>
                 <h2 className="text-2xl font-light tracking-tight text-slate-900">Profile & Employee Self-Service (ESS)</h2>
                 <p className="text-sm text-slate-500 font-light mt-1">Manage your personal contact details, emergency contacts, bank information, and print your Digital ID badge.</p>
@@ -1808,7 +1808,7 @@ function EmployeeDashboard() {
 
           {/* ─── SECURITY & OFFBOARDING ─── */}
           {activeTab === "security" && (
-            <motion.div key="security" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-8">
+            <motion.div key="security" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-8">
               <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Security & Offboarding Lifecycle</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
