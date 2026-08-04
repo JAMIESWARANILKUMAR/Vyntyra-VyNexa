@@ -269,6 +269,100 @@ export const deleteTask = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+export const acceptTask = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const now = new Date().toISOString();
+    const updatePayload: any = {
+      accepted_at: now,
+      accepted_by: context.userId,
+      assigned_to: context.userId,
+      status: "in_progress",
+      is_pool_task: false,
+    };
+    const { error } = await supabase
+      .from("tasks")
+      .update(updatePayload)
+      .eq("id", data.id);
+    if (error) {
+      // Graceful fallback if columns PGRST204 not yet migrated
+      const { error: errFallback } = await supabase
+        .from("tasks")
+        .update({ assigned_to: context.userId, status: "in_progress", is_pool_task: false })
+        .eq("id", data.id);
+      if (errFallback) throw new Error(errFallback.message);
+    }
+    return { success: true, accepted_at: now };
+  });
+
+export const updateTaskExecution = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    id: z.string().uuid(),
+    status: z.enum(["pending", "in_progress", "completed", "blocked"]),
+    progress_percentage: z.number().min(0).max(100).optional(),
+    progress_notes: z.string().optional(),
+    project_requirements: z.string().optional(),
+    deliverable_url: z.string().optional(),
+    time_spent_hours: z.number().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const updatePayload: any = {
+      status: data.status,
+      updated_at: new Date().toISOString(),
+    };
+    if (data.progress_percentage !== undefined) updatePayload.progress_percentage = data.progress_percentage;
+    if (data.progress_notes !== undefined) updatePayload.progress_notes = data.progress_notes;
+    if (data.project_requirements !== undefined) updatePayload.project_requirements = data.project_requirements;
+    if (data.deliverable_url !== undefined) updatePayload.deliverable_url = data.deliverable_url;
+    if (data.time_spent_hours !== undefined) updatePayload.time_spent_hours = data.time_spent_hours;
+
+    const { error } = await supabase
+      .from("tasks")
+      .update(updatePayload)
+      .eq("id", data.id);
+    if (error) {
+      // Graceful fallback if extra columns not migrated
+      const { error: errFallback } = await supabase
+        .from("tasks")
+        .update({ status: data.status, updated_at: new Date().toISOString() })
+        .eq("id", data.id);
+      if (errFallback) throw new Error(errFallback.message);
+    }
+    return { success: true };
+  });
+
+export const updateTaskByAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    id: z.string().uuid(),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    status: z.enum(["pending", "in_progress", "completed", "blocked"]).optional(),
+    priority: z.enum(["low", "medium", "high"]).optional(),
+    assigned_to: z.string().nullable().optional(),
+    progress_percentage: z.number().optional(),
+    progress_notes: z.string().optional(),
+    project_requirements: z.string().optional(),
+    deliverable_url: z.string().optional(),
+    time_spent_hours: z.number().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
+    if (roleData?.role !== 'admin') throw new Error("Unauthorized");
+
+    const updatePayload: any = { ...data };
+    delete updatePayload.id;
+
+    const { error } = await supabase
+      .from("tasks")
+      .update(updatePayload)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
 // ─── Schedules ────────────────────────────────────────────────────
 const scheduleSchema = z.object({
   title: z.string().min(1),

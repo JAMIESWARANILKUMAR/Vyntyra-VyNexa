@@ -122,6 +122,8 @@ function OperationsDashboard() {
   const doUpdateExpenseStatus = useServerFn(updateExpenseStatus);
   const fetchTickets = useServerFn(listAllSupportTickets);
   const doUpdateTicketStatus = useServerFn(updateSupportTicketStatus);
+  const doUpdateTaskByAdmin = useServerFn(updateTaskByAdmin);
+  const [editingTaskByAdmin, setEditingTaskByAdmin] = useState<any>(null);
   const fetchKudos = useServerFn(listKudos);
 
   // Dialog states
@@ -787,8 +789,39 @@ function OperationsDashboard() {
                           )}
                           {t.due_date && <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{new Date(t.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>}
                         </div>
-                        {t.description && <p className="text-xs text-muted-foreground mt-1.5 line-clamp-1">{t.description}</p>}
+                        {t.description && <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{t.description}</p>}
+
+                        {/* Acceptance & Execution Details */}
+                        <div className="mt-2 text-xs space-y-1 bg-slate-50 p-2.5 rounded-md border border-slate-200">
+                          {t.accepted_at ? (
+                            <div className="text-emerald-700 font-medium flex items-center gap-1">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Accepted on {new Date(t.accepted_at).toLocaleString()}
+                            </div>
+                          ) : (
+                            <div className="text-amber-700 font-medium">Not accepted yet</div>
+                          )}
+                          {t.progress_percentage !== undefined && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="font-bold text-slate-700">{t.progress_percentage}% Done</span>
+                              <div className="h-1.5 w-24 bg-slate-200 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${t.progress_percentage}%` }} />
+                              </div>
+                            </div>
+                          )}
+                          {t.progress_notes && <p className="text-slate-600 italic mt-1">"Notes: {t.progress_notes}"</p>}
+                          {t.project_requirements && <p className="text-slate-500 font-mono text-[10px] mt-1">Specs: {t.project_requirements}</p>}
+                          {t.deliverable_url && (
+                            <a href={t.deliverable_url} target="_blank" rel="noreferrer" className="text-purple-600 hover:underline flex items-center gap-1 mt-1">
+                              <FileText className="h-3 w-3" /> Deliverable: {t.deliverable_url}
+                            </a>
+                          )}
+                        </div>
                       </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => setEditingTaskByAdmin(t)}>
+                          Edit Task
+                        </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/50 hover:text-destructive hover:bg-destructive/10 shrink-0">
@@ -808,7 +841,8 @@ function OperationsDashboard() {
                       </AlertDialog>
                     </div>
                   </div>
-                ))
+                </div>
+              ))
               )}
             </div>
           </section>

@@ -23,7 +23,8 @@ import {
   listTasks, listMeetings, listSchedules, listAnnouncements, listResources, 
   listNotes, createNote, deleteNote, createFeedback, claimPoolTask,
   listMyStandups, createStandup, listMyDeliverables, createDeliverable,
-  listMyAccessRequests, createAccessRequest, getPresignedUrl
+  listMyAccessRequests, createAccessRequest, getPresignedUrl,
+  acceptTask, updateTaskExecution
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
@@ -70,6 +71,10 @@ function InternDashboard() {
   const doDeleteNote = useServerFn(deleteNote);
   const doCreateFeedback = useServerFn(createFeedback);
   const doClaimPoolTask = useServerFn(claimPoolTask);
+  const doAcceptTask = useServerFn(acceptTask);
+  const doUpdateTaskExecution = useServerFn(updateTaskExecution);
+
+  const [selectedTaskWorkspace, setSelectedTaskWorkspace] = useState<any>(null);
 
   const tasksQ = useQuery({ queryKey: ["my-tasks"], queryFn: () => fetchTasks() });
   const meetingsQ = useQuery({ queryKey: ["my-meetings"], queryFn: () => fetchMeetings() });
@@ -779,18 +784,24 @@ function InternDashboard() {
                             {task.due_date && <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="h-3 w-3" />Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>}
                           </div>
                         </div>
-                        <div className="flex flex-col gap-1.5 shrink-0">
-                          {task.status === "pending" && (
-                            <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700" onClick={() => markTaskStatus(task.id, "in_progress")}>Accept</Button>
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          {task.accepted_at ? (
+                            <div className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md font-medium flex items-center gap-1">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Accepted on {new Date(task.accepted_at).toLocaleDateString()} at {new Date(task.accepted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          ) : (
+                            <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white" onClick={async () => {
+                              try {
+                                await doAcceptTask({ data: { id: task.id } });
+                                toast.success("Task accepted!");
+                                qc.invalidateQueries({ queryKey: ["my-tasks"] });
+                              } catch (err: any) { toast.error("Failed to accept task"); }
+                            }}>Accept Task</Button>
                           )}
-                          {task.status === "in_progress" && (
-                            <Button size="sm" className="h-7 text-xs" onClick={() => markTaskStatus(task.id, "completed")}>
-                              <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Mark Done
-                            </Button>
-                          )}
-                          {task.status === "completed" && (
-                            <span className="text-xs text-emerald-600 flex items-center gap-1 font-medium"><CheckCircle2 className="h-4 w-4" />Done</span>
-                          )}
+
+                          <Button size="sm" variant="outline" className="h-7 text-xs border-slate-300 hover:bg-slate-100" onClick={() => setSelectedTaskWorkspace(task)}>
+                            <Layers className="h-3.5 w-3.5 mr-1 text-blue-600" /> Open Workspace & Details
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -957,6 +968,91 @@ function InternDashboard() {
         )}
 
       </main>
+
+      
+{/* ── Task Execution Workspace Dialog ── */}
+{selectedTaskWorkspace && (
+  <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto border border-slate-200">
+      <div className="flex items-start justify-between border-b pb-4">
+        <div>
+          <span className="text-[10px] font-mono font-bold uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">Task Workspace</span>
+          <h2 className="text-lg font-bold text-slate-900 mt-1">{selectedTaskWorkspace.title}</h2>
+          {selectedTaskWorkspace.accepted_at && (
+            <p className="text-xs text-emerald-700 font-medium mt-1">✓ You accepted this task on {new Date(selectedTaskWorkspace.accepted_at).toLocaleString()}</p>
+          )}
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => setSelectedTaskWorkspace(null)}>✕</Button>
+      </div>
+
+      <div className="space-y-4 text-xs">
+        <div>
+          <label className="font-semibold text-slate-800 mb-1 block">Task Description</label>
+          <p className="text-slate-600 bg-slate-50 p-3 rounded-lg border leading-relaxed">{selectedTaskWorkspace.description || "No description provided."}</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="font-semibold text-slate-800 mb-1 block">Task Status</label>
+            <select className="w-full rounded-md border p-2 text-xs" value={selectedTaskWorkspace.status || "in_progress"} onChange={e => setSelectedTaskWorkspace({...selectedTaskWorkspace, status: e.target.value})}>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="blocked">Blocked</option>
+            </select>
+          </div>
+          <div>
+            <label className="font-semibold text-slate-800 mb-1 block">Completion Progress (%)</label>
+            <input type="number" min="0" max="100" className="w-full rounded-md border p-2 text-xs" value={selectedTaskWorkspace.progress_percentage ?? 0} onChange={e => setSelectedTaskWorkspace({...selectedTaskWorkspace, progress_percentage: parseInt(e.target.value) || 0})} />
+          </div>
+        </div>
+
+        <div>
+          <label className="font-semibold text-slate-800 mb-1 block">Project Requirements & Technical Specs</label>
+          <textarea className="w-full rounded-md border p-2.5 text-xs font-mono" rows={3} value={selectedTaskWorkspace.project_requirements || ""} onChange={e => setSelectedTaskWorkspace({...selectedTaskWorkspace, project_requirements: e.target.value})} placeholder="Tech stack, API endpoints, performance metrics, design specs..." />
+        </div>
+
+        <div>
+          <label className="font-semibold text-slate-800 mb-1 block">Status & Progress Notes</label>
+          <textarea className="w-full rounded-md border p-2.5 text-xs" rows={3} value={selectedTaskWorkspace.progress_notes || ""} onChange={e => setSelectedTaskWorkspace({...selectedTaskWorkspace, progress_notes: e.target.value})} placeholder="Describe progress update, completed milestones, or blockers..." />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="font-semibold text-slate-800 mb-1 block">Deliverable URL (GitHub PR / Figma / Doc)</label>
+            <input className="w-full rounded-md border p-2 text-xs" value={selectedTaskWorkspace.deliverable_url || ""} onChange={e => setSelectedTaskWorkspace({...selectedTaskWorkspace, deliverable_url: e.target.value})} placeholder="https://github.com/..." />
+          </div>
+          <div>
+            <label className="font-semibold text-slate-800 mb-1 block">Time Spent (Hours)</label>
+            <input type="number" step="0.5" className="w-full rounded-md border p-2 text-xs" value={selectedTaskWorkspace.time_spent_hours ?? 0} onChange={e => setSelectedTaskWorkspace({...selectedTaskWorkspace, time_spent_hours: parseFloat(e.target.value) || 0})} placeholder="e.g. 4.5" />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4 border-t">
+        <Button variant="outline" size="sm" onClick={() => setSelectedTaskWorkspace(null)}>Cancel</Button>
+        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={async () => {
+          try {
+            await doUpdateTaskExecution({
+              data: {
+                id: selectedTaskWorkspace.id,
+                status: selectedTaskWorkspace.status || "in_progress",
+                progress_percentage: selectedTaskWorkspace.progress_percentage ?? 0,
+                progress_notes: selectedTaskWorkspace.progress_notes || "",
+                project_requirements: selectedTaskWorkspace.project_requirements || "",
+                deliverable_url: selectedTaskWorkspace.deliverable_url || "",
+                time_spent_hours: selectedTaskWorkspace.time_spent_hours ?? 0,
+              }
+            });
+            toast.success("Task workspace saved!");
+            setSelectedTaskWorkspace(null);
+            qc.invalidateQueries({ queryKey: ["my-tasks"] });
+          } catch (err: any) { toast.error("Failed to save workspace"); }
+        }}>Save Workspace Changes</Button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Floating Apps Panel */}
       <FloatingAppsPanel />
