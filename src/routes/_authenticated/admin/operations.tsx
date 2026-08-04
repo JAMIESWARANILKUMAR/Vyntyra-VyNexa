@@ -23,7 +23,7 @@ import {
   assignIntern, removeIntern, adminResetPassword,
   listAllExpenses, updateExpenseStatus, listAllSupportTickets, updateSupportTicketStatus,
   listAllStandups, updateStandupStatus, listAllDeliverables, updateDeliverableStatus,
-  listAllAccessRequests, updateAccessRequestStatus
+  listAllAccessRequests, updateAccessRequestStatus, updateTaskByAdmin
 } from "@/lib/operations.functions";
 import { toast } from "sonner";
 import {
