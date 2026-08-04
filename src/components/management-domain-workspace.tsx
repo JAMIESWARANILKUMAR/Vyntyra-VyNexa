@@ -14,12 +14,9 @@ interface ManagementWorkspaceProps {
 }
 
 export function ManagementDomainWorkspace({ standups, deliverables, onApproveStandup, onApproveDeliverable }: ManagementWorkspaceProps) {
-  const [activeWorkloads] = useState([
-    { name: "Jami Eswar Anil Kumar", role: "Full Stack Lead", tasksAssigned: 5, bandwidth: 88, status: "Optimal" },
-    { name: "Niveditha M", role: "Co-Founder / Operations", tasksAssigned: 4, bandwidth: 75, status: "Optimal" },
-    { name: "Kashish Khilani", role: "Senior Advisor", tasksAssigned: 3, bandwidth: 60, status: "Available" },
-    { name: "Ananya Sharma", role: "Frontend Intern", tasksAssigned: 6, bandwidth: 96, status: "High Workload" },
-  ]);
+  const approvedStandups = standups.filter(s => s.status === "approved").length;
+  const approvedDeliverables = deliverables.filter(d => d.status === "approved").length;
+  const standupCompliance = standups.length > 0 ? Math.round((approvedStandups / standups.length) * 100) : 100;
 
   return (
     <div className="space-y-6">
@@ -31,26 +28,26 @@ export function ManagementDomainWorkspace({ standups, deliverables, onApproveSta
             <span className="text-xs font-semibold uppercase text-emerald-400">Milestone Velocity</span>
             <TrendingUp className="h-4 w-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-bold">94.2% On-Time</div>
-          <p className="text-xs text-slate-400">18/19 Q3 Project Milestones Delivered</p>
+          <div className="text-2xl font-bold">{standupCompliance}% Compliance</div>
+          <p className="text-xs text-slate-400">{approvedStandups}/{standups.length} Standup Logs Approved</p>
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900 text-white shadow-xl border border-slate-800 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-sky-400">Team Bandwidth Meter</span>
+            <span className="text-xs font-semibold uppercase text-sky-400">Deliverables Approved</span>
             <Users className="h-4 w-4 text-sky-400" />
           </div>
-          <div className="text-2xl font-bold">81% Allocated</div>
-          <p className="text-xs text-slate-400">Balanced Workload across 4 Domains</p>
+          <div className="text-2xl font-bold">{approvedDeliverables} Verified</div>
+          <p className="text-xs text-slate-400">Code & document submissions</p>
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900 text-white shadow-xl border border-slate-800 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-amber-400">PPO Conversion Radar</span>
+            <span className="text-xs font-semibold uppercase text-amber-400">Action Queue</span>
             <Award className="h-4 w-4 text-amber-400" />
           </div>
-          <div className="text-2xl font-bold">4 Top Interns</div>
-          <p className="text-xs text-slate-400">Recommended for Full-Time Offboarding</p>
+          <div className="text-2xl font-bold">{standups.filter(s => s.status === "pending").length} Pending Reviews</div>
+          <p className="text-xs text-slate-400">Daily Standups awaiting approval</p>
         </div>
       </div>
 

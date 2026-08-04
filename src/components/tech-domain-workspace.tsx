@@ -15,10 +15,7 @@ interface TechWorkspaceProps {
 export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechWorkspaceProps) {
   const [prUrl, setPrUrl] = useState("");
   const [repoBranch, setRepoBranch] = useState("main");
-  const [prLogs, setPrLogs] = useState<{ title: string; pr: string; status: string; comments: string }[]>([
-    { title: "feat(auth): Add 2FA WebAuthn Passkeys", pr: "https://github.com/vyntyra/core/pull/142", status: "Approved", comments: "LGTM! Excellent test coverage." },
-    { title: "refactor(db): Migrate RLS policies for leads", pr: "https://github.com/vyntyra/core/pull/139", status: "In Review", comments: "Please check policy index performance." },
-  ]);
+  const [prLogs, setPrLogs] = useState<{ title: string; pr: string; status: string; comments: string }[]>([]);
 
   const [bugOpen, setBugOpen] = useState(false);
   const [bugForm, setBugForm] = useState<{ title: string; description: string; severity: "Blocker" | "Major" | "Minor"; repo_url: string }>({

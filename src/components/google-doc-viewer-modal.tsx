@@ -19,12 +19,7 @@ export function GoogleDocViewerModal({ url, title, isOpen, onClose }: DocViewerM
 
   // Interactive Tabular Spreadsheet State
   const [columns] = useState<string[]>(["ID", "Task / Item Name", "Assigned To", "Status", "Progress", "Budget / Hours"]);
-  const [rows, setRows] = useState<string[][]>([
-    ["101", "Frontend UI Polish & Responsiveness", "Jami Eswar Anil Kumar", "In Progress", "85%", "12.5 hrs"],
-    ["102", "Supabase RLS Schema Updates", "Niveditha M", "Completed", "100%", "8.0 hrs"],
-    ["103", "VS Code IDE & Doc Integration", "Jami Eswar Anil Kumar", "In Progress", "90%", "6.0 hrs"],
-    ["104", "Enterprise LMS & PPO Automation", "Kashish Khilani", "Under Review", "95%", "15.0 hrs"],
-  ]);
+  const [rows, setRows] = useState<string[][]>([]);
 
   if (!isOpen) return null;
 
@@ -148,7 +143,14 @@ export function GoogleDocViewerModal({ url, title, isOpen, onClose }: DocViewerM
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
-                      {rows.map((row, ri) => (
+                      {rows.length === 0 ? (
+                        <tr>
+                          <td colSpan={columns.length + 2} className="p-8 text-center text-slate-400 text-xs">
+                            No spreadsheet rows added yet. Click "+ Add Row" above to insert data.
+                          </td>
+                        </tr>
+                      ) : (
+                        rows.map((row, ri) => (
                         <tr key={ri} className="hover:bg-slate-50 transition-colors">
                           <td className="p-3 font-mono text-center text-slate-400 font-bold border-r bg-slate-50/50">{ri + 1}</td>
                           {row.map((cell, ci) => (
@@ -170,7 +172,7 @@ export function GoogleDocViewerModal({ url, title, isOpen, onClose }: DocViewerM
                             </button>
                           </td>
                         </tr>
-                      ))}
+                      )))}
                     </tbody>
                   </table>
                 </div>

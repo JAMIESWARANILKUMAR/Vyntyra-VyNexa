@@ -28,11 +28,11 @@ export function NonTechDomainWorkspace({ leads, onAddLead, onUpdateLeadStatus, o
   });
 
   // Marketing Analytics State
-  const [campaigns] = useState([
-    { name: "Q3 Enterprise AI Lead Gen", platform: "LinkedIn Ads", ctr: "3.4%", impressions: "45,200", spend: "₹18,500", leads: 38 },
-    { name: "VyNexa Connect Launch Campaign", platform: "Google Search", ctr: "4.8%", impressions: "82,000", spend: "₹32,000", leads: 94 },
-    { name: "Intern ESS Suite Outreach", platform: "Meta Ads", ctr: "2.9%", impressions: "28,400", spend: "₹12,000", leads: 22 },
-  ]);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+
+  const totalPipelineVal = leads.reduce((sum, l) => sum + (Number(l.estimated_value) || 0), 0);
+  const conversionRate = leads.length > 0 ? Math.round((leads.filter(l => l.status === "Closed-Won").length / leads.length) * 100) : 0;
+  const pendingFollowups = leads.filter(l => l.follow_up_date).length;
 
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,10 +73,10 @@ export function NonTechDomainWorkspace({ leads, onAddLead, onUpdateLeadStatus, o
       {/* 1. CRM Funnel High-Contrast Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Leads Generated", val: leads.length || 154, sub: "+18% this week", color: "border-l-blue-500" },
-          { label: "Active Pipeline Value", val: "₹18,50,000", sub: "12 Open Proposals", color: "border-l-emerald-500" },
-          { label: "Conversion Rate", val: "28.4%", sub: "Above industry avg", color: "border-l-purple-500" },
-          { label: "Pending Follow-Ups", val: "8 Today", sub: "Scheduled callbacks", color: "border-l-amber-500" },
+          { label: "Total Leads Generated", val: leads.length, sub: "Live CRM database leads", color: "border-l-blue-500" },
+          { label: "Active Pipeline Value", val: `₹${totalPipelineVal.toLocaleString("en-IN")}`, sub: "Estimated Contract Size", color: "border-l-emerald-500" },
+          { label: "Conversion Rate", val: `${conversionRate}%`, sub: "Closed-Won percentage", color: "border-l-purple-500" },
+          { label: "Pending Follow-Ups", val: pendingFollowups, sub: "Scheduled callbacks", color: "border-l-amber-500" },
         ].map((m, idx) => (
           <div key={idx} className={`p-4 rounded-xl bg-white border border-slate-200 shadow-sm border-l-4 ${m.color}`}>
             <div className="text-xs font-semibold text-slate-500 uppercase">{m.label}</div>
