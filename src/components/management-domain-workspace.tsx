@@ -61,22 +61,25 @@ export function ManagementDomainWorkspace({ standups, deliverables, onApproveSta
           <p className="text-xs text-slate-500">Monitor active workloads to prevent burnout or idle time and reassign tasks dynamically.</p>
 
           <div className="space-y-3">
-            {activeWorkloads.map((w, idx) => (
-              <div key={idx} className="p-3.5 rounded-xl border bg-slate-50 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <div>
-                    <span className="font-bold text-slate-900 block">{w.name}</span>
-                    <span className="text-slate-500 text-[11px]">{w.role} • {w.tasksAssigned} Tasks</span>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded font-bold text-[10px] uppercase ${w.bandwidth > 90 ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}`}>
-                    {w.status} ({w.bandwidth}%)
-                  </span>
-                </div>
-                <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full ${w.bandwidth > 90 ? "bg-red-500" : "bg-emerald-500"}`} style={{ width: `${w.bandwidth}%` }} />
-                </div>
+            {standups.length === 0 ? (
+              <div className="p-6 text-center text-slate-400 text-xs bg-slate-50 rounded-xl">
+                No active intern standup logs recorded.
               </div>
-            ))}
+            ) : (
+              standups.map((s: any, idx: number) => (
+                <div key={idx} className="p-3.5 rounded-xl border bg-slate-50 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <div>
+                      <span className="font-bold text-slate-900 block">{s.profiles?.full_name || "Intern"}</span>
+                      <span className="text-slate-500 text-[11px]">Daily Log • {s.date}</span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded font-bold text-[10px] uppercase ${s.status === "approved" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
+                      {s.status}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
