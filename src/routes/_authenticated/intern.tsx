@@ -473,17 +473,28 @@ function InternDashboard() {
                       <div className="divide-y">
                         {resources.slice(0, 3).map((r: any) => {
                           const ri = RESOURCE_ICONS[r.type] || RESOURCE_ICONS.link;
+                          const isDocOrSheet = r.url?.includes("docs.google.com") || r.url?.includes(".xls") || r.url?.includes(".csv") || r.type === "document";
                           return (
-                            <div key={r.id} onClick={() => setViewingDoc({ url: r.url, title: r.title })}
-                              className="flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
-                              <div className={`h-9 w-9 rounded-lg border flex items-center justify-center shrink-0 ${ri.color}`}>{ri.icon}</div>
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium text-sm group-hover:text-emerald-600 transition-colors truncate">{r.title}</div>
-                                {r.description && <div className="text-xs text-slate-400 truncate">{r.description}</div>}
+                            <div key={r.id} className="flex items-center justify-between gap-3 p-4 hover:bg-slate-50 transition-colors group">
+                              <a href={r.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className={`h-9 w-9 rounded-lg border flex items-center justify-center shrink-0 ${ri.color}`}>{ri.icon}</div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-sm text-slate-800 group-hover:text-emerald-600 transition-colors truncate">{r.title}</div>
+                                  {r.description && <div className="text-xs text-slate-400 truncate">{r.description}</div>}
+                                </div>
+                              </a>
+                              <div className="flex items-center gap-2 shrink-0">
+                                {isDocOrSheet && (
+                                  <Button size="sm" variant="ghost" className="h-7 text-xs text-emerald-700 hover:bg-emerald-50 px-2" onClick={() => setViewingDoc({ url: r.url, title: r.title })}>
+                                    Inbuilt Viewer
+                                  </Button>
+                                )}
+                                <a href={r.url} target="_blank" rel="noopener noreferrer">
+                                  <Button size="sm" variant="outline" className="h-7 text-xs border-slate-200 text-slate-700 hover:bg-slate-100 gap-1">
+                                    Open Link <ExternalLink className="h-3 w-3" />
+                                  </Button>
+                                </a>
                               </div>
-                              <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50">
-                                View Doc / Sheet
-                              </Button>
                             </div>
                           );
                         })}
