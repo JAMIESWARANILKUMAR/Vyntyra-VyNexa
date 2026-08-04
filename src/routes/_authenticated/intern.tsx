@@ -141,12 +141,12 @@ function InternDashboard() {
 
   const TABS = [
     { id: "overview",       label: "Overview" },
-    { id: "onboarding",     label: "Onboarding Kit" },
-    { id: "lms",            label: "Learning & Skill Path" },
+    { id: "onboarding",     label: "Onboarding" },
+    { id: "lms",            label: "LMS & Skills" },
     { id: "kanban",         label: "Sprint Board" },
     { id: "standups",       label: `Standups (${standups.length})` },
     { id: "deliverables",   label: `Deliverables (${deliverables.length})` },
-    { id: "ppo",            label: "PPO & Certificates" },
+    { id: "ppo",            label: "PPO & Credentials" },
     { id: "tasks",          label: `Tasks (${pendingTasks.length})` },
     { id: "meetings",       label: "Meetings" },
     { id: "resources",      label: `Resources (${resources.length})` },
@@ -157,37 +157,60 @@ function InternDashboard() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <img src="/icon-512.png" alt="Vyntyra" className="h-8 w-auto" />
-            <div className="border-l border-slate-200 pl-3 hidden sm:block">
-              <div className="text-[10px] uppercase tracking-widest text-emerald-500 font-semibold">Intern Portal</div>
-              <div className="text-sm font-semibold text-slate-800 capitalize">{displayName}</div>
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-xs">
+        <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
+          
+          {/* Logo & User Info */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <img src="/icon-512.png" alt="Vyntyra" className="h-8 w-auto rounded-md shadow-xs" />
+            <div className="border-l border-slate-200 pl-2.5">
+              <div className="text-[10px] uppercase tracking-widest text-emerald-600 font-bold leading-none">Intern Portal</div>
+              <div className="text-xs sm:text-sm font-semibold text-slate-900 capitalize truncate max-w-[120px] sm:max-w-[200px]">{displayName}</div>
             </div>
           </div>
-          <nav className="hidden md:flex items-center gap-1">
+
+          {/* Desktop & Tablet Navigation */}
+          <nav className="hidden lg:flex items-center gap-1 overflow-x-auto py-1 scrollbar-none max-w-[65%]">
             {TABS.map((t) => (
-              <button key={t.id} onClick={() => setActiveTab(t.id)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${activeTab === t.id ? "bg-emerald-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"}`}>
+              <button 
+                key={t.id} 
+                onClick={() => setActiveTab(t.id)}
+                className={`shrink-0 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+                  activeTab === t.id 
+                    ? "bg-emerald-600 text-white shadow-xs" 
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                }`}
+              >
                 {t.label}
               </button>
             ))}
           </nav>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 hidden sm:flex">
-              <ProfileAvatar url={profile?.avatar_url} name={displayName} />
-              <div className="text-xs text-slate-500">{email}</div>
+
+          {/* User Profile & Sign Out */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2">
+              <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 sm:h-9 sm:w-9" />
+              <div className="text-xs text-slate-500 hidden xl:block truncate max-w-[160px]">{email}</div>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5 text-slate-600 hover:text-red-600">
-              <LogOut className="h-4 w-4" /><span className="hidden sm:inline">Sign Out</span>
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5 text-slate-600 hover:text-red-600 px-2 sm:px-3 text-xs">
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline font-medium">Sign Out</span>
             </Button>
           </div>
         </div>
-        <div className="md:hidden flex overflow-x-auto border-t border-slate-100 px-4 gap-1 py-1.5">
+
+        {/* Mobile / Smartphone Touch-Scrollable Navigation */}
+        <div className="lg:hidden flex items-center overflow-x-auto border-t border-slate-100 px-3 gap-1.5 py-2 scrollbar-none bg-slate-50/50">
           {TABS.map((t) => (
-            <button key={t.id} onClick={() => setActiveTab(t.id)}
-              className={`shrink-0 px-3 py-1 text-xs font-medium rounded-full transition-all ${activeTab === t.id ? "bg-emerald-600 text-white" : "text-slate-500 bg-slate-100"}`}>
+            <button 
+              key={t.id} 
+              onClick={() => setActiveTab(t.id)}
+              className={`shrink-0 px-3 py-1 text-xs font-semibold rounded-full transition-all whitespace-nowrap ${
+                activeTab === t.id 
+                  ? "bg-emerald-600 text-white shadow-xs" 
+                  : "text-slate-600 bg-white border border-slate-200 hover:bg-slate-100"
+              }`}
+            >
               {t.label}
             </button>
           ))}
