@@ -1192,3 +1192,112 @@ export const updateAccessRequestStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { success: true };
   });
+
+// ─── CRM Leads (Non-Tech Sales & Marketing) ─────────────────────
+export const listLeads = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+export const createLead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    client_name: z.string().min(1),
+    company_name: z.string().min(1),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+    lead_source: z.string().optional(),
+    status: z.enum(["New", "Attempted", "Connected", "Requirement Gathered", "Proposal Sent", "Closed-Won", "Closed-Lost"]).optional(),
+    project_scope: z.string().optional(),
+    estimated_value: z.number().optional(),
+    follow_up_date: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("leads").insert({
+      user_id: context.userId,
+      client_name: data.client_name,
+      company_name: data.company_name,
+      email: data.email || null,
+      phone: data.phone || null,
+      lead_source: data.lead_source || "Inbound Website",
+      status: data.status || "New",
+      project_scope: data.project_scope || null,
+      estimated_value: data.estimated_value ?? 0,
+      follow_up_date: data.follow_up_date || null,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const updateLeadStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    id: z.string().uuid(),
+    status: z.enum(["New", "Attempted", "Connected", "Requirement Gathered", "Proposal Sent", "Closed-Won", "Closed-Lost"]).optional(),
+    is_contacted: z.boolean().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const updatePayload: any = {};
+    if (data.status) updatePayload.status = data.status;
+    if (data.is_contacted !== undefined) updatePayload.is_contacted = data.is_contacted;
+    const { error } = await supabase.from("leads").update(updatePayload).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const deleteLead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase.from("leads").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Technical Bug & Ticket Log ─────────────────────────────────
+export const listBugs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from("bugs")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+export const createBug = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    title: z.string().min(1),
+    description: z.string().optional(),
+    severity: z.enum(["Blocker", "Major", "Minor"]).default("Major"),
+    repo_url: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("bugs").insert({
+      user_id: context.userId,
+      title: data.title,
+      description: data.description || null,
+      severity: data.severity,
+      status: "open",
+      repo_url: data.repo_url || null,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const updateBugStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["open", "in_progress", "resolved"]) }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase.from("bugs").update({ status: data.status }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });

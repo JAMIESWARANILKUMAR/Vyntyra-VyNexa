@@ -21,12 +21,17 @@ import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import { VSCodeIDEWindow } from "@/components/vscode-ide-window";
+import { TechDomainWorkspace } from "@/components/tech-domain-workspace";
+import { NonTechDomainWorkspace } from "@/components/non-tech-domain-workspace";
+import { ManagementDomainWorkspace } from "@/components/management-domain-workspace";
 import { 
   listTasks, listMeetings, listSchedules, listAnnouncements, listResources, 
   listNotes, createNote, deleteNote, createFeedback, claimPoolTask,
   listMyStandups, createStandup, listMyDeliverables, createDeliverable,
   listMyAccessRequests, createAccessRequest, getPresignedUrl,
-  acceptTask, updateTaskExecution
+  acceptTask, updateTaskExecution,
+  listLeads, createLead, updateLeadStatus, deleteLead,
+  listBugs, createBug, updateBugStatus
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
@@ -78,6 +83,19 @@ function InternDashboard() {
   const doUpdateTaskExecution = useServerFn(updateTaskExecution);
 
   const [selectedTaskWorkspace, setSelectedTaskWorkspace] = useState<any>(null);
+  const [selectedDomain, setSelectedDomain] = useState<"tech" | "non_tech" | "management">("tech");
+
+  const fetchLeads = useServerFn(listLeads);
+  const doCreateLead = useServerFn(createLead);
+  const doUpdateLeadStatus = useServerFn(updateLeadStatus);
+  const doDeleteLead = useServerFn(deleteLead);
+
+  const fetchBugs = useServerFn(listBugs);
+  const doCreateBug = useServerFn(createBug);
+  const doUpdateBugStatus = useServerFn(updateBugStatus);
+
+  const leadsQ = useQuery({ queryKey: ["my-leads"], queryFn: () => fetchLeads() });
+  const bugsQ = useQuery({ queryKey: ["my-bugs"], queryFn: () => fetchBugs() });
 
   const tasksQ = useQuery({ queryKey: ["my-tasks"], queryFn: () => fetchTasks() });
   const meetingsQ = useQuery({ queryKey: ["my-meetings"], queryFn: () => fetchMeetings() });
@@ -291,10 +309,94 @@ function InternDashboard() {
                   <div className="h-2 bg-white/20 rounded-full overflow-hidden">
                     <div className="h-full bg-white rounded-full transition-all duration-700" style={{ width: `${progress}%` }} />
                   </div>
-                  <div className="text-xs opacity-60 mt-1">{completedTasks.length}/{myTasks.length} tasks completed</div>
                 </div>
               )}
             </div>
+
+            {/* Domain Workspace Selector Strip */}
+            <div className="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between gap-3 shadow-xs flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 pl-2">Domain Workspace:</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setSelectedDomain("tech")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                    selectedDomain === "tech"
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  <Cpu className="h-3.5 w-3.5 text-emerald-400" /> 1. Tech & Engineering
+                </button>
+                <button
+                  onClick={() => setSelectedDomain("non_tech")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                    selectedDomain === "non_tech"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  <Users className="h-3.5 w-3.5 text-blue-200" /> 2. Non-Tech (CRM & Sales)
+                </button>
+                <button
+                  onClick={() => setSelectedDomain("management")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                    selectedDomain === "management"
+                      ? "bg-emerald-700 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  <Shield className="h-3.5 w-3.5 text-emerald-200" /> 3. Management & Operations
+                </button>
+              </div>
+            </div>
+
+            {/* Render Selected Domain Workspace */}
+            {selectedDomain === "tech" && (
+              <TechDomainWorkspace
+                bugs={bugsQ.data || []}
+                onAddBug={async (title, description, severity, repo_url) => {
+                  await doCreateBug({ data: { title, description, severity, repo_url } });
+                  bugsQ.refetch();
+                }}
+                onUpdateBugStatus={async (id, status) => {
+                  await doUpdateBugStatus({ data: { id, status } });
+                  bugsQ.refetch();
+                }}
+              />
+            )}
+
+            {selectedDomain === "non_tech" && (
+              <NonTechDomainWorkspace
+                leads={leadsQ.data || []}
+                onAddLead={async (lead) => {
+                  await doCreateLead({ data: lead });
+                  leadsQ.refetch();
+                }}
+                onUpdateLeadStatus={async (id, status, is_contacted) => {
+                  await doUpdateLeadStatus({ data: { id, status, is_contacted } });
+                  leadsQ.refetch();
+                }}
+                onDeleteLead={async (id) => {
+                  await doDeleteLead({ data: { id } });
+                  leadsQ.refetch();
+                }}
+              />
+            )}
+
+            {selectedDomain === "management" && (
+              <ManagementDomainWorkspace
+                standups={standups}
+                deliverables={deliverables}
+                onApproveStandup={async (id) => {
+                  toast.success("Standup approved");
+                }}
+                onApproveDeliverable={async (id) => {
+                  toast.success("Deliverable approved");
+                }}
+              />
+            )}
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
