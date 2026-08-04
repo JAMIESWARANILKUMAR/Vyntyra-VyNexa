@@ -21,7 +21,9 @@ import {
   getPresignedUrl, updateUserProfile, listFeedbacks, markFeedbackRead, listKudos,
   listAllLeaves, updateLeaveStatus, listAllAttendance, listAllPayouts, createPayout,
   assignIntern, removeIntern, adminResetPassword,
-  listAllExpenses, updateExpenseStatus, listAllSupportTickets, updateSupportTicketStatus
+  listAllExpenses, updateExpenseStatus, listAllSupportTickets, updateSupportTicketStatus,
+  listAllStandups, updateStandupStatus, listAllDeliverables, updateDeliverableStatus,
+  listAllAccessRequests, updateAccessRequestStatus
 } from "@/lib/operations.functions";
 import { toast } from "sonner";
 import {
@@ -161,6 +163,17 @@ function OperationsDashboard() {
   const feedbacksQ = useQuery({ queryKey: ["feedbacks"], queryFn: () => fetchFeedbacks() });
   const expensesQ = useQuery({ queryKey: ["admin-expenses"], queryFn: () => fetchExpenses() });
   const ticketsQ = useQuery({ queryKey: ["admin-tickets"], queryFn: () => fetchTickets() });
+  const fetchAllStandups = useServerFn(listAllStandups);
+  const doUpdateStandupStatus = useServerFn(updateStandupStatus);
+  const fetchAllDeliverables = useServerFn(listAllDeliverables);
+  const doUpdateDeliverableStatus = useServerFn(updateDeliverableStatus);
+  const fetchAllAccessRequests = useServerFn(listAllAccessRequests);
+  const doUpdateAccessRequestStatus = useServerFn(updateAccessRequestStatus);
+
+  const standupsAdminQ = useQuery({ queryKey: ["admin-standups"], queryFn: () => fetchAllStandups() });
+  const deliverablesAdminQ = useQuery({ queryKey: ["admin-deliverables"], queryFn: () => fetchAllDeliverables() });
+  const accessRequestsAdminQ = useQuery({ queryKey: ["admin-access-requests"], queryFn: () => fetchAllAccessRequests() });
+
   const kudosQ = useQuery({ queryKey: ["admin-kudos"], queryFn: () => fetchKudos() });
 
   const leavesQ = useQuery({ queryKey: ["admin-leaves"], queryFn: () => fetchAllLeaves() });
@@ -1305,7 +1318,111 @@ function OperationsDashboard() {
             )}
           </div>
         </section>
+        
+        {/* ── Manager & Mentor Oversight Dashboard ── */}
+        <section className="rounded-xl border bg-white shadow-sm overflow-hidden mt-6">
+          <div className="px-5 py-4 border-b flex items-center justify-between bg-slate-900 text-white">
+            <h2 className="font-semibold text-sm flex items-center gap-2"><GraduationCap className="h-4 w-4 text-emerald-400" /> Manager & Mentor Oversight Dashboard</h2>
+            <span className="text-xs text-slate-400">Multi-Intern Batch Approvals & Performance Oversight</span>
+          </div>
+          
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Daily Standups Approval */}
+              <div className="rounded-xl border bg-slate-50 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-blue-600" /> Daily Standups Review</h3>
+                  <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">{(standupsAdminQ.data || []).length} Logs</span>
+                </div>
+                <div className="divide-y max-h-[220px] overflow-y-auto bg-white rounded-lg border p-2 text-xs">
+                  {(standupsAdminQ.data || []).length === 0 ? (
+                    <div className="p-4 text-center text-slate-400">No standup logs to review</div>
+                  ) : (
+                    (standupsAdminQ.data as any[]).slice(0, 5).map((s: any) => (
+                      <div key={s.id} className="py-2 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-800 truncate">{s.profiles?.full_name || "Intern"}</div>
+                          <div className="text-[10px] text-slate-400 truncate">{s.did_today}</div>
+                        </div>
+                        {s.status !== 'approved' ? (
+                          <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={async () => {
+                            await doUpdateStandupStatus({ data: { id: s.id, status: 'approved' } });
+                            toast.success("Standup approved");
+                            qc.invalidateQueries({ queryKey: ["admin-standups"] });
+                          }}>Approve</Button>
+                        ) : (
+                          <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">Approved</span>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
 
+              {/* Deliverable Review */}
+              <div className="rounded-xl border bg-slate-50 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-purple-600" /> Deliverables Review</h3>
+                  <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded-full">{(deliverablesAdminQ.data || []).length} Submissions</span>
+                </div>
+                <div className="divide-y max-h-[220px] overflow-y-auto bg-white rounded-lg border p-2 text-xs">
+                  {(deliverablesAdminQ.data || []).length === 0 ? (
+                    <div className="p-4 text-center text-slate-400">No deliverables to review</div>
+                  ) : (
+                    (deliverablesAdminQ.data as any[]).slice(0, 5).map((d: any) => (
+                      <div key={d.id} className="py-2 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-800 truncate">{d.title}</div>
+                          <div className="text-[10px] text-slate-400 truncate">{d.profiles?.full_name || "Intern"}</div>
+                        </div>
+                        {d.status !== 'approved' ? (
+                          <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-purple-600 border-purple-200 hover:bg-purple-50" onClick={async () => {
+                            await doUpdateDeliverableStatus({ data: { id: d.id, status: 'approved', feedback: 'Great work! Approved by Manager.' } });
+                            toast.success("Deliverable approved");
+                            qc.invalidateQueries({ queryKey: ["admin-deliverables"] });
+                          }}>Approve</Button>
+                        ) : (
+                          <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">Approved</span>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Tooling Access Provisioning */}
+              <div className="rounded-xl border bg-slate-50 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-emerald-600" /> Tooling & Access Requests</h3>
+                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">{(accessRequestsAdminQ.data || []).length} Requests</span>
+                </div>
+                <div className="divide-y max-h-[220px] overflow-y-auto bg-white rounded-lg border p-2 text-xs">
+                  {(accessRequestsAdminQ.data || []).length === 0 ? (
+                    <div className="p-4 text-center text-slate-400">No tooling access requests</div>
+                  ) : (
+                    (accessRequestsAdminQ.data as any[]).slice(0, 5).map((a: any) => (
+                      <div key={a.id} className="py-2 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-800 truncate">{a.tool_name}</div>
+                          <div className="text-[10px] text-slate-400 truncate">{a.profiles?.full_name || "Intern"}</div>
+                        </div>
+                        {a.status !== 'provisioned' ? (
+                          <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={async () => {
+                            await doUpdateAccessRequestStatus({ data: { id: a.id, status: 'provisioned' } });
+                            toast.success("Access provisioned");
+                            qc.invalidateQueries({ queryKey: ["admin-access-requests"] });
+                          }}>Provision</Button>
+                        ) : (
+                          <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">Provisioned</span>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
       
       {/* ── User Profile Drawer / Dialog ── */}

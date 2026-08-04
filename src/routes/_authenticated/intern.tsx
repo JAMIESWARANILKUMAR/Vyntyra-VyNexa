@@ -5,7 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   GraduationCap, ClipboardList, Clock, Mail, Bell, LogOut, Loader2,
   CheckCircle2, Video, CalendarDays, User, BookOpen, Link2, FileText,
-  Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin
+  Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
+  ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
+  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -17,7 +19,12 @@ import { MeetingsSection } from "@/components/meetings-section";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
 import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
-import { listTasks, listMeetings, listSchedules, listAnnouncements, listResources, listNotes, createNote, deleteNote, createFeedback, claimPoolTask } from "@/lib/operations.functions";
+import { 
+  listTasks, listMeetings, listSchedules, listAnnouncements, listResources, 
+  listNotes, createNote, deleteNote, createFeedback, claimPoolTask,
+  listMyStandups, createStandup, listMyDeliverables, createDeliverable,
+  listMyAccessRequests, createAccessRequest, getPresignedUrl
+} from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
   head: () => ({ meta: [{ title: "Intern Dashboard — Vyntyra" }] }),
@@ -111,12 +118,38 @@ function InternDashboard() {
     qc.invalidateQueries({ queryKey: ["my-tasks"] });
   }
 
+  const fetchMyStandups = useServerFn(listMyStandups);
+  const doCreateStandup = useServerFn(createStandup);
+  const fetchMyDeliverables = useServerFn(listMyDeliverables);
+  const doCreateDeliverable = useServerFn(createDeliverable);
+  const fetchMyAccessRequests = useServerFn(listMyAccessRequests);
+  const doCreateAccessRequest = useServerFn(createAccessRequest);
+
+  const standupsQ = useQuery({ queryKey: ["my-standups"], queryFn: () => fetchMyStandups() });
+  const deliverablesQ = useQuery({ queryKey: ["my-deliverables"], queryFn: () => fetchMyDeliverables() });
+  const accessRequestsQ = useQuery({ queryKey: ["my-access-requests"], queryFn: () => fetchMyAccessRequests() });
+
+  const [standupForm, setStandupForm] = useState({ did_today: "", will_do_tomorrow: "", blockers: "" });
+  const [deliverableForm, setDeliverableForm] = useState({ title: "", submission_url: "", notes: "", task_id: "" });
+  const [accessRequestForm, setAccessRequestForm] = useState({ tool_name: "", reason: "" });
+  const [clockedIn, setClockedIn] = useState(false);
+  const [clockTime, setClockTime] = useState<string | null>(null);
+
+  const standups: any[] = standupsQ.data || [];
+  const deliverables: any[] = deliverablesQ.data || [];
+  const accessRequests: any[] = accessRequestsQ.data || [];
+
   const TABS = [
     { id: "overview",       label: "Overview" },
+    { id: "onboarding",     label: "Onboarding Kit" },
+    { id: "lms",            label: "Learning & Skill Path" },
+    { id: "kanban",         label: "Sprint Board" },
+    { id: "standups",       label: `Standups (${standups.length})` },
+    { id: "deliverables",   label: `Deliverables (${deliverables.length})` },
+    { id: "ppo",            label: "PPO & Certificates" },
     { id: "tasks",          label: `Tasks (${pendingTasks.length})` },
     { id: "meetings",       label: "Meetings" },
     { id: "resources",      label: `Resources (${resources.length})` },
-    { id: "announcements",  label: `News (${announcements.length})` },
     { id: "notes",          label: "Notes" },
     { id: "feedback",       label: "Feedback" },
   ] as const;
@@ -319,6 +352,350 @@ function InternDashboard() {
             </div>
           </>
         )}
+
+                {/* ─── ONBOARDING & PRE-BOARDING HUB ─── */}
+        {activeTab === "onboarding" && (
+          <div className="space-y-6">
+            <div className="rounded-xl border bg-white p-6 shadow-sm">
+              <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2 mb-2">
+                <Compass className="h-5 w-5 text-emerald-600" /> Welcome & Orientation Roadmap (Week 1 to Week 8)
+              </h2>
+              <p className="text-xs text-slate-500 mb-6">Follow your structured orientation kit and weekly milestones for a seamless onboarding journey.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {[
+                  { week: "Week 1", title: "Orientation & Setup", desc: "Complete NDA/NOC uploads, dev env setup & mentor intro.", done: true },
+                  { week: "Week 2", title: "Tech Stack & Architecture", desc: "Complete LMS modules and build first micro-feature.", done: true },
+                  { week: "Week 4", title: "Mid-Term Sprint & Review", desc: "Mid-term appraisal scorecard & project demo.", done: false },
+                  { week: "Week 8", title: "Final Showcase & PPO", desc: "Deliverable showcase, exit survey & verifiable certificate.", done: false }
+                ].map((w, idx) => (
+                  <div key={idx} className={`p-4 rounded-xl border ${w.done ? 'bg-emerald-50/50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded ${w.done ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}`}>{w.week}</span>
+                      {w.done ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Clock className="h-4 w-4 text-slate-400" />}
+                    </div>
+                    <div className="font-semibold text-sm text-slate-900">{w.title}</div>
+                    <div className="text-xs text-slate-500 mt-1">{w.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Compliance & Legal Uploads */}
+              <div className="rounded-xl border bg-white p-6 shadow-sm space-y-4">
+                <h3 className="font-semibold text-sm flex items-center gap-2 text-slate-800"><FileCheck className="h-4 w-4 text-blue-600" /> Compliance & Legal Uploads</h3>
+                <p className="text-xs text-slate-500">Upload your NOC, Student ID proof, signed NDA, and bank passbook proof.</p>
+                <div className="space-y-3">
+                  {[
+                    { label: "University NOC (No Objection Certificate)", status: "Uploaded" },
+                    { label: "Student Identity Card / College Proof", status: "Uploaded" },
+                    { label: "Signed NDA & Code of Conduct", status: "Pending Upload" },
+                    { label: "Bank Account Passbook / Cancelled Cheque", status: "Uploaded" }
+                  ].map((doc, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 rounded-lg border bg-slate-50 text-xs">
+                      <span className="font-medium text-slate-700">{doc.label}</span>
+                      <span className={`font-bold px-2 py-0.5 rounded ${doc.status === 'Uploaded' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{doc.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tooling & Credentials Tracker */}
+              <div className="rounded-xl border bg-white p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-sm flex items-center gap-2 text-slate-800"><ShieldCheck className="h-4 w-4 text-purple-600" /> Tooling & Access Tracker</h3>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => {
+                    const tool = prompt("Enter requested software/tool name (e.g. Figma, GitHub, AWS):");
+                    if (tool) doCreateAccessRequest({ data: { tool_name: tool } }).then(() => { toast.success("Access requested!"); qc.invalidateQueries({ queryKey: ["my-access-requests"] }); });
+                  }}>Request Access</Button>
+                </div>
+                <div className="space-y-2 max-h-[220px] overflow-y-auto">
+                  {accessRequests.length === 0 ? (
+                    <div className="text-xs text-slate-400 p-4 text-center">No active access requests. Click above to request software credentials.</div>
+                  ) : (
+                    accessRequests.map((req: any) => (
+                      <div key={req.id} className="flex items-center justify-between p-3 rounded-lg border bg-slate-50 text-xs">
+                        <span className="font-semibold text-slate-800">{req.tool_name}</span>
+                        <span className={`font-bold uppercase text-[10px] px-2 py-0.5 rounded ${req.status === 'provisioned' ? 'bg-emerald-100 text-emerald-800' : req.status === 'approved' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>{req.status}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── LEARNING & SKILL PATH (LMS) ─── */}
+        {activeTab === "lms" && (
+          <div className="space-y-6">
+            <div className="rounded-xl border bg-white p-6 shadow-sm">
+              <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2 mb-1">
+                <BookMarked className="h-5 w-5 text-emerald-600" /> Structured Curriculum & Certification Path
+              </h2>
+              <p className="text-xs text-slate-500 mb-6">Complete mandatory training modules to earn digital skill badges.</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { title: "Vyntyra Architecture 101", category: "Core Engineering", progress: 100, badge: "Architecture Specialist" },
+                  { title: "Git, CI/CD & Code Review", category: "DevOps & Workflow", progress: 80, badge: "Git Pro" },
+                  { title: "Enterprise AI Infrastructure", category: "Machine Learning", progress: 40, badge: "AI Practitioner" }
+                ].map((m, idx) => (
+                  <div key={idx} className="rounded-xl border p-5 bg-white hover:shadow-md transition-all flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] uppercase font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold">{m.category}</span>
+                      <h3 className="font-bold text-sm text-slate-900 mt-2">{m.title}</h3>
+                      <div className="mt-4">
+                        <div className="flex justify-between text-xs text-slate-500 mb-1">
+                          <span>Progress</span>
+                          <span className="font-bold">{m.progress}%</span>
+                        </div>
+                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${m.progress}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-5 pt-3 border-t flex items-center justify-between text-xs">
+                      <span className="text-amber-700 font-semibold flex items-center gap-1"><Award className="h-3.5 w-3.5 text-amber-500" /> {m.badge}</span>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs text-emerald-600">Resume Module</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── SPRINT KANBAN BOARD ─── */}
+        {activeTab === "kanban" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2">
+                <Layers className="h-5 w-5 text-blue-600" /> Sprint Kanban Board
+              </h2>
+              <div className="text-xs text-slate-500 font-medium">Click arrows to move tasks across sprint status columns</div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[
+                { title: "To Do", status: "pending", bg: "bg-slate-100 border-slate-200" },
+                { title: "In Progress", status: "in_progress", bg: "bg-blue-50 border-blue-200" },
+                { title: "In Review", status: "blocked", bg: "bg-amber-50 border-amber-200" },
+                { title: "Completed", status: "completed", bg: "bg-emerald-50 border-emerald-200" }
+              ].map((col) => {
+                const colTasks = myTasks.filter((t: any) => t.status === col.status);
+                return (
+                  <div key={col.status} className={`rounded-xl border p-4 ${col.bg} min-h-[400px] flex flex-col`}>
+                    <div className="font-bold text-xs uppercase tracking-wider text-slate-700 mb-3 flex items-center justify-between">
+                      <span>{col.title}</span>
+                      <span className="bg-white/80 px-2 py-0.5 rounded-full text-slate-800">{colTasks.length}</span>
+                    </div>
+                    <div className="space-y-3 flex-1 overflow-y-auto">
+                      {colTasks.map((t: any) => (
+                        <div key={t.id} className="p-3 bg-white rounded-lg border shadow-sm space-y-2">
+                          <div className="font-semibold text-xs text-slate-900">{t.title}</div>
+                          {t.description && <p className="text-[11px] text-slate-500 line-clamp-2">{t.description}</p>}
+                          <div className="flex items-center justify-between pt-2 border-t text-[10px]">
+                            <span className="font-bold text-slate-600">{t.priority || "Medium"}</span>
+                            <div className="flex gap-1">
+                              {col.status !== 'pending' && <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-slate-400 hover:text-slate-700" onClick={() => markTaskStatus(t.id, 'pending')}>←</Button>}
+                              {col.status !== 'in_progress' && <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-blue-600 hover:bg-blue-50" onClick={() => markTaskStatus(t.id, 'in_progress')}>→</Button>}
+                              {col.status !== 'completed' && <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-emerald-600 hover:bg-emerald-50" onClick={() => markTaskStatus(t.id, 'completed')}>✓</Button>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ─── DAILY STANDUPS ─── */}
+        {activeTab === "standups" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Standup Form */}
+              <div className="lg:col-span-1 rounded-xl border bg-white p-6 shadow-sm space-y-4">
+                <h2 className="font-semibold text-sm flex items-center gap-2 text-slate-800"><Send className="h-4 w-4 text-emerald-600" /> Submit Daily Standup Log</h2>
+                
+                {/* Clock-in Button */}
+                <div className="p-4 rounded-xl border bg-emerald-50/50 flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-slate-800">Shift Clock-In</div>
+                    <div className="text-[10px] text-slate-500">{clockedIn ? `Clocked in at ${clockTime}` : 'Not clocked in today'}</div>
+                  </div>
+                  <Button size="sm" className={clockedIn ? "bg-red-600 hover:bg-red-700 text-white" : "bg-emerald-600 hover:bg-emerald-700 text-white"} onClick={() => {
+                    setClockedIn(!clockedIn);
+                    setClockTime(new Date().toLocaleTimeString());
+                    toast.success(clockedIn ? "Clocked out!" : "Clocked in for today's shift!");
+                  }}>
+                    {clockedIn ? 'Clock Out' : 'Clock In'}
+                  </Button>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="font-semibold text-slate-700 mb-1 block">What I did today</label>
+                    <textarea className="w-full rounded-md border p-2.5" rows={3} value={standupForm.did_today} onChange={e => setStandupForm({...standupForm, did_today: e.target.value})} placeholder="Tasks completed today..." />
+                  </div>
+                  <div>
+                    <label className="font-semibold text-slate-700 mb-1 block">What I'll do tomorrow</label>
+                    <textarea className="w-full rounded-md border p-2.5" rows={2} value={standupForm.will_do_tomorrow} onChange={e => setStandupForm({...standupForm, will_do_tomorrow: e.target.value})} placeholder="Planned tasks for tomorrow..." />
+                  </div>
+                  <div>
+                    <label className="font-semibold text-slate-700 mb-1 block">Blockers (optional)</label>
+                    <input className="w-full rounded-md border p-2 text-xs" value={standupForm.blockers} onChange={e => setStandupForm({...standupForm, blockers: e.target.value})} placeholder="Any roadblocks faced..." />
+                  </div>
+                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={async () => {
+                    if (!standupForm.did_today || !standupForm.will_do_tomorrow) { toast.error("Please fill required standup fields"); return; }
+                    try {
+                      await doCreateStandup({ data: standupForm });
+                      setStandupForm({ did_today: "", will_do_tomorrow: "", blockers: "" });
+                      toast.success("Daily standup logged!");
+                      qc.invalidateQueries({ queryKey: ["my-standups"] });
+                    } catch (err) { toast.error("Failed to log standup"); }
+                  }}>Submit Standup</Button>
+                </div>
+              </div>
+
+              {/* Standup History */}
+              <div className="lg:col-span-2 rounded-xl border bg-white p-6 shadow-sm space-y-4">
+                <h2 className="font-semibold text-sm text-slate-800">My Standup Log History</h2>
+                <div className="divide-y max-h-[480px] overflow-y-auto">
+                  {standups.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 text-xs">No daily standups submitted yet. Fill out the log on the left.</div>
+                  ) : (
+                    standups.map((st: any) => (
+                      <div key={st.id} className="py-3 space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-800">{st.date}</span>
+                          <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase ${st.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{st.status}</span>
+                        </div>
+                        <p className="text-xs text-slate-700"><strong>Did Today:</strong> {st.did_today}</p>
+                        <p className="text-xs text-slate-500"><strong>Tomorrow:</strong> {st.will_do_tomorrow}</p>
+                        {st.blockers && <p className="text-xs text-red-500"><strong>Blockers:</strong> {st.blockers}</p>}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── DELIVERABLES & CODE SUBMISSIONS ─── */}
+        {activeTab === "deliverables" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Submission Form */}
+              <div className="lg:col-span-1 rounded-xl border bg-white p-6 shadow-sm space-y-4">
+                <h2 className="font-semibold text-sm flex items-center gap-2 text-slate-800"><Upload className="h-4 w-4 text-purple-600" /> Submit Assignment / Deliverable</h2>
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="font-semibold text-slate-700 mb-1 block">Deliverable Title</label>
+                    <input className="w-full rounded-md border p-2" value={deliverableForm.title} onChange={e => setDeliverableForm({...deliverableForm, title: e.target.value})} placeholder="e.g. Search Indexer Microservice PR" />
+                  </div>
+                  <div>
+                    <label className="font-semibold text-slate-700 mb-1 block">Submission URL (GitHub PR / Figma / Docs)</label>
+                    <input className="w-full rounded-md border p-2" value={deliverableForm.submission_url} onChange={e => setDeliverableForm({...deliverableForm, submission_url: e.target.value})} placeholder="https://github.com/... or https://figma.com/..." />
+                  </div>
+                  <div>
+                    <label className="font-semibold text-slate-700 mb-1 block">Submission Notes</label>
+                    <textarea className="w-full rounded-md border p-2" rows={3} value={deliverableForm.notes} onChange={e => setDeliverableForm({...deliverableForm, notes: e.target.value})} placeholder="Key highlights & test results..." />
+                  </div>
+                  <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white" onClick={async () => {
+                    if (!deliverableForm.title || !deliverableForm.submission_url) { toast.error("Title and URL required"); return; }
+                    try {
+                      await doCreateDeliverable({ data: deliverableForm });
+                      setDeliverableForm({ title: "", submission_url: "", notes: "", task_id: "" });
+                      toast.success("Deliverable submitted for review!");
+                      qc.invalidateQueries({ queryKey: ["my-deliverables"] });
+                    } catch (err) { toast.error("Failed to submit deliverable"); }
+                  }}>Submit for Review</Button>
+                </div>
+              </div>
+
+              {/* Submissions Feed */}
+              <div className="lg:col-span-2 rounded-xl border bg-white p-6 shadow-sm space-y-4">
+                <h2 className="font-semibold text-sm text-slate-800">Submitted Deliverables & Mentor Feedback</h2>
+                <div className="divide-y max-h-[480px] overflow-y-auto">
+                  {deliverables.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 text-xs">No deliverables submitted yet.</div>
+                  ) : (
+                    deliverables.map((del: any) => (
+                      <div key={del.id} className="py-4 space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-900">{del.title}</span>
+                          <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${del.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : del.status === 'under_review' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>{del.status}</span>
+                        </div>
+                        <a href={del.submission_url} target="_blank" rel="noreferrer" className="text-xs text-purple-600 hover:underline inline-flex items-center gap-1"><ExternalLink className="h-3 w-3" /> {del.submission_url}</a>
+                        {del.notes && <p className="text-xs text-slate-600">{del.notes}</p>}
+                        {del.feedback && <p className="text-xs text-emerald-700 bg-emerald-50 p-2 rounded border border-emerald-100 mt-2"><strong>Mentor Feedback:</strong> {del.feedback}</p>}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── PPO & CERTIFICATES ─── */}
+        {activeTab === "ppo" && (
+          <div className="space-y-6">
+            <div className="rounded-xl border bg-white p-6 shadow-sm">
+              <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2 mb-2">
+                <Sparkles className="h-5 w-5 text-amber-500" /> Pre-Employment Offer (PPO) & Automated Certificates
+              </h2>
+              <p className="text-xs text-slate-500 mb-6">Track your PPO conversion metrics and download official verifiable internship certificates upon offboarding.</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* PPO Status */}
+                <div className="p-5 rounded-xl border bg-amber-50/50 border-amber-200 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs uppercase text-amber-800">PPO Conversion Score</span>
+                    <span className="font-mono font-bold text-base text-amber-900">88 / 100</span>
+                  </div>
+                  <div className="h-3 bg-amber-200/60 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-500 rounded-full" style={{ width: '88%' }} />
+                  </div>
+                  <div className="text-xs text-amber-800 space-y-1">
+                    <div>✓ Task Completion Rate &gt; 85%</div>
+                    <div>✓ Daily Standup Compliance &gt; 90%</div>
+                    <div>✓ Mid-Term Appraisal Grade: Exceeds Expectations</div>
+                  </div>
+                </div>
+
+                {/* Certificates Engine */}
+                <div className="p-5 rounded-xl border bg-emerald-50/50 border-emerald-200 space-y-4">
+                  <span className="font-bold text-xs uppercase text-emerald-800 block">Verifiable Credentials</span>
+                  <div className="space-y-2">
+                    {[
+                      { name: "Internship Completion Certificate", code: "VY-INT-2026-88" },
+                      { name: "Letter of Recommendation (LOR)", code: "VY-LOR-2026-92" },
+                      { name: "Official Experience Certificate", code: "VY-EXP-2026-04" }
+                    ].map((c, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2.5 rounded bg-white border text-xs">
+                        <div>
+                          <div className="font-semibold text-slate-800">{c.name}</div>
+                          <div className="text-[10px] font-mono text-slate-400">{c.code}</div>
+                        </div>
+                        <Button size="sm" variant="outline" className="h-7 text-xs text-emerald-700 border-emerald-200 hover:bg-emerald-50" onClick={() => toast.success(`Downloading ${c.name}...`)}>
+                          <Download className="h-3 w-3 mr-1" /> PDF
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
 
         {/* ─── TASKS ─── */}
         {activeTab === "tasks" && (

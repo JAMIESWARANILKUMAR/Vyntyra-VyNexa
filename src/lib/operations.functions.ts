@@ -957,3 +957,144 @@ export const updateSupportTicketStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { success: true };
   });
+
+// ─── Intern Daily Standups ──────────────────────────────────────
+export const listMyStandups = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("intern_standups")
+      .select("*")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+export const createStandup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ did_today: z.string().min(1), will_do_tomorrow: z.string().min(1), blockers: z.string().optional() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("intern_standups").insert({
+      user_id: context.userId,
+      did_today: data.did_today,
+      will_do_tomorrow: data.will_do_tomorrow,
+      blockers: data.blockers || null,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const listAllStandups = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("intern_standups")
+      .select("*, profiles(full_name, email)")
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+export const updateStandupStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["pending", "approved", "flagged"]) }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase.from("intern_standups").update({ status: data.status }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Intern Deliverables ────────────────────────────────────────
+export const listMyDeliverables = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("intern_deliverables")
+      .select("*")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+export const createDeliverable = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ task_id: z.string().optional(), title: z.string().min(1), submission_url: z.string().min(1), notes: z.string().optional() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("intern_deliverables").insert({
+      user_id: context.userId,
+      task_id: data.task_id || null,
+      title: data.title,
+      submission_url: data.submission_url,
+      notes: data.notes || null,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const listAllDeliverables = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from("intern_deliverables")
+      .select("*, profiles(full_name, email)")
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+export const updateDeliverableStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["submitted", "under_review", "approved", "revision_requested"]), feedback: z.string().optional() }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase.from("intern_deliverables").update({ status: data.status, feedback: data.feedback || null }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Intern Tooling & Access Requests ───────────────────────────
+export const listMyAccessRequests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("intern_access_requests")
+      .select("*")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+export const createAccessRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ tool_name: z.string().min(1), reason: z.string().optional() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("intern_access_requests").insert({
+      user_id: context.userId,
+      tool_name: data.tool_name,
+      reason: data.reason || null,
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const listAllAccessRequests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from("intern_access_requests")
+      .select("*, profiles(full_name, email)")
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+export const updateAccessRequestStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["pending", "approved", "provisioned", "rejected"]) }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase.from("intern_access_requests").update({ status: data.status }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
