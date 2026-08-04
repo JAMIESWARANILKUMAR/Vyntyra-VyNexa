@@ -20,7 +20,6 @@ import { FloatingAppsPanel } from "@/components/floating-apps-panel";
 import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
-import { VSCodeIDEWindow } from "@/components/vscode-ide-window";
 import { TechDomainWorkspace } from "@/components/tech-domain-workspace";
 import { NonTechDomainWorkspace } from "@/components/non-tech-domain-workspace";
 import { ManagementDomainWorkspace } from "@/components/management-domain-workspace";
@@ -56,7 +55,7 @@ const RESOURCE_ICONS: Record<string, { icon: React.ReactNode; color: string }> =
 
 function InternDashboard() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "announcements" | "notes" | "feedback" | "vscode">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "announcements" | "notes" | "feedback">("overview");
   const [newNote, setNewNote] = useState("");
   const [feedback, setFeedback] = useState("");
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
@@ -191,7 +190,6 @@ function InternDashboard() {
     { id: "resources",      label: `Resources (${resources.length})` },
     { id: "notes",          label: "Notes" },
     { id: "feedback",       label: "Feedback" },
-    { id: "vscode",         label: "VS Code IDE" },
   ] as const;
 
   return (
@@ -1090,20 +1088,6 @@ function InternDashboard() {
                 toast.error("Failed to submit feedback");
               }
             }}>Submit Feedback</Button>
-          </div>
-        )}
-
-        {/* ─── VS CODE IDE WINDOW ─── */}
-        {activeTab === "vscode" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between bg-slate-900 text-white p-4 rounded-xl shadow-xs">
-              <div className="flex items-center gap-2">
-                <Code2 className="h-5 w-5 text-emerald-400" />
-                <h2 className="font-bold text-sm">Inbuilt VS Code Development IDE</h2>
-              </div>
-              <span className="text-xs text-slate-400 font-mono">Integrated Code Editor, File Explorer & Terminal Simulator</span>
-            </div>
-            <VSCodeIDEWindow />
           </div>
         )}
       </main>
