@@ -48,7 +48,7 @@ const RESOURCE_ICONS: Record<string, { icon: React.ReactNode; color: string }> =
 
 function InternDashboard() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "tasks" | "meetings" | "resources" | "announcements" | "notes" | "feedback">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "announcements" | "notes" | "feedback">("overview");
   const [newNote, setNewNote] = useState("");
   const [feedback, setFeedback] = useState("");
 
