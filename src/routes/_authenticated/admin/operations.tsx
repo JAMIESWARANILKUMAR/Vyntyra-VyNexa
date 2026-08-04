@@ -25,6 +25,7 @@ import {
   listAllStandups, updateStandupStatus, listAllDeliverables, updateDeliverableStatus,
   listAllAccessRequests, updateAccessRequestStatus, updateTaskByAdmin
 } from "@/lib/operations.functions";
+import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import { toast } from "sonner";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
@@ -124,6 +125,7 @@ function OperationsDashboard() {
   const doUpdateTicketStatus = useServerFn(updateSupportTicketStatus);
   const doUpdateTaskByAdmin = useServerFn(updateTaskByAdmin);
   const [editingTaskByAdmin, setEditingTaskByAdmin] = useState<any>(null);
+  const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
   const fetchKudos = useServerFn(listKudos);
 
   // Dialog states
@@ -1471,6 +1473,16 @@ function OperationsDashboard() {
         doAssignIntern={doAssignIntern}
         doRemoveIntern={doRemoveIntern}
       />
+
+      {/* ── Google Docs / Sheets & Spreadsheet Viewer Modal ── */}
+      {viewingDoc && (
+        <GoogleDocViewerModal
+          url={viewingDoc.url}
+          title={viewingDoc.title}
+          isOpen={!!viewingDoc}
+          onClose={() => setViewingDoc(null)}
+        />
+      )}
     </div>
   );
 }

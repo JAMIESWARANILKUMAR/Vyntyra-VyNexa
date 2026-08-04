@@ -19,6 +19,8 @@ import { MeetingsSection } from "@/components/meetings-section";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
 import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
+import { VSCodeIDEWindow } from "@/components/vscode-ide-window";
 import { 
   listTasks, listMeetings, listSchedules, listAnnouncements, listResources, 
   listNotes, createNote, deleteNote, createFeedback, claimPoolTask,
@@ -49,9 +51,10 @@ const RESOURCE_ICONS: Record<string, { icon: React.ReactNode; color: string }> =
 
 function InternDashboard() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "announcements" | "notes" | "feedback">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "announcements" | "notes" | "feedback" | "vscode">("overview");
   const [newNote, setNewNote] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
 
   const sessionQ = useQuery({
     queryKey: ["session"],
@@ -157,6 +160,7 @@ function InternDashboard() {
     { id: "resources",      label: `Resources (${resources.length})` },
     { id: "notes",          label: "Notes" },
     { id: "feedback",       label: "Feedback" },
+    { id: "vscode",         label: "VS Code IDE" },
   ] as const;
 
   return (
@@ -361,15 +365,17 @@ function InternDashboard() {
                         {resources.slice(0, 3).map((r: any) => {
                           const ri = RESOURCE_ICONS[r.type] || RESOURCE_ICONS.link;
                           return (
-                            <a key={r.id} href={r.url} target="_blank" rel="noopener noreferrer"
-                              className="flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors group">
+                            <div key={r.id} onClick={() => setViewingDoc({ url: r.url, title: r.title })}
+                              className="flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
                               <div className={`h-9 w-9 rounded-lg border flex items-center justify-center shrink-0 ${ri.color}`}>{ri.icon}</div>
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium text-sm group-hover:text-primary transition-colors truncate">{r.title}</div>
+                                <div className="font-medium text-sm group-hover:text-emerald-600 transition-colors truncate">{r.title}</div>
                                 {r.description && <div className="text-xs text-slate-400 truncate">{r.description}</div>}
                               </div>
-                              <ExternalLink className="h-4 w-4 text-slate-300 group-hover:text-primary transition-colors shrink-0" />
-                            </a>
+                              <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                                View Doc / Sheet
+                              </Button>
+                            </div>
                           );
                         })}
                       </div>
@@ -967,6 +973,19 @@ function InternDashboard() {
           </div>
         )}
 
+        {/* ─── VS CODE IDE WINDOW ─── */}
+        {activeTab === "vscode" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between bg-slate-900 text-white p-4 rounded-xl shadow-xs">
+              <div className="flex items-center gap-2">
+                <Code2 className="h-5 w-5 text-emerald-400" />
+                <h2 className="font-bold text-sm">Inbuilt VS Code Development IDE</h2>
+              </div>
+              <span className="text-xs text-slate-400 font-mono">Integrated Code Editor, File Explorer & Terminal Simulator</span>
+            </div>
+            <VSCodeIDEWindow />
+          </div>
+        )}
       </main>
 
       
@@ -1053,6 +1072,16 @@ function InternDashboard() {
     </div>
   </div>
 )}
+
+      {/* ── Google Docs / Sheets & Spreadsheet Viewer Modal ── */}
+      {viewingDoc && (
+        <GoogleDocViewerModal
+          url={viewingDoc.url}
+          title={viewingDoc.title}
+          isOpen={!!viewingDoc}
+          onClose={() => setViewingDoc(null)}
+        />
+      )}
 
       {/* Floating Apps Panel */}
       <FloatingAppsPanel />
