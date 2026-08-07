@@ -1787,7 +1787,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
 
 function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutomatedEmailLog, qc }: any) {
   const [inputText, setInputText] = useState("");
-  const [subjectText, setSubjectText] = useState("Exclusive Internship Opportunity 2026 — Vyntyra Consultancy Services");
+  const [subjectText, setSubjectText] = useState("Invitation: 2026 Official Internship Program — Vyntyra Consultancy Services");
   const [recipients, setRecipients] = useState<{ email: string; name: string; university: string }[]>([]);
   
   // Campaign automation state
