@@ -4,7 +4,8 @@ import {
   ShieldAlert, Loader2, AlertCircle, UserCheck, UserX, Clock,
   CheckCircle2, Circle, AlertTriangle, ChevronDown, ArrowLeft,
   Shield, GraduationCap, Briefcase, CalendarDays, RefreshCw,
-  Video, FileText, UploadCloud, MessageSquare, CreditCard, LifeBuoy, Award
+  Video, FileText, UploadCloud, MessageSquare, CreditCard, LifeBuoy, Award,
+  Play, Pause, Square, Search, ExternalLink, ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +26,8 @@ import {
   listAllStandups, updateStandupStatus, listAllDeliverables, updateDeliverableStatus,
   listAllAccessRequests, updateAccessRequestStatus, updateTaskByAdmin,
   listLeads, createLead, updateLeadStatus, deleteLead,
-  listBugs, createBug, updateBugStatus
+  listBugs, createBug, updateBugStatus,
+  sendPromotionalInternshipEmail, listAutomatedEmailLogs, deleteAutomatedEmailLog
 } from "@/lib/operations.functions";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import { toast } from "sonner";
@@ -185,8 +187,13 @@ function OperationsDashboard() {
   const doCreateBug = useServerFn(createBug);
   const doUpdateBugStatus = useServerFn(updateBugStatus);
 
+  const fetchEmailLogs = useServerFn(listAutomatedEmailLogs);
+  const doSendPromotionalEmail = useServerFn(sendPromotionalInternshipEmail);
+  const doDeleteAutomatedEmailLog = useServerFn(deleteAutomatedEmailLog);
+
   const leadsAdminQ = useQuery({ queryKey: ["admin-leads"], queryFn: () => fetchLeads(), ...queryOpts });
   const bugsAdminQ = useQuery({ queryKey: ["admin-bugs"], queryFn: () => fetchBugs(), ...queryOpts });
+  const emailLogsQ = useQuery({ queryKey: ["admin-email-logs"], queryFn: () => fetchEmailLogs(), ...queryOpts });
 
   const standupsAdminQ = useQuery({ queryKey: ["admin-standups"], queryFn: () => fetchAllStandups(), ...queryOpts });
   const deliverablesAdminQ = useQuery({ queryKey: ["admin-deliverables"], queryFn: () => fetchAllDeliverables(), ...queryOpts });
@@ -1473,6 +1480,14 @@ function OperationsDashboard() {
             </div>
           </div>
         </section>
+
+        {/* ── Email Automation & Promotional Campaign Engine ── */}
+        <EmailAutomationHub 
+          emailLogsQ={emailLogsQ} 
+          doSendPromotionalEmail={doSendPromotionalEmail} 
+          doDeleteAutomatedEmailLog={doDeleteAutomatedEmailLog} 
+          qc={qc} 
+        />
       </main>
       
       {/* ── User Profile Drawer / Dialog ── */}
@@ -1767,5 +1782,469 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutomatedEmailLog, qc }: any) {
+  const [inputText, setInputText] = useState("");
+  const [subjectText, setSubjectText] = useState("Exclusive Internship Opportunity 2026 — Vyntyra Consultancy Services");
+  const [recipients, setRecipients] = useState<{ email: string; name: string }[]>([]);
+  
+  // Campaign automation state
+  const [isAutomating, setIsAutomating] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [sentCount, setSentCount] = useState(0);
+  const [failedCount, setFailedCount] = useState(0);
+  const [countdown, setCountdown] = useState(0);
+  const [activeStatus, setActiveStatus] = useState("Idle");
+
+  // Log table filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // Parse text or files into recipients
+  function handleParse(text: string) {
+    const extracted = extractEmails(text);
+    setRecipients(extracted);
+    if (extracted.length > 0) {
+      toast.success(`Extracted ${extracted.length} recipient email addresses!`);
+    } else {
+      toast.error("No valid email addresses found in the input.");
+    }
+  }
+
+  function extractEmails(raw: string) {
+    const lines = raw.split(/[\r\n,;]+/);
+    const list: { email: string; name: string }[] = [];
+    const seen = new Set<string>();
+
+    for (let line of lines) {
+      line = line.trim();
+      if (!line) continue;
+      const m = line.match(/(?:"?([^"<]+)"?\s*)?<?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>?/);
+      if (m && m[2]) {
+        const email = m[2].toLowerCase().trim();
+        if (!seen.has(email)) {
+          seen.add(email);
+          const name = m[1]?.trim() || email.split("@")[0];
+          list.push({ email, name });
+        }
+      }
+    }
+    return list;
+  }
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const content = evt.target?.result as string;
+      if (content) {
+        setInputText(content);
+        handleParse(content);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Automation Runner
+  useEffect(() => {
+    let timer: any;
+    if (isAutomating && !isPaused && currentIndex < recipients.length) {
+      const currentItem = recipients[currentIndex];
+      setActiveStatus(`Sending to ${currentItem.email}...`);
+
+      doSendPromotionalEmail({
+        data: {
+          recipient_email: currentItem.email,
+          recipient_name: currentItem.name,
+          custom_subject: subjectText,
+        }
+      })
+      .then(() => {
+        setSentCount((prev) => prev + 1);
+        qc.invalidateQueries({ queryKey: ["admin-email-logs"] });
+      })
+      .catch((err: any) => {
+        setFailedCount((prev) => prev + 1);
+        toast.error(`Failed sending to ${currentItem.email}: ${err.message}`);
+      })
+      .finally(() => {
+        // 5-second rate limit countdown
+        setCountdown(5);
+        let secondsLeft = 5;
+        const countdownInterval = setInterval(() => {
+          secondsLeft -= 1;
+          setCountdown(secondsLeft);
+          if (secondsLeft <= 0) {
+            clearInterval(countdownInterval);
+            setCurrentIndex((prev) => prev + 1);
+          }
+        }, 1000);
+      });
+    } else if (isAutomating && currentIndex >= recipients.length && recipients.length > 0) {
+      setIsAutomating(false);
+      setActiveStatus("Campaign Completed");
+      toast.success(`Bulk Email Campaign finished! Sent: ${sentCount}, Failed: ${failedCount}`);
+    }
+    return () => clearTimeout(timer);
+  }, [isAutomating, isPaused, currentIndex]);
+
+  function startAutomation() {
+    if (recipients.length === 0) {
+      toast.error("Please add or upload recipient email addresses first!");
+      return;
+    }
+    setIsAutomating(true);
+    setIsPaused(false);
+    setActiveStatus("Starting campaign...");
+    toast.info("Started Automated Email Campaign (5s delay per email)");
+  }
+
+  function pauseAutomation() {
+    setIsPaused(true);
+    setActiveStatus("Paused");
+    toast.info("Campaign paused.");
+  }
+
+  function resumeAutomation() {
+    setIsPaused(false);
+    toast.info("Campaign resumed.");
+  }
+
+  function stopAutomation() {
+    setIsAutomating(false);
+    setIsPaused(false);
+    setCurrentIndex(0);
+    setSentCount(0);
+    setFailedCount(0);
+    setCountdown(0);
+    setActiveStatus("Stopped");
+    toast.warning("Campaign stopped.");
+  }
+
+  // Filter logs
+  const rawLogs: any[] = emailLogsQ.data || [];
+  const filteredLogs = rawLogs.filter((log: any) => {
+    const matchesSearch = (log.recipient_email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (log.recipient_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (log.subject || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || log.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden mt-8">
+      {/* Banner */}
+      <div className="bg-slate-900 text-white px-6 py-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800">
+        <div>
+          <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+            <ShieldCheck className="h-4 w-4" /> Resend High-Deliverability Inbox Engine
+          </div>
+          <h2 className="text-xl font-bold mt-1 text-white flex items-center gap-2">
+            <Mail className="h-5 w-5 text-emerald-400" /> Automated Email Campaign Hub
+          </h2>
+          <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+            Automate bulk promotional internship invitations to up to <strong>1,000 email addresses</strong> with a mandatory <strong>5-second delay per email</strong> to ensure inbox delivery, prevent spam folder flagging, and align with SPF/DKIM verification standards.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 bg-slate-800/80 px-3.5 py-2 rounded-xl border border-slate-700/60 text-xs">
+          <Clock className="h-4 w-4 text-emerald-400 shrink-0" />
+          <div>
+            <div className="text-slate-300 font-medium">Auto Rate Limit</div>
+            <div className="text-emerald-400 font-bold">5s Interval Delay</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-6">
+        {/* Recipient Extraction Card */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-7 space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <FileText className="h-4 w-4 text-emerald-600" /> Upload Excel / CSV or Paste Email Addresses
+              </label>
+              <span className="text-xs text-slate-400 font-mono">Up to 1,000 Emails</span>
+            </div>
+
+            <Textarea 
+              rows={5}
+              value={inputText}
+              onChange={(e) => {
+                setInputText(e.target.value);
+                handleParse(e.target.value);
+              }}
+              placeholder={`Paste raw email list or CSV data...\ne.g.\njohn.doe@example.com\nPriya Sharma <priya@example.com>\naman@college.edu`}
+              className="font-mono text-xs p-3 rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+            />
+
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-3">
+                <label className="cursor-pointer inline-flex items-center gap-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition-colors shadow-xs">
+                  <UploadCloud className="h-4 w-4 text-emerald-600" /> Upload Excel / CSV
+                  <input type="file" accept=".csv,.xlsx,.xls,.txt" onChange={handleFileUpload} className="hidden" />
+                </label>
+                <Button variant="ghost" size="sm" onClick={() => handleParse(inputText)} className="text-xs text-slate-600 hover:text-slate-900">
+                  Re-Parse Input
+                </Button>
+              </div>
+
+              <div className="text-xs font-semibold text-slate-700 bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-lg border border-emerald-200 flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" /> Extracted Audience: <strong className="text-emerald-900 font-bold">{recipients.length} Recipients</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Campaign Subject & Template Preview */}
+          <div className="lg:col-span-5 space-y-4">
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 block">
+                Campaign Subject Line
+              </label>
+              <Input 
+                value={subjectText} 
+                onChange={(e) => setSubjectText(e.target.value)} 
+                placeholder="Exclusive Internship Opportunity 2026..."
+                className="text-xs rounded-xl border-slate-200"
+              />
+            </div>
+
+            {/* Template Specs */}
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 space-y-2.5 text-xs text-slate-700">
+              <div className="font-bold text-emerald-900 flex items-center gap-1.5 text-sm">
+                <ShieldCheck className="h-4 w-4 text-emerald-600" /> Verified High-Inbox Template Features:
+              </div>
+              <ul className="space-y-1.5 text-slate-600">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  <strong>Apply CTA:</strong> "Apply For Internship" button linking to Careers portal
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  <strong>Official Contact:</strong> internships@vyntyraconsultancyservices.in
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  <strong>Anti-Spam Standards:</strong> Clean HTML-to-text ratio & DKIM signed header
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Live Automation Controls & Progress Engine */}
+        <div className="rounded-2xl border border-slate-200 bg-slate-900 text-white p-6 space-y-4 shadow-md">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="text-xs uppercase font-bold tracking-widest text-emerald-400">Live Campaign Controller</div>
+              <div className="text-lg font-bold text-white flex items-center gap-2 mt-0.5">
+                Status: <span className="text-emerald-400">{activeStatus}</span>
+                {isAutomating && !isPaused && <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {!isAutomating ? (
+                <Button 
+                  onClick={startAutomation} 
+                  disabled={recipients.length === 0}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-5 py-2.5 rounded-xl shadow-lg transition-all gap-2 text-xs"
+                >
+                  <Play className="h-4 w-4 fill-slate-950" /> Start 5s Delay Campaign ({recipients.length})
+                </Button>
+              ) : isPaused ? (
+                <Button 
+                  onClick={resumeAutomation} 
+                  className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs gap-2"
+                >
+                  <Play className="h-4 w-4 fill-slate-950" /> Resume Campaign
+                </Button>
+              ) : (
+                <Button 
+                  onClick={pauseAutomation} 
+                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs gap-2"
+                >
+                  <Pause className="h-4 w-4 fill-slate-950" /> Pause Campaign
+                </Button>
+              )}
+
+              {isAutomating && (
+                <Button 
+                  onClick={stopAutomation} 
+                  variant="outline" 
+                  className="border-rose-500 text-rose-400 hover:bg-rose-950/40 text-xs px-4 py-2.5 rounded-xl gap-1.5"
+                >
+                  <Square className="h-3.5 w-3.5 fill-rose-400" /> Stop Campaign
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs text-slate-300 font-medium">
+              <span>
+                Progress: <strong>{currentIndex}</strong> / {recipients.length} ({recipients.length > 0 ? Math.round((currentIndex / recipients.length) * 100) : 0}%)
+              </span>
+              {isAutomating && countdown > 0 && (
+                <span className="text-emerald-400 font-mono font-bold flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5 animate-spin" /> Next email in {countdown}s
+                </span>
+              )}
+            </div>
+            <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden border border-slate-700">
+              <div 
+                className="bg-emerald-500 h-full transition-all duration-500 ease-out" 
+                style={{ width: `${recipients.length > 0 ? (currentIndex / recipients.length) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Campaign Metrics */}
+          <div className="grid grid-cols-3 gap-4 pt-2 border-t border-slate-800 text-center text-xs">
+            <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-800">
+              <div className="text-slate-400">Total Queued</div>
+              <div className="text-base font-bold text-white mt-0.5">{recipients.length}</div>
+            </div>
+            <div className="bg-emerald-950/40 p-3 rounded-xl border border-emerald-900/50">
+              <div className="text-emerald-400">Successfully Sent</div>
+              <div className="text-base font-bold text-emerald-400 mt-0.5">{sentCount}</div>
+            </div>
+            <div className="bg-rose-950/40 p-3 rounded-xl border border-rose-900/50">
+              <div className="text-rose-400">Failed / Errors</div>
+              <div className="text-base font-bold text-rose-400 mt-0.5">{failedCount}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Sent Emails Log Management Table ── */}
+        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden space-y-4">
+          <div className="p-5 border-b bg-slate-50/50 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                <Mail className="h-4 w-4 text-emerald-600" /> Sent Emails Log Management
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Track all sent promotional email dispatches with sent date, sent time, email ID, and delivery status.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <Input 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search email or subject..."
+                  className="pl-8 text-xs h-8 w-48 rounded-lg border-slate-200"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-8 text-xs w-32 rounded-lg border-slate-200">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button variant="outline" size="sm" onClick={() => emailLogsQ.refetch()} className="h-8 text-xs gap-1.5">
+                <RefreshCw className={`h-3.5 w-3.5 ${emailLogsQ.isFetching ? "animate-spin" : ""}`} /> Refresh Log
+              </Button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-slate-100/70 text-slate-700 uppercase tracking-wider font-semibold border-b text-[10px]">
+                <tr>
+                  <th className="px-5 py-3">Recipient Email</th>
+                  <th className="px-5 py-3">Recipient Name</th>
+                  <th className="px-5 py-3">Subject</th>
+                  <th className="px-5 py-3">Sent Date</th>
+                  <th className="px-5 py-3">Sent Time</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3">Resend ID</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {emailLogsQ.isLoading ? (
+                  <tr>
+                    <td colSpan={8} className="p-8 text-center text-slate-400">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin text-emerald-600" /> Loading sent email logs...
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-8 text-center text-slate-400">
+                      No sent email logs found matching your criteria.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredLogs.map((log: any) => {
+                    const dateObj = new Date(log.sent_at || log.created_at);
+                    const sentDate = dateObj.toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" });
+                    const sentTime = dateObj.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
+
+                    return (
+                      <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-5 py-3.5 font-bold text-slate-900">{log.recipient_email}</td>
+                        <td className="px-5 py-3.5 text-slate-600">{log.recipient_name || "—"}</td>
+                        <td className="px-5 py-3.5 text-slate-700 max-w-xs truncate">{log.subject}</td>
+                        <td className="px-5 py-3.5 text-slate-600 font-mono">{sentDate}</td>
+                        <td className="px-5 py-3.5 text-slate-600 font-mono">{sentTime}</td>
+                        <td className="px-5 py-3.5">
+                          {log.status === "sent" ? (
+                            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                              <CheckCircle2 className="h-3 w-3" /> Sent
+                            </span>
+                          ) : (
+                            <span className="bg-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" /> Failed
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5 font-mono text-[10px] text-slate-500">
+                          {log.resend_id ? log.resend_id.slice(0, 12) + "..." : "—"}
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                            onClick={async () => {
+                              try {
+                                await doDeleteAutomatedEmailLog({ data: { id: log.id } });
+                                toast.success("Log deleted");
+                                qc.invalidateQueries({ queryKey: ["admin-email-logs"] });
+                              } catch (e) {
+                                toast.error("Failed to delete log");
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

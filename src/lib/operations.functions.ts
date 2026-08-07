@@ -1301,3 +1301,199 @@ export const updateBugStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { success: true };
   });
+
+// ─── Email Automation & Promotional Campaign Engine ─────────────
+export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    recipient_email: z.string().trim().email(),
+    recipient_name: z.string().optional(),
+    custom_subject: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const recipientEmail = data.recipient_email.trim().toLowerCase();
+    const recipientName = data.recipient_name?.trim() || "Candidate";
+    const subject = data.custom_subject?.trim() || "Exclusive Internship Opportunity 2026 — Vyntyra Consultancy Services";
+
+    let resendId: string | null = null;
+    let status: "sent" | "failed" = "sent";
+    let errorMessage: string | null = null;
+
+    try {
+      const { Resend } = await import("resend");
+      const apiKey = process.env.RESEND_API_KEY;
+      if (!apiKey) throw new Error("RESEND_API_KEY is missing");
+      const resend = new Resend(apiKey);
+
+      const htmlContent = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#334155;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#0f172a;padding:40px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04);">
+          
+          <!-- Header Branding -->
+          <tr>
+            <td style="background-color:#0b132b;padding:32px 40px;text-align:left;border-bottom:3px solid #10b981;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td>
+                    <div style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.02em;">Vyntyra Consultancy Services</div>
+                    <div style="color:#10b981;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;margin-top:4px;">Project VyNexa &middot; Official Internship Program</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Hero Section -->
+          <tr>
+            <td style="padding:40px 40px 20px 40px;">
+              <div style="font-size:12px;font-weight:700;color:#10b981;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Invitation to Apply</div>
+              <h1 style="margin:0 0 16px 0;font-size:24px;font-weight:800;color:#0f172a;line-height:1.3;letter-spacing:-0.02em;">
+                Kickstart Your Professional Career with Project VyNexa
+              </h1>
+              <p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;color:#475569;">
+                Dear <strong>${recipientName}</strong>,
+              </p>
+              <p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;color:#475569;">
+                Vyntyra Consultancy Services is excited to announce open positions for our <strong>Official Internship Program 2026</strong>. We are offering high-impact, hands-on internship tracks across multiple core technical and business domains.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Key Highlights Box -->
+          <tr>
+            <td style="padding:0 40px 24px 40px;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;padding:24px;">
+                <tr>
+                  <td>
+                    <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em;">Available Internship Tracks & Focus Areas:</div>
+                    <ul style="margin:0;padding-left:20px;font-size:14px;color:#334155;line-height:1.7;">
+                      <li><strong>Technical & Engineering:</strong> Full Stack, MERN, MEAN, Frontend, Backend, DevOps, R&D</li>
+                      <li><strong>Non-Tech & Growth:</strong> Digital Marketing, B2B Sales, CRM, Content & Customer Support</li>
+                      <li><strong>Management & Leadership:</strong> Business Operations, Corporate Strategy & Financial Modeling (MBA/BBA)</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Stipend & Benefits -->
+          <tr>
+            <td style="padding:0 40px 32px 40px;">
+              <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:8px;">Program Perks & Industry Recognition:</div>
+              <p style="margin:0 0 20px 0;font-size:14px;line-height:1.6;color:#475569;">
+                &check; Official Stipend & Expense Reimbursements (ESS)<br>
+                &check; Verifiable Internship Completion Certificate & LOR<br>
+                &check; Pre-Employment Offer (PPO) opportunities for top performers<br>
+                &check; 1-on-1 Senior Industry Mentor Guidance
+              </p>
+
+              <!-- Apply Button CTA -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" style="padding-top:8px;">
+                    <a href="https://careers.vyntyraconsultancyservices.in/" target="_blank" style="display:inline-block;background-color:#10b981;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:8px;box-shadow:0 4px 6px -1px rgba(16,185,129,0.3);letter-spacing:0.02em;">
+                      Apply For Internship &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Official Contact Info -->
+          <tr>
+            <td style="background-color:#f1f5f9;padding:24px 40px;border-top:1px solid #e2e8f0;font-size:13px;color:#64748b;line-height:1.5;">
+              <div style="font-weight:700;color:#0f172a;margin-bottom:4px;">Have Questions or Need Support?</div>
+              Reach out directly to our Talent Acquisition team at:
+              <br>
+              <a href="mailto:internships@vyntyraconsultancyservices.in" style="color:#0284c7;font-weight:600;text-decoration:underline;">internships@vyntyraconsultancyservices.in</a>
+            </td>
+          </tr>
+
+          <!-- Footer & Anti-Spam Compliance -->
+          <tr>
+            <td style="background-color:#0b132b;padding:32px 40px;text-align:center;color:#94a3b8;font-size:11px;line-height:1.6;">
+              <div style="color:#ffffff;font-weight:600;font-size:12px;margin-bottom:6px;">Vyntyra Consultancy Services</div>
+              <div>Visakhapatnam, Andhra Pradesh, India</div>
+              <div>ISO-Aligned &middot; NASSCOM Verified &middot; MSME Registered</div>
+              <div style="margin-top:12px;color:#64748b;font-size:10px;">
+                You received this invitation because your profile matches our professional internship criteria.<br>
+                To manage email preferences, contact <a href="mailto:internships@vyntyraconsultancyservices.in" style="color:#10b981;text-decoration:none;">internships@vyntyraconsultancyservices.in</a>.
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+      const response = await resend.emails.send({
+        from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
+        to: recipientEmail,
+        subject: subject,
+        html: htmlContent,
+        replyTo: "internships@vyntyraconsultancyservices.in",
+      });
+
+      if (response.data?.id) {
+        resendId = response.data.id;
+      }
+    } catch (err: any) {
+      status = "failed";
+      errorMessage = err.message || "Failed to dispatch promotional email";
+    }
+
+    // Record log in automated_emails_log
+    const { error: logError } = await supabase.from("automated_emails_log").insert({
+      recipient_email: recipientEmail,
+      recipient_name: recipientName,
+      subject: subject,
+      status: status,
+      resend_id: resendId,
+      error_message: errorMessage,
+      sent_at: new Date().toISOString(),
+    });
+
+    if (logError) {
+      console.warn("[email-automation] Failed to write log:", logError.message);
+    }
+
+    if (status === "failed") {
+      throw new Error(errorMessage || "Failed to send email");
+    }
+
+    return { success: true, resendId };
+  });
+
+export const listAutomatedEmailLogs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from("automated_emails_log")
+      .select("*")
+      .order("sent_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+export const deleteAutomatedEmailLog = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase.from("automated_emails_log").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
