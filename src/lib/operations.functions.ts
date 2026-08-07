@@ -1322,7 +1322,7 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
     try {
       const { Resend } = await import("resend");
       const apiKey = process.env.RESEND_API_KEY;
-      if (!apiKey) throw new Error("RESEND_API_KEY is missing");
+      if (!apiKey) throw new Error("RESEND_API_KEY environment variable is not configured");
       const resend = new Resend(apiKey);
 
       const htmlContent = `<!doctype html>
@@ -1440,13 +1440,28 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
 </body>
 </html>`;
 
-      const response = await resend.emails.send({
+      let response = await resend.emails.send({
         from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
         to: recipientEmail,
         subject: subject,
         html: htmlContent,
         replyTo: "internships@vyntyraconsultancyservices.in",
       });
+
+      if (response.error) {
+        console.warn("[email-automation] Primary sender failed, trying fallback sender:", response.error.message);
+        response = await resend.emails.send({
+          from: "Vyntyra Careers <noreply@vyntyraconsultancyservices.in>",
+          to: recipientEmail,
+          subject: subject,
+          html: htmlContent,
+          replyTo: "internships@vyntyraconsultancyservices.in",
+        });
+      }
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
 
       if (response.data?.id) {
         resendId = response.data.id;
