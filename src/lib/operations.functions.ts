@@ -1308,11 +1308,13 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({
     recipient_email: z.string().trim().email(),
     recipient_name: z.string().optional(),
+    university_name: z.string().optional(),
     custom_subject: z.string().optional(),
   }).parse(d))
   .handler(async ({ data }) => {
     const recipientEmail = data.recipient_email.trim().toLowerCase();
     const recipientName = data.recipient_name?.trim() || "Candidate";
+    const universityName = data.university_name?.trim() || "";
     const subject = data.custom_subject?.trim() || "Exclusive Internship Opportunity 2026 — Vyntyra Consultancy Services";
 
     let resendId: string | null = null;
@@ -1360,7 +1362,7 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
                 Kickstart Your Professional Career with Project VyNexa
               </h1>
               <p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;color:#475569;">
-                Dear <strong>${recipientName}</strong>,
+                Dear <strong>${recipientName}</strong>${universityName ? ` (${universityName})` : ''},
               </p>
               <p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;color:#475569;">
                 Vyntyra Consultancy Services is excited to announce open positions for our <strong>Official Internship Program 2026</strong>. We are offering high-impact, hands-on internship tracks across multiple core technical and business domains.
@@ -1475,6 +1477,7 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
     const { error: logError } = await supabase.from("automated_emails_log").insert({
       recipient_email: recipientEmail,
       recipient_name: recipientName,
+      university_name: universityName || null,
       subject: subject,
       status: status,
       resend_id: resendId,

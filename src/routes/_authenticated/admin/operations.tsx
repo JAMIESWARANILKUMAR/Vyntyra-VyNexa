@@ -5,7 +5,7 @@ import {
   CheckCircle2, Circle, AlertTriangle, ChevronDown, ArrowLeft,
   Shield, GraduationCap, Briefcase, CalendarDays, RefreshCw,
   Video, FileText, UploadCloud, MessageSquare, CreditCard, LifeBuoy, Award,
-  Play, Pause, Square, Search, ExternalLink, ShieldCheck
+  Play, Pause, Square, Search, ExternalLink, ShieldCheck, Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1788,7 +1788,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
 function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutomatedEmailLog, qc }: any) {
   const [inputText, setInputText] = useState("");
   const [subjectText, setSubjectText] = useState("Exclusive Internship Opportunity 2026 — Vyntyra Consultancy Services");
-  const [recipients, setRecipients] = useState<{ email: string; name: string }[]>([]);
+  const [recipients, setRecipients] = useState<{ email: string; name: string; university: string }[]>([]);
   
   // Campaign automation state
   const [isAutomating, setIsAutomating] = useState(false);
@@ -1803,20 +1803,34 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // Download Sample CSV Audience Template
+  function downloadCsvTemplate() {
+    const csvContent = `Email Address, Candidate Name, University / Organization\njamianil37@gmail.com, Jami Eswar Anil Kumar, Andhra University\npriya.sharma@iitm.ac.in, Priya Sharma, IIT Madras\nrahul.verma@bits.ac.in, Rahul Verma, BITS Pilani\n`;
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Vyntyra_Internship_Email_Audience_Template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Downloaded CSV Audience Template!");
+  }
+
   // Parse text or files into recipients
   function handleParse(text: string) {
     const extracted = extractEmails(text);
     setRecipients(extracted);
     if (extracted.length > 0) {
-      toast.success(`Extracted ${extracted.length} recipient email addresses!`);
+      toast.success(`Extracted ${extracted.length} recipient records with details!`);
     } else {
       toast.error("No valid email addresses found in the input.");
     }
   }
 
   function extractEmails(raw: string) {
-    const lines = raw.split(/[\r\n,;]+/);
-    const list: { email: string; name: string }[] = [];
+    const lines = raw.split(/[\r\n]+/);
+    const list: { email: string; name: string; university: string }[] = [];
     const seen = new Set<string>();
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 
@@ -1830,17 +1844,23 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
         if (!seen.has(email)) {
           seen.add(email);
 
-          // Extract name if format is "Priya Sharma <priya@domain.com>" or "Priya, priya@domain.com"
+          // Split line by comma, tab, or pipe to parse: Email, Name, University / Organization
+          const parts = line.split(/[,;\t|]+/).map((p) => p.replace(/[<>"']/g, "").trim());
           let name = "";
-          const namePart = line.replace(emailMatch[0], "").replace(/[<>"']/g, "").trim();
-          if (namePart) {
-            name = namePart.replace(/^[,;:]+|[,;:]+$/g, "").trim();
+          let university = "";
+
+          const emailIdx = parts.findIndex((p) => p.toLowerCase().includes(email));
+          if (emailIdx !== -1) {
+            const otherParts = parts.filter((_, idx) => idx !== emailIdx && _ !== "");
+            if (otherParts.length >= 1) name = otherParts[0];
+            if (otherParts.length >= 2) university = otherParts[1];
           }
+
           if (!name) {
             name = email.split("@")[0];
           }
 
-          list.push({ email, name });
+          list.push({ email, name, university });
         }
       }
     }
@@ -1872,6 +1892,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
         data: {
           recipient_email: currentItem.email,
           recipient_name: currentItem.name,
+          university_name: currentItem.university,
           custom_subject: subjectText,
         }
       })
@@ -1940,9 +1961,11 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
   // Filter logs
   const rawLogs: any[] = emailLogsQ.data || [];
   const filteredLogs = rawLogs.filter((log: any) => {
-    const matchesSearch = (log.recipient_email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (log.recipient_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (log.subject || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = (log.recipient_email || "").toLowerCase().includes(searchLower) ||
+                          (log.recipient_name || "").toLowerCase().includes(searchLower) ||
+                          (log.university_name || "").toLowerCase().includes(searchLower) ||
+                          (log.subject || "").toLowerCase().includes(searchLower);
     const matchesStatus = statusFilter === "all" || log.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -1977,7 +2000,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
           <div className="lg:col-span-7 space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <FileText className="h-4 w-4 text-emerald-600" /> Upload Excel / CSV or Paste Email Addresses
+                <FileText className="h-4 w-4 text-emerald-600" /> Upload Excel / CSV or Paste Email, Name, University
               </label>
               <span className="text-xs text-slate-400 font-mono">Up to 1,000 Emails</span>
             </div>
@@ -1989,16 +2012,27 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                 setInputText(e.target.value);
                 handleParse(e.target.value);
               }}
-              placeholder={`Paste raw email list or CSV data...\ne.g.\njohn.doe@example.com\nPriya Sharma <priya@example.com>\naman@college.edu`}
+              placeholder={`Paste format: Email Address, Candidate Name, University / Organization\ne.g.\njamianil37@gmail.com, Jami Eswar Anil Kumar, Andhra University\npriya.sharma@iitm.ac.in, Priya Sharma, IIT Madras`}
               className="font-mono text-xs p-3 rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20"
             />
 
             <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2">
                 <label className="cursor-pointer inline-flex items-center gap-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition-colors shadow-xs">
                   <UploadCloud className="h-4 w-4 text-emerald-600" /> Upload Excel / CSV
                   <input type="file" accept=".csv,.xlsx,.xls,.txt" onChange={handleFileUpload} className="hidden" />
                 </label>
+
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={downloadCsvTemplate}
+                  className="text-xs gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                >
+                  <Download className="h-3.5 w-3.5" /> Download CSV Template
+                </Button>
+
                 <Button variant="ghost" size="sm" onClick={() => handleParse(inputText)} className="text-xs text-slate-600 hover:text-slate-900">
                   Re-Parse Input
                 </Button>
@@ -2030,6 +2064,10 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                 <ShieldCheck className="h-4 w-4 text-emerald-600" /> Verified High-Inbox Template Features:
               </div>
               <ul className="space-y-1.5 text-slate-600">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  <strong>Format:</strong> Email, Name, University / Organization
+                </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                   <strong>Apply CTA:</strong> "Apply For Internship" button linking to Careers portal
@@ -2140,7 +2178,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                 <Mail className="h-4 w-4 text-emerald-600" /> Sent Emails Log Management
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Track all sent promotional email dispatches with sent date, sent time, email ID, and delivery status.
+                Track all sent promotional email dispatches with recipient email, name, university/organization, sent date, sent time, email ID, and delivery status.
               </p>
             </div>
 
@@ -2151,8 +2189,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                 <Input 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search email or subject..."
-                  className="pl-8 text-xs h-8 w-48 rounded-lg border-slate-200"
+                  placeholder="Search email, name, university..."
+                  className="pl-8 text-xs h-8 w-56 rounded-lg border-slate-200"
                 />
               </div>
 
@@ -2180,6 +2218,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                 <tr>
                   <th className="px-5 py-3">Recipient Email</th>
                   <th className="px-5 py-3">Recipient Name</th>
+                  <th className="px-5 py-3">University / Organization</th>
                   <th className="px-5 py-3">Subject</th>
                   <th className="px-5 py-3">Sent Date</th>
                   <th className="px-5 py-3">Sent Time</th>
@@ -2191,7 +2230,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
               <tbody className="divide-y divide-slate-100 font-medium">
                 {emailLogsQ.isLoading ? (
                   <tr>
-                    <td colSpan={8} className="p-8 text-center text-slate-400">
+                    <td colSpan={9} className="p-8 text-center text-slate-400">
                       <div className="flex items-center justify-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin text-emerald-600" /> Loading sent email logs...
                       </div>
@@ -2199,7 +2238,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                   </tr>
                 ) : filteredLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="p-8 text-center text-slate-400">
+                    <td colSpan={9} className="p-8 text-center text-slate-400">
                       No sent email logs found matching your criteria.
                     </td>
                   </tr>
@@ -2213,7 +2252,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                       <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="px-5 py-3.5 font-bold text-slate-900">{log.recipient_email}</td>
                         <td className="px-5 py-3.5 text-slate-600">{log.recipient_name || "—"}</td>
-                        <td className="px-5 py-3.5 text-slate-700 max-w-xs truncate">{log.subject}</td>
+                        <td className="px-5 py-3.5 text-slate-600">{log.university_name || "—"}</td>
+                        <td className="px-5 py-3.5 text-slate-700 max-w-xs truncate" title={log.subject}>{log.subject}</td>
                         <td className="px-5 py-3.5 text-slate-600 font-mono">{sentDate}</td>
                         <td className="px-5 py-3.5 text-slate-600 font-mono">{sentTime}</td>
                         <td className="px-5 py-3.5">
@@ -2227,8 +2267,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                             </span>
                           )}
                         </td>
-                        <td className="px-5 py-3.5 font-mono text-[10px] text-slate-500">
-                          {log.resend_id ? log.resend_id.slice(0, 12) + "..." : "—"}
+                        <td className="px-5 py-3.5 font-mono text-[10px] text-slate-500" title={log.resend_id || ""}>
+                          {log.resend_id ? log.resend_id.slice(0, 14) + "..." : "—"}
                         </td>
                         <td className="px-5 py-3.5 text-right">
                           <Button 
