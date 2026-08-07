@@ -1459,11 +1459,11 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
                   LinkedIn &rarr;
                 </a>
                 <span style="color:#475569;">&middot;</span>
-                <a href="https://www.instagram.com/vyntyraconsultancy" target="_blank" style="display:inline-block;margin:0 10px;color:#f472b6;font-weight:600;text-decoration:none;font-size:12px;">
-                  Instagram &rarr;
+                <a href="https://www.instagram.com/vyntyraindia" target="_blank" style="display:inline-block;margin:0 10px;color:#f472b6;font-weight:600;text-decoration:none;font-size:12px;">
+                  Instagram (@vyntyraindia) &rarr;
                 </a>
                 <span style="color:#475569;">&middot;</span>
-                <a href="https://careers.vyntyraconsultancyservices.in/" target="_blank" style="display:inline-block;margin:0 10px;color:#34d399;font-weight:600;text-decoration:none;font-size:12px;">
+                <a href="https://vyntyraconsultancyservices.in/" target="_blank" style="display:inline-block;margin:0 10px;color:#34d399;font-weight:600;text-decoration:none;font-size:12px;">
                   Official Website &rarr;
                 </a>
               </div>
