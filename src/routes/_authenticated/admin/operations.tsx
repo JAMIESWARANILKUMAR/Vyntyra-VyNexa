@@ -23,7 +23,9 @@ import {
   assignIntern, removeIntern, adminResetPassword,
   listAllExpenses, updateExpenseStatus, listAllSupportTickets, updateSupportTicketStatus,
   listAllStandups, updateStandupStatus, listAllDeliverables, updateDeliverableStatus,
-  listAllAccessRequests, updateAccessRequestStatus, updateTaskByAdmin
+  listAllAccessRequests, updateAccessRequestStatus, updateTaskByAdmin,
+  listLeads, createLead, updateLeadStatus, deleteLead,
+  listBugs, createBug, updateBugStatus
 } from "@/lib/operations.functions";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import { toast } from "sonner";
@@ -157,16 +159,17 @@ function OperationsDashboard() {
   const [assignInternOpen, setAssignInternOpen] = useState(false);
   const [assignInternForm, setAssignInternForm] = useState({ internId: "", employeeId: "" });
 
-  // Queries
-  const teamQ = useQuery({ queryKey: ["team-members"], queryFn: () => fetchTeam() });
-  const announcementsQ = useQuery({ queryKey: ["announcements"], queryFn: () => fetchAnnouncements() });
-  const tasksQ = useQuery({ queryKey: ["tasks"], queryFn: () => fetchTasks() });
-  const schedulesQ = useQuery({ queryKey: ["schedules"], queryFn: () => fetchSchedules() });
-  const meetingsQ = useQuery({ queryKey: ["meetings"], queryFn: () => fetchMeetings() });
-  const resourcesQ = useQuery({ queryKey: ["resources"], queryFn: () => fetchResources() });
-  const feedbacksQ = useQuery({ queryKey: ["feedbacks"], queryFn: () => fetchFeedbacks() });
-  const expensesQ = useQuery({ queryKey: ["admin-expenses"], queryFn: () => fetchExpenses() });
-  const ticketsQ = useQuery({ queryKey: ["admin-tickets"], queryFn: () => fetchTickets() });
+  // Queries with Stale Time optimization for Instant Load Performance
+  const queryOpts = { staleTime: 1000 * 60 * 5, gcTime: 1000 * 60 * 10 };
+  const teamQ = useQuery({ queryKey: ["team-members"], queryFn: () => fetchTeam(), ...queryOpts });
+  const announcementsQ = useQuery({ queryKey: ["announcements"], queryFn: () => fetchAnnouncements(), ...queryOpts });
+  const tasksQ = useQuery({ queryKey: ["tasks"], queryFn: () => fetchTasks(), ...queryOpts });
+  const schedulesQ = useQuery({ queryKey: ["schedules"], queryFn: () => fetchSchedules(), ...queryOpts });
+  const meetingsQ = useQuery({ queryKey: ["meetings"], queryFn: () => fetchMeetings(), ...queryOpts });
+  const resourcesQ = useQuery({ queryKey: ["resources"], queryFn: () => fetchResources(), ...queryOpts });
+  const feedbacksQ = useQuery({ queryKey: ["feedbacks"], queryFn: () => fetchFeedbacks(), ...queryOpts });
+  const expensesQ = useQuery({ queryKey: ["admin-expenses"], queryFn: () => fetchExpenses(), ...queryOpts });
+  const ticketsQ = useQuery({ queryKey: ["admin-tickets"], queryFn: () => fetchTickets(), ...queryOpts });
   const fetchAllStandups = useServerFn(listAllStandups);
   const doUpdateStandupStatus = useServerFn(updateStandupStatus);
   const fetchAllDeliverables = useServerFn(listAllDeliverables);
@@ -174,15 +177,26 @@ function OperationsDashboard() {
   const fetchAllAccessRequests = useServerFn(listAllAccessRequests);
   const doUpdateAccessRequestStatus = useServerFn(updateAccessRequestStatus);
 
-  const standupsAdminQ = useQuery({ queryKey: ["admin-standups"], queryFn: () => fetchAllStandups() });
-  const deliverablesAdminQ = useQuery({ queryKey: ["admin-deliverables"], queryFn: () => fetchAllDeliverables() });
-  const accessRequestsAdminQ = useQuery({ queryKey: ["admin-access-requests"], queryFn: () => fetchAllAccessRequests() });
+  const fetchLeads = useServerFn(listLeads);
+  const doCreateLead = useServerFn(createLead);
+  const doUpdateLeadStatus = useServerFn(updateLeadStatus);
+  const doDeleteLead = useServerFn(deleteLead);
+  const fetchBugs = useServerFn(listBugs);
+  const doCreateBug = useServerFn(createBug);
+  const doUpdateBugStatus = useServerFn(updateBugStatus);
 
-  const kudosQ = useQuery({ queryKey: ["admin-kudos"], queryFn: () => fetchKudos() });
+  const leadsAdminQ = useQuery({ queryKey: ["admin-leads"], queryFn: () => fetchLeads(), ...queryOpts });
+  const bugsAdminQ = useQuery({ queryKey: ["admin-bugs"], queryFn: () => fetchBugs(), ...queryOpts });
 
-  const leavesQ = useQuery({ queryKey: ["admin-leaves"], queryFn: () => fetchAllLeaves() });
-  const attendanceQ = useQuery({ queryKey: ["admin-attendance"], queryFn: () => fetchAllAttendance() });
-  const payoutsQ = useQuery({ queryKey: ["admin-payouts"], queryFn: () => fetchAllPayouts() });
+  const standupsAdminQ = useQuery({ queryKey: ["admin-standups"], queryFn: () => fetchAllStandups(), ...queryOpts });
+  const deliverablesAdminQ = useQuery({ queryKey: ["admin-deliverables"], queryFn: () => fetchAllDeliverables(), ...queryOpts });
+  const accessRequestsAdminQ = useQuery({ queryKey: ["admin-access-requests"], queryFn: () => fetchAllAccessRequests(), ...queryOpts });
+
+  const kudosQ = useQuery({ queryKey: ["admin-kudos"], queryFn: () => fetchKudos(), ...queryOpts });
+
+  const leavesQ = useQuery({ queryKey: ["admin-leaves"], queryFn: () => fetchAllLeaves(), ...queryOpts });
+  const attendanceQ = useQuery({ queryKey: ["admin-attendance"], queryFn: () => fetchAllAttendance(), ...queryOpts });
+  const payoutsQ = useQuery({ queryKey: ["admin-payouts"], queryFn: () => fetchAllPayouts(), ...queryOpts });
 
   const team: any[] = teamQ.data || [];
   const employees = team.filter((m: any) => m.role === "employee");

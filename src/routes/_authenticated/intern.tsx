@@ -93,15 +93,16 @@ function InternDashboard() {
   const doCreateBug = useServerFn(createBug);
   const doUpdateBugStatus = useServerFn(updateBugStatus);
 
-  const leadsQ = useQuery({ queryKey: ["my-leads"], queryFn: () => fetchLeads() });
-  const bugsQ = useQuery({ queryKey: ["my-bugs"], queryFn: () => fetchBugs() });
+  const queryOpts = { staleTime: 1000 * 60 * 5, gcTime: 1000 * 60 * 10 };
+  const leadsQ = useQuery({ queryKey: ["my-leads"], queryFn: () => fetchLeads(), ...queryOpts });
+  const bugsQ = useQuery({ queryKey: ["my-bugs"], queryFn: () => fetchBugs(), ...queryOpts });
 
-  const tasksQ = useQuery({ queryKey: ["my-tasks"], queryFn: () => fetchTasks() });
-  const meetingsQ = useQuery({ queryKey: ["my-meetings"], queryFn: () => fetchMeetings() });
-  const schedulesQ = useQuery({ queryKey: ["my-schedules"], queryFn: () => fetchSchedules() });
-  const announcementsQ = useQuery({ queryKey: ["my-announcements"], queryFn: () => fetchAnnouncements() });
-  const resourcesQ = useQuery({ queryKey: ["my-resources"], queryFn: () => fetchResources() });
-  const notesQ = useQuery({ queryKey: ["my-notes"], queryFn: () => fetchNotes() });
+  const tasksQ = useQuery({ queryKey: ["my-tasks"], queryFn: () => fetchTasks(), ...queryOpts });
+  const meetingsQ = useQuery({ queryKey: ["my-meetings"], queryFn: () => fetchMeetings(), ...queryOpts });
+  const schedulesQ = useQuery({ queryKey: ["my-schedules"], queryFn: () => fetchSchedules(), ...queryOpts });
+  const announcementsQ = useQuery({ queryKey: ["my-announcements"], queryFn: () => fetchAnnouncements(), ...queryOpts });
+  const resourcesQ = useQuery({ queryKey: ["my-resources"], queryFn: () => fetchResources(), ...queryOpts });
+  const notesQ = useQuery({ queryKey: ["my-notes"], queryFn: () => fetchNotes(), ...queryOpts });
 
   const tasks: any[] = tasksQ.data || [];
   const notes: any[] = notesQ.data || [];
