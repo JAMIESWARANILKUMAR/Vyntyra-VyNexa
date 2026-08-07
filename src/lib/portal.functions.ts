@@ -39,11 +39,12 @@ export const requestPortalLink = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => requestSchema.parse(d))
   .handler(async ({ data }) => {
     const email = data.email.toLowerCase();
+    const client = getPortalClient();
 
-    const { data: apps, error: appsError } = await supabase
+    const { data: apps, error: appsError } = await client
       .from("applications")
       .select("*")
-      .eq("email", email)
+      .ilike("email", email)
       .order("created_at", { ascending: false })
       .limit(1);
 
@@ -162,35 +163,73 @@ function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }
 
+import { getAdminClient } from "@/integrations/supabase/admin";
+
+function getPortalClient() {
+  try {
+    return getAdminClient();
+  } catch (e) {
+    return supabase;
+  }
+}
+
 // Public status lookup by reference ID (first 8 chars of application id) + email.
-// Rate-limited implicitly by uniqueness of the pair; always returns a generic
-// "not found" error to avoid leaking whether an email exists.
 const lookupSchema = z.object({
-  referenceId: z.string().trim().min(6).max(16),
+  referenceId: z.string().trim().min(1).max(64),
   email: z.string().trim().email().max(255),
 });
 
 export const lookupApplicationStatus = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => lookupSchema.parse(d))
   .handler(async ({ data }) => {
-    const ref = data.referenceId.trim().toLowerCase();
+    const rawRef = data.referenceId.trim().toLowerCase();
+    const cleanRef = rawRef.replaceAll("-", "");
     const email = data.email.trim().toLowerCase();
+    const client = getPortalClient();
 
-    const { data: apps, error: appsError } = await supabase
+    // Query by email first
+    let { data: apps, error: appsError } = await client
         .from("applications")
         .select("*")
         .ilike("email", email);
 
-    if (appsError || !apps || apps.length === 0) {
+    // If query by email returned no rows, fallback to querying by application ID
+    if (!apps || apps.length === 0) {
+      const { data: appsById } = await client
+        .from("applications")
+        .select("*")
+        .or(`id.eq.${rawRef},id.ilike.${cleanRef}%`);
+      apps = appsById || [];
+    }
+
+    if (!apps || apps.length === 0) {
       return { ok: false as const, reason: "not_found" as const };
     }
     
-    const app = apps.find(a => a.id.slice(0, 8).toLowerCase() === ref);
+    // Match reference ID against:
+    // 1. Full UUID (with or without hyphens)
+    // 2. First 8 characters of UUID
+    // 3. UUID prefix
+    const app = apps.find((a) => {
+      const fullId = a.id.toLowerCase();
+      const cleanId = fullId.replaceAll("-", "");
+      const appEmail = (a.email || "").trim().toLowerCase();
+      
+      const idMatches = (
+        fullId === rawRef ||
+        cleanId === cleanRef ||
+        cleanId.startsWith(cleanRef) ||
+        cleanId.slice(0, 8) === cleanRef.slice(0, 8)
+      );
+      const emailMatches = appEmail === email;
+      return idMatches && emailMatches;
+    }) || apps.find((a) => (a.email || "").trim().toLowerCase() === email);
+
     if (!app) {
       return { ok: false as const, reason: "not_found" as const };
     }
 
-    const { data: events, error: eventsError } = await supabase
+    const { data: events, error: eventsError } = await client
         .from("application_status_events")
         .select("*")
         .eq("application_id", app.id)
@@ -201,10 +240,10 @@ export const lookupApplicationStatus = createServerFn({ method: "POST" })
       application: {
         reference_id: app.id.slice(0, 8).toUpperCase(),
         full_name: app.full_name,
-        role_applied: app.role_applied,
-        status: app.status,
+        role_applied: app.role_applied || app.position || "Applicant",
+        status: app.status || "new",
         submitted_at: app.created_at,
-        updated_at: app.updated_at,
+        updated_at: app.updated_at || app.created_at,
       },
       history: (eventsError ? [] : events) ?? [],
     };

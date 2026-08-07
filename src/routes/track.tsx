@@ -96,11 +96,11 @@ function TrackPage() {
                   <Input
                     id="ref"
                     required
-                    minLength={6}
-                    maxLength={16}
+                    minLength={1}
+                    maxLength={36}
                     value={referenceId}
-                    onChange={(e) => setReferenceId(e.target.value.toUpperCase())}
-                    placeholder="e.g. A1B2C3D4"
+                    onChange={(e) => setReferenceId(e.target.value.trim().toUpperCase())}
+                    placeholder="e.g. A1B2C3D4 or full Reference ID"
                     className="pl-9 font-mono uppercase"
                   />
                 </div>
