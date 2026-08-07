@@ -1831,7 +1831,6 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
   function extractEmails(raw: string) {
     const lines = raw.split(/[\r\n]+/);
     const list: { email: string; name: string; university: string }[] = [];
-    const seen = new Set<string>();
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 
     for (let line of lines) {
@@ -1841,27 +1840,24 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
       const emailMatch = line.match(emailRegex);
       if (emailMatch) {
         const email = emailMatch[0].toLowerCase().trim();
-        if (!seen.has(email)) {
-          seen.add(email);
 
-          // Split line by comma, tab, or pipe to parse: Email, Name, University / Organization
-          const parts = line.split(/[,;\t|]+/).map((p) => p.replace(/[<>"']/g, "").trim());
-          let name = "";
-          let university = "";
+        // Split line by comma, tab, or pipe to parse: Email, Name, University / Organization
+        const parts = line.split(/[,;\t|]+/).map((p) => p.replace(/[<>"']/g, "").trim());
+        let name = "";
+        let university = "";
 
-          const emailIdx = parts.findIndex((p) => p.toLowerCase().includes(email));
-          if (emailIdx !== -1) {
-            const otherParts = parts.filter((_, idx) => idx !== emailIdx && _ !== "");
-            if (otherParts.length >= 1) name = otherParts[0];
-            if (otherParts.length >= 2) university = otherParts[1];
-          }
-
-          if (!name) {
-            name = email.split("@")[0];
-          }
-
-          list.push({ email, name, university });
+        const emailIdx = parts.findIndex((p) => p.toLowerCase().includes(email));
+        if (emailIdx !== -1) {
+          const otherParts = parts.filter((_, idx) => idx !== emailIdx && _ !== "");
+          if (otherParts.length >= 1) name = otherParts[0];
+          if (otherParts.length >= 2) university = otherParts[1];
         }
+
+        if (!name) {
+          name = email.split("@")[0];
+        }
+
+        list.push({ email, name, university });
       }
     }
     return list;
