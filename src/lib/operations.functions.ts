@@ -1334,23 +1334,23 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#080e1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#334155;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#080e1a;padding:40px 10px;">
+<body style="margin:0;padding:0;background-color:#060b14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#334155;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#060b14;padding:40px 10px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.35);">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
           
           <!-- Header Branding with Official Vyntyra Logo -->
           <tr>
-            <td style="background-color:#0b1728;padding:28px 40px;text-align:left;border-bottom:3px solid #10b981;">
+            <td style="background-color:#0f1e36;padding:28px 40px;text-align:left;border-bottom:3px solid #10b981;">
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td style="width:52px;vertical-align:middle;">
-                    <img src="https://media.licdn.com/dms/image/v2/D560BAQHqR70ldjUQfw/company-logo_100_100/B56ZcLUrrcHoAY-/0/1748241661218?e=1787788800&v=beta&t=P9WCxG463gvoB0RKqmTrmuk0c7o6jVeFZbDmsg5dX9A" alt="Vyntyra Logo" width="44" height="44" style="display:block;border-radius:10px;border:1px solid #1e293b;box-shadow:0 4px 6px rgba(0,0,0,0.15);">
+                  <td style="width:52px;vertical-align:middle;text-align:left;">
+                    <img src="https://media.licdn.com/dms/image/v2/D560BAQHqR70ldjUQfw/company-logo_100_100/B56ZcLUrrcHoAY-/0/1748241661218?e=1787788800&v=beta&t=P9WCxG463gvoB0RKqmTrmuk0c7o6jVeFZbDmsg5dX9A" alt="Vyntyra Logo" width="46" height="46" style="display:block;border-radius:10px;border:1px solid #1e293b;box-shadow:0 4px 8px rgba(0,0,0,0.25);">
                   </td>
-                  <td style="padding-left:14px;vertical-align:middle;">
-                    <div style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.02em;">Vyntyra Consultancy Services</div>
-                    <div style="color:#10b981;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;margin-top:2px;">Project VyNexa &middot; Official Internship Program</div>
+                  <td style="padding-left:14px;vertical-align:middle;text-align:left;">
+                    <div style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.02em;line-height:1.2;">Vyntyra Consultancy Services</div>
+                    <div style="color:#10b981;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;margin-top:3px;">Project VyNexa &middot; Official Internship Program</div>
                   </td>
                 </tr>
               </table>
@@ -1359,21 +1359,21 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
 
           <!-- Hero & Executive Opening Section -->
           <tr>
-            <td style="padding:40px 40px 24px 40px;">
-              <div style="font-size:12px;font-weight:700;color:#10b981;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">&starf; Official Invitation</div>
-              <h1 style="margin:0 0 16px 0;font-size:22px;font-weight:800;color:#0f172a;line-height:1.35;letter-spacing:-0.02em;">
+            <td style="padding:40px 40px 24px 40px;text-align:left;">
+              <div style="font-size:12px;font-weight:700;color:#10b981;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;text-align:left;">&starf; Official Invitation</div>
+              <h1 style="margin:0 0 16px 0;font-size:22px;font-weight:800;color:#0f172a;line-height:1.35;letter-spacing:-0.02em;text-align:left;">
                 Advance Your Professional Trajectory with Project VyNexa
               </h1>
-              <p style="margin:0 0 16px 0;font-size:15px;line-height:1.65;color:#334155;">
+              <p style="margin:0 0 16px 0;font-size:15px;line-height:1.7;color:#334155;text-align:left;">
                 Dear <strong>${recipientName}</strong>${universityName ? ` (${universityName})` : ''},
               </p>
-              <p style="margin:0 0 16px 0;font-size:15px;line-height:1.65;color:#475569;">
+              <p style="margin:0 0 16px 0;font-size:15px;line-height:1.7;color:#475569;text-align:left;">
                 Your professional background stood out to the talent acquisition team at <strong>Vyntyra Consultancy Services</strong>. We are pleased to invite you to apply for our <strong>2026 Official Internship Program</strong>, an opportunity designed for high-potential candidates to integrate into our global workflows.
               </p>
               
-              <div style="background-color:#f8fafc;border-left:4px solid #10b981;padding:16px 20px;border-radius:0 8px 8px 0;margin:20px 0;">
-                <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;">Program Overview</div>
-                <p style="margin:0;font-size:14px;line-height:1.6;color:#334155;">
+              <div style="background-color:#f0fdf4;border-left:4px solid #10b981;padding:18px 22px;border-radius:0 10px 10px 0;margin:24px 0;text-align:left;">
+                <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em;">Program Overview</div>
+                <p style="margin:0;font-size:14px;line-height:1.65;color:#1e293b;text-align:left;">
                   <strong>Project VyNexa</strong> is our core initiative providing hands-on experience in cross-border technical and commercial environments. We emphasize rigorous skill acquisition, direct mentorship, and tangible project impact.
                 </p>
               </div>
@@ -1382,14 +1382,18 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
 
           <!-- Core Internship Tracks -->
           <tr>
-            <td style="padding:0 40px 24px 40px;">
+            <td style="padding:0 40px 24px 40px;text-align:left;">
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;padding:24px;">
                 <tr>
-                  <td>
-                    <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em;">Core Internship Tracks:</div>
-                    <ul style="margin:0;padding-left:20px;font-size:14px;color:#334155;line-height:1.75;">
-                      <li style="margin-bottom:8px;"><strong>Engineering & Cloud Systems:</strong> Full Stack Development, DevOps, Infrastructure Architecture, AI/ML Research & Development.</li>
-                      <li><strong>Growth & Strategy:</strong> B2B Sales, CRM Optimization, Financial Modeling, Digital Growth, and Strategic Operations.</li>
+                  <td style="text-align:left;">
+                    <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.08em;text-align:left;">Core Internship Tracks:</div>
+                    <ul style="margin:0;padding-left:18px;font-size:14px;color:#334155;line-height:1.8;text-align:left;">
+                      <li style="margin-bottom:10px;text-align:left;">
+                        <strong>Engineering & Cloud Systems:</strong> Full Stack Development, DevOps, Infrastructure Architecture, AI/ML Research & Development.
+                      </li>
+                      <li style="text-align:left;">
+                        <strong>Growth & Strategy:</strong> B2B Sales, CRM Optimization, Financial Modeling, Digital Growth, and Strategic Operations.
+                      </li>
                     </ul>
                   </td>
                 </tr>
@@ -1399,18 +1403,18 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
 
           <!-- Program Highlights (Outcome-Oriented) -->
           <tr>
-            <td style="padding:0 40px 28px 40px;">
+            <td style="padding:0 40px 28px 40px;text-align:left;">
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#ecfdf5;border-radius:12px;border:1px solid #a7f3d0;padding:24px;">
                 <tr>
-                  <td>
-                    <div style="font-size:13px;font-weight:700;color:#047857;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em;">
+                  <td style="text-align:left;">
+                    <div style="font-size:12px;font-weight:700;color:#047857;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.08em;text-align:left;">
                       &check; Program Highlights:
                     </div>
-                    <ul style="margin:0;padding-left:20px;font-size:14px;color:#166534;line-height:1.8;">
-                      <li style="margin-bottom:6px;"><strong>Real-World Impact:</strong> Contribute directly to international client initiatives and scalable platforms.</li>
-                      <li style="margin-bottom:6px;"><strong>Expert Mentorship:</strong> 1-on-1 guidance from Senior Tech Leads and Executive Directors.</li>
-                      <li style="margin-bottom:6px;"><strong>Strategic Growth:</strong> Access to cross-border collaborative workflows.</li>
-                      <li><strong>Pathway to Employment:</strong> Priority consideration for our global PPO (Pre-Placement Offer) network.</li>
+                    <ul style="margin:0;padding-left:18px;font-size:14px;color:#166534;line-height:1.85;text-align:left;">
+                      <li style="margin-bottom:8px;text-align:left;"><strong>Real-World Impact:</strong> Contribute directly to international client initiatives and scalable platforms.</li>
+                      <li style="margin-bottom:8px;text-align:left;"><strong>Expert Mentorship:</strong> 1-on-1 guidance from Senior Tech Leads and Executive Directors.</li>
+                      <li style="margin-bottom:8px;text-align:left;"><strong>Strategic Growth:</strong> Access to cross-border collaborative workflows.</li>
+                      <li style="text-align:left;"><strong>Pathway to Employment:</strong> Priority consideration for our global PPO (Pre-Placement Offer) network.</li>
                     </ul>
                   </td>
                 </tr>
@@ -1418,45 +1422,45 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
             </td>
           </tr>
 
-          <!-- Next Steps & Clean CTA -->
+          <!-- Next Steps & Clean CTA Box -->
           <tr>
-            <td style="padding:0 40px 36px 40px;">
-              <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:8px;">Next Steps:</div>
-              <p style="margin:0 0 20px 0;font-size:14px;line-height:1.6;color:#475569;">
+            <td style="padding:0 40px 36px 40px;text-align:left;">
+              <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:8px;text-align:left;">Next Steps:</div>
+              <p style="margin:0 0 20px 0;font-size:14px;line-height:1.65;color:#475569;text-align:left;">
                 To review the detailed program scope and submit your application, please visit our secure portal:
               </p>
 
-              <!-- Clean CTA Button -->
+              <!-- Apply Now CTA Button linking directly to #form -->
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td align="center" style="padding-top:4px;">
-                    <a href="https://careers.vyntyraconsultancyservices.in/?apply=true#apply" target="_blank" style="display:inline-block;background-color:#10b981;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:15px 36px;border-radius:8px;box-shadow:0 4px 14px rgba(16,185,129,0.35);letter-spacing:0.02em;">
+                  <td align="center" style="padding-top:4px;padding-bottom:12px;">
+                    <a href="https://careers.vyntyraconsultancyservices.in/?apply=true#form" target="_blank" style="display:inline-block;background-color:#10b981;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;padding:16px 40px;border-radius:10px;box-shadow:0 6px 20px rgba(16,185,129,0.35);letter-spacing:0.02em;transition:all 0.2s;">
                       View Program Details & Apply &rarr;
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <p style="margin:24px 0 0 0;font-size:13px;line-height:1.6;color:#64748b;">
+              <p style="margin:20px 0 0 0;font-size:13px;line-height:1.65;color:#64748b;text-align:left;">
                 For any inquiries regarding the program or candidacy, please connect with our Talent Acquisition team at <a href="mailto:internships@vyntyraconsultancyservices.in" style="color:#0284c7;font-weight:600;text-decoration:underline;">internships@vyntyraconsultancyservices.in</a>.
               </p>
-              <p style="margin:12px 0 0 0;font-size:13px;color:#475569;">
+              <p style="margin:12px 0 0 0;font-size:13px;color:#475569;text-align:left;">
                 We look forward to seeing the potential you bring to Project VyNexa.
               </p>
 
               <!-- Executive Sign-off -->
-              <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0;">
-                <div style="font-size:13px;color:#64748b;">Best regards,</div>
-                <div style="font-size:16px;font-weight:800;color:#0f172a;margin-top:4px;">Jami Eswar Anil Kumar</div>
-                <div style="font-size:12px;font-weight:600;color:#10b981;">Founder & Managing Director</div>
-                <div style="font-size:12px;color:#64748b;">Vyntyra Consultancy Services</div>
+              <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e2e8f0;text-align:left;">
+                <div style="font-size:13px;color:#64748b;text-align:left;">Best regards,</div>
+                <div style="font-size:16px;font-weight:800;color:#0f172a;margin-top:4px;text-align:left;">Jami Eswar Anil Kumar</div>
+                <div style="font-size:12px;font-weight:600;color:#10b981;text-align:left;">Founder & Managing Director</div>
+                <div style="font-size:12px;color:#64748b;text-align:left;">Vyntyra Consultancy Services</div>
               </div>
             </td>
           </tr>
 
-          <!-- Footer & Anti-Spam Compliance with Social Links -->
+          <!-- Footer & Compliance with Verified Social Links -->
           <tr>
-            <td style="background-color:#0b1728;padding:36px 40px;text-align:center;color:#94a3b8;font-size:11px;line-height:1.6;">
+            <td style="background-color:#0b1728;padding:36px 40px;text-align:center;color:#94a3b8;font-size:11px;line-height:1.65;">
               <div style="color:#ffffff;font-weight:600;font-size:13px;margin-bottom:8px;">Vyntyra Consultancy Services</div>
               
               <!-- Social Media Links -->
