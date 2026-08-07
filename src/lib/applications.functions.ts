@@ -119,10 +119,22 @@ export const submitApplication = createServerFn({ method: "POST" })
 
     if (insertError) {
         console.warn("[applications] Insert failed with extended schema, trying fallback:", insertError.message);
-        const { opportunity_type, domain, profile_photo_url, ...baseInsert } = insert;
+        const { opportunity_type, domain, sub_domain, profile_photo_url, state, college, graduation_year, hod_name, hod_contact, hod_email, tp_officer_name, tp_officer_contact, tp_officer_email, ...baseInsert } = insert;
         const { error: fallbackErr } = await supabase.from("applications").insert([baseInsert]);
         if (fallbackErr) {
-          throw new Error(`Failed to submit application: ${fallbackErr.message}`);
+          console.warn("[applications] Base fallback failed, trying minimal insert:", fallbackErr.message);
+          const minimalInsert = {
+            id: insert.id,
+            full_name: insert.full_name,
+            email: insert.email,
+            phone: insert.phone,
+            position: insert.position,
+            status: insert.status
+          };
+          const { error: minErr } = await supabase.from("applications").insert([minimalInsert]);
+          if (minErr) {
+            throw new Error(`Failed to submit application: ${minErr.message}`);
+          }
         }
     }
 
