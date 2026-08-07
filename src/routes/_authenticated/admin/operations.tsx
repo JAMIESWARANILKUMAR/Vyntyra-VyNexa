@@ -1818,16 +1818,28 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
     const lines = raw.split(/[\r\n,;]+/);
     const list: { email: string; name: string }[] = [];
     const seen = new Set<string>();
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 
     for (let line of lines) {
       line = line.trim();
       if (!line) continue;
-      const m = line.match(/(?:"?([^"<]+)"?\s*)?<?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>?/);
-      if (m && m[2]) {
-        const email = m[2].toLowerCase().trim();
+
+      const emailMatch = line.match(emailRegex);
+      if (emailMatch) {
+        const email = emailMatch[0].toLowerCase().trim();
         if (!seen.has(email)) {
           seen.add(email);
-          const name = m[1]?.trim() || email.split("@")[0];
+
+          // Extract name if format is "Priya Sharma <priya@domain.com>" or "Priya, priya@domain.com"
+          let name = "";
+          const namePart = line.replace(emailMatch[0], "").replace(/[<>"']/g, "").trim();
+          if (namePart) {
+            name = namePart.replace(/^[,;:]+|[,;:]+$/g, "").trim();
+          }
+          if (!name) {
+            name = email.split("@")[0];
+          }
+
           list.push({ email, name });
         }
       }
