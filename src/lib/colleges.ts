@@ -301,8 +301,7 @@ export const COLLEGES: Record<StateName, string[]> = {
 };
 
 export function graduationYears(): number[] {
-  const current = new Date().getFullYear();
   const years: number[] = [];
-  for (let y = 2022; y <= Math.max(current + 1, 2026); y++) years.push(y);
+  for (let y = 2022; y <= 2030; y++) years.push(y);
   return years;
 }
