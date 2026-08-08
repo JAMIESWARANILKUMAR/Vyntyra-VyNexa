@@ -837,7 +837,19 @@ function AdminDashboard() {
                         <div className="font-medium text-foreground">{a.full_name}</div>
                         <div className="text-xs text-muted-foreground">{a.years_experience || "—"}</div>
                       </td>
-                      <td className="px-6 py-4 text-foreground">{a.role_applied}</td>
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-foreground">{a.role_applied}</div>
+                        {a.sub_domain && (
+                          <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                            Sub-Domain: {a.sub_domain}
+                          </div>
+                        )}
+                        {!a.sub_domain && a.domain && (
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Domain: {a.domain}
+                          </div>
+                        )}
+                      </td>
                       <td className="px-6 py-4 text-xs text-muted-foreground">
                         <div>{a.email}</div>
                         <div>{a.phone}</div>
@@ -1301,7 +1313,14 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         <DialogHeader className="flex flex-row items-start justify-between sm:items-center">
           <div>
             <DialogTitle className="text-2xl text-primary tracking-tight">{app.full_name}</DialogTitle>
-            <div className="text-sm text-muted-foreground">{app.role_applied}</div>
+            <div className="text-sm text-muted-foreground flex items-center gap-2 mt-0.5 flex-wrap">
+              <span>{app.role_applied}</span>
+              {app.sub_domain && (
+                <span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold px-2 py-0.5 rounded-md">
+                  Sub-Domain: {app.sub_domain}
+                </span>
+              )}
+            </div>
           </div>
           <Button
             variant="ghost"
@@ -1325,6 +1344,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
             <InfoRow icon={Phone} label="Phone" value={app.phone} />
             <InfoRow label="Opportunity Type" value={app.opportunity_type ? <span className="font-semibold text-secondary">{app.opportunity_type}</span> : "—"} />
             <InfoRow label="Domain / Specialization" value={app.domain || "—"} />
+            <InfoRow label="Sub-Domain Track" value={app.sub_domain ? <span className="font-semibold text-emerald-600 dark:text-emerald-400">{app.sub_domain}</span> : "—"} />
             <InfoRow icon={Briefcase} label="Company" value={app.company || "—"} />
             <InfoRow icon={Briefcase} label="Position" value={app.position || "—"} />
             <InfoRow label="Experience" value={app.years_experience || "—"} />

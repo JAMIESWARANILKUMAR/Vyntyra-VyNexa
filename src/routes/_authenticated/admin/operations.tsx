@@ -1788,7 +1788,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
 function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutomatedEmailLog, qc }: any) {
   const [inputText, setInputText] = useState("");
   const [subjectText, setSubjectText] = useState("Invitation: 2026 Official Internship Program — Vyntyra Consultancy Services");
-  const [recipients, setRecipients] = useState<{ email: string; name: string; university: string }[]>([]);
+  const [recipients, setRecipients] = useState<{ email: string; name: string; university: string; domain: string; subDomain: string }[]>([]);
   
   // Campaign automation state
   const [isAutomating, setIsAutomating] = useState(false);
@@ -1805,7 +1805,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
 
   // Download Sample CSV Audience Template
   function downloadCsvTemplate() {
-    const csvContent = `Email Address, Candidate Name, University / Organization\njamianil37@gmail.com, Jami Eswar Anil Kumar, Andhra University\npriya.sharma@iitm.ac.in, Priya Sharma, IIT Madras\nrahul.verma@bits.ac.in, Rahul Verma, BITS Pilani\n`;
+    const csvContent = `Email Address, Candidate Name, University / Organization, Domain, Sub-Domain\njamianil37@gmail.com, Jami Eswar Anil Kumar, Andhra University, Engineering & Technology, Full Stack Development\npriya.sharma@iitm.ac.in, Priya Sharma, IIT Madras, Engineering & Technology, DevOps & Cloud Architecture\nrahul.verma@bits.ac.in, Rahul Verma, BITS Pilani, Growth & Strategy, B2B Sales & Financial Modeling\n`;
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -1814,7 +1814,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success("Downloaded CSV Audience Template!");
+    toast.success("Downloaded CSV Audience Template with Domain & Sub-Domain!");
   }
 
   // Parse text or files into recipients
@@ -1830,7 +1830,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
 
   function extractEmails(raw: string) {
     const lines = raw.split(/[\r\n]+/);
-    const list: { email: string; name: string; university: string }[] = [];
+    const list: { email: string; name: string; university: string; domain: string; subDomain: string }[] = [];
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 
     for (let line of lines) {
@@ -1841,23 +1841,27 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
       if (emailMatch) {
         const email = emailMatch[0].toLowerCase().trim();
 
-        // Split line by comma, tab, or pipe to parse: Email, Name, University / Organization
+        // Split line by comma, tab, or pipe to parse: Email, Name, University, Domain, Sub-Domain
         const parts = line.split(/[,;\t|]+/).map((p) => p.replace(/[<>"']/g, "").trim());
         let name = "";
         let university = "";
+        let domain = "";
+        let subDomain = "";
 
         const emailIdx = parts.findIndex((p) => p.toLowerCase().includes(email));
         if (emailIdx !== -1) {
           const otherParts = parts.filter((_, idx) => idx !== emailIdx && _ !== "");
           if (otherParts.length >= 1) name = otherParts[0];
           if (otherParts.length >= 2) university = otherParts[1];
+          if (otherParts.length >= 3) domain = otherParts[2];
+          if (otherParts.length >= 4) subDomain = otherParts[3];
         }
 
         if (!name) {
           name = email.split("@")[0];
         }
 
-        list.push({ email, name, university });
+        list.push({ email, name, university, domain, subDomain });
       }
     }
     return list;
@@ -1889,6 +1893,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
           recipient_email: currentItem.email,
           recipient_name: currentItem.name,
           university_name: currentItem.university,
+          domain: currentItem.domain,
+          sub_domain: currentItem.subDomain,
           custom_subject: subjectText,
         }
       })
@@ -2062,7 +2068,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
               <ul className="space-y-1.5 text-slate-600">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                  <strong>Format:</strong> Email, Name, University / Organization
+                  <strong>Format:</strong> Email, Name, University, Domain, Sub-Domain
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
@@ -2215,6 +2221,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                   <th className="px-5 py-3">Recipient Email</th>
                   <th className="px-5 py-3">Recipient Name</th>
                   <th className="px-5 py-3">University / Organization</th>
+                  <th className="px-5 py-3">Domain</th>
+                  <th className="px-5 py-3">Sub-Domain</th>
                   <th className="px-5 py-3">Subject</th>
                   <th className="px-5 py-3">Sent Date</th>
                   <th className="px-5 py-3">Sent Time</th>
@@ -2249,6 +2257,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                         <td className="px-5 py-3.5 font-bold text-slate-900">{log.recipient_email}</td>
                         <td className="px-5 py-3.5 text-slate-600">{log.recipient_name || "—"}</td>
                         <td className="px-5 py-3.5 text-slate-600">{log.university_name || "—"}</td>
+                        <td className="px-5 py-3.5 text-slate-600 font-medium">{log.domain || "—"}</td>
+                        <td className="px-5 py-3.5 text-emerald-700 font-bold">{log.sub_domain || "—"}</td>
                         <td className="px-5 py-3.5 text-slate-700 max-w-xs truncate" title={log.subject}>{log.subject}</td>
                         <td className="px-5 py-3.5 text-slate-600 font-mono">{sentDate}</td>
                         <td className="px-5 py-3.5 text-slate-600 font-mono">{sentTime}</td>

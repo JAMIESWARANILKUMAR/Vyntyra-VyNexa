@@ -1309,12 +1309,16 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
     recipient_email: z.string().trim().email(),
     recipient_name: z.string().optional(),
     university_name: z.string().optional(),
+    domain: z.string().optional(),
+    sub_domain: z.string().optional(),
     custom_subject: z.string().optional(),
   }).parse(d))
   .handler(async ({ data }) => {
     const recipientEmail = data.recipient_email.trim().toLowerCase();
     const recipientName = data.recipient_name?.trim() || "Candidate";
     const universityName = data.university_name?.trim() || "";
+    const domain = data.domain?.trim() || "";
+    const subDomain = data.sub_domain?.trim() || "";
     const subject = data.custom_subject?.trim() || "Invitation: 2026 Official Internship Program — Vyntyra Consultancy Services";
 
     let resendId: string | null = null;
@@ -1379,6 +1383,29 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
               </div>
             </td>
           </tr>
+
+          <!-- Target Recommended Role Track & Sub-Domain Card -->
+          ${(domain || subDomain) ? `
+          <tr>
+            <td style="padding:0 40px 24px 40px;text-align:left;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#eff6ff;border-radius:12px;border:1px solid #bfdbfe;padding:20px;">
+                <tr>
+                  <td style="text-align:left;">
+                    <div style="font-size:11px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;text-align:left;">
+                      Recommended Internship Role Track
+                    </div>
+                    <div style="font-size:17px;font-weight:800;color:#1e3a8a;margin-bottom:4px;text-align:left;">
+                      ${domain || 'Core Internship Program'}
+                    </div>
+                    ${subDomain ? `
+                    <div style="display:inline-block;background-color:#2563eb;color:#ffffff;font-size:12px;font-weight:700;padding:5px 14px;border-radius:6px;margin-top:6px;">
+                      Sub-Domain Focus: ${subDomain}
+                    </div>` : ''}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>` : ''}
 
           <!-- Core Internship Tracks -->
           <tr>
@@ -1530,6 +1557,8 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
       recipient_email: recipientEmail,
       recipient_name: recipientName,
       university_name: universityName || null,
+      domain: domain || null,
+      sub_domain: subDomain || null,
       subject: subject,
       status: status,
       resend_id: resendId,
