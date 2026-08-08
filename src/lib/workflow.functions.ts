@@ -102,7 +102,8 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
     }
 
     if (from !== to) {
-      const updateData: any = { status: to, updated_at: new Date().toISOString() };
+      const adminClient = getAdminClient();
+      const updateData: any = { status: to };
       if (to === "interview_scheduled") {
         updateData.meet_link = data.meetLink || null;
         updateData.meeting_time = data.meetingTime || null;
@@ -114,16 +115,29 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
         updateData.joining_date = data.joiningDate || null;
         updateData.job_location = data.jobLocation || null;
       }
-      
-      const { error: updateError } = await supabase.from("applications").update(updateData).eq('id', data.id);
+
+      // Try updating with updated_at timestamp first
+      let { error: updateError } = await adminClient
+        .from("applications")
+        .update({ ...updateData, updated_at: new Date().toISOString() })
+        .eq('id', data.id);
+
+      // If updated_at is missing from schema cache, update without updated_at
       if (updateError) {
-        console.warn("[workflow] update failed with full data, falling back to base status update:", updateError.message);
-        const fallbackData = { 
-          status: to, 
-          updated_at: new Date().toISOString() 
-        };
-        const { error: fallbackError } = await supabase.from("applications").update(fallbackData).eq('id', data.id);
-        if (fallbackError) throw new Error(fallbackError.message);
+        console.warn("[workflow] update with updated_at failed, retrying without updated_at:", updateError.message);
+        const retryRes = await adminClient
+          .from("applications")
+          .update(updateData)
+          .eq('id', data.id);
+        
+        if (retryRes.error) {
+          // Final fallback: update status only
+          const fallbackRes = await adminClient
+            .from("applications")
+            .update({ status: to })
+            .eq('id', data.id);
+          if (fallbackRes.error) throw new Error(fallbackRes.error.message);
+        }
       }
 
       await supabase.from("application_status_events").insert([{
