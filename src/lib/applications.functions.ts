@@ -202,7 +202,27 @@ export const deleteApplication = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => deleteSchema.parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
-    await supabase.from("applications").update({ deleted_at: new Date().toISOString() }).eq('id', data.id);
+    const adminClient = getAdminClient();
+
+    // Delete any dependent child project records first
+    try {
+      await adminClient.from("application_projects").delete().eq("application_id", data.id);
+    } catch (e) {
+      console.warn("[deleteApplication] Child projects cleanup skipped:", (e as Error)?.message);
+    }
+
+    // Try soft-delete first
+    const softRes = await adminClient.from("applications").update({ deleted_at: new Date().toISOString() }).eq('id', data.id);
+    
+    // If soft-delete failed due to schema cache or missing column, hard delete the row
+    if (softRes.error) {
+      console.warn("[deleteApplication] Soft delete failed, executing hard delete:", softRes.error.message);
+      const hardRes = await adminClient.from("applications").delete().eq('id', data.id);
+      if (hardRes.error) {
+        throw new Error("Failed to delete application: " + hardRes.error.message);
+      }
+    }
+
     return { ok: true };
   });
 
