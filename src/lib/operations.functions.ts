@@ -1886,6 +1886,34 @@ async function sendViaHttpSms({ recipientPhone, message }: { recipientPhone: str
   return data.data?.id || data.id || 'hs-' + Date.now();
 }
 
+async function sendViaFast2SMS({ recipientPhone, message }: { recipientPhone: string; message: string }) {
+  const apiKey = process.env.FAST2SMS_API_KEY;
+  if (!apiKey) throw new Error('FAST2SMS_API_KEY environment variable is not configured');
+
+  const cleanNumber = recipientPhone.replace(/[^\d]/g, '').slice(-10);
+
+  const res = await fetch('https://www.fast2sms.com/dev/bulkV2', {
+    method: 'POST',
+    headers: {
+      'authorization': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      route: 'q',
+      message: message,
+      language: 'english',
+      flash: 0,
+      numbers: cleanNumber,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.return) {
+    throw new Error(data.message?.[0] || data.message || 'Fast2SMS dispatch failed');
+  }
+  return data.request_id || 'f2s-' + Date.now();
+}
+
 export const getSmsQuotaStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
