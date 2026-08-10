@@ -178,6 +178,19 @@ export const submitApplication = createServerFn({ method: "POST" })
       console.warn("[applications] email notify skipped:", (e as Error)?.message);
     }
 
+    // Send Application Received Confirmation SMS Alert via Email API Gateway (1,000 SMS / month for all carriers)
+    try {
+      const { sendSmsViaEmailGateway } = await import("./email-sms-gateway");
+      await sendSmsViaEmailGateway({
+        recipientPhone: data.phone,
+        recipientName: data.full_name,
+        message: `Dear ${data.full_name}, your application for ${data.role_applied} at Vyntyra is successfully received! Ref ID: ${appId.slice(0, 8).toUpperCase()}`,
+        subjectTag: "APPLICATION CONFIRMED",
+      });
+    } catch (e) {
+      console.warn("[applications] SMS gateway alert skipped:", (e as Error)?.message);
+    }
+
     try {
       const { generateInterviewQuestions } = await import("./interview-questions.server");
       await generateInterviewQuestions({

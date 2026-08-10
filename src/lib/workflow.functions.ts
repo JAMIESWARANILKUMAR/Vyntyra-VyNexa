@@ -210,6 +210,25 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
               meetingTime: data.meetingTime || null,
               interviewerName: data.interviewerName || null,
             });
+
+            // Trigger Selection / Status Confirmation SMS via Email-to-SMS Gateway API (1,000 SMS / month for all carriers)
+            if (app.phone) {
+              try {
+                const { sendSmsViaEmailGateway } = await import("./email-sms-gateway");
+                let statusLabel = to.toUpperCase();
+                if (to === "shortlisted") statusLabel = "SHORTLISTED FOR INTERVIEW";
+                if (to === "selected" || to === "hired") statusLabel = "SELECTION CONFIRMED";
+
+                await sendSmsViaEmailGateway({
+                  recipientPhone: app.phone,
+                  recipientName: app.full_name,
+                  message: `Dear ${app.full_name}, your application status for ${app.role_applied} has been updated to: ${statusLabel}. Check portal: ${portalLink}`,
+                  subjectTag: `SELECTION ${statusLabel}`,
+                });
+              } catch (smsErr) {
+                console.warn("[workflow] Email-to-SMS alert skipped:", (smsErr as Error).message);
+              }
+            }
   
             // Enterprise Backup hook
             try {
