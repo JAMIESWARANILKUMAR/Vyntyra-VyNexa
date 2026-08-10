@@ -16,6 +16,7 @@ interface StatusEmailInput {
   template: { subject: string; html_body: string };
   idempotencyKey: string;
   attachmentUrl?: string | null;
+  attachments?: Array<{ filename: string; path: string }> | null;
   ccEmail?: string | null;
   meetLink?: string | null;
   meetingTime?: string | null;
@@ -120,14 +121,16 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
       html,
       text,
       ...(input.ccEmail ? { cc: input.ccEmail } : {}),
-      ...(input.attachmentUrl ? {
+      ...(input.attachments && input.attachments.length > 0 ? {
+        attachments: input.attachments
+      } : (input.attachmentUrl ? {
         attachments: [
           {
             filename: 'Offer_Letter.pdf',
             path: input.attachmentUrl
           }
         ]
-      } : {})
+      } : {}))
     });
   } catch (err) {
     console.error("[status-email] failed to send email via Resend:", err);

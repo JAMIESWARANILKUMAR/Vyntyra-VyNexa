@@ -140,9 +140,7 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
         }
       }
 
-      if (to === "hired") {
-        await autoProvisionIntern(app, context.userId);
-      }
+
 
       await supabase.from("application_status_events").insert([{
           application_id: data.id,
@@ -185,7 +183,7 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
             .eq("id", to)
             .single();
 
-        if (tpl?.enabled) {
+        if (tpl?.enabled && to !== "hired") {
           try {
             let attachmentUrl = null;
             
@@ -394,19 +392,349 @@ export async function autoProvisionIntern(app: any, changedBy: string) {
           start_date: startDateStr,
           end_date: endDateStr,
           duration_months: 3,
-          avatar_url: app.profile_photo_url || null
-        });
-
-        await supabase.from("application_status_events").insert([{
-          application_id: app.id,
-          from_status: app.status || "new",
-          to_status: "hired",
-          note: `[System Auto-Provisioning] Intern user dashboard created for ${app.full_name}.\nEmail: ${app.email}\nTemporary Password: ${tempPassword}`,
-          changed_by: changedBy
-        }]);
-      }
     }
   } catch (provErr: any) {
     console.error("[workflow] Failed to auto-provision intern user:", provErr.message);
   }
 }
+
+// ─── Selection Email Scheduling & Bulk Despatch Engine ──────────
+
+export async function dispatchSelectionEmail(applicationId: string) {
+  const { data: app, error: appError } = await supabase
+    .from("applications")
+    .select("*")
+    .eq("id", applicationId)
+    .single();
+
+  if (appError || !app) throw new Error("Application not found");
+
+  let tempPassword = app.phone ? app.phone.trim().replace(/[^\d]/g, '') : "";
+  if (tempPassword.length < 6) {
+    tempPassword = "VyNexa@" + app.id.slice(-4);
+  }
+
+  let userId = "";
+  const { data: existingProf } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("email", app.email)
+    .maybeSingle();
+
+  if (existingProf) {
+    userId = existingProf.id;
+  } else {
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: app.email,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: { must_change_password: true }
+    });
+
+    if (authError) throw new Error(`Auth creation failed: ${authError.message}`);
+    userId = authData.user.id;
+
+    await supabase.from("user_roles").insert({
+      user_id: userId,
+      role: "intern"
+    });
+  }
+
+  const sendDay = new Date();
+  const startDate = new Date(sendDay.getTime() + 4 * 24 * 60 * 60 * 1000);
+  const endDate = new Date(startDate);
+  endDate.setMonth(startDate.getMonth() + 3);
+
+  const mm = String(sendDay.getMonth() + 1).padStart(2, '0');
+  const yy = String(sendDay.getFullYear()).slice(-2);
+  const registrationId = app.id.slice(0, 8).toUpperCase();
+  const internId = `VYNT-${mm}/${yy}-${registrationId}`;
+
+  const startDateStr = startDate.toISOString().split('T')[0];
+  const endDateStr = endDate.toISOString().split('T')[0];
+
+  await supabase.from("profiles").upsert({
+    id: userId,
+    full_name: app.full_name,
+    email: app.email,
+    phone: app.phone,
+    department: app.domain || "Technology & Software",
+    position: app.sub_domain || "Intern",
+    intern_id: internId,
+    start_date: startDateStr,
+    end_date: endDateStr,
+    duration_months: 3,
+    avatar_url: app.profile_photo_url || null
+  });
+
+  const verificationUrl = `https://careers.vyntyraconsultancyservices.in/status/${app.id}`;
+  const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`;
+  
+  let qrBase64 = null;
+  try {
+    const qrRes = await fetch(qrApiUrl);
+    if (qrRes.ok) {
+      const buffer = await qrRes.arrayBuffer();
+      qrBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
+    }
+  } catch (qrErr) {
+    console.warn("QR code fetch failed in dispatchSelectionEmail:", qrErr);
+  }
+
+  let photoBase64 = null;
+  if (app.profile_photo_url) {
+    try {
+      const photoRes = await fetch(app.profile_photo_url);
+      if (photoRes.ok) {
+        const buffer = await photoRes.arrayBuffer();
+        photoBase64 = `data:image/jpeg;base64,${Buffer.from(buffer).toString('base64')}`;
+      }
+    } catch (photoErr) {
+      console.warn("Photo fetch failed:", photoErr);
+    }
+  }
+
+  const { generateNocPdf } = await import("./nocGenerator");
+  const doc = generateNocPdf({
+    fullName: app.full_name,
+    email: app.email,
+    phone: app.phone,
+    applicationId: app.id,
+    college: app.college || "Academic Institution",
+    domain: app.domain || "Technology & Software",
+    subDomain: app.sub_domain || "Full Stack Web Development",
+    internshipStartDate: startDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }),
+    profilePhotoUrl: photoBase64,
+    qrCodeBase64: qrBase64
+  });
+
+  const pdfOutput = doc.output("arraybuffer");
+  const pdfBuffer = Buffer.from(pdfOutput);
+
+  const filepath = `nocs/${app.id}_NOC.pdf`;
+  const { error: uploadError } = await supabase.storage
+    .from("default")
+    .upload(filepath, pdfBuffer, {
+      contentType: "application/pdf",
+      upsert: true
+    });
+
+  if (uploadError) {
+    console.warn("NOC upload failed:", uploadError.message);
+  }
+
+  const { data: { publicUrl: nocUrl } } = supabase.storage
+    .from("default")
+    .getPublicUrl(filepath);
+
+  let offerLetterUrl = null;
+  try {
+    const { generateOfferLetterPDF } = await import("./pdf.server");
+    offerLetterUrl = await generateOfferLetterPDF({
+      fullName: app.full_name,
+      roleApplied: app.role_applied,
+      applicationId: app.id,
+    });
+  } catch (pdfErr) {
+    console.warn("Offer Letter PDF generation failed:", pdfErr);
+  }
+
+  const subject = `OFFICIAL SELECTION: Vyntyra Industrial Internship Program 2026`;
+  const portalLink = `https://careers.vyntyraconsultancyservices.in/auth/intern`;
+  const htmlBody = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+      <h2 style="color: #0f172a; border-bottom: 2px solid #10b981; padding-bottom: 10px;">Selection Confirmation & Joining Offer</h2>
+      <p>Dear <strong>${app.full_name}</strong>,</p>
+      <p>Congratulations! You have been officially selected for the <strong>Vyntyra Industrial Internship Program 2026</strong> under Project VyNexa.</p>
+      
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 20px 0;">
+        <h3 style="margin-top: 0; color: #0f172a;">Intern Portal Login Credentials:</h3>
+        <p style="margin: 5px 0;"><strong>Portal URL:</strong> <a href="${portalLink}">${portalLink}</a></p>
+        <p style="margin: 5px 0;"><strong>Username:</strong> ${app.email}</p>
+        <p style="margin: 5px 0;"><strong>Temporary Password:</strong> ${tempPassword}</p>
+        <p style="font-size: 12px; color: #64748b; margin-top: 10px;">*You will be prompted to update your password on your first login for security reasons.</p>
+      </div>
+
+      <p>Your official <strong>No Objection Certificate (NOC)</strong> and <strong>Offer Letter</strong> have been generated with your official internship start date set for <strong>${startDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })}</strong> (4 days from today).</p>
+      <p>Please log in to your Intern Dashboard to accept your offer, complete onboarding, and access your project resources.</p>
+      
+      <p style="margin-top: 30px;">Best Regards,<br><strong>Corporate HR Division</strong><br>Vyntyra Consultancy Services</p>
+    </div>
+  `;
+
+  const { sendStatusChangeEmail } = await import("./status-email.server");
+  
+  const attachments = [];
+  if (nocUrl) {
+    attachments.push({ filename: 'No_Objection_Certificate.pdf', path: nocUrl });
+  }
+  if (offerLetterUrl) {
+    attachments.push({ filename: 'Offer_Letter.pdf', path: offerLetterUrl });
+  }
+
+  await sendStatusChangeEmail({
+    toEmail: app.email,
+    fullName: app.full_name,
+    roleApplied: app.role_applied,
+    status: "hired",
+    applicationId: app.id,
+    portalLink,
+    template: { subject, html_body: htmlBody },
+    idempotencyKey: `selection-${app.id}-${Date.now()}`,
+    attachments,
+    ccEmail: null,
+  });
+
+  await supabase.from("application_status_events").insert([{
+    application_id: app.id,
+    from_status: "selected",
+    to_status: "hired",
+    note: `[Selection Email Sent] Intern credentials created. Temporary Password: ${tempPassword}`,
+    changed_by: "00000000-0000-0000-0000-000000000000"
+  }]);
+
+  if (app.phone) {
+    try {
+      const { sendSmsViaEmailGateway } = await import("./email-sms-gateway");
+      await sendSmsViaEmailGateway({
+        recipientPhone: app.phone,
+        recipientName: app.full_name,
+        message: `Congratulations ${app.full_name}! You have been selected for Vyntyra Internship. Credentials sent to your email. Login: ${portalLink}`,
+        subjectTag: "SELECTION CONFIRMATION",
+      });
+    } catch (smsErr) {
+      console.warn("SMS dispatch skipped:", smsErr);
+    }
+  }
+
+  await supabase
+    .from("applications")
+    .update({ status: "hired" })
+    .eq("id", applicationId);
+}
+
+const scheduleSchema = z.object({
+  applicationId: z.string().uuid(),
+  sendAt: z.string().optional()
+});
+
+export const scheduleSelectionEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => scheduleSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+
+    const { data: app, error } = await supabase
+      .from("applications")
+      .select("*")
+      .eq("id", data.applicationId)
+      .single();
+
+    if (error || !app) throw new Error("Application not found");
+
+    const sendAt = data.sendAt ? new Date(data.sendAt) : new Date();
+
+    if (sendAt.getTime() <= Date.now() + 60000) {
+      await dispatchSelectionEmail(data.applicationId);
+      return { success: true, dispatched: true };
+    }
+
+    const { error: insertError } = await supabase.from("scheduled_emails").insert({
+      application_id: data.applicationId,
+      recipient_email: app.email,
+      recipient_name: app.full_name,
+      subject: `OFFICIAL SELECTION: Vyntyra Industrial Internship Program 2026`,
+      send_at: sendAt.toISOString(),
+      status: "pending"
+    });
+
+    if (insertError) throw new Error(`Failed to schedule email: ${insertError.message}`);
+
+    return { success: true, dispatched: false };
+  });
+
+export const sendBulkSelectionEmails = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context);
+
+    const { data: hiredApps, error } = await supabase
+      .from("applications")
+      .select("id, email, status")
+      .eq("status", "hired");
+
+    if (error) throw new Error(error.message);
+
+    let sentCount = 0;
+    for (const app of hiredApps || []) {
+      const { data: existingProf } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", app.email)
+        .maybeSingle();
+
+      if (!existingProf) {
+        await dispatchSelectionEmail(app.id);
+        sentCount++;
+      }
+    }
+
+    return { success: true, sentCount };
+  });
+
+export const listScheduledEmails = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context);
+
+    const { data, error } = await supabase
+      .from("scheduled_emails")
+      .select(`
+        *,
+        applications:application_id (
+          full_name,
+          role_applied,
+          status
+        )
+      `)
+      .order("send_at", { ascending: true });
+
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const processScheduledEmails = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context);
+
+    const { data: pending, error } = await supabase
+      .from("scheduled_emails")
+      .select("*")
+      .eq("status", "pending")
+      .lte("send_at", new Date().toISOString());
+
+    if (error || !pending || pending.length === 0) {
+      return { success: true, processedCount: 0 };
+    }
+
+    let processedCount = 0;
+    for (const email of pending) {
+      try {
+        await supabase
+          .from("scheduled_emails")
+          .update({ status: "sent", sent_at: new Date().toISOString() })
+          .eq("id", email.id);
+
+        await dispatchSelectionEmail(email.application_id);
+        processedCount++;
+      } catch (err: any) {
+        await supabase
+          .from("scheduled_emails")
+          .update({ status: "failed", error_message: err.message })
+          .eq("id", email.id);
+      }
+    }
+
+    return { success: true, processedCount };
+  });

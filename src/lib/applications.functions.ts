@@ -524,10 +524,6 @@ export const updateApplicantByAdmin = createServerFn({ method: "POST" })
         changed_by: context.userId,
       }]);
 
-      if (updateFields.status === "hired") {
-        const { autoProvisionIntern } = await import("./workflow.functions");
-        await autoProvisionIntern({ ...existing, ...payload }, context.userId);
-      }
     }
 
     return { ok: true, id };

@@ -50,6 +50,9 @@ import {
   listStatusEvents,
   ALLOWED_TRANSITIONS,
   type AppStatus,
+  scheduleSelectionEmail,
+  sendBulkSelectionEmails,
+  processScheduledEmails,
 } from "@/lib/workflow.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,6 +119,20 @@ function AdminDashboard() {
   const fetchNotifications = useServerFn(listAdminNotifications);
   const markAllRead = useServerFn(markAllNotificationsRead);
   const fetchVisitorCount = useServerFn(getVisitorCount);
+  const triggerProcessScheduled = useServerFn(processScheduledEmails);
+  const doBulkSendEmails = useServerFn(sendBulkSelectionEmails);
+
+  useEffect(() => {
+    triggerProcessScheduled()
+      .then((res) => {
+        if (res?.processedCount && res.processedCount > 0) {
+          toast.success(`Processed ${res.processedCount} scheduled selection emails!`);
+          qc.invalidateQueries({ queryKey: ["applications"] });
+        }
+      })
+      .catch((err) => console.warn("Failed to process scheduled emails:", err));
+  }, []);
+
   const [selected, setSelected] = useState<any>(null);
 
   // MFA / 2FA Security states & handlers
@@ -740,6 +757,31 @@ function AdminDashboard() {
                   <X className="h-4 w-4 mr-1.5" /> Clear
                 </Button>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200"
+                onClick={async () => {
+                  const confirmBulk = window.confirm("Are you sure you want to send selection emails and activate accounts for ALL applications marked as 'Hired'?");
+                  if (!confirmBulk) return;
+                  const loadingToast = toast.loading("Sending bulk selection emails...");
+                  try {
+                    const res = await doBulkSendEmails();
+                    toast.dismiss(loadingToast);
+                    if (res?.sentCount) {
+                      toast.success(`Successfully sent selection emails to ${res.sentCount} selected interns!`);
+                      qc.invalidateQueries({ queryKey: ["applications"] });
+                    } else {
+                      toast.info("No unsent hired applications found.");
+                    }
+                  } catch (err: any) {
+                    toast.dismiss(loadingToast);
+                    toast.error(err.message || "Failed to dispatch bulk emails");
+                  }
+                }}
+              >
+                <Send className="h-4 w-4 mr-1.5" /> Send Bulk Selection
+              </Button>
               <Button variant="outline" size="sm" onClick={exportCsv}>
                 <FileDown className="h-4 w-4 mr-1.5" /> Export All
               </Button>
@@ -1196,6 +1238,35 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
   const [editOpen, setEditOpen] = useState(false);
   const [payslipOpen, setPayslipOpen] = useState(false);
 
+  const [profileExists, setProfileExists] = useState(false);
+  const [scheduledEmail, setScheduledEmail] = useState<any>(null);
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [isScheduling, setIsScheduling] = useState(false);
+  const triggerSchedule = useServerFn(scheduleSelectionEmail);
+
+  useEffect(() => {
+    if (app && app.status === "hired") {
+      supabase.from("profiles")
+        .select("id")
+        .eq("email", app.email)
+        .maybeSingle()
+        .then(({ data }) => {
+          setProfileExists(!!data);
+        });
+
+      supabase.from("scheduled_emails")
+        .select("*")
+        .eq("application_id", app.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          setScheduledEmail(data);
+          if (data?.send_at) {
+            setScheduleTime(new Date(data.send_at).toISOString().slice(0, 16));
+          }
+        });
+    }
+  }, [app?.id, app?.status]);
+
   async function handleDownloadNoc() {
     const loadingToast = toast.loading("Generating premium NOC Certificate...");
     try {
@@ -1590,6 +1661,114 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
               <div className="rounded-sm border border-border bg-surface p-4 text-sm whitespace-pre-wrap">
                 {app.message}
               </div>
+            </div>
+          )}
+
+          {app.status === "hired" && (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50/30 p-5 space-y-4">
+              <div className="flex items-center gap-2 text-emerald-800 font-semibold text-sm">
+                <GraduationCap className="h-5 w-5 text-emerald-600" /> 
+                Selection Email & Portal Activation Hub
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                This applicant has been selected. You can now activate their intern account and dispatch their welcome pack containing their login details, premium verification NOC, and Offer Letter.
+              </p>
+
+              {profileExists ? (
+                <div className="bg-emerald-100/50 border border-emerald-200 text-emerald-800 text-xs rounded-lg p-3 flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
+                  <div>
+                    <strong>Intern Profile Active:</strong> Account has been fully activated and credentials sent.
+                  </div>
+                </div>
+              ) : scheduledEmail && scheduledEmail.status === "pending" ? (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 shrink-0 text-amber-600 animate-pulse" />
+                    <strong>Selection Email Scheduled:</strong> Will be dispatched on <strong>{new Date(scheduledEmail.send_at).toLocaleString()}</strong>.
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="h-7 text-xs border-amber-300 text-amber-800 bg-white hover:bg-amber-50"
+                    disabled={isScheduling}
+                    onClick={async () => {
+                      setIsScheduling(true);
+                      try {
+                        const { error } = await supabase.from("scheduled_emails").delete().eq("id", scheduledEmail.id);
+                        if (error) throw error;
+                        setScheduledEmail(null);
+                        toast.success("Schedule cancelled successfully.");
+                      } catch (err: any) {
+                        toast.error(err.message || "Failed to cancel schedule");
+                      } finally {
+                        setIsScheduling(false);
+                      }
+                    }}
+                  >
+                    Cancel Schedule
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Schedule Dispatch Date & Time</label>
+                    <Input
+                      type="datetime-local"
+                      value={scheduleTime}
+                      onChange={(e) => setScheduleTime(e.target.value)}
+                      className="bg-white border-slate-200"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button 
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5 h-9"
+                      disabled={isScheduling}
+                      onClick={async () => {
+                        setIsScheduling(true);
+                        try {
+                          await triggerSchedule({ data: { applicationId: app.id } });
+                          toast.success("Selection Email & Welcome Pack dispatched successfully!");
+                          setProfileExists(true);
+                          qc.invalidateQueries({ queryKey: ["applications"] });
+                        } catch (err: any) {
+                          toast.error(err.message || "Failed to send selection email");
+                        } finally {
+                          setIsScheduling(false);
+                        }
+                      }}
+                    >
+                      <Send className="h-3.5 w-3.5" /> Send Selection Email Now
+                    </Button>
+
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-semibold gap-1.5 h-9"
+                      disabled={isScheduling || !scheduleTime}
+                      onClick={async () => {
+                        setIsScheduling(true);
+                        try {
+                          const date = new Date(scheduleTime);
+                          await triggerSchedule({ data: { applicationId: app.id, sendAt: date.toISOString() } });
+                          toast.success(`Selection email scheduled for ${date.toLocaleString()}`);
+                          
+                          const { data } = await supabase.from("scheduled_emails").eq("application_id", app.id).maybeSingle();
+                          setScheduledEmail(data);
+                        } catch (err: any) {
+                          toast.error(err.message || "Failed to schedule selection email");
+                        } finally {
+                          setIsScheduling(false);
+                        }
+                      }}
+                    >
+                      <Clock className="h-3.5 w-3.5" /> Schedule Welcome Pack
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

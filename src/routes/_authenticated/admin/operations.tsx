@@ -162,6 +162,7 @@ function OperationsDashboard() {
 
   const [assignInternOpen, setAssignInternOpen] = useState(false);
   const [assignInternForm, setAssignInternForm] = useState({ internId: "", employeeId: "" });
+  const [showAttendanceLogs, setShowAttendanceLogs] = useState(false);
 
   // Queries with Stale Time optimization for Instant Load Performance
   const queryOpts = { staleTime: 1000 * 60 * 5, gcTime: 1000 * 60 * 10 };
@@ -215,6 +216,52 @@ function OperationsDashboard() {
   const team: any[] = teamQ.data || [];
   const employees = team.filter((m: any) => m.role === "employee");
   const interns = team.filter((m: any) => m.role === "intern");
+
+  const processedInternAttendance = useMemo(() => {
+    return interns.map((intern: any) => {
+      const internAttendance = (attendanceQ.data || []).filter((a: any) => a.user_id === intern.id);
+      const totalAttendance = internAttendance.length;
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const todayLog = internAttendance.find((a: any) => a.date === todayStr);
+
+      let activeStatus: "Active" | "Offline" | "Completed" = "Offline";
+      let clockInTime = "—";
+      let clockOutTime = "—";
+
+      if (todayLog) {
+        clockInTime = todayLog.clock_in ? new Date(todayLog.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—";
+        clockOutTime = todayLog.clock_out ? new Date(todayLog.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—";
+        
+        if (todayLog.clock_in && !todayLog.clock_out) {
+          activeStatus = "Active";
+        } else if (todayLog.clock_in && todayLog.clock_out) {
+          activeStatus = "Completed";
+        }
+      }
+
+      let remainingDays = "—";
+      if (intern.end_date) {
+        const end = new Date(intern.end_date).getTime();
+        const diff = end - Date.now();
+        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+        remainingDays = days > 0 ? `${days} Days` : "Ended";
+      }
+
+      const completedTasks = (tasksQ.data || []).filter((t: any) => t.assigned_to === intern.id && t.status === "completed").length;
+
+      return {
+        ...intern,
+        totalAttendance,
+        activeStatus,
+        clockInTime,
+        clockOutTime,
+        remainingDays,
+        completedTasks,
+        attendance: internAttendance
+      };
+    });
+  }, [interns, attendanceQ.data, tasksQ.data]);
 
   async function handleAdminResetPassword(e: React.FormEvent) {
     e.preventDefault();
@@ -1525,6 +1572,212 @@ function OperationsDashboard() {
             doDeleteSmsLog={doDeleteSmsLog}
             qc={qc}
           />
+        </section>
+
+        {/* ── Intern Attendance & Timecard Monitoring Dashboard ── */}
+        <section className="rounded-xl border bg-white shadow-sm overflow-hidden mt-6">
+          <div className="px-5 py-4 border-b flex items-center justify-between bg-slate-900 text-white">
+            <h2 className="font-semibold text-sm flex items-center gap-2">
+              <Clock className="h-4 w-4 text-emerald-400" /> Intern Attendance &amp; Timecard Monitoring
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className="bg-emerald-500/20 text-emerald-300 text-xs px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                {processedInternAttendance.filter(i => i.activeStatus === "Active").length} Online Now
+              </span>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Quick Metrics Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-3">
+                <div className="p-3 bg-emerald-100 text-emerald-700 rounded-full shrink-0">
+                  <UserCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Clocked-In Today</div>
+                  <div className="text-xl font-bold text-slate-800">
+                    {processedInternAttendance.filter(i => i.activeStatus === "Active" || i.activeStatus === "Completed").length} Interns
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-3">
+                <div className="p-3 bg-blue-100 text-blue-700 rounded-full shrink-0">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Shift Presence Rate</div>
+                  <div className="text-xl font-bold text-slate-800">
+                    {interns.length > 0 
+                      ? `${Math.round((processedInternAttendance.filter(i => i.activeStatus === "Active" || i.activeStatus === "Completed").length / interns.length) * 100)}%`
+                      : "0%"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-3">
+                <div className="p-3 bg-indigo-100 text-indigo-700 rounded-full shrink-0">
+                  <CheckCircle2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Task Completion Rate</div>
+                  <div className="text-xl font-bold text-slate-800">
+                    {tasksQ.data?.length > 0 
+                      ? `${Math.round((tasksQ.data.filter((t: any) => t.status === "completed").length / tasksQ.data.length) * 100)}%`
+                      : "0%"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Interns Table */}
+            <div className="rounded-xl border bg-white overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-bold tracking-wider text-slate-500">
+                      <th className="px-5 py-3">Intern Details</th>
+                      <th className="px-5 py-3">Today's Status</th>
+                      <th className="px-5 py-3">Clock In</th>
+                      <th className="px-5 py-3">Clock Out</th>
+                      <th className="px-5 py-3">Total Attendance</th>
+                      <th className="px-5 py-3">Task Completions</th>
+                      <th className="px-5 py-3">Days Remaining</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                    {processedInternAttendance.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-5 py-8 text-center text-slate-400">No active interns found</td>
+                      </tr>
+                    ) : (
+                      processedInternAttendance.map((intern: any) => (
+                        <tr key={intern.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-3">
+                              <div 
+                                className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 bg-cover bg-center shrink-0 border"
+                                style={intern.avatar_url ? { backgroundImage: `url(${intern.avatar_url})` } : {}}
+                              >
+                                {!intern.avatar_url && (intern.full_name || "?")[0].toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="font-semibold text-slate-900 text-sm">{intern.full_name}</div>
+                                <div className="text-[10px] text-slate-400 font-light">{intern.intern_id || "No ID"} · {intern.department}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4">
+                            {intern.activeStatus === "Active" ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                Active
+                              </span>
+                            ) : intern.activeStatus === "Completed" ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-50 text-slate-600 border border-slate-200">
+                                Clocked Out
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                Offline
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-5 py-4 font-mono text-slate-600">{intern.clockInTime}</td>
+                          <td className="px-5 py-4 font-mono text-slate-600">{intern.clockOutTime}</td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-800">{intern.totalAttendance} Days</span>
+                              <span className="text-[10px] text-slate-400 font-normal">Present</span>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-800">{intern.completedTasks} Tasks</span>
+                              <span className="text-[10px] text-slate-400 font-normal">Done</span>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className={`font-semibold ${intern.remainingDays.includes("Days") ? "text-slate-800" : "text-slate-400"}`}>
+                              {intern.remainingDays}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Day-Wise Logs Toggle & List */}
+            <div className="pt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowAttendanceLogs(!showAttendanceLogs)}
+                className="gap-2 font-semibold text-xs border-slate-200"
+              >
+                <Calendar className="h-4 w-4" /> 
+                {showAttendanceLogs ? "Hide Detailed History Logs" : "Show Detailed History Logs"}
+              </Button>
+
+              {showAttendanceLogs && (
+                <div className="mt-4 rounded-xl border bg-white overflow-hidden shadow-sm animate-in fade-in slide-in-from-top-4 duration-200">
+                  <div className="bg-slate-50 px-5 py-3 border-b flex items-center justify-between text-xs">
+                    <span className="font-bold uppercase tracking-wider text-slate-500">Every Day-Wise Attendance Logs</span>
+                    <span className="text-slate-400 font-light">All recorded clock-in and clock-out history</span>
+                  </div>
+                  <div className="overflow-x-auto max-h-[350px] overflow-y-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] uppercase font-bold tracking-wider text-slate-500">
+                          <th className="px-5 py-2.5">Date</th>
+                          <th className="px-5 py-2.5">Intern Name</th>
+                          <th className="px-5 py-2.5">Email</th>
+                          <th className="px-5 py-2.5">Clock In</th>
+                          <th className="px-5 py-2.5">Clock Out</th>
+                          <th className="px-5 py-2.5">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-600 font-medium">
+                        {(attendanceQ.data || []).length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="px-5 py-8 text-center text-slate-400">No attendance logs in database</td>
+                          </tr>
+                        ) : (
+                          (attendanceQ.data as any[]).map((log: any) => (
+                            <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-5 py-3 font-semibold text-slate-800">
+                                {new Date(log.date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </td>
+                              <td className="px-5 py-3 font-semibold text-slate-900">{log.profiles?.full_name || "—"}</td>
+                              <td className="px-5 py-3 text-slate-500">{log.profiles?.email || "—"}</td>
+                              <td className="px-5 py-3 font-mono">
+                                {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
+                              </td>
+                              <td className="px-5 py-3 font-mono">
+                                {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
+                              </td>
+                              <td className="px-5 py-3">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                  log.clock_in && !log.clock_out ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-600"
+                                }`}>
+                                  {log.clock_in && !log.clock_out ? "Active" : "Completed"}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </section>
       </main>
       
