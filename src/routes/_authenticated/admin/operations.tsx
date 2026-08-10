@@ -1837,8 +1837,11 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
   const quota = quotaQ.data || {
     totalSentThisMonth: 0,
     resendSentThisMonth: 0,
-    resendAvailable: 3000,
-    resendQuota: 3000,
+    resendSentToday: 0,
+    resendAvailableMonth: 3000,
+    resendAvailableToday: 100,
+    resendQuotaMonth: 3000,
+    resendQuotaDay: 100,
     brevoSentThisMonth: 0,
     brevoAvailable: 9000,
     brevoQuota: 9000,
@@ -2060,22 +2063,24 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Resend Primary Service</span>
               <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
-                3,000 / mo Quota
+                100 / day &middot; 3k / mo
               </span>
             </div>
             <div className="flex items-baseline justify-between">
-              <div className="text-2xl font-black text-slate-900">{quota.resendAvailable.toLocaleString()}</div>
-              <div className="text-xs text-slate-500 font-medium">Available Emails</div>
+              <div className="text-2xl font-black text-slate-900">{(quota.resendAvailableMonth ?? quota.resendAvailable ?? 3000).toLocaleString()}</div>
+              <div className="text-xs text-slate-500 font-medium">Available Month</div>
             </div>
             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
               <div 
                 className="bg-emerald-500 h-full transition-all" 
-                style={{ width: `${Math.min(100, (quota.resendSentThisMonth / quota.resendQuota) * 100)}%` }} 
+                style={{ width: `${Math.min(100, ((quota.resendSentThisMonth || 0) / 3000) * 100)}%` }} 
               />
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-              <span>Sent: <strong>{quota.resendSentThisMonth.toLocaleString()}</strong></span>
-              <span className="text-emerald-700 font-semibold">{quota.hasResendKey ? "✓ API Active" : "⚠️ Key Missing"}</span>
+              <span>Today: <strong>{quota.resendSentToday || 0} / 100 max</strong></span>
+              <span className="text-emerald-700 font-semibold font-mono">
+                {(quota.resendSentToday || 0) >= 100 ? "⚠️ Auto-Brevo" : quota.hasResendKey ? "✓ API Active" : "⚠️ Key Missing"}
+              </span>
             </div>
           </div>
 

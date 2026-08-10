@@ -1539,26 +1539,31 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
 </body>
 </html>`;
 
-      // Equal usage strategy: check monthly usage for Resend vs Brevo
+      // Equal usage & daily limit safety strategy: check monthly & today's usage for Resend vs Brevo
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+      const startOfToday = new Date().toISOString().split('T')[0];
+
       const { data: monthLogs } = await supabase
         .from("automated_emails_log")
-        .select("provider")
+        .select("provider, sent_at")
         .gte("sent_at", startOfMonth)
         .eq("status", "sent");
 
       const resendCountThisMonth = monthLogs?.filter((l: any) => l.provider === "resend" || !l.provider).length || 0;
+      const resendCountToday = monthLogs?.filter((l: any) => (l.provider === "resend" || !l.provider) && l.sent_at?.startsWith(startOfToday)).length || 0;
       const brevoCountThisMonth = monthLogs?.filter((l: any) => l.provider === "brevo").length || 0;
 
       const hasResend = !!process.env.RESEND_API_KEY;
       const hasBrevo = !!process.env.BREVO_API_KEY;
 
-      // Select primary provider based on lower monthly usage for equal load distribution
+      // Select primary provider (Auto-switch to Brevo if Resend reaches 100 emails/day limit)
       let primaryProvider: "resend" | "brevo" = "resend";
       if (hasResend && hasBrevo) {
-        if (brevoCountThisMonth < resendCountThisMonth && brevoCountThisMonth < 9000) {
+        if (resendCountToday >= 100 && brevoCountThisMonth < 9000) {
           primaryProvider = "brevo";
-        } else if (resendCountThisMonth < 3000) {
+        } else if (brevoCountThisMonth < resendCountThisMonth && brevoCountThisMonth < 9000) {
+          primaryProvider = "brevo";
+        } else if (resendCountThisMonth < 3000 && resendCountToday < 100) {
           primaryProvider = "resend";
         } else {
           primaryProvider = "brevo";
@@ -1686,11 +1691,12 @@ async function sendViaBrevo({ recipientEmail, recipientName, subject, htmlConten
   return data.messageId || data.id || "brevo-" + Date.now();
 }
 
-// Get Monthly Email Quota & Service Health Stats
+// Get Monthly & Daily Email Quota & Service Health Stats
 export const getEmailQuotaStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    const startOfToday = new Date().toISOString().split('T')[0];
 
     const { data: logs } = await supabase
       .from("automated_emails_log")
@@ -1700,16 +1706,21 @@ export const getEmailQuotaStats = createServerFn({ method: "GET" })
 
     const totalSentThisMonth = logs?.length || 0;
     const resendSentThisMonth = logs?.filter((l: any) => l.provider === "resend" || !l.provider).length || 0;
+    const resendSentToday = logs?.filter((l: any) => (l.provider === "resend" || !l.provider) && l.sent_at?.startsWith(startOfToday)).length || 0;
     const brevoSentThisMonth = logs?.filter((l: any) => l.provider === "brevo").length || 0;
 
-    const resendQuota = 3000;
+    const resendQuotaMonth = 3000;
+    const resendQuotaDay = 100;
     const brevoQuota = 9000;
 
     return {
       totalSentThisMonth,
       resendSentThisMonth,
-      resendAvailable: Math.max(0, resendQuota - resendSentThisMonth),
-      resendQuota,
+      resendSentToday,
+      resendAvailableMonth: Math.max(0, resendQuotaMonth - resendSentThisMonth),
+      resendAvailableToday: Math.max(0, resendQuotaDay - resendSentToday),
+      resendQuotaMonth,
+      resendQuotaDay,
       brevoSentThisMonth,
       brevoAvailable: Math.max(0, brevoQuota - brevoSentThisMonth),
       brevoQuota,
