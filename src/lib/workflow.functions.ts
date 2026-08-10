@@ -392,6 +392,17 @@ export async function autoProvisionIntern(app: any, changedBy: string) {
           start_date: startDateStr,
           end_date: endDateStr,
           duration_months: 3,
+          avatar_url: app.profile_photo_url || null
+        });
+
+        await supabase.from("application_status_events").insert([{
+          application_id: app.id,
+          from_status: app.status || "new",
+          to_status: "hired",
+          note: `[System Auto-Provisioning] Intern user dashboard created for ${app.full_name}.\nEmail: ${app.email}\nTemporary Password: ${tempPassword}`,
+          changed_by: changedBy
+        }]);
+      }
     }
   } catch (provErr: any) {
     console.error("[workflow] Failed to auto-provision intern user:", provErr.message);
