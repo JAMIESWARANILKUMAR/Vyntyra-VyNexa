@@ -1838,6 +1838,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
     totalSentThisMonth: 0,
     resendSentThisMonth: 0,
     resendSentToday: 0,
+    resendAvailable: 3000,
     resendAvailableMonth: 3000,
     resendAvailableToday: 100,
     resendQuotaMonth: 3000,
