@@ -2642,10 +2642,12 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
     setIsSending(true);
     try {
       await doSendSms({
-        recipient_phone: recipientPhone,
-        recipient_name: recipientName,
-        message: message,
-        preferred_provider: provider,
+        data: {
+          recipient_phone: recipientPhone,
+          recipient_name: recipientName,
+          message: message,
+          preferred_provider: provider,
+        }
       });
       toast.success("SMS notification sent successfully!");
       setRecipientPhone("");
@@ -2865,7 +2867,7 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
                         size="icon"
                         onClick={async () => {
                           if (confirm("Delete SMS log record?")) {
-                            await doDeleteSmsLog({ id: log.id });
+                            await doDeleteSmsLog({ data: { id: log.id } });
                             qc.invalidateQueries({ queryKey: ["sms-logs"] });
                             toast.success("SMS log deleted.");
                           }

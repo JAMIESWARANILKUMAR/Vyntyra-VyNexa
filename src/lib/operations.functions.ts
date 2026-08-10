@@ -1828,7 +1828,7 @@ export const sendSmsNotification = createServerFn({ method: "POST" })
     recipient_phone: z.string().min(5),
     recipient_name: z.string().optional(),
     message: z.string().min(1),
-    preferred_provider: z.enum(['auto', 'textbee', 'httpsms']).optional().default('auto'),
+    preferred_provider: z.enum(['auto', 'twilio', 'textbee', 'httpsms']).optional().default('auto'),
   }).parse(d))
   .handler(async ({ data }) => {
     const rawPhone = data.recipient_phone.trim().replace(/[^\d+]/g, '');
