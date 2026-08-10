@@ -1857,7 +1857,7 @@ export const sendSmsNotification = createServerFn({ method: "POST" })
 
     const hasTextBee = !!(process.env.TEXTBEE_API_KEY && process.env.TEXTBEE_DEVICE_ID);
     const hasHttpSms = !!(process.env.HTTPSMS_API_KEY && process.env.HTTPSMS_PHONE_NUMBER);
-    const hasTwilio = !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_API_KEY && process.env.TWILIO_API_SECRET);
+    const hasTwilio = !!(process.env.TWILIO_ACCOUNT_SID && (process.env.TWILIO_AUTH_TOKEN || (process.env.TWILIO_API_KEY && process.env.TWILIO_API_SECRET)));
 
     // Multi-Gateway Selection Strategy: Twilio -> TextBee -> HttpSMS -> Fast2SMS
     let selectedProvider: 'twilio' | 'textbee' | 'httpsms' = 'twilio';
@@ -1951,10 +1951,23 @@ async function sendViaTwilio({ recipientPhone, message }: { recipientPhone: stri
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const apiKey = process.env.TWILIO_API_KEY;
   const apiSecret = process.env.TWILIO_API_SECRET;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
   const fromPhone = process.env.TWILIO_PHONE_NUMBER || process.env.TWILIO_FROM_NUMBER;
 
-  if (!accountSid || !apiKey || !apiSecret) {
-    throw new Error('Twilio credentials (TWILIO_ACCOUNT_SID, TWILIO_API_KEY, TWILIO_API_SECRET) not set');
+  if (!accountSid) {
+    throw new Error('TWILIO_ACCOUNT_SID is not set in environment');
+  }
+
+  let username = accountSid;
+  let password = authToken || '';
+
+  if (apiKey && apiSecret && !authToken) {
+    username = apiKey;
+    password = apiSecret;
+  }
+
+  if (!password) {
+    throw new Error('Either TWILIO_AUTH_TOKEN or (TWILIO_API_KEY and TWILIO_API_SECRET) must be set in environment');
   }
 
   let cleanPhone = recipientPhone.replace(/[^\d+]/g, '');
@@ -1963,7 +1976,7 @@ async function sendViaTwilio({ recipientPhone, message }: { recipientPhone: stri
   }
 
   const endpoint = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
-  const authHeader = 'Basic ' + Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
+  const authHeader = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
 
   const params = new URLSearchParams();
   params.append('To', cleanPhone);
@@ -2104,7 +2117,7 @@ export const getSmsQuotaStats = createServerFn({ method: "GET" })
       textbeeAvailableToday: Math.max(0, textbeeDayQuota - textbeeSentToday),
       httpsmsSentThisMonth,
       httpsmsAvailableMonth: Math.max(0, httpsmsQuota - httpsmsSentThisMonth),
-      hasTwilio: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_API_KEY && process.env.TWILIO_API_SECRET),
+      hasTwilio: !!(process.env.TWILIO_ACCOUNT_SID && (process.env.TWILIO_AUTH_TOKEN || (process.env.TWILIO_API_KEY && process.env.TWILIO_API_SECRET))),
       twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || null,
       hasTextBee: !!(process.env.TEXTBEE_API_KEY && process.env.TEXTBEE_DEVICE_ID),
       hasHttpSms: !!(process.env.HTTPSMS_API_KEY && process.env.HTTPSMS_PHONE_NUMBER),
