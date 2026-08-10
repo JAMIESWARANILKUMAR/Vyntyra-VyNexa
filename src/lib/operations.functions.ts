@@ -1888,23 +1888,15 @@ async function sendViaHttpSms({ recipientPhone, message }: { recipientPhone: str
 
 async function sendViaFast2SMS({ recipientPhone, message }: { recipientPhone: string; message: string }) {
   const apiKey = process.env.FAST2SMS_API_KEY;
-  if (!apiKey) throw new Error('FAST2SMS_API_KEY environment variable is not configured');
+  if (!apiKey) throw new Error('Fast2SMS API key (FAST2SMS_API_KEY) not set');
 
-  const cleanNumber = recipientPhone.replace(/[^\d]/g, '').slice(-10);
+  const cleanPhone = recipientPhone.replace(/[^\d]/g, '').slice(-10);
 
-  const res = await fetch('https://www.fast2sms.com/dev/bulkV2', {
-    method: 'POST',
+  const res = await fetch(`https://www.fast2sms.com/dev/bulkV2?authorization=${apiKey}&route=q&message=${encodeURIComponent(message)}&flash=0&numbers=${encodeURIComponent(cleanPhone)}`, {
+    method: 'GET',
     headers: {
       'authorization': apiKey,
-      'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      route: 'q',
-      message: message,
-      language: 'english',
-      flash: 0,
-      numbers: cleanNumber,
-    }),
   });
 
   const data = await res.json();
