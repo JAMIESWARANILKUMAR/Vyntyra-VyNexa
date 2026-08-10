@@ -27,7 +27,8 @@ import {
   listAllAccessRequests, updateAccessRequestStatus, updateTaskByAdmin,
   listLeads, createLead, updateLeadStatus, deleteLead,
   listBugs, createBug, updateBugStatus,
-  sendPromotionalInternshipEmail, listAutomatedEmailLogs, deleteAutomatedEmailLog, getEmailQuotaStats
+  sendPromotionalInternshipEmail, listAutomatedEmailLogs, deleteAutomatedEmailLog, getEmailQuotaStats,
+  sendSmsNotification, getSmsQuotaStats, listSmsLogs, deleteSmsLog
 } from "@/lib/operations.functions";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import { toast } from "sonner";
@@ -191,9 +192,14 @@ function OperationsDashboard() {
   const doSendPromotionalEmail = useServerFn(sendPromotionalInternshipEmail);
   const doDeleteAutomatedEmailLog = useServerFn(deleteAutomatedEmailLog);
 
+  const fetchSmsLogsList = useServerFn(listSmsLogs);
+  const doSendSms = useServerFn(sendSmsNotification);
+  const doDeleteSmsLog = useServerFn(deleteSmsLog);
+
   const leadsAdminQ = useQuery({ queryKey: ["admin-leads"], queryFn: () => fetchLeads(), ...queryOpts });
   const bugsAdminQ = useQuery({ queryKey: ["admin-bugs"], queryFn: () => fetchBugs(), ...queryOpts });
   const emailLogsQ = useQuery({ queryKey: ["admin-email-logs"], queryFn: () => fetchEmailLogs(), ...queryOpts });
+  const smsLogsQ = useQuery({ queryKey: ["sms-logs"], queryFn: () => fetchSmsLogsList(), ...queryOpts });
 
   const standupsAdminQ = useQuery({ queryKey: ["admin-standups"], queryFn: () => fetchAllStandups(), ...queryOpts });
   const deliverablesAdminQ = useQuery({ queryKey: ["admin-deliverables"], queryFn: () => fetchAllDeliverables(), ...queryOpts });
@@ -1488,6 +1494,32 @@ function OperationsDashboard() {
           doDeleteAutomatedEmailLog={doDeleteAutomatedEmailLog} 
           qc={qc} 
         />
+
+        {/* ── SMS Gateway Automation Engine ── */}
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <h2 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-emerald-600" /> Multi-Provider Free SMS Gateway Hub
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Send candidate interview updates, selection alerts, and emergency notifications using free SMS gateways (TextBee: 300/mo &middot; HttpSMS: 200/mo).
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full">
+                500 Total SMS / month
+              </span>
+            </div>
+          </div>
+
+          <SmsGatewayHub
+            smsLogsQ={smsLogsQ}
+            doSendSms={doSendSms}
+            doDeleteSmsLog={doDeleteSmsLog}
+            qc={qc}
+          />
+        </section>
       </main>
       
       {/* ── User Profile Drawer / Dialog ── */}
@@ -2403,5 +2435,280 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
         </div>
       </div>
     </section>
+  );
+}
+
+function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
+  const [recipientPhone, setRecipientPhone] = useState("");
+  const [recipientName, setRecipientName] = useState("");
+  const [message, setMessage] = useState("");
+  const [provider, setProvider] = useState<"auto" | "textbee" | "httpsms">("auto");
+  const [isSending, setIsSending] = useState(false);
+
+  const quotaQ = useQuery({
+    queryKey: ["sms-quota-stats"],
+    queryFn: () => getSmsQuotaStats(),
+    refetchInterval: 10000,
+  });
+
+  const quota = quotaQ.data || {
+    totalSentThisMonth: 0,
+    textbeeSentThisMonth: 0,
+    textbeeSentToday: 0,
+    textbeeAvailableMonth: 300,
+    textbeeAvailableToday: 50,
+    httpsmsSentThisMonth: 0,
+    httpsmsAvailableMonth: 200,
+    hasTextBee: false,
+    hasHttpSms: false,
+  };
+
+  const smsLogs = smsLogsQ.data || [];
+
+  async function handleSendSms(e: React.FormEvent) {
+    e.preventDefault();
+    if (!recipientPhone || !message) {
+      toast.error("Please enter a valid recipient phone number and SMS message!");
+      return;
+    }
+    setIsSending(true);
+    try {
+      await doSendSms({
+        recipient_phone: recipientPhone,
+        recipient_name: recipientName,
+        message: message,
+        preferred_provider: provider,
+      });
+      toast.success("SMS notification sent successfully!");
+      setRecipientPhone("");
+      setRecipientName("");
+      setMessage("");
+      qc.invalidateQueries({ queryKey: ["sms-logs"] });
+      qc.invalidateQueries({ queryKey: ["sms-quota-stats"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send SMS notification");
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Provider Quota Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* TextBee Card */}
+        <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">TextBee Gateway (textbee.dev)</span>
+            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+              300 SMS / month
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl font-black text-slate-900">{quota.textbeeAvailableMonth}</div>
+            <div className="text-xs text-slate-500 font-medium">Available Month</div>
+          </div>
+          <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+            <div 
+              className="bg-emerald-500 h-full transition-all" 
+              style={{ width: `${Math.min(100, (quota.textbeeSentThisMonth / 300) * 100)}%` }} 
+            />
+          </div>
+          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+            <span>Today: <strong>{quota.textbeeSentToday} / 50 max</strong></span>
+            <span className="text-slate-400">Resets monthly &amp; daily</span>
+          </div>
+          <div className="text-[10.5px] text-slate-500 italic pt-1 border-t border-slate-100">
+            Restrictions: Max 50 texts per day.
+          </div>
+        </div>
+
+        {/* HttpSMS Card */}
+        <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">HttpSMS Gateway (httpsms.com)</span>
+            <span className="bg-sky-100 text-sky-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+              200 SMS / month
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl font-black text-slate-900">{quota.httpsmsAvailableMonth}</div>
+            <div className="text-xs text-slate-500 font-medium">Available Month</div>
+          </div>
+          <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+            <div 
+              className="bg-sky-500 h-full transition-all" 
+              style={{ width: `${Math.min(100, (quota.httpsmsSentThisMonth / 200) * 100)}%` }} 
+            />
+          </div>
+          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+            <span>Sent: <strong>{quota.httpsmsSentThisMonth} / 200</strong></span>
+            <span className="text-slate-400">Resets monthly</span>
+          </div>
+          <div className="text-[10.5px] text-sky-800 font-medium pt-1 border-t border-slate-100">
+            Requires an Android device (Android Gateway App).
+          </div>
+        </div>
+
+        {/* Combined Total */}
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-2 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">Total SMS Capacity</span>
+            <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+              500 SMS / month
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl font-black text-emerald-950">{quota.totalSentThisMonth}</div>
+            <div className="text-xs text-emerald-800 font-medium">Total Sent This Month</div>
+          </div>
+          <div className="text-[11px] text-emerald-800 leading-snug pt-1">
+            Free SMS notifications are automatically load-balanced between TextBee (300/mo) and HttpSMS (200/mo).
+          </div>
+        </div>
+      </div>
+
+      {/* Quick SMS Dispatcher Card */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-emerald-600" /> Send Instant Candidate SMS Notification
+        </h3>
+
+        <form onSubmit={handleSendSms} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className="text-xs">Recipient Phone Number *</Label>
+              <Input
+                placeholder="+91 98765 43210"
+                value={recipientPhone}
+                onChange={(e) => setRecipientPhone(e.target.value)}
+                className="mt-1 font-mono text-xs"
+                required
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Candidate Name (Optional)</Label>
+              <Input
+                placeholder="Candidate Name"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+                className="mt-1 text-xs"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Preferred Gateway Provider</Label>
+              <Select value={provider} onValueChange={(val: any) => setProvider(val)}>
+                <SelectTrigger className="mt-1 text-xs">
+                  <SelectValue placeholder="Auto Load Balance" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Auto Load Balance (Recommended)</SelectItem>
+                  <SelectItem value="textbee">TextBee Gateway (300/mo &middot; 50/day)</SelectItem>
+                  <SelectItem value="httpsms">HttpSMS Gateway (200/mo &middot; Android)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-xs">SMS Message Body *</Label>
+            <Textarea
+              rows={3}
+              placeholder="e.g. Congratulations! Your application for Vyntyra Internship Program 2026 has been reviewed. Check your portal: https://careers.vyntyraconsultancyservices.in/"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="mt-1 text-xs p-3 font-mono"
+              required
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isSending} className="bg-emerald-600 hover:bg-emerald-700 text-xs gap-2">
+              <Send className="h-3.5 w-3.5" /> {isSending ? "Dispatching SMS..." : "Dispatch SMS Notification"}
+            </Button>
+          </div>
+        </form>
+      </div>
+
+      {/* SMS Dispatch History Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">SMS Outbound Dispatch Logs</h4>
+          <span className="text-xs text-slate-500 font-mono">{smsLogs.length} Log Entries</span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
+              <tr>
+                <th className="px-5 py-3">Phone Number</th>
+                <th className="px-5 py-3">Candidate Name</th>
+                <th className="px-5 py-3">Provider</th>
+                <th className="px-5 py-3">Message Snippet</th>
+                <th className="px-5 py-3">Sent Time</th>
+                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {smsLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-5 py-8 text-center text-slate-400">
+                    No SMS notifications sent yet.
+                  </td>
+                </tr>
+              ) : (
+                smsLogs.map((log: any) => (
+                  <tr key={log.id} className="hover:bg-slate-50">
+                    <td className="px-5 py-3.5 font-mono font-semibold text-slate-800">{log.recipient_phone}</td>
+                    <td className="px-5 py-3.5 text-slate-700">{log.recipient_name || "—"}</td>
+                    <td className="px-5 py-3.5">
+                      {log.provider === "httpsms" ? (
+                        <span className="bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                          HttpSMS
+                        </span>
+                      ) : (
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                          TextBee
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 text-slate-600 max-w-xs truncate" title={log.message}>{log.message}</td>
+                    <td className="px-5 py-3.5 text-slate-500 font-mono">{new Date(log.sent_at).toLocaleString()}</td>
+                    <td className="px-5 py-3.5">
+                      {log.status === "sent" ? (
+                        <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                          Sent
+                        </span>
+                      ) : (
+                        <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                          Failed
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={async () => {
+                          if (confirm("Delete SMS log record?")) {
+                            await doDeleteSmsLog({ id: log.id });
+                            qc.invalidateQueries({ queryKey: ["sms-logs"] });
+                            toast.success("SMS log deleted.");
+                          }
+                        }}
+                        className="h-7 w-7 text-rose-600 hover:bg-rose-50"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }

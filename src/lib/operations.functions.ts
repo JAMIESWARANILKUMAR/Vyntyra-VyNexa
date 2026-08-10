@@ -1729,3 +1729,213 @@ export const deleteAutomatedEmailLog = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { success: true };
   });
+
+// ─── SMS Gateway & Multi-Provider Automation Engine ─────────────
+export const sendSmsNotification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    recipient_phone: z.string().min(5),
+    recipient_name: z.string().optional(),
+    message: z.string().min(1),
+    preferred_provider: z.enum(['auto', 'textbee', 'httpsms']).optional().default('auto'),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const rawPhone = data.recipient_phone.trim().replace(/[^\d+]/g, '');
+    const recipientPhone = rawPhone.startsWith('+') ? rawPhone : `+91${rawPhone}`;
+    const recipientName = data.recipient_name?.trim() || 'Candidate';
+    const message = data.message.trim();
+
+    let smsId: string | null = null;
+    let providerUsed: 'textbee' | 'httpsms' = 'textbee';
+    let status: 'sent' | 'failed' = 'sent';
+    let errorMessage: string | null = null;
+
+    // Check monthly & daily usage for load balancing
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    const startOfToday = new Date().toISOString().split('T')[0];
+
+    const { data: monthSms } = await supabase
+      .from('sms_logs')
+      .select('provider, sent_at')
+      .gte('sent_at', startOfMonth)
+      .eq('status', 'sent');
+
+    const textbeeMonthCount = monthSms?.filter((s: any) => s.provider === 'textbee').length || 0;
+    const httpsmsMonthCount = monthSms?.filter((s: any) => s.provider === 'httpsms').length || 0;
+    const textbeeTodayCount = monthSms?.filter((s: any) => s.provider === 'textbee' && s.sent_at?.startsWith(startOfToday)).length || 0;
+
+    const hasTextBee = !!(process.env.TEXTBEE_API_KEY && process.env.TEXTBEE_DEVICE_ID);
+    const hasHttpSms = !!(process.env.HTTPSMS_API_KEY && process.env.HTTPSMS_PHONE_NUMBER);
+
+    // Load Balancing Strategy: TextBee (300/mo, max 50/day) vs HttpSMS (200/mo, Android app required)
+    let selectedProvider: 'textbee' | 'httpsms' = 'textbee';
+    if (data.preferred_provider !== 'auto') {
+      selectedProvider = data.preferred_provider as 'textbee' | 'httpsms';
+    } else {
+      if (hasTextBee && textbeeMonthCount < 300 && textbeeTodayCount < 50 && (textbeeMonthCount <= httpsmsMonthCount || !hasHttpSms)) {
+        selectedProvider = 'textbee';
+      } else if (hasHttpSms && httpsmsMonthCount < 200) {
+        selectedProvider = 'httpsms';
+      } else if (hasTextBee && textbeeMonthCount < 300 && textbeeTodayCount < 50) {
+        selectedProvider = 'textbee';
+      }
+    }
+
+    try {
+      if (selectedProvider === 'textbee' && hasTextBee) {
+        try {
+          smsId = await sendViaTextBee({ recipientPhone, message });
+          providerUsed = 'textbee';
+        } catch (tbErr: any) {
+          console.warn('[sms-engine] TextBee failed, trying HttpSMS fallback:', tbErr.message);
+          if (hasHttpSms) {
+            smsId = await sendViaHttpSms({ recipientPhone, message });
+            providerUsed = 'httpsms';
+          } else {
+            throw tbErr;
+          }
+        }
+      } else if (hasHttpSms) {
+        try {
+          smsId = await sendViaHttpSms({ recipientPhone, message });
+          providerUsed = 'httpsms';
+        } catch (hsErr: any) {
+          console.warn('[sms-engine] HttpSMS failed, trying TextBee fallback:', hsErr.message);
+          if (hasTextBee) {
+            smsId = await sendViaTextBee({ recipientPhone, message });
+            providerUsed = 'textbee';
+          } else {
+            throw hsErr;
+          }
+        }
+      } else if (hasTextBee) {
+        smsId = await sendViaTextBee({ recipientPhone, message });
+        providerUsed = 'textbee';
+      } else {
+        throw new Error('No SMS gateway credentials (TEXTBEE_API_KEY or HTTPSMS_API_KEY) configured in environment');
+      }
+    } catch (err: any) {
+      status = 'failed';
+      errorMessage = err.message || 'SMS dispatch failed';
+    }
+
+    await supabase.from('sms_logs').insert({
+      recipient_phone: recipientPhone,
+      recipient_name: recipientName,
+      message: message,
+      provider: providerUsed,
+      status: status,
+      gateway_response_id: smsId,
+      error_message: errorMessage,
+      sent_at: new Date().toISOString(),
+    });
+
+    if (status === 'failed') {
+      throw new Error(errorMessage || 'Failed to dispatch SMS');
+    }
+
+    return { success: true, smsId, provider: providerUsed };
+  });
+
+async function sendViaTextBee({ recipientPhone, message }: { recipientPhone: string; message: string }) {
+  const apiKey = process.env.TEXTBEE_API_KEY;
+  const deviceId = process.env.TEXTBEE_DEVICE_ID;
+  if (!apiKey || !deviceId) throw new Error('TextBee credentials (TEXTBEE_API_KEY / TEXTBEE_DEVICE_ID) not set');
+
+  const res = await fetch(`https://api.textbee.dev/api/v1/gateway/devices/${deviceId}/sendSMS`, {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      recipients: [recipientPhone],
+      message: message,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || data.error || 'TextBee SMS dispatch failed');
+  }
+  return data.id || data.data?.id || 'tb-' + Date.now();
+}
+
+async function sendViaHttpSms({ recipientPhone, message }: { recipientPhone: string; message: string }) {
+  const apiKey = process.env.HTTPSMS_API_KEY;
+  const fromNumber = process.env.HTTPSMS_PHONE_NUMBER;
+  if (!apiKey || !fromNumber) throw new Error('HttpSMS credentials (HTTPSMS_API_KEY / HTTPSMS_PHONE_NUMBER) not set');
+
+  const res = await fetch('https://api.httpsms.com/v1/messages/send', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: fromNumber,
+      to: recipientPhone,
+      content: message,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || data.code || 'HttpSMS dispatch failed');
+  }
+  return data.data?.id || data.id || 'hs-' + Date.now();
+}
+
+export const getSmsQuotaStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    const startOfToday = new Date().toISOString().split('T')[0];
+
+    const { data: logs } = await supabase
+      .from('sms_logs')
+      .select('provider, status, sent_at')
+      .gte('sent_at', startOfMonth)
+      .eq('status', 'sent');
+
+    const totalSentThisMonth = logs?.length || 0;
+    const textbeeSentThisMonth = logs?.filter((l: any) => l.provider === 'textbee').length || 0;
+    const textbeeSentToday = logs?.filter((l: any) => l.provider === 'textbee' && l.sent_at?.startsWith(startOfToday)).length || 0;
+    const httpsmsSentThisMonth = logs?.filter((l: any) => l.provider === 'httpsms').length || 0;
+
+    const textbeeMonthQuota = 300;
+    const textbeeDayQuota = 50;
+    const httpsmsQuota = 200;
+
+    return {
+      totalSentThisMonth,
+      textbeeSentThisMonth,
+      textbeeSentToday,
+      textbeeAvailableMonth: Math.max(0, textbeeMonthQuota - textbeeSentThisMonth),
+      textbeeAvailableToday: Math.max(0, textbeeDayQuota - textbeeSentToday),
+      httpsmsSentThisMonth,
+      httpsmsAvailableMonth: Math.max(0, httpsmsQuota - httpsmsSentThisMonth),
+      hasTextBee: !!(process.env.TEXTBEE_API_KEY && process.env.TEXTBEE_DEVICE_ID),
+      hasHttpSms: !!(process.env.HTTPSMS_API_KEY && process.env.HTTPSMS_PHONE_NUMBER),
+    };
+  });
+
+export const listSmsLogs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from('sms_logs')
+      .select('*')
+      .order('sent_at', { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+export const deleteSmsLog = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase.from('sms_logs').delete().eq('id', data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
