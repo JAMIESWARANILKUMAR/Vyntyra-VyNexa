@@ -371,13 +371,28 @@ export async function autoProvisionIntern(app: any, changedBy: string) {
           role: "intern"
         });
 
+        const now = new Date();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yy = String(now.getFullYear()).slice(-2);
+        const registrationId = app.id.slice(0, 8).toUpperCase();
+        const internId = `VYNT-${mm}/${yy}-${registrationId}`;
+
+        const startDate = new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000);
+        const endDate = new Date(startDate);
+        endDate.setMonth(startDate.getMonth() + 3);
+
+        const startDateStr = startDate.toISOString().split('T')[0];
+        const endDateStr = endDate.toISOString().split('T')[0];
+
         await supabase.from("profiles").upsert({
           id: userId,
           full_name: app.full_name,
           email: app.email,
           department: app.domain || "Technology & Software",
           position: app.sub_domain || "Intern",
-          intern_id: `INT-${app.id || Date.now().toString().slice(-6)}`,
+          intern_id: internId,
+          start_date: startDateStr,
+          end_date: endDateStr,
           duration_months: 3,
           avatar_url: app.profile_photo_url || null
         });

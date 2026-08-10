@@ -1208,6 +1208,10 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`;
       const qrBase64 = await urlToBase64(qrApiUrl);
 
+      const selectionDate = new Date();
+      const calcStartDate = new Date(selectionDate.getTime() + 4 * 24 * 60 * 60 * 1000);
+      const formattedStartDate = calcStartDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
+
       const doc = generateNocPdf({
         fullName: app.full_name,
         email: app.email,
@@ -1216,7 +1220,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         college: app.college || "Academic Institution",
         domain: app.domain || "Technology & Software",
         subDomain: app.sub_domain || "Full Stack Web Development",
-        internshipStartDate: app.availability || app.joining_date || "Immediately",
+        internshipStartDate: formattedStartDate,
         profilePhotoUrl: photoBase64,
         qrCodeBase64: qrBase64,
       });
