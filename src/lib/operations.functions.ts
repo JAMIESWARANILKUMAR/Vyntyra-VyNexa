@@ -1322,16 +1322,11 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
     const subject = data.custom_subject?.trim() || "Invitation: 2026 Official Internship Program — Vyntyra Consultancy Services";
 
     let resendId: string | null = null;
+    let providerUsed: "resend" | "brevo" = "resend";
     let status: "sent" | "failed" = "sent";
     let errorMessage: string | null = null;
 
-    try {
-      const { Resend } = await import("resend");
-      const apiKey = process.env.RESEND_API_KEY;
-      if (!apiKey) throw new Error("RESEND_API_KEY environment variable is not configured");
-      const resend = new Resend(apiKey);
-
-      const htmlContent = `<!doctype html>
+    const htmlContent = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -1536,60 +1531,183 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
 </body>
 </html>`;
 
-      let response = await resend.emails.send({
-        from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
-        to: recipientEmail,
+      // Equal usage strategy: check monthly usage for Resend vs Brevo
+      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+      const { data: monthLogs } = await supabase
+        .from("automated_emails_log")
+        .select("provider")
+        .gte("sent_at", startOfMonth)
+        .eq("status", "sent");
+
+      const resendCountThisMonth = monthLogs?.filter((l: any) => l.provider === "resend" || !l.provider).length || 0;
+      const brevoCountThisMonth = monthLogs?.filter((l: any) => l.provider === "brevo").length || 0;
+
+      const hasResend = !!process.env.RESEND_API_KEY;
+      const hasBrevo = !!process.env.BREVO_API_KEY;
+
+      // Select primary provider based on lower monthly usage for equal load distribution
+      let primaryProvider: "resend" | "brevo" = "resend";
+      if (hasResend && hasBrevo) {
+        if (brevoCountThisMonth < resendCountThisMonth && brevoCountThisMonth < 9000) {
+          primaryProvider = "brevo";
+        } else if (resendCountThisMonth < 3000) {
+          primaryProvider = "resend";
+        } else {
+          primaryProvider = "brevo";
+        }
+      } else if (hasBrevo && !hasResend) {
+        primaryProvider = "brevo";
+      }
+
+      try {
+        if (primaryProvider === "brevo" && hasBrevo) {
+          try {
+            resendId = await sendViaBrevo({ recipientEmail, recipientName, subject, htmlContent });
+            providerUsed = "brevo";
+          } catch (bErr: any) {
+            console.warn("[email-balancer] Brevo primary failed, falling back to Resend:", bErr.message);
+            if (hasResend) {
+              const { Resend } = await import("resend");
+              const resend = new Resend(process.env.RESEND_API_KEY!);
+              let resp = await resend.emails.send({
+                from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
+                to: recipientEmail,
+                subject: subject,
+                html: htmlContent,
+                replyTo: "internships@vyntyraconsultancyservices.in",
+              });
+              if (resp.error) throw new Error(resp.error.message);
+              resendId = resp.data?.id || null;
+              providerUsed = "resend";
+            } else {
+              throw bErr;
+            }
+          }
+        } else {
+          // Resend Primary
+          try {
+            const { Resend } = await import("resend");
+            const apiKey = process.env.RESEND_API_KEY;
+            if (!apiKey) throw new Error("RESEND_API_KEY is not configured");
+            const resend = new Resend(apiKey);
+            let resp = await resend.emails.send({
+              from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
+              to: recipientEmail,
+              subject: subject,
+              html: htmlContent,
+              replyTo: "internships@vyntyraconsultancyservices.in",
+            });
+            if (resp.error) {
+              resp = await resend.emails.send({
+                from: "Vyntyra Careers <noreply@vyntyraconsultancyservices.in>",
+                to: recipientEmail,
+                subject: subject,
+                html: htmlContent,
+                replyTo: "internships@vyntyraconsultancyservices.in",
+              });
+            }
+            if (resp.error) throw new Error(resp.error.message);
+            resendId = resp.data?.id || null;
+            providerUsed = "resend";
+          } catch (rErr: any) {
+            console.warn("[email-balancer] Resend primary failed, falling back to Brevo:", rErr.message);
+            if (hasBrevo) {
+              resendId = await sendViaBrevo({ recipientEmail, recipientName, subject, htmlContent });
+              providerUsed = "brevo";
+            } else {
+              throw rErr;
+            }
+          }
+        }
+      } catch (err: any) {
+        status = "failed";
+        errorMessage = err.message || "Failed to dispatch promotional email";
+      }
+
+      // Record log in automated_emails_log
+      const { error: logError } = await supabase.from("automated_emails_log").insert({
+        recipient_email: recipientEmail,
+        recipient_name: recipientName,
+        university_name: universityName || null,
+        domain: domain || null,
+        sub_domain: subDomain || null,
         subject: subject,
-        html: htmlContent,
-        replyTo: "internships@vyntyraconsultancyservices.in",
+        status: status,
+        provider: providerUsed,
+        resend_id: resendId,
+        error_message: errorMessage,
+        sent_at: new Date().toISOString(),
       });
 
-      if (response.error) {
-        console.warn("[email-automation] Primary sender failed, trying fallback sender:", response.error.message);
-        response = await resend.emails.send({
-          from: "Vyntyra Careers <noreply@vyntyraconsultancyservices.in>",
-          to: recipientEmail,
-          subject: subject,
-          html: htmlContent,
-          replyTo: "internships@vyntyraconsultancyservices.in",
-        });
+      if (logError) {
+        console.warn("[email-automation] Failed to write log:", logError.message);
       }
 
-      if (response.error) {
-        throw new Error(response.error.message);
+      if (status === "failed") {
+        throw new Error(errorMessage || "Failed to send email");
       }
 
-      if (response.data?.id) {
-        resendId = response.data.id;
-      }
-    } catch (err: any) {
-      status = "failed";
-      errorMessage = err.message || "Failed to dispatch promotional email";
-    }
+      return { success: true, resendId, provider: providerUsed };
+  });
 
-    // Record log in automated_emails_log
-    const { error: logError } = await supabase.from("automated_emails_log").insert({
-      recipient_email: recipientEmail,
-      recipient_name: recipientName,
-      university_name: universityName || null,
-      domain: domain || null,
-      sub_domain: subDomain || null,
+// Secondary Email Service Helper for Brevo API
+async function sendViaBrevo({ recipientEmail, recipientName, subject, htmlContent }: { recipientEmail: string; recipientName?: string; subject: string; htmlContent: string }) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) throw new Error("BREVO_API_KEY environment variable is not configured");
+
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "accept": "application/json",
+      "content-type": "application/json",
+      "api-key": apiKey,
+    },
+    body: JSON.stringify({
+      sender: { name: "Vyntyra Careers", email: "careers@vyntyraconsultancyservices.in" },
+      to: [{ email: recipientEmail, name: recipientName || "Candidate" }],
+      replyTo: { email: "internships@vyntyraconsultancyservices.in", name: "Vyntyra Talent Acquisition" },
       subject: subject,
-      status: status,
-      resend_id: resendId,
-      error_message: errorMessage,
-      sent_at: new Date().toISOString(),
-    });
+      htmlContent: htmlContent,
+    }),
+  });
 
-    if (logError) {
-      console.warn("[email-automation] Failed to write log:", logError.message);
-    }
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || data.code || "Brevo email dispatch failed");
+  }
+  return data.messageId || data.id || "brevo-" + Date.now();
+}
 
-    if (status === "failed") {
-      throw new Error(errorMessage || "Failed to send email");
-    }
+// Get Monthly Email Quota & Service Health Stats
+export const getEmailQuotaStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
-    return { success: true, resendId };
+    const { data: logs } = await supabase
+      .from("automated_emails_log")
+      .select("provider, status, sent_at")
+      .gte("sent_at", startOfMonth)
+      .eq("status", "sent");
+
+    const totalSentThisMonth = logs?.length || 0;
+    const resendSentThisMonth = logs?.filter((l: any) => l.provider === "resend" || !l.provider).length || 0;
+    const brevoSentThisMonth = logs?.filter((l: any) => l.provider === "brevo").length || 0;
+
+    const resendQuota = 3000;
+    const brevoQuota = 9000;
+
+    return {
+      totalSentThisMonth,
+      resendSentThisMonth,
+      resendAvailable: Math.max(0, resendQuota - resendSentThisMonth),
+      resendQuota,
+      brevoSentThisMonth,
+      brevoAvailable: Math.max(0, brevoQuota - brevoSentThisMonth),
+      brevoQuota,
+      hasResendKey: !!process.env.RESEND_API_KEY,
+      hasBrevoKey: !!process.env.BREVO_API_KEY,
+    };
   });
 
 export const listAutomatedEmailLogs = createServerFn({ method: "GET" })

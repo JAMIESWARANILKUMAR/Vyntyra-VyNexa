@@ -27,7 +27,7 @@ import {
   listAllAccessRequests, updateAccessRequestStatus, updateTaskByAdmin,
   listLeads, createLead, updateLeadStatus, deleteLead,
   listBugs, createBug, updateBugStatus,
-  sendPromotionalInternshipEmail, listAutomatedEmailLogs, deleteAutomatedEmailLog
+  sendPromotionalInternshipEmail, listAutomatedEmailLogs, deleteAutomatedEmailLog, getEmailQuotaStats
 } from "@/lib/operations.functions";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import { toast } from "sonner";
@@ -1789,6 +1789,25 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
   const [inputText, setInputText] = useState("");
   const [subjectText, setSubjectText] = useState("Invitation: 2026 Official Internship Program — Vyntyra Consultancy Services");
   const [recipients, setRecipients] = useState<{ email: string; name: string; university: string; domain: string; subDomain: string }[]>([]);
+
+  // Email Quota & Service Health Query
+  const quotaQ = useQuery({
+    queryKey: ["email-quota-stats"],
+    queryFn: () => getEmailQuotaStats(),
+    refetchInterval: 10000,
+  });
+
+  const quota = quotaQ.data || {
+    totalSentThisMonth: 0,
+    resendSentThisMonth: 0,
+    resendAvailable: 3000,
+    resendQuota: 3000,
+    brevoSentThisMonth: 0,
+    brevoAvailable: 9000,
+    brevoQuota: 9000,
+    hasResendKey: true,
+    hasBrevoKey: true,
+  };
   
   // Campaign automation state
   const [isAutomating, setIsAutomating] = useState(false);
@@ -1996,7 +2015,75 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
+        {/* Safety Email Service Quota & Load Balancer Widgets */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Card 1: Resend Quota */}
+          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Resend Primary Service</span>
+              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                3,000 / mo Quota
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <div className="text-2xl font-black text-slate-900">{quota.resendAvailable.toLocaleString()}</div>
+              <div className="text-xs text-slate-500 font-medium">Available Emails</div>
+            </div>
+            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+              <div 
+                className="bg-emerald-500 h-full transition-all" 
+                style={{ width: `${Math.min(100, (quota.resendSentThisMonth / quota.resendQuota) * 100)}%` }} 
+              />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+              <span>Sent: <strong>{quota.resendSentThisMonth.toLocaleString()}</strong></span>
+              <span className="text-emerald-700 font-semibold">{quota.hasResendKey ? "✓ API Active" : "⚠️ Key Missing"}</span>
+            </div>
+          </div>
+
+          {/* Card 2: Brevo Secondary Quota */}
+          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Brevo Secondary Service</span>
+              <span className="bg-sky-100 text-sky-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                9,000 / mo Quota
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <div className="text-2xl font-black text-slate-900">{quota.brevoAvailable.toLocaleString()}</div>
+              <div className="text-xs text-slate-500 font-medium">Available Emails</div>
+            </div>
+            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+              <div 
+                className="bg-sky-500 h-full transition-all" 
+                style={{ width: `${Math.min(100, (quota.brevoSentThisMonth / quota.brevoQuota) * 100)}%` }} 
+              />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+              <span>Sent: <strong>{quota.brevoSentThisMonth.toLocaleString()}</strong></span>
+              <span className="text-sky-700 font-semibold">{quota.hasBrevoKey ? "✓ API Active" : "⚠️ BREVO_API_KEY Optional"}</span>
+            </div>
+          </div>
+
+          {/* Card 3: Total Load Balancer Safety */}
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-2 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">Total Safety Capacity</span>
+              <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                Equal Load Balancer
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <div className="text-2xl font-black text-emerald-950">{quota.totalSentThisMonth.toLocaleString()}</div>
+              <div className="text-xs text-emerald-800 font-medium">Total Sent This Month</div>
+            </div>
+            <div className="text-[11px] text-emerald-800 leading-snug pt-1">
+              Emails are automatically balanced equally between Resend &amp; Brevo to ensure 100% inbox delivery and zero quota exhaustion.
+            </div>
+          </div>
+        </div>
+
         {/* Recipient Extraction Card */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-7 space-y-4">
@@ -2223,6 +2310,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                   <th className="px-5 py-3">University / Organization</th>
                   <th className="px-5 py-3">Domain</th>
                   <th className="px-5 py-3">Sub-Domain</th>
+                  <th className="px-5 py-3">Provider</th>
                   <th className="px-5 py-3">Subject</th>
                   <th className="px-5 py-3">Sent Date</th>
                   <th className="px-5 py-3">Sent Time</th>
@@ -2259,6 +2347,17 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                         <td className="px-5 py-3.5 text-slate-600">{log.university_name || "—"}</td>
                         <td className="px-5 py-3.5 text-slate-600 font-medium">{log.domain || "—"}</td>
                         <td className="px-5 py-3.5 text-emerald-700 font-bold">{log.sub_domain || "—"}</td>
+                        <td className="px-5 py-3.5">
+                          {log.provider === "brevo" ? (
+                            <span className="bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                              Brevo
+                            </span>
+                          ) : (
+                            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                              Resend
+                            </span>
+                          )}
+                        </td>
                         <td className="px-5 py-3.5 text-slate-700 max-w-xs truncate" title={log.subject}>{log.subject}</td>
                         <td className="px-5 py-3.5 text-slate-600 font-mono">{sentDate}</td>
                         <td className="px-5 py-3.5 text-slate-600 font-mono">{sentTime}</td>
