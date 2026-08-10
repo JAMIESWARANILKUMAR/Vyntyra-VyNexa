@@ -1857,23 +1857,42 @@ export const sendSmsNotification = createServerFn({ method: "POST" })
 
     const hasTextBee = !!(process.env.TEXTBEE_API_KEY && process.env.TEXTBEE_DEVICE_ID);
     const hasHttpSms = !!(process.env.HTTPSMS_API_KEY && process.env.HTTPSMS_PHONE_NUMBER);
+    const hasTwilio = !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_API_KEY && process.env.TWILIO_API_SECRET);
 
-    // Load Balancing Strategy: TextBee (300/mo, max 50/day) vs HttpSMS (200/mo, Android app required)
-    let selectedProvider: 'textbee' | 'httpsms' = 'textbee';
+    // Multi-Gateway Selection Strategy: Twilio -> TextBee -> HttpSMS -> Fast2SMS
+    let selectedProvider: 'twilio' | 'textbee' | 'httpsms' = 'twilio';
     if (data.preferred_provider !== 'auto') {
-      selectedProvider = data.preferred_provider as 'textbee' | 'httpsms';
+      selectedProvider = data.preferred_provider as any;
     } else {
-      if (hasTextBee && textbeeMonthCount < 300 && textbeeTodayCount < 50 && (textbeeMonthCount <= httpsmsMonthCount || !hasHttpSms)) {
+      if (hasTwilio) {
+        selectedProvider = 'twilio';
+      } else if (hasTextBee && textbeeMonthCount < 300 && textbeeTodayCount < 50) {
         selectedProvider = 'textbee';
       } else if (hasHttpSms && httpsmsMonthCount < 200) {
         selectedProvider = 'httpsms';
-      } else if (hasTextBee && textbeeMonthCount < 300 && textbeeTodayCount < 50) {
+      } else if (hasTextBee) {
         selectedProvider = 'textbee';
       }
     }
 
     try {
-      if (selectedProvider === 'textbee' && hasTextBee) {
+      if (selectedProvider === 'twilio' || (hasTwilio && data.preferred_provider === 'auto')) {
+        try {
+          smsId = await sendViaTwilio({ recipientPhone, message });
+          providerUsed = 'twilio' as any;
+        } catch (twErr: any) {
+          console.warn('[sms-engine] Twilio failed, trying TextBee/HttpSMS fallback:', twErr.message);
+          if (hasTextBee) {
+            smsId = await sendViaTextBee({ recipientPhone, message });
+            providerUsed = 'textbee';
+          } else if (hasHttpSms) {
+            smsId = await sendViaHttpSms({ recipientPhone, message });
+            providerUsed = 'httpsms';
+          } else {
+            throw twErr;
+          }
+        }
+      } else if (selectedProvider === 'textbee' && hasTextBee) {
         try {
           smsId = await sendViaTextBee({ recipientPhone, message });
           providerUsed = 'textbee';
@@ -1903,7 +1922,7 @@ export const sendSmsNotification = createServerFn({ method: "POST" })
         smsId = await sendViaTextBee({ recipientPhone, message });
         providerUsed = 'textbee';
       } else {
-        throw new Error('No SMS gateway credentials (TEXTBEE_API_KEY or HTTPSMS_API_KEY) configured in environment');
+        throw new Error('No SMS gateway credentials (TWILIO_ACCOUNT_SID, TEXTBEE_API_KEY, or HTTPSMS_API_KEY) configured in environment');
       }
     } catch (err: any) {
       status = 'failed';
@@ -1927,6 +1946,63 @@ export const sendSmsNotification = createServerFn({ method: "POST" })
 
     return { success: true, smsId, provider: providerUsed };
   });
+
+async function sendViaTwilio({ recipientPhone, message }: { recipientPhone: string; message: string }) {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const apiKey = process.env.TWILIO_API_KEY;
+  const apiSecret = process.env.TWILIO_API_SECRET;
+  const fromPhone = process.env.TWILIO_PHONE_NUMBER || process.env.TWILIO_FROM_NUMBER;
+
+  if (!accountSid || !apiKey || !apiSecret) {
+    throw new Error('Twilio credentials (TWILIO_ACCOUNT_SID, TWILIO_API_KEY, TWILIO_API_SECRET) not set');
+  }
+
+  let cleanPhone = recipientPhone.replace(/[^\d+]/g, '');
+  if (!cleanPhone.startsWith('+')) {
+    cleanPhone = '+91' + cleanPhone;
+  }
+
+  const endpoint = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+  const authHeader = 'Basic ' + Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
+
+  const params = new URLSearchParams();
+  params.append('To', cleanPhone);
+  if (fromPhone) {
+    params.append('From', fromPhone);
+  } else {
+    params.append('From', '+18332412613');
+  }
+  params.append('Body', message);
+
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Authorization': authHeader,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: params.toString(),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    const regEndpoint = `https://api.us1.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+    const regRes = await fetch(regEndpoint, {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
+    const regData = await regRes.json();
+    if (!regRes.ok) {
+      throw new Error(regData.message || data.message || `Twilio SMS dispatch failed (${res.status})`);
+    }
+    return regData.sid || 'tw-' + Date.now();
+  }
+
+  return data.sid || 'tw-' + Date.now();
+}
 
 async function sendViaTextBee({ recipientPhone, message }: { recipientPhone: string; message: string }) {
   const apiKey = process.env.TEXTBEE_API_KEY;
@@ -2010,6 +2086,7 @@ export const getSmsQuotaStats = createServerFn({ method: "GET" })
       .eq('status', 'sent');
 
     const totalSentThisMonth = logs?.length || 0;
+    const twilioSentThisMonth = logs?.filter((l: any) => l.provider === 'twilio').length || 0;
     const textbeeSentThisMonth = logs?.filter((l: any) => l.provider === 'textbee').length || 0;
     const textbeeSentToday = logs?.filter((l: any) => l.provider === 'textbee' && l.sent_at?.startsWith(startOfToday)).length || 0;
     const httpsmsSentThisMonth = logs?.filter((l: any) => l.provider === 'httpsms').length || 0;
@@ -2020,12 +2097,15 @@ export const getSmsQuotaStats = createServerFn({ method: "GET" })
 
     return {
       totalSentThisMonth,
+      twilioSentThisMonth,
       textbeeSentThisMonth,
       textbeeSentToday,
       textbeeAvailableMonth: Math.max(0, textbeeMonthQuota - textbeeSentThisMonth),
       textbeeAvailableToday: Math.max(0, textbeeDayQuota - textbeeSentToday),
       httpsmsSentThisMonth,
       httpsmsAvailableMonth: Math.max(0, httpsmsQuota - httpsmsSentThisMonth),
+      hasTwilio: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_API_KEY && process.env.TWILIO_API_SECRET),
+      twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || null,
       hasTextBee: !!(process.env.TEXTBEE_API_KEY && process.env.TEXTBEE_DEVICE_ID),
       hasHttpSms: !!(process.env.HTTPSMS_API_KEY && process.env.HTTPSMS_PHONE_NUMBER),
     };

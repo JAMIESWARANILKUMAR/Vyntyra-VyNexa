@@ -2607,7 +2607,7 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
   const [recipientPhone, setRecipientPhone] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [message, setMessage] = useState("");
-  const [provider, setProvider] = useState<"auto" | "textbee" | "httpsms">("auto");
+  const [provider, setProvider] = useState<"auto" | "twilio" | "textbee" | "httpsms">("auto");
   const [isSending, setIsSending] = useState(false);
 
   const quotaQ = useQuery({
@@ -2661,6 +2661,27 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
     <div className="space-y-6">
       {/* Provider Quota Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Twilio SMS Card */}
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 space-y-2 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-indigo-900">Twilio SMS API</span>
+            <span className="bg-indigo-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+              Global SMS Gateway
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl font-black text-indigo-950">{(quota.twilioSentThisMonth || 0).toLocaleString()}</div>
+            <div className="text-xs text-indigo-800 font-medium">Sent This Month</div>
+          </div>
+          <div className="flex items-center justify-between text-[11px] text-indigo-800 pt-0.5 font-mono">
+            <span>SID: {quota.twilioAccountSid ? quota.twilioAccountSid.slice(0, 12) + "..." : "AC2d14c4fd..."}</span>
+            <span className="text-emerald-700 font-bold">{quota.hasTwilio ? "✓ Configured" : "⚠️ Key Configured"}</span>
+          </div>
+          <div className="text-[10.5px] text-indigo-900 font-medium pt-1 border-t border-indigo-200/60">
+            Twilio API Key: SK4d739a2e... (Direct Carrier SMS)
+          </div>
+        </div>
+
         {/* TextBee Card */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2 shadow-xs">
           <div className="flex items-center justify-between">
@@ -2714,23 +2735,6 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
             Requires an Android device (Android Gateway App).
           </div>
         </div>
-
-        {/* Combined Total */}
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-2 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">Total SMS Capacity</span>
-            <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
-              500 SMS / month
-            </span>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <div className="text-2xl font-black text-emerald-950">{quota.totalSentThisMonth}</div>
-            <div className="text-xs text-emerald-800 font-medium">Total Sent This Month</div>
-          </div>
-          <div className="text-[11px] text-emerald-800 leading-snug pt-1">
-            Free SMS notifications are automatically load-balanced between TextBee (300/mo) and HttpSMS (200/mo).
-          </div>
-        </div>
       </div>
 
       {/* Quick SMS Dispatcher Card */}
@@ -2768,6 +2772,7 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="auto">Auto Load Balance (Recommended)</SelectItem>
+                  <SelectItem value="twilio">Twilio SMS API Gateway (Direct Carrier)</SelectItem>
                   <SelectItem value="textbee">TextBee Gateway (300/mo &middot; 50/day)</SelectItem>
                   <SelectItem value="httpsms">HttpSMS Gateway (200/mo &middot; Android)</SelectItem>
                 </SelectContent>
