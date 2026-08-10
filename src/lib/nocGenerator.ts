@@ -12,6 +12,8 @@ export interface NocData {
   profilePhotoUrl?: string | null;
   qrCodeBase64?: string | null;
   issueDate?: string;
+  logoBase64?: string | null;
+  hodName?: string | null;
 }
 
 export async function urlToBase64(url: string): Promise<string | null> {
@@ -44,15 +46,27 @@ export function generateNocPdf(data: NocData): jsPDF {
   doc.setFillColor(15, 23, 42); // slate-900
   doc.rect(margin, 15, contentWidth, 26, "F");
 
-  // Premium Logo Crest (Emblem)
-  doc.setFillColor(16, 185, 129); // emerald-500
-  doc.roundedRect(margin + 6, 19, 14, 14, 2.5, 2.5, "F");
-
-  // Styled White V inside Crest
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text("V", margin + 13, 29, { align: "center" });
+  // Premium Logo Crest (Emblem) or Vyntyra Brand Logo
+  if (data.logoBase64 && data.logoBase64.startsWith("data:image")) {
+    try {
+      doc.addImage(data.logoBase64, "PNG", margin + 6, 21, 12, 12);
+    } catch (err) {
+      console.warn("[nocGenerator] Failed to render Vyntyra logo:", err);
+      doc.setFillColor(16, 185, 129); // emerald-500
+      doc.roundedRect(margin + 6, 19, 14, 14, 2.5, 2.5, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text("V", margin + 13, 29, { align: "center" });
+    }
+  } else {
+    doc.setFillColor(16, 185, 129); // emerald-500
+    doc.roundedRect(margin + 6, 19, 14, 14, 2.5, 2.5, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("V", margin + 13, 29, { align: "center" });
+  }
 
   // Company Brand Header Details
   doc.setFontSize(14.5);
@@ -230,16 +244,14 @@ export function generateNocPdf(data: NocData): jsPDF {
   const x2 = margin + colW + colW / 2;
   doc.line(margin + colW + 10, y + 10, margin + colW * 2 - 10, y + 10);
   
-  // Stylized HOD Signature
-  doc.setFont("courier", "oblique");
-  doc.text("Dr. A. K. Rao", x2, y + 8, { align: "center" });
+  // Stylized HOD Signature (Left blank as requested for manual/physical signature)
   
   doc.setFont("helvetica", "bold");
   doc.setTextColor(15, 23, 42);
-  doc.text("Head of Department", x2, y + 14, { align: "center" });
+  doc.text(data.hodName || "Head of Department", x2, y + 14, { align: "center" });
   doc.setFont("helvetica", "normal");
   doc.setTextColor(100, 116, 139);
-  doc.text("Academic Affairs Division", x2, y + 18, { align: "center" });
+  doc.text("Head of Department", x2, y + 18, { align: "center" });
 
   // 3. Founder Column (Right)
   const x3 = margin + colW * 2 + colW / 2;
@@ -247,11 +259,11 @@ export function generateNocPdf(data: NocData): jsPDF {
   
   // Stylized Founder Signature
   doc.setFont("courier", "oblique");
-  doc.text("Jamie J. Swaran", x3, y + 8, { align: "center" });
+  doc.text("Jami Eswar", x3, y + 8, { align: "center" });
   
   doc.setFont("helvetica", "bold");
   doc.setTextColor(15, 23, 42);
-  doc.text("Jamie J. Swaran", x3, y + 14, { align: "center" });
+  doc.text("Jami Eswar Anil Kumar", x3, y + 14, { align: "center" });
   doc.setFont("helvetica", "normal");
   doc.setTextColor(100, 116, 139);
   doc.text("Founder & Managing Director", x3, y + 18, { align: "center" });

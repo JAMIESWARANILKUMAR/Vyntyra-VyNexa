@@ -481,6 +481,17 @@ export async function dispatchSelectionEmail(applicationId: string) {
     console.warn("QR code fetch failed in dispatchSelectionEmail:", qrErr);
   }
 
+  let logoBase64 = null;
+  try {
+    const logoRes = await fetch("https://careers.vyntyraconsultancyservices.in/icon-512.png");
+    if (logoRes.ok) {
+      const buffer = await logoRes.arrayBuffer();
+      logoBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
+    }
+  } catch (logoErr) {
+    console.warn("Logo fetch failed in dispatchSelectionEmail:", logoErr);
+  }
+
   let photoBase64 = null;
   if (app.profile_photo_url) {
     try {
@@ -505,7 +516,9 @@ export async function dispatchSelectionEmail(applicationId: string) {
     subDomain: app.sub_domain || "Full Stack Web Development",
     internshipStartDate: startDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }),
     profilePhotoUrl: photoBase64,
-    qrCodeBase64: qrBase64
+    qrCodeBase64: qrBase64,
+    logoBase64: logoBase64,
+    hodName: app.hod_name,
   });
 
   const pdfOutput = doc.output("arraybuffer");

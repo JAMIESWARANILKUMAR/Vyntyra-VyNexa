@@ -1277,6 +1277,8 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         photoBase64 = await urlToBase64(app.profile_photo_url);
       }
 
+      const logoBase64 = await urlToBase64("/icon-512.png");
+
       const verificationUrl = `https://careers.vyntyraconsultancyservices.in/status/${app.id}`;
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`;
       const qrBase64 = await urlToBase64(qrApiUrl);
@@ -1296,6 +1298,8 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         internshipStartDate: formattedStartDate,
         profilePhotoUrl: photoBase64,
         qrCodeBase64: qrBase64,
+        logoBase64: logoBase64,
+        hodName: app.hod_name,
       });
       doc.save(`NOC_${app.full_name.replace(/\s+/g, "_")}_Vyntyra.pdf`);
       toast.dismiss(loadingToast);
