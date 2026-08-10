@@ -2618,12 +2618,15 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
 
   const quota = quotaQ.data || {
     totalSentThisMonth: 0,
+    twilioSentThisMonth: 0,
     textbeeSentThisMonth: 0,
     textbeeSentToday: 0,
     textbeeAvailableMonth: 300,
     textbeeAvailableToday: 50,
     httpsmsSentThisMonth: 0,
     httpsmsAvailableMonth: 200,
+    hasTwilio: false,
+    twilioAccountSid: null,
     hasTextBee: false,
     hasHttpSms: false,
   };
