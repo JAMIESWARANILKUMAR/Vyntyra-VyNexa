@@ -181,21 +181,10 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
             .from("status_email_templates")
             .select("*")
             .eq("id", to)
-            .single();
-
-        if (tpl?.enabled && to !== "hired") {
+            .single();        if (tpl?.enabled && to !== "hired") {
           try {
             let attachmentUrl = null;
-            
-            if (to === "hired") {
-               const { generateOfferLetterPDF } = await import("./pdf.server");
-               attachmentUrl = await generateOfferLetterPDF({
-                 fullName: app.full_name,
-                 roleApplied: app.role_applied,
-                 applicationId: data.id,
-               });
-            }
-  
+   
             const { sendStatusChangeEmail } = await import("./status-email.server");
             await sendStatusChangeEmail({
               toEmail: app.email,
@@ -219,7 +208,7 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
                 const { sendSmsViaEmailGateway } = await import("./email-sms-gateway");
                 let statusLabel = to.toUpperCase();
                 if (to === "shortlisted") statusLabel = "SHORTLISTED FOR INTERVIEW";
-                if (to === "selected" || to === "hired") statusLabel = "SELECTION CONFIRMED";
+                if (to === "selected") statusLabel = "SELECTION CONFIRMED";
 
                 await sendSmsViaEmailGateway({
                   recipientPhone: app.phone,

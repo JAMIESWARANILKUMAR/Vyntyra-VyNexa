@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -1583,7 +1583,7 @@ function OperationsDashboard() {
             <div className="flex items-center gap-2">
               <span className="bg-emerald-500/20 text-emerald-300 text-xs px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1">
                 <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                {processedInternAttendance.filter(i => i.activeStatus === "Active").length} Online Now
+                {processedInternAttendance.filter((i: any) => i.activeStatus === "Active").length} Online Now
               </span>
             </div>
           </div>
@@ -1598,7 +1598,7 @@ function OperationsDashboard() {
                 <div>
                   <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Clocked-In Today</div>
                   <div className="text-xl font-bold text-slate-800">
-                    {processedInternAttendance.filter(i => i.activeStatus === "Active" || i.activeStatus === "Completed").length} Interns
+                    {processedInternAttendance.filter((i: any) => i.activeStatus === "Active" || i.activeStatus === "Completed").length} Interns
                   </div>
                 </div>
               </div>
@@ -1611,7 +1611,7 @@ function OperationsDashboard() {
                   <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Shift Presence Rate</div>
                   <div className="text-xl font-bold text-slate-800">
                     {interns.length > 0 
-                      ? `${Math.round((processedInternAttendance.filter(i => i.activeStatus === "Active" || i.activeStatus === "Completed").length / interns.length) * 100)}%`
+                      ? `${Math.round((processedInternAttendance.filter((i: any) => i.activeStatus === "Active" || i.activeStatus === "Completed").length / interns.length) * 100)}%`
                       : "0%"}
                   </div>
                 </div>

@@ -31,6 +31,8 @@ import {
   TrendingUp,
   ChevronRight,
   Building2,
+  Send,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -1755,7 +1757,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
                           await triggerSchedule({ data: { applicationId: app.id, sendAt: date.toISOString() } });
                           toast.success(`Selection email scheduled for ${date.toLocaleString()}`);
                           
-                          const { data } = await supabase.from("scheduled_emails").eq("application_id", app.id).maybeSingle();
+                          const { data } = await supabase.from("scheduled_emails").select("*").eq("application_id", app.id).maybeSingle();
                           setScheduledEmail(data);
                         } catch (err: any) {
                           toast.error(err.message || "Failed to schedule selection email");
