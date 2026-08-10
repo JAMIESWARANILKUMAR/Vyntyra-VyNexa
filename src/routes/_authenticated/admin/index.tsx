@@ -34,12 +34,14 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { listApplications, updateAdminNotes, getResumeSignedUrl, regenerateInterviewQuestions, listApplicationProjects, deleteApplication, listEmployees } from "@/lib/applications.functions";
+import { listApplications, updateAdminNotes, getResumeSignedUrl, regenerateInterviewQuestions, listApplicationProjects, deleteApplication, listEmployees, updateApplicantByAdmin } from "@/lib/applications.functions";
+import { generatePayslipPdf } from "@/lib/payslip";
+import { generateNocPdf } from "@/lib/nocGenerator";
 import { getApplicationsOpen, setApplicationsOpen } from "@/lib/settings.functions";
 import { listJobPostings, createJobPosting, updateJobPosting, toggleJobPosting, deleteJobPosting } from "@/lib/job-postings.functions";
 import { listAdminNotifications, markAllNotificationsRead } from "@/lib/notifications.functions";
 import { getVisitorCount } from "@/lib/visitor.functions";
-import { Sparkles, RefreshCw, GraduationCap, FolderGit2, Link2 } from "lucide-react";
+import { Sparkles, RefreshCw, GraduationCap, FolderGit2, Link2, FileSpreadsheet, Award } from "lucide-react";
 import { WorldClocks } from "@/components/world-clocks";
 import { InstallPwaButton } from "@/components/install-pwa-button";
 import { Switch } from "@/components/ui/switch";
@@ -1191,6 +1193,29 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
   const [aiText, setAiText] = useState<string | null>(app?.interview_questions ?? null);
   const [regenerating, setRegenerating] = useState(false);
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [payslipOpen, setPayslipOpen] = useState(false);
+
+  function handleDownloadNoc() {
+    try {
+      const doc = generateNocPdf({
+        fullName: app.full_name,
+        email: app.email,
+        phone: app.phone,
+        applicationId: app.id,
+        college: app.college || "Academic Institution",
+        domain: app.domain || "Technology & Software",
+        subDomain: app.sub_domain || "Full Stack Web Development",
+        internshipStartDate: app.availability || app.joining_date || "2026-08-15",
+        profilePhotoUrl: app.profile_photo_url || null,
+      });
+      doc.save(`NOC_${app.full_name.replace(/\s+/g, "_")}_Vyntyra.pdf`);
+      toast.success("NOC Certificate downloaded successfully!");
+    } catch (err: any) {
+      toast.error("Failed to generate NOC PDF: " + err.message);
+    }
+  }
+
   const isPdf = !!app?.resume_path && /\.pdf$/i.test(app.resume_path);
 
   useEffect(() => {
@@ -1322,20 +1347,49 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
               )}
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              if (confirm("Are you sure you want to delete this application? This action cannot be undone.")) {
-                delMut.mutate();
-              }
-            }}
-            disabled={delMut.isPending}
-            className="text-destructive hover:text-destructive hover:bg-destructive/10 -mt-1 sm:mt-0"
-          >
-            <Trash2 className="h-4 w-4 mr-1.5" />
-            Delete
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap -mt-1 sm:mt-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditOpen(true)}
+              className="text-foreground hover:bg-muted"
+            >
+              <PenLine className="h-4 w-4 mr-1.5" />
+              Edit Applicant
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPayslipOpen(true)}
+              className="bg-slate-900 text-white hover:bg-slate-800 border-slate-900"
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-1.5 text-emerald-400" />
+              Payslip PDF
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadNoc}
+              className="bg-emerald-700 text-white hover:bg-emerald-800 border-emerald-700"
+            >
+              <Award className="h-4 w-4 mr-1.5" />
+              NOC Document
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (confirm("Are you sure you want to delete this application? This action cannot be undone.")) {
+                  delMut.mutate();
+                }
+              }}
+              disabled={delMut.isPending}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4 mr-1.5" />
+              Delete
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
@@ -1697,6 +1751,9 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
             </div>
           </div>
         </div>
+
+        <EditApplicantDialog app={app} open={editOpen} onClose={() => setEditOpen(false)} />
+        <PayslipModalDialog app={app} open={payslipOpen} onClose={() => setPayslipOpen(false)} />
       </DialogContent>
     </Dialog>
   );
@@ -1718,5 +1775,297 @@ function InfoRow({
       </div>
       <div className="mt-1 text-foreground">{value}</div>
     </div>
+  );
+}
+
+/* ── Admin Edit Applicant Dialog ── */
+function EditApplicantDialog({ app, open, onClose }: { app: any; open: boolean; onClose: () => void }) {
+  const qc = useQueryClient();
+  const updateAppMut = useServerFn(updateApplicantByAdmin);
+
+  const [formData, setFormData] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    role_applied: "",
+    domain: "",
+    sub_domain: "",
+    college: "",
+    state: "",
+    graduation_year: "",
+    availability: "",
+    status: "new",
+    admin_notes: "",
+    profile_photo_url: "",
+  });
+
+  useEffect(() => {
+    if (app) {
+      setFormData({
+        full_name: app.full_name || "",
+        email: app.email || "",
+        phone: app.phone || "",
+        role_applied: app.role_applied || "",
+        domain: app.domain || "",
+        sub_domain: app.sub_domain || "",
+        college: app.college || "",
+        state: app.state || "",
+        graduation_year: app.graduation_year ? String(app.graduation_year) : "",
+        availability: app.availability || "",
+        status: app.status || "new",
+        admin_notes: app.admin_notes || "",
+        profile_photo_url: app.profile_photo_url || "",
+      });
+    }
+  }, [app]);
+
+  const saveMut = useMutation({
+    mutationFn: () => updateAppMut({
+      data: {
+        id: app.id,
+        full_name: formData.full_name,
+        email: formData.email,
+        phone: formData.phone,
+        role_applied: formData.role_applied,
+        domain: formData.domain || null,
+        sub_domain: formData.sub_domain || null,
+        college: formData.college || null,
+        state: formData.state || null,
+        graduation_year: formData.graduation_year ? parseInt(formData.graduation_year, 10) : null,
+        availability: formData.availability || null,
+        status: formData.status,
+        admin_notes: formData.admin_notes || null,
+        profile_photo_url: formData.profile_photo_url || null,
+      }
+    }),
+    onSuccess: () => {
+      toast.success("Applicant details updated successfully!");
+      qc.invalidateQueries({ queryKey: ["applications"] });
+      onClose();
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  if (!app) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl text-primary tracking-tight font-semibold flex items-center gap-2">
+            <PenLine className="h-5 w-5 text-secondary" /> Edit Applicant Application
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={(e) => { e.preventDefault(); saveMut.mutate(); }} className="space-y-4 mt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Full Name *</label>
+              <Input className="mt-1" value={formData.full_name} onChange={(e) => setFormData({ ...formData, full_name: e.target.value })} required />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Email Address *</label>
+              <Input className="mt-1" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Phone Number *</label>
+              <Input className="mt-1" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Role Applied *</label>
+              <Input className="mt-1" value={formData.role_applied} onChange={(e) => setFormData({ ...formData, role_applied: e.target.value })} required />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Domain Track</label>
+              <Input className="mt-1" placeholder="e.g. Technology & Software" value={formData.domain} onChange={(e) => setFormData({ ...formData, domain: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Sub-Domain Specialization</label>
+              <Input className="mt-1" placeholder="e.g. Full Stack Web Development" value={formData.sub_domain} onChange={(e) => setFormData({ ...formData, sub_domain: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">College / University</label>
+              <Input className="mt-1" placeholder="e.g. Andhra University" value={formData.college} onChange={(e) => setFormData({ ...formData, college: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">State</label>
+              <Input className="mt-1" placeholder="e.g. Andhra Pradesh" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Graduation Year</label>
+              <Input className="mt-1" type="number" placeholder="2026" value={formData.graduation_year} onChange={(e) => setFormData({ ...formData, graduation_year: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Internship Start Date / Availability</label>
+              <Input className="mt-1" placeholder="e.g. 2026-08-15" value={formData.availability} onChange={(e) => setFormData({ ...formData, availability: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Status</label>
+              <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {["new", "reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected", "hired"].map((s) => (
+                    <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Profile Photo URL</label>
+              <Input className="mt-1" placeholder="https://..." value={formData.profile_photo_url} onChange={(e) => setFormData({ ...formData, profile_photo_url: e.target.value })} />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Admin Notes / Remarks</label>
+            <Textarea className="mt-1" rows={3} value={formData.admin_notes} onChange={(e) => setFormData({ ...formData, admin_notes: e.target.value })} />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="submit" disabled={saveMut.isPending}>
+              {saveMut.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving Changes…</> : "Save Applicant Changes"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ── Corporate Payslip Generator Dialog ── */
+function PayslipModalDialog({ app, open, onClose }: { app: any; open: boolean; onClose: () => void }) {
+  const [payPeriod, setPayPeriod] = useState("August 2026");
+  const [basicSalary, setBasicSalary] = useState(25000);
+  const [hra, setHra] = useState(10000);
+  const [specialAllowance, setSpecialAllowance] = useState(6000);
+  const [conveyanceAllowance, setConveyanceAllowance] = useState(4000);
+  const [bonus, setBonus] = useState(0);
+  const [pf, setPf] = useState(1800);
+  const [pt, setPt] = useState(200);
+  const [tds, setTds] = useState(0);
+
+  if (!app) return null;
+
+  function handleDownload() {
+    try {
+      const doc = generatePayslipPdf({
+        employeeName: app.full_name,
+        employeeId: app.id.slice(0, 8).toUpperCase(),
+        designation: app.role_applied,
+        domain: app.domain || "Technology & Software",
+        subDomain: app.sub_domain || "Full Stack Web Development",
+        department: "Project VyNexa",
+        payPeriod,
+        dateOfJoining: app.created_at ? new Date(app.created_at).toLocaleDateString("en-IN") : "2026-08-01",
+        basicSalary: Number(basicSalary),
+        hra: Number(hra),
+        specialAllowance: Number(specialAllowance),
+        conveyanceAllowance: Number(conveyanceAllowance),
+        performanceBonus: Number(bonus),
+        providentFund: Number(pf),
+        professionalTax: Number(pt),
+        incomeTax: Number(tds),
+      });
+      doc.save(`Payslip_${app.full_name.replace(/\s+/g, "_")}_${payPeriod.replace(/\s+/g, "_")}.pdf`);
+      toast.success("Corporate Payslip PDF generated & downloaded!");
+      onClose();
+    } catch (err: any) {
+      toast.error("Failed to generate payslip: " + err.message);
+    }
+  }
+
+  const gross = Number(basicSalary) + Number(hra) + Number(specialAllowance) + Number(conveyanceAllowance) + Number(bonus);
+  const deductions = Number(pf) + Number(pt) + Number(tds);
+  const net = Math.max(0, gross - deductions);
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl text-primary font-semibold flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5 text-emerald-600" /> Corporate Payslip Generator
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 mt-2">
+          <div className="bg-slate-900 text-white p-3.5 rounded-lg flex items-center justify-between">
+            <div>
+              <div className="font-semibold text-base">{app.full_name}</div>
+              <div className="text-xs text-slate-300">{app.role_applied} · {app.domain || "Tech"} ({app.sub_domain || "Software"})</div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs uppercase text-slate-400 font-medium">Net Take-Home</div>
+              <div className="text-lg font-bold text-emerald-400">₹ {net.toLocaleString("en-IN")}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <label className="font-semibold text-muted-foreground uppercase">Pay Period</label>
+              <Input className="mt-1 text-xs" value={payPeriod} onChange={(e) => setPayPeriod(e.target.value)} />
+            </div>
+
+            <div>
+              <label className="font-semibold text-muted-foreground uppercase">Basic Salary (₹)</label>
+              <Input className="mt-1 text-xs" type="number" value={basicSalary} onChange={(e) => setBasicSalary(Number(e.target.value))} />
+            </div>
+
+            <div>
+              <label className="font-semibold text-muted-foreground uppercase">HRA (₹)</label>
+              <Input className="mt-1 text-xs" type="number" value={hra} onChange={(e) => setHra(Number(e.target.value))} />
+            </div>
+
+            <div>
+              <label className="font-semibold text-muted-foreground uppercase">Special Allowance (₹)</label>
+              <Input className="mt-1 text-xs" type="number" value={specialAllowance} onChange={(e) => setSpecialAllowance(Number(e.target.value))} />
+            </div>
+
+            <div>
+              <label className="font-semibold text-muted-foreground uppercase">Conveyance Allowance (₹)</label>
+              <Input className="mt-1 text-xs" type="number" value={conveyanceAllowance} onChange={(e) => setConveyanceAllowance(Number(e.target.value))} />
+            </div>
+
+            <div>
+              <label className="font-semibold text-muted-foreground uppercase">Performance Bonus (₹)</label>
+              <Input className="mt-1 text-xs" type="number" value={bonus} onChange={(e) => setBonus(Number(e.target.value))} />
+            </div>
+
+            <div>
+              <label className="font-semibold text-muted-foreground uppercase">Provident Fund / PF (₹)</label>
+              <Input className="mt-1 text-xs" type="number" value={pf} onChange={(e) => setPf(Number(e.target.value))} />
+            </div>
+
+            <div>
+              <label className="font-semibold text-muted-foreground uppercase">Professional Tax / PT (₹)</label>
+              <Input className="mt-1 text-xs" type="number" value={pt} onChange={(e) => setPt(Number(e.target.value))} />
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-3 flex items-center justify-between">
+            <div className="text-xs text-muted-foreground">
+              Gross: <span className="font-semibold text-foreground">₹ {gross.toLocaleString("en-IN")}</span> · Deductions: <span className="font-semibold text-destructive">₹ {deductions.toLocaleString("en-IN")}</span>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+              <Button size="sm" onClick={handleDownload} className="bg-slate-900 text-white hover:bg-slate-800">
+                <Download className="h-4 w-4 mr-1.5" /> Download Payslip PDF
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -6,6 +6,8 @@ interface AppNotifyPayload {
   email: string
   phone: string
   roleApplied: string
+  domain?: string
+  subDomain?: string
   applicationId: string
   hasResume?: boolean
 }
@@ -16,6 +18,8 @@ export async function notifyAdminOfApplication(p: AppNotifyPayload) {
     email: p.email,
     phone: p.phone,
     roleApplied: p.roleApplied,
+    domain: p.domain || '',
+    subDomain: p.subDomain || '',
     applicationId: p.applicationId,
     hasResume: !!p.hasResume,
   }

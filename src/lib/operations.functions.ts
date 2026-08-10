@@ -1751,6 +1751,76 @@ export const deleteAutomatedEmailLog = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+export const getPromotionalEmailConversionStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    // 1. Fetch promotional email logs
+    const { data: emailLogs } = await supabase
+      .from("automated_emails_log")
+      .select("*")
+      .order("sent_at", { ascending: false });
+
+    // 2. Fetch all internship applications
+    const { data: applications } = await supabase
+      .from("applications")
+      .select("id, full_name, email, domain, sub_domain, status, college, state, created_at, profile_photo_url");
+
+    const appMap = new Map<string, any>();
+    (applications || []).forEach((app: any) => {
+      if (app.email) {
+        appMap.set(app.email.toLowerCase().trim(), app);
+      }
+    });
+
+    const logsWithConversion = (emailLogs || []).map((log: any) => {
+      const emailKey = log.recipient_email?.toLowerCase().trim();
+      const matchedApp = emailKey ? appMap.get(emailKey) : null;
+      return {
+        ...log,
+        conversionStatus: matchedApp ? "matched" : "pending",
+        matchedApplication: matchedApp ? {
+          id: matchedApp.id,
+          fullName: matchedApp.full_name,
+          email: matchedApp.email,
+          domain: matchedApp.domain || log.domain || "Technology",
+          subDomain: matchedApp.sub_domain || log.sub_domain || "Software",
+          status: matchedApp.status,
+          college: matchedApp.college || log.university_name,
+          createdAt: matchedApp.created_at,
+          photoUrl: matchedApp.profile_photo_url || null,
+        } : null,
+      };
+    });
+
+    const totalSent = logsWithConversion.length;
+    const totalMatched = logsWithConversion.filter((l: any) => l.conversionStatus === "matched").length;
+    const totalPending = logsWithConversion.filter((l: any) => l.conversionStatus === "pending").length;
+    const conversionRate = totalSent > 0 ? Math.round((totalMatched / totalSent) * 100) : 0;
+
+    // Grouping by domain
+    const domainCounts: Record<string, { matched: number; pending: number }> = {};
+    logsWithConversion.forEach((l: any) => {
+      const dom = l.domain || "General Tech";
+      if (!domainCounts[dom]) domainCounts[dom] = { matched: 0, pending: 0 };
+      if (l.conversionStatus === "matched") domainCounts[dom].matched++;
+      else domainCounts[dom].pending++;
+    });
+
+    return {
+      totalSent,
+      totalMatched,
+      totalPending,
+      conversionRate,
+      logs: logsWithConversion,
+      domainCounts: Object.entries(domainCounts).map(([domain, counts]) => ({
+        domain,
+        matched: counts.matched,
+        pending: counts.pending,
+      })),
+      allApplicationsCount: applications?.length || 0,
+    };
+  });
+
 // ─── SMS Gateway & Multi-Provider Automation Engine ─────────────
 export const sendSmsNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

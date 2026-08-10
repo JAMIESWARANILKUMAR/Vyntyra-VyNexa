@@ -27,9 +27,10 @@ import {
   listAllAccessRequests, updateAccessRequestStatus, updateTaskByAdmin,
   listLeads, createLead, updateLeadStatus, deleteLead,
   listBugs, createBug, updateBugStatus,
-  sendPromotionalInternshipEmail, listAutomatedEmailLogs, deleteAutomatedEmailLog, getEmailQuotaStats,
+  sendPromotionalInternshipEmail, listAutomatedEmailLogs, deleteAutomatedEmailLog, getEmailQuotaStats, getPromotionalEmailConversionStats,
   sendSmsNotification, getSmsQuotaStats, listSmsLogs, deleteSmsLog
 } from "@/lib/operations.functions";
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import { toast } from "sonner";
 import {
@@ -2032,6 +2033,28 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
     return matchesSearch && matchesStatus;
   });
 
+  // Promotional Email Conversion & Registration Analytics Query
+  const conversionQ = useQuery({
+    queryKey: ["promotional-email-conversion-stats"],
+    queryFn: () => getPromotionalEmailConversionStats(),
+    refetchInterval: 15000,
+  });
+
+  const conv = conversionQ.data || {
+    totalSent: 0,
+    totalMatched: 0,
+    totalPending: 0,
+    conversionRate: 0,
+    logs: [],
+    domainCounts: [],
+    allApplicationsCount: 0,
+  };
+
+  const pieData = [
+    { name: "Registered (Matched)", value: conv.totalMatched, color: "#10B981" },
+    { name: "Pending Registration", value: conv.totalPending, color: "#F59E0B" },
+  ];
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden mt-8">
       {/* Banner */}
@@ -2056,7 +2079,121 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="p-6 space-y-6">
+        {/* Graphical Representation of Promotional Emails & Internship Registrations */}
+        <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <Award className="h-5 w-5 text-emerald-600" />
+                Promotional Email Conversion &amp; Internship Registration Analytics
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Real-time tracking of sent promotional email recipients vs actual registered internship applications.
+              </p>
+            </div>
+            <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold px-3 py-1 rounded-full">
+              Conversion Rate: {conv.conversionRate}%
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-1">
+              <div className="text-xs font-semibold text-slate-500 uppercase">Promotional Emails Sent</div>
+              <div className="text-2xl font-black text-slate-900">{conv.totalSent}</div>
+              <div className="text-[11px] text-slate-400">Total email dispatches</div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 shadow-xs space-y-1">
+              <div className="text-xs font-semibold text-emerald-800 uppercase flex items-center gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Registered (Matched)
+              </div>
+              <div className="text-2xl font-black text-emerald-950">{conv.totalMatched}</div>
+              <div className="text-[11px] text-emerald-700 font-medium">Applied for Internship</div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 shadow-xs space-y-1">
+              <div className="text-xs font-semibold text-amber-800 uppercase flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5 text-amber-600" /> Pending Registration
+              </div>
+              <div className="text-2xl font-black text-amber-950">{conv.totalPending}</div>
+              <div className="text-[11px] text-amber-700 font-medium">Email Sent / Not Registered</div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-200 shadow-xs space-y-1">
+              <div className="text-xs font-semibold text-indigo-800 uppercase">Total Portal Applications</div>
+              <div className="text-2xl font-black text-indigo-950">{conv.allApplicationsCount}</div>
+              <div className="text-[11px] text-indigo-700 font-medium">Across All Channels</div>
+            </div>
+          </div>
+
+          {/* Graphical Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
+            {/* Donut Chart: Matched vs Pending */}
+            <div className="lg:col-span-5 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+              <div className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Conversion Breakdown (Matched vs Pending)
+              </div>
+              <div className="h-48 w-full flex items-center justify-center">
+                {conv.totalSent > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={70}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: any) => [`${value} Recipients`, 'Count']} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-xs text-slate-400 italic">No promotional emails dispatched yet to render chart.</div>
+                )}
+              </div>
+              <div className="flex justify-center gap-4 text-xs mt-1">
+                <div className="flex items-center gap-1.5 font-semibold text-emerald-700">
+                  <span className="h-3 w-3 rounded-full bg-emerald-500" /> Matched ({conv.totalMatched})
+                </div>
+                <div className="flex items-center gap-1.5 font-semibold text-amber-700">
+                  <span className="h-3 w-3 rounded-full bg-amber-500" /> Pending ({conv.totalPending})
+                </div>
+              </div>
+            </div>
+
+            {/* Bar Chart: Domain Distribution */}
+            <div className="lg:col-span-7 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+              <div className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Internship Registrations by Selected Domain
+              </div>
+              <div className="h-48 w-full">
+                {conv.domainCounts.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={conv.domainCounts}>
+                      <XAxis dataKey="domain" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                      <Tooltip />
+                      <Bar dataKey="matched" name="Matched / Registered" fill="#10B981" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="pending" name="Pending Registration" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-xs text-slate-400 italic">
+                    Domain distribution will display as promotional emails are sent.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Safety Email Service Quota & Load Balancer Widgets */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Card 1: Resend Quota */}
@@ -2358,6 +2495,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                   <th className="px-5 py-3">Sent Date</th>
                   <th className="px-5 py-3">Sent Time</th>
                   <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3">Internship Registration</th>
                   <th className="px-5 py-3">Resend ID</th>
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
@@ -2365,7 +2503,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
               <tbody className="divide-y divide-slate-100 font-medium">
                 {emailLogsQ.isLoading ? (
                   <tr>
-                    <td colSpan={9} className="p-8 text-center text-slate-400">
+                    <td colSpan={11} className="p-8 text-center text-slate-400">
                       <div className="flex items-center justify-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin text-emerald-600" /> Loading sent email logs...
                       </div>
@@ -2373,7 +2511,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                   </tr>
                 ) : filteredLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="p-8 text-center text-slate-400">
+                    <td colSpan={11} className="p-8 text-center text-slate-400">
                       No sent email logs found matching your criteria.
                     </td>
                   </tr>
@@ -2382,6 +2520,11 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                     const dateObj = new Date(log.sent_at || log.created_at);
                     const sentDate = dateObj.toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" });
                     const sentTime = dateObj.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
+
+                    const emailKey = log.recipient_email?.toLowerCase().trim();
+                    const matchedLog = conv.logs.find((l: any) => l.recipient_email?.toLowerCase().trim() === emailKey);
+                    const isMatched = matchedLog?.conversionStatus === "matched";
+                    const matchedApp = matchedLog?.matchedApplication;
 
                     return (
                       <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
@@ -2412,6 +2555,17 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                           ) : (
                             <span className="bg-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                               <AlertCircle className="h-3 w-3" /> Failed
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {isMatched ? (
+                            <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-extrabold px-2.5 py-1 rounded-full inline-flex items-center gap-1 shadow-xs">
+                              <CheckCircle2 className="h-3 w-3 text-emerald-600" /> REGISTERED ({matchedApp?.status || "applied"})
+                            </span>
+                          ) : (
+                            <span className="bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold px-2 py-1 rounded-full inline-flex items-center gap-1">
+                              <Clock className="h-3 w-3 text-amber-500" /> PENDING
                             </span>
                           )}
                         </td>

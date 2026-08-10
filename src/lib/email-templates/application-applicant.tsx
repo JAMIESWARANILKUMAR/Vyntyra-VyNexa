@@ -13,11 +13,13 @@ interface Props {
   fullName?: string
   email?: string
   roleApplied?: string
+  domain?: string
+  subDomain?: string
   applicationId?: string
   hasResume?: boolean
 }
 
-const ApplicantConfirm = ({ fullName = 'there', email = '', roleApplied = 'the role', applicationId = '', hasResume = false }: Props) => (
+const ApplicantConfirm = ({ fullName = 'there', email = '', roleApplied = 'the role', domain = '', subDomain = '', applicationId = '', hasResume = false }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>Your application to Project VyNexa is confirmed — Vyntyra Consultancy Services</Preview>
@@ -59,15 +61,47 @@ const ApplicantConfirm = ({ fullName = 'there', email = '', roleApplied = 'the r
           </Text>
         </Section>
 
-        {/* Reference */}
+        {/* Reference Details */}
         <Section style={{ padding: '16px 40px' }}>
           <div style={{ border: `1px solid ${LINE}`, borderRadius: 6, padding: '16px', background: CANVAS }}>
-            <Text style={{ margin: 0, fontSize: 12, color: MUTED, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em' }}>
-              Application ID
-            </Text>
-            <Text style={{ margin: '4px 0 0', fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', fontSize: 14, color: INK, fontWeight: 600, wordBreak: 'break-all' }}>
-              {applicationId.slice(0, 8).toUpperCase()}
-            </Text>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                <tr>
+                  <td style={{ paddingBottom: '8px' }}>
+                    <Text style={{ margin: 0, fontSize: 11, color: MUTED, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em' }}>
+                      Application ID
+                    </Text>
+                    <Text style={{ margin: '2px 0 0', fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', fontSize: 14, color: INK, fontWeight: 600 }}>
+                      {applicationId.slice(0, 8).toUpperCase()}
+                    </Text>
+                  </td>
+                </tr>
+                {domain ? (
+                  <tr>
+                    <td style={{ paddingTop: '8px', borderTop: `1px solid ${LINE}` }}>
+                      <Text style={{ margin: 0, fontSize: 11, color: MUTED, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em' }}>
+                        Domain Track
+                      </Text>
+                      <Text style={{ margin: '2px 0 0', fontSize: 14, color: INK, fontWeight: 600 }}>
+                        {domain}
+                      </Text>
+                    </td>
+                  </tr>
+                ) : null}
+                {subDomain ? (
+                  <tr>
+                    <td style={{ paddingTop: '8px', borderTop: `1px solid ${LINE}` }}>
+                      <Text style={{ margin: 0, fontSize: 11, color: MUTED, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em' }}>
+                        Sub-Domain Specialization
+                      </Text>
+                      <Text style={{ margin: '2px 0 0', fontSize: 14, color: INK, fontWeight: 600 }}>
+                        {subDomain}
+                      </Text>
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
           </div>
         </Section>
 

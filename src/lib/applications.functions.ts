@@ -172,6 +172,8 @@ export const submitApplication = createServerFn({ method: "POST" })
         email: data.email,
         phone: data.phone,
         roleApplied: data.role_applied,
+        domain: data.domain || undefined,
+        subDomain: data.sub_domain || undefined,
         hasResume: !!data.resume_path,
       });
     } catch (e) {
@@ -451,4 +453,77 @@ export const submitInterviewFeedback = createServerFn({ method: "POST" })
     }
     
     return { ok: true };
+  });
+
+const updateApplicantSchema = z.object({
+  id: z.string(),
+  full_name: z.string().trim().min(2).max(120).optional(),
+  email: z.string().trim().email().max(255).optional(),
+  phone: z.string().trim().min(6).max(30).optional(),
+  role_applied: z.string().trim().min(1).max(120).optional(),
+  domain: z.string().trim().max(160).optional().nullable(),
+  sub_domain: z.string().trim().max(160).optional().nullable(),
+  college: z.string().trim().max(240).optional().nullable(),
+  state: z.string().trim().max(80).optional().nullable(),
+  graduation_year: z.number().int().optional().nullable(),
+  availability: z.string().trim().max(120).optional().nullable(),
+  status: z.string().trim().optional(),
+  admin_notes: z.string().trim().max(2000).optional().nullable(),
+  profile_photo_url: z.string().trim().max(600).optional().nullable(),
+});
+
+export const updateApplicantByAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => updateApplicantSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const isAdmin = await checkIsAdmin(context.userId);
+    if (!isAdmin) {
+      throw new Error("Unauthorized: Only administrators can update applicant details.");
+    }
+
+    const { id, ...updateFields } = data;
+
+    // Fetch existing application
+    const { data: existing, error: fetchErr } = await supabase
+      .from("applications")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (fetchErr || !existing) throw new Error("Application not found");
+
+    const payload: Record<string, any> = {};
+    if (updateFields.full_name !== undefined) payload.full_name = updateFields.full_name;
+    if (updateFields.email !== undefined) payload.email = updateFields.email.toLowerCase();
+    if (updateFields.phone !== undefined) payload.phone = updateFields.phone;
+    if (updateFields.role_applied !== undefined) payload.role_applied = updateFields.role_applied;
+    if (updateFields.domain !== undefined) payload.domain = updateFields.domain;
+    if (updateFields.sub_domain !== undefined) payload.sub_domain = updateFields.sub_domain;
+    if (updateFields.college !== undefined) payload.college = updateFields.college;
+    if (updateFields.state !== undefined) payload.state = updateFields.state;
+    if (updateFields.graduation_year !== undefined) payload.graduation_year = updateFields.graduation_year;
+    if (updateFields.availability !== undefined) payload.availability = updateFields.availability;
+    if (updateFields.status !== undefined) payload.status = updateFields.status;
+    if (updateFields.admin_notes !== undefined) payload.admin_notes = updateFields.admin_notes;
+    if (updateFields.profile_photo_url !== undefined) payload.profile_photo_url = updateFields.profile_photo_url;
+
+    const { error: updateErr } = await supabase
+      .from("applications")
+      .update(payload)
+      .eq("id", id);
+
+    if (updateErr) throw new Error(updateErr.message);
+
+    // If status changed, log event
+    if (updateFields.status && updateFields.status !== existing.status) {
+      await supabase.from("application_status_events").insert([{
+        application_id: id,
+        from_status: existing.status,
+        to_status: updateFields.status,
+        note: `[Admin Updated Details]\nStatus updated from '${existing.status}' to '${updateFields.status}'`,
+        changed_by: context.userId,
+      }]);
+    }
+
+    return { ok: true, id };
   });
