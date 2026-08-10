@@ -79,8 +79,8 @@ export function Footer() {
                   <ExternalLink className="h-3 w-3 opacity-0 -translate-x-1 translate-y-1 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-300 text-gold" />
                 </a>
               </li>
-              <li><Link to="/" className="hover:text-white transition-colors">Careers</Link></li>
-              <li><Link to="/about" className="hover:text-white transition-colors">Why Join Us</Link></li>
+              <li><Link to="/careers" className="hover:text-white transition-colors">Careers</Link></li>
+              <li><Link to="/" className="hover:text-white transition-colors">Why Join Us</Link></li>
               <li><Link to="/status" className="hover:text-white transition-colors">Track Application</Link></li>
             </ul>
           </div>

@@ -14,7 +14,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as StatusRouteImport } from './routes/status'
 import { Route as SecurityCheckRouteImport } from './routes/security-check'
 import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as AboutRouteImport } from './routes/about'
+import { Route as CareersRouteImport } from './routes/careers'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StatusTokenRouteImport } from './routes/status.$token'
@@ -54,9 +54,9 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const CareersRoute = CareersRouteImport.update({
+  id: '/careers',
+  path: '/careers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -128,7 +128,7 @@ const AuthenticatedAdminOperationsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/careers': typeof CareersRoute
   '/privacy': typeof PrivacyRoute
   '/security-check': typeof SecurityCheckRoute
   '/status': typeof StatusRouteWithChildren
@@ -148,7 +148,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/careers': typeof CareersRoute
   '/privacy': typeof PrivacyRoute
   '/security-check': typeof SecurityCheckRoute
   '/status': typeof StatusRouteWithChildren
@@ -170,7 +170,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/about': typeof AboutRoute
+  '/careers': typeof CareersRoute
   '/privacy': typeof PrivacyRoute
   '/security-check': typeof SecurityCheckRoute
   '/status': typeof StatusRouteWithChildren
@@ -192,7 +192,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/about'
+    | '/careers'
     | '/privacy'
     | '/security-check'
     | '/status'
@@ -212,7 +212,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/about'
+    | '/careers'
     | '/privacy'
     | '/security-check'
     | '/status'
@@ -233,7 +233,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/about'
+    | '/careers'
     | '/privacy'
     | '/security-check'
     | '/status'
@@ -255,7 +255,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AboutRoute: typeof AboutRoute
+  CareersRoute: typeof CareersRoute
   PrivacyRoute: typeof PrivacyRoute
   SecurityCheckRoute: typeof SecurityCheckRoute
   StatusRoute: typeof StatusRouteWithChildren
@@ -303,11 +303,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/careers': {
+      id: '/careers'
+      path: '/careers'
+      fullPath: '/careers'
+      preLoaderRoute: typeof CareersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -441,7 +441,7 @@ const StatusRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AboutRoute: AboutRoute,
+  CareersRoute: CareersRoute,
   PrivacyRoute: PrivacyRoute,
   SecurityCheckRoute: SecurityCheckRoute,
   StatusRoute: StatusRouteWithChildren,

@@ -251,7 +251,25 @@ function AdminDashboard() {
   const { data: apps = [], isLoading, error } = useQuery({
     queryKey: ["applications"],
     queryFn: () => list(),
+    refetchInterval: 15_000, // Poll every 15 seconds for live updates
   });
+
+  // Live Supabase Realtime subscription for applications table
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-applications-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "applications" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["applications"] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
 
   const openQ = useQuery({
     queryKey: ["applications-open"],
