@@ -1907,9 +1907,9 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
         toast.error(`Failed sending to ${currentItem.email}: ${err.message}`);
       })
       .finally(() => {
-        // 5-second rate limit countdown
-        setCountdown(5);
-        let secondsLeft = 5;
+        // 2-second rate limit countdown
+        setCountdown(2);
+        let secondsLeft = 2;
         const countdownInterval = setInterval(() => {
           secondsLeft -= 1;
           setCountdown(secondsLeft);
@@ -1935,7 +1935,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
     setIsAutomating(true);
     setIsPaused(false);
     setActiveStatus("Starting campaign...");
-    toast.info("Started Automated Email Campaign (5s delay per email)");
+    toast.info("Started Automated Email Campaign (2s delay per email)");
   }
 
   function pauseAutomation() {

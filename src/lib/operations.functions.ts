@@ -1342,11 +1342,11 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
   <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#060b14;padding:40px 10px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:620px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
           
-          <!-- Header Branding with Official Vyntyra Logo -->
+          <!-- Header Branding with Official Vyntyra Logo & Corporate Badge -->
           <tr>
-            <td style="background-color:#0f1e36;padding:28px 40px;text-align:left;border-bottom:3px solid #10b981;">
+            <td style="background-color:#0b1728;padding:28px 40px;text-align:left;border-bottom:3px solid #10b981;">
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
                   <td style="width:52px;vertical-align:middle;text-align:left;">
@@ -1354,37 +1354,39 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
                   </td>
                   <td style="padding-left:14px;vertical-align:middle;text-align:left;">
                     <div style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.02em;line-height:1.2;">Vyntyra Consultancy Services</div>
-                    <div style="color:#10b981;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;margin-top:3px;">Project VyNexa &middot; Official Internship Program</div>
+                    <div style="color:#10b981;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;margin-top:3px;">Project VyNexa &middot; Global Internship Program</div>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Hero & Executive Opening Section -->
+          <!-- Hero & Opening Executive Statement -->
           <tr>
             <td style="padding:40px 40px 24px 40px;text-align:left;">
-              <div style="font-size:12px;font-weight:700;color:#10b981;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;text-align:left;">&starf; Official Invitation</div>
-              <h1 style="margin:0 0 16px 0;font-size:22px;font-weight:800;color:#0f172a;line-height:1.35;letter-spacing:-0.02em;text-align:left;">
+              <div style="display:inline-block;background-color:#ecfdf5;color:#047857;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;padding:4px 12px;border-radius:20px;border:1px solid #a7f3d0;margin-bottom:12px;text-align:left;">
+                &starf; Official Invitation &middot; 2026 Season
+              </div>
+              <h1 style="margin:0 0 16px 0;font-size:23px;font-weight:800;color:#0f172a;line-height:1.35;letter-spacing:-0.02em;text-align:left;">
                 Advance Your Professional Trajectory with Project VyNexa
               </h1>
               <p style="margin:0 0 16px 0;font-size:15px;line-height:1.7;color:#334155;text-align:left;">
                 Dear <strong>${recipientName}</strong>${universityName ? ` (${universityName})` : ''},
               </p>
               <p style="margin:0 0 16px 0;font-size:15px;line-height:1.7;color:#475569;text-align:left;">
-                Your professional background stood out to the talent acquisition team at <strong>Vyntyra Consultancy Services</strong>. We are pleased to invite you to apply for our <strong>2026 Official Internship Program</strong>, an opportunity designed for high-potential candidates to integrate into our global workflows.
+                Following a review of academic credentials and candidate profiles, the talent acquisition committee at <strong>Vyntyra Consultancy Services</strong> is pleased to invite you to apply for our <strong>Official 2026 Internship Program</strong> under <strong>Project VyNexa</strong>.
               </p>
               
               <div style="background-color:#f0fdf4;border-left:4px solid #10b981;padding:18px 22px;border-radius:0 10px 10px 0;margin:24px 0;text-align:left;">
-                <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em;">Program Overview</div>
+                <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em;">About Project VyNexa</div>
                 <p style="margin:0;font-size:14px;line-height:1.65;color:#1e293b;text-align:left;">
-                  <strong>Project VyNexa</strong> is our core initiative providing hands-on experience in cross-border technical and commercial environments. We emphasize rigorous skill acquisition, direct mentorship, and tangible project impact.
+                  Project VyNexa is Vyntyra’s flag-ship development program designed to bridge the gap between academic learning and high-stakes corporate execution. Participants collaborate on live international initiatives with structured mentorship.
                 </p>
               </div>
             </td>
           </tr>
 
-          <!-- Target Recommended Role Track & Sub-Domain Card -->
+          <!-- Target Candidate Recommendation Track (If Domain/Sub-Domain specified) -->
           ${(domain || subDomain) ? `
           <tr>
             <td style="padding:0 40px 24px 40px;text-align:left;">
@@ -1392,14 +1394,14 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
                 <tr>
                   <td style="text-align:left;">
                     <div style="font-size:11px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;text-align:left;">
-                      Recommended Internship Role Track
+                      &star; Recommended Candidate Match
                     </div>
                     <div style="font-size:17px;font-weight:800;color:#1e3a8a;margin-bottom:4px;text-align:left;">
                       ${domain || 'Core Internship Program'}
                     </div>
                     ${subDomain ? `
                     <div style="display:inline-block;background-color:#2563eb;color:#ffffff;font-size:12px;font-weight:700;padding:5px 14px;border-radius:6px;margin-top:6px;">
-                      Sub-Domain Focus: ${subDomain}
+                      Specialization Track: ${subDomain}
                     </div>` : ''}
                   </td>
                 </tr>
@@ -1407,41 +1409,59 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
             </td>
           </tr>` : ''}
 
-          <!-- Core Internship Tracks -->
+          <!-- Global Domain Tracks & Specialization Sub-Domains Grid -->
           <tr>
             <td style="padding:0 40px 24px 40px;text-align:left;">
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;padding:24px;">
-                <tr>
-                  <td style="text-align:left;">
-                    <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.08em;text-align:left;">Core Internship Tracks:</div>
-                    <ul style="margin:0;padding-left:18px;font-size:14px;color:#334155;line-height:1.8;text-align:left;">
-                      <li style="margin-bottom:10px;text-align:left;">
-                        <strong>Engineering & Cloud Systems:</strong> Full Stack Development, DevOps, Infrastructure Architecture, AI/ML Research & Development.
-                      </li>
-                      <li style="text-align:left;">
-                        <strong>Growth & Strategy:</strong> B2B Sales, CRM Optimization, Financial Modeling, Digital Growth, and Strategic Operations.
-                      </li>
-                    </ul>
-                  </td>
-                </tr>
-              </table>
+              <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.08em;text-align:left;">
+                Available Domain Tracks &amp; Sub-Domains:
+              </div>
+
+              <!-- Track 1: Engineering & Technology -->
+              <div style="background-color:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;padding:18px 20px;margin-bottom:14px;text-align:left;">
+                <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:6px;display:flex;align-items:center;">
+                  <span style="color:#10b981;margin-right:8px;">&bull;</span> Engineering &amp; Technology Systems
+                </div>
+                <div style="font-size:13px;color:#475569;line-height:1.65;padding-left:14px;">
+                  <strong>Sub-Domains:</strong> Full Stack Web Development (React/Node), Cloud Architecture &amp; DevOps, AI/ML Research &amp; Data Engineering, Cybersecurity &amp; Systems Architecture.
+                </div>
+              </div>
+
+              <!-- Track 2: Growth & Commercial Strategy -->
+              <div style="background-color:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;padding:18px 20px;margin-bottom:14px;text-align:left;">
+                <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:6px;display:flex;align-items:center;">
+                  <span style="color:#0284c7;margin-right:8px;">&bull;</span> Growth &amp; Commercial Strategy
+                </div>
+                <div style="font-size:13px;color:#475569;line-height:1.65;padding-left:14px;">
+                  <strong>Sub-Domains:</strong> B2B Enterprise Sales &amp; Business Development, CRM Optimization, Financial Modeling &amp; Analytics, Digital Growth Marketing &amp; SEO.
+                </div>
+              </div>
+
+              <!-- Track 3: Design, Product & Operations -->
+              <div style="background-color:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;padding:18px 20px;text-align:left;">
+                <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:6px;display:flex;align-items:center;">
+                  <span style="color:#8b5cf6;margin-right:8px;">&bull;</span> Product, Design &amp; Operations
+                </div>
+                <div style="font-size:13px;color:#475569;line-height:1.65;padding-left:14px;">
+                  <strong>Sub-Domains:</strong> UI/UX &amp; Product Design, HR &amp; Global Talent Acquisition, Technical Quality Assurance, Business Operations.
+                </div>
+              </div>
             </td>
           </tr>
 
-          <!-- Program Highlights (Outcome-Oriented) -->
+          <!-- Program Highlights & Corporate Benefits -->
           <tr>
             <td style="padding:0 40px 28px 40px;text-align:left;">
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#ecfdf5;border-radius:12px;border:1px solid #a7f3d0;padding:24px;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#ecfdf5;border-radius:12px;border:1px solid #a7f3d0;padding:22px;">
                 <tr>
                   <td style="text-align:left;">
-                    <div style="font-size:12px;font-weight:700;color:#047857;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.08em;text-align:left;">
-                      &check; Program Highlights:
+                    <div style="font-size:12px;font-weight:800;color:#047857;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.08em;text-align:left;">
+                      &check; Program Highlights &amp; Corporate Benefits:
                     </div>
-                    <ul style="margin:0;padding-left:18px;font-size:14px;color:#166534;line-height:1.85;text-align:left;">
-                      <li style="margin-bottom:8px;text-align:left;"><strong>Real-World Impact:</strong> Contribute directly to international client initiatives and scalable platforms.</li>
-                      <li style="margin-bottom:8px;text-align:left;"><strong>Expert Mentorship:</strong> 1-on-1 guidance from Senior Tech Leads and Executive Directors.</li>
-                      <li style="margin-bottom:8px;text-align:left;"><strong>Strategic Growth:</strong> Access to cross-border collaborative workflows.</li>
-                      <li style="text-align:left;"><strong>Pathway to Employment:</strong> Priority consideration for our global PPO (Pre-Placement Offer) network.</li>
+                    <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#166534;line-height:1.8;text-align:left;">
+                      <li style="margin-bottom:6px;text-align:left;"><strong>Live Client Projects:</strong> Work on scalable software and enterprise strategy initiatives.</li>
+                      <li style="margin-bottom:6px;text-align:left;"><strong>Executive Mentorship:</strong> 1-on-1 guidance from Senior Architects and Department Directors.</li>
+                      <li style="margin-bottom:6px;text-align:left;"><strong>Pre-Placement Offer (PPO):</strong> High performers receive direct fast-track PPO considerations.</li>
+                      <li style="text-align:left;"><strong>Verified Certificate &amp; LOR:</strong> Official ISO-aligned experience documentation upon completion.</li>
                     </ul>
                   </td>
                 </tr>
@@ -1449,67 +1469,62 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
             </td>
           </tr>
 
-          <!-- Next Steps & Clean CTA Box -->
+          <!-- Call To Action Section -->
           <tr>
             <td style="padding:0 40px 36px 40px;text-align:left;">
-              <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:8px;text-align:left;">Next Steps:</div>
+              <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:8px;text-align:left;">Application Instructions:</div>
               <p style="margin:0 0 20px 0;font-size:14px;line-height:1.65;color:#475569;text-align:left;">
-                To review the detailed program scope and submit your application, please visit our secure portal:
+                Click the button below to review full program details and submit your application on our official careers portal:
               </p>
 
-              <!-- Apply Now CTA Button linking directly to #form -->
+              <!-- Premium CTA Button -->
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
                   <td align="center" style="padding-top:4px;padding-bottom:12px;">
-                    <a href="https://careers.vyntyraconsultancyservices.in/?apply=true#form" target="_blank" style="display:inline-block;background-color:#10b981;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;padding:16px 40px;border-radius:10px;box-shadow:0 6px 20px rgba(16,185,129,0.35);letter-spacing:0.02em;transition:all 0.2s;">
-                      View Program Details & Apply &rarr;
+                    <a href="https://careers.vyntyraconsultancyservices.in/?apply=true#form" target="_blank" style="display:inline-block;background-color:#10b981;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;padding:16px 42px;border-radius:10px;box-shadow:0 6px 20px rgba(16,185,129,0.35);letter-spacing:0.02em;">
+                      Apply For Internship &rarr;
                     </a>
                   </td>
                 </tr>
               </table>
 
               <p style="margin:20px 0 0 0;font-size:13px;line-height:1.65;color:#64748b;text-align:left;">
-                For any inquiries regarding the program or candidacy, please connect with our Talent Acquisition team at <a href="mailto:internships@vyntyraconsultancyservices.in" style="color:#0284c7;font-weight:600;text-decoration:underline;">internships@vyntyraconsultancyservices.in</a>.
-              </p>
-              <p style="margin:12px 0 0 0;font-size:13px;color:#475569;text-align:left;">
-                We look forward to seeing the potential you bring to Project VyNexa.
+                For candidate queries or institutional partnerships, reach out directly to <a href="mailto:internships@vyntyraconsultancyservices.in" style="color:#0284c7;font-weight:600;text-decoration:underline;">internships@vyntyraconsultancyservices.in</a>.
               </p>
 
-              <!-- Executive Sign-off -->
+              <!-- Executive Signature Block -->
               <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e2e8f0;text-align:left;">
-                <div style="font-size:13px;color:#64748b;text-align:left;">Best regards,</div>
+                <div style="font-size:13px;color:#64748b;text-align:left;">Sincerely,</div>
                 <div style="font-size:16px;font-weight:800;color:#0f172a;margin-top:4px;text-align:left;">Jami Eswar Anil Kumar</div>
-                <div style="font-size:12px;font-weight:600;color:#10b981;text-align:left;">Founder & Managing Director</div>
+                <div style="font-size:12px;font-weight:700;color:#10b981;text-align:left;">Founder &amp; Managing Director</div>
                 <div style="font-size:12px;color:#64748b;text-align:left;">Vyntyra Consultancy Services</div>
               </div>
             </td>
           </tr>
 
-          <!-- Footer & Compliance with Verified Social Links -->
+          <!-- Corporate Footer & Social Media Icon Buttons -->
           <tr>
             <td style="background-color:#0b1728;padding:36px 40px;text-align:center;color:#94a3b8;font-size:11px;line-height:1.65;">
-              <div style="color:#ffffff;font-weight:600;font-size:13px;margin-bottom:8px;">Vyntyra Consultancy Services</div>
+              <div style="color:#ffffff;font-weight:700;font-size:14px;margin-bottom:12px;letter-spacing:-0.01em;">Vyntyra Consultancy Services</div>
               
-              <!-- Social Media Links -->
-              <div style="margin-bottom:20px;padding:12px 0;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b;">
-                <a href="https://www.linkedin.com/company/vyntyra-consultancy-services" target="_blank" style="display:inline-block;margin:0 10px;color:#38bdf8;font-weight:600;text-decoration:none;font-size:12px;">
-                  LinkedIn &rarr;
+              <!-- Social Media Buttons with Icons -->
+              <div style="margin-bottom:22px;padding:14px 0;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-center:center;gap:12px;">
+                <a href="https://www.linkedin.com/company/vyntyra-consultancy-services" target="_blank" style="display:inline-flex;align-items:center;background-color:#0284c7;color:#ffffff;font-size:12px;font-weight:700;text-decoration:none;padding:8px 16px;border-radius:6px;margin:0 4px;">
+                  <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="14" height="14" style="margin-right:6px;vertical-align:middle;filter:brightness(0) invert(1);"> LinkedIn
                 </a>
-                <span style="color:#475569;">&middot;</span>
-                <a href="https://www.instagram.com/vyntyraindia" target="_blank" style="display:inline-block;margin:0 10px;color:#f472b6;font-weight:600;text-decoration:none;font-size:12px;">
-                  Instagram (@vyntyraindia) &rarr;
+                <a href="https://www.instagram.com/vyntyraindia" target="_blank" style="display:inline-flex;align-items:center;background-color:#e1306c;color:#ffffff;font-size:12px;font-weight:700;text-decoration:none;padding:8px 16px;border-radius:6px;margin:0 4px;">
+                  <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="14" height="14" style="margin-right:6px;vertical-align:middle;filter:brightness(0) invert(1);"> Instagram
                 </a>
-                <span style="color:#475569;">&middot;</span>
-                <a href="https://vyntyraconsultancyservices.in/" target="_blank" style="display:inline-block;margin:0 10px;color:#34d399;font-weight:600;text-decoration:none;font-size:12px;">
-                  Official Website &rarr;
+                <a href="https://vyntyraconsultancyservices.in/" target="_blank" style="display:inline-flex;align-items:center;background-color:#10b981;color:#ffffff;font-size:12px;font-weight:700;text-decoration:none;padding:8px 16px;border-radius:6px;margin:0 4px;">
+                  <img src="https://cdn-icons-png.flaticon.com/512/1006/1006771.png" alt="Website" width="14" height="14" style="margin-right:6px;vertical-align:middle;filter:brightness(0) invert(1);"> Corporate Site
                 </a>
               </div>
 
               <div>Visakhapatnam, Andhra Pradesh, India</div>
-              <div>ISO-Aligned &middot; NASSCOM Verified &middot; MSME Registered</div>
-              <div style="margin-top:14px;color:#64748b;font-size:10px;">
-                You received this invitation because your profile matches our professional internship criteria.<br>
-                To manage email preferences, contact <a href="mailto:internships@vyntyraconsultancyservices.in" style="color:#10b981;text-decoration:none;">internships@vyntyraconsultancyservices.in</a>.
+              <div>ISO 9001:2015 Certified &middot; MSME Registered &middot; NASSCOM Member</div>
+              <div style="margin-top:14px;color:#64748b;font-size:10.5px;line-height:1.5;">
+                This communication is an official recruitment notification issued by Vyntyra Consultancy Services.<br>
+                For recruitment compliance or preference updates, email <a href="mailto:internships@vyntyraconsultancyservices.in" style="color:#34d399;text-decoration:none;">internships@vyntyraconsultancyservices.in</a>.
               </div>
             </td>
           </tr>
