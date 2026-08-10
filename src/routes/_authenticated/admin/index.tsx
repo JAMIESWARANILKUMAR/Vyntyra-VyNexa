@@ -36,7 +36,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { listApplications, updateAdminNotes, getResumeSignedUrl, regenerateInterviewQuestions, listApplicationProjects, deleteApplication, listEmployees, updateApplicantByAdmin } from "@/lib/applications.functions";
 import { generatePayslipPdf } from "@/lib/payslip";
-import { generateNocPdf } from "@/lib/nocGenerator";
+import { generateNocPdf, urlToBase64 } from "@/lib/nocGenerator";
 import { getApplicationsOpen, setApplicationsOpen } from "@/lib/settings.functions";
 import { listJobPostings, createJobPosting, updateJobPosting, toggleJobPosting, deleteJobPosting } from "@/lib/job-postings.functions";
 import { listAdminNotifications, markAllNotificationsRead } from "@/lib/notifications.functions";
@@ -1196,8 +1196,18 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
   const [editOpen, setEditOpen] = useState(false);
   const [payslipOpen, setPayslipOpen] = useState(false);
 
-  function handleDownloadNoc() {
+  async function handleDownloadNoc() {
+    const loadingToast = toast.loading("Generating premium NOC Certificate...");
     try {
+      let photoBase64: string | null = null;
+      if (app.profile_photo_url) {
+        photoBase64 = await urlToBase64(app.profile_photo_url);
+      }
+
+      const verificationUrl = `https://careers.vyntyraconsultancyservices.in/status/${app.id}`;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`;
+      const qrBase64 = await urlToBase64(qrApiUrl);
+
       const doc = generateNocPdf({
         fullName: app.full_name,
         email: app.email,
@@ -1206,12 +1216,15 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         college: app.college || "Academic Institution",
         domain: app.domain || "Technology & Software",
         subDomain: app.sub_domain || "Full Stack Web Development",
-        internshipStartDate: app.availability || app.joining_date || "2026-08-15",
-        profilePhotoUrl: app.profile_photo_url || null,
+        internshipStartDate: app.availability || app.joining_date || "Immediately",
+        profilePhotoUrl: photoBase64,
+        qrCodeBase64: qrBase64,
       });
       doc.save(`NOC_${app.full_name.replace(/\s+/g, "_")}_Vyntyra.pdf`);
+      toast.dismiss(loadingToast);
       toast.success("NOC Certificate downloaded successfully!");
     } catch (err: any) {
+      toast.dismiss(loadingToast);
       toast.error("Failed to generate NOC PDF: " + err.message);
     }
   }

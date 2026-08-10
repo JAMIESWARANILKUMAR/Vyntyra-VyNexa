@@ -140,6 +140,10 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
         }
       }
 
+      if (to === "hired") {
+        await autoProvisionIntern(app, context.userId);
+      }
+
       await supabase.from("application_status_events").insert([{
           application_id: data.id,
           from_status: from,
@@ -332,3 +336,62 @@ export const updateStatusTemplate = createServerFn({ method: "POST" })
     
     return { ok: true };
   });
+
+export async function autoProvisionIntern(app: any, changedBy: string) {
+  try {
+    const { data: existingProf } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", app.email)
+      .maybeSingle();
+
+    if (!existingProf) {
+      let tempPassword = app.phone ? app.phone.trim().replace(/[^\d]/g, '') : "";
+      if (tempPassword.length < 6) {
+        tempPassword = "VyNexa@" + (app.id ? app.id.toString().slice(-4) : "2026");
+      }
+
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: app.email,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { must_change_password: true }
+      });
+
+      if (authError) {
+        console.error("[workflow] Failed to create auth user:", authError.message);
+        return;
+      }
+
+      if (authData?.user) {
+        const userId = authData.user.id;
+
+        await supabase.from("user_roles").insert({
+          user_id: userId,
+          role: "intern"
+        });
+
+        await supabase.from("profiles").upsert({
+          id: userId,
+          full_name: app.full_name,
+          email: app.email,
+          department: app.domain || "Technology & Software",
+          position: app.sub_domain || "Intern",
+          intern_id: `INT-${app.id || Date.now().toString().slice(-6)}`,
+          duration_months: 3,
+          avatar_url: app.profile_photo_url || null
+        });
+
+        await supabase.from("application_status_events").insert([{
+          application_id: app.id,
+          from_status: app.status || "new",
+          to_status: "hired",
+          note: `[System Auto-Provisioning] Intern user dashboard created for ${app.full_name}.\nEmail: ${app.email}\nTemporary Password: ${tempPassword}`,
+          changed_by: changedBy
+        }]);
+      }
+    }
+  } catch (provErr: any) {
+    console.error("[workflow] Failed to auto-provision intern user:", provErr.message);
+  }
+}

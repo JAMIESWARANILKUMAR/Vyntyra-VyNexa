@@ -60,6 +60,11 @@ function InternDashboard() {
   const [feedback, setFeedback] = useState("");
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
 
+  const [showForcePasswordModal, setShowForcePasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
   const sessionQ = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
@@ -138,6 +143,39 @@ function InternDashboard() {
       }
     }
   }, [profile?.department]);
+
+  useEffect(() => {
+    if (session?.user?.user_metadata?.must_change_password) {
+      setShowForcePasswordModal(true);
+    }
+  }, [session]);
+
+  async function handleForcePasswordChange(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match!");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters!");
+      return;
+    }
+    setIsUpdatingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ 
+        password: newPassword,
+        data: { must_change_password: false }
+      });
+      if (error) throw error;
+      toast.success("Security password updated successfully! Welcome to your dashboard.");
+      setShowForcePasswordModal(false);
+      qc.invalidateQueries({ queryKey: ["session"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update security password.");
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  }
 
   const poolTasks = tasks.filter((t: any) => t.is_pool_task === true && !t.assigned_to);
   const myTasks = tasks.filter((t: any) => !(t.is_pool_task === true && !t.assigned_to));
@@ -1190,6 +1228,67 @@ function InternDashboard() {
 
       {/* Floating Apps Panel */}
       <FloatingAppsPanel />
+
+      {/* ── Force Password Reset Modal ── */}
+      {showForcePasswordModal && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-slate-100 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="text-center space-y-2">
+              <div className="inline-flex p-3 rounded-full bg-amber-50 text-amber-600 mb-2">
+                <ShieldCheck className="h-8 w-8" />
+              </div>
+              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Security Update Required</h2>
+              <p className="text-sm text-slate-500 font-light leading-relaxed">
+                You are currently signed in with a temporary password. For your account security, please choose a new strong password before continuing.
+              </p>
+            </div>
+
+            <form onSubmit={handleForcePasswordChange} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">New Password</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="New Password (min 6 characters)"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Confirm New Password</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm New Password"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium transition-all"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isUpdatingPassword}
+                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 active:scale-[0.98] transition-all"
+              >
+                {isUpdatingPassword ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Updating Security...
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="h-4 w-4" /> Save &amp; Unlock Dashboard
+                  </>
+                )}
+              </Button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
