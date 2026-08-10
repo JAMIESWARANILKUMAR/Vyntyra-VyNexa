@@ -412,10 +412,11 @@ export const deleteSchedule = createServerFn({ method: "POST" })
 const meetingSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
-  meeting_link: z.string().url(),
-  scheduled_at: z.string(),
+  meeting_link: z.string().min(1),
+  scheduled_at: z.string().optional(),
+  start_time: z.string().optional(),
   duration_minutes: z.number().optional(),
-  target_role: z.enum(['employee', 'intern', 'all']),
+  target_role: z.enum(['employee', 'intern', 'all']).optional().default('all'),
 });
 
 export const listMeetings = createServerFn({ method: 'GET' })
@@ -434,20 +435,27 @@ export const listMeetings = createServerFn({ method: 'GET' })
 
     const { data, error } = await query;
     if (error) throw new Error(error.message);
-    return data || [];
+    
+    // Normalize start_time and scheduled_at for frontend compatibility
+    return (data || []).map((m: any) => ({
+      ...m,
+      scheduled_at: m.scheduled_at || m.start_time || m.created_at,
+      start_time: m.start_time || m.scheduled_at || m.created_at,
+    }));
   });
 
 export const createMeeting = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => meetingSchema.parse(d))
   .handler(async ({ data, context }) => {
+    const scheduledAt = data.scheduled_at || data.start_time || new Date().toISOString();
     const { error } = await supabase.from('meetings').insert({
       title: data.title,
-      description: data.description,
+      description: data.description || null,
       meeting_link: data.meeting_link,
-      scheduled_at: data.scheduled_at,
-      duration_minutes: data.duration_minutes,
-      target_role: data.target_role,
+      scheduled_at: scheduledAt,
+      duration_minutes: data.duration_minutes || 30,
+      target_role: data.target_role || 'all',
       created_by: context.userId,
     });
     if (error) throw new Error(error.message);

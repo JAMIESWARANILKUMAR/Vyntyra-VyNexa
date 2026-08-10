@@ -388,7 +388,12 @@ function OperationsDashboard() {
   async function handleCreateMeeting(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await doCreateMeeting({ data: meetingForm });
+      await doCreateMeeting({
+        data: {
+          ...meetingForm,
+          scheduled_at: meetingForm.start_time || new Date().toISOString(),
+        }
+      });
       toast.success("Meeting scheduled!");
       setMeetingOpen(false);
       setMeetingForm({ title: "", meeting_link: "", start_time: "", target_role: "all" });
