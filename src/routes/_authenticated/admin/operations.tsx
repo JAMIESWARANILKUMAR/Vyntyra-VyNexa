@@ -2044,14 +2044,14 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
             <Mail className="h-5 w-5 text-emerald-400" /> Automated Email Campaign Hub
           </h2>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-            Automate bulk promotional internship invitations to up to <strong>1,000 email addresses</strong> with a mandatory <strong>5-second delay per email</strong> to ensure inbox delivery, prevent spam folder flagging, and align with SPF/DKIM verification standards.
+            Automate bulk promotional internship invitations to up to <strong>1,000 email addresses</strong> with a mandatory <strong>2-second delay per email</strong> to ensure inbox delivery, prevent spam folder flagging, and align with SPF/DKIM verification standards.
           </p>
         </div>
         <div className="flex items-center gap-2 bg-slate-800/80 px-3.5 py-2 rounded-xl border border-slate-700/60 text-xs">
           <Clock className="h-4 w-4 text-emerald-400 shrink-0" />
           <div>
             <div className="text-slate-300 font-medium">Auto Rate Limit</div>
-            <div className="text-emerald-400 font-bold">5s Interval Delay</div>
+            <div className="text-emerald-400 font-bold">2s Interval Delay</div>
           </div>
         </div>
       </div>
@@ -2235,7 +2235,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                   disabled={recipients.length === 0}
                   className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-5 py-2.5 rounded-xl shadow-lg transition-all gap-2 text-xs"
                 >
-                  <Play className="h-4 w-4 fill-slate-950" /> Start 5s Delay Campaign ({recipients.length})
+                  <Play className="h-4 w-4 fill-slate-950" /> Start 2s Delay Campaign ({recipients.length})
                 </Button>
               ) : isPaused ? (
                 <Button 
