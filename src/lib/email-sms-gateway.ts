@@ -4,7 +4,9 @@
 // with 1,000+ free monthly SMS dispatches.
 
 import { sendPromotionalInternshipEmail } from "./operations.functions";
-import { supabase } from "./supabase";
+import { getAdminClient } from "@/integrations/supabase/admin";
+
+const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
 export async function sendSmsViaEmailGateway({
   recipientPhone,
