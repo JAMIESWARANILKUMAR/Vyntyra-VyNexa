@@ -5,7 +5,7 @@ import {
   CheckCircle2, Circle, AlertTriangle, ChevronDown, ArrowLeft,
   Shield, GraduationCap, Briefcase, CalendarDays, RefreshCw,
   Video, FileText, UploadCloud, MessageSquare, CreditCard, LifeBuoy, Award,
-  Play, Pause, Square, Search, ExternalLink, ShieldCheck, Download
+  Play, Pause, Square, Search, ExternalLink, ShieldCheck, Download, Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
