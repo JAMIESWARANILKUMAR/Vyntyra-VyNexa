@@ -344,13 +344,13 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
   doc.text(`Date: ${genTime}`, sigX + 2, sigBoxY + 11.0);
   doc.text("Reason: Verified Corporate Payout Authorization", sigX + 2, sigBoxY + 13.5);
 
-  // Line below Digital Signature Stamp (spaced 26mm below box top)
-  const sigLineY = sigBoxY + 26;
+  // Line below Digital Signature Stamp (spaced 23mm below box top)
+  const sigLineY = sigBoxY + 23;
 
   // Draw Real Signature Image if provided (sits cleanly above horizontal line)
   if (data.signatureBase64 && data.signatureBase64.startsWith("data:image")) {
     try {
-      doc.addImage(data.signatureBase64, "PNG", sigX + 19, sigLineY - 11, 28, 10.5);
+      doc.addImage(data.signatureBase64, "PNG", sigX + 20, sigLineY - 9.5, 26, 9.5);
     } catch (e) {
       // Fallback if image load fails
     }
@@ -367,18 +367,19 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
   doc.text("JAMI ESWAR ANIL KUMAR", sigX + 33, sigLineY + 4.5, { align: "center" });
   doc.setFontSize(7.5);
   doc.setTextColor(51, 65, 85);
-  doc.text("Founder & Managing Director", sigX + 33, sigLineY + 8.2, { align: "center" });
+  doc.text("Founder & Managing Director", sigX + 33, sigLineY + 8.0, { align: "center" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(100, 116, 139);
-  doc.text("Vyntyra Consultancy Services", sigX + 33, sigLineY + 11.8, { align: "center" });
+  doc.text("Vyntyra Consultancy Services", sigX + 33, sigLineY + 11.2, { align: "center" });
 
-  // Footer Disclaimer
+  // Footer Disclaimer (positioned cleanly below signature block with divider line)
+  const footerLineY = sigBoxY + 42;
   doc.setDrawColor(226, 232, 240);
-  doc.line(margin, y + 42, margin + contentWidth, y + 42);
+  doc.line(margin, footerLineY, margin + contentWidth, footerLineY);
   doc.setFontSize(7);
   doc.setTextColor(148, 163, 184);
-  doc.text("This is a computer-generated salary document with DigiLocker-compliant electronic signature verification.", pageWidth / 2, y + 40, { align: "center" });
+  doc.text("This is a computer-generated salary document with DigiLocker-compliant electronic signature verification.", pageWidth / 2, footerLineY + 4.5, { align: "center" });
 
   return doc;
 }
