@@ -117,7 +117,7 @@ export function PayslipModal({ isOpen, onClose, payslip }: PayslipModalProps) {
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-slate-900">VyNexa Consultancy Services</h1>
                 <p className="text-xs text-slate-500 font-medium">Vyntyra Technologies Pvt. Ltd. · Enterprise Portal</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Visakhapatnam, Andhra Pradesh, India · CIN: U72900AP2026PTC109823</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Visakhapatnam, AP, India · MSME: UDYAM-AP-10-0143100</p>
               </div>
             </div>
             <div className="text-left sm:text-right">

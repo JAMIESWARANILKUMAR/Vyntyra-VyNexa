@@ -111,7 +111,7 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(226, 232, 240);
-  doc.text("ISO 9001:2015 Certified | NASSCOM Verified | MSME Reg. AP-03-00128", headerTextX, 29.5);
+  doc.text("ISO 9001:2015 Certified | NASSCOM Verified | MSME: UDYAM-AP-10-0143100", headerTextX, 29.5);
   doc.setFontSize(7.5);
   doc.setTextColor(148, 163, 184);
   doc.text("Vyntyra Technologies Pvt. Ltd. · Enterprise Payroll Portal", headerTextX, 34.5);
