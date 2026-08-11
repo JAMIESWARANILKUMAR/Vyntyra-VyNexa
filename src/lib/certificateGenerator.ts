@@ -41,12 +41,8 @@ export function generateInternshipCertificatePdf(data: InternshipCertificateData
   // Corner Accent Diamonds (Gold)
   const drawCornerDiamond = (x: number, y: number) => {
     doc.setFillColor(217, 119, 6);
-    doc.polygon([
-      { x: x, y: y - 2.5 },
-      { x: x + 2.5, y: y },
-      { x: x, y: y + 2.5 },
-      { x: x - 2.5, y: y },
-    ], "F");
+    doc.triangle(x, y - 2.5, x + 2.5, y, x - 2.5, y, "F");
+    doc.triangle(x, y + 2.5, x + 2.5, y, x - 2.5, y, "F");
   };
   drawCornerDiamond(8, 8);
   drawCornerDiamond(pageW - 8, 8);
@@ -64,11 +60,7 @@ export function generateInternshipCertificatePdf(data: InternshipCertificateData
 
   // Ribbon Top Decorative Notch
   doc.setFillColor(255, 255, 255);
-  doc.polygon([
-    { x: ribbonX, y: ribbonY },
-    { x: ribbonX + ribbonW / 2, y: ribbonY + 6 },
-    { x: ribbonX + ribbonW, y: ribbonY },
-  ], "F");
+  doc.triangle(ribbonX, ribbonY, ribbonX + ribbonW / 2, ribbonY + 6, ribbonX + ribbonW, ribbonY, "F");
 
   // Vyntyra Academy Brand Title in Left Ribbon Pillar
   doc.setFont("helvetica", "bold");
