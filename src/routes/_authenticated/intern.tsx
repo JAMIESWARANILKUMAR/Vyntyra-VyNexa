@@ -1149,13 +1149,31 @@ function InternDashboard() {
                                 reader.onloadend = () => resolve(reader.result as string);
                                 reader.readAsDataURL(blob);
                               });
+
+                              const internId = profile?.intern_id || c.code;
+                              const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${internId}`;
+                              const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(verificationUrl)}`;
+                              let qrCodeBase64: string | null = null;
+                              try {
+                                const qrRes = await fetch(qrApiUrl);
+                                const qrBlob = await qrRes.blob();
+                                qrCodeBase64 = await new Promise<string>((resolve) => {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => resolve(reader.result as string);
+                                  reader.readAsDataURL(qrBlob);
+                                });
+                              } catch (e) {
+                                // fallback if offline
+                              }
+
                               const { generateInternshipCertificatePdf } = await import("@/lib/certificateGenerator");
                               const doc = generateInternshipCertificatePdf({
                                 candidateName: profile?.full_name || profile?.email || "Candidate Name",
-                                internId: profile?.intern_id || c.code,
+                                internId,
                                 domainName: profile?.department || "Engineering & Technology",
                                 subDomainName: profile?.position || "Full Stack Web Development",
                                 issueDate: new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+                                qrCodeBase64,
                                 templateBase64,
                               });
                               doc.save(`${c.name.replace(/\s+/g, "_")}_${(profile?.full_name || "Intern").replace(/\s+/g, "_")}.pdf`);

@@ -1332,13 +1332,19 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
     const loadingToast = toast.loading("Generating Internship Completion Certificate...");
     try {
       const templateBase64 = await urlToBase64("/certificate_template.png");
+      const internId = app.intern_id || `VY-INT-${app.id.slice(0, 6).toUpperCase()}`;
+      const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${internId}`;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(verificationUrl)}`;
+      const qrCodeBase64 = await urlToBase64(qrApiUrl);
+
       const { generateInternshipCertificatePdf } = await import("@/lib/certificateGenerator");
       const doc = generateInternshipCertificatePdf({
         candidateName: app.full_name,
-        internId: app.intern_id || `VY-INT-${app.id.slice(0, 6).toUpperCase()}`,
+        internId,
         domainName: app.domain || "Technology & Software",
         subDomainName: app.sub_domain || "Full Stack Web Development",
         issueDate: new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+        qrCodeBase64,
         templateBase64,
       });
       doc.save(`Internship_Certificate_${app.full_name.replace(/\s+/g, "_")}.pdf`);
