@@ -350,7 +350,7 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
   // Draw Real Signature Image if provided
   if (data.signatureBase64 && data.signatureBase64.startsWith("data:image")) {
     try {
-      doc.addImage(data.signatureBase64, "PNG", sigX + 17, sigLineY - 11, 32, 10.5);
+      doc.addImage(data.signatureBase64, "PNG", sigX + 18, sigLineY - 12.5, 30, 12);
     } catch (e) {
       // Fallback if image load fails
     }
