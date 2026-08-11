@@ -1142,14 +1142,6 @@ function InternDashboard() {
                           onClick={async () => {
                             const loadingToast = toast.loading(`Generating ${c.name}...`);
                             try {
-                              const res = await fetch("/certificate_template.png");
-                              const blob = await res.blob();
-                              const templateBase64 = await new Promise<string>((resolve) => {
-                                const reader = new FileReader();
-                                reader.onloadend = () => resolve(reader.result as string);
-                                reader.readAsDataURL(blob);
-                              });
-
                               const internId = profile?.intern_id || c.code;
                               const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${internId}`;
                               const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(verificationUrl)}`;
@@ -1178,7 +1170,6 @@ function InternDashboard() {
                                 completionDate: endDateStr,
                                 issueDate: endDateStr,
                                 qrCodeBase64,
-                                templateBase64,
                               });
                               doc.save(`${c.name.replace(/\s+/g, "_")}_${(profile?.full_name || "Intern").replace(/\s+/g, "_")}.pdf`);
                               toast.dismiss(loadingToast);
