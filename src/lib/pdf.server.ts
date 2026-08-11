@@ -181,10 +181,12 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
 
   // Generate PDF as Buffer
   const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
-  const fileName = `offer_letters/${details.applicationId}_${Date.now()}.pdf`;
+  const fileName = `offer_letters/${details.applicationId}_OfferLetter.pdf`;
 
-  // Upload to Supabase Storage
-  const { data, error } = await supabase.storage.from("default").upload(fileName, pdfBuffer, { contentType: "application/pdf" });
+  // Upload to Supabase Storage with upsert: true to replace previous version
+  const { data, error } = await supabase.storage
+    .from("default")
+    .upload(fileName, pdfBuffer, { contentType: "application/pdf", upsert: true });
   if (error) {
     console.error("Failed to upload PDF:", error);
     throw new Error("Failed to upload offer letter PDF");

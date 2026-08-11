@@ -118,3 +118,60 @@ export const verifyNocCertificate = createServerFn({ method: "POST" })
       },
     };
   });
+
+const savePdfSchema = z.object({
+  applicationId: z.string().min(1),
+  pdfBase64: z.string().min(1),
+});
+
+export const saveNocPdf = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => savePdfSchema.parse(d))
+  .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
+    const base64Data = data.pdfBase64.replace(/^data:application\/pdf;base64,/, "");
+    const pdfBuffer = Buffer.from(base64Data, "base64");
+    const filepath = `nocs/${data.applicationId}_NOC.pdf`;
+
+    const { error: uploadError } = await adminClient.storage
+      .from("default")
+      .upload(filepath, pdfBuffer, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+
+    if (uploadError) throw new Error(uploadError.message);
+
+    const { data: { publicUrl } } = adminClient.storage
+      .from("default")
+      .getPublicUrl(filepath);
+
+    await adminClient.from("applications").update({ noc_url: publicUrl }).eq("id", data.applicationId);
+
+    return { success: true, url: publicUrl };
+  });
+
+export const saveInternshipCertificatePdf = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => savePdfSchema.parse(d))
+  .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
+    const base64Data = data.pdfBase64.replace(/^data:application\/pdf;base64,/, "");
+    const pdfBuffer = Buffer.from(base64Data, "base64");
+    const filepath = `certificates/${data.applicationId}_Certificate.pdf`;
+
+    const { error: uploadError } = await adminClient.storage
+      .from("default")
+      .upload(filepath, pdfBuffer, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+
+    if (uploadError) throw new Error(uploadError.message);
+
+    const { data: { publicUrl } } = adminClient.storage
+      .from("default")
+      .getPublicUrl(filepath);
+
+    await adminClient.from("applications").update({ certificate_url: publicUrl }).eq("id", data.applicationId);
+
+    return { success: true, url: publicUrl };
+  });

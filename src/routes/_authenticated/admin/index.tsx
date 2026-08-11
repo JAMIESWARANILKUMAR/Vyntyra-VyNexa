@@ -39,6 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { listApplications, updateAdminNotes, getResumeSignedUrl, regenerateInterviewQuestions, listApplicationProjects, deleteApplication, listEmployees, updateApplicantByAdmin } from "@/lib/applications.functions";
 import { generatePayslipPdf } from "@/lib/payslip";
 import { generateNocPdf, urlToBase64 } from "@/lib/nocGenerator";
+import { saveNocPdf, saveInternshipCertificatePdf } from "@/lib/noc.functions";
 import { getApplicationsOpen, setApplicationsOpen } from "@/lib/settings.functions";
 import { listJobPostings, createJobPosting, updateJobPosting, toggleJobPosting, deleteJobPosting } from "@/lib/job-postings.functions";
 import { listAdminNotifications, markAllNotificationsRead } from "@/lib/notifications.functions";
@@ -1263,6 +1264,8 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
   const [scheduleTime, setScheduleTime] = useState("");
   const [isScheduling, setIsScheduling] = useState(false);
   const triggerSchedule = useServerFn(scheduleSelectionEmail);
+  const doSaveNocPdf = useServerFn(saveNocPdf);
+  const doSaveCertificatePdf = useServerFn(saveInternshipCertificatePdf);
 
   useEffect(() => {
     if (app && app.status === "hired") {
@@ -1319,9 +1322,19 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         logoBase64: logoBase64,
         hodName: app.hod_name,
       });
+
       doc.save(`NOC_${app.full_name.replace(/\s+/g, "_")}_Vyntyra.pdf`);
+
+      // Auto-replace previous NOC file in storage
+      const pdfDataUri = doc.output("datauristring");
+      try {
+        await doSaveNocPdf({ data: { applicationId: app.id, pdfBase64: pdfDataUri } });
+      } catch (e) {
+        console.warn("Failed to auto-replace NOC in storage:", e);
+      }
+
       toast.dismiss(loadingToast);
-      toast.success("NOC Certificate downloaded successfully!");
+      toast.success("NOC Certificate generated & updated in storage!");
     } catch (err: any) {
       toast.dismiss(loadingToast);
       toast.error("Failed to generate NOC PDF: " + err.message);
@@ -1351,9 +1364,19 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         qrCodeBase64,
         templateBase64,
       });
+
       doc.save(`Internship_Certificate_${app.full_name.replace(/\s+/g, "_")}.pdf`);
+
+      // Auto-replace previous Certificate file in storage
+      const pdfDataUri = doc.output("datauristring");
+      try {
+        await doSaveCertificatePdf({ data: { applicationId: app.id, pdfBase64: pdfDataUri } });
+      } catch (e) {
+        console.warn("Failed to auto-replace Certificate in storage:", e);
+      }
+
       toast.dismiss(loadingToast);
-      toast.success("Internship Completion Certificate downloaded successfully!");
+      toast.success("Internship Completion Certificate generated & updated in storage!");
     } catch (err: any) {
       toast.dismiss(loadingToast);
       toast.error("Failed to generate certificate: " + err.message);
