@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SmartAvatar } from "@/components/SmartAvatar";
 
 export const Route = createFileRoute("/verify")({
   validateSearch: (search: Record<string, unknown>) => {
@@ -215,15 +216,12 @@ function VerifyNocPage() {
                     {/* Photo Box */}
                     <div className="flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-slate-800 pb-6 md:pb-0 md:pr-6">
                       <div className="h-28 w-24 rounded-xl overflow-hidden border-2 border-emerald-500/40 shadow-md bg-slate-900 flex items-center justify-center mb-3">
-                        {result.certificate.profilePhotoUrl ? (
-                          <img
-                            src={result.certificate.profilePhotoUrl}
-                            alt={result.certificate.fullName}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="text-slate-600 text-xs font-bold">CANDIDATE</div>
-                        )}
+                        <SmartAvatar
+                          src={result.certificate.profilePhotoUrl}
+                          alt={result.certificate.fullName}
+                          fallbackInitials={(result.certificate.fullName || "C")[0]}
+                          className="h-full w-full rounded-none border-none"
+                        />
                       </div>
                       <h3 className="font-bold text-white text-base">
                         {result.certificate.fullName}

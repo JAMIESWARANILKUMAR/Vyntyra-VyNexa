@@ -301,26 +301,18 @@ export const listApplications = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
-    let result = await supabase
-        .from("applications")
-        .select("*")
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
-        
-    if (result.error) {
-      console.warn("Failed to query with deleted_at filter, falling back:", result.error.message);
-      // Fallback query in case the migration column is not yet applied
-      const fallbackResult = await supabase
-          .from("applications")
-          .select("*")
-          .order("created_at", { ascending: false });
-      if (fallbackResult.error) {
-        throw new Error("Failed to list applications: " + fallbackResult.error.message);
-      }
-      return fallbackResult.data;
-    }
+    const res = await supabase.from("applications").select("*").order("created_at", { ascending: false });
+    const apps = res.data || [];
     
-    return result.data;
+    return await Promise.all(
+      apps.map(async (app: any) => {
+        if (app.profile_photo_url && (app.profile_photo_url.includes("photos.google.com") || app.profile_photo_url.includes("photos.app.goo.gl"))) {
+          const resolved = await resolveGooglePhotosUrl(app.profile_photo_url);
+          if (resolved) return { ...app, profile_photo_url: resolved };
+        }
+        return app;
+      })
+    );
   });
 
 const updateNotesSchema = z.object({

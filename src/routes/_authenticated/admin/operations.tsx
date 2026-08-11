@@ -32,6 +32,7 @@ import {
 } from "@/lib/operations.functions";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
+import { SmartAvatar } from "@/components/SmartAvatar";
 import { toast } from "sonner";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
@@ -1657,12 +1658,12 @@ function OperationsDashboard() {
                         <tr key={intern.id} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-3">
-                              <div 
-                                className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 bg-cover bg-center shrink-0 border"
-                                style={intern.avatar_url ? { backgroundImage: `url(${intern.avatar_url})` } : {}}
-                              >
-                                {!intern.avatar_url && (intern.full_name || "?")[0].toUpperCase()}
-                              </div>
+                              <SmartAvatar
+                                src={intern.avatar_url}
+                                alt={intern.full_name}
+                                fallbackInitials={(intern.full_name || "?")[0]}
+                                className="h-8 w-8 rounded-full"
+                              />
                               <div>
                                 <div className="font-semibold text-slate-900 text-sm">{intern.full_name}</div>
                                 <div className="text-[10px] text-slate-400 font-light">{intern.intern_id || "No ID"} · {intern.department}</div>
@@ -1815,9 +1816,12 @@ function MemberRow({ member, onRevoke, onClick }: { member: any; onRevoke: (id: 
   return (
     <div className="px-5 py-3.5 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors cursor-pointer group" onClick={onClick}>
       <div className="flex items-center gap-3 min-w-0">
-        <div className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${member.role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"} bg-cover bg-center`} style={member.avatar_url ? { backgroundImage: `url(${member.avatar_url})` } : {}}>
-          {!member.avatar_url && (member.full_name || member.email || "?")[0].toUpperCase()}
-        </div>
+        <SmartAvatar
+          src={member.avatar_url}
+          alt={member.full_name}
+          fallbackInitials={(member.full_name || member.email || "?")[0]}
+          className="h-9 w-9 rounded-full"
+        />
         <div className="min-w-0">
           <div className="font-medium text-sm truncate group-hover:text-primary transition-colors">{member.full_name || "—"}</div>
           <div className="text-xs text-muted-foreground truncate">{member.email}</div>
@@ -1983,12 +1987,12 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
                     {team.filter((m: any) => m.role === "intern" && m.mentor_id === user.id).map((intern: any) => (
                       <div key={intern.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div 
-                            className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0 bg-cover bg-center"
-                            style={intern.avatar_url ? { backgroundImage: `url(${intern.avatar_url})` } : {}}
-                          >
-                            {!intern.avatar_url && (intern.full_name || "?")[0].toUpperCase()}
-                          </div>
+                          <SmartAvatar
+                            src={intern.avatar_url}
+                            alt={intern.full_name}
+                            fallbackInitials={(intern.full_name || "?")[0]}
+                            className="h-7 w-7 rounded-full"
+                          />
                           <div className="min-w-0">
                             <div className="text-xs font-semibold truncate text-slate-700">{intern.full_name}</div>
                             <div className="text-[10px] text-slate-400 truncate">{intern.email}</div>
