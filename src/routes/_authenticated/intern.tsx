@@ -30,7 +30,8 @@ import {
   listMyAccessRequests, createAccessRequest, getPresignedUrl,
   acceptTask, updateTaskExecution,
   listLeads, createLead, updateLeadStatus, deleteLead,
-  listBugs, createBug, updateBugStatus
+  listBugs, createBug, updateBugStatus,
+  clockIn, clockOut, getMyAttendance
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
@@ -55,7 +56,7 @@ const RESOURCE_ICONS: Record<string, { icon: React.ReactNode; color: string }> =
 
 function InternDashboard() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "announcements" | "notes" | "feedback">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance">("overview");
   const [newNote, setNewNote] = useState("");
   const [feedback, setFeedback] = useState("");
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
@@ -86,6 +87,10 @@ function InternDashboard() {
   const doAcceptTask = useServerFn(acceptTask);
   const doUpdateTaskExecution = useServerFn(updateTaskExecution);
 
+  const doClockIn = useServerFn(clockIn);
+  const doClockOut = useServerFn(clockOut);
+  const fetchAttendance = useServerFn(getMyAttendance);
+
   const [selectedTaskWorkspace, setSelectedTaskWorkspace] = useState<any>(null);
   const [selectedDomain, setSelectedDomain] = useState<"tech" | "non_tech" | "management">("tech");
 
@@ -108,6 +113,46 @@ function InternDashboard() {
   const announcementsQ = useQuery({ queryKey: ["my-announcements"], queryFn: () => fetchAnnouncements(), ...queryOpts });
   const resourcesQ = useQuery({ queryKey: ["my-resources"], queryFn: () => fetchResources(), ...queryOpts });
   const notesQ = useQuery({ queryKey: ["my-notes"], queryFn: () => fetchNotes(), ...queryOpts });
+  const attendanceQ = useQuery({ queryKey: ["my-attendance"], queryFn: () => fetchAttendance(), staleTime: 0, refetchInterval: 3000 });
+
+  const attendanceLogs: any[] = attendanceQ.data || [];
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayDateStr = new Date().toDateString();
+  const todayAttendance = attendanceLogs.find((a: any) => {
+    if (a.date === todayStr) return true;
+    if (a.clock_in && new Date(a.clock_in).toDateString() === todayDateStr) return true;
+    return false;
+  });
+
+  const [isClocking, setIsClocking] = useState(false);
+
+  async function handleClockIn() {
+    setIsClocking(true);
+    try {
+      await doClockIn();
+      toast.success("Clocked in successfully!");
+      qc.invalidateQueries({ queryKey: ["my-attendance"] });
+      qc.invalidateQueries({ queryKey: ["admin-attendance"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to clock in");
+    } finally {
+      setIsClocking(false);
+    }
+  }
+
+  async function handleClockOut() {
+    setIsClocking(true);
+    try {
+      await doClockOut();
+      toast.success("Clocked out successfully!");
+      qc.invalidateQueries({ queryKey: ["my-attendance"] });
+      qc.invalidateQueries({ queryKey: ["admin-attendance"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to clock out");
+    } finally {
+      setIsClocking(false);
+    }
+  }
 
   const tasks: any[] = tasksQ.data || [];
   const notes: any[] = notesQ.data || [];
@@ -218,6 +263,7 @@ function InternDashboard() {
 
   const TABS = [
     { id: "overview",       label: "Overview" },
+    { id: "attendance",     label: `Attendance (${attendanceLogs.length})` },
     { id: "onboarding",     label: "Onboarding" },
     { id: "lms",            label: "LMS & Skills" },
     { id: "kanban",         label: "Sprint Board" },
@@ -263,8 +309,37 @@ function InternDashboard() {
             ))}
           </nav>
 
-          {/* User Profile & Sign Out */}
+          {/* User Profile, Attendance Clock & Sign Out */}
           <div className="flex items-center gap-2 shrink-0">
+            {todayAttendance ? (
+              todayAttendance.clock_out ? (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 border border-slate-200">
+                  Shift Completed
+                </span>
+              ) : (
+                <Button 
+                  size="sm"
+                  variant="outline"
+                  onClick={handleClockOut} 
+                  disabled={isClocking}
+                  className="h-8 px-2.5 text-xs font-bold border-slate-800 text-slate-900 hover:bg-slate-900 hover:text-white transition-all gap-1"
+                >
+                  {isClocking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5 text-emerald-600" />}
+                  Clock Out
+                </Button>
+              )
+            ) : (
+              <Button 
+                size="sm"
+                onClick={handleClockIn} 
+                disabled={isClocking}
+                className="h-8 px-2.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs gap-1"
+              >
+                {isClocking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5" />}
+                Clock In
+              </Button>
+            )}
+
             <div className="flex items-center gap-2">
               <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 sm:h-9 sm:w-9" />
               <div className="text-xs text-slate-500 hidden xl:block truncate max-w-[160px]">{email}</div>
@@ -323,44 +398,92 @@ function InternDashboard() {
         {/* ─── OVERVIEW ─── */}
         {activeTab === "overview" && (
           <>
-            {/* Hero */}
-            <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white p-6 shadow-lg">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <ProfileAvatar url={profile?.avatar_url} name={displayName} />
+            {/* ─── ATTENDANCE TIMECARD WIDGET ─── */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center">
+                    <Clock className="h-5 w-5" />
+                  </div>
                   <div>
-                    <div className="text-xs uppercase tracking-widest opacity-70 mb-1 flex items-center gap-1.5">
-                      <GraduationCap className="h-3.5 w-3.5" /> Vyntyra Academy
-                    </div>
-                    <h1 className="text-2xl font-bold capitalize">{displayName} 👋</h1>
-                    <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs opacity-90">
-                      {profile?.intern_id && <span className="bg-white/20 px-2 py-0.5 rounded font-mono font-medium tracking-wide">{profile.intern_id}</span>}
-                      {profile?.phone && <span className="flex items-center gap-1.5"><Phone className="h-3 w-3 opacity-70"/> {profile.phone}</span>}
-                      {profile?.address && <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3 opacity-70"/> {profile.address}</span>}
-                      <span className="flex items-center gap-1.5"><Mail className="h-3 w-3 opacity-70"/> {email}</span>
-                    </div>
-                    <p className="text-xs opacity-75 mt-1.5">{new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
+                    <h2 className="text-base font-bold text-slate-900">Daily Attendance &amp; Shift Timecard</h2>
+                    <p className="text-xs text-slate-500">Record your daily work presence and view historical shift logs</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <AnalogClock />
-                  <div className="text-center bg-white/10 rounded-xl px-4 py-2">
-                    <div className="text-3xl font-bold">{myTasks.length}</div>
-                    <div className="text-xs opacity-60 uppercase tracking-wider">Tasks</div>
+
+                <div className="flex items-center gap-3">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                    todayAttendance
+                      ? todayAttendance.clock_out
+                        ? "bg-slate-100 text-slate-700 border border-slate-200"
+                        : "bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse"
+                      : "bg-amber-50 text-amber-700 border border-amber-200"
+                  }`}>
+                    Status: {todayAttendance ? (todayAttendance.clock_out ? "Completed" : "Active Shift") : "Offline"}
+                  </span>
+
+                  {todayAttendance ? (
+                    !todayAttendance.clock_out && (
+                      <Button
+                        onClick={handleClockOut}
+                        disabled={isClocking}
+                        className="bg-slate-900 hover:bg-black text-white font-bold text-xs gap-2 px-4 h-10 shadow-md"
+                      >
+                        {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4 text-emerald-400" />}
+                        Clock Out Now
+                      </Button>
+                    )
+                  ) : (
+                    <Button
+                      onClick={handleClockIn}
+                      disabled={isClocking}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs gap-2 px-5 h-10 shadow-md shadow-emerald-600/20"
+                    >
+                      {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
+                      Clock In Now
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Timecard Summary Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <div className="text-slate-400 font-semibold mb-0.5">Today Clock In</div>
+                    <div className="text-base font-bold text-slate-900 font-mono">
+                      {todayAttendance?.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
+                    </div>
                   </div>
-                  <div className="text-center bg-white/10 rounded-xl px-4 py-2">
-                    <div className="text-3xl font-bold">{progress}%</div>
-                    <div className="text-xs opacity-60 uppercase tracking-wider">Done</div>
+                  <div className="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <div className="text-slate-400 font-semibold mb-0.5">Today Clock Out</div>
+                    <div className="text-base font-bold text-slate-900 font-mono">
+                      {todayAttendance?.clock_out ? new Date(todayAttendance.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
+                    </div>
+                  </div>
+                  <div className="h-8 w-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <div className="text-slate-400 font-semibold mb-0.5">Total Days Present</div>
+                    <div className="text-base font-bold text-slate-900 font-mono">
+                      {attendanceLogs.length} Days
+                    </div>
+                  </div>
+                  <div className="h-8 w-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                    <CalendarDays className="h-4 w-4" />
                   </div>
                 </div>
               </div>
-              {myTasks.length > 0 && (
-                <div className="mt-4">
-                  <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                    <div className="h-full bg-white rounded-full transition-all duration-700" style={{ width: `${progress}%` }} />
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Domain Workspace Auto-Detected Header Strip */}
@@ -542,6 +665,143 @@ function InternDashboard() {
               </div>
             </div>
           </>
+        )}
+
+        {/* ─── ATTENDANCE TAB ─── */}
+        {activeTab === "attendance" && (
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">Intern Attendance &amp; Shift Timecard</h2>
+                  <p className="text-xs text-slate-500">Record your daily work presence and view historical shift logs</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                  todayAttendance
+                    ? todayAttendance.clock_out
+                      ? "bg-slate-100 text-slate-700 border border-slate-200"
+                      : "bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse"
+                    : "bg-amber-50 text-amber-700 border border-amber-200"
+                }`}>
+                  Status: {todayAttendance ? (todayAttendance.clock_out ? "Completed" : "Active Shift") : "Offline"}
+                </span>
+
+                {todayAttendance ? (
+                  !todayAttendance.clock_out && (
+                    <Button
+                      onClick={handleClockOut}
+                      disabled={isClocking}
+                      className="bg-slate-900 hover:bg-black text-white font-bold text-xs gap-2 px-4 h-10 shadow-md"
+                    >
+                      {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4 text-emerald-400" />}
+                      Clock Out Now
+                    </Button>
+                  )
+                ) : (
+                  <Button
+                    onClick={handleClockIn}
+                    disabled={isClocking}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs gap-2 px-5 h-10 shadow-md shadow-emerald-600/20"
+                  >
+                    {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
+                    Clock In Now
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Timecard Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between">
+                <div>
+                  <div className="text-slate-400 font-semibold mb-0.5">Today Clock In</div>
+                  <div className="text-base font-bold text-slate-900 font-mono">
+                    {todayAttendance?.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
+                  </div>
+                </div>
+                <div className="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                  <Clock className="h-4 w-4" />
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between">
+                <div>
+                  <div className="text-slate-400 font-semibold mb-0.5">Today Clock Out</div>
+                  <div className="text-base font-bold text-slate-900 font-mono">
+                    {todayAttendance?.clock_out ? new Date(todayAttendance.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
+                  </div>
+                </div>
+                <div className="h-8 w-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4" />
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between">
+                <div>
+                  <div className="text-slate-400 font-semibold mb-0.5">Total Days Present</div>
+                  <div className="text-base font-bold text-slate-900 font-mono">
+                    {attendanceLogs.length} Days
+                  </div>
+                </div>
+                <div className="h-8 w-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                  <CalendarDays className="h-4 w-4" />
+                </div>
+              </div>
+            </div>
+
+            {/* Attendance History Table */}
+            <div className="space-y-3 pt-2">
+              <h3 className="font-bold text-slate-900 text-sm">Attendance History Logs</h3>
+              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Clock In</th>
+                      <th className="px-4 py-3">Clock Out</th>
+                      <th className="px-4 py-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {attendanceLogs.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-8 text-center text-slate-400 font-medium">
+                          No attendance logs recorded yet. Click "Clock In Now" to log today's shift presence.
+                        </td>
+                      </tr>
+                    ) : (
+                      attendanceLogs.map((log: any) => (
+                        <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="px-4 py-3 font-semibold text-slate-900">
+                            {new Date(log.date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </td>
+                          <td className="px-4 py-3 font-mono">
+                            {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
+                          </td>
+                          <td className="px-4 py-3 font-mono">
+                            {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                              log.clock_in && !log.clock_out ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-600"
+                            }`}>
+                              {log.clock_in && !log.clock_out ? "Active" : "Completed"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         )}
 
                 {/* ─── ONBOARDING & PRE-BOARDING HUB ─── */}

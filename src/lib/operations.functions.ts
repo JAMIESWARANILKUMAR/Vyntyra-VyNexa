@@ -743,17 +743,28 @@ export const clockIn = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const adminClient = getAdminClient();
     const today = new Date().toISOString().split('T')[0];
+    const todayDateStr = new Date().toDateString();
     
-    // Check if already clocked in today
-    const { data: existing } = await adminClient
+    // Check recent logs for active or completed shift today
+    const { data: recentLogs } = await adminClient
       .from("attendance")
-      .select("id")
+      .select("id, clock_in, clock_out, date")
       .eq("user_id", context.userId)
-      .eq("date", today)
-      .maybeSingle();
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    const existing = recentLogs?.find((a: any) => {
+      if (a.date === today) return true;
+      if (a.clock_in && new Date(a.clock_in).toDateString() === todayDateStr) return true;
+      return false;
+    });
       
     if (existing) {
-      throw new Error("Already clocked in for today");
+      if (!existing.clock_out) {
+        throw new Error("You are currently clocked in. Please clock out when your shift ends.");
+      } else {
+        throw new Error("Already completed shift for today.");
+      }
     }
 
     const { error } = await adminClient.from("attendance").insert({
@@ -772,21 +783,29 @@ export const clockOut = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const adminClient = getAdminClient();
     const today = new Date().toISOString().split('T')[0];
+    const todayDateStr = new Date().toDateString();
     
-    const { data: existing } = await adminClient
+    const { data: recentLogs } = await adminClient
       .from("attendance")
-      .select("id, clock_in")
+      .select("id, clock_in, clock_out, date")
       .eq("user_id", context.userId)
-      .eq("date", today)
-      .maybeSingle();
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    const activeShift = recentLogs?.find((a: any) => {
+      if (!a.clock_out) return true;
+      if (a.date === today) return true;
+      if (a.clock_in && new Date(a.clock_in).toDateString() === todayDateStr) return true;
+      return false;
+    });
       
-    if (!existing) {
-      throw new Error("No clock in found for today");
+    if (!activeShift) {
+      throw new Error("No active clock-in session found for today.");
     }
 
     const { error } = await adminClient.from("attendance")
-      .update({ clock_out: new Date().toISOString() })
-      .eq("id", existing.id);
+      .update({ clock_out: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq("id", activeShift.id);
       
     if (error) throw new Error(error.message);
     return { success: true };
