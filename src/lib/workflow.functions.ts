@@ -477,7 +477,7 @@ export async function dispatchSelectionEmail(applicationId: string) {
     avatar_url: app.profile_photo_url || null
   });
 
-  const verificationUrl = `https://careers.vyntyraconsultancyservices.in/status/${app.id}`;
+  const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`;
   
   let qrBase64 = null;

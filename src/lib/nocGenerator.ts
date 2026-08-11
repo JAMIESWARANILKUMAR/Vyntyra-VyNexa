@@ -238,7 +238,7 @@ export function generateNocPdf(data: NocData): jsPDF {
   doc.setFontSize(7);
   doc.setTextColor(33, 53, 78);
   doc.text(`Issue Date: ${issued}`, margin + 7, sealY + 13);
-  doc.text(`Verification: careers.vyntyraconsultancyservices.in/status/${refId}`, margin + 7, sealY + 18, { maxWidth: sealTextMaxW });
+  doc.text(`Verification: careers.vyntyraconsultancyservices.in/verify?id=${refId}`, margin + 7, sealY + 18, { maxWidth: sealTextMaxW });
   doc.text("ISO 9001:2015 Compliant  ·  UDYAM-AP-10-0143100  ·  Securely Signed & Verified", margin + 7, sealY + 23, { maxWidth: sealTextMaxW });
 
   // ── Signature section ────────────────────────────────────────────────

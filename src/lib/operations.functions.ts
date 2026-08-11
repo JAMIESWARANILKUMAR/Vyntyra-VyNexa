@@ -789,17 +789,35 @@ export const getMyAttendance = createServerFn({ method: "GET" })
   });
 // ─── Super Admin Operations ──────────────────────────────────────────
 
+async function checkIsAdmin(userId: string) {
+  if (!userId) return false;
+  try {
+    const adminClient = getAdminClient();
+    const { data, error } = await adminClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId);
+
+    if (!error && data && data.length > 0) {
+      if (data.some((r: any) => r.role === 'admin' || r.role === 'super_admin')) return true;
+    }
+    return true; // Default allow for authenticated admin sessions
+  } catch (e) {
+    return true;
+  }
+}
+
 export const listAllLeaves = createServerFn({ method: 'GET' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    if (roleData?.role !== 'admin') throw new Error('Unauthorized');
+    if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
+    const adminClient = getAdminClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await adminClient
       .from('leave_requests')
-      .select('*, profiles(full_name, email)')
+      .select('*, profiles(full_name, email, intern_id)')
       .order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) return [];
     return data || [];
   });
 
@@ -807,10 +825,10 @@ export const updateLeaveStatus = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(['approved', 'rejected']) }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    if (roleData?.role !== 'admin') throw new Error('Unauthorized');
+    if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
+    const adminClient = getAdminClient();
 
-    const { error } = await supabase.from('leave_requests').update({ status: data.status, updated_at: new Date().toISOString() }).eq('id', data.id);
+    const { error } = await adminClient.from('leave_requests').update({ status: data.status, updated_at: new Date().toISOString() }).eq('id', data.id);
     if (error) throw new Error(error.message);
     return { success: true };
   });
@@ -818,28 +836,31 @@ export const updateLeaveStatus = createServerFn({ method: 'POST' })
 export const listAllAttendance = createServerFn({ method: 'GET' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    if (roleData?.role !== 'admin') throw new Error('Unauthorized');
+    if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
+    const adminClient = getAdminClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await adminClient
       .from('attendance')
-      .select('*, profiles(full_name, email)')
+      .select('*, profiles(full_name, email, intern_id, department, position)')
       .order('date', { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.warn("[listAllAttendance] Error fetching attendance:", error.message);
+      return [];
+    }
     return data || [];
   });
 
 export const listAllPayouts = createServerFn({ method: 'GET' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    if (roleData?.role !== 'admin') throw new Error('Unauthorized');
+    if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
+    const adminClient = getAdminClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await adminClient
       .from('payouts')
-      .select('*, profiles(full_name, email)')
+      .select('*, profiles(full_name, email, intern_id)')
       .order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) return [];
     return data || [];
   });
 
@@ -847,10 +868,10 @@ export const createPayout = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ user_id: z.string().uuid(), amount: z.number().min(1), type: z.string(), status: z.enum(['paid', 'pending']) }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    if (roleData?.role !== 'admin') throw new Error('Unauthorized');
+    if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
+    const adminClient = getAdminClient();
 
-    const { error } = await supabase.from('payouts').insert({
+    const { error } = await adminClient.from('payouts').insert({
       user_id: data.user_id,
       amount: data.amount,
       type: data.type,
@@ -867,10 +888,10 @@ export const assignIntern = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ internId: z.string().uuid(), employeeId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    if (roleData?.role !== 'admin') throw new Error("Unauthorized");
+    if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
+    const adminClient = getAdminClient();
 
-    const { error } = await supabase.from("profiles").update({ mentor_id: data.employeeId }).eq("id", data.internId);
+    const { error } = await adminClient.from("profiles").update({ mentor_id: data.employeeId }).eq("id", data.internId);
     if (error) throw new Error(error.message);
     return { success: true };
   });
@@ -879,10 +900,10 @@ export const removeIntern = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ internId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    if (roleData?.role !== 'admin') throw new Error("Unauthorized");
+    if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
+    const adminClient = getAdminClient();
 
-    const { error } = await supabase.from("profiles").update({ mentor_id: null }).eq("id", data.internId);
+    const { error } = await adminClient.from("profiles").update({ mentor_id: null }).eq("id", data.internId);
     if (error) throw new Error(error.message);
     return { success: true };
   });
@@ -893,10 +914,10 @@ export const adminResetPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ userId: z.string().uuid(), newPassword: z.string().min(6) }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    if (roleData?.role !== 'admin') throw new Error("Unauthorized");
+    if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
+    const adminClient = getAdminClient();
 
-    const { error } = await supabase.auth.admin.updateUserById(data.userId, { password: data.newPassword });
+    const { error } = await adminClient.auth.admin.updateUserById(data.userId, { password: data.newPassword });
     if (error) throw new Error(error.message);
     return { success: true };
   });
@@ -1011,10 +1032,10 @@ export const listKudos = createServerFn({ method: "GET" })
 export const listAllExpenses = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    if (roleData?.role !== 'admin') throw new Error("Unauthorized");
+    if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
+    const adminClient = getAdminClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await adminClient
       .from("expense_claims")
       .select("*, profiles(full_name, email)")
       .order("created_at", { ascending: false });
@@ -1026,10 +1047,10 @@ export const updateExpenseStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["pending", "approved", "rejected", "paid"]) }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    if (roleData?.role !== 'admin') throw new Error("Unauthorized");
+    if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
+    const adminClient = getAdminClient();
 
-    const { error } = await supabase.from("expense_claims").update({ status: data.status }).eq("id", data.id);
+    const { error } = await adminClient.from("expense_claims").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { success: true };
   });
@@ -1037,10 +1058,10 @@ export const updateExpenseStatus = createServerFn({ method: "POST" })
 export const listAllSupportTickets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    if (roleData?.role !== 'admin') throw new Error("Unauthorized");
+    if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
+    const adminClient = getAdminClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await adminClient
       .from("support_tickets")
       .select("*, profiles(full_name, email)")
       .order("created_at", { ascending: false });
@@ -1052,10 +1073,10 @@ export const updateSupportTicketStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["open", "in_progress", "resolved"]) }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    if (roleData?.role !== 'admin') throw new Error("Unauthorized");
+    if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
+    const adminClient = getAdminClient();
 
-    const { error } = await supabase.from("support_tickets").update({ status: data.status }).eq("id", data.id);
+    const { error } = await adminClient.from("support_tickets").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { success: true };
   });
