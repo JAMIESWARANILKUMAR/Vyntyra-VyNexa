@@ -1735,17 +1735,37 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
             <td style="background-color:#0b1728;padding:36px 40px;text-align:center;color:#94a3b8;font-size:11px;line-height:1.65;">
               <div style="color:#ffffff;font-weight:700;font-size:14px;margin-bottom:12px;letter-spacing:-0.01em;">Vyntyra Consultancy Services</div>
               
-              <!-- Social Media Buttons with Icons -->
-              <div style="margin-bottom:22px;padding:14px 0;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-center:center;gap:12px;">
-                <a href="https://www.linkedin.com/company/vyntyra-consultancy-services" target="_blank" style="display:inline-flex;align-items:center;background-color:#0284c7;color:#ffffff;font-size:12px;font-weight:700;text-decoration:none;padding:8px 16px;border-radius:6px;margin:0 4px;">
-                  <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="14" height="14" style="margin-right:6px;vertical-align:middle;filter:brightness(0) invert(1);"> LinkedIn
-                </a>
-                <a href="https://www.instagram.com/vyntyraindia" target="_blank" style="display:inline-flex;align-items:center;background-color:#e1306c;color:#ffffff;font-size:12px;font-weight:700;text-decoration:none;padding:8px 16px;border-radius:6px;margin:0 4px;">
-                  <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="14" height="14" style="margin-right:6px;vertical-align:middle;filter:brightness(0) invert(1);"> Instagram
-                </a>
-                <a href="https://vyntyraconsultancyservices.in/" target="_blank" style="display:inline-flex;align-items:center;background-color:#10b981;color:#ffffff;font-size:12px;font-weight:700;text-decoration:none;padding:8px 16px;border-radius:6px;margin:0 4px;">
-                  <img src="https://cdn-icons-png.flaticon.com/512/1006/1006771.png" alt="Website" width="14" height="14" style="margin-right:6px;vertical-align:middle;filter:brightness(0) invert(1);"> Corporate Site
-                </a>
+              <!-- Social Media Circular Buttons (Facebook, X, LinkedIn, Instagram, YouTube) -->
+              <div style="margin-bottom:22px;padding:16px 0;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b;text-align:center;">
+                <table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" style="margin:0 auto;display:inline-block;">
+                  <tr>
+                    <td style="padding:0 6px;" align="center">
+                      <a href="https://facebook.com/vyntyraindia" target="_blank" style="text-decoration:none;">
+                        <img src="https://careers.vyntyraconsultancyservices.in/social/facebook.png" alt="Facebook" width="34" height="34" style="display:block;border:0;outline:none;" />
+                      </a>
+                    </td>
+                    <td style="padding:0 6px;" align="center">
+                      <a href="https://x.com/vyntyraindia" target="_blank" style="text-decoration:none;">
+                        <img src="https://careers.vyntyraconsultancyservices.in/social/x.png" alt="X" width="34" height="34" style="display:block;border:0;outline:none;" />
+                      </a>
+                    </td>
+                    <td style="padding:0 6px;" align="center">
+                      <a href="https://www.linkedin.com/company/vyntyra-consultancy-services" target="_blank" style="text-decoration:none;">
+                        <img src="https://careers.vyntyraconsultancyservices.in/social/linkedin.png" alt="LinkedIn" width="34" height="34" style="display:block;border:0;outline:none;" />
+                      </a>
+                    </td>
+                    <td style="padding:0 6px;" align="center">
+                      <a href="https://www.instagram.com/vyntyraindia" target="_blank" style="text-decoration:none;">
+                        <img src="https://careers.vyntyraconsultancyservices.in/social/instagram.png" alt="Instagram" width="34" height="34" style="display:block;border:0;outline:none;" />
+                      </a>
+                    </td>
+                    <td style="padding:0 6px;" align="center">
+                      <a href="https://youtube.com/@vyntyra" target="_blank" style="text-decoration:none;">
+                        <img src="https://careers.vyntyraconsultancyservices.in/social/youtube.png" alt="YouTube" width="34" height="34" style="display:block;border:0;outline:none;" />
+                      </a>
+                    </td>
+                  </tr>
+                </table>
               </div>
 
               <div>Visakhapatnam, Andhra Pradesh, India</div>

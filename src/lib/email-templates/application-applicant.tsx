@@ -131,11 +131,35 @@ const ApplicantConfirm = ({ fullName = 'there', email = '', roleApplied = 'the r
           </div>
           
           <div style={{ marginBottom: 16 }}>
-            <Link href="https://linkedin.com" style={{ color: BRAND, fontWeight: 600, textDecoration: 'none', marginRight: '12px' }}>LinkedIn</Link>
-            <span style={{ color: LINE }}>|</span>
-            <Link href="https://instagram.com" style={{ color: BRAND, fontWeight: 600, textDecoration: 'none', marginLeft: '12px', marginRight: '12px' }}>Instagram</Link>
-            <span style={{ color: LINE }}>|</span>
-            <Link href="https://twitter.com" style={{ color: BRAND, fontWeight: 600, textDecoration: 'none', marginLeft: '12px' }}>Twitter</Link>
+            <table role="presentation" align="center" border={0} cellSpacing={0} cellPadding={0} style={{ margin: '0 auto', display: 'inline-block' }}>
+              <tr>
+                <td style={{ padding: '0 6px' }} align="center">
+                  <Link href="https://facebook.com/vyntyraindia" target="_blank" style={{ textDecoration: 'none' }}>
+                    <Img src="https://careers.vyntyraconsultancyservices.in/social/facebook.png" alt="Facebook" width={32} height={32} style={{ display: 'block', border: 0 }} />
+                  </Link>
+                </td>
+                <td style={{ padding: '0 6px' }} align="center">
+                  <Link href="https://x.com/vyntyraindia" target="_blank" style={{ textDecoration: 'none' }}>
+                    <Img src="https://careers.vyntyraconsultancyservices.in/social/x.png" alt="X" width={32} height={32} style={{ display: 'block', border: 0 }} />
+                  </Link>
+                </td>
+                <td style={{ padding: '0 6px' }} align="center">
+                  <Link href="https://www.linkedin.com/company/vyntyra-consultancy-services" target="_blank" style={{ textDecoration: 'none' }}>
+                    <Img src="https://careers.vyntyraconsultancyservices.in/social/linkedin.png" alt="LinkedIn" width={32} height={32} style={{ display: 'block', border: 0 }} />
+                  </Link>
+                </td>
+                <td style={{ padding: '0 6px' }} align="center">
+                  <Link href="https://www.instagram.com/vyntyraindia" target="_blank" style={{ textDecoration: 'none' }}>
+                    <Img src="https://careers.vyntyraconsultancyservices.in/social/instagram.png" alt="Instagram" width={32} height={32} style={{ display: 'block', border: 0 }} />
+                  </Link>
+                </td>
+                <td style={{ padding: '0 6px' }} align="center">
+                  <Link href="https://youtube.com/@vyntyra" target="_blank" style={{ textDecoration: 'none' }}>
+                    <Img src="https://careers.vyntyraconsultancyservices.in/social/youtube.png" alt="YouTube" width={32} height={32} style={{ display: 'block', border: 0 }} />
+                  </Link>
+                </td>
+              </tr>
+            </table>
           </div>
 
           <Hr style={{ borderColor: LINE, margin: '16px 0' }} />
