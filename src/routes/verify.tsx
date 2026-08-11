@@ -35,7 +35,7 @@ export const Route = createFileRoute("/verify")({
 });
 
 function VerifyNocPage() {
-  const searchParams = Route.useSearch();
+  const searchParams = Route.useSearch() as Record<string, string | undefined>;
   const initialQuery = searchParams.id || searchParams.ref || searchParams.email || searchParams.q || "";
 
   const [query, setQuery] = useState(initialQuery);
