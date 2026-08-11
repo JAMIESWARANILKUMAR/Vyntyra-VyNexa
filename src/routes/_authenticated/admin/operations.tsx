@@ -221,7 +221,8 @@ function OperationsDashboard() {
   const [attendanceRoleFilter, setAttendanceRoleFilter] = useState<"all" | "employee" | "intern">("all");
 
   const processedTeamAttendance = useMemo(() => {
-    return team.map((member: any) => {
+    const nonAdminTeam = team.filter((m: any) => m.role !== "admin" && m.role !== "super_admin");
+    return nonAdminTeam.map((member: any) => {
       const memberAttendance = (attendanceQ.data || []).filter((a: any) => {
         if (!a) return false;
         if (a.user_id === member.id || a.user_id === member.user_id) return true;
