@@ -50,6 +50,7 @@ export function PayslipModal({ isOpen, onClose, payslip }: PayslipModalProps) {
     if (!payslip) return;
     try {
       const logoBase64 = await urlToBase64("/icon-512.png");
+      const signatureBase64 = await urlToBase64("/signature.png");
       const doc = generatePayslipPdf({
         employeeName: payslip.employeeName,
         employeeId: payslip.employeeId,
@@ -66,6 +67,7 @@ export function PayslipModal({ isOpen, onClose, payslip }: PayslipModalProps) {
         professionalTax: payslip.professionalTax,
         incomeTax: payslip.tds,
         logoBase64,
+        signatureBase64,
       });
       doc.save(`Payslip_${payslip.employeeName.replace(/\s+/g, "_")}_${payslip.payPeriod.replace(/\s+/g, "_")}.pdf`);
       toast.success("Official PDF Payslip downloaded!");
@@ -152,27 +154,31 @@ export function PayslipModal({ isOpen, onClose, payslip }: PayslipModalProps) {
               <span className="font-medium text-slate-700 mt-1 block truncate">{payslip.email}</span>
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">PAN Number</span>
-              <span className="font-mono font-semibold text-slate-700 mt-1 block">{payslip.panNumber || "ABCDE1234F"}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Contact Phone</span>
+              <span className="font-medium text-slate-700 mt-1 block">{payslip.phone || "N/A"}</span>
             </div>
-            <div className="col-span-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Bank Account & IFSC</span>
-              <span className="font-medium text-slate-700 mt-1 block">{payslip.bankDetails || "Kotak Mahindra Bank · A/C ****8821"}</span>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Bank Account</span>
+              <span className="font-mono font-medium text-slate-700 mt-1 block">{payslip.bankDetails || "HDFC Bank Ltd · XXXX-XXXX-8921"}</span>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">PAN / UAN</span>
+              <span className="font-mono font-medium text-slate-700 mt-1 block">{payslip.panNumber || "ABCDE1234F"}</span>
             </div>
           </div>
 
-          {/* Breakdown Table */}
-          <div className="border border-slate-200 rounded-2xl overflow-hidden text-xs">
+          {/* Salary Components Breakdown Table */}
+          <div className="rounded-2xl border border-slate-200 overflow-hidden text-xs">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-slate-900 text-white font-semibold uppercase text-[10px] tracking-wider">
-                  <th className="p-3 w-1/2">Earnings</th>
-                  <th className="p-3 text-right">Amount (₹)</th>
-                  <th className="p-3 w-1/2 border-l border-slate-700">Deductions</th>
-                  <th className="p-3 text-right">Amount (₹)</th>
+                <tr className="bg-slate-900 text-white font-bold uppercase tracking-wider text-[10px]">
+                  <th className="p-3">Earnings Component</th>
+                  <th className="p-3 text-right">Amount (INR)</th>
+                  <th className="p-3 border-l border-slate-700">Deductions Component</th>
+                  <th className="p-3 text-right">Amount (INR)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-light text-slate-700">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 <tr>
                   <td className="p-3 font-medium text-slate-900">Basic Salary</td>
                   <td className="p-3 text-right font-mono">₹{payslip.basicSalary.toLocaleString("en-IN")}</td>
@@ -216,7 +222,7 @@ export function PayslipModal({ isOpen, onClose, payslip }: PayslipModalProps) {
               <h2 className="text-3xl font-extrabold text-white mt-1">₹{netPayable.toLocaleString("en-IN")}</h2>
             </div>
             <div className="text-xs text-slate-300 font-light italic">
-              Electronically generated & verified by VyNexa Payroll Engine
+              Electronically generated &amp; verified by VyNexa Payroll Engine
             </div>
           </div>
 
@@ -235,19 +241,21 @@ export function PayslipModal({ isOpen, onClose, payslip }: PayslipModalProps) {
               </div>
             </div>
 
-            <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-200 text-right space-y-1 min-w-[230px]">
+            <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-200 text-right space-y-1 min-w-[240px]">
               <div className="flex items-center justify-end gap-1.5 text-emerald-600 font-bold text-xs">
                 <CheckCircle2 className="h-4 w-4 fill-emerald-600 text-white shrink-0" />
                 <span>Signature Verified</span>
               </div>
               <div className="text-[10px] text-slate-600 space-y-0.5 mt-1 font-mono">
-                <div>Digitally Signed by: <span className="font-semibold text-slate-900">Jami Eswar Anil Kumar</span></div>
+                <div>Digitally Signed by: <span className="font-semibold text-slate-900">JAMI ESWAR ANIL KUMAR</span></div>
                 <div>Date: {new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} {new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })} IST</div>
                 <div className="text-[9px] text-slate-400 font-sans italic">Verified Corporate Payout Authorization</div>
               </div>
-              <div className="border-t border-slate-300 pt-1.5 mt-2">
-                <div className="font-bold text-slate-900 text-xs">Authorized Signatory</div>
-                <div className="text-[10px] text-slate-500 font-medium">Vyntyra Consultancy Services</div>
+              <div className="border-t border-slate-300 pt-2 mt-2 flex flex-col items-end">
+                <img src="/signature.png" alt="Signature" className="h-8 object-contain mb-1 opacity-90 shrink-0" />
+                <div className="font-bold text-slate-900 text-xs tracking-tight">JAMI ESWAR ANIL KUMAR</div>
+                <div className="text-[10px] text-slate-700 font-semibold">Founder &amp; Managing Director</div>
+                <div className="text-[9px] text-slate-500 font-medium">Vyntyra Consultancy Services</div>
               </div>
             </div>
           </div>

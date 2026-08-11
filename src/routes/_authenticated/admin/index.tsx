@@ -2181,6 +2181,7 @@ function PayslipModalDialog({ app, open, onClose }: { app: any; open: boolean; o
   async function handleDownload() {
     try {
       const logoBase64 = await urlToBase64("/icon-512.png");
+      const signatureBase64 = await urlToBase64("/signature.png");
       const doc = generatePayslipPdf({
         employeeName: app.full_name,
         employeeId: app.id.slice(0, 8).toUpperCase(),
@@ -2199,6 +2200,7 @@ function PayslipModalDialog({ app, open, onClose }: { app: any; open: boolean; o
         professionalTax: Number(pt),
         incomeTax: Number(tds),
         logoBase64,
+        signatureBase64,
       });
       doc.save(`Payslip_${app.full_name.replace(/\s+/g, "_")}_${payPeriod.replace(/\s+/g, "_")}.pdf`);
       toast.success("Corporate Payslip PDF generated & downloaded!");

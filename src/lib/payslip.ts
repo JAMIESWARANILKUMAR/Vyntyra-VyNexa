@@ -24,6 +24,7 @@ export interface PayslipData {
   incomeTax?: number;
   notes?: string;
   logoBase64?: string | null;
+  signatureBase64?: string | null;
   generatedAt?: string;
 }
 
@@ -345,6 +346,16 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
 
   // Line below Digital Signature Stamp
   const sigLineY = sigBoxY + 20;
+
+  // Draw Real Signature Image if provided
+  if (data.signatureBase64 && data.signatureBase64.startsWith("data:image")) {
+    try {
+      doc.addImage(data.signatureBase64, "PNG", sigX + 17, sigLineY - 11, 32, 10.5);
+    } catch (e) {
+      // Fallback if image load fails
+    }
+  }
+
   doc.setDrawColor(148, 163, 184);
   doc.setLineWidth(0.4);
   doc.line(sigX, sigLineY, margin + contentWidth, sigLineY);
@@ -353,11 +364,14 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
   doc.setFont("helvetica", "bold");
   doc.setTextColor(15, 23, 42);
   doc.setFontSize(8.5);
-  doc.text("Authorized Signatory", sigX + 33, sigLineY + 4.5, { align: "center" });
-  doc.setFont("helvetica", "normal");
+  doc.text("JAMI ESWAR ANIL KUMAR", sigX + 33, sigLineY + 4.5, { align: "center" });
   doc.setFontSize(7.5);
+  doc.setTextColor(51, 65, 85);
+  doc.text("Founder & Managing Director", sigX + 33, sigLineY + 8.2, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
   doc.setTextColor(100, 116, 139);
-  doc.text("Vyntyra Consultancy Services", sigX + 33, sigLineY + 8.5, { align: "center" });
+  doc.text("Vyntyra Consultancy Services", sigX + 33, sigLineY + 11.8, { align: "center" });
 
   // Footer Disclaimer
   doc.setDrawColor(226, 232, 240);
