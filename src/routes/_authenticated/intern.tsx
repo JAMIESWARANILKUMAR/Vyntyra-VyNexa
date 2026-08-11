@@ -1153,8 +1153,8 @@ function InternDashboard() {
                               const doc = generateInternshipCertificatePdf({
                                 candidateName: profile?.full_name || profile?.email || "Candidate Name",
                                 internId: profile?.intern_id || c.code,
-                                domainName: domain || "Engineering & Technology",
-                                subDomainName: subDomain || "Full Stack Web Development",
+                                domainName: profile?.department || "Engineering & Technology",
+                                subDomainName: profile?.position || "Full Stack Web Development",
                                 issueDate: new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
                                 templateBase64,
                               });
