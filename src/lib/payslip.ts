@@ -80,48 +80,52 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
   const logoW = 20;
   const logoH = 20;
 
+  // Draw clean white rounded container badge for Logo
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(logoX, logoY, logoW, logoH, 2.5, 2.5, "F");
+
   if (data.logoBase64 && data.logoBase64.startsWith("data:image")) {
     try {
-      doc.addImage(data.logoBase64, "PNG", logoX, logoY, logoW, logoH);
+      doc.addImage(data.logoBase64, "PNG", logoX + 1.5, logoY + 1.5, 17, 17);
     } catch (e) {
-      // Fallback stylized logo badge
       doc.setFillColor(30, 41, 59);
-      doc.roundedRect(logoX, logoY, logoW, logoH, 3, 3, "F");
+      doc.roundedRect(logoX, logoY, logoW, logoH, 2.5, 2.5, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(15);
       doc.text("V", logoX + 10, logoY + 13.5, { align: "center" });
     }
   } else {
-    // Elegant Vyntyra Logo Emblem fallback
     doc.setFillColor(30, 41, 59);
-    doc.roundedRect(logoX, logoY, logoW, logoH, 3, 3, "F");
+    doc.roundedRect(logoX, logoY, logoW, logoH, 2.5, 2.5, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(15);
     doc.text("V", logoX + 10, logoY + 13.5, { align: "center" });
   }
 
-  // Company Name & Subtitle in Header (Adjusted X for Logo offset)
+  // Company Name & Subtitles (Adjusted X & Y for zero overlap with right contact text)
   const headerTextX = margin + 27;
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
-  doc.text("VYNTYRA CONSULTANCY SERVICES", headerTextX, 23.5);
+  doc.setFontSize(14.5);
+  doc.text("VYNTYRA CONSULTANCY SERVICES", headerTextX, 22.5);
+  
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(226, 232, 240);
-  doc.text("ISO 9001:2015 Certified | NASSCOM Verified | MSME: UDYAM-AP-10-0143100", headerTextX, 29.5);
   doc.setFontSize(7.5);
+  doc.setTextColor(226, 232, 240);
+  doc.text("ISO 9001:2015 Certified · NASSCOM Verified", headerTextX, 28);
+  
+  doc.setFontSize(7);
   doc.setTextColor(148, 163, 184);
-  doc.text("Vyntyra Technologies Pvt. Ltd. · Enterprise Payroll Portal", headerTextX, 34.5);
+  doc.text("MSME: UDYAM-AP-10-0143100 · Enterprise Payroll", headerTextX, 33);
 
   // Company Contact Details on Right of Header
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(226, 232, 240);
-  doc.text("Visakhapatnam, AP, India", margin + contentWidth - 5, 23, { align: "right" });
-  doc.text("hr@vyntyraconsultancyservices.in", margin + contentWidth - 5, 28, { align: "right" });
-  doc.text("https://vyntyraconsultancyservices.in", margin + contentWidth - 5, 33, { align: "right" });
+  doc.text("Visakhapatnam, AP, India", margin + contentWidth - 5, 22.5, { align: "right" });
+  doc.text("hr@vyntyraconsultancyservices.in", margin + contentWidth - 5, 27.5, { align: "right" });
+  doc.text("https://vyntyraconsultancyservices.in", margin + contentWidth - 5, 32.5, { align: "right" });
 
   // Title Box
   doc.setFillColor(241, 245, 249);
