@@ -230,48 +230,70 @@ export const deleteAnnouncement = createServerFn({ method: "POST" })
 const taskSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
-  assigned_to: z.string().uuid().nullable().optional(),
+  assigned_to: z.string().nullable().optional(),
   due_date: z.string().optional(),
   priority: z.enum(["low", "medium", "high"]).default("medium"),
   is_pool_task: z.boolean().optional().default(false),
-  target_role: z.enum(["employee", "intern", "all"]).optional(),
+  target_role: z.enum(["employee", "intern", "all", "individual"]).optional(),
+  target_user_id: z.string().optional().nullable(),
 });
 
 export const listTasks = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
+    const role = roleData?.role || 'employee';
+
     const { data, error } = await supabase
       .from("tasks")
       .select("*, profiles!tasks_assigned_to_fkey(full_name)")
       .order("created_at", { ascending: false });
+
+    let rawList = data;
     if (error) {
-      // Fallback: try without join
       const { data: plain, error: e2 } = await supabase
         .from("tasks")
         .select("*")
         .order("created_at", { ascending: false });
       if (e2) throw new Error(e2.message);
-      return plain || [];
+      rawList = plain;
     }
-    return data || [];
+
+    return (rawList || []).filter((t: any) => {
+      if (role === 'admin' || role === 'super_admin') return true;
+      if (t.assigned_to && t.assigned_to === context.userId) return true;
+      if (t.target_user_id && t.target_user_id === context.userId) return true;
+      if (t.is_pool_task) return true;
+      if (!t.target_role || t.target_role === 'all' || t.target_role === role) return true;
+      return false;
+    });
   });
 
 export const createTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => taskSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await supabase.from("tasks").insert({
+    const payload: any = {
       title: data.title,
-      description: data.description,
-      assigned_to: data.assigned_to,
-      due_date: data.due_date,
+      description: data.description || null,
+      assigned_to: data.assigned_to || null,
+      due_date: data.due_date || null,
       priority: data.priority,
       status: "pending",
-      is_pool_task: data.is_pool_task,
-      target_role: data.target_role,
+      is_pool_task: data.is_pool_task || false,
+      target_role: data.target_role || "all",
       created_by: context.userId,
-    });
-    if (error) throw new Error(error.message);
+    };
+    if (data.target_user_id) payload.target_user_id = data.target_user_id;
+
+    const { error } = await supabase.from("tasks").insert(payload);
+    if (error && error.message.includes("target_user_id")) {
+      delete payload.target_user_id;
+      const { error: err2 } = await supabase.from("tasks").insert(payload);
+      if (err2) throw new Error(err2.message);
+    } else if (error) {
+      throw new Error(error.message);
+    }
     return { success: true };
   });
 
@@ -379,38 +401,60 @@ export const updateTaskByAdmin = createServerFn({ method: "POST" })
   });
 
 // ─── Schedules ────────────────────────────────────────────────────
+// ─── Schedules ────────────────────────────────────────────────────
 const scheduleSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   event_date: z.string(),
   event_time: z.string().optional(),
-  target_role: z.enum(["employee", "intern", "all"]),
+  target_role: z.enum(["employee", "intern", "all", "individual"]).optional().default("all"),
+  target_user_id: z.string().optional().nullable(),
 });
 
 export const listSchedules = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
+    const role = roleData?.role || 'employee';
+
     const { data, error } = await supabase
       .from("schedules")
       .select("*")
       .order("event_date", { ascending: true });
     if (error) throw new Error(error.message);
-    return data || [];
+
+    return (data || []).filter((s: any) => {
+      if (role === 'admin' || role === 'super_admin') return true;
+      if (s.target_user_id && s.target_user_id === context.userId) return true;
+      if (!s.target_user_id || s.target_role !== 'individual') {
+        if (!s.target_role || s.target_role === 'all' || s.target_role === role) return true;
+      }
+      return false;
+    });
   });
 
 export const createSchedule = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => scheduleSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await supabase.from("schedules").insert({
+    const payload: any = {
       title: data.title,
-      description: data.description,
+      description: data.description || null,
       event_date: data.event_date,
-      event_time: data.event_time,
-      target_role: data.target_role,
+      event_time: data.event_time || null,
+      target_role: data.target_role || "all",
       created_by: context.userId,
-    });
-    if (error) throw new Error(error.message);
+    };
+    if (data.target_user_id) payload.target_user_id = data.target_user_id;
+
+    const { error } = await supabase.from("schedules").insert(payload);
+    if (error && error.message.includes("target_user_id")) {
+      delete payload.target_user_id;
+      const { error: err2 } = await supabase.from("schedules").insert(payload);
+      if (err2) throw new Error(err2.message);
+    } else if (error) {
+      throw new Error(error.message);
+    }
     return { success: true };
   });
 
@@ -431,28 +475,29 @@ const meetingSchema = z.object({
   scheduled_at: z.string().optional(),
   start_time: z.string().optional(),
   duration_minutes: z.number().optional(),
-  target_role: z.enum(['employee', 'intern', 'all']).optional().default('all'),
+  target_role: z.enum(['employee', 'intern', 'all', 'individual']).optional().default('all'),
+  target_user_id: z.string().optional().nullable(),
 });
 
 export const listMeetings = createServerFn({ method: 'GET' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // Get the user's role
     const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
     const role = roleData?.role || 'employee';
 
-    let query = supabase.from('meetings').select('*').order('scheduled_at', { ascending: true });
-
-    // Admins see all meetings
-    if (role !== 'admin') {
-      query = query.or(`target_role.eq.all,target_role.eq.${role}`);
-    }
-
-    const { data, error } = await query;
+    const { data, error } = await supabase.from('meetings').select('*').order('scheduled_at', { ascending: true });
     if (error) throw new Error(error.message);
-    
-    // Normalize start_time and scheduled_at for frontend compatibility
-    return (data || []).map((m: any) => ({
+
+    const filtered = (data || []).filter((m: any) => {
+      if (role === 'admin' || role === 'super_admin') return true;
+      if (m.target_user_id && m.target_user_id === context.userId) return true;
+      if (!m.target_user_id || m.target_role !== 'individual') {
+        if (!m.target_role || m.target_role === 'all' || m.target_role === role) return true;
+      }
+      return false;
+    });
+
+    return filtered.map((m: any) => ({
       ...m,
       scheduled_at: m.scheduled_at || m.start_time || m.created_at,
       start_time: m.start_time || m.scheduled_at || m.created_at,
@@ -464,7 +509,7 @@ export const createMeeting = createServerFn({ method: 'POST' })
   .inputValidator((d: unknown) => meetingSchema.parse(d))
   .handler(async ({ data, context }) => {
     const scheduledAt = data.scheduled_at || data.start_time || new Date().toISOString();
-    const { error } = await supabase.from('meetings').insert({
+    const payload: any = {
       title: data.title,
       description: data.description || null,
       meeting_link: data.meeting_link,
@@ -472,8 +517,17 @@ export const createMeeting = createServerFn({ method: 'POST' })
       duration_minutes: data.duration_minutes || 30,
       target_role: data.target_role || 'all',
       created_by: context.userId,
-    });
-    if (error) throw new Error(error.message);
+    };
+    if (data.target_user_id) payload.target_user_id = data.target_user_id;
+
+    const { error } = await supabase.from('meetings').insert(payload);
+    if (error && error.message.includes('target_user_id')) {
+      delete payload.target_user_id;
+      const { error: err2 } = await supabase.from('meetings').insert(payload);
+      if (err2) throw new Error(err2.message);
+    } else if (error) {
+      throw new Error(error.message);
+    }
     return { success: true };
   });
 
@@ -492,7 +546,8 @@ const resourceSchema = z.object({
   description: z.string().optional(),
   url: z.string().min(1),
   type: z.enum(['document', 'video', 'link', 'template', 'guide']),
-  target_role: z.enum(['employee', 'intern', 'all']),
+  target_role: z.enum(['employee', 'intern', 'all', 'individual']).optional().default('all'),
+  target_user_id: z.string().optional().nullable(),
 });
 
 export const listResources = createServerFn({ method: 'GET' })
@@ -501,29 +556,41 @@ export const listResources = createServerFn({ method: 'GET' })
     const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
     const role = roleData?.role || 'intern';
 
-    let query = supabase.from('resources').select('*').order('created_at', { ascending: false });
-    if (role !== 'admin') {
-      query = query.or(`target_role.eq.all,target_role.eq.${role}`);
-    }
-
-    const { data, error } = await query;
+    const { data, error } = await supabase.from('resources').select('*').order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
-    return data || [];
+
+    return (data || []).filter((r: any) => {
+      if (role === 'admin' || role === 'super_admin') return true;
+      if (r.target_user_id && r.target_user_id === context.userId) return true;
+      if (!r.target_user_id || r.target_role !== 'individual') {
+        if (!r.target_role || r.target_role === 'all' || r.target_role === role) return true;
+      }
+      return false;
+    });
   });
 
 export const createResource = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => resourceSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await supabase.from('resources').insert({
+    const payload: any = {
       title: data.title,
-      description: data.description,
+      description: data.description || null,
       url: data.url,
       type: data.type,
-      target_role: data.target_role,
+      target_role: data.target_role || 'all',
       created_by: context.userId,
-    });
-    if (error) throw new Error(error.message);
+    };
+    if (data.target_user_id) payload.target_user_id = data.target_user_id;
+
+    const { error } = await supabase.from('resources').insert(payload);
+    if (error && error.message.includes('target_user_id')) {
+      delete payload.target_user_id;
+      const { error: err2 } = await supabase.from('resources').insert(payload);
+      if (err2) throw new Error(err2.message);
+    } else if (error) {
+      throw new Error(error.message);
+    }
     return { success: true };
   });
 

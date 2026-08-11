@@ -146,10 +146,9 @@ function OperationsDashboard() {
   // Form states
   const [provisionForm, setProvisionForm] = useState({ full_name: "", email: "", password: "", role: "employee" as "employee" | "intern", department: "", position: "", bank_account_number: "", employee_id: "", intern_id: "", duration_months: "" });
   const [announcementForm, setAnnouncementForm] = useState({ title: "", body: "", target_role: "all" as "employee" | "intern" | "all" });
-  const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium" as "low" | "medium" | "high", is_pool_task: false });
-  const [scheduleForm, setScheduleForm] = useState({ title: "", description: "", event_date: "", event_time: "", target_role: "all" as "employee" | "intern" | "all" });
-  const [meetingForm, setMeetingForm] = useState({ title: "", meeting_link: "", start_time: "", target_role: "all" as "employee" | "intern" | "all" });
-  const [resourceForm, setResourceForm] = useState({ title: "", type: "document" as "document" | "video" | "link" | "template" | "guide", description: "", target_role: "all" as "employee" | "intern" | "all" });
+  const [scheduleForm, setScheduleForm] = useState({ title: "", description: "", event_date: "", event_time: "", target_role: "all" as "employee" | "intern" | "all" | "individual", target_user_id: "" });
+  const [meetingForm, setMeetingForm] = useState({ title: "", meeting_link: "", start_time: "", target_role: "all" as "employee" | "intern" | "all" | "individual", target_user_id: "" });
+  const [resourceForm, setResourceForm] = useState({ title: "", type: "document" as "document" | "video" | "link" | "template" | "guide", description: "", target_role: "all" as "employee" | "intern" | "all" | "individual", target_user_id: "" });
   const [resourceFile, setResourceFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -438,7 +437,7 @@ function OperationsDashboard() {
       await doCreateSchedule({ data: scheduleForm });
       toast.success("Event scheduled!");
       setScheduleOpen(false);
-      setScheduleForm({ title: "", description: "", event_date: "", event_time: "", target_role: "all" });
+      setScheduleForm({ title: "", description: "", event_date: "", event_time: "", target_role: "all", target_user_id: "" });
       qc.invalidateQueries({ queryKey: ["schedules"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to create schedule");
@@ -466,7 +465,7 @@ function OperationsDashboard() {
       });
       toast.success("Meeting scheduled!");
       setMeetingOpen(false);
-      setMeetingForm({ title: "", meeting_link: "", start_time: "", target_role: "all" });
+      setMeetingForm({ title: "", meeting_link: "", start_time: "", target_role: "all", target_user_id: "" });
       qc.invalidateQueries({ queryKey: ["meetings"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to create meeting");
@@ -992,9 +991,25 @@ function OperationsDashboard() {
                         <SelectItem value="all">Everyone</SelectItem>
                         <SelectItem value="employee">Employees Only</SelectItem>
                         <SelectItem value="intern">Interns Only</SelectItem>
+                        <SelectItem value="individual">Specific Person (Individual)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                  {scheduleForm.target_role === "individual" && (
+                    <div className="space-y-1.5">
+                      <Label>Select Team Member</Label>
+                      <Select value={scheduleForm.target_user_id} onValueChange={(v) => setScheduleForm({ ...scheduleForm, target_user_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Choose Person..." /></SelectTrigger>
+                        <SelectContent>
+                          {(teamQ.data || []).map((m: any) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.full_name || m.email} ({m.role || "Member"})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <DialogFooter>
                     <Button type="button" variant="ghost" onClick={() => setScheduleOpen(false)}>Cancel</Button>
                     <Button type="submit">Add to Schedule</Button>
@@ -1009,44 +1024,48 @@ function OperationsDashboard() {
             ) : schedulesQ.isError ? (
               <ErrorState message="Could not load schedules. Ensure the schedules table exists." onRetry={() => schedulesQ.refetch()} />
             ) : (schedulesQ.data || []).length === 0 ? (
-              <EmptyState icon={<CalendarDays className="h-6 w-6" />} message="No upcoming events. Add one above!" />
+              <EmptyState icon={<Calendar className="h-6 w-6" />} message="No schedules added yet." />
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-x divide-y">
-                {(schedulesQ.data as any[]).map((s: any) => (
-                  <div key={s.id} className="p-4 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="h-8 w-8 rounded-lg bg-emerald-50 flex flex-col items-center justify-center border border-emerald-100 shrink-0">
-                            <span className="text-[10px] font-bold text-emerald-700 leading-none">{new Date(s.event_date).toLocaleDateString("en-IN", { day: "2-digit" })}</span>
-                            <span className="text-[8px] text-emerald-500 uppercase">{new Date(s.event_date).toLocaleDateString("en-IN", { month: "short" })}</span>
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-sm leading-tight">{s.title}</h4>
-                            {s.event_time && <p className="text-xs text-muted-foreground">{s.event_time}</p>}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${s.target_role === "all" ? "bg-slate-100 text-slate-600" : s.target_role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
-                            {s.target_role === "all" ? "Everyone" : s.target_role}
-                          </span>
-                        </div>
-                        {s.description && <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{s.description}</p>}
+              (schedulesQ.data as any[]).map((s: any) => (
+                <div key={s.id} className="p-4 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm truncate">{s.title}</h4>
+                      {s.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{s.description}</p>}
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${s.target_role === "all" ? "bg-slate-100 text-slate-600" : s.target_role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+                          {s.target_role === "all" ? "Everyone" : s.target_role}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-700">{s.event_date} {s.event_time ? `at ${s.event_time}` : ""}</span>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteSchedule(s.id)} className="h-7 w-7 text-destructive/40 hover:text-destructive hover:bg-destructive/10 shrink-0">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
                     </div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/50 hover:text-destructive hover:bg-destructive/10 shrink-0">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Event?</AlertDialogTitle>
+                          <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteSchedule(s.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))
             )}
           </div>
         </section>
 
         {/* ── Meetings + Resources ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
           {/* Meetings */}
           <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b flex items-center justify-between">
@@ -1058,12 +1077,12 @@ function OperationsDashboard() {
                 <DialogContent className="sm:max-w-lg">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2"><Video className="h-5 w-5 text-indigo-500" /> Schedule Meeting</DialogTitle>
-                    <DialogDescription>Add a new meeting for your team.</DialogDescription>
+                    <DialogDescription>Add a new meeting for your team or an individual person.</DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleCreateMeeting} className="space-y-4 py-2">
                     <div className="space-y-1.5">
                       <Label>Title</Label>
-                      <Input required value={meetingForm.title} onChange={e => setMeetingForm({ ...meetingForm, title: e.target.value })} placeholder="e.g. Daily Standup" />
+                      <Input required value={meetingForm.title} onChange={e => setMeetingForm({ ...meetingForm, title: e.target.value })} placeholder="e.g. Daily Standup / 1-on-1 Review" />
                     </div>
                     <div className="space-y-1.5">
                       <Label>Meeting Link</Label>
@@ -1081,9 +1100,25 @@ function OperationsDashboard() {
                           <SelectItem value="all">Everyone</SelectItem>
                           <SelectItem value="employee">Employees Only</SelectItem>
                           <SelectItem value="intern">Interns Only</SelectItem>
+                          <SelectItem value="individual">Specific Person (Individual)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+                    {meetingForm.target_role === "individual" && (
+                      <div className="space-y-1.5">
+                        <Label>Select Team Member</Label>
+                        <Select value={meetingForm.target_user_id} onValueChange={(v) => setMeetingForm({ ...meetingForm, target_user_id: v })}>
+                          <SelectTrigger><SelectValue placeholder="Choose Person..." /></SelectTrigger>
+                          <SelectContent>
+                            {(teamQ.data || []).map((m: any) => (
+                              <SelectItem key={m.id} value={m.id}>
+                                {m.full_name || m.email} ({m.role || "Member"})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <DialogFooter>
                       <Button type="button" variant="ghost" onClick={() => setMeetingOpen(false)}>Cancel</Button>
                       <Button type="submit">Schedule</Button>
@@ -1148,12 +1183,12 @@ function OperationsDashboard() {
                 <DialogContent className="sm:max-w-lg">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-pink-500" /> Upload Resource</DialogTitle>
-                    <DialogDescription>Share documents or links with your team.</DialogDescription>
+                    <DialogDescription>Share documents or links with your team or an individual person.</DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleCreateResource} className="space-y-4 py-2">
                     <div className="space-y-1.5">
                       <Label>Title</Label>
-                      <Input required value={resourceForm.title} onChange={e => setResourceForm({ ...resourceForm, title: e.target.value })} placeholder="e.g. Employee Handbook" />
+                      <Input required value={resourceForm.title} onChange={e => setResourceForm({ ...resourceForm, title: e.target.value })} placeholder="e.g. Employee Handbook / Onboarding Specs" />
                     </div>
                     <div className="space-y-1.5">
                       <Label>Description <span className="text-muted-foreground text-xs">(optional)</span></Label>
@@ -1181,10 +1216,26 @@ function OperationsDashboard() {
                             <SelectItem value="all">Everyone</SelectItem>
                             <SelectItem value="employee">Employees Only</SelectItem>
                             <SelectItem value="intern">Interns Only</SelectItem>
+                            <SelectItem value="individual">Specific Person (Individual)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
+                    {resourceForm.target_role === "individual" && (
+                      <div className="space-y-1.5">
+                        <Label>Select Team Member</Label>
+                        <Select value={resourceForm.target_user_id} onValueChange={(v) => setResourceForm({ ...resourceForm, target_user_id: v })}>
+                          <SelectTrigger><SelectValue placeholder="Choose Person..." /></SelectTrigger>
+                          <SelectContent>
+                            {(teamQ.data || []).map((m: any) => (
+                              <SelectItem key={m.id} value={m.id}>
+                                {m.full_name || m.email} ({m.role || "Member"})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <div className="space-y-1.5">
                       <Label>File</Label>
                       <Input type="file" required onChange={e => setResourceFile(e.target.files?.[0] || null)} />
