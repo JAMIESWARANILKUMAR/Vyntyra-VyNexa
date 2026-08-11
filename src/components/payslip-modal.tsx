@@ -3,6 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Download, Printer, ShieldCheck, Building2, CheckCircle2, FileText } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { generatePayslipPdf } from "@/lib/payslip";
+import { urlToBase64 } from "@/lib/nocGenerator";
+import { toast } from "sonner";
 
 interface PayslipData {
   payoutId?: string;
@@ -43,6 +46,33 @@ export function PayslipModal({ isOpen, onClose, payslip }: PayslipModalProps) {
     window.print();
   }
 
+  async function handleDownloadPdf() {
+    try {
+      const logoBase64 = await urlToBase64("/icon-512.png");
+      const doc = generatePayslipPdf({
+        employeeName: payslip.employeeName,
+        employeeId: payslip.employeeId,
+        designation: payslip.designation || "Software Engineer",
+        department: payslip.department || "Engineering & Software",
+        payPeriod: payslip.payPeriod,
+        dateOfJoining: "2026-08-01",
+        basicSalary: payslip.basicSalary,
+        hra: payslip.hra,
+        specialAllowance: payslip.specialAllowance,
+        conveyanceAllowance: 0,
+        performanceBonus: payslip.bonus || 0,
+        providentFund: payslip.pfDeduction,
+        professionalTax: payslip.professionalTax,
+        incomeTax: payslip.tds,
+        logoBase64,
+      });
+      doc.save(`Payslip_${payslip.employeeName.replace(/\s+/g, "_")}_${payslip.payPeriod.replace(/\s+/g, "_")}.pdf`);
+      toast.success("Official PDF Payslip downloaded!");
+    } catch (err: any) {
+      toast.error("Failed to download PDF: " + err.message);
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 rounded-3xl bg-white border border-slate-100 shadow-2xl print:max-w-none print:w-full print:h-auto print:shadow-none print:border-none print:rounded-none">
@@ -51,15 +81,23 @@ export function PayslipModal({ isOpen, onClose, payslip }: PayslipModalProps) {
         <div className="p-4 bg-slate-900 text-white flex items-center justify-between print:hidden rounded-t-3xl">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
             <FileText className="h-4 w-4 text-emerald-400" />
-            Official Payslip & Tax Summary
+            Official Payslip &amp; Tax Summary
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Button 
-              onClick={handlePrint}
+              onClick={handleDownloadPdf}
               size="sm" 
               className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium text-xs gap-1.5 shadow-md"
             >
-              <Printer className="h-3.5 w-3.5" /> Download / Print Payslip PDF
+              <Download className="h-3.5 w-3.5" /> Download PDF
+            </Button>
+            <Button 
+              onClick={handlePrint}
+              size="sm" 
+              variant="outline"
+              className="border-slate-700 text-white hover:bg-slate-800 rounded-xl font-medium text-xs gap-1.5"
+            >
+              <Printer className="h-3.5 w-3.5" /> Print
             </Button>
           </div>
         </div>
@@ -70,9 +108,11 @@ export function PayslipModal({ isOpen, onClose, payslip }: PayslipModalProps) {
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-b border-slate-200 pb-8">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 bg-black rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-xl">
-                V
-              </div>
+              <img 
+                src="/icon-512.png" 
+                alt="Vyntyra Logo" 
+                className="h-14 w-14 rounded-2xl object-cover shadow-xl border border-slate-200 shrink-0" 
+              />
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-slate-900">VyNexa Consultancy Services</h1>
                 <p className="text-xs text-slate-500 font-medium">Vyntyra Technologies Pvt. Ltd. · Enterprise Portal</p>
