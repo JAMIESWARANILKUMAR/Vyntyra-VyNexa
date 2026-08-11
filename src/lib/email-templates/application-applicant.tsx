@@ -113,8 +113,14 @@ const ApplicantConfirm = ({ fullName = 'there', email = '', roleApplied = 'the r
             Track Application
           </Link>
           <Text style={{ margin: '32px 0 0', color: INK, fontSize: 15 }}>
-            Sincerely,<br />
-            <strong>Vyntyra Talent Acquisition</strong>
+            Sincerely,
+          </Text>
+          <div style={{ marginTop: '10px', marginBottom: '10px' }}>
+            <Img src="https://plain-apac-prod-public.komododecks.com/202608/11/olXE11N8ipqBTR8DBSXt/image.png" alt="Jami Eswar Anil Kumar Signature" width="140" style={{ display: 'block', height: 'auto', maxHeight: '48px', objectFit: 'contain' }} />
+          </div>
+          <Text style={{ margin: '4px 0 0', color: INK, fontSize: 15, fontWeight: 700 }}>
+            Jami Eswar Anil Kumar<br />
+            <span style={{ fontSize: 13, color: '#10b981', fontWeight: 600 }}>Founder &amp; Managing Director</span>
           </Text>
         </Section>
 

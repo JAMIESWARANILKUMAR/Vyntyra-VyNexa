@@ -1720,6 +1720,9 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
               <!-- Executive Signature Block -->
               <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e2e8f0;text-align:left;">
                 <div style="font-size:13px;color:#64748b;text-align:left;">Sincerely,</div>
+                <div style="margin-top:10px;margin-bottom:10px;">
+                  <img src="https://plain-apac-prod-public.komododecks.com/202608/11/olXE11N8ipqBTR8DBSXt/image.png" alt="Jami Eswar Anil Kumar Signature" width="140" style="display:block;height:auto;max-height:48px;object-fit:contain;" />
+                </div>
                 <div style="font-size:16px;font-weight:800;color:#0f172a;margin-top:4px;text-align:left;">Jami Eswar Anil Kumar</div>
                 <div style="font-size:12px;font-weight:700;color:#10b981;text-align:left;">Founder &amp; Managing Director</div>
                 <div style="font-size:12px;color:#64748b;text-align:left;">Vyntyra Consultancy Services</div>
