@@ -738,6 +738,41 @@ export const listMyPayouts = createServerFn({ method: "GET" })
   });
 
 // ─── Attendance ───────────────────────────────────────────────────
+const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
+
+async function autoClockOutStaleRecords(adminClient: any, logs: any[]) {
+  if (!logs || logs.length === 0) return logs;
+  const now = Date.now();
+  const updatedLogs = [...logs];
+
+  for (let i = 0; i < updatedLogs.length; i++) {
+    const log = updatedLogs[i];
+    if (log.clock_in && !log.clock_out) {
+      const clockInTime = new Date(log.clock_in).getTime();
+      const elapsed = now - clockInTime;
+      if (elapsed >= EIGHT_HOURS_MS) {
+        // Auto clock out exactly 8 hours after clock_in
+        const autoClockOut = new Date(clockInTime + EIGHT_HOURS_MS).toISOString();
+        log.clock_out = autoClockOut;
+
+        try {
+          await adminClient
+            .from("attendance")
+            .update({
+              clock_out: autoClockOut,
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", log.id);
+        } catch (e) {
+          console.warn("[autoClockOutStaleRecords] Error auto clocking out:", e);
+        }
+      }
+    }
+  }
+
+  return updatedLogs;
+}
+
 export const clockIn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -746,12 +781,14 @@ export const clockIn = createServerFn({ method: "POST" })
     const todayDateStr = new Date().toDateString();
     
     // Check recent logs for active or completed shift today
-    const { data: recentLogs } = await adminClient
+    const { data: rawRecent } = await adminClient
       .from("attendance")
       .select("id, clock_in, clock_out, date")
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(5);
+
+    const recentLogs = await autoClockOutStaleRecords(adminClient, rawRecent || []);
 
     const existing = recentLogs?.find((a: any) => {
       if (a.date === today) return true;
@@ -785,12 +822,14 @@ export const clockOut = createServerFn({ method: "POST" })
     const today = new Date().toISOString().split('T')[0];
     const todayDateStr = new Date().toDateString();
     
-    const { data: recentLogs } = await adminClient
+    const { data: rawRecent } = await adminClient
       .from("attendance")
       .select("id, clock_in, clock_out, date")
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(5);
+
+    const recentLogs = await autoClockOutStaleRecords(adminClient, rawRecent || []);
 
     const activeShift = recentLogs?.find((a: any) => {
       if (!a.clock_out) return true;
@@ -803,11 +842,14 @@ export const clockOut = createServerFn({ method: "POST" })
       throw new Error("No active clock-in session found for today.");
     }
 
-    const { error } = await adminClient.from("attendance")
-      .update({ clock_out: new Date().toISOString(), updated_at: new Date().toISOString() })
-      .eq("id", activeShift.id);
-      
-    if (error) throw new Error(error.message);
+    if (!activeShift.clock_out) {
+      const { error } = await adminClient.from("attendance")
+        .update({ clock_out: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq("id", activeShift.id);
+        
+      if (error) throw new Error(error.message);
+    }
+
     return { success: true };
   });
 
@@ -822,7 +864,8 @@ export const getMyAttendance = createServerFn({ method: "GET" })
       .order("date", { ascending: false });
       
     if (error) throw new Error(error.message);
-    return data || [];
+    const checkedData = await autoClockOutStaleRecords(adminClient, data || []);
+    return checkedData || [];
   });
 // ─── Super Admin Operations ──────────────────────────────────────────
 
@@ -896,6 +939,8 @@ export const listAllAttendance = createServerFn({ method: 'GET' })
       return [];
     }
 
+    const checkedAttData = await autoClockOutStaleRecords(adminClient, attData || []);
+
     const { data: profData } = await adminClient
       .from('profiles')
       .select('id, full_name, email, intern_id, department, position');
@@ -903,7 +948,7 @@ export const listAllAttendance = createServerFn({ method: 'GET' })
     const profMap = new Map();
     (profData || []).forEach((p: any) => profMap.set(p.id, p));
 
-    return (attData || []).map((a: any) => ({
+    return (checkedAttData || []).map((a: any) => ({
       ...a,
       profiles: profMap.get(a.user_id) || null
     }));
