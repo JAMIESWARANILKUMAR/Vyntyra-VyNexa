@@ -1167,12 +1167,16 @@ function InternDashboard() {
                               }
 
                               const { generateInternshipCertificatePdf } = await import("@/lib/certificateGenerator");
+                              const startDateStr = profile?.created_at ? new Date(profile.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "12 Jun 2026";
+                              const endDateStr = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
                               const doc = generateInternshipCertificatePdf({
                                 candidateName: profile?.full_name || profile?.email || "Candidate Name",
                                 internId,
                                 domainName: profile?.department || "Engineering & Technology",
                                 subDomainName: profile?.position || "Full Stack Web Development",
-                                issueDate: new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+                                startDate: startDateStr,
+                                completionDate: endDateStr,
+                                issueDate: endDateStr,
                                 qrCodeBase64,
                                 templateBase64,
                               });

@@ -1338,12 +1338,16 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
       const qrCodeBase64 = await urlToBase64(qrApiUrl);
 
       const { generateInternshipCertificatePdf } = await import("@/lib/certificateGenerator");
+      const startDateStr = app.created_at ? new Date(app.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "12 Jun 2026";
+      const endDateStr = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
       const doc = generateInternshipCertificatePdf({
         candidateName: app.full_name,
         internId,
         domainName: app.domain || "Technology & Software",
         subDomainName: app.sub_domain || "Full Stack Web Development",
-        issueDate: new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+        startDate: startDateStr,
+        completionDate: endDateStr,
+        issueDate: endDateStr,
         qrCodeBase64,
         templateBase64,
       });
