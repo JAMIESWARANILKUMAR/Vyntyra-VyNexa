@@ -316,7 +316,7 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
   // Background box for Digital Signature Badge
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(sigX, sigBoxY, 66, 17, 2, 2, "FD");
+  doc.roundedRect(sigX, sigBoxY, 66, 16, 2, 2, "FD");
 
   // DigiLocker Green Circle with White Vector Checkmark
   doc.setFillColor(22, 163, 74); // Emerald Green (22, 163, 74)
@@ -341,16 +341,16 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
   doc.setFontSize(6.5);
   doc.setTextColor(71, 85, 105);
   doc.text("Digitally Signed by: Jami Eswar Anil Kumar", sigX + 2, sigBoxY + 8.5);
-  doc.text(`Date: ${genTime}`, sigX + 2, sigBoxY + 11.5);
-  doc.text("Reason: Verified Corporate Payout Authorization", sigX + 2, sigBoxY + 14.5);
+  doc.text(`Date: ${genTime}`, sigX + 2, sigBoxY + 11.0);
+  doc.text("Reason: Verified Corporate Payout Authorization", sigX + 2, sigBoxY + 13.5);
 
-  // Line below Digital Signature Stamp
-  const sigLineY = sigBoxY + 20;
+  // Line below Digital Signature Stamp (spaced 26mm below box top)
+  const sigLineY = sigBoxY + 26;
 
-  // Draw Real Signature Image if provided
+  // Draw Real Signature Image if provided (sits cleanly above horizontal line)
   if (data.signatureBase64 && data.signatureBase64.startsWith("data:image")) {
     try {
-      doc.addImage(data.signatureBase64, "PNG", sigX + 18, sigLineY - 12.5, 30, 12);
+      doc.addImage(data.signatureBase64, "PNG", sigX + 18, sigLineY - 9.5, 30, 9);
     } catch (e) {
       // Fallback if image load fails
     }
@@ -375,7 +375,7 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
 
   // Footer Disclaimer
   doc.setDrawColor(226, 232, 240);
-  doc.line(margin, y + 36, margin + contentWidth, y + 36);
+  doc.line(margin, y + 42, margin + contentWidth, y + 42);
   doc.setFontSize(7);
   doc.setTextColor(148, 163, 184);
   doc.text("This is a computer-generated salary document with DigiLocker-compliant electronic signature verification.", pageWidth / 2, y + 40, { align: "center" });
