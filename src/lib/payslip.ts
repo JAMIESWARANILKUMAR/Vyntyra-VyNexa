@@ -313,13 +313,13 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
   const sigX = margin + contentWidth - 66; // 129mm to 195mm (width 66mm)
   const sigBoxY = y + 1;
 
-  // Background box for Digital Signature Badge
+  // Background box for Digital Signature Badge & Metadata
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(sigX, sigBoxY, 66, 16, 2, 2, "FD");
+  doc.roundedRect(sigX, sigBoxY, 66, 23, 2, 2, "FD");
 
-  // DigiLocker Green Circle with White Vector Checkmark
-  doc.setFillColor(22, 163, 74); // Emerald Green (22, 163, 74)
+  // 1. DigiLocker Green Circle with White Vector Checkmark (Signature Verified Badge)
+  doc.setFillColor(22, 163, 74); // Emerald Green
   doc.circle(sigX + 4.5, sigBoxY + 4, 3, "F");
 
   // White Vector Checkmark inside Circle
@@ -334,33 +334,33 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
   doc.setTextColor(22, 163, 74);
   doc.text("Signature Verified", sigX + 9.5, sigBoxY + 4.5);
 
-  // Digital Signature Metadata (Generation Date & Time in IST)
-  const genTime = data.generatedAt || `${new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} ${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })} IST`;
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
-  doc.setTextColor(71, 85, 105);
-  doc.text("Digitally Signed by: Jami Eswar Anil Kumar", sigX + 2, sigBoxY + 8.5);
-  doc.text(`Date: ${genTime}`, sigX + 2, sigBoxY + 11.0);
-  doc.text("Reason: Verified Corporate Payout Authorization", sigX + 2, sigBoxY + 13.5);
-
-  // Line below Digital Signature Stamp (spaced 23mm below box top)
-  const sigLineY = sigBoxY + 23;
-
-  // Draw Real Signature Image if provided (sits cleanly above horizontal line)
+  // 2. Draw Real Signature Image right after Signature Verified badge
   if (data.signatureBase64 && data.signatureBase64.startsWith("data:image")) {
     try {
-      doc.addImage(data.signatureBase64, "PNG", sigX + 20, sigLineY - 9.5, 26, 9.5);
+      doc.addImage(data.signatureBase64, "PNG", sigX + 2, sigBoxY + 6.0, 24, 8.5);
     } catch (e) {
       // Fallback if image load fails
     }
   }
 
+  // 3. Digital Signature Metadata (after signature image)
+  const genTime = data.generatedAt || `${new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} ${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })} IST`;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text("Digitally Signed by: Jami Eswar Anil Kumar", sigX + 2, sigBoxY + 15.5);
+  doc.text(`Date: ${genTime}`, sigX + 2, sigBoxY + 18.0);
+  doc.text("Reason: Verified Corporate Payout Authorization", sigX + 2, sigBoxY + 20.5);
+
+  // 4. Line below Digital Signature Stamp Box
+  const sigLineY = sigBoxY + 28;
+
   doc.setDrawColor(148, 163, 184);
   doc.setLineWidth(0.4);
   doc.line(sigX, sigLineY, margin + contentWidth, sigLineY);
 
-  // Authorized Signatory Label under line
+  // 5. Authorized Signatory Label under line
   doc.setFont("helvetica", "bold");
   doc.setTextColor(15, 23, 42);
   doc.setFontSize(8.5);
@@ -374,7 +374,7 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
   doc.text("Vyntyra Consultancy Services", sigX + 33, sigLineY + 11.2, { align: "center" });
 
   // Footer Disclaimer (positioned cleanly below signature block with divider line)
-  const footerLineY = sigBoxY + 42;
+  const footerLineY = sigBoxY + 44;
   doc.setDrawColor(226, 232, 240);
   doc.line(margin, footerLineY, margin + contentWidth, footerLineY);
   doc.setFontSize(7);
