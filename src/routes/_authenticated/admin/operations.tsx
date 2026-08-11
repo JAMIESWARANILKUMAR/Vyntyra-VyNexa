@@ -218,20 +218,22 @@ function OperationsDashboard() {
   const employees = team.filter((m: any) => m.role === "employee");
   const interns = team.filter((m: any) => m.role === "intern");
 
-  const processedInternAttendance = useMemo(() => {
-    return interns.map((intern: any) => {
-      const internAttendance = (attendanceQ.data || []).filter((a: any) => {
+  const [attendanceRoleFilter, setAttendanceRoleFilter] = useState<"all" | "employee" | "intern">("all");
+
+  const processedTeamAttendance = useMemo(() => {
+    return team.map((member: any) => {
+      const memberAttendance = (attendanceQ.data || []).filter((a: any) => {
         if (!a) return false;
-        if (a.user_id === intern.id || a.user_id === intern.user_id) return true;
-        if (intern.email && a.profiles?.email && a.profiles.email.toLowerCase() === intern.email.toLowerCase()) return true;
-        if (intern.email && a.email && a.email.toLowerCase() === intern.email.toLowerCase()) return true;
+        if (a.user_id === member.id || a.user_id === member.user_id) return true;
+        if (member.email && a.profiles?.email && a.profiles.email.toLowerCase() === member.email.toLowerCase()) return true;
+        if (member.email && a.email && a.email.toLowerCase() === member.email.toLowerCase()) return true;
         return false;
       });
-      const totalAttendance = internAttendance.length;
+      const totalAttendance = memberAttendance.length;
 
       const todayStr = new Date().toISOString().split('T')[0];
       const todayDateStr = new Date().toDateString();
-      const todayLog = internAttendance.find((a: any) => {
+      const todayLog = memberAttendance.find((a: any) => {
         if (a.date === todayStr) return true;
         if (a.clock_in && new Date(a.clock_in).toDateString() === todayDateStr) return true;
         return false;
@@ -253,27 +255,34 @@ function OperationsDashboard() {
       }
 
       let remainingDays = "—";
-      if (intern.end_date) {
-        const end = new Date(intern.end_date).getTime();
+      if (member.end_date) {
+        const end = new Date(member.end_date).getTime();
         const diff = end - Date.now();
         const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
         remainingDays = days > 0 ? `${days} Days` : "Ended";
       }
 
-      const completedTasks = (tasksQ.data || []).filter((t: any) => t.assigned_to === intern.id && t.status === "completed").length;
+      const completedTasks = (tasksQ.data || []).filter((t: any) => t.assigned_to === member.id && t.status === "completed").length;
 
       return {
-        ...intern,
+        ...member,
         totalAttendance,
         activeStatus,
         clockInTime,
         clockOutTime,
         remainingDays,
         completedTasks,
-        attendance: internAttendance
+        attendance: memberAttendance
       };
     });
-  }, [interns, attendanceQ.data, tasksQ.data]);
+  }, [team, attendanceQ.data, tasksQ.data]);
+
+  const filteredAttendance = useMemo(() => {
+    if (attendanceRoleFilter === "all") return processedTeamAttendance;
+    return processedTeamAttendance.filter((m: any) => m.role === attendanceRoleFilter);
+  }, [processedTeamAttendance, attendanceRoleFilter]);
+
+  const processedInternAttendance = processedTeamAttendance.filter((m: any) => m.role === "intern");
 
   async function handleAdminResetPassword(e: React.FormEvent) {
     e.preventDefault();
@@ -1586,16 +1595,45 @@ function OperationsDashboard() {
           />
         </section>
 
-        {/* ── Intern Attendance & Timecard Monitoring Dashboard ── */}
+        {/* ── Employee & Intern Attendance Timecard Monitoring Dashboard ── */}
         <section className="rounded-xl border bg-white shadow-sm overflow-hidden mt-6">
-          <div className="px-5 py-4 border-b flex items-center justify-between bg-slate-900 text-white">
-            <h2 className="font-semibold text-sm flex items-center gap-2">
-              <Clock className="h-4 w-4 text-emerald-400" /> Intern Attendance &amp; Timecard Monitoring
-            </h2>
+          <div className="px-5 py-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 text-white">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="font-semibold text-sm flex items-center gap-2">
+                <Clock className="h-4 w-4 text-emerald-400" /> Employee &amp; Intern Attendance Monitoring
+              </h2>
+              <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs">
+                <button
+                  onClick={() => setAttendanceRoleFilter("all")}
+                  className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                    attendanceRoleFilter === "all" ? "bg-emerald-600 text-white shadow-xs" : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  All Team ({processedTeamAttendance.length})
+                </button>
+                <button
+                  onClick={() => setAttendanceRoleFilter("employee")}
+                  className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                    attendanceRoleFilter === "employee" ? "bg-emerald-600 text-white shadow-xs" : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  Employees ({processedTeamAttendance.filter((m: any) => m.role === "employee").length})
+                </button>
+                <button
+                  onClick={() => setAttendanceRoleFilter("intern")}
+                  className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                    attendanceRoleFilter === "intern" ? "bg-emerald-600 text-white shadow-xs" : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  Interns ({processedTeamAttendance.filter((m: any) => m.role === "intern").length})
+                </button>
+              </div>
+            </div>
+
             <div className="flex items-center gap-2">
               <span className="bg-emerald-500/20 text-emerald-300 text-xs px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1">
                 <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                {processedInternAttendance.filter((i: any) => i.activeStatus === "Active").length} Online Now
+                {filteredAttendance.filter((i: any) => i.activeStatus === "Active").length} Online Now
               </span>
             </div>
           </div>
@@ -1610,7 +1648,7 @@ function OperationsDashboard() {
                 <div>
                   <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Clocked-In Today</div>
                   <div className="text-xl font-bold text-slate-800">
-                    {processedInternAttendance.filter((i: any) => i.activeStatus === "Active" || i.activeStatus === "Completed").length} Interns
+                    {filteredAttendance.filter((i: any) => i.activeStatus === "Active" || i.activeStatus === "Completed").length} Present
                   </div>
                 </div>
               </div>
@@ -1622,8 +1660,8 @@ function OperationsDashboard() {
                 <div>
                   <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Shift Presence Rate</div>
                   <div className="text-xl font-bold text-slate-800">
-                    {interns.length > 0 
-                      ? `${Math.round((processedInternAttendance.filter((i: any) => i.activeStatus === "Active" || i.activeStatus === "Completed").length / interns.length) * 100)}%`
+                    {filteredAttendance.length > 0 
+                      ? `${Math.round((filteredAttendance.filter((i: any) => i.activeStatus === "Active" || i.activeStatus === "Completed").length / filteredAttendance.length) * 100)}%`
                       : "0%"}
                   </div>
                 </div>
@@ -1644,50 +1682,59 @@ function OperationsDashboard() {
               </div>
             </div>
 
-            {/* Interns Table */}
+            {/* Team Attendance Table */}
             <div className="rounded-xl border bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-bold tracking-wider text-slate-500">
-                      <th className="px-5 py-3">Intern Details</th>
+                      <th className="px-5 py-3">Member Details</th>
+                      <th className="px-5 py-3">Role</th>
                       <th className="px-5 py-3">Today's Status</th>
                       <th className="px-5 py-3">Clock In</th>
                       <th className="px-5 py-3">Clock Out</th>
                       <th className="px-5 py-3">Total Attendance</th>
                       <th className="px-5 py-3">Task Completions</th>
-                      <th className="px-5 py-3">Days Remaining</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                    {processedInternAttendance.length === 0 ? (
+                    {filteredAttendance.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-5 py-8 text-center text-slate-400">No active interns found</td>
+                        <td colSpan={7} className="px-5 py-8 text-center text-slate-400">No team members found for this filter</td>
                       </tr>
                     ) : (
-                      processedInternAttendance.map((intern: any) => (
-                        <tr key={intern.id} className="hover:bg-slate-50/50 transition-colors">
+                      filteredAttendance.map((member: any) => (
+                        <tr key={member.id} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-3">
                               <SmartAvatar
-                                src={intern.avatar_url}
-                                alt={intern.full_name}
-                                fallbackInitials={(intern.full_name || "?")[0]}
+                                src={member.avatar_url}
+                                alt={member.full_name}
+                                fallbackInitials={(member.full_name || "?")[0]}
                                 className="h-8 w-8 rounded-full"
                               />
                               <div>
-                                <div className="font-semibold text-slate-900 text-sm">{intern.full_name}</div>
-                                <div className="text-[10px] text-slate-400 font-light">{intern.intern_id || "No ID"} · {intern.department}</div>
+                                <div className="font-semibold text-slate-900 text-sm">{member.full_name}</div>
+                                <div className="text-[10px] text-slate-400 font-light">{member.intern_id || member.email} · {member.department}</div>
                               </div>
                             </div>
                           </td>
                           <td className="px-5 py-4">
-                            {intern.activeStatus === "Active" ? (
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                              member.role === "employee" 
+                                ? "bg-purple-50 text-purple-700 border border-purple-200" 
+                                : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            }`}>
+                              {member.role || "member"}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4">
+                            {member.activeStatus === "Active" ? (
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                 Active
                               </span>
-                            ) : intern.activeStatus === "Completed" ? (
+                            ) : member.activeStatus === "Completed" ? (
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-50 text-slate-600 border border-slate-200">
                                 Clocked Out
                               </span>
@@ -1697,24 +1744,19 @@ function OperationsDashboard() {
                               </span>
                             )}
                           </td>
-                          <td className="px-5 py-4 font-mono text-slate-600">{intern.clockInTime}</td>
-                          <td className="px-5 py-4 font-mono text-slate-600">{intern.clockOutTime}</td>
+                          <td className="px-5 py-4 font-mono text-slate-600">{member.clockInTime}</td>
+                          <td className="px-5 py-4 font-mono text-slate-600">{member.clockOutTime}</td>
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-800">{intern.totalAttendance} Days</span>
+                              <span className="font-bold text-slate-800">{member.totalAttendance} Days</span>
                               <span className="text-[10px] text-slate-400 font-normal">Present</span>
                             </div>
                           </td>
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-800">{intern.completedTasks} Tasks</span>
+                              <span className="font-bold text-slate-800">{member.completedTasks} Tasks</span>
                               <span className="text-[10px] text-slate-400 font-normal">Done</span>
                             </div>
-                          </td>
-                          <td className="px-5 py-4">
-                            <span className={`font-semibold ${intern.remainingDays.includes("Days") ? "text-slate-800" : "text-slate-400"}`}>
-                              {intern.remainingDays}
-                            </span>
                           </td>
                         </tr>
                       ))
