@@ -36,68 +36,85 @@ function stripHtml(h: string) {
 const LOGO_URL = 'https://careers.vyntyraconsultancyservices.in/icon-512.png';
 
 function shell(innerHtml: string) {
-  return `<!doctype html><html><body style="margin:0;background:#F9FAFB;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;padding:40px 16px;">
-    <div style="max-width:600px;margin:0 auto;background:#FFFFFF;border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;">
-      <div style="padding:32px 40px;border-bottom:1px solid #F3F4F6;">
-        <table style="width:100%;border-collapse:collapse;"><tr>
-          <td style="vertical-align:middle;width:40px;">
-            <img src="${LOGO_URL}" alt="Vyntyra" width="32" height="32" style="display:block;" />
-          </td>
-          <td style="vertical-align:middle;padding-left:12px;">
-            <div style="color:#111827;font-size:18px;font-weight:600;letter-spacing:-0.01em;">Vyntyra Consultancy Services</div>
-          </td>
-        </tr></table>
-      </div>
-      <div style="padding:40px;color:#374151;line-height:1.6;font-size:15px;">
-        ${innerHtml}
-      </div>
-      <div style="background:#F9FAFB;border-top:1px solid #E5E7EB;padding:32px 40px;color:#6B7280;font-size:12px;line-height:1.5;">
-        <div style="margin-bottom:16px;">
-          <strong>Questions?</strong> Contact our Talent Acquisition team at <a href="mailto:hr@vyntyraconsultancyservices.in" style="color:#0f172a;font-weight:600;text-decoration:underline;">hr@vyntyraconsultancyservices.in</a>.
-        </div>
-        
-        <div style="margin-bottom:16px;">
-          <a href="https://linkedin.com" style="color:#0f172a;font-weight:600;text-decoration:none;margin-right:12px;">LinkedIn</a>
-          <span style="color:#E5E7EB;">|</span>
-          <a href="https://instagram.com" style="color:#0f172a;font-weight:600;text-decoration:none;margin-left:12px;margin-right:12px;">Instagram</a>
-          <span style="color:#E5E7EB;">|</span>
-          <a href="https://twitter.com" style="color:#0f172a;font-weight:600;text-decoration:none;margin-left:12px;">Twitter</a>
-        </div>
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#060b14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#334155;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#060b14;padding:40px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:620px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+          
+          <!-- Header Branding -->
+          <tr>
+            <td style="background-color:#0b1728;padding:28px 40px;text-align:left;border-bottom:3px solid #10b981;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="width:48px;vertical-align:middle;text-align:left;">
+                    <img src="${LOGO_URL}" alt="Vyntyra Logo" width="42" height="42" style="display:block;border-radius:10px;border:1px solid #1e293b;">
+                  </td>
+                  <td style="padding-left:14px;vertical-align:middle;text-align:left;">
+                    <div style="color:#ffffff;font-size:19px;font-weight:700;letter-spacing:-0.02em;">Vyntyra Consultancy Services</div>
+                    <div style="color:#10b981;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;margin-top:2px;">Project VyNexa &middot; Recruitment Division</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-        <hr style="border:0;border-top:1px solid #E5E7EB;margin:16px 0;" />
+          <!-- Main Content -->
+          <tr>
+            <td style="padding:40px;color:#334155;line-height:1.7;font-size:15px;text-align:left;">
+              ${innerHtml}
+            </td>
+          </tr>
 
-        <div style="margin-bottom:12px;">
-          This email was sent to you by Vyntyra Consultancy Services in relation to your application for Project VyNexa.
-        </div>
-        <div style="margin-bottom:12px;">
-          <strong>Vyntyra Consultancy Services</strong><br/>
-          Visakhapatnam, AP, India<br/>
-          ISO-aligned &middot; NASSCOM Verified &middot; MSME Registered
-        </div>
-        
-        <div style="margin-bottom:16px;">
-          <a href="https://careers.vyntyraconsultancyservices.in/privacy" style="color:#6B7280;text-decoration:underline;margin-right:12px;">Privacy Policy</a>
-          <span style="color:#E5E7EB;">|</span>
-          <a href="https://careers.vyntyraconsultancyservices.in/terms" style="color:#6B7280;text-decoration:underline;margin-left:12px;">Applicant Terms</a>
-        </div>
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#0b1728;padding:32px 40px;text-align:center;color:#94a3b8;font-size:11.5px;line-height:1.65;">
+              <div style="color:#ffffff;font-weight:700;font-size:13.5px;margin-bottom:12px;">Vyntyra Consultancy Services</div>
+              
+              <div style="margin-bottom:18px;">
+                <a href="https://www.linkedin.com/company/vyntyra-consultancy-services" style="color:#38bdf8;font-weight:600;text-decoration:none;margin:0 8px;">LinkedIn</a>
+                <span style="color:#334155;">&bull;</span>
+                <a href="https://www.instagram.com/vyntyraindia" style="color:#f472b6;font-weight:600;text-decoration:none;margin:0 8px;">Instagram</a>
+                <span style="color:#334155;">&bull;</span>
+                <a href="https://careers.vyntyraconsultancyservices.in/" style="color:#34d399;font-weight:600;text-decoration:none;margin:0 8px;">Official Portal</a>
+              </div>
 
-        <div style="font-size:10px;color:#9CA3AF;font-style:italic;margin-top:16px;">
-          Disclaimer: This electronic mail message, including any attachments, is for the sole use of the intended recipient(s) and may contain confidential or privileged information. Any unauthorized review, use, disclosure, or distribution is prohibited. If you are not the intended recipient, please contact the sender by reply email and destroy all copies of the original message.
-        </div>
-        
-        <div style="margin-top:12px;">&copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.</div>
-      </div>
-    </div>
-  </body></html>`;
+              <div style="border-top:1px solid #1e293b;padding-top:16px;">
+                Dwaraka Nagar, Visakhapatnam - 530016, AP, India<br>
+                ISO 9001:2015 Certified &middot; MSME Registered &middot; UDYAM-AP-10-0143100
+              </div>
+
+              <div style="margin-top:14px;color:#64748b;font-size:10.5px;line-height:1.5;">
+                This communication relates to your application for Project VyNexa.<br>
+                Need assistance? Email <a href="mailto:hr@vyntyraconsultancyservices.in" style="color:#34d399;text-decoration:underline;">hr@vyntyraconsultancyservices.in</a>
+              </div>
+
+              <div style="margin-top:14px;font-size:10px;color:#475569;font-style:italic;">
+                Disclaimer: This transmission contains confidential information intended solely for the recipient. If received in error, please notify the sender immediately and delete all copies.
+              </div>
+
+              <div style="margin-top:14px;color:#64748b;">&copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.</div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 }
 
 export async function sendStatusChangeEmail(input: StatusEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.warn("[status-email] RESEND_API_KEY missing; skipping");
-    return;
-  }
-  const resend = new Resend(apiKey);
+  const brevoKey = process.env.BREVO_API_KEY;
+
   const vars = {
     full_name: input.fullName,
     role_applied: input.roleApplied,
@@ -113,26 +130,51 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
   const html = shell(body);
   const text = stripHtml(html);
 
-  try {
-    await resend.emails.send({
-      to: input.toEmail,
-      from: FROM_ADDR,
-      subject,
-      html,
-      text,
-      ...(input.ccEmail ? { cc: input.ccEmail } : {}),
-      ...(input.attachments && input.attachments.length > 0 ? {
-        attachments: input.attachments
-      } : (input.attachmentUrl ? {
-        attachments: [
-          {
-            filename: 'Offer_Letter.pdf',
-            path: input.attachmentUrl
-          }
-        ]
-      } : {}))
-    });
-  } catch (err) {
-    console.error("[status-email] failed to send email via Resend:", err);
+  const attachments = input.attachments && input.attachments.length > 0
+    ? input.attachments
+    : (input.attachmentUrl ? [{ filename: 'Offer_Letter.pdf', path: input.attachmentUrl }] : []);
+
+  let sent = false;
+  if (apiKey) {
+    try {
+      const resend = new Resend(apiKey);
+      await resend.emails.send({
+        to: input.toEmail,
+        from: FROM_ADDR,
+        subject,
+        html,
+        text,
+        ...(input.ccEmail ? { cc: input.ccEmail } : {}),
+        ...(attachments.length > 0 ? { attachments } : {})
+      });
+      sent = true;
+    } catch (err) {
+      console.warn("[status-email] Resend failed, trying Brevo fallback:", err);
+    }
+  }
+
+  if (!sent && brevoKey) {
+    try {
+      await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "api-key": brevoKey,
+        },
+        body: JSON.stringify({
+          sender: { name: "Vyntyra Careers", email: "careers@vyntyraconsultancyservices.in" },
+          to: [{ email: input.toEmail, name: input.fullName }],
+          subject,
+          htmlContent: html,
+          ...(input.ccEmail ? { cc: [{ email: input.ccEmail }] } : {}),
+          ...(attachments.length > 0 ? {
+            attachment: attachments.map(a => ({ url: a.path, name: a.filename }))
+          } : {})
+        }),
+      });
+    } catch (bErr) {
+      console.error("[status-email] Brevo fallback failed:", bErr);
+    }
   }
 }

@@ -2215,6 +2215,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
       .then(() => {
         setSentCount((prev) => prev + 1);
         qc.invalidateQueries({ queryKey: ["admin-email-logs"] });
+        qc.invalidateQueries({ queryKey: ["promotional-email-conversion-stats"] });
+        qc.invalidateQueries({ queryKey: ["email-quota-stats"] });
       })
       .catch((err: any) => {
         setFailedCount((prev) => prev + 1);

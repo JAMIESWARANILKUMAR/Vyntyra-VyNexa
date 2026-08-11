@@ -1637,8 +1637,9 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
         errorMessage = err.message || "Failed to dispatch promotional email";
       }
 
-      // Record log in automated_emails_log
-      const { error: logError } = await supabase.from("automated_emails_log").insert({
+      // Record log in automated_emails_log using Admin Client
+      const adminClient = getAdminClient();
+      const { error: logError } = await adminClient.from("automated_emails_log").insert({
         recipient_email: recipientEmail,
         recipient_name: recipientName,
         university_name: universityName || null,
@@ -1695,10 +1696,11 @@ async function sendViaBrevo({ recipientEmail, recipientName, subject, htmlConten
 export const getEmailQuotaStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
+    const adminClient = getAdminClient();
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const startOfToday = new Date().toISOString().split('T')[0];
 
-    const { data: logs } = await supabase
+    const { data: logs } = await adminClient
       .from("automated_emails_log")
       .select("provider, status, sent_at")
       .gte("sent_at", startOfMonth)
@@ -1734,11 +1736,15 @@ export const getEmailQuotaStats = createServerFn({ method: "GET" })
 export const listAutomatedEmailLogs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    const { data, error } = await supabase
+    const adminClient = getAdminClient();
+    const { data, error } = await adminClient
       .from("automated_emails_log")
       .select("*")
       .order("sent_at", { ascending: false });
-    if (error) return [];
+    if (error) {
+      console.warn("[listAutomatedEmailLogs] error:", error.message);
+      return [];
+    }
     return data || [];
   });
 
@@ -1746,7 +1752,8 @@ export const deleteAutomatedEmailLog = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
-    const { error } = await supabase.from("automated_emails_log").delete().eq("id", data.id);
+    const adminClient = getAdminClient();
+    const { error } = await adminClient.from("automated_emails_log").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { success: true };
   });
@@ -1754,14 +1761,15 @@ export const deleteAutomatedEmailLog = createServerFn({ method: "POST" })
 export const getPromotionalEmailConversionStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
+    const adminClient = getAdminClient();
     // 1. Fetch promotional email logs
-    const { data: emailLogs } = await supabase
+    const { data: emailLogs } = await adminClient
       .from("automated_emails_log")
       .select("*")
       .order("sent_at", { ascending: false });
 
     // 2. Fetch all internship applications
-    const { data: applications } = await supabase
+    const { data: applications } = await adminClient
       .from("applications")
       .select("id, full_name, email, domain, sub_domain, status, college, state, created_at, profile_photo_url");
 
