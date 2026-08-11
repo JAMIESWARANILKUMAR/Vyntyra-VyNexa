@@ -1718,18 +1718,16 @@ export const getEmailQuotaStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const adminClient = getAdminClient();
-    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const startOfToday = new Date().toISOString().split('T')[0];
 
     const { data: logs } = await adminClient
       .from("automated_emails_log")
       .select("provider, status, sent_at")
-      .gte("sent_at", startOfMonth)
-      .eq("status", "sent");
+      .neq("status", "failed");
 
     const totalSentThisMonth = logs?.length || 0;
     const resendSentThisMonth = logs?.filter((l: any) => l.provider === "resend" || !l.provider).length || 0;
-    const resendSentToday = logs?.filter((l: any) => (l.provider === "resend" || !l.provider) && l.sent_at?.startsWith(startOfToday)).length || 0;
+    const resendSentToday = logs?.filter((l: any) => (l.provider === "resend" || !l.provider) && (l.sent_at || "").startsWith(startOfToday)).length || 0;
     const brevoSentThisMonth = logs?.filter((l: any) => l.provider === "brevo").length || 0;
 
     const resendQuotaMonth = 3000;

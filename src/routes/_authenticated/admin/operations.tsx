@@ -200,8 +200,8 @@ function OperationsDashboard() {
 
   const leadsAdminQ = useQuery({ queryKey: ["admin-leads"], queryFn: () => fetchLeads(), ...queryOpts });
   const bugsAdminQ = useQuery({ queryKey: ["admin-bugs"], queryFn: () => fetchBugs(), ...queryOpts });
-  const emailLogsQ = useQuery({ queryKey: ["admin-email-logs"], queryFn: () => fetchEmailLogs(), ...queryOpts });
-  const smsLogsQ = useQuery({ queryKey: ["sms-logs"], queryFn: () => fetchSmsLogsList(), ...queryOpts });
+  const emailLogsQ = useQuery({ queryKey: ["admin-email-logs"], queryFn: () => fetchEmailLogs(), staleTime: 0, refetchInterval: 4000 });
+  const smsLogsQ = useQuery({ queryKey: ["sms-logs"], queryFn: () => fetchSmsLogsList(), staleTime: 0, refetchInterval: 4000 });
 
   const standupsAdminQ = useQuery({ queryKey: ["admin-standups"], queryFn: () => fetchAllStandups(), ...queryOpts });
   const deliverablesAdminQ = useQuery({ queryKey: ["admin-deliverables"], queryFn: () => fetchAllDeliverables(), ...queryOpts });
@@ -209,9 +209,9 @@ function OperationsDashboard() {
 
   const kudosQ = useQuery({ queryKey: ["admin-kudos"], queryFn: () => fetchKudos(), ...queryOpts });
 
-  const leavesQ = useQuery({ queryKey: ["admin-leaves"], queryFn: () => fetchAllLeaves(), ...queryOpts });
-  const attendanceQ = useQuery({ queryKey: ["admin-attendance"], queryFn: () => fetchAllAttendance(), ...queryOpts });
-  const payoutsQ = useQuery({ queryKey: ["admin-payouts"], queryFn: () => fetchAllPayouts(), ...queryOpts });
+  const leavesQ = useQuery({ queryKey: ["admin-leaves"], queryFn: () => fetchAllLeaves(), staleTime: 0, refetchInterval: 4000 });
+  const attendanceQ = useQuery({ queryKey: ["admin-attendance"], queryFn: () => fetchAllAttendance(), staleTime: 0, refetchInterval: 4000 });
+  const payoutsQ = useQuery({ queryKey: ["admin-payouts"], queryFn: () => fetchAllPayouts(), staleTime: 0, refetchInterval: 4000 });
 
   const team: any[] = teamQ.data || [];
   const employees = team.filter((m: any) => m.role === "employee");
@@ -2085,7 +2085,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
   const quotaQ = useQuery({
     queryKey: ["email-quota-stats"],
     queryFn: () => getEmailQuotaStats(),
-    refetchInterval: 10000,
+    staleTime: 0,
+    refetchInterval: 3000,
   });
 
   const quota = quotaQ.data || {
@@ -2292,7 +2293,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
   const conversionQ = useQuery({
     queryKey: ["promotional-email-conversion-stats"],
     queryFn: () => getPromotionalEmailConversionStats(),
-    refetchInterval: 15000,
+    staleTime: 0,
+    refetchInterval: 3000,
   });
 
   const conv = conversionQ.data || {
