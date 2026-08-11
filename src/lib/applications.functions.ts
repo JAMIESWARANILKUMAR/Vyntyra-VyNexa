@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getAdminClient } from "@/integrations/supabase/admin";
 import { verifyTurnstileToken } from "./turnstile.server";
+import { resolveGooglePhotosUrl } from "./google-photos";
 
 const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
@@ -97,7 +98,8 @@ export const submitApplication = createServerFn({ method: "POST" })
     }
     
     const appId = crypto.randomUUID();
-    
+    const resolvedPhotoUrl = await resolveGooglePhotosUrl(data.profile_photo_url);
+
     const insert = {
       id: appId,
       full_name: data.full_name,
@@ -125,7 +127,7 @@ export const submitApplication = createServerFn({ method: "POST" })
       opportunity_type: data.opportunity_type || null,
       domain: data.domain || null,
       sub_domain: data.sub_domain || null,
-      profile_photo_url: data.profile_photo_url || null,
+      profile_photo_url: resolvedPhotoUrl || null,
       agreement_accepted: true,
       status: 'new'
     };

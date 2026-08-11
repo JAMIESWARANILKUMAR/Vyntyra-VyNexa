@@ -726,21 +726,22 @@ export const listMyPayouts = createServerFn({ method: "GET" })
 export const clockIn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const adminClient = getAdminClient();
     const today = new Date().toISOString().split('T')[0];
     
     // Check if already clocked in today
-    const { data: existing } = await supabase
+    const { data: existing } = await adminClient
       .from("attendance")
       .select("id")
       .eq("user_id", context.userId)
       .eq("date", today)
-      .single();
+      .maybeSingle();
       
     if (existing) {
       throw new Error("Already clocked in for today");
     }
 
-    const { error } = await supabase.from("attendance").insert({
+    const { error } = await adminClient.from("attendance").insert({
       user_id: context.userId,
       date: today,
       clock_in: new Date().toISOString(),
@@ -754,20 +755,21 @@ export const clockIn = createServerFn({ method: "POST" })
 export const clockOut = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const adminClient = getAdminClient();
     const today = new Date().toISOString().split('T')[0];
     
-    const { data: existing } = await supabase
+    const { data: existing } = await adminClient
       .from("attendance")
       .select("id, clock_in")
       .eq("user_id", context.userId)
       .eq("date", today)
-      .single();
+      .maybeSingle();
       
     if (!existing) {
       throw new Error("No clock in found for today");
     }
 
-    const { error } = await supabase.from("attendance")
+    const { error } = await adminClient.from("attendance")
       .update({ clock_out: new Date().toISOString() })
       .eq("id", existing.id);
       
@@ -778,7 +780,8 @@ export const clockOut = createServerFn({ method: "POST" })
 export const getMyAttendance = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await supabase
+    const adminClient = getAdminClient();
+    const { data, error } = await adminClient
       .from("attendance")
       .select("*")
       .eq("user_id", context.userId)

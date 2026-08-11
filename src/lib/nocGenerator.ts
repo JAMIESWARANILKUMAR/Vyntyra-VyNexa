@@ -21,11 +21,15 @@ export interface NocData {
 // Royal:  (37, 99, 160)  │  Body:  (33, 53, 78)
 // Muted:  (100,116,139)  │  Bg:    (245, 247, 250)
 
+import { resolveGooglePhotosUrl } from "./google-photos";
+
 export async function urlToBase64(url: string): Promise<string | null> {
   try {
     if (!url) return null;
-    if (url.startsWith("data:image")) return url;
-    const res = await fetch(url);
+    const resolvedUrl = await resolveGooglePhotosUrl(url);
+    if (!resolvedUrl) return null;
+    if (resolvedUrl.startsWith("data:image")) return resolvedUrl;
+    const res = await fetch(resolvedUrl);
     if (!res.ok) return null;
     const blob = await res.blob();
     return new Promise((resolve) => {
