@@ -831,12 +831,22 @@ export const listAllLeaves = createServerFn({ method: 'GET' })
     if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
     const adminClient = getAdminClient();
 
-    const { data, error } = await adminClient
+    const { data: leaveData, error } = await adminClient
       .from('leave_requests')
-      .select('*, profiles(full_name, email, intern_id)')
+      .select('*')
       .order('created_at', { ascending: false });
     if (error) return [];
-    return data || [];
+
+    const { data: profData } = await adminClient
+      .from('profiles')
+      .select('id, full_name, email, intern_id');
+    const profMap = new Map();
+    (profData || []).forEach((p: any) => profMap.set(p.id, p));
+
+    return (leaveData || []).map((l: any) => ({
+      ...l,
+      profiles: profMap.get(l.user_id) || null
+    }));
   });
 
 export const updateLeaveStatus = createServerFn({ method: 'POST' })
@@ -857,15 +867,27 @@ export const listAllAttendance = createServerFn({ method: 'GET' })
     if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
     const adminClient = getAdminClient();
 
-    const { data, error } = await adminClient
+    const { data: attData, error } = await adminClient
       .from('attendance')
-      .select('*, profiles(full_name, email, intern_id, department, position)')
+      .select('*')
       .order('date', { ascending: false });
+
     if (error) {
       console.warn("[listAllAttendance] Error fetching attendance:", error.message);
       return [];
     }
-    return data || [];
+
+    const { data: profData } = await adminClient
+      .from('profiles')
+      .select('id, full_name, email, intern_id, department, position');
+
+    const profMap = new Map();
+    (profData || []).forEach((p: any) => profMap.set(p.id, p));
+
+    return (attData || []).map((a: any) => ({
+      ...a,
+      profiles: profMap.get(a.user_id) || null
+    }));
   });
 
 export const listAllPayouts = createServerFn({ method: 'GET' })
@@ -874,12 +896,22 @@ export const listAllPayouts = createServerFn({ method: 'GET' })
     if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
     const adminClient = getAdminClient();
 
-    const { data, error } = await adminClient
+    const { data: payoutData, error } = await adminClient
       .from('payouts')
-      .select('*, profiles(full_name, email, intern_id)')
+      .select('*')
       .order('created_at', { ascending: false });
     if (error) return [];
-    return data || [];
+
+    const { data: profData } = await adminClient
+      .from('profiles')
+      .select('id, full_name, email, intern_id');
+    const profMap = new Map();
+    (profData || []).forEach((p: any) => profMap.set(p.id, p));
+
+    return (payoutData || []).map((p: any) => ({
+      ...p,
+      profiles: profMap.get(p.user_id) || null
+    }));
   });
 
 export const createPayout = createServerFn({ method: 'POST' })
@@ -1053,12 +1085,22 @@ export const listAllExpenses = createServerFn({ method: "GET" })
     if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
     const adminClient = getAdminClient();
 
-    const { data, error } = await adminClient
+    const { data: expData, error } = await adminClient
       .from("expense_claims")
-      .select("*, profiles(full_name, email)")
+      .select("*")
       .order("created_at", { ascending: false });
     if (error) return [];
-    return data || [];
+
+    const { data: profData } = await adminClient
+      .from("profiles")
+      .select("id, full_name, email");
+    const profMap = new Map();
+    (profData || []).forEach((p: any) => profMap.set(p.id, p));
+
+    return (expData || []).map((e: any) => ({
+      ...e,
+      profiles: profMap.get(e.user_id) || null
+    }));
   });
 
 export const updateExpenseStatus = createServerFn({ method: "POST" })
@@ -1079,12 +1121,22 @@ export const listAllSupportTickets = createServerFn({ method: "GET" })
     if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
     const adminClient = getAdminClient();
 
-    const { data, error } = await adminClient
+    const { data: ticketData, error } = await adminClient
       .from("support_tickets")
-      .select("*, profiles(full_name, email)")
+      .select("*")
       .order("created_at", { ascending: false });
     if (error) return [];
-    return data || [];
+
+    const { data: profData } = await adminClient
+      .from("profiles")
+      .select("id, full_name, email");
+    const profMap = new Map();
+    (profData || []).forEach((p: any) => profMap.set(p.id, p));
+
+    return (ticketData || []).map((t: any) => ({
+      ...t,
+      profiles: profMap.get(t.user_id) || null
+    }));
   });
 
 export const updateSupportTicketStatus = createServerFn({ method: "POST" })
