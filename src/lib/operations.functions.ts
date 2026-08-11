@@ -78,45 +78,60 @@ export const revokeUser = createServerFn({ method: "POST" })
 
 export const listTeamMembers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    // Fetch users who have employee or intern role
-    const { data: roles, error: rolesError } = await supabase
+  .handler(async () => {
+    const adminClient = getAdminClient();
+
+    // Fetch user roles
+    const { data: roles } = await adminClient
       .from("user_roles")
-      .select("user_id, role")
-      .in("role", ["employee", "intern"]);
-
-    if (rolesError) throw new Error(rolesError.message);
-    if (!roles || roles.length === 0) return [];
-
-    const userIds = roles.map((r: any) => r.user_id);
+      .select("user_id, role");
 
     // Bulk fetch profiles
-    const { data: profiles } = await supabase
+    const { data: profiles } = await adminClient
       .from("profiles")
-      .select("*")
-      .in("id", userIds);
+      .select("*");
 
-    // Fetch all auth users to avoid rate limiting on getUserById
-    const { data: authData } = await supabase.auth.admin.listUsers();
+    // Fetch auth users
+    const { data: authData } = await adminClient.auth.admin.listUsers();
     const authUsers = authData?.users || [];
 
-    const members = roles.map((r: any) => {
-      const authUser = authUsers.find((u: any) => u.id === r.user_id);
-      const profile = profiles?.find((p: any) => p.id === r.user_id) || {};
-      
-      const email = authUser?.email || profile.email || "";
-      const full_name = profile.full_name || authUser?.user_metadata?.full_name || email.split("@")[0];
+    const roleMap = new Map<string, string>();
+    (roles || []).forEach((r: any) => roleMap.set(r.user_id, r.role));
 
-      return {
-        id: r.user_id,
-        role: r.role,
-        ...profile,
+    const membersMap = new Map<string, any>();
+
+    (profiles || []).forEach((p: any) => {
+      const authUser = authUsers.find((u: any) => u.id === p.id);
+      const assignedRole = roleMap.get(p.id) || (p.intern_id ? "intern" : "employee");
+      const email = p.email || authUser?.email || "";
+      const full_name = p.full_name || authUser?.user_metadata?.full_name || email.split("@")[0];
+
+      membersMap.set(p.id, {
+        id: p.id,
+        user_id: p.id,
+        role: assignedRole,
+        ...p,
         email,
         full_name,
-      };
+      });
     });
 
-    return members.filter((m: any) => m.email || m.full_name);
+    (roles || []).forEach((r: any) => {
+      if (!membersMap.has(r.user_id)) {
+        const authUser = authUsers.find((u: any) => u.id === r.user_id);
+        const email = authUser?.email || "";
+        const full_name = authUser?.user_metadata?.full_name || email.split("@")[0];
+        membersMap.set(r.user_id, {
+          id: r.user_id,
+          user_id: r.user_id,
+          role: r.role,
+          email,
+          full_name,
+        });
+      }
+    });
+
+    return Array.from(membersMap.values());
   });
 
 // ─── Announcements ────────────────────────────────────────────────

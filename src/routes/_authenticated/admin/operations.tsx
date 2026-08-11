@@ -220,11 +220,22 @@ function OperationsDashboard() {
 
   const processedInternAttendance = useMemo(() => {
     return interns.map((intern: any) => {
-      const internAttendance = (attendanceQ.data || []).filter((a: any) => a.user_id === intern.id);
+      const internAttendance = (attendanceQ.data || []).filter((a: any) => {
+        if (!a) return false;
+        if (a.user_id === intern.id || a.user_id === intern.user_id) return true;
+        if (intern.email && a.profiles?.email && a.profiles.email.toLowerCase() === intern.email.toLowerCase()) return true;
+        if (intern.email && a.email && a.email.toLowerCase() === intern.email.toLowerCase()) return true;
+        return false;
+      });
       const totalAttendance = internAttendance.length;
 
       const todayStr = new Date().toISOString().split('T')[0];
-      const todayLog = internAttendance.find((a: any) => a.date === todayStr);
+      const todayDateStr = new Date().toDateString();
+      const todayLog = internAttendance.find((a: any) => {
+        if (a.date === todayStr) return true;
+        if (a.clock_in && new Date(a.clock_in).toDateString() === todayDateStr) return true;
+        return false;
+      });
 
       let activeStatus: "Active" | "Offline" | "Completed" = "Offline";
       let clockInTime = "—";
