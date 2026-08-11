@@ -1328,6 +1328,28 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
     }
   }
 
+  async function handleDownloadInternshipCertificate() {
+    const loadingToast = toast.loading("Generating Internship Completion Certificate...");
+    try {
+      const templateBase64 = await urlToBase64("/certificate_template.png");
+      const { generateInternshipCertificatePdf } = await import("@/lib/certificateGenerator");
+      const doc = generateInternshipCertificatePdf({
+        candidateName: app.full_name,
+        internId: app.intern_id || `VY-INT-${app.id.slice(0, 6).toUpperCase()}`,
+        domainName: app.domain || "Technology & Software",
+        subDomainName: app.sub_domain || "Full Stack Web Development",
+        issueDate: new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+        templateBase64,
+      });
+      doc.save(`Internship_Certificate_${app.full_name.replace(/\s+/g, "_")}.pdf`);
+      toast.dismiss(loadingToast);
+      toast.success("Internship Completion Certificate downloaded successfully!");
+    } catch (err: any) {
+      toast.dismiss(loadingToast);
+      toast.error("Failed to generate certificate: " + err.message);
+    }
+  }
+
   const isPdf = !!app?.resume_path && /\.pdf$/i.test(app.resume_path);
 
   useEffect(() => {
@@ -1486,6 +1508,15 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
             >
               <Award className="h-4 w-4 mr-1.5" />
               NOC Document
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadInternshipCertificate}
+              className="bg-indigo-700 text-white hover:bg-indigo-800 border-indigo-700"
+            >
+              <GraduationCap className="h-4 w-4 mr-1.5" />
+              Certificate PDF
             </Button>
             <Button
               variant="ghost"

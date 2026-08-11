@@ -1135,7 +1135,38 @@ function InternDashboard() {
                           <div className="font-semibold text-slate-800">{c.name}</div>
                           <div className="text-[10px] font-mono text-slate-400">{c.code}</div>
                         </div>
-                        <Button size="sm" variant="outline" className="h-7 text-xs text-emerald-700 border-emerald-200 hover:bg-emerald-50" onClick={() => toast.success(`Downloading ${c.name}...`)}>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="h-7 text-xs text-emerald-700 border-emerald-200 hover:bg-emerald-50" 
+                          onClick={async () => {
+                            const loadingToast = toast.loading(`Generating ${c.name}...`);
+                            try {
+                              const res = await fetch("/certificate_template.png");
+                              const blob = await res.blob();
+                              const templateBase64 = await new Promise<string>((resolve) => {
+                                const reader = new FileReader();
+                                reader.onloadend = () => resolve(reader.result as string);
+                                reader.readAsDataURL(blob);
+                              });
+                              const { generateInternshipCertificatePdf } = await import("@/lib/certificateGenerator");
+                              const doc = generateInternshipCertificatePdf({
+                                candidateName: profile?.full_name || profile?.email || "Candidate Name",
+                                internId: profile?.intern_id || c.code,
+                                domainName: domain || "Engineering & Technology",
+                                subDomainName: subDomain || "Full Stack Web Development",
+                                issueDate: new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+                                templateBase64,
+                              });
+                              doc.save(`${c.name.replace(/\s+/g, "_")}_${(profile?.full_name || "Intern").replace(/\s+/g, "_")}.pdf`);
+                              toast.dismiss(loadingToast);
+                              toast.success(`${c.name} downloaded successfully!`);
+                            } catch (err: any) {
+                              toast.dismiss(loadingToast);
+                              toast.error("Failed to generate certificate: " + err.message);
+                            }
+                          }}
+                        >
                           <Download className="h-3 w-3 mr-1" /> PDF
                         </Button>
                       </div>
