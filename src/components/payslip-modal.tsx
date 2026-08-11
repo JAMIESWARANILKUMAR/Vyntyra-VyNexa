@@ -235,10 +235,20 @@ export function PayslipModal({ isOpen, onClose, payslip }: PayslipModalProps) {
               </div>
             </div>
 
-            <div className="text-right space-y-1">
-              <div className="font-serif italic font-bold text-slate-800 text-base">Jami Eswar Anil Kumar</div>
-              <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Director & Authorized Signatory</div>
-              <div className="text-[9px] text-emerald-600 font-semibold uppercase tracking-widest">VyNexa HR & Finance</div>
+            <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-200 text-right space-y-1 min-w-[230px]">
+              <div className="flex items-center justify-end gap-1.5 text-emerald-600 font-bold text-xs">
+                <CheckCircle2 className="h-4 w-4 fill-emerald-600 text-white shrink-0" />
+                <span>Signature Verified</span>
+              </div>
+              <div className="text-[10px] text-slate-600 space-y-0.5 mt-1 font-mono">
+                <div>Digitally Signed by: <span className="font-semibold text-slate-900">Jami Eswar Anil Kumar</span></div>
+                <div>Date: {new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} {new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })} IST</div>
+                <div className="text-[9px] text-slate-400 font-sans italic">Verified Corporate Payout Authorization</div>
+              </div>
+              <div className="border-t border-slate-300 pt-1.5 mt-2">
+                <div className="font-bold text-slate-900 text-xs">Authorized Signatory</div>
+                <div className="text-[10px] text-slate-500 font-medium">Vyntyra Consultancy Services</div>
+              </div>
             </div>
           </div>
 

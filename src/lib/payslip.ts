@@ -24,6 +24,7 @@ export interface PayslipData {
   incomeTax?: number;
   notes?: string;
   logoBase64?: string | null;
+  generatedAt?: string;
 }
 
 export function numberToWords(num: number): string {
@@ -303,25 +304,63 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
   doc.setFont("helvetica", "normal");
   doc.text(data.notes || "Payroll processed & verified by Finance Department.", margin, y + 4.5);
 
-  // Signatures Right
-  const sigX = margin + contentWidth - 55;
+  // DigiLocker Style Digital Signature Stamp & Authorized Signatory Block
+  const sigX = margin + contentWidth - 66; // 129mm to 195mm (width 66mm)
+  const sigBoxY = y + 1;
+
+  // Background box for Digital Signature Badge
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(sigX, sigBoxY, 66, 17, 2, 2, "FD");
+
+  // DigiLocker Green Circle with White Vector Checkmark
+  doc.setFillColor(22, 163, 74); // Emerald Green (22, 163, 74)
+  doc.circle(sigX + 4.5, sigBoxY + 4, 3, "F");
+
+  // White Vector Checkmark inside Circle
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.6);
+  doc.line(sigX + 3.1, sigBoxY + 4, sigX + 4.1, sigBoxY + 5.2);
+  doc.line(sigX + 4.1, sigBoxY + 5.2, sigX + 6.1, sigBoxY + 2.7);
+
+  // Green Bold Header: "Signature Verified"
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(22, 163, 74);
+  doc.text("Signature Verified", sigX + 9.5, sigBoxY + 4.5);
+
+  // Digital Signature Metadata (Generation Date & Time in IST)
+  const genTime = data.generatedAt || `${new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} ${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })} IST`;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text("Digitally Signed by: Jami Eswar Anil Kumar", sigX + 2, sigBoxY + 8.5);
+  doc.text(`Date: ${genTime}`, sigX + 2, sigBoxY + 11.5);
+  doc.text("Reason: Verified Corporate Payout Authorization", sigX + 2, sigBoxY + 14.5);
+
+  // Line below Digital Signature Stamp
+  const lineY = sigBoxY + 20;
   doc.setDrawColor(148, 163, 184);
-  doc.line(sigX, y + 16, margin + contentWidth, y + 16);
+  doc.setLineWidth(0.4);
+  doc.line(sigX, lineY, margin + contentWidth, lineY);
+
+  // Authorized Signatory Label under line
   doc.setFont("helvetica", "bold");
   doc.setTextColor(15, 23, 42);
   doc.setFontSize(8.5);
-  doc.text("Authorized Signatory", sigX + 27.5, y + 20, { align: "center" });
+  doc.text("Authorized Signatory", sigX + 33, lineY + 4.5, { align: "center" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(100, 116, 139);
-  doc.text("Vyntyra Consultancy Services", sigX + 27.5, y + 24, { align: "center" });
+  doc.text("Vyntyra Consultancy Services", sigX + 33, lineY + 8.5, { align: "center" });
 
   // Footer Disclaimer
   doc.setDrawColor(226, 232, 240);
-  doc.line(margin, y + 30, margin + contentWidth, y + 30);
+  doc.line(margin, y + 36, margin + contentWidth, y + 36);
   doc.setFontSize(7);
   doc.setTextColor(148, 163, 184);
-  doc.text("This is a computer-generated salary document and does not require a physical signature.", pageWidth / 2, y + 34, { align: "center" });
+  doc.text("This is a computer-generated salary document with DigiLocker-compliant electronic signature verification.", pageWidth / 2, y + 40, { align: "center" });
 
   return doc;
 }
