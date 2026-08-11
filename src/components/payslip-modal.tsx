@@ -47,6 +47,7 @@ export function PayslipModal({ isOpen, onClose, payslip }: PayslipModalProps) {
   }
 
   async function handleDownloadPdf() {
+    if (!payslip) return;
     try {
       const logoBase64 = await urlToBase64("/icon-512.png");
       const doc = generatePayslipPdf({
