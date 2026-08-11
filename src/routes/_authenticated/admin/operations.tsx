@@ -146,6 +146,7 @@ function OperationsDashboard() {
   // Form states
   const [provisionForm, setProvisionForm] = useState({ full_name: "", email: "", password: "", role: "employee" as "employee" | "intern", department: "", position: "", bank_account_number: "", employee_id: "", intern_id: "", duration_months: "" });
   const [announcementForm, setAnnouncementForm] = useState({ title: "", body: "", target_role: "all" as "employee" | "intern" | "all" });
+  const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium" as "low" | "medium" | "high", is_pool_task: false });
   const [scheduleForm, setScheduleForm] = useState({ title: "", description: "", event_date: "", event_time: "", target_role: "all" as "employee" | "intern" | "all" | "individual", target_user_id: "" });
   const [meetingForm, setMeetingForm] = useState({ title: "", meeting_link: "", start_time: "", target_role: "all" as "employee" | "intern" | "all" | "individual", target_user_id: "" });
   const [resourceForm, setResourceForm] = useState({ title: "", type: "document" as "document" | "video" | "link" | "template" | "guide", description: "", target_role: "all" as "employee" | "intern" | "all" | "individual", target_user_id: "" });
@@ -504,7 +505,7 @@ function OperationsDashboard() {
       await doCreateResource({ data: { ...resourceForm, url: fileUrl } });
       toast.success("Resource added!");
       setResourceOpen(false);
-      setResourceForm({ title: "", type: "document", description: "", target_role: "all" });
+      setResourceForm({ title: "", type: "document", description: "", target_role: "all", target_user_id: "" });
       setResourceFile(null);
       qc.invalidateQueries({ queryKey: ["resources"] });
     } catch (err: any) {
