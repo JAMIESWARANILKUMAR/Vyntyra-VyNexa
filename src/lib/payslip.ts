@@ -340,20 +340,20 @@ export function generatePayslipPdf(data: PayslipData): jsPDF {
   doc.text("Reason: Verified Corporate Payout Authorization", sigX + 2, sigBoxY + 14.5);
 
   // Line below Digital Signature Stamp
-  const lineY = sigBoxY + 20;
+  const sigLineY = sigBoxY + 20;
   doc.setDrawColor(148, 163, 184);
   doc.setLineWidth(0.4);
-  doc.line(sigX, lineY, margin + contentWidth, lineY);
+  doc.line(sigX, sigLineY, margin + contentWidth, sigLineY);
 
   // Authorized Signatory Label under line
   doc.setFont("helvetica", "bold");
   doc.setTextColor(15, 23, 42);
   doc.setFontSize(8.5);
-  doc.text("Authorized Signatory", sigX + 33, lineY + 4.5, { align: "center" });
+  doc.text("Authorized Signatory", sigX + 33, sigLineY + 4.5, { align: "center" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(100, 116, 139);
-  doc.text("Vyntyra Consultancy Services", sigX + 33, lineY + 8.5, { align: "center" });
+  doc.text("Vyntyra Consultancy Services", sigX + 33, sigLineY + 8.5, { align: "center" });
 
   // Footer Disclaimer
   doc.setDrawColor(226, 232, 240);
