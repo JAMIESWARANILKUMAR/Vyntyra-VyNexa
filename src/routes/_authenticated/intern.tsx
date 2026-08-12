@@ -1249,6 +1249,16 @@ function InternDashboard() {
                             <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wide ${s.badge}`}>{s.label}</span>
                             {task.priority && <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${task.priority === "high" ? "bg-red-100 text-red-700" : task.priority === "medium" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>{task.priority}</span>}
                             {task.due_date && <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="h-3 w-3" />Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>}
+                            {(task.project_requirements || task.task_file_url) && (
+                              <a
+                                href={task.project_requirements || task.task_file_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline inline-flex items-center gap-1"
+                              >
+                                <FileText className="h-3.5 w-3.5" /> Attached Task File ↗
+                              </a>
+                            )}
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-2 shrink-0">

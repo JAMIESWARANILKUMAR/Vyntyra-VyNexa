@@ -400,6 +400,169 @@ export const updateTaskByAdmin = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    tasks: z.array(z.object({
+      title: z.string().min(1),
+      description: z.string().optional(),
+      task_file_url: z.string().optional(),
+      due_date: z.string().optional(),
+      priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
+    })).min(1),
+    target_intern_ids: z.array(z.string()).optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    let internIds = data.target_intern_ids || [];
+    if (!internIds.length) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, role, department")
+        .or("role.eq.intern,department.ilike.%intern%,position.ilike.%intern%");
+      internIds = (profiles || []).map((p: any) => p.id);
+    }
+    if (!internIds.length) {
+      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "intern");
+      internIds = (roles || []).map((r: any) => r.user_id);
+    }
+    if (!internIds.length) {
+      const { data: allProfiles } = await supabase.from("profiles").select("id");
+      internIds = (allProfiles || []).map((p: any) => p.id);
+    }
+    if (!internIds.length) throw new Error("No active interns found in system to assign tasks to.");
+
+    const taskPayloads: any[] = [];
+    const now = new Date().toISOString();
+
+    for (let i = 0; i < internIds.length; i++) {
+      const internId = internIds[i];
+      const taskItem = data.tasks[i % data.tasks.length];
+      taskPayloads.push({
+        title: taskItem.title,
+        description: taskItem.description || "Assigned Internship Project Task",
+        project_requirements: taskItem.task_file_url || null,
+        deliverable_url: null,
+        due_date: taskItem.due_date || null,
+        priority: taskItem.priority || "medium",
+        assigned_to: internId,
+        target_user_id: internId,
+        target_role: "intern",
+        status: "pending",
+        is_pool_task: false,
+        created_by: context.userId,
+        created_at: now,
+      });
+    }
+
+    const { error } = await supabase.from("tasks").insert(taskPayloads);
+    if (error) {
+      const fallbackPayloads = taskPayloads.map(t => {
+        const copy = { ...t };
+        delete copy.target_user_id;
+        return copy;
+      });
+      const { error: err2 } = await supabase.from("tasks").insert(fallbackPayloads);
+      if (err2) throw new Error(err2.message);
+    }
+
+    return {
+      success: true,
+      assignedCount: taskPayloads.length,
+      internCount: internIds.length,
+    };
+  });
+
+export const assignManualTaskToInterns = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    title: z.string().min(1),
+    description: z.string().optional(),
+    task_file_url: z.string().optional(),
+    due_date: z.string().optional(),
+    priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
+    target_intern_ids: z.array(z.string()).min(1),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const now = new Date().toISOString();
+    const taskPayloads = data.target_intern_ids.map(internId => ({
+      title: data.title,
+      description: data.description || "Manual Internship Task",
+      project_requirements: data.task_file_url || null,
+      due_date: data.due_date || null,
+      priority: data.priority || "medium",
+      assigned_to: internId,
+      target_user_id: internId,
+      target_role: "intern",
+      status: "pending",
+      is_pool_task: false,
+      created_by: context.userId,
+      created_at: now,
+    }));
+
+    const { error } = await supabase.from("tasks").insert(taskPayloads);
+    if (error) {
+      const fallbackPayloads = taskPayloads.map(t => {
+        const copy = { ...t };
+        delete copy.target_user_id;
+        return copy;
+      });
+      const { error: err2 } = await supabase.from("tasks").insert(fallbackPayloads);
+      if (err2) throw new Error(err2.message);
+    }
+
+    return { success: true, count: taskPayloads.length };
+  });
+
+export const listAllInternTasksWithProgress = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: tasks, error } = await supabase
+      .from("tasks")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, department, position, intern_id, avatar_url");
+
+    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+    return (tasks || []).map((t: any) => {
+      const assignedId = t.assigned_to || t.target_user_id;
+      return {
+        ...t,
+        assigned_profile: profileMap.get(assignedId) || null,
+      };
+    });
+  });
+
+export const reviewInternTaskByAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    taskId: z.string().uuid(),
+    status: z.enum(["pending", "in_progress", "submitted", "completed", "blocked"]),
+    admin_remarks: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const updatePayload: any = {
+      status: data.status,
+      updated_at: new Date().toISOString(),
+    };
+    if (data.admin_remarks !== undefined) {
+      updatePayload.progress_notes = data.admin_remarks;
+    }
+
+    const { error } = await supabase
+      .from("tasks")
+      .update(updatePayload)
+      .eq("id", data.taskId);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
 // ─── Schedules ────────────────────────────────────────────────────
 // ─── Schedules ────────────────────────────────────────────────────
 const scheduleSchema = z.object({

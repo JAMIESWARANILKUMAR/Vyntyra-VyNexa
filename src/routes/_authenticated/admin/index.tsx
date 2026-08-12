@@ -48,6 +48,7 @@ import { Sparkles, RefreshCw, GraduationCap, FolderGit2, Link2, FileSpreadsheet,
 import { WorldClocks } from "@/components/world-clocks";
 import { InstallPwaButton } from "@/components/install-pwa-button";
 import { Switch } from "@/components/ui/switch";
+import { AdminInternTasksView } from "@/components/admin-intern-tasks-view";
 import {
   changeApplicationStatus,
   listStatusEvents,
@@ -733,6 +734,11 @@ function AdminDashboard() {
           onCreateNew={() => { setEditingJob(null); setJobDialogOpen(true); }}
           onEdit={(j: any) => { setEditingJob(j); setJobDialogOpen(true); }}
         />
+
+        {/* ── Intern Task Assignment & Progress Tracker ── */}
+        <div className="my-8">
+          <AdminInternTasksView />
+        </div>
 
         {/* ── Applications Section ── */}
         <div className="mb-8 mt-8">
