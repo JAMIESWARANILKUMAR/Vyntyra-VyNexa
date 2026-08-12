@@ -604,23 +604,39 @@ export async function dispatchSelectionEmail(applicationId: string) {
   const subject = `OFFICIAL SELECTION: Vyntyra Industrial Internship Program 2026`;
   const portalLink = `https://careers.vyntyraconsultancyservices.in/auth/intern`;
   const htmlBody = `
-    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-      <h2 style="color: #0f172a; border-bottom: 2px solid #10b981; padding-bottom: 10px;">Selection Confirmation & Joining Offer</h2>
-      <p>Dear <strong>${app.full_name}</strong>,</p>
-      <p>Congratulations! You have been officially selected for the <strong>Vyntyra Industrial Internship Program 2026</strong> under Project VyNexa.</p>
-      
-      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 20px 0;">
-        <h3 style="margin-top: 0; color: #0f172a;">Intern Portal Login Credentials:</h3>
-        <p style="margin: 5px 0;"><strong>Portal URL:</strong> <a href="${portalLink}">${portalLink}</a></p>
-        <p style="margin: 5px 0;"><strong>Username:</strong> ${app.email}</p>
-        <p style="margin: 5px 0;"><strong>Temporary Password:</strong> ${tempPassword}</p>
-        <p style="font-size: 12px; color: #64748b; margin-top: 10px;">*You will be prompted to update your password on your first login for security reasons.</p>
-      </div>
+    <div style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); padding: 30px 20px; font-family: sans-serif; min-height: 100%;">
+      <div style="max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
+        <h2 style="color: #0f172a; margin-top: 0; border-bottom: 2px solid #10b981; padding-bottom: 12px; font-size: 20px;">Selection Confirmation & Joining Offer</h2>
+        <p style="font-size: 14.5px; color: #334155; line-height: 1.5;">Dear <strong>${app.full_name}</strong>,</p>
+        <p style="font-size: 14.5px; color: #334155; line-height: 1.5;">Congratulations! You have been officially selected for the <strong>Vyntyra Industrial Internship Program 2026</strong> under Project VyNexa.</p>
+        
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #0f172a; font-size: 14px;">Intern Portal Login Credentials:</h3>
+          <p style="margin: 5px 0; font-size: 13.5px; color: #334155;"><strong>Portal URL:</strong> <a href="${portalLink}" style="color: #10b981; text-decoration: none;">${portalLink}</a></p>
+          <p style="margin: 5px 0; font-size: 13.5px; color: #334155;"><strong>Username:</strong> ${app.email}</p>
+          <p style="margin: 5px 0; font-size: 13.5px; color: #334155;"><strong>Temporary Password:</strong> <code style="background-color: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-family: monospace;">${tempPassword}</code></p>
+          <p style="font-size: 11.5px; color: #64748b; margin-top: 10px; font-style: italic;">*You will be prompted to update your password on your first login for security reasons.</p>
+        </div>
 
-      <p>Your official <strong>No Objection Certificate (NOC)</strong> and <strong>Offer Letter</strong> have been generated with your official internship start date set for <strong>${startDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })}</strong> (4 days from today).</p>
-      <p>Please log in to your Intern Dashboard to accept your offer, complete onboarding, and access your project resources.</p>
-      
-      <p style="margin-top: 30px;">Best Regards,<br><strong>Corporate HR Division</strong><br>Vyntyra Consultancy Services</p>
+        <p style="font-size: 14.5px; color: #334155; line-height: 1.5;">Your official <strong>No Objection Certificate (NOC)</strong> and <strong>Offer Letter</strong> have been generated with your official internship start date set for <strong>${startDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })}</strong> (4 days from today).</p>
+        
+        <p style="font-size: 14.5px; color: #334155; margin-bottom: 8px;">You can download your selection documents directly using the links below:</p>
+        
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 15px 0 25px 0;">
+          <tr>
+            <td>
+              <a href="${offerLetterUrl || '#'}" target="_blank" style="display: inline-block; padding: 10px 18px; font-family: sans-serif; font-size: 13px; font-weight: bold; color: #ffffff; background-color: #0f172a; border-radius: 6px; text-decoration: none; margin-right: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">Download Offer Letter</a>
+            </td>
+            <td>
+              <a href="${nocUrl || '#'}" target="_blank" style="display: inline-block; padding: 10px 18px; font-family: sans-serif; font-size: 13px; font-weight: bold; color: #ffffff; background-color: #10b981; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">Download NOC</a>
+            </td>
+          </tr>
+        </table>
+
+        <p style="font-size: 14.5px; color: #334155; line-height: 1.5;">Please log in to your Intern Dashboard to accept your offer, complete onboarding, and access your project resources.</p>
+        
+        <p style="margin-top: 30px; font-size: 14px; color: #475569; line-height: 1.5;">Best Regards,<br><strong>Corporate HR Division</strong><br>Vyntyra Consultancy Services</p>
+      </div>
     </div>
   `;
 
