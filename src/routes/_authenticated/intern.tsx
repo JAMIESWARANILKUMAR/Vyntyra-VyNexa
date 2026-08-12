@@ -345,6 +345,11 @@ function InternDashboard() {
               <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 sm:h-9 sm:w-9" />
               <div className="text-xs text-slate-500 hidden xl:block truncate max-w-[160px]">{email}</div>
             </div>
+            
+            <Button variant="ghost" size="sm" onClick={() => setShowForcePasswordModal(true)} className="gap-1.5 text-slate-600 hover:text-emerald-600 px-2 sm:px-3 text-xs">
+              <Lock className="h-4 w-4" />
+              <span className="hidden sm:inline font-medium">Change Password</span>
+            </Button>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5 text-slate-600 hover:text-red-600 px-2 sm:px-3 text-xs">
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline font-medium">Sign Out</span>
@@ -1626,9 +1631,13 @@ function InternDashboard() {
               <div className="inline-flex p-3 rounded-full bg-amber-50 text-amber-600 mb-2">
                 <ShieldCheck className="h-8 w-8" />
               </div>
-              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Security Update Required</h2>
+              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+                {session?.user?.user_metadata?.must_change_password ? "Security Update Required" : "Change Your Password"}
+              </h2>
               <p className="text-sm text-slate-500 font-light leading-relaxed">
-                You are currently signed in with a temporary password. For your account security, please choose a new strong password before continuing.
+                {session?.user?.user_metadata?.must_change_password 
+                  ? "You are currently signed in with a temporary password. For your account security, please choose a new strong password before continuing."
+                  : "Update your password to keep your account secure. Please choose a strong password."}
               </p>
             </div>
 
@@ -1659,21 +1668,37 @@ function InternDashboard() {
                 />
               </div>
 
-              <Button
-                type="submit"
-                disabled={isUpdatingPassword}
-                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 active:scale-[0.98] transition-all"
-              >
-                {isUpdatingPassword ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Updating Security...
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="h-4 w-4" /> Save &amp; Unlock Dashboard
-                  </>
+              <div className="flex gap-3 pt-2">
+                {!session?.user?.user_metadata?.must_change_password && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowForcePasswordModal(false);
+                      setNewPassword("");
+                      setConfirmPassword("");
+                    }}
+                    className="flex-1 py-3 rounded-xl h-auto"
+                  >
+                    Cancel
+                  </Button>
                 )}
-              </Button>
+                <Button
+                  type="submit"
+                  disabled={isUpdatingPassword}
+                  className={`py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 active:scale-[0.98] transition-all h-auto ${session?.user?.user_metadata?.must_change_password ? "w-full" : "flex-1"}`}
+                >
+                  {isUpdatingPassword ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Updating...
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="h-4 w-4" /> Save
+                    </>
+                  )}
+                </Button>
+              </div>
             </form>
           </div>
         </div>
