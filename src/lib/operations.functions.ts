@@ -457,7 +457,7 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
     const { error } = await supabase.from("tasks").insert(taskPayloads);
     if (error) {
       const fallbackPayloads = taskPayloads.map(t => {
-        const copy = { ...t };
+        const copy: any = { ...t };
         delete copy.target_user_id;
         return copy;
       });
@@ -502,7 +502,7 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
     const { error } = await supabase.from("tasks").insert(taskPayloads);
     if (error) {
       const fallbackPayloads = taskPayloads.map(t => {
-        const copy = { ...t };
+        const copy: any = { ...t };
         delete copy.target_user_id;
         return copy;
       });
