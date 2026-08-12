@@ -7,7 +7,7 @@ import {
   CheckCircle2, Video, CalendarDays, User, BookOpen, Link2, FileText,
   Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
-  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield
+  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -1122,70 +1122,141 @@ function InternDashboard() {
                 </div>
 
                 {/* Certificates Engine */}
-                <div className="p-5 rounded-xl border bg-emerald-50/50 border-emerald-200 space-y-4">
-                  <span className="font-bold text-xs uppercase text-emerald-800 block">Verifiable Credentials</span>
-                  <div className="space-y-2">
-                    {[
-                      { name: "Internship Completion Certificate", code: "VY-INT-2026-88" },
-                      { name: "Letter of Recommendation (LOR)", code: "VY-LOR-2026-92" },
-                      { name: "Official Experience Certificate", code: "VY-EXP-2026-04" }
-                    ].map((c, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2.5 rounded bg-white border text-xs">
-                        <div>
-                          <div className="font-semibold text-slate-800">{c.name}</div>
-                          <div className="text-[10px] font-mono text-slate-400">{c.code}</div>
-                        </div>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="h-7 text-xs text-emerald-700 border-emerald-200 hover:bg-emerald-50" 
-                          onClick={async () => {
-                            const loadingToast = toast.loading(`Generating ${c.name}...`);
-                            try {
-                              const internId = profile?.intern_id || c.code;
-                              const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${internId}`;
-                              const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(verificationUrl)}`;
-                              let qrCodeBase64: string | null = null;
-                              try {
-                                const qrRes = await fetch(qrApiUrl);
-                                const qrBlob = await qrRes.blob();
-                                qrCodeBase64 = await new Promise<string>((resolve) => {
-                                  const reader = new FileReader();
-                                  reader.onloadend = () => resolve(reader.result as string);
-                                  reader.readAsDataURL(qrBlob);
-                                });
-                              } catch (e) {
-                                // fallback if offline
-                              }
+                {(() => {
+                  const createdAt = profile?.created_at ? new Date(profile.created_at) : new Date();
+                  const completionDateObj = profile?.end_date ? new Date(profile.end_date) : new Date(createdAt.getTime() + 60 * 24 * 60 * 60 * 1000);
+                  const unlockDateObj = new Date(completionDateObj.getTime() - 1 * 24 * 60 * 60 * 1000);
+                  const isCredUnlocked = Date.now() >= unlockDateObj.getTime();
 
-                              const { generateInternshipCertificatePdf } = await import("@/lib/certificateGenerator");
-                              const startDateStr = profile?.created_at ? new Date(profile.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "12 Jun 2026";
-                              const endDateStr = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-                              const doc = generateInternshipCertificatePdf({
-                                candidateName: profile?.full_name || profile?.email || "Candidate Name",
-                                internId,
-                                domainName: profile?.department || "Engineering & Technology",
-                                subDomainName: profile?.position || "Full Stack Web Development",
-                                startDate: startDateStr,
-                                completionDate: endDateStr,
-                                issueDate: endDateStr,
-                                qrCodeBase64,
-                              });
-                              doc.save(`${c.name.replace(/\s+/g, "_")}_${(profile?.full_name || "Intern").replace(/\s+/g, "_")}.pdf`);
-                              toast.dismiss(loadingToast);
-                              toast.success(`${c.name} downloaded successfully!`);
-                            } catch (err: any) {
-                              toast.dismiss(loadingToast);
-                              toast.error("Failed to generate certificate: " + err.message);
-                            }
-                          }}
-                        >
-                          <Download className="h-3 w-3 mr-1" /> PDF
-                        </Button>
+                  return (
+                    <div className="p-5 rounded-xl border bg-gradient-to-br from-emerald-50/60 via-white to-amber-50/40 border-emerald-200 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs uppercase text-emerald-800 tracking-wider flex items-center gap-1.5">
+                          <Award className="h-4 w-4 text-emerald-600" /> Verifiable Credentials Engine
+                        </span>
+                        {isCredUnlocked ? (
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                            <Unlock className="h-3 w-3" /> Unlocked for Download
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
+                            <Lock className="h-3 w-3" /> Unlocks 1 Day Before Completion
+                          </span>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </div>
+
+                      <div className="space-y-2.5">
+                        {[
+                          { name: "Internship Completion Certificate", code: "VY-INT-2026-88" },
+                          { name: "Letter of Recommendation (LOR)", code: "VY-LOR-2026-92" },
+                          { name: "Official Experience Certificate", code: "VY-EXP-2026-04" }
+                        ].map((c, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200 text-xs shadow-xs hover:border-emerald-300 transition-colors">
+                            <div className="flex items-center gap-2.5">
+                              {!isCredUnlocked ? (
+                                <div className="h-8 w-8 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0 relative">
+                                  <Lock className="h-4 w-4 text-amber-700 animate-bounce" />
+                                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-amber-500 rounded-full animate-ping" />
+                                </div>
+                              ) : (
+                                <div className="h-8 w-8 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0">
+                                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600" />
+                                </div>
+                              )}
+                              <div>
+                                <div className="font-semibold text-slate-800">{c.name}</div>
+                                <div className="text-[10px] font-mono text-slate-400">{c.code} &middot; ISO 9001:2015 Verified</div>
+                              </div>
+                            </div>
+
+                            {isCredUnlocked ? (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="h-8 text-xs text-emerald-700 border-emerald-200 hover:bg-emerald-50 font-semibold"
+                                onClick={async () => {
+                                  const loadingToast = toast.loading(`Generating ${c.name}...`);
+                                  try {
+                                    const internId = profile?.intern_id || c.code;
+                                    const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${internId}`;
+                                    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(verificationUrl)}`;
+                                    let qrCodeBase64: string | null = null;
+                                    try {
+                                      const qrRes = await fetch(qrApiUrl);
+                                      const qrBlob = await qrRes.blob();
+                                      qrCodeBase64 = await new Promise<string>((resolve) => {
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => resolve(reader.result as string);
+                                        reader.readAsDataURL(qrBlob);
+                                      });
+                                    } catch (e) {}
+
+                                    const { generateInternshipCertificatePdf } = await import("@/lib/certificateGenerator");
+                                    const startDateStr = profile?.created_at ? new Date(profile.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "12 Jun 2026";
+                                    const endDateStr = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+                                    const doc = generateInternshipCertificatePdf({
+                                      candidateName: profile?.full_name || profile?.email || "Candidate Name",
+                                      internId,
+                                      domainName: profile?.department || "Engineering & Technology",
+                                      subDomainName: profile?.position || "Full Stack Web Development",
+                                      startDate: startDateStr,
+                                      completionDate: endDateStr,
+                                      issueDate: endDateStr,
+                                      qrCodeBase64,
+                                    });
+                                    doc.save(`${c.name.replace(/\s+/g, "_")}_${(profile?.full_name || "Intern").replace(/\s+/g, "_")}.pdf`);
+                                    toast.dismiss(loadingToast);
+                                    toast.success(`${c.name} downloaded successfully!`);
+                                  } catch (err: any) {
+                                    toast.dismiss(loadingToast);
+                                    toast.error("Failed to generate certificate: " + err.message);
+                                  }
+                                }}
+                              >
+                                <Download className="h-3.5 w-3.5 mr-1" /> Download PDF
+                              </Button>
+                            ) : (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                disabled
+                                className="h-8 text-xs text-amber-700 border-amber-200 bg-amber-50/50 cursor-not-allowed font-medium opacity-80"
+                              >
+                                <Lock className="h-3.5 w-3.5 mr-1 text-amber-600" /> Locked
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Mandatory Final Certification Exam & Fee Guidelines Notice */}
+                      <div className="p-4 rounded-xl border bg-amber-50/80 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900 text-xs text-slate-700 dark:text-slate-300 space-y-2">
+                        <div className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5 text-xs">
+                          <Sparkles className="h-4 w-4 text-amber-600" /> Mandatory Final Certification Exam & Credential Guidelines
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[11px] text-slate-600 dark:text-slate-400 pt-1">
+                          <div className="flex items-start gap-1.5">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-amber-700 shrink-0 mt-0.5" />
+                            <span><strong>Exam Link:</strong> Shared by your Administrator upon completing your final module project.</span>
+                          </div>
+                          <div className="flex items-start gap-1.5">
+                            <CreditCard className="h-3.5 w-3.5 text-amber-700 shrink-0 mt-0.5" />
+                            <span><strong>Exam Fee:</strong> <strong>₹199 (Inclusive of all GST)</strong> — Mandatory skilling & credential verification fee.</span>
+                          </div>
+                          <div className="flex items-start gap-1.5">
+                            <RefreshCw className="h-3.5 w-3.5 text-amber-700 shrink-0 mt-0.5" />
+                            <span><strong>Attempts Allowed:</strong> Maximum <strong>3 attempts</strong> permitted to achieve passing grade (70%).</span>
+                          </div>
+                          <div className="flex items-start gap-1.5">
+                            <Clock className="h-3.5 w-3.5 text-amber-700 shrink-0 mt-0.5" />
+                            <span><strong>Unlock Date:</strong> Credentials unlock automatically <strong>1 day prior</strong> ({unlockDateObj.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}) to completion.</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>

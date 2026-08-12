@@ -678,31 +678,96 @@ export const scheduleSelectionEmail = createServerFn({ method: "POST" })
 
 export const sendBulkSelectionEmails = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) => z.object({
+    applicationIds: z.array(z.string()).optional()
+  }).optional().parse(d))
+  .handler(async ({ data, context }) => {
     await ensureAdmin(context);
 
-    const { data: hiredApps, error } = await supabase
-      .from("applications")
-      .select("id, email, status")
-      .eq("status", "hired");
+    let query = supabase.from("applications").select("id, email, full_name, status");
+    if (data?.applicationIds && data.applicationIds.length > 0) {
+      query = query.in("id", data.applicationIds);
+    } else {
+      query = query.or("status.eq.hired,status.eq.selected");
+    }
 
+    const { data: apps, error } = await query;
     if (error) throw new Error(error.message);
 
     let sentCount = 0;
-    for (const app of hiredApps || []) {
-      const { data: existingProf } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", app.email)
-        .maybeSingle();
+    let failedCount = 0;
+    const results: any[] = [];
 
-      if (!existingProf) {
+    for (const app of apps || []) {
+      try {
         await dispatchSelectionEmail(app.id);
         sentCount++;
+        results.push({ id: app.id, email: app.email, status: "sent" });
+      } catch (err: any) {
+        failedCount++;
+        results.push({ id: app.id, email: app.email, status: "failed", error: err.message });
       }
     }
 
-    return { success: true, sentCount };
+    return { success: true, sentCount, failedCount, results };
+  });
+
+export const getBulkSelectionEmailTracker = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context);
+
+    const { data: apps, error } = await supabase
+      .from("applications")
+      .select("id, full_name, email, phone, role_applied, domain, sub_domain, status, created_at")
+      .or("status.eq.hired,status.eq.selected")
+      .order("created_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    const { data: events } = await supabase
+      .from("application_status_events")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    const eventMap = new Map();
+    (events || []).forEach((e: any) => {
+      if (!eventMap.has(e.application_id)) {
+        eventMap.set(e.application_id, e);
+      }
+    });
+
+    const { data: scheduled } = await supabase
+      .from("scheduled_emails")
+      .select("*");
+
+    const scheduledMap = new Map();
+    (scheduled || []).forEach((s: any) => {
+      scheduledMap.set(s.application_id, s);
+    });
+
+    return (apps || []).map((app: any) => {
+      const ev = eventMap.get(app.id);
+      const sc = scheduledMap.get(app.id);
+
+      let emailStatus = "pending";
+      let lastSentAt = null;
+
+      if (sc?.status === "sent" || sc?.sent_at || ev?.note?.includes("Selection Email")) {
+        emailStatus = "delivered";
+        lastSentAt = sc?.sent_at || ev?.created_at || null;
+      } else if (sc?.status === "failed") {
+        emailStatus = "failed";
+      }
+
+      return {
+        ...app,
+        email_status: emailStatus,
+        last_sent_at: lastSentAt,
+        scheduled_info: sc || null,
+        event_info: ev || null,
+      };
+    });
   });
 
 export const listScheduledEmails = createServerFn({ method: "GET" })

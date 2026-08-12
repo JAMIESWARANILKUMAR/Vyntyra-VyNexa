@@ -49,6 +49,7 @@ import { WorldClocks } from "@/components/world-clocks";
 import { InstallPwaButton } from "@/components/install-pwa-button";
 import { Switch } from "@/components/ui/switch";
 import { AdminInternTasksView } from "@/components/admin-intern-tasks-view";
+import { SelectionEmailTrackerDialog } from "@/components/selection-email-tracker-dialog";
 import {
   changeApplicationStatus,
   listStatusEvents,
@@ -249,6 +250,7 @@ function AdminDashboard() {
   // Job posting dialog
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<any>(null);
+  const [selectionTrackerOpen, setSelectionTrackerOpen] = useState(false);
 
   const { data: apps = [], isLoading, error } = useQuery({
     queryKey: ["applications"],
@@ -540,6 +542,12 @@ function AdminDashboard() {
                   <div className="text-5xl font-bold tracking-tight">{stats.total}</div>
                   <div className="text-xs uppercase tracking-widest text-primary-foreground/60 mt-1">Total Applications</div>
                 </div>
+                <Button
+                  onClick={() => setSelectionTrackerOpen(true)}
+                  className="bg-gold hover:bg-gold/90 text-slate-950 font-bold text-xs shadow-lg mt-1 flex items-center gap-1.5 border-0"
+                >
+                  <Mail className="h-4 w-4" /> Selection Email Delivery Status
+                </Button>
               </div>
             </div>
           </div>
@@ -1005,6 +1013,10 @@ function AdminDashboard() {
         open={jobDialogOpen}
         onClose={() => { setJobDialogOpen(false); setEditingJob(null); }}
         editing={editingJob}
+      />
+      <SelectionEmailTrackerDialog
+        open={selectionTrackerOpen}
+        onClose={() => setSelectionTrackerOpen(false)}
       />
 
 
