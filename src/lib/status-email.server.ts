@@ -189,11 +189,11 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
             ...(resendAttachments.length > 0 ? { attachments: resendAttachments } : {})
           });
           if (!fallbackRes.error) {
-            sent = true;
+            return { messageId: fallbackRes.data?.id || "resend-fallback-ok", provider: 'resend' as const };
           }
         }
       } else {
-        sent = true;
+        return { messageId: res.data?.id || "resend-ok", provider: 'resend' as const };
       }
     } catch (err: any) {
       lastError = `Resend Exception: ${err.message}`;
@@ -202,7 +202,7 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
   }
 
   // 2. Try Brevo API Fallback
-  if (!sent && brevoKey) {
+  if (brevoKey) {
     try {
       const bRes = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
@@ -222,7 +222,8 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
       });
 
       if (bRes.ok) {
-        sent = true;
+        const bJson = await bRes.json().catch(() => ({}));
+        return { messageId: bJson.messageId || "brevo-ok", provider: 'brevo' as const };
       } else {
         const bErrJson = await bRes.json().catch(() => ({ message: bRes.statusText }));
         lastError = `Brevo Error (${bRes.status}): ${bErrJson.message || bRes.statusText}`;
@@ -234,7 +235,5 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
     }
   }
 
-  if (!sent) {
-    throw new Error(`Email delivery failed for ${input.toEmail}. Reason: ${lastError || "No valid email API credentials found."}`);
-  }
+  throw new Error(`Email delivery failed for ${input.toEmail}. Reason: ${lastError || "No valid email API credentials found."}`);
 }

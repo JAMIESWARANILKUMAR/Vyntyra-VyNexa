@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getBulkSelectionEmailTracker, sendBulkSelectionEmails } from "@/lib/workflow.functions";
+import { getBulkSelectionEmailTracker, sendBulkSelectionEmails, dispatchSingleSelectionEmail } from "@/lib/workflow.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,11 +13,12 @@ import { toast } from "sonner";
 export function SelectionEmailTrackerDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const qc = useQueryClient();
   const fetchTracker = useServerFn(getBulkSelectionEmailTracker);
-  const doSendBulk = useServerFn(sendBulkSelectionEmails);
+  const doSendSingle = useServerFn(dispatchSingleSelectionEmail);
 
   const [search, setSearch] = useState("");
   const [selectedAppIds, setSelectedAppIds] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [progress, setProgress] = useState<{ current: number; total: number; activeName: string } | null>(null);
 
   const trackerQ = useQuery({
     queryKey: ["selection-email-tracker"],
@@ -56,27 +57,71 @@ export function SelectionEmailTrackerDialog({ open, onClose }: { open: boolean; 
   };
 
   const handleDispatchEmails = async (targetIds?: string[]) => {
-    setIsSending(true);
-    const toastId = toast.loading("Dispatching selection emails with credentials & PDF attachments...");
-    try {
-      const res = await doSendBulk({
-        data: targetIds && targetIds.length > 0 ? { applicationIds: targetIds } : undefined,
-      });
+    const idsToSend = targetIds && targetIds.length > 0
+      ? targetIds
+      : filteredList.filter(item => item.email_status !== "delivered").map(i => i.id);
 
-      qc.invalidateQueries({ queryKey: ["selection-email-tracker"] });
-      qc.invalidateQueries({ queryKey: ["admin-applications"] });
-
-      toast.dismiss(toastId);
-      toast.success(
-        `Selection emails dispatched! Sent: ${res.sentCount}${res.failedCount > 0 ? `, Failed: ${res.failedCount}` : ""}`
-      );
-      setSelectedAppIds([]);
-    } catch (err: any) {
-      toast.dismiss(toastId);
-      toast.error("Failed to dispatch selection emails: " + err.message);
-    } finally {
-      setIsSending(false);
+    if (idsToSend.length === 0) {
+      toast.info("No candidates selected or requiring dispatch.");
+      return;
     }
+
+    setIsSending(true);
+    setProgress({ current: 0, total: idsToSend.length, activeName: "" });
+
+    let sent = 0;
+    let failed = 0;
+
+    for (let i = 0; i < idsToSend.length; i++) {
+      const id = idsToSend[i];
+      const candidate = list.find((c) => c.id === id);
+      const name = candidate?.full_name || candidate?.email || "Candidate";
+
+      setProgress({ current: i + 1, total: idsToSend.length, activeName: name });
+
+      if (i > 0) {
+        // Enforce the strict 3-second delay
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+
+      try {
+        await doSendSingle({ data: { applicationId: id } });
+        sent++;
+      } catch (err: any) {
+        failed++;
+        console.error("Failed to send to", name, err);
+      }
+
+      // Refresh tracker queries in background to show status ticks live
+      qc.invalidateQueries({ queryKey: ["selection-email-tracker"] });
+    }
+
+    toast.success(`Bulk dispatch finished! Sent: ${sent}, Failed: ${failed}`);
+    setProgress(null);
+    setIsSending(false);
+    setSelectedAppIds([]);
+    qc.invalidateQueries({ queryKey: ["selection-email-tracker"] });
+    qc.invalidateQueries({ queryKey: ["admin-applications"] });
+  };
+
+  const getMailIdInfo = (app: any) => {
+    if (app.scheduled_info?.message_id) {
+      return {
+        id: app.scheduled_info.message_id,
+        provider: app.scheduled_info.provider || "resend"
+      };
+    }
+    const err = app.scheduled_info?.error_message || "";
+    if (err.startsWith("ID: ")) {
+      const match = err.match(/ID:\s*([^\s(]+)(?:\s*\(([^)]+)\))?/);
+      if (match) {
+        return {
+          id: match[1],
+          provider: match[2] || "resend"
+        };
+      }
+    }
+    return null;
   };
 
   return (
@@ -113,6 +158,30 @@ export function SelectionEmailTrackerDialog({ open, onClose }: { open: boolean; 
           </div>
         </div>
 
+        {/* Real-time sending progress bar */}
+        {progress && (
+          <div className="p-4 rounded-xl border border-indigo-100 bg-indigo-50/50 space-y-2 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex items-center justify-between text-xs font-semibold text-indigo-900">
+              <span className="flex items-center gap-1.5">
+                <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                Sending selection credentials package... ({progress.current} of {progress.total})
+              </span>
+              <span>{Math.round((progress.current / progress.total) * 100)}%</span>
+            </div>
+            <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+              <div
+                className="bg-indigo-600 h-full transition-all duration-500 rounded-full"
+                style={{ width: `${(progress.current / progress.total) * 100}%` }}
+              />
+            </div>
+            {progress.activeName && (
+              <div className="text-[11px] text-slate-500 italic">
+                Active: Delivering select package to <strong className="text-slate-700">{progress.activeName}</strong>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Search & Bulk Action Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border">
           <div className="relative w-full sm:w-72">
@@ -129,6 +198,7 @@ export function SelectionEmailTrackerDialog({ open, onClose }: { open: boolean; 
             <Button
               size="sm"
               variant="outline"
+              disabled={isSending}
               onClick={() => qc.invalidateQueries({ queryKey: ["selection-email-tracker"] })}
               className="text-xs gap-1"
             >
@@ -193,7 +263,7 @@ export function SelectionEmailTrackerDialog({ open, onClose }: { open: boolean; 
                   <div>
                     <div className="font-bold text-slate-900">{app.full_name || app.email}</div>
                     <div className="text-[11px] text-slate-500">{app.email} &middot; {app.phone || "No Phone"}</div>
-                    {app.scheduled_info?.error_message && (
+                    {app.scheduled_info?.error_message && !app.scheduled_info?.error_message.startsWith("ID: ") && (
                       <div className="text-[10px] text-red-600 font-mono mt-0.5 max-w-xs truncate" title={app.scheduled_info.error_message}>
                         Error: {app.scheduled_info.error_message}
                       </div>
@@ -208,9 +278,22 @@ export function SelectionEmailTrackerDialog({ open, onClose }: { open: boolean; 
 
                   <div>
                     {app.email_status === "delivered" ? (
-                      <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] font-bold">
-                        <CheckCircle2 className="h-3 w-3 mr-1" /> Delivered
-                      </Badge>
+                      <div className="flex flex-col items-end gap-0.5">
+                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] font-bold">
+                          <CheckCircle2 className="h-3 w-3 mr-1" /> Delivered
+                        </Badge>
+                        {(() => {
+                          const mailInfo = getMailIdInfo(app);
+                          if (mailInfo) {
+                            return (
+                              <span className="text-[9px] font-mono text-muted-foreground bg-slate-50 px-1 py-0.2 rounded border max-w-[110px] truncate" title={`${mailInfo.provider.toUpperCase()} ID: ${mailInfo.id}`}>
+                                {mailInfo.id}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
                     ) : app.email_status === "failed" ? (
                       <Badge className="bg-red-100 text-red-800 border-red-200 text-[10px] font-bold" title={app.scheduled_info?.error_message}>
                         <AlertCircle className="h-3 w-3 mr-1" /> Failed
@@ -240,3 +323,4 @@ export function SelectionEmailTrackerDialog({ open, onClose }: { open: boolean; 
     </Dialog>
   );
 }
+

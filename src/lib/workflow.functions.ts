@@ -596,8 +596,9 @@ export async function dispatchSelectionEmail(applicationId: string) {
   }
 
   let sendError: string | null = null;
+  let emailResult: { messageId?: string; provider?: 'resend' | 'brevo' } | null = null;
   try {
-    await sendStatusChangeEmail({
+    const res = await sendStatusChangeEmail({
       toEmail: app.email,
       fullName: app.full_name,
       roleApplied: app.role_applied,
@@ -609,6 +610,7 @@ export async function dispatchSelectionEmail(applicationId: string) {
       attachments,
       ccEmail: null,
     });
+    emailResult = res;
   } catch (err: any) {
     sendError = err.message || "Unknown SMTP delivery failure";
     console.error("[dispatchSelectionEmail] Email send failed for", app.email, sendError);
@@ -616,7 +618,7 @@ export async function dispatchSelectionEmail(applicationId: string) {
 
   // Update scheduled_emails status accurately based on send result
   try {
-    await supabase.from("scheduled_emails").upsert({
+    const payload: any = {
       application_id: app.id,
       recipient_email: app.email,
       recipient_name: app.full_name,
@@ -624,8 +626,29 @@ export async function dispatchSelectionEmail(applicationId: string) {
       send_at: new Date().toISOString(),
       status: sendError ? "failed" : "sent",
       sent_at: sendError ? null : new Date().toISOString(),
-      error_message: sendError,
-    }, { onConflict: "application_id" });
+      error_message: sendError || (emailResult ? `ID: ${emailResult.messageId} (${emailResult.provider})` : null),
+      message_id: emailResult?.messageId || null,
+      provider: emailResult?.provider || null,
+    };
+
+    const { error: upsertErr } = await supabase
+      .from("scheduled_emails")
+      .upsert(payload, { onConflict: "application_id" });
+
+    if (upsertErr) {
+      console.warn("[dispatchSelectionEmail] Upsert failed with message_id/provider, retrying fallback:", upsertErr.message);
+      // Fallback: upsert without the message_id and provider columns to prevent crashes
+      await supabase.from("scheduled_emails").upsert({
+        application_id: app.id,
+        recipient_email: app.email,
+        recipient_name: app.full_name,
+        subject: `OFFICIAL SELECTION: Vyntyra Industrial Internship Program 2026`,
+        send_at: new Date().toISOString(),
+        status: sendError ? "failed" : "sent",
+        sent_at: sendError ? null : new Date().toISOString(),
+        error_message: sendError || (emailResult ? `ID: ${emailResult.messageId} (${emailResult.provider})` : null),
+      }, { onConflict: "application_id" });
+    }
   } catch (scErr) {
     console.warn("Could not upsert scheduled_emails status:", scErr);
   }
@@ -868,3 +891,13 @@ export const processScheduledEmails = createServerFn({ method: "POST" })
 
     return { success: true, processedCount };
   });
+
+export const dispatchSingleSelectionEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ applicationId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    await dispatchSelectionEmail(data.applicationId);
+    return { success: true };
+  });
+
