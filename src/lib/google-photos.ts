@@ -23,7 +23,38 @@ export async function resolveGooglePhotosUrl(url: string | null | undefined): Pr
     return directUrl;
   }
 
-  // 3. Resolve Google Photos shared links
+  // 3. Resolve ImgBB Sharing / Viewer links (e.g. ibb.co or imgbb.com)
+  if (trimmed.includes("ibb.co") || trimmed.includes("imgbb.com")) {
+    try {
+      const res = await fetch(trimmed, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        },
+        redirect: "follow",
+      });
+
+      if (res.ok) {
+        const html = await res.text();
+        // Og match
+        const ogMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) ||
+                        html.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:image["']/i);
+
+        if (ogMatch && ogMatch[1]) {
+          return ogMatch[1];
+        }
+
+        // Direct search for ibb.co links in source
+        const imgMatch = html.match(/(https:\/\/i\.ibb\.co\/[^\s"'<>]+)/);
+        if (imgMatch && imgMatch[1]) {
+          return imgMatch[1];
+        }
+      }
+    } catch (e) {
+      console.warn("[ImgBB] Failed to resolve link:", e);
+    }
+  }
+
+  // 4. Resolve Google Photos shared links
   if (trimmed.includes("photos.app.goo.gl") || trimmed.includes("photos.google.com")) {
     try {
       const res = await fetch(trimmed, {
