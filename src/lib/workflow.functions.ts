@@ -817,7 +817,10 @@ export async function dispatchSelectionEmail(applicationId: string) {
 
   await supabase
     .from("applications")
-    .update({ status: "hired" })
+    .update({
+      status: "hired",
+      ...(offerLetterUrl ? { offer_letter_url: offerLetterUrl } : {}),
+    })
     .eq("id", applicationId);
 }
 

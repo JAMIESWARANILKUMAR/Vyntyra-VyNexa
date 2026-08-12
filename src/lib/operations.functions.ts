@@ -773,6 +773,46 @@ export const getPresignedUrl = createServerFn({ method: "POST" })
     return await generateUploadUrl(data.filename, data.contentType);
   });
 
+export const getMyDocuments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const adminClient = getAdminClient();
+    // Get the intern's profile to find their application id
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("email")
+      .eq("id", context.userId)
+      .single();
+
+    if (!profile?.email) return { nocUrl: null, offerLetterUrl: null };
+
+    // Find the application linked to this intern's email
+    const { data: app } = await adminClient
+      .from("applications")
+      .select("id, offer_letter_url")
+      .eq("email", profile.email)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!app) return { nocUrl: null, offerLetterUrl: null };
+
+    // Generate a fresh 2-hour signed URL for the NOC PDF
+    const nocPath = `nocs/${app.id}_NOC.pdf`;
+    let nocUrl: string | null = null;
+    const { data: signedData } = await adminClient.storage
+      .from("default")
+      .createSignedUrl(nocPath, 7200);
+    if (signedData?.signedUrl) {
+      nocUrl = signedData.signedUrl;
+    }
+
+    return {
+      nocUrl,
+      offerLetterUrl: app.offer_letter_url || null,
+    };
+  });
+
 export const claimPoolTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
@@ -1074,7 +1114,7 @@ export const clockOut = createServerFn({ method: "POST" })
 
     if (!activeShift.clock_out) {
       const { error } = await adminClient.from("attendance")
-        .update({ clock_out: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .update({ clock_out: new Date().toISOString() })
         .eq("id", activeShift.id);
         
       if (error) throw new Error(error.message);

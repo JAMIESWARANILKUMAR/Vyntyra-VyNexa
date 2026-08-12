@@ -24,6 +24,7 @@ import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import { TechDomainWorkspace } from "@/components/tech-domain-workspace";
 import { NonTechDomainWorkspace } from "@/components/non-tech-domain-workspace";
 import { ManagementDomainWorkspace } from "@/components/management-domain-workspace";
+import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { 
   listTasks, listMeetings, listSchedules, listAnnouncements, listResources, 
   listNotes, createNote, deleteNote, createFeedback, claimPoolTask,
@@ -32,7 +33,7 @@ import {
   acceptTask, updateTaskExecution,
   listLeads, createLead, updateLeadStatus, deleteLead,
   listBugs, createBug, updateBugStatus,
-  clockIn, clockOut, getMyAttendance
+  clockIn, clockOut, getMyAttendance, getMyDocuments
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
@@ -91,6 +92,7 @@ function InternDashboard() {
   const doClockIn = useServerFn(clockIn);
   const doClockOut = useServerFn(clockOut);
   const fetchAttendance = useServerFn(getMyAttendance);
+  const fetchMyDocuments = useServerFn(getMyDocuments);
 
   const [selectedTaskWorkspace, setSelectedTaskWorkspace] = useState<any>(null);
   const [selectedDomain, setSelectedDomain] = useState<"tech" | "non_tech" | "management">("tech");
@@ -115,6 +117,7 @@ function InternDashboard() {
   const resourcesQ = useQuery({ queryKey: ["my-resources"], queryFn: () => fetchResources(), ...queryOpts });
   const notesQ = useQuery({ queryKey: ["my-notes"], queryFn: () => fetchNotes(), ...queryOpts });
   const attendanceQ = useQuery({ queryKey: ["my-attendance"], queryFn: () => fetchAttendance(), staleTime: 0, refetchInterval: 3000 });
+  const docsQ = useQuery({ queryKey: ["my-documents"], queryFn: () => fetchMyDocuments(), staleTime: 1000 * 60 * 30 });
 
   const attendanceLogs: any[] = attendanceQ.data || [];
   const todayStr = new Date().toISOString().split('T')[0];
@@ -408,6 +411,99 @@ function InternDashboard() {
         {/* ─── OVERVIEW ─── */}
         {activeTab === "overview" && (
           <>
+            {/* ─── INTERN PROFILE CARD ─── */}
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+              {/* Card header */}
+              <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-900 px-6 py-5 flex items-center gap-5">
+                <div className="relative shrink-0">
+                  <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 rounded-2xl border-2 border-white/20 shadow-xl text-2xl" />
+                  <span className="absolute -bottom-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white shadow">INTERN</span>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xl font-bold text-white truncate">{profile?.full_name || displayName}</div>
+                  <div className="text-emerald-400 text-xs font-semibold mt-0.5">{profile?.intern_id || "—"}</div>
+                  <div className="text-slate-400 text-xs mt-1 truncate">{email}</div>
+                </div>
+              </div>
+              {/* Details grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 p-0">
+                {[
+                  { icon: <Mail className="h-4 w-4 text-emerald-600" />, label: "Email", value: email },
+                  { icon: <Phone className="h-4 w-4 text-blue-600" />, label: "Contact", value: profile?.phone || "—" },
+                  { icon: <MapPin className="h-4 w-4 text-rose-600" />, label: "Address", value: profile?.address || "—" },
+                  { icon: <Briefcase className="h-4 w-4 text-purple-600" />, label: "Domain", value: profile?.department || "—" },
+                  { icon: <CalendarDays className="h-4 w-4 text-amber-600" />, label: "Internship Start", value: profile?.start_date ? new Date(profile.start_date).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "—" },
+                  {
+                    icon: <Clock className="h-4 w-4 text-teal-600" />,
+                    label: "End Date / Remaining",
+                    value: profile?.end_date
+                      ? (() => {
+                          const end = new Date(profile.end_date);
+                          const remaining = Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                          return `${end.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} · ${remaining > 0 ? `${remaining} days left` : "Completed"}`;
+                        })()
+                      : "—",
+                  },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3 px-5 py-4 hover:bg-slate-50 transition-colors">
+                    <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">{item.icon}</div>
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{item.label}</div>
+                      <div className="text-sm font-semibold text-slate-800 mt-0.5 break-words">{item.value}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Document downloads */}
+              <div className="border-t border-slate-100 px-5 py-4 bg-slate-50 flex flex-wrap gap-3 items-center">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mr-1">Your Documents:</span>
+                {docsQ.isLoading ? (
+                  <span className="text-xs text-slate-400 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Loading...</span>
+                ) : (
+                  <>
+                    <a
+                      href={docsQ.data?.nocUrl || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                        docsQ.data?.nocUrl
+                          ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20"
+                          : "bg-slate-200 text-slate-400 cursor-not-allowed pointer-events-none"
+                      }`}
+                      onClick={(e) => { if (!docsQ.data?.nocUrl) e.preventDefault(); }}
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Download NOC
+                      {!docsQ.data?.nocUrl && <span className="ml-1 opacity-70">(Not Ready)</span>}
+                    </a>
+                    <a
+                      href={docsQ.data?.offerLetterUrl || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                        docsQ.data?.offerLetterUrl
+                          ? "bg-slate-900 hover:bg-black text-white shadow-sm"
+                          : "bg-slate-200 text-slate-400 cursor-not-allowed pointer-events-none"
+                      }`}
+                      onClick={(e) => { if (!docsQ.data?.offerLetterUrl) e.preventDefault(); }}
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      Download Offer Letter
+                      {!docsQ.data?.offerLetterUrl && <span className="ml-1 opacity-70">(Not Ready)</span>}
+                    </a>
+                    <button
+                      onClick={() => docsQ.refetch()}
+                      className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                      title="Refresh document links"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                      Refresh
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
             {/* ─── ATTENDANCE TIMECARD WIDGET ─── */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
@@ -1707,6 +1803,9 @@ function InternDashboard() {
           </div>
         </div>
       )}
+
+      {/* ── PWA Install Prompt (bottom floating banner) ── */}
+      <PwaInstallBanner />
     </div>
   );
 }
