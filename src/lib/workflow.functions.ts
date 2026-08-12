@@ -425,15 +425,18 @@ export async function dispatchSelectionEmail(applicationId: string) {
   }
 
   let userId = "";
-  const { data: existingProf } = await supabase
+  const { data: existingProfs } = await supabase
     .from("profiles")
     .select("id")
     .eq("email", app.email)
-    .maybeSingle();
+    .limit(1);
+
+  const existingProf = existingProfs && existingProfs.length > 0 ? existingProfs[0] : null;
 
   if (existingProf) {
     userId = existingProf.id;
   } else {
+    // Attempt to create user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: app.email,
       password: tempPassword,
@@ -441,13 +444,38 @@ export async function dispatchSelectionEmail(applicationId: string) {
       user_metadata: { must_change_password: true }
     });
 
-    if (authError) throw new Error(`Auth creation failed: ${authError.message}`);
-    userId = authData.user.id;
+    if (authError) {
+      if (authError.message.includes("already been registered") || authError.status === 422) {
+        // Find existing user in auth list
+        const { data: usersData, error: listError } = await supabase.auth.admin.listUsers();
+        if (!listError && usersData?.users) {
+          const matchedUser = usersData.users.find((u: any) => u.email === app.email);
+          if (matchedUser) {
+            userId = matchedUser.id;
+          }
+        }
+      }
 
-    await supabase.from("user_roles").insert({
-      user_id: userId,
-      role: "intern"
-    });
+      if (!userId) {
+        throw new Error(`Auth creation failed: ${authError.message}`);
+      }
+    } else {
+      userId = authData.user.id;
+    }
+
+    // Insert user role if not already present
+    const { data: existingRoles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .limit(1);
+
+    if (!existingRoles || existingRoles.length === 0) {
+      await supabase.from("user_roles").insert({
+        user_id: userId,
+        role: "intern"
+      });
+    }
   }
 
   const sendDay = new Date();
@@ -554,9 +582,12 @@ export async function dispatchSelectionEmail(applicationId: string) {
     console.warn("NOC upload failed:", uploadError.message);
   }
 
-  const { data: { publicUrl: nocUrl } } = supabase.storage
+  // Get signed URL (fallback to public URL if signed URL creation fails)
+  const { data: signedData } = await supabase.storage
     .from("default")
-    .getPublicUrl(filepath);
+    .createSignedUrl(filepath, 7200);
+
+  const nocUrl = signedData?.signedUrl || supabase.storage.from("default").getPublicUrl(filepath).data.publicUrl;
 
   let offerLetterUrl = null;
   try {
@@ -639,26 +670,59 @@ export async function dispatchSelectionEmail(applicationId: string) {
       provider: emailResult?.provider || null,
     };
 
-    const { error: upsertErr } = await supabase
+    const { data: existingEmail } = await supabase
       .from("scheduled_emails")
-      .upsert(payload, { onConflict: "application_id" });
+      .select("id")
+      .eq("application_id", app.id)
+      .maybeSingle();
 
-    if (upsertErr) {
-      console.warn("[dispatchSelectionEmail] Upsert failed with message_id/provider, retrying fallback:", upsertErr.message);
-      // Fallback: upsert without the message_id and provider columns to prevent crashes
-      await supabase.from("scheduled_emails").upsert({
-        application_id: app.id,
-        recipient_email: app.email,
-        recipient_name: app.full_name,
-        subject: `OFFICIAL SELECTION: Vyntyra Industrial Internship Program 2026`,
-        send_at: new Date().toISOString(),
-        status: sendError ? "failed" : "sent",
-        sent_at: sendError ? null : new Date().toISOString(),
-        error_message: sendError || (emailResult ? `ID: ${emailResult.messageId} (${emailResult.provider})` : null),
-      }, { onConflict: "application_id" });
+    if (existingEmail) {
+      const { error: updateErr } = await supabase
+        .from("scheduled_emails")
+        .update(payload)
+        .eq("id", existingEmail.id);
+
+      if (updateErr) {
+        console.warn("[dispatchSelectionEmail] Update failed with message_id/provider, retrying fallback:", updateErr.message);
+        // Fallback update without message_id and provider columns
+        await supabase
+          .from("scheduled_emails")
+          .update({
+            application_id: app.id,
+            recipient_email: app.email,
+            recipient_name: app.full_name,
+            subject: `OFFICIAL SELECTION: Vyntyra Industrial Internship Program 2026`,
+            send_at: new Date().toISOString(),
+            status: sendError ? "failed" : "sent",
+            sent_at: sendError ? null : new Date().toISOString(),
+            error_message: sendError || (emailResult ? `ID: ${emailResult.messageId} (${emailResult.provider})` : null),
+          })
+          .eq("id", existingEmail.id);
+      }
+    } else {
+      const { error: insertErr } = await supabase
+        .from("scheduled_emails")
+        .insert(payload);
+
+      if (insertErr) {
+        console.warn("[dispatchSelectionEmail] Insert failed with message_id/provider, retrying fallback:", insertErr.message);
+        // Fallback insert without message_id and provider columns
+        await supabase
+          .from("scheduled_emails")
+          .insert({
+            application_id: app.id,
+            recipient_email: app.email,
+            recipient_name: app.full_name,
+            subject: `OFFICIAL SELECTION: Vyntyra Industrial Internship Program 2026`,
+            send_at: new Date().toISOString(),
+            status: sendError ? "failed" : "sent",
+            sent_at: sendError ? null : new Date().toISOString(),
+            error_message: sendError || (emailResult ? `ID: ${emailResult.messageId} (${emailResult.provider})` : null),
+          });
+      }
     }
   } catch (scErr) {
-    console.warn("Could not upsert scheduled_emails status:", scErr);
+    console.warn("Could not save scheduled_emails status:", scErr);
   }
 
   if (sendError) {

@@ -230,7 +230,15 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
     throw new Error("Failed to upload offer letter PDF");
   }
 
-  // Get public URL
+  // Get signed URL (fallback to public URL if signed URL creation fails)
+  const { data: signedData } = await supabase.storage
+    .from("default")
+    .createSignedUrl(fileName, 7200);
+
+  if (signedData?.signedUrl) {
+    return signedData.signedUrl;
+  }
+
   const { data: { publicUrl } } = supabase.storage.from("default").getPublicUrl(fileName);
   return publicUrl;
 }
