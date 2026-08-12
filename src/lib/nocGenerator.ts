@@ -29,7 +29,11 @@ export async function urlToBase64(url: string): Promise<string | null> {
     const resolvedUrl = await resolveGooglePhotosUrl(url);
     if (!resolvedUrl) return null;
     if (resolvedUrl.startsWith("data:image")) return resolvedUrl;
-    const res = await fetch(resolvedUrl);
+    const res = await fetch(resolvedUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      }
+    });
     if (!res.ok) return null;
     const blob = await res.blob();
     return new Promise((resolve) => {

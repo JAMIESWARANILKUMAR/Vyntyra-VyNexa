@@ -9,7 +9,21 @@ export async function resolveGooglePhotosUrl(url: string | null | undefined): Pr
   if (!trimmed) return null;
   if (trimmed.startsWith("data:image")) return trimmed;
 
-  // Check if it's a Google Photos shared album or shortened link
+  // 1. Resolve Google Drive Sharing links
+  // Match formats: /file/d/ID/view or ?id=ID or open?id=ID
+  const driveIdMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (trimmed.includes("drive.google.com") && driveIdMatch && driveIdMatch[1]) {
+    return `https://drive.google.com/uc?export=download&id=${driveIdMatch[1]}`;
+  }
+
+  // 2. Resolve Dropbox Sharing links
+  if (trimmed.includes("dropbox.com")) {
+    let directUrl = trimmed.replace("www.dropbox.com", "dl.dropboxusercontent.com");
+    directUrl = directUrl.split("?")[0];
+    return directUrl;
+  }
+
+  // 3. Resolve Google Photos shared links
   if (trimmed.includes("photos.app.goo.gl") || trimmed.includes("photos.google.com")) {
     try {
       const res = await fetch(trimmed, {
@@ -22,7 +36,7 @@ export async function resolveGooglePhotosUrl(url: string | null | undefined): Pr
       if (res.ok) {
         const html = await res.text();
 
-        // 1. Search for <meta property="og:image" content="...">
+        // Og match
         const ogMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) ||
                         html.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:image["']/i);
 
@@ -34,7 +48,7 @@ export async function resolveGooglePhotosUrl(url: string | null | undefined): Pr
           return directUrl;
         }
 
-        // 2. Search for any googleusercontent photo link in HTML
+        // Lh3 match
         const lh3Match = html.match(/(https:\/\/[a-zA-Z0-9\.-]+\.googleusercontent\.com\/[^\s"'<>]+)/);
         if (lh3Match && lh3Match[1]) {
           let directUrl = lh3Match[1];
@@ -49,7 +63,7 @@ export async function resolveGooglePhotosUrl(url: string | null | undefined): Pr
     }
   }
 
-  // If already a googleusercontent link, ensure proper sizing parameter
+  // 4. Resolve standard Google User Content links
   if (trimmed.includes("googleusercontent.com")) {
     const baseUrl = trimmed.split("=")[0];
     return `${baseUrl}=w1000-h1000`;

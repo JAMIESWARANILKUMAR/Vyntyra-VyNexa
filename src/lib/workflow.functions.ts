@@ -505,10 +505,18 @@ export async function dispatchSelectionEmail(applicationId: string) {
   let photoBase64 = null;
   if (app.profile_photo_url) {
     try {
-      const photoRes = await fetch(app.profile_photo_url);
-      if (photoRes.ok) {
-        const buffer = await photoRes.arrayBuffer();
-        photoBase64 = `data:image/jpeg;base64,${Buffer.from(buffer).toString('base64')}`;
+      const { resolveGooglePhotosUrl } = await import("./google-photos");
+      const resolvedUrl = await resolveGooglePhotosUrl(app.profile_photo_url);
+      if (resolvedUrl) {
+        const photoRes = await fetch(resolvedUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          }
+        });
+        if (photoRes.ok) {
+          const buffer = await photoRes.arrayBuffer();
+          photoBase64 = `data:image/jpeg;base64,${Buffer.from(buffer).toString('base64')}`;
+        }
       }
     } catch (photoErr) {
       console.warn("Photo fetch failed:", photoErr);
