@@ -1,5 +1,7 @@
 import { jsPDF } from "jspdf";
 import { getAdminClient } from "@/integrations/supabase/admin";
+import fs from "fs";
+import path from "path";
 
 export interface IOfferDetails {
   fullName: string;
@@ -10,8 +12,33 @@ export interface IOfferDetails {
   jobLocation?: string;
 }
 
+function getLocalAssetBase64(filename: string): string | null {
+  try {
+    const projectRoot = process.cwd();
+    const publicPath = path.join(projectRoot, "public", filename);
+    if (fs.existsSync(publicPath)) {
+      const buffer = fs.readFileSync(publicPath);
+      const ext = path.extname(filename).toLowerCase().replace(".", "");
+      return `data:image/${ext === "jpg" ? "jpeg" : ext};base64,${buffer.toString("base64")}`;
+    }
+  } catch (err) {
+    console.warn(`[pdf.server local-loader] Failed to read ${filename}:`, err);
+  }
+  return null;
+}
+
 async function fetchBase64Image(url: string): Promise<string | null> {
   try {
+    // Check local filesystem first to bypass any domain-level networking blocks
+    if (url.includes("icon-512.png")) {
+      const localLogo = getLocalAssetBase64("icon-512.png");
+      if (localLogo) return localLogo;
+    }
+    if (url.includes("signature.png") || url.includes("olXE11N8ipqBTR8DBSXt")) {
+      const localSig = getLocalAssetBase64("signature.png");
+      if (localSig) return localSig;
+    }
+
     const { resolveGooglePhotosUrl } = await import("./google-photos");
     const resolvedUrl = await resolveGooglePhotosUrl(url);
     if (!resolvedUrl) {

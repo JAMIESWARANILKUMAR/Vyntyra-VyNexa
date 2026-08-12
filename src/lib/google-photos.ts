@@ -118,10 +118,41 @@ export async function resolveGooglePhotosUrl(url: string | null | undefined): Pr
     }
   }
 
-  // 4. Resolve standard Google User Content links
+  // 5. Resolve standard Google User Content links
   if (trimmed.includes("googleusercontent.com")) {
     const baseUrl = trimmed.split("=")[0];
     return `${baseUrl}=w1000-h1000`;
+  }
+
+  // 6. Universal og:image scraper for any website domain/extension
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    const isDirectImage = /\.(jpg|jpeg|png|gif|webp|svg)($|\?)/i.test(trimmed);
+    if (!isDirectImage) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 sec timeout
+
+        const res = await fetch(trimmed, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          },
+          signal: controller.signal,
+          redirect: "follow",
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const html = await res.text();
+          const ogMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) ||
+                          html.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:image["']/i);
+          if (ogMatch && ogMatch[1]) {
+            return ogMatch[1];
+          }
+        }
+      } catch (e) {
+        console.warn("[UniversalScraper] Failed to resolve link:", trimmed, e);
+      }
+    }
   }
 
   return trimmed;

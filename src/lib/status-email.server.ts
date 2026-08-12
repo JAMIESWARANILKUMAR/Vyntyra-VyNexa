@@ -42,23 +42,22 @@ function shell(innerHtml: string) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin:0;padding:0;background-color:#060b14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#334155;-webkit-font-smoothing:antialiased;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#060b14;padding:40px 10px;">
+<body style="margin:0;padding:0;background-color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#334155;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;padding:40px 10px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:620px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:620px;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05),0 2px 4px -1px rgba(0,0,0,0.025);">
           
           <!-- Header Branding -->
           <tr>
-            <td style="background-color:#0b1728;padding:28px 40px;text-align:left;border-bottom:3px solid #10b981;">
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <td style="background-color:#ffffff;padding:24px 40px;text-align:left;border-bottom:1px solid #e2e8f0;">
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td style="width:48px;vertical-align:middle;text-align:left;">
-                    <img src="${LOGO_URL}" alt="Vyntyra Logo" width="42" height="42" style="display:block;border-radius:10px;border:1px solid #1e293b;">
+                  <td style="width:36px;vertical-align:middle;text-align:left;">
+                    <img src="${LOGO_URL}" alt="Vyntyra Logo" width="30" height="30" style="display:block;border-radius:6px;">
                   </td>
-                  <td style="padding-left:14px;vertical-align:middle;text-align:left;">
-                    <div style="color:#ffffff;font-size:19px;font-weight:700;letter-spacing:-0.02em;">Vyntyra Consultancy Services</div>
-                    <div style="color:#10b981;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;margin-top:2px;">Project VyNexa &middot; Recruitment Division</div>
+                  <td style="padding-left:12px;vertical-align:middle;text-align:left;">
+                    <div style="color:#0f172a;font-size:16px;font-weight:600;letter-spacing:-0.01em;">Vyntyra Consultancy Services</div>
                   </td>
                 </tr>
               </table>
@@ -74,32 +73,32 @@ function shell(innerHtml: string) {
 
           <!-- Footer -->
           <tr>
-            <td style="background-color:#0b1728;padding:32px 40px;text-align:center;color:#94a3b8;font-size:11.5px;line-height:1.65;">
-              <div style="color:#ffffff;font-weight:700;font-size:13.5px;margin-bottom:12px;">Vyntyra Consultancy Services</div>
+            <td style="background-color:#f8fafc;padding:32px 40px;text-align:center;color:#64748b;font-size:11.5px;line-height:1.65;border-top:1px solid #e2e8f0;">
+              <div style="color:#0f172a;font-weight:600;font-size:13px;margin-bottom:12px;">Vyntyra Consultancy Services</div>
               
               <div style="margin-bottom:18px;">
-                <a href="https://www.linkedin.com/company/vyntyra-consultancy-services" style="color:#38bdf8;font-weight:600;text-decoration:none;margin:0 8px;">LinkedIn</a>
-                <span style="color:#334155;">&bull;</span>
-                <a href="https://www.instagram.com/vyntyraindia" style="color:#f472b6;font-weight:600;text-decoration:none;margin:0 8px;">Instagram</a>
-                <span style="color:#334155;">&bull;</span>
-                <a href="https://careers.vyntyraconsultancyservices.in/" style="color:#34d399;font-weight:600;text-decoration:none;margin:0 8px;">Official Portal</a>
+                <a href="https://www.linkedin.com/company/vyntyra-consultancy-services" style="color:#2563eb;font-weight:500;text-decoration:none;margin:0 8px;">LinkedIn</a>
+                <span style="color:#cbd5e1;">|</span>
+                <a href="https://www.instagram.com/vyntyraindia" style="color:#2563eb;font-weight:500;text-decoration:none;margin:0 8px;">Instagram</a>
+                <span style="color:#cbd5e1;">|</span>
+                <a href="https://careers.vyntyraconsultancyservices.in/" style="color:#2563eb;font-weight:500;text-decoration:none;margin:0 8px;">Official Portal</a>
               </div>
 
-              <div style="border-top:1px solid #1e293b;padding-top:16px;">
+              <div style="padding-top:12px;color:#64748b;">
                 Dwaraka Nagar, Visakhapatnam - 530016, AP, India<br>
                 ISO 9001:2015 Certified &middot; MSME Registered &middot; UDYAM-AP-10-0143100
               </div>
 
-              <div style="margin-top:14px;color:#64748b;font-size:10.5px;line-height:1.5;">
+              <div style="margin-top:14px;color:#94a3b8;font-size:10px;line-height:1.5;">
                 This communication relates to your application for Project VyNexa.<br>
-                Need assistance? Email <a href="mailto:hr@vyntyraconsultancyservices.in" style="color:#34d399;text-decoration:underline;">hr@vyntyraconsultancyservices.in</a>
+                Need assistance? Email <a href="mailto:hr@vyntyraconsultancyservices.in" style="color:#2563eb;text-decoration:underline;">hr@vyntyraconsultancyservices.in</a>
               </div>
 
-              <div style="margin-top:14px;font-size:10px;color:#475569;font-style:italic;">
+              <div style="margin-top:14px;font-size:10px;color:#94a3b8;font-style:italic;">
                 Disclaimer: This transmission contains confidential information intended solely for the recipient. If received in error, please notify the sender immediately and delete all copies.
               </div>
 
-              <div style="margin-top:14px;color:#64748b;">&copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.</div>
+              <div style="margin-top:14px;color:#94a3b8;">&copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.</div>
             </td>
           </tr>
 

@@ -13,6 +13,7 @@ export interface NocData {
   qrCodeBase64?: string | null;
   issueDate?: string;
   logoBase64?: string | null;
+  signatureBase64?: string | null;
   hodName?: string | null;
 }
 
@@ -254,14 +255,21 @@ export function generateNocPdf(data: NocData): jsPDF {
   const colW  = cW / 3;
 
   // Helper draws one signature column
-  function drawSig(cx: number, line1: string, line2: string, label: string, isScript: boolean) {
+  function drawSig(cx: number, line1: string, line2: string, label: string, isScript: boolean, customSignatureImage?: string | null) {
     const lx1 = cx - colW / 2 + 8;
     const lx2 = cx + colW / 2 - 8;
     doc.setDrawColor(37, 99, 160);
     doc.setLineWidth(0.4);
     doc.line(lx1, sigY + 10, lx2, sigY + 10);
 
-    if (isScript && line1) {
+    if (customSignatureImage && customSignatureImage.startsWith("data:image")) {
+      try {
+        // Draw the image instead of text script, centered above the line (20mm x 7mm fits perfectly)
+        doc.addImage(customSignatureImage, "PNG", cx - 10, sigY + 1.5, 20, 7.5);
+      } catch (err) {
+        console.warn("Failed to add custom signature image inside NOC:", err);
+      }
+    } else if (isScript && line1) {
       doc.setFont("courier", "oblique");
       doc.setFontSize(9.5);
       doc.setTextColor(30, 58, 95);
@@ -286,9 +294,9 @@ export function generateNocPdf(data: NocData): jsPDF {
   const c2 = margin + colW + colW / 2;
   const c3 = margin + colW * 2 + colW / 2;
 
-  drawSig(c1, data.fullName, data.fullName, "Candidate Signature", true);
-  drawSig(c2, "", data.hodName || "Head of Department", "Head of Department", false);
-  drawSig(c3, "Jami Eswar", "Jami Eswar Anil Kumar", "Founder & Managing Director", true);
+  drawSig(c1, data.fullName, data.fullName, "Candidate Signature", true, null);
+  drawSig(c2, "", data.hodName || "Head of Department", "Head of Department", false, null);
+  drawSig(c3, "Jami Eswar", "Jami Eswar Anil Kumar", "Founder & Managing Director", true, data.signatureBase64);
 
   // ── Footer ───────────────────────────────────────────────────────────
   const footerY = 254;
