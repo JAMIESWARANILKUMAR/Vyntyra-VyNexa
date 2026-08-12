@@ -557,6 +557,11 @@ function AdminDashboard() {
           <WorldClocks />
         </div>
 
+        {/* ── Intern Task Assignment & Real-Time Progress Tracker ── */}
+        <div id="intern-tasks-section" className="mb-8">
+          <AdminInternTasksView />
+        </div>
+
         <div className="rounded-md border border-border bg-card shadow-corp p-5 mb-8">
           <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-secondary mb-4">At a Glance</div>
           <div className="grid md:grid-cols-3 gap-5">
@@ -742,11 +747,6 @@ function AdminDashboard() {
           onCreateNew={() => { setEditingJob(null); setJobDialogOpen(true); }}
           onEdit={(j: any) => { setEditingJob(j); setJobDialogOpen(true); }}
         />
-
-        {/* ── Intern Task Assignment & Progress Tracker ── */}
-        <div className="my-8">
-          <AdminInternTasksView />
-        </div>
 
         {/* ── Applications Section ── */}
         <div className="mb-8 mt-8">

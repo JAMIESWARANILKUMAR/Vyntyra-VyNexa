@@ -135,10 +135,12 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
     : (input.attachmentUrl ? [{ filename: 'Offer_Letter.pdf', path: input.attachmentUrl }] : []);
 
   let sent = false;
+  let lastError = "";
+
   if (apiKey) {
     try {
       const resend = new Resend(apiKey);
-      await resend.emails.send({
+      const res = await resend.emails.send({
         to: input.toEmail,
         from: FROM_ADDR,
         subject,
@@ -147,15 +149,21 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
         ...(input.ccEmail ? { cc: input.ccEmail } : {}),
         ...(attachments.length > 0 ? { attachments } : {})
       });
-      sent = true;
-    } catch (err) {
+      if (res.error) {
+        lastError = `Resend Error: ${res.error.message}`;
+        console.warn("[status-email] Resend returned error:", res.error);
+      } else {
+        sent = true;
+      }
+    } catch (err: any) {
+      lastError = `Resend Exception: ${err.message}`;
       console.warn("[status-email] Resend failed, trying Brevo fallback:", err);
     }
   }
 
   if (!sent && brevoKey) {
     try {
-      await fetch("https://api.brevo.com/v3/smtp/email", {
+      const bRes = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
         headers: {
           "accept": "application/json",
@@ -173,8 +181,21 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
           } : {})
         }),
       });
-    } catch (bErr) {
+
+      if (bRes.ok) {
+        sent = true;
+      } else {
+        const bErrJson = await bRes.json().catch(() => ({ message: bRes.statusText }));
+        lastError = `Brevo Error (${bRes.status}): ${bErrJson.message || bRes.statusText}`;
+        console.error("[status-email] Brevo returned error:", bErrJson);
+      }
+    } catch (bErr: any) {
+      lastError = `Brevo Exception: ${bErr.message}`;
       console.error("[status-email] Brevo fallback failed:", bErr);
     }
+  }
+
+  if (!sent) {
+    throw new Error(`Email dispatch failed for ${input.toEmail}. Details: ${lastError || "No valid SMTP API keys configured."}`);
   }
 }
