@@ -16,13 +16,16 @@ interface FirstLoginWelcomeModalProps {
     employee_id?: string;
     intern_id?: string;
   } | null;
+  mustChangePassword?: boolean;
 }
 
-export function FirstLoginWelcomeModal({ user }: FirstLoginWelcomeModalProps) {
+export function FirstLoginWelcomeModal({ user, mustChangePassword }: FirstLoginWelcomeModalProps) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!user || !user.id) return;
+    // Do NOT show welcome modal if intern must change their password first
+    if (mustChangePassword) return;
     const storageKey = `vy_first_login_seen_${user.id}`;
     const alreadySeen = localStorage.getItem(storageKey);
 
@@ -30,7 +33,7 @@ export function FirstLoginWelcomeModal({ user }: FirstLoginWelcomeModalProps) {
       // Show modal on first time login
       setOpen(true);
     }
-  }, [user]);
+  }, [user, mustChangePassword]);
 
   const handleClose = () => {
     if (user?.id) {

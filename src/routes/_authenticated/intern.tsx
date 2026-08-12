@@ -213,11 +213,15 @@ function InternDashboard() {
         data: { must_change_password: false }
       });
       if (error) throw error;
-      toast.success("Security password updated successfully! Welcome to your dashboard.");
+      // Refresh session so user_metadata is updated immediately
+      await supabase.auth.refreshSession();
+      toast.success("Password updated successfully! Welcome to your dashboard.");
       setShowForcePasswordModal(false);
+      setNewPassword("");
+      setConfirmPassword("");
       qc.invalidateQueries({ queryKey: ["session"] });
     } catch (err: any) {
-      toast.error(err.message || "Failed to update security password.");
+      toast.error(err.message || "Failed to update password.");
     } finally {
       setIsUpdatingPassword(false);
     }
@@ -1621,12 +1625,12 @@ function InternDashboard() {
       <FloatingAppsPanel />
 
       {/* ── First-Time Login Animated Welcome Modal ── */}
-      <FirstLoginWelcomeModal user={profile} />
+      <FirstLoginWelcomeModal user={profile} mustChangePassword={!!session?.user?.user_metadata?.must_change_password} />
 
       {/* ── Force Password Reset Modal ── */}
       {showForcePasswordModal && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-slate-100 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4" style={{ pointerEvents: 'all' }}>
+          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-slate-100 space-y-6 animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
             <div className="text-center space-y-2">
               <div className="inline-flex p-3 rounded-full bg-amber-50 text-amber-600 mb-2">
                 <ShieldCheck className="h-8 w-8" />
