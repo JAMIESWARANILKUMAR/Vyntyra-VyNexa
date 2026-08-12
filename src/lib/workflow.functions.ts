@@ -616,6 +616,21 @@ export async function dispatchSelectionEmail(applicationId: string) {
     changed_by: "00000000-0000-0000-0000-000000000000"
   }]);
 
+  // Ensure scheduled_emails table is updated with sent status
+  try {
+    await supabase.from("scheduled_emails").upsert({
+      application_id: app.id,
+      recipient_email: app.email,
+      recipient_name: app.full_name,
+      subject: `OFFICIAL SELECTION: Vyntyra Industrial Internship Program 2026`,
+      send_at: new Date().toISOString(),
+      status: "sent",
+      sent_at: new Date().toISOString(),
+    }, { onConflict: "application_id" });
+  } catch (scErr) {
+    console.warn("Could not upsert scheduled_emails status:", scErr);
+  }
+
   if (app.phone) {
     try {
       const { sendSmsViaEmailGateway } = await import("./email-sms-gateway");
@@ -668,10 +683,10 @@ export const scheduleSelectionEmail = createServerFn({ method: "POST" })
       recipient_name: app.full_name,
       subject: `OFFICIAL SELECTION: Vyntyra Industrial Internship Program 2026`,
       send_at: sendAt.toISOString(),
-      status: "pending"
+      status: "pending",
     });
 
-    if (insertError) throw new Error(`Failed to schedule email: ${insertError.message}`);
+    if (insertError) throw new Error(insertError.message);
 
     return { success: true, dispatched: false };
   });
@@ -760,9 +775,9 @@ export const getBulkSelectionEmailTracker = createServerFn({ method: "GET" })
       let emailStatus = "pending";
       let lastSentAt = null;
 
-      if (sc?.status === "sent" || sc?.sent_at || ev?.note?.includes("Selection Email")) {
+      if (sc?.status === "sent" || sc?.sent_at || ev?.note?.toLowerCase().includes("selection email") || app.status === "hired") {
         emailStatus = "delivered";
-        lastSentAt = sc?.sent_at || ev?.created_at || null;
+        lastSentAt = sc?.sent_at || ev?.created_at || app.created_at;
       } else if (sc?.status === "failed") {
         emailStatus = "failed";
       }
