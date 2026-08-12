@@ -698,7 +698,14 @@ export const sendBulkSelectionEmails = createServerFn({ method: "POST" })
     let failedCount = 0;
     const results: any[] = [];
 
-    for (const app of apps || []) {
+    const appsList = apps || [];
+    for (let i = 0; i < appsList.length; i++) {
+      const app = appsList[i];
+      if (i > 0) {
+        // 3 second delay between each email dispatch
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+
       try {
         await dispatchSelectionEmail(app.id);
         sentCount++;
@@ -807,7 +814,13 @@ export const processScheduledEmails = createServerFn({ method: "POST" })
     }
 
     let processedCount = 0;
-    for (const email of pending) {
+    for (let i = 0; i < pending.length; i++) {
+      const email = pending[i];
+      if (i > 0) {
+        // 3 second delay between each scheduled email dispatch
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+
       try {
         await supabase
           .from("scheduled_emails")
