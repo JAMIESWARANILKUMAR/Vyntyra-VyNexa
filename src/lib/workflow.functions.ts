@@ -521,7 +521,11 @@ export async function dispatchSelectionEmail(applicationId: string) {
 
   let logoBase64 = null;
   try {
-    const logoRes = await fetch("https://careers.vyntyraconsultancyservices.in/icon-512.png");
+    const logoRes = await fetch("https://careers.vyntyraconsultancyservices.in/icon-512.png", {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      }
+    });
     if (logoRes.ok) {
       const buffer = await logoRes.arrayBuffer();
       logoBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
