@@ -12,7 +12,14 @@ export interface IOfferDetails {
 
 async function fetchBase64Image(url: string): Promise<string | null> {
   try {
-    const res = await fetch(url, {
+    const { resolveGooglePhotosUrl } = await import("./google-photos");
+    const resolvedUrl = await resolveGooglePhotosUrl(url);
+    if (!resolvedUrl) {
+      console.warn(`[pdf.server] Could not resolve URL: ${url}`);
+      return null;
+    }
+
+    const res = await fetch(resolvedUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       }
@@ -189,23 +196,29 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
   doc.text("For Vyntyra Consultancy Services,", 20, signY);
 
-  const sigBase64 = await fetchBase64Image("https://careers.vyntyraconsultancyservices.in/signature.png");
+  const sigBase64 = await fetchBase64Image("https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
   if (sigBase64) {
-    doc.addImage(sigBase64, "PNG", 20, signY + 1.5, 30, 9);
+    doc.addImage(sigBase64, "PNG", 20, signY + 2, 32, 10.5);
   }
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("Jami Eswar Anil Kumar", 20, signY + 14);
+  doc.text("Jami Eswar Anil Kumar", 20, signY + 16);
   
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(110, 110, 110);
-  doc.text("Founder & Managing Director", 20, signY + 18);
+  doc.text("Founder & Managing Director", 20, signY + 20);
   
-  doc.line(20, signY + 21, 75, signY + 21);
-  doc.text("Authorized Signatory", 20, signY + 25);
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.25);
+  doc.line(20, signY + 23, 75, signY + 23);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(110, 110, 110);
+  doc.text("Authorized Signatory", 20, signY + 27);
 
   // Candidate Acceptance
   doc.text("Accepted and Agreed By:", 120, signY);

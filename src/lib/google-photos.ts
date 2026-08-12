@@ -54,7 +54,31 @@ export async function resolveGooglePhotosUrl(url: string | null | undefined): Pr
     }
   }
 
-  // 4. Resolve Google Photos shared links
+  // 4. Resolve Komodo / Komodo Decks sharing links (e.g. kommodo.ai or komododecks.com)
+  if (trimmed.includes("kommodo.ai") || trimmed.includes("komododecks.com")) {
+    try {
+      const res = await fetch(trimmed, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        },
+        redirect: "follow",
+      });
+
+      if (res.ok) {
+        const html = await res.text();
+        const ogMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) ||
+                        html.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:image["']/i);
+
+        if (ogMatch && ogMatch[1]) {
+          return ogMatch[1];
+        }
+      }
+    } catch (e) {
+      console.warn("[Komodo] Failed to resolve link:", e);
+    }
+  }
+
+  // 5. Resolve Google Photos shared links
   if (trimmed.includes("photos.app.goo.gl") || trimmed.includes("photos.google.com")) {
     try {
       const res = await fetch(trimmed, {
