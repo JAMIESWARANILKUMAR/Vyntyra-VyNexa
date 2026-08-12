@@ -595,18 +595,44 @@ export async function dispatchSelectionEmail(applicationId: string) {
     attachments.push({ filename: 'Offer_Letter.pdf', path: offerLetterUrl });
   }
 
-  await sendStatusChangeEmail({
-    toEmail: app.email,
-    fullName: app.full_name,
-    roleApplied: app.role_applied,
-    status: "hired",
-    applicationId: app.id,
-    portalLink,
-    template: { subject, html_body: htmlBody },
-    idempotencyKey: `selection-${app.id}-${Date.now()}`,
-    attachments,
-    ccEmail: null,
-  });
+  let sendError: string | null = null;
+  try {
+    await sendStatusChangeEmail({
+      toEmail: app.email,
+      fullName: app.full_name,
+      roleApplied: app.role_applied,
+      status: "hired",
+      applicationId: app.id,
+      portalLink,
+      template: { subject, html_body: htmlBody },
+      idempotencyKey: `selection-${app.id}-${Date.now()}`,
+      attachments,
+      ccEmail: null,
+    });
+  } catch (err: any) {
+    sendError = err.message || "Unknown SMTP delivery failure";
+    console.error("[dispatchSelectionEmail] Email send failed for", app.email, sendError);
+  }
+
+  // Update scheduled_emails status accurately based on send result
+  try {
+    await supabase.from("scheduled_emails").upsert({
+      application_id: app.id,
+      recipient_email: app.email,
+      recipient_name: app.full_name,
+      subject: `OFFICIAL SELECTION: Vyntyra Industrial Internship Program 2026`,
+      send_at: new Date().toISOString(),
+      status: sendError ? "failed" : "sent",
+      sent_at: sendError ? null : new Date().toISOString(),
+      error_message: sendError,
+    }, { onConflict: "application_id" });
+  } catch (scErr) {
+    console.warn("Could not upsert scheduled_emails status:", scErr);
+  }
+
+  if (sendError) {
+    throw new Error(`Failed to deliver selection email to ${app.email}: ${sendError}`);
+  }
 
   await supabase.from("application_status_events").insert([{
     application_id: app.id,
@@ -615,21 +641,6 @@ export async function dispatchSelectionEmail(applicationId: string) {
     note: `[Selection Email Sent] Intern credentials created. Temporary Password: ${tempPassword}`,
     changed_by: "00000000-0000-0000-0000-000000000000"
   }]);
-
-  // Ensure scheduled_emails table is updated with sent status
-  try {
-    await supabase.from("scheduled_emails").upsert({
-      application_id: app.id,
-      recipient_email: app.email,
-      recipient_name: app.full_name,
-      subject: `OFFICIAL SELECTION: Vyntyra Industrial Internship Program 2026`,
-      send_at: new Date().toISOString(),
-      status: "sent",
-      sent_at: new Date().toISOString(),
-    }, { onConflict: "application_id" });
-  } catch (scErr) {
-    console.warn("Could not upsert scheduled_emails status:", scErr);
-  }
 
   if (app.phone) {
     try {
@@ -775,11 +786,14 @@ export const getBulkSelectionEmailTracker = createServerFn({ method: "GET" })
       let emailStatus = "pending";
       let lastSentAt = null;
 
-      if (sc?.status === "sent" || sc?.sent_at || ev?.note?.toLowerCase().includes("selection email") || app.status === "hired") {
-        emailStatus = "delivered";
-        lastSentAt = sc?.sent_at || ev?.created_at || app.created_at;
-      } else if (sc?.status === "failed") {
+      if (sc?.status === "failed") {
         emailStatus = "failed";
+      } else if (sc?.status === "sent" || sc?.sent_at) {
+        emailStatus = "delivered";
+        lastSentAt = sc.sent_at;
+      } else if (ev?.note?.toLowerCase().includes("selection email sent")) {
+        emailStatus = "delivered";
+        lastSentAt = ev.created_at;
       }
 
       return {

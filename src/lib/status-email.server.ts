@@ -130,28 +130,68 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
   const html = shell(body);
   const text = stripHtml(html);
 
-  const attachments = input.attachments && input.attachments.length > 0
+  const rawAttachments = input.attachments && input.attachments.length > 0
     ? input.attachments
     : (input.attachmentUrl ? [{ filename: 'Offer_Letter.pdf', path: input.attachmentUrl }] : []);
 
+  // Pre-fetch remote PDF attachments into Base64 buffers for 100% reliable MIME delivery
+  const resendAttachments: Array<{ filename: string; content: Buffer }> = [];
+  const brevoAttachments: Array<{ name: string; content: string }> = [];
+
+  for (const att of rawAttachments) {
+    try {
+      if (att.path.startsWith("http://") || att.path.startsWith("https://")) {
+        const fetchRes = await fetch(att.path);
+        if (fetchRes.ok) {
+          const arrBuf = await fetchRes.arrayBuffer();
+          const buf = Buffer.from(arrBuf);
+          resendAttachments.push({ filename: att.filename, content: buf });
+          brevoAttachments.push({ name: att.filename, content: buf.toString("base64") });
+        } else {
+          console.warn("[status-email] Remote attachment fetch returned status:", fetchRes.status, att.path);
+        }
+      }
+    } catch (attErr) {
+      console.warn("[status-email] Failed to pre-fetch attachment:", att.path, attErr);
+    }
+  }
+
+  const fromAddr = process.env.RESEND_FROM || FROM_ADDR;
   let sent = false;
   let lastError = "";
 
+  // 1. Try Primary Resend Dispatch
   if (apiKey) {
     try {
       const resend = new Resend(apiKey);
       const res = await resend.emails.send({
         to: input.toEmail,
-        from: FROM_ADDR,
+        from: fromAddr,
         subject,
         html,
         text,
         ...(input.ccEmail ? { cc: input.ccEmail } : {}),
-        ...(attachments.length > 0 ? { attachments } : {})
+        ...(resendAttachments.length > 0 ? { attachments: resendAttachments } : {})
       });
+
       if (res.error) {
         lastError = `Resend Error: ${res.error.message}`;
         console.warn("[status-email] Resend returned error:", res.error);
+
+        // Fallback: If domain verification issue, try fallback address if configured
+        if (res.error.message.includes("domain") || res.error.message.includes("verify") || res.error.message.includes("validation")) {
+          const fallbackRes = await resend.emails.send({
+            to: input.toEmail,
+            from: "Vyntyra Careers <onboarding@resend.dev>",
+            subject,
+            html,
+            text,
+            ...(resendAttachments.length > 0 ? { attachments: resendAttachments } : {})
+          });
+          if (!fallbackRes.error) {
+            sent = true;
+          }
+        }
       } else {
         sent = true;
       }
@@ -161,6 +201,7 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
     }
   }
 
+  // 2. Try Brevo API Fallback
   if (!sent && brevoKey) {
     try {
       const bRes = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -176,9 +217,7 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
           subject,
           htmlContent: html,
           ...(input.ccEmail ? { cc: [{ email: input.ccEmail }] } : {}),
-          ...(attachments.length > 0 ? {
-            attachment: attachments.map(a => ({ url: a.path, name: a.filename }))
-          } : {})
+          ...(brevoAttachments.length > 0 ? { attachment: brevoAttachments } : {})
         }),
       });
 
@@ -196,6 +235,6 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
   }
 
   if (!sent) {
-    throw new Error(`Email dispatch failed for ${input.toEmail}. Details: ${lastError || "No valid SMTP API keys configured."}`);
+    throw new Error(`Email delivery failed for ${input.toEmail}. Reason: ${lastError || "No valid email API credentials found."}`);
   }
 }

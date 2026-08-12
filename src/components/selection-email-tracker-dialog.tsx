@@ -193,6 +193,11 @@ export function SelectionEmailTrackerDialog({ open, onClose }: { open: boolean; 
                   <div>
                     <div className="font-bold text-slate-900">{app.full_name || app.email}</div>
                     <div className="text-[11px] text-slate-500">{app.email} &middot; {app.phone || "No Phone"}</div>
+                    {app.scheduled_info?.error_message && (
+                      <div className="text-[10px] text-red-600 font-mono mt-0.5 max-w-xs truncate" title={app.scheduled_info.error_message}>
+                        Error: {app.scheduled_info.error_message}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -207,7 +212,7 @@ export function SelectionEmailTrackerDialog({ open, onClose }: { open: boolean; 
                         <CheckCircle2 className="h-3 w-3 mr-1" /> Delivered
                       </Badge>
                     ) : app.email_status === "failed" ? (
-                      <Badge className="bg-red-100 text-red-800 border-red-200 text-[10px] font-bold">
+                      <Badge className="bg-red-100 text-red-800 border-red-200 text-[10px] font-bold" title={app.scheduled_info?.error_message}>
                         <AlertCircle className="h-3 w-3 mr-1" /> Failed
                       </Badge>
                     ) : (
