@@ -10,6 +10,20 @@ export interface IOfferDetails {
   jobLocation?: string;
 }
 
+async function fetchBase64Image(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (res.ok) {
+      const arrayBuffer = await res.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString("base64");
+      return `data:image/png;base64,${base64}`;
+    }
+  } catch (err) {
+    console.warn(`[pdf.server] Failed to fetch image from ${url}:`, err);
+  }
+  return null;
+}
+
 export async function generateOfferLetterPDF(details: IOfferDetails): Promise<string> {
   const doc = new jsPDF({
     orientation: "portrait",
@@ -31,25 +45,41 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   doc.rect(0, 14, 210, 3, "F");
 
   // ─── CORPORATE LETTERHEAD ───
-  // Typographic Brand Logo (Left)
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(22);
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("VYNTYRA", 20, 33);
-  
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-  doc.text("CONSULTANCY SERVICES", 20, 38);
+  const logoBase64 = await fetchBase64Image("https://careers.vyntyraconsultancyservices.in/icon-512.png");
+  if (logoBase64) {
+    doc.addImage(logoBase64, "PNG", 20, 22, 13, 13);
+    
+    // Typographic Brand Logo next to image
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.text("VYNTYRA", 37, 29);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+    doc.text("CONSULTANCY SERVICES", 37, 34);
+  } else {
+    // Fallback if logo not loaded
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.text("VYNTYRA", 20, 33);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+    doc.text("CONSULTANCY SERVICES", 20, 38);
+  }
 
   // Address and Contact Details (Right, aligned right)
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(110, 110, 110);
-  doc.text("Vyntyra Tower, Tech Zone", 190, 28, { align: "right" });
-  doc.text("Bangalore, Karnataka - 560103", 190, 33, { align: "right" });
-  doc.text("Email: careers@vyntyraconsultancyservices.in", 190, 38, { align: "right" });
-  doc.text("Web: www.vyntyraconsultancyservices.in", 190, 43, { align: "right" });
+  doc.text("Dwaraka Nagar, Dwaraka Plaza", 190, 26, { align: "right" });
+  doc.text("Visakhapatnam, AP, India - 530016", 190, 31, { align: "right" });
+  doc.text("Email: careers@vyntyraconsultancyservices.in", 190, 36, { align: "right" });
+  doc.text("Web: www.vyntyraconsultancyservices.in", 190, 41, { align: "right" });
 
   // Thin Elegant Divider
   doc.setDrawColor(borderGrey[0], borderGrey[1], borderGrey[2]);
@@ -130,7 +160,7 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   doc.setFont("helvetica", "bold");
   doc.text("Job Location:", 25, cardY + 44);
   doc.setFont("helvetica", "normal");
-  doc.text(details.jobLocation || "Bangalore / Remote", 75, cardY + 44);
+  doc.text(details.jobLocation || "Visakhapatnam / Remote", 75, cardY + 44);
 
   // ─── SECONDARY TEXT (TERMS) ───
   const termsY = 178;
@@ -149,21 +179,29 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   // ─── SIGNATURE BLOCK ───
   const signY = 228;
   
-  // Vyntyra HR Signatory
-  doc.setFont("helvetica", "normal");
-  doc.text("For Vyntyra Consultancy Services,", 20, signY);
-  
-  // Space for signature (Typographic representation or blank space)
-  doc.setFont("courier", "italic");
-  doc.setFontSize(11);
-  doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-  doc.text("HR Department", 20, signY + 12);
-  
-  doc.setFont("helvetica", "normal");
+  // Vyntyra Signatory
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-  doc.line(20, signY + 16, 75, signY + 16);
-  doc.text("Authorized Signatory", 20, signY + 21);
+  doc.text("For Vyntyra Consultancy Services,", 20, signY);
+
+  const sigBase64 = await fetchBase64Image("https://careers.vyntyraconsultancyservices.in/signature.png");
+  if (sigBase64) {
+    doc.addImage(sigBase64, "PNG", 20, signY + 1.5, 30, 9);
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("Jami Eswar Anil Kumar", 20, signY + 14);
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(110, 110, 110);
+  doc.text("Founder & Managing Director", 20, signY + 18);
+  
+  doc.line(20, signY + 21, 75, signY + 21);
+  doc.text("Authorized Signatory", 20, signY + 25);
 
   // Candidate Acceptance
   doc.text("Accepted and Agreed By:", 120, signY);
