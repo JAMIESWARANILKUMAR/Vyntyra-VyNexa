@@ -642,6 +642,48 @@ function OperationsDashboard() {
               </form>
             </DialogContent>
           </Dialog>
+
+          {/* ── Admin Password Reset Modal ── */}
+          <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-slate-900">
+                  <ShieldCheck className="h-5 w-5 text-indigo-600" /> Reset Password for User
+                </DialogTitle>
+                <DialogDescription>
+                  Instantly set a new secure password for {resetUserTarget?.full_name || resetUserTarget?.email || "this account"}.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAdminResetPassword} className="space-y-4 py-2">
+                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1">
+                  <div><strong className="text-slate-900">Account:</strong> {resetUserTarget?.full_name || "—"} ({resetUserTarget?.email})</div>
+                  <div><strong className="text-slate-900">Role:</strong> <span className="uppercase font-bold text-indigo-600">{resetUserTarget?.role}</span> &middot; ID: {resetUserTarget?.employee_id || resetUserTarget?.intern_id || resetUserTarget?.id}</div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-700">New Secure Password (min 6 chars) *</Label>
+                  <Input
+                    required
+                    type="text"
+                    minLength={6}
+                    value={resetPasswordForm.newPassword}
+                    onChange={(e) => setResetPasswordForm({ ...resetPasswordForm, newPassword: e.target.value })}
+                    placeholder="e.g. Vyntyra2026#Pass"
+                    className="text-xs font-mono"
+                  />
+                </div>
+
+                <DialogFooter>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setResetPasswordOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold gap-1.5">
+                    <ShieldCheck className="h-4 w-4" /> Set & Update Password
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </header>
 
@@ -690,7 +732,17 @@ function OperationsDashboard() {
                   <EmptyState icon={<Briefcase className="h-6 w-6" />} message="No employees provisioned yet" />
                 ) : (
                   employees.map((m: any) => (
-                    <MemberRow key={m.id} member={m} onRevoke={handleRevoke} onClick={() => setSelectedUser(m)} />
+                    <MemberRow
+                      key={m.id}
+                      member={m}
+                      onRevoke={handleRevoke}
+                      onResetPassword={(user) => {
+                        setResetUserTarget(user);
+                        setResetPasswordForm({ userId: user.id, newPassword: "" });
+                        setResetPasswordOpen(true);
+                      }}
+                      onClick={() => setSelectedUser(m)}
+                    />
                   ))
                 )}
               </div>
@@ -714,7 +766,17 @@ function OperationsDashboard() {
                   <EmptyState icon={<GraduationCap className="h-6 w-6" />} message="No interns provisioned yet" />
                 ) : (
                   interns.map((m: any) => (
-                    <MemberRow key={m.id} member={m} onRevoke={handleRevoke} onClick={() => setSelectedUser(m)} />
+                    <MemberRow
+                      key={m.id}
+                      member={m}
+                      onRevoke={handleRevoke}
+                      onResetPassword={(user) => {
+                        setResetUserTarget(user);
+                        setResetPasswordForm({ userId: user.id, newPassword: "" });
+                        setResetPasswordOpen(true);
+                      }}
+                      onClick={() => setSelectedUser(m)}
+                    />
                   ))
                 )}
               </div>
@@ -1920,7 +1982,7 @@ function OperationsDashboard() {
   );
 }
 
-function MemberRow({ member, onRevoke, onClick }: { member: any; onRevoke: (id: string, name: string) => void; onClick: () => void }) {
+function MemberRow({ member, onRevoke, onResetPassword, onClick }: { member: any; onRevoke: (id: string, name: string) => void; onResetPassword?: (member: any) => void; onClick: () => void }) {
   const roleStyles = member.role === "employee"
     ? "bg-blue-100 text-blue-800"
     : "bg-emerald-100 text-emerald-800";
@@ -1941,10 +2003,23 @@ function MemberRow({ member, onRevoke, onClick }: { member: any; onRevoke: (id: 
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide ${roleStyles}`}>{member.role}</span>
-        <div onClick={(e) => e.stopPropagation()}>
+        
+        <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1">
+          {onResetPassword && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+              title="Reset Password for this account"
+              onClick={() => onResetPassword(member)}
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+            </Button>
+          )}
+
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/40 hover:text-destructive hover:bg-destructive/10">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/40 hover:text-destructive hover:bg-destructive/10" title="Revoke Access">
                 <UserX className="h-3.5 w-3.5" />
               </Button>
             </AlertDialogTrigger>
