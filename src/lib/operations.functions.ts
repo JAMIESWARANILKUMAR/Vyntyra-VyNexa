@@ -134,6 +134,87 @@ export const listTeamMembers = createServerFn({ method: "GET" })
     return Array.from(membersMap.values());
   });
 
+async function getUserRole(userId: string) {
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return roleData?.role || "viewer";
+}
+
+function isAdminLikeRole(role: string) {
+  return role === "admin" || role === "super_admin";
+}
+
+async function listInternProfiles(adminClient: any) {
+  const [{ data: profiles }, { data: roles }] = await Promise.all([
+    adminClient
+      .from("profiles")
+      .select("id, full_name, email, department, position, intern_id, mentor_id, avatar_url"),
+    adminClient.from("user_roles").select("user_id, role"),
+  ]);
+
+  const roleMap = new Map<string, string>();
+  (roles || []).forEach((r: any) => roleMap.set(r.user_id, r.role));
+
+  return (profiles || [])
+    .filter((p: any) => {
+      const role = roleMap.get(p.id);
+      const dept = (p.department || "").toLowerCase();
+      const position = (p.position || "").toLowerCase();
+      return role === "intern" || !!p.intern_id || dept.includes("intern") || position.includes("intern");
+    })
+    .map((p: any) => ({
+      ...p,
+      role: roleMap.get(p.id) || "intern",
+    }));
+}
+
+async function resolveAssignableInternIdsForTaskAssignment(
+  userId: string,
+  requestedInternIds: string[] | undefined,
+  fallbackToAllScopedInterns: boolean
+) {
+  const role = await getUserRole(userId);
+  if (!isAdminLikeRole(role) && role !== "employee") {
+    throw new Error("Unauthorized");
+  }
+
+  const adminClient = getAdminClient();
+  const allInterns = await listInternProfiles(adminClient);
+  const scopedInterns = role === "employee" ? allInterns.filter((intern: any) => intern.mentor_id === userId) : allInterns;
+
+  if (!scopedInterns.length) {
+    throw new Error(
+      role === "employee"
+        ? "No interns are currently assigned to you. Please contact admin to assign interns first."
+        : "No active interns found in system to assign tasks to."
+    );
+  }
+
+  const allowedIds = new Set(scopedInterns.map((intern: any) => intern.id));
+  const requestedIds = requestedInternIds || [];
+  const resolvedIds = requestedIds.length
+    ? requestedIds
+    : (fallbackToAllScopedInterns ? scopedInterns.map((intern: any) => intern.id) : []);
+
+  if (!resolvedIds.length) {
+    throw new Error("Please select at least one intern to assign tasks.");
+  }
+
+  const invalidIds = resolvedIds.filter((internId) => !allowedIds.has(internId));
+  if (invalidIds.length) {
+    throw new Error(
+      role === "employee"
+        ? "You can only assign tasks to interns currently mentored by you."
+        : "One or more selected interns are not eligible for assignment."
+    );
+  }
+
+  return Array.from(new Set(resolvedIds));
+}
+
 // ─── Announcements ────────────────────────────────────────────────
 const announcementSchema = z.object({
   title: z.string().min(1),
@@ -413,23 +494,11 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
     target_intern_ids: z.array(z.string()).optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
-    let internIds = data.target_intern_ids || [];
-    if (!internIds.length) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, role, department")
-        .or("role.eq.intern,department.ilike.%intern%,position.ilike.%intern%");
-      internIds = (profiles || []).map((p: any) => p.id);
-    }
-    if (!internIds.length) {
-      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "intern");
-      internIds = (roles || []).map((r: any) => r.user_id);
-    }
-    if (!internIds.length) {
-      const { data: allProfiles } = await supabase.from("profiles").select("id");
-      internIds = (allProfiles || []).map((p: any) => p.id);
-    }
-    if (!internIds.length) throw new Error("No active interns found in system to assign tasks to.");
+    const internIds = await resolveAssignableInternIdsForTaskAssignment(
+      context.userId,
+      data.target_intern_ids,
+      true
+    );
 
     const taskPayloads: any[] = [];
     const now = new Date().toISOString();
@@ -483,8 +552,14 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
     target_intern_ids: z.array(z.string()).min(1),
   }).parse(d))
   .handler(async ({ data, context }) => {
+    const targetInternIds = await resolveAssignableInternIdsForTaskAssignment(
+      context.userId,
+      data.target_intern_ids,
+      false
+    );
+
     const now = new Date().toISOString();
-    const taskPayloads = data.target_intern_ids.map(internId => ({
+    const taskPayloads = targetInternIds.map(internId => ({
       title: data.title,
       description: data.description || "Manual Internship Task",
       project_requirements: data.task_file_url || null,
@@ -1264,6 +1339,94 @@ export const createPayout = createServerFn({ method: 'POST' })
     });
     if (error) throw new Error(error.message);
     return { success: true };
+  });
+
+export const listAssignableInterns = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const role = await getUserRole(context.userId);
+    if (!isAdminLikeRole(role) && role !== "employee") {
+      throw new Error("Unauthorized");
+    }
+
+    const adminClient = getAdminClient();
+    const interns = await listInternProfiles(adminClient);
+    const scopedInterns = role === "employee"
+      ? interns.filter((intern: any) => intern.mentor_id === context.userId)
+      : interns;
+
+    return scopedInterns.sort((a: any, b: any) => {
+      const left = (a.full_name || a.email || "").toLowerCase();
+      const right = (b.full_name || b.email || "").toLowerCase();
+      return left.localeCompare(right);
+    });
+  });
+
+export const listMentorInternAttendance = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const role = await getUserRole(context.userId);
+    if (!isAdminLikeRole(role) && role !== "employee") {
+      throw new Error("Unauthorized");
+    }
+
+    const adminClient = getAdminClient();
+    const interns = await listInternProfiles(adminClient);
+    const scopedInterns = role === "employee"
+      ? interns.filter((intern: any) => intern.mentor_id === context.userId)
+      : interns;
+
+    if (!scopedInterns.length) return [];
+
+    const internIds = scopedInterns.map((intern: any) => intern.id);
+    const { data: attendanceRows, error } = await adminClient
+      .from("attendance")
+      .select("id, user_id, date, status, clock_in, clock_out, created_at, updated_at")
+      .in("user_id", internIds)
+      .order("date", { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    const attendanceByIntern = new Map<string, any[]>();
+    (attendanceRows || []).forEach((row: any) => {
+      const existing = attendanceByIntern.get(row.user_id) || [];
+      existing.push(row);
+      attendanceByIntern.set(row.user_id, existing);
+    });
+
+    return scopedInterns
+      .map((intern: any) => ({
+        ...intern,
+        attendance: attendanceByIntern.get(intern.id) || [],
+      }))
+      .sort((a: any, b: any) => {
+        const left = (a.full_name || a.email || "").toLowerCase();
+        const right = (b.full_name || b.email || "").toLowerCase();
+        return left.localeCompare(right);
+      });
+  });
+
+export const getMyMentorProfile = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const adminClient = getAdminClient();
+
+    const { data: profile, error: profileError } = await adminClient
+      .from("profiles")
+      .select("mentor_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (profileError) throw new Error(profileError.message);
+    if (!profile?.mentor_id) return null;
+
+    const { data: mentor, error: mentorError } = await adminClient
+      .from("profiles")
+      .select("id, full_name, email, department, position, employee_id, phone, avatar_url")
+      .eq("id", profile.mentor_id)
+      .maybeSingle();
+    if (mentorError) throw new Error(mentorError.message);
+
+    return mentor || null;
   });
 
 // ─── Team Assignments (Admin) ────────────────────────────────────────

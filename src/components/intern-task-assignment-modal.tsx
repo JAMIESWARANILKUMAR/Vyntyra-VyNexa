@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { bulkAssignTasksFromCsv, assignManualTaskToInterns } from "@/lib/operations.functions";
+import { bulkAssignTasksFromCsv, assignManualTaskToInterns, listAssignableInterns } from "@/lib/operations.functions";
 import { Upload, FileSpreadsheet, Plus, CheckCircle2, Loader2, Sparkles, Link2, Users } from "lucide-react";
 import { toast } from "sonner";
 
@@ -22,31 +21,46 @@ interface ParsedTask {
   priority: "low" | "medium" | "high";
 }
 
-export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function InternTaskAssignmentModal({
+  open,
+  onClose,
+  initialSelectedInternIds = [],
+  initialSelectAll = true,
+}: {
+  open: boolean;
+  onClose: () => void;
+  initialSelectedInternIds?: string[];
+  initialSelectAll?: boolean;
+}) {
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<"csv" | "manual">("csv");
 
   // Server functions
   const doBulkAssign = useServerFn(bulkAssignTasksFromCsv);
   const doManualAssign = useServerFn(assignManualTaskToInterns);
+  const fetchAssignableInterns = useServerFn(listAssignableInterns);
 
   // Fetch active interns list for manual selection
   const internsQ = useQuery({
     queryKey: ["active-interns-for-tasks"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, department, position, intern_id")
-        .or("role.eq.intern,department.ilike.%intern%,position.ilike.%intern%")
-        .order("full_name");
-      return data || [];
-    },
+    queryFn: () => fetchAssignableInterns(),
     enabled: open,
   });
 
   const interns = internsQ.data || [];
   const [selectedInternIds, setSelectedInternIds] = useState<string[]>([]);
-  const [selectAll, setSelectAll] = useState(true);
+  const [selectAll, setSelectAll] = useState(initialSelectAll);
+
+  useEffect(() => {
+    if (!open) return;
+    if (initialSelectedInternIds.length > 0) {
+      setSelectedInternIds(initialSelectedInternIds);
+      setSelectAll(false);
+      return;
+    }
+    setSelectedInternIds([]);
+    setSelectAll(initialSelectAll);
+  }, [open, initialSelectedInternIds, initialSelectAll]);
 
   // Manual Form State
   const [manualTitle, setManualTitle] = useState("");
@@ -324,7 +338,7 @@ Automated CI/CD Pipeline & Dockerization,Write GitHub Actions workflow for autom
                 <div className="flex items-center gap-2">
                   <Checkbox id="selectAllBulk" checked={selectAll} onCheckedChange={(v) => handleToggleSelectAll(!!v)} />
                   <label htmlFor="selectAllBulk" className="text-xs font-medium text-slate-700 cursor-pointer">
-                    All Active Interns ({interns.length})
+                    All Available Interns ({interns.length})
                   </label>
                 </div>
               </div>
@@ -430,7 +444,7 @@ Automated CI/CD Pipeline & Dockerization,Write GitHub Actions workflow for autom
                   <div className="flex items-center gap-2">
                     <Checkbox id="selectAllManual" checked={selectAll} onCheckedChange={(v) => handleToggleSelectAll(!!v)} />
                     <label htmlFor="selectAllManual" className="text-xs font-medium text-slate-700 cursor-pointer">
-                      All Active Interns ({interns.length})
+                      All Available Interns ({interns.length})
                     </label>
                   </div>
                 </div>

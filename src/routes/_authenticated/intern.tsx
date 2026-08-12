@@ -33,7 +33,7 @@ import {
   acceptTask, updateTaskExecution,
   listLeads, createLead, updateLeadStatus, deleteLead,
   listBugs, createBug, updateBugStatus,
-  clockIn, clockOut, getMyAttendance, getMyDocuments
+  clockIn, clockOut, getMyAttendance, getMyDocuments, getMyMentorProfile
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
@@ -93,6 +93,7 @@ function InternDashboard() {
   const doClockOut = useServerFn(clockOut);
   const fetchAttendance = useServerFn(getMyAttendance);
   const fetchMyDocuments = useServerFn(getMyDocuments);
+  const fetchMyMentor = useServerFn(getMyMentorProfile);
 
   const [selectedTaskWorkspace, setSelectedTaskWorkspace] = useState<any>(null);
   const [selectedDomain, setSelectedDomain] = useState<"tech" | "non_tech" | "management">("tech");
@@ -118,6 +119,7 @@ function InternDashboard() {
   const notesQ = useQuery({ queryKey: ["my-notes"], queryFn: () => fetchNotes(), ...queryOpts });
   const attendanceQ = useQuery({ queryKey: ["my-attendance"], queryFn: () => fetchAttendance(), staleTime: 0, refetchInterval: 3000 });
   const docsQ = useQuery({ queryKey: ["my-documents"], queryFn: () => fetchMyDocuments(), staleTime: 1000 * 60 * 30 });
+  const mentorQ = useQuery({ queryKey: ["my-mentor"], queryFn: () => fetchMyMentor(), staleTime: 1000 * 60 * 30 });
 
   const attendanceLogs: any[] = attendanceQ.data || [];
   const todayStr = new Date().toISOString().split('T')[0];
@@ -178,6 +180,7 @@ function InternDashboard() {
   });
   
   const profile = profileQ.data;
+  const mentor = mentorQ.data;
   const displayName = profile?.full_name || email.split("@")[0] || "Intern";
 
   useEffect(() => {
@@ -500,6 +503,31 @@ function InternDashboard() {
                       Refresh
                     </button>
                   </>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">Your Mentor</h3>
+                  {mentor ? (
+                    <div className="mt-2 space-y-1">
+                      <div className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-emerald-600" />
+                        {mentor.full_name || "Mentor"}
+                      </div>
+                      <div className="text-xs text-slate-500">{mentor.email || "No email available"}</div>
+                      <div className="text-xs text-slate-600">{mentor.position || "Mentor"}{mentor.department ? ` · ${mentor.department}` : ""}</div>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-sm text-slate-400">A mentor has not been assigned yet.</p>
+                  )}
+                </div>
+                {mentor?.employee_id && (
+                  <span className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold">
+                    {mentor.employee_id}
+                  </span>
                 )}
               </div>
             </div>

@@ -32,12 +32,14 @@ import { IdCardModal } from "@/components/id-card-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { InternTaskAssignmentModal } from "@/components/intern-task-assignment-modal";
 
 import { 
   listTasks, listMeetings, listSchedules, listAnnouncements,
   requestLeave, listMyLeaves, listMyPayouts, clockIn, clockOut, getMyAttendance,
   listTeamMembers, createFeedback, listResources, listMyExpenses, createExpenseClaim,
-  listMySupportTickets, createSupportTicket, listKudos, createKudos, updateUserProfile
+  listMySupportTickets, createSupportTicket, listKudos, createKudos, updateUserProfile,
+  listMentorInternAttendance
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/employee")({
@@ -309,6 +311,7 @@ function EmployeeDashboard() {
   const fetchKudos = useServerFn(listKudos);
   const doCreateKudos = useServerFn(createKudos);
   const doUpdateProfile = useServerFn(updateUserProfile);
+  const fetchMentorInternAttendance = useServerFn(listMentorInternAttendance);
 
   const tasksQ = useQuery({ queryKey: ["my-tasks"], queryFn: () => fetchTasks() });
   const meetingsQ = useQuery({ queryKey: ["my-meetings"], queryFn: () => fetchMeetings() });
@@ -322,6 +325,7 @@ function EmployeeDashboard() {
   const expensesQ = useQuery({ queryKey: ["my-expenses"], queryFn: () => fetchExpenses() });
   const ticketsQ = useQuery({ queryKey: ["my-tickets"], queryFn: () => fetchTickets() });
   const kudosQ = useQuery({ queryKey: ["kudos-feed"], queryFn: () => fetchKudos() });
+  const mentorInternAttendanceQ = useQuery({ queryKey: ["mentor-intern-attendance"], queryFn: () => fetchMentorInternAttendance() });
 
   const tasks: any[] = tasksQ.data || [];
   const meetings: any[] = meetingsQ.data || [];
@@ -335,6 +339,7 @@ function EmployeeDashboard() {
   const expenses: any[] = expensesQ.data || [];
   const tickets: any[] = ticketsQ.data || [];
   const kudosList: any[] = kudosQ.data || [];
+  const mentorInterns: any[] = mentorInternAttendanceQ.data || [];
 
   const session = sessionQ.data;
   const email = session?.user?.email || "";
@@ -386,6 +391,8 @@ function EmployeeDashboard() {
   const [selectedPayslip, setSelectedPayslip] = useState<any | null>(null);
   const [isPayslipOpen, setIsPayslipOpen] = useState(false);
   const [isIdCardOpen, setIsIdCardOpen] = useState(false);
+  const [isInternTaskModalOpen, setIsInternTaskModalOpen] = useState(false);
+  const [prefillInternIds, setPrefillInternIds] = useState<string[]>([]);
 
   function openPayslipModal(payout?: any) {
     const amt = payout?.amount || 75000;
@@ -674,6 +681,7 @@ function EmployeeDashboard() {
   const TABS = [
     { id: "overview", label: "Overview" },
     { id: "tasks", label: `Tasks`, badge: pendingTasks.length },
+    { id: "interns", label: `My Interns`, badge: mentorInterns.length },
     { id: "attendance", label: "Attendance & Time" },
     { id: "leave", label: "Leaves" },
     { id: "payouts", label: "Payouts & Expenses" },
@@ -941,6 +949,104 @@ function EmployeeDashboard() {
                   })
                 )}
               </motion.div>
+            </motion.div>
+          )}
+
+          {/* ─── MY INTERNS ─── */}
+          {activeTab === "interns" && (
+            <motion.div key="interns" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-light tracking-tight text-slate-900">Assigned Interns</h2>
+                  <p className="text-sm text-slate-500">View intern details, attendance logs, and assign individual or bulk tasks.</p>
+                </div>
+                <Button
+                  onClick={() => {
+                    setPrefillInternIds(mentorInterns.map((intern: any) => intern.id));
+                    setIsInternTaskModalOpen(true);
+                  }}
+                  disabled={mentorInterns.length === 0}
+                  className="bg-black text-white hover:bg-slate-800 rounded-xl"
+                >
+                  <ClipboardList className="h-4 w-4 mr-2" /> Assign Tasks (Bulk / Manual)
+                </Button>
+              </div>
+
+              {mentorInternAttendanceQ.isLoading ? (
+                <div className="p-10 rounded-2xl border border-slate-100 bg-white text-slate-400 text-sm flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading assigned interns...
+                </div>
+              ) : mentorInterns.length === 0 ? (
+                <div className="p-10 rounded-2xl border border-dashed border-slate-200 bg-white text-center text-slate-500">
+                  No interns are currently assigned to you.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                  {mentorInterns.map((intern: any) => {
+                    const internAttendance = intern.attendance || [];
+                    const todayLog = internAttendance.find((log: any) => log.date === todayStr || (log.clock_in && new Date(log.clock_in).toDateString() === new Date().toDateString()));
+                    const completedShifts = internAttendance.filter((log: any) => !!log.clock_out).length;
+                    return (
+                      <div key={intern.id} className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <h3 className="text-base font-semibold text-slate-900">{intern.full_name || intern.email}</h3>
+                            <p className="text-xs text-slate-500 mt-0.5">{intern.email || "No email"}</p>
+                            <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                              <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-700 font-medium">{intern.intern_id || "Intern ID N/A"}</span>
+                              <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 font-medium">{intern.department || "Internship"}</span>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-lg text-xs"
+                            onClick={() => {
+                              setPrefillInternIds([intern.id]);
+                              setIsInternTaskModalOpen(true);
+                            }}
+                          >
+                            Assign Individual Task
+                          </Button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                            <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Attendance Today</div>
+                            <div className="text-sm font-semibold text-slate-800 mt-1">
+                              {todayLog ? (todayLog.clock_out ? "Shift Completed" : "Clocked In") : "No Log Yet"}
+                            </div>
+                          </div>
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                            <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Completed Shifts</div>
+                            <div className="text-sm font-semibold text-slate-800 mt-1">{completedShifts}</div>
+                          </div>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-100 overflow-hidden">
+                          <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-widest text-slate-500 bg-slate-50">Recent Attendance</div>
+                          <div className="divide-y divide-slate-100">
+                            {internAttendance.length === 0 ? (
+                              <div className="px-3 py-4 text-xs text-slate-400">No attendance logs yet.</div>
+                            ) : (
+                              internAttendance.slice(0, 5).map((log: any) => (
+                                <div key={log.id} className="px-3 py-2.5 flex items-center justify-between text-xs">
+                                  <span className="text-slate-700">{new Date(log.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                                  <span className="text-slate-500 font-mono">
+                                    {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--"}
+                                    <span className="mx-1 text-slate-300">→</span>
+                                    {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--"}
+                                  </span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -1921,6 +2027,16 @@ function EmployeeDashboard() {
           validUntil: profile?.end_date || '31 Dec 2028',
           officeLocation: profile?.address || 'VyNexa IT Tower, Cyber Hills, Visakhapatnam, AP, 530045'
         }} 
+      />
+      <InternTaskAssignmentModal
+        open={isInternTaskModalOpen}
+        onClose={() => {
+          setIsInternTaskModalOpen(false);
+          setPrefillInternIds([]);
+          qc.invalidateQueries({ queryKey: ["mentor-intern-attendance"] });
+        }}
+        initialSelectedInternIds={prefillInternIds}
+        initialSelectAll={prefillInternIds.length === 0}
       />
       <FloatingAppsPanel />
       <FirstLoginWelcomeModal user={profile} />

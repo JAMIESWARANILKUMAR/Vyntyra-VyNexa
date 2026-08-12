@@ -140,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
+  '/verify': typeof VerifyRoute
   '/cms': typeof AuthenticatedCmsRoute
   '/employee': typeof AuthenticatedEmployeeRoute
   '/intern': typeof AuthenticatedInternRoute
@@ -160,6 +161,7 @@ export interface FileRoutesByTo {
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
+  '/verify': typeof VerifyRoute
   '/cms': typeof AuthenticatedCmsRoute
   '/employee': typeof AuthenticatedEmployeeRoute
   '/intern': typeof AuthenticatedInternRoute
@@ -182,6 +184,7 @@ export interface FileRoutesById {
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
+  '/verify': typeof VerifyRoute
   '/_authenticated/cms': typeof AuthenticatedCmsRoute
   '/_authenticated/employee': typeof AuthenticatedEmployeeRoute
   '/_authenticated/intern': typeof AuthenticatedInternRoute
@@ -204,6 +207,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/terms'
     | '/track'
+    | '/verify'
     | '/cms'
     | '/employee'
     | '/intern'
@@ -224,6 +228,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/terms'
     | '/track'
+    | '/verify'
     | '/cms'
     | '/employee'
     | '/intern'
@@ -245,6 +250,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/terms'
     | '/track'
+    | '/verify'
     | '/_authenticated/cms'
     | '/_authenticated/employee'
     | '/_authenticated/intern'
@@ -267,6 +273,7 @@ export interface RootRouteChildren {
   StatusRoute: typeof StatusRouteWithChildren
   TermsRoute: typeof TermsRoute
   TrackRoute: typeof TrackRoute
+  VerifyRoute: typeof VerifyRoute
   AuthAdminRoute: typeof AuthAdminRoute
   AuthEmployeeRoute: typeof AuthEmployeeRoute
   AuthInternRoute: typeof AuthInternRoute
@@ -274,6 +281,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify': {
+      id: '/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/track': {
       id: '/track'
       path: '/track'
@@ -406,13 +420,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/operations'
       preLoaderRoute: typeof AuthenticatedAdminOperationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/verify': {
-      id: '/verify'
-      path: '/verify'
-      fullPath: '/verify'
-      preLoaderRoute: typeof VerifyRouteImport
-      parentRoute: typeof rootRouteImport
     }
   }
 }
