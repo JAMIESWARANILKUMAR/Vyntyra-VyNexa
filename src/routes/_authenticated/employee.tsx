@@ -23,6 +23,7 @@ import ReactMarkdown from "react-markdown";
 import { RichContentRenderer } from "@/components/rich-content-renderer";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { MeetingsSection } from "@/components/meetings-section";
+import { FirstLoginWelcomeModal } from "@/components/first-login-welcome-modal";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
 import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -1922,6 +1923,7 @@ function EmployeeDashboard() {
         }} 
       />
       <FloatingAppsPanel />
+      <FirstLoginWelcomeModal user={profile} />
     </div>
   );
 }

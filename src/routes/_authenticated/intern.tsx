@@ -19,6 +19,7 @@ import { MeetingsSection } from "@/components/meetings-section";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
 import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { FirstLoginWelcomeModal } from "@/components/first-login-welcome-modal";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import { TechDomainWorkspace } from "@/components/tech-domain-workspace";
 import { NonTechDomainWorkspace } from "@/components/non-tech-domain-workspace";
@@ -1613,6 +1614,9 @@ function InternDashboard() {
 
       {/* Floating Apps Panel */}
       <FloatingAppsPanel />
+
+      {/* ── First-Time Login Animated Welcome Modal ── */}
+      <FirstLoginWelcomeModal user={profile} />
 
       {/* ── Force Password Reset Modal ── */}
       {showForcePasswordModal && (
