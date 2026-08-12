@@ -171,6 +171,16 @@ async function listInternProfiles(adminClient: any) {
     }));
 }
 
+async function listMentoredProfiles(adminClient: any, mentorId: string) {
+  const { data, error } = await adminClient
+    .from("profiles")
+    .select("id, full_name, email, department, position, intern_id, mentor_id, avatar_url")
+    .eq("mentor_id", mentorId);
+
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
 async function resolveAssignableInternIdsForTaskAssignment(
   userId: string,
   requestedInternIds: string[] | undefined,
@@ -182,8 +192,9 @@ async function resolveAssignableInternIdsForTaskAssignment(
   }
 
   const adminClient = getAdminClient();
-  const allInterns = await listInternProfiles(adminClient);
-  const scopedInterns = role === "employee" ? allInterns.filter((intern: any) => intern.mentor_id === userId) : allInterns;
+  const scopedInterns = role === "employee"
+    ? await listMentoredProfiles(adminClient, userId)
+    : await listInternProfiles(adminClient);
 
   if (!scopedInterns.length) {
     throw new Error(
@@ -1350,10 +1361,9 @@ export const listAssignableInterns = createServerFn({ method: "GET" })
     }
 
     const adminClient = getAdminClient();
-    const interns = await listInternProfiles(adminClient);
     const scopedInterns = role === "employee"
-      ? interns.filter((intern: any) => intern.mentor_id === context.userId)
-      : interns;
+      ? await listMentoredProfiles(adminClient, context.userId)
+      : await listInternProfiles(adminClient);
 
     return scopedInterns.sort((a: any, b: any) => {
       const left = (a.full_name || a.email || "").toLowerCase();
@@ -1371,10 +1381,9 @@ export const listMentorInternAttendance = createServerFn({ method: "GET" })
     }
 
     const adminClient = getAdminClient();
-    const interns = await listInternProfiles(adminClient);
     const scopedInterns = role === "employee"
-      ? interns.filter((intern: any) => intern.mentor_id === context.userId)
-      : interns;
+      ? await listMentoredProfiles(adminClient, context.userId)
+      : await listInternProfiles(adminClient);
 
     if (!scopedInterns.length) return [];
 
