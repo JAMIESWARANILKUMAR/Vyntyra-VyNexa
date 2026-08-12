@@ -201,6 +201,25 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
     }
   };
 
+  const handleDownloadSampleCsv = () => {
+    const sampleCsvContent = `Title,Description,File URL,Deadline,Priority
+Build Full-Stack E-Commerce Dashboard,Develop React frontend with TanStack Router and Supabase REST API authentication,https://drive.google.com/file/d/sample-doc-1/view,2026-08-30,High
+Implement Microservices Billing Engine,Design Node.js Express microservice for invoice generation & GST calculation,https://github.com/vyntyra/sample-repo-specs,2026-08-28,Medium
+AI Chatbot Integration & UI Polish,Integrate Gemini AI assistant SDK with dynamic stream rendering & Tailwind CSS,https://drive.google.com/file/d/sample-doc-3/view,2026-09-05,High
+Automated CI/CD Pipeline & Dockerization,Write GitHub Actions workflow for automated testing and Vercel production deployment,https://drive.google.com/file/d/sample-doc-4/view,2026-09-02,Medium`;
+
+    const blob = new Blob([sampleCsvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "vyntyra_intern_tasks_template.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Sample task template CSV downloaded!");
+  };
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -230,15 +249,28 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
               <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                 Upload CSV or Excel Task List
               </div>
-              <div className="text-xs text-slate-500 mt-1 mb-4">
+              <div className="text-xs text-slate-500 mt-1 mb-3">
                 Required Columns: <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Title</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Description</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">File URL</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Deadline</code>
               </div>
-              <Input
-                type="file"
-                accept=".csv, .txt, .tsv"
-                onChange={handleFileUpload}
-                className="max-w-xs mx-auto text-xs cursor-pointer"
-              />
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Input
+                  type="file"
+                  accept=".csv, .txt, .tsv"
+                  onChange={handleFileUpload}
+                  className="max-w-xs text-xs cursor-pointer"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadSampleCsv}
+                  className="text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50 font-semibold"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5 mr-1 text-emerald-600" /> Download Sample CSV Template
+                </Button>
+              </div>
+
               {fileName && <div className="text-xs font-semibold text-emerald-600 mt-2">Selected: {fileName}</div>}
             </div>
 

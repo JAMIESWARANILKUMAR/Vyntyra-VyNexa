@@ -542,12 +542,23 @@ function AdminDashboard() {
                   <div className="text-5xl font-bold tracking-tight">{stats.total}</div>
                   <div className="text-xs uppercase tracking-widest text-primary-foreground/60 mt-1">Total Applications</div>
                 </div>
-                <Button
-                  onClick={() => setSelectionTrackerOpen(true)}
-                  className="bg-gold hover:bg-gold/90 text-slate-950 font-bold text-xs shadow-lg mt-1 flex items-center gap-1.5 border-0"
-                >
-                  <Mail className="h-4 w-4" /> Selection Email Delivery Status
-                </Button>
+                <div className="flex items-center gap-2 mt-1">
+                  <Button
+                    onClick={() => setSelectionTrackerOpen(true)}
+                    className="bg-gold hover:bg-gold/90 text-slate-950 font-bold text-xs shadow-lg flex items-center gap-1.5 border-0"
+                  >
+                    <Mail className="h-4 w-4" /> Selection Email Status
+                  </Button>
+
+                  <Button
+                    asChild
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0"
+                  >
+                    <Link to="/admin/operations">
+                      <ClipboardList className="h-4 w-4" /> Operations & Tasks
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -555,11 +566,6 @@ function AdminDashboard() {
 
         <div className="mb-6">
           <WorldClocks />
-        </div>
-
-        {/* ── Intern Task Assignment & Real-Time Progress Tracker ── */}
-        <div id="intern-tasks-section" className="mb-8">
-          <AdminInternTasksView />
         </div>
 
         <div className="rounded-md border border-border bg-card shadow-corp p-5 mb-8">

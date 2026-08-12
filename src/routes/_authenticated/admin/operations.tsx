@@ -33,6 +33,7 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import { SmartAvatar } from "@/components/SmartAvatar";
+import { AdminInternTasksView } from "@/components/admin-intern-tasks-view";
 import { toast } from "sonner";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
@@ -653,6 +654,11 @@ function OperationsDashboard() {
           <StatCard icon={<GraduationCap className="h-5 w-5 text-emerald-600" />} label="Interns" value={interns.length} color="bg-emerald-50" />
           <StatCard icon={<ClipboardList className="h-5 w-5 text-amber-600" />} label="Active Tasks" value={(tasksQ.data || []).filter((t: any) => t.status !== "completed").length} color="bg-amber-50" />
         </div>
+
+        {/* ── Intern Task Assignment & Progress Tracker ── */}
+        <section id="intern-tasks-section">
+          <AdminInternTasksView />
+        </section>
 
         {/* ── Team Members (Employees + Interns) ── */}
         <section className="space-y-4">
