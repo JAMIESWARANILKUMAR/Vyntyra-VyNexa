@@ -33,6 +33,7 @@ import {
   Building2,
   Send,
   ShieldCheck,
+  ClipboardList,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
