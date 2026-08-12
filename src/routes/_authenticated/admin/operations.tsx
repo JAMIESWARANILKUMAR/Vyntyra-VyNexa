@@ -2933,6 +2933,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
             <table className="w-full text-xs text-left">
               <thead className="bg-slate-100/70 text-slate-700 uppercase tracking-wider font-semibold border-b text-[10px]">
                 <tr>
+                  <th className="px-5 py-3">Type</th>
                   <th className="px-5 py-3">Recipient Email</th>
                   <th className="px-5 py-3">Recipient Name</th>
                   <th className="px-5 py-3">University / Organization</th>
@@ -2944,7 +2945,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                   <th className="px-5 py-3">Sent Time</th>
                   <th className="px-5 py-3">Status</th>
                   <th className="px-5 py-3">Internship Registration</th>
-                  <th className="px-5 py-3">Resend ID</th>
+                  <th className="px-5 py-3">Email / Message ID</th>
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -2974,8 +2975,16 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                     const isMatched = matchedLog?.conversionStatus === "matched";
                     const matchedApp = matchedLog?.matchedApplication;
 
+                    const isSelectionEmail = String(log.id).startsWith("sel_");
                     return (
                       <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-5 py-3.5">
+                          {isSelectionEmail ? (
+                            <span className="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap">Selection</span>
+                          ) : (
+                            <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap">Promotional</span>
+                          )}
+                        </td>
                         <td className="px-5 py-3.5 font-bold text-slate-900">{log.recipient_email}</td>
                         <td className="px-5 py-3.5 text-slate-600">{log.recipient_name || "—"}</td>
                         <td className="px-5 py-3.5 text-slate-600">{log.university_name || "—"}</td>
@@ -3000,6 +3009,10 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                             <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                               <CheckCircle2 className="h-3 w-3" /> Sent
                             </span>
+                          ) : log.status === "pending" ? (
+                            <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                              <Clock className="h-3 w-3" /> Pending
+                            </span>
                           ) : (
                             <span className="bg-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                               <AlertCircle className="h-3 w-3" /> Failed
@@ -3021,22 +3034,24 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                           {log.resend_id ? log.resend_id.slice(0, 14) + "..." : "—"}
                         </td>
                         <td className="px-5 py-3.5 text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                            onClick={async () => {
-                              try {
-                                await doDeleteAutomatedEmailLog({ data: { id: log.id } });
-                                toast.success("Log deleted");
-                                qc.invalidateQueries({ queryKey: ["admin-email-logs"] });
-                              } catch (e) {
-                                toast.error("Failed to delete log");
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          {!isSelectionEmail && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                              onClick={async () => {
+                                try {
+                                  await doDeleteAutomatedEmailLog({ data: { id: log.id } });
+                                  toast.success("Log deleted");
+                                  qc.invalidateQueries({ queryKey: ["admin-email-logs"] });
+                                } catch (e) {
+                                  toast.error("Failed to delete log");
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     );

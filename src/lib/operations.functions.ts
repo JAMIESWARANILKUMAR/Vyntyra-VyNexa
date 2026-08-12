@@ -2183,15 +2183,63 @@ export const listAutomatedEmailLogs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const adminClient = getAdminClient();
-    const { data, error } = await adminClient
+
+    // 1. Promotional emails (automated_emails_log)
+    const { data: promoLogs, error: promoError } = await adminClient
       .from("automated_emails_log")
       .select("*")
       .order("sent_at", { ascending: false });
-    if (error) {
-      console.warn("[listAutomatedEmailLogs] error:", error.message);
-      return [];
+
+    if (promoError) {
+      console.warn("[listAutomatedEmailLogs] promo error:", promoError.message);
     }
-    return data || [];
+
+    // 2. Selection / hire emails (scheduled_emails + joined application data)
+    const { data: selectionLogs, error: selError } = await adminClient
+      .from("scheduled_emails")
+      .select(`
+        id, recipient_email, recipient_name, subject, status,
+        sent_at, send_at, error_message, message_id, provider,
+        application_id,
+        applications ( college, domain, sub_domain, phone )
+      `)
+      .order("sent_at", { ascending: false, nullsFirst: false });
+
+    if (selError) {
+      console.warn("[listAutomatedEmailLogs] selection error:", selError.message);
+    }
+
+    // Normalize selection logs to same shape as automated_emails_log
+    const normalizedSelection = (selectionLogs || []).map((row: any) => ({
+      id: `sel_${row.id}`,
+      recipient_email: row.recipient_email,
+      recipient_name: row.recipient_name,
+      university_name: row.applications?.college || null,
+      domain: row.applications?.domain || null,
+      sub_domain: row.applications?.sub_domain || null,
+      subject: row.subject,
+      status: row.status === "sent" ? "sent" : row.status === "failed" ? "failed" : row.status,
+      provider: row.provider || null,
+      resend_id: row.message_id || null,
+      error_message: row.error_message || null,
+      sent_at: row.sent_at || row.send_at,
+      email_type: "selection",
+    }));
+
+    // Merge: promotional first (already most recent first), then selection
+    const allLogs = [
+      ...(promoLogs || []).map((l: any) => ({ ...l, email_type: "promotional" })),
+      ...normalizedSelection,
+    ];
+
+    // Re-sort combined by sent_at descending
+    allLogs.sort((a, b) => {
+      const ta = a.sent_at ? new Date(a.sent_at).getTime() : 0;
+      const tb = b.sent_at ? new Date(b.sent_at).getTime() : 0;
+      return tb - ta;
+    });
+
+    return allLogs;
   });
 
 export const deleteAutomatedEmailLog = createServerFn({ method: "POST" })
