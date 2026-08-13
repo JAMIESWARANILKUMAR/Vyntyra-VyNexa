@@ -37,7 +37,8 @@ import {
   listTasks, listMeetings, listSchedules, listAnnouncements,
   requestLeave, listMyLeaves, listMyPayouts, clockIn, clockOut, getMyAttendance,
   listTeamMembers, createFeedback, listResources, listMyExpenses, createExpenseClaim,
-  listMySupportTickets, createSupportTicket, listKudos, createKudos, updateUserProfile
+  listMySupportTickets, createSupportTicket, listKudos, createKudos, updateUserProfile,
+  assignManualTaskToInterns, getMenteeAttendance
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/employee")({
@@ -268,8 +269,10 @@ function BankAdCard({
             </motion.button>
           </a>
         </div>
-
       </div>
+
+
+
     </motion.div>
   );
 }
@@ -299,6 +302,8 @@ function EmployeeDashboard() {
   const doClockIn = useServerFn(clockIn);
   const doClockOut = useServerFn(clockOut);
   const fetchAttendance = useServerFn(getMyAttendance);
+  const fetchMenteeAttendance = useServerFn(getMenteeAttendance);
+  const assignInternTask = useServerFn(assignManualTaskToInterns);
   const fetchTeam = useServerFn(listTeamMembers);
   const doCreateFeedback = useServerFn(createFeedback);
   const fetchResources = useServerFn(listResources);
@@ -322,6 +327,15 @@ function EmployeeDashboard() {
   const expensesQ = useQuery({ queryKey: ["my-expenses"], queryFn: () => fetchExpenses() });
   const ticketsQ = useQuery({ queryKey: ["my-tickets"], queryFn: () => fetchTickets() });
   const kudosQ = useQuery({ queryKey: ["kudos-feed"], queryFn: () => fetchKudos() });
+  const internsQ = useQuery({
+    queryKey: ["my-interns", sessionQ.data?.user?.id],
+    queryFn: async () => {
+      if (!sessionQ.data?.user?.id) return [];
+      const { data } = await supabase.from('profiles').select('*').eq('mentor_id', sessionQ.data.user.id);
+      return data || [];
+    },
+    enabled: !!sessionQ.data?.user?.id
+  });
 
   const tasks: any[] = tasksQ.data || [];
   const meetings: any[] = meetingsQ.data || [];
@@ -335,6 +349,7 @@ function EmployeeDashboard() {
   const expenses: any[] = expensesQ.data || [];
   const tickets: any[] = ticketsQ.data || [];
   const kudosList: any[] = kudosQ.data || [];
+  const myInterns: any[] = internsQ.data || [];
 
   const session = sessionQ.data;
   const email = session?.user?.email || "";
@@ -445,30 +460,81 @@ function EmployeeDashboard() {
     }
   }
 
-  async function handleSubmitTicket(e: React.FormEvent) {
-    e.preventDefault();
-    if (!ticketForm.subject || !ticketForm.description) {
-      toast.error("Please fill in subject and description");
+  const ticketMutation = useMutation({
+    mutationFn: async (payload: { category: string; priority: string; subject: string; description: string }) => {
+      return doCreateTicket({ data: payload });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["my-support"] });
+      toast.success("Support ticket created!");
+      setIsTicketModalOpen(false);
+      setTicketSubject("");
+      setTicketCategory("HR");
+      setTicketDescription("");
+    },
+    onError: (err: Error) => toast.error(err.message)
+  });
+
+  const assignTaskMutation = useMutation({
+    mutationFn: async (payload: { title: string; description: string; priority: "low"|"medium"|"high"; due_date: string; target_intern_ids: string[] }) => {
+      return assignInternTask({ data: payload });
+    },
+    onSuccess: (res) => {
+      toast.success(`Task successfully assigned to ${res.count} intern(s).`);
+      setIsTaskModalOpen(false);
+      setTaskTitle("");
+      setTaskDesc("");
+      setSelectedInterns([]);
+      setTargetInternId(null);
+    },
+    onError: (err: Error) => toast.error(err.message)
+  });
+
+  const handleAssignTask = (internId?: string) => {
+    if (internId) {
+      setTargetInternId(internId);
+    } else {
+      setTargetInternId(null);
+      if (selectedInterns.length === 0) {
+        toast.error("Please select at least one intern to assign a task.");
+        return;
+      }
+    }
+    setIsTaskModalOpen(true);
+  };
+
+  const submitAssignTask = () => {
+    if (!taskTitle) {
+      toast.error("Task title is required.");
       return;
     }
-    setIsSubmittingTicket(true);
+    const ids = targetInternId ? [targetInternId] : selectedInterns;
+    assignTaskMutation.mutate({
+      title: taskTitle,
+      description: taskDesc,
+      priority: taskPriority,
+      due_date: taskDueDate,
+      target_intern_ids: ids
+    });
+  };
+
+  const handleViewAttendance = async (intern: any) => {
+    setViewingIntern(intern);
+    setIsAttendanceModalOpen(true);
+    setIsLoadingMenteeAttendance(true);
     try {
-      await doCreateTicket({
-        data: {
-          category: ticketForm.category,
-          priority: ticketForm.priority,
-          subject: ticketForm.subject,
-          description: ticketForm.description,
-        }
-      });
-      toast.success("Helpdesk ticket raised successfully!");
-      setTicketForm({ category: "IT Support", priority: "Medium", subject: "", description: "" });
-      qc.invalidateQueries({ queryKey: ["my-tickets"] });
-    } catch (err: any) {
-      toast.error(err.message || "Failed to submit ticket");
+      const att = await fetchMenteeAttendance({ data: { internId: intern.id } });
+      setViewingInternAttendance(att);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to fetch attendance.");
     } finally {
-      setIsSubmittingTicket(false);
+      setIsLoadingMenteeAttendance(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/";
   }
 
   async function handleSubmitKudos(e: React.FormEvent) {
@@ -504,9 +570,49 @@ function EmployeeDashboard() {
   
   // MFA States
   const [mfaStatus, setMfaStatus] = useState<"checking" | "enrolled" | "unenrolled" | "enrolling">("checking");
-  const [mfaQrCode, setMfaQrCode] = useState<string | null>(null);
+  const [profilePreviewUrl, setProfilePreviewUrl] = useState<string | null>(null);
+
+  // Mentor management state
+  const [selectedInterns, setSelectedInterns] = useState<string[]>([]);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskDesc, setTaskDesc] = useState("");
+  const [taskPriority, setTaskPriority] = useState<"low"|"medium"|"high">("medium");
+  const [taskDueDate, setTaskDueDate] = useState("");
+  const [targetInternId, setTargetInternId] = useState<string | null>(null); // null means bulk
+  
+  const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
+  const [viewingIntern, setViewingIntern] = useState<any>(null);
+  const [viewingInternAttendance, setViewingInternAttendance] = useState<any[]>([]);
+  const [isLoadingMenteeAttendance, setIsLoadingMenteeAttendance] = useState(false);
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
+  const [mfaQrCode, setMfaQrCode] = useState<string | null>(null);
+
+  // Ticket states
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [ticketSubject, setTicketSubject] = useState("");
+  const [ticketCategory, setTicketCategory] = useState("IT Support");
+  const [ticketDescription, setTicketDescription] = useState("");
+
+  async function handleSubmitTicket(e: React.FormEvent) {
+    e.preventDefault();
+    if (!profile) return;
+    try {
+      await ticketMutation.mutateAsync({
+        category: ticketCategory,
+        priority: "medium", // or low/high depending on what's needed
+        subject: ticketSubject,
+        description: ticketDescription,
+      });
+      setIsTicketModalOpen(false);
+      setTicketSubject("");
+      setTicketDescription("");
+      toast.success("Ticket submitted successfully");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to submit ticket");
+    }
+  }
 
   useEffect(() => {
     async function checkMfa() {
@@ -680,6 +786,7 @@ function EmployeeDashboard() {
     { id: "support", label: "Helpdesk Tickets", badge: tickets.filter((t: any) => t.status === "open").length },
     { id: "meetings", label: "Meetings" },
     { id: "interviews", label: "Interviews", badge: assignedInterviews.length },
+    { id: "my_interns", label: "My Interns", badge: myInterns.length },
     { id: "announcements", label: `News`, badge: announcements.length },
     { id: "team", label: "Team & Kudos" },
     { id: "resources", label: "Resources & LMS" },
@@ -1230,6 +1337,83 @@ function EmployeeDashboard() {
                     </motion.div>
                   ))
                 )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ─── MY INTERNS ─── */}
+          {activeTab === "my_interns" && (
+            <motion.div key="my_interns" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-8 max-w-7xl mx-auto">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-light tracking-tight text-slate-900">My Interns</h2>
+                  <p className="text-sm text-slate-500 font-light mt-1">Manage tasks and view attendance for interns assigned to you.</p>
+                </div>
+                {selectedInterns.length > 0 && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-slate-500 font-medium">{selectedInterns.length} selected</span>
+                    <Button onClick={() => handleAssignTask()} className="bg-slate-900 hover:bg-black text-white rounded-xl shadow-sm">
+                      <Plus className="h-4 w-4 mr-2" /> Assign Bulk Task
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
+                      <tr>
+                        <th className="px-6 py-4 w-10">
+                          <input 
+                            type="checkbox" 
+                            className="rounded border-slate-300 text-black focus:ring-black"
+                            checked={selectedInterns.length === myInterns.length && myInterns.length > 0}
+                            onChange={(e) => setSelectedInterns(e.target.checked ? myInterns.map((i:any) => i.id) : [])}
+                          />
+                        </th>
+                        <th className="px-6 py-4">Intern</th>
+                        <th className="px-6 py-4">Department</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {myInterns.length === 0 ? (
+                        <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400 font-light">No interns assigned.</td></tr>
+                      ) : (
+                        myInterns.map((intern: any) => (
+                          <tr key={intern.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-6 py-4">
+                              <input 
+                                type="checkbox" 
+                                className="rounded border-slate-300 text-black focus:ring-black"
+                                checked={selectedInterns.includes(intern.id)}
+                                onChange={(e) => setSelectedInterns(prev => e.target.checked ? [...prev, intern.id] : prev.filter(id => id !== intern.id))}
+                              />
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <ProfileAvatar url={intern.avatar_url} name={intern.full_name} className="h-10 w-10 rounded-xl" />
+                                <div>
+                                  <div className="font-semibold text-slate-900">{intern.full_name}</div>
+                                  <div className="text-xs text-slate-500">{intern.email}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-slate-600">{intern.department || "—"}</td>
+                            <td className="px-6 py-4 text-right space-x-2">
+                              <Button variant="outline" size="sm" onClick={() => handleViewAttendance(intern)} className="rounded-xl">
+                                <Clock className="h-4 w-4 mr-2 text-slate-500" /> Attendance
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={() => handleAssignTask(intern.id)} className="rounded-xl">
+                                <Plus className="h-4 w-4 mr-2 text-slate-500" /> Assign Task
+                              </Button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </motion.div>
           )}
@@ -1902,6 +2086,128 @@ function EmployeeDashboard() {
 
         </AnimatePresence>
       </main>
+
+      {/* Task Assignment Modal */}
+      <AnimatePresence>
+        {isTaskModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsTaskModalOpen(false)} />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl p-8 z-10 overflow-hidden">
+              <h3 className="text-2xl font-light tracking-tight text-slate-900 mb-1">Assign Task</h3>
+              <p className="text-slate-500 text-sm mb-6">
+                {targetInternId ? "Assigning task to 1 intern." : `Assigning bulk task to ${selectedInterns.length} interns.`}
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold mb-1.5 block">Task Title</Label>
+                  <Input placeholder="E.g., Complete UI mockups" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} className="rounded-xl bg-slate-50/50" />
+                </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold mb-1.5 block">Description</Label>
+                  <Textarea placeholder="Provide task details..." value={taskDesc} onChange={(e) => setTaskDesc(e.target.value)} className="min-h-[100px] rounded-xl bg-slate-50/50" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold mb-1.5 block">Due Date (Optional)</Label>
+                    <Input type="date" value={taskDueDate} onChange={(e) => setTaskDueDate(e.target.value)} className="rounded-xl bg-slate-50/50" />
+                  </div>
+                  <div>
+                    <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold mb-1.5 block">Priority</Label>
+                    <select 
+                      value={taskPriority} 
+                      onChange={(e) => setTaskPriority(e.target.value as "low"|"medium"|"high")}
+                      className="w-full rounded-xl border border-input bg-slate-50/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end gap-3">
+                <Button variant="ghost" onClick={() => setIsTaskModalOpen(false)} className="rounded-xl text-slate-500">Cancel</Button>
+                <Button 
+                  onClick={submitAssignTask} 
+                  disabled={assignTaskMutation.isPending}
+                  className="rounded-xl bg-black text-white hover:bg-slate-800"
+                >
+                  {assignTaskMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                  Assign Task
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Intern Attendance Modal */}
+      <AnimatePresence>
+        {isAttendanceModalOpen && viewingIntern && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsAttendanceModalOpen(false)} />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-8 z-10 overflow-hidden max-h-[85vh] flex flex-col">
+              <div className="flex items-center gap-4 mb-6">
+                <ProfileAvatar url={viewingIntern.avatar_url} name={viewingIntern.full_name} className="h-12 w-12 rounded-xl" />
+                <div>
+                  <h3 className="text-xl font-light tracking-tight text-slate-900">{viewingIntern.full_name}'s Attendance</h3>
+                  <p className="text-slate-500 text-sm">{viewingIntern.email}</p>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto min-h-[300px] border border-slate-100 rounded-2xl">
+                {isLoadingMenteeAttendance ? (
+                  <div className="h-full flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-slate-300" />
+                  </div>
+                ) : viewingInternAttendance.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-slate-400 font-light p-8 text-center">
+                    No attendance records found for this intern.
+                  </div>
+                ) : (
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-slate-50 text-slate-500 font-medium sticky top-0">
+                      <tr>
+                        <th className="px-6 py-4">Date</th>
+                        <th className="px-6 py-4">Clock In</th>
+                        <th className="px-6 py-4">Clock Out</th>
+                        <th className="px-6 py-4 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {viewingInternAttendance.map((log: any) => (
+                        <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4 font-medium text-slate-900">{log.date}</td>
+                          <td className="px-6 py-4 text-slate-600">
+                            {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
+                          </td>
+                          <td className="px-6 py-4 text-slate-600">
+                            {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                              log.clock_out ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                            }`}>
+                              {log.clock_out ? 'Completed' : 'Active'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <Button variant="ghost" onClick={() => setIsAttendanceModalOpen(false)} className="rounded-xl text-slate-500 bg-slate-50 hover:bg-slate-100 px-6">Close</Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <PayslipModal isOpen={isPayslipOpen} onClose={() => setIsPayslipOpen(false)} payslip={selectedPayslip} />
       <IdCardModal 
         isOpen={isIdCardOpen} 

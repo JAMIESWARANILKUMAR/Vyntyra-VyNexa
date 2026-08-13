@@ -843,6 +843,109 @@ const profileUpdateSchema = z.object({
   department: z.string().optional().nullable(),
 });
 
+export const regenerateMyDocuments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const adminClient = getAdminClient();
+    
+    // 1. Get profile
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("*")
+      .eq("id", context.userId)
+      .single();
+    if (!profile) throw new Error("Profile not found");
+
+    // 2. Get application
+    const { data: app } = await adminClient
+      .from("applications")
+      .select("*")
+      .eq("email", profile.email)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (!app) throw new Error("Application not found");
+
+    // 3. fetch signature
+    const { resolveGooglePhotosUrl } = await import("./google-photos");
+    let signatureBase64 = null;
+    const resolvedSigUrl = await resolveGooglePhotosUrl("https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
+    if (resolvedSigUrl) {
+      try {
+        const sigRes = await fetch(resolvedSigUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          }
+        });
+        if (sigRes.ok) {
+          const buffer = await sigRes.arrayBuffer();
+          signatureBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
+        }
+      } catch (err) {
+        console.warn("Signature fetch failed:", err);
+      }
+    }
+
+    // 4. fetch photo
+    let photoBase64 = null;
+    const url = profile.avatar_url || app.profile_photo_url;
+    if (url) {
+      if (url.startsWith("data:image")) {
+        photoBase64 = url;
+      } else {
+        const resolvedUrl = await resolveGooglePhotosUrl(url);
+        if (resolvedUrl) {
+          try {
+            const photoRes = await fetch(resolvedUrl, {
+              headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+              }
+            });
+            if (photoRes.ok) {
+              const buffer = await photoRes.arrayBuffer();
+              photoBase64 = `data:image/jpeg;base64,${Buffer.from(buffer).toString('base64')}`;
+            }
+          } catch (err) {
+            console.warn("Photo fetch failed:", err);
+          }
+        }
+      }
+    }
+
+    const startDate = profile.start_date ? new Date(profile.start_date) : (app.internship_start_date ? new Date(app.internship_start_date) : new Date());
+
+    const { generateNocPdf } = await import("./nocGenerator");
+    const doc = generateNocPdf({
+      fullName: app.full_name,
+      email: app.email,
+      phone: app.phone,
+      applicationId: app.id,
+      college: app.college || "Academic Institution",
+      domain: app.domain || "Technology & Software",
+      subDomain: app.sub_domain || "Full Stack Web Development",
+      internshipStartDate: startDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }),
+      profilePhotoUrl: photoBase64,
+      qrCodeBase64: null,
+      logoBase64: null,
+      signatureBase64: signatureBase64,
+      hodName: app.hod_name,
+    });
+
+    const pdfOutput = doc.output("arraybuffer");
+    const pdfBuffer = Buffer.from(pdfOutput);
+    const filepath = `nocs/${app.id}_NOC.pdf`;
+
+    await adminClient.storage
+      .from("default")
+      .upload(filepath, pdfBuffer, {
+        contentType: "application/pdf",
+        upsert: true
+      });
+
+    return { success: true };
+  });
+
 export const updateUserProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => profileUpdateSchema.parse(d))
@@ -1135,6 +1238,41 @@ export const getMyAttendance = createServerFn({ method: "GET" })
       
     if (error) throw new Error(error.message);
     const checkedData = await autoClockOutStaleRecords(adminClient, data || []);
+    return checkedData || [];
+  });
+
+export const getMenteeAttendance = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ internId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const adminClient = getAdminClient();
+    
+    // Verify the requester is the mentor of the requested intern
+    const { data: profile, error: profileErr } = await adminClient
+      .from("profiles")
+      .select("mentor_id")
+      .eq("id", data.internId)
+      .single();
+      
+    if (profileErr) throw new Error("Could not fetch intern profile");
+    
+    // We optionally allow super admins/admins to bypass this, but for now we enforce the mentor relationship strictly
+    if (profile?.mentor_id !== context.userId) {
+      // Also check if requester is an admin as fallback
+      const { data: roleData } = await adminClient.from("user_roles").select("role").eq("user_id", context.userId).single();
+      if (roleData?.role !== "admin") {
+        throw new Error("Unauthorized to view this intern's attendance");
+      }
+    }
+
+    const { data: attendanceData, error } = await adminClient
+      .from("attendance")
+      .select("*")
+      .eq("user_id", data.internId)
+      .order("date", { ascending: false });
+      
+    if (error) throw new Error(error.message);
+    const checkedData = await autoClockOutStaleRecords(adminClient, attendanceData || []);
     return checkedData || [];
   });
 // ─── Super Admin Operations ──────────────────────────────────────────

@@ -33,7 +33,7 @@ import {
   acceptTask, updateTaskExecution,
   listLeads, createLead, updateLeadStatus, deleteLead,
   listBugs, createBug, updateBugStatus,
-  clockIn, clockOut, getMyAttendance, getMyDocuments
+  clockIn, clockOut, getMyAttendance, getMyDocuments, regenerateMyDocuments
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
@@ -93,6 +93,7 @@ function InternDashboard() {
   const doClockOut = useServerFn(clockOut);
   const fetchAttendance = useServerFn(getMyAttendance);
   const fetchMyDocuments = useServerFn(getMyDocuments);
+  const regenerateDocs = useServerFn(regenerateMyDocuments);
 
   const [selectedTaskWorkspace, setSelectedTaskWorkspace] = useState<any>(null);
   const [selectedDomain, setSelectedDomain] = useState<"tech" | "non_tech" | "management">("tech");
@@ -179,6 +180,71 @@ function InternDashboard() {
   
   const profile = profileQ.data;
   const displayName = profile?.full_name || email.split("@")[0] || "Intern";
+
+  const mentorQ = useQuery({
+    queryKey: ["mentor", profile?.mentor_id],
+    queryFn: async () => {
+      const { data } = await supabase.from('profiles').select('full_name, email, department').eq('id', profile?.mentor_id).single();
+      return data;
+    },
+    enabled: !!profile?.mentor_id
+  });
+  const mentor = mentorQ.data;
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Check size (10kb max)
+    if (file.size > 10 * 1024) {
+      toast.error("Image size must be less than 10KB");
+      return;
+    }
+    
+    // Check type
+    if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error("Only jpg, jpeg, png, and webp are allowed");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = async (event) => {
+      const base64String = event.target?.result as string;
+      
+      // Update locally first (optional, but React Query refetch is better)
+      const { error } = await supabase.from('profiles')
+        .update({ avatar_url: base64String })
+        .eq('id', session?.user?.id);
+        
+      if (error) {
+        toast.error("Failed to save profile image");
+      } else {
+        toast.success("Profile image updated");
+        // Also regenerate documents so NOC contains the new image
+        try {
+          await regenerateDocs();
+          docsQ.refetch();
+        } catch (e) {
+          console.error("Failed to regenerate documents:", e);
+        }
+        qc.invalidateQueries({ queryKey: ["profile", session?.user?.id] });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleNOCDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (docsQ.data?.nocUrl) window.open(docsQ.data.nocUrl, "_blank");
+    else toast.error("NOC not available yet.");
+  };
+
+  const handleOfferLetterDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (docsQ.data?.offerLetterUrl) window.open(docsQ.data.offerLetterUrl, "_blank");
+    else toast.error("Offer Letter not available yet.");
+  };
+
 
   useEffect(() => {
     if (profile?.department) {
@@ -414,16 +480,27 @@ function InternDashboard() {
             {/* ─── INTERN PROFILE CARD ─── */}
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
               {/* Card header */}
-              <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-900 px-6 py-5 flex items-center gap-5">
-                <div className="relative shrink-0">
+              <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-900 px-6 py-5 flex flex-wrap items-center gap-5">
+                <div className="relative shrink-0 group">
                   <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 rounded-2xl border-2 border-white/20 shadow-xl text-2xl" />
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl cursor-pointer text-white">
+                    <span className="text-[10px] font-bold uppercase">Upload</span>
+                    <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.webp" onChange={handleImageUpload} />
+                  </label>
                   <span className="absolute -bottom-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white shadow">INTERN</span>
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="text-xl font-bold text-white truncate">{profile?.full_name || displayName}</div>
                   <div className="text-emerald-400 text-xs font-semibold mt-0.5">{profile?.intern_id || "—"}</div>
                   <div className="text-slate-400 text-xs mt-1 truncate">{email}</div>
                 </div>
+                {mentor && (
+                  <div className="shrink-0 text-left sm:text-right bg-white/10 rounded-xl p-3 border border-white/10 backdrop-blur-sm w-full sm:w-auto">
+                    <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider mb-0.5">My Mentor</div>
+                    <div className="text-sm font-semibold text-white">{mentor.full_name}</div>
+                    <div className="text-xs text-slate-300">{mentor.department || "Employee"}</div>
+                  </div>
+                )}
               </div>
               {/* Details grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 p-0">
