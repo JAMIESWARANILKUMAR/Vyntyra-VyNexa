@@ -45,6 +45,7 @@ import { getApplicationsOpen, setApplicationsOpen } from "@/lib/settings.functio
 import { listJobPostings, createJobPosting, updateJobPosting, toggleJobPosting, deleteJobPosting } from "@/lib/job-postings.functions";
 import { listAdminNotifications, markAllNotificationsRead } from "@/lib/notifications.functions";
 import { getVisitorCount } from "@/lib/visitor.functions";
+import { listAllLeaveRequests, listAllFeedbacks, updateLeaveStatus } from "@/lib/operations.functions";
 import { Sparkles, RefreshCw, GraduationCap, FolderGit2, Link2, FileSpreadsheet, Award } from "lucide-react";
 import { WorldClocks } from "@/components/world-clocks";
 import { InstallPwaButton } from "@/components/install-pwa-button";
@@ -127,6 +128,20 @@ function AdminDashboard() {
   const fetchVisitorCount = useServerFn(getVisitorCount);
   const triggerProcessScheduled = useServerFn(processScheduledEmails);
   const doBulkSendEmails = useServerFn(sendBulkSelectionEmails);
+  
+  const fetchLeaveRequests = useServerFn(listAllLeaveRequests);
+  const fetchFeedbacks = useServerFn(listAllFeedbacks);
+  const doUpdateLeave = useServerFn(updateLeaveStatus);
+
+  const leavesQ = useQuery({
+    queryKey: ["admin-leaves"],
+    queryFn: () => fetchLeaveRequests()
+  });
+
+  const feedbacksQ = useQuery({
+    queryKey: ["admin-feedbacks"],
+    queryFn: () => fetchFeedbacks()
+  });
 
   useEffect(() => {
     triggerProcessScheduled()
@@ -964,6 +979,78 @@ function AdminDashboard() {
           )}
         </div>
 
+        {/* ── Leaves and Feedbacks ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 mt-8">
+          {/* Leave Requests */}
+          <div className="rounded-md border border-border bg-card shadow-corp flex flex-col">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-secondary" />
+                <span className="text-sm font-semibold text-primary">Leave Requests</span>
+              </div>
+            </div>
+            <div className="p-4 flex-1 overflow-y-auto max-h-[400px] space-y-3">
+              {leavesQ.isLoading ? (
+                <div className="flex justify-center p-4"><Loader2 className="h-5 w-5 animate-spin" /></div>
+              ) : leavesQ.data?.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center p-4">No leave requests found.</div>
+              ) : (
+                leavesQ.data?.map((l: any) => (
+                  <div key={l.id} className="border border-border rounded-lg p-3 text-sm flex flex-col gap-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-semibold">{l.user_id}</div>
+                        <div className="text-xs text-muted-foreground">{new Date(l.start_date).toLocaleDateString()} to {new Date(l.end_date).toLocaleDateString()}</div>
+                      </div>
+                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${l.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : l.status === 'rejected' ? 'bg-destructive/10 text-destructive' : 'bg-amber-100 text-amber-800'}`}>{l.status}</span>
+                    </div>
+                    <div className="text-muted-foreground text-xs mt-1 bg-surface p-2 rounded">{l.reason}</div>
+                    {l.status === 'pending' && (
+                      <div className="flex gap-2 mt-2">
+                        <Button size="sm" onClick={() => {
+                          doUpdateLeave({ data: { id: l.id, status: 'approved' } }).then(() => { toast.success('Approved'); qc.invalidateQueries({queryKey: ['admin-leaves']}) })
+                        }} className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 text-xs">Approve</Button>
+                        <Button size="sm" variant="destructive" onClick={() => {
+                          doUpdateLeave({ data: { id: l.id, status: 'rejected' } }).then(() => { toast.success('Rejected'); qc.invalidateQueries({queryKey: ['admin-leaves']}) })
+                        }} className="h-7 text-xs">Reject</Button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Feedbacks */}
+          <div className="rounded-md border border-border bg-card shadow-corp flex flex-col">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-secondary" />
+                <span className="text-sm font-semibold text-primary">Feedbacks</span>
+              </div>
+            </div>
+            <div className="p-4 flex-1 overflow-y-auto max-h-[400px] space-y-3">
+              {feedbacksQ.isLoading ? (
+                <div className="flex justify-center p-4"><Loader2 className="h-5 w-5 animate-spin" /></div>
+              ) : feedbacksQ.data?.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center p-4">No feedbacks found.</div>
+              ) : (
+                feedbacksQ.data?.map((f: any) => (
+                  <div key={f.id} className="border border-border rounded-lg p-3 text-sm flex flex-col gap-2">
+                    <div className="flex justify-between items-start">
+                      <div className="font-semibold text-xs text-muted-foreground">{f.user_id}</div>
+                      <div className="text-[10px] text-muted-foreground">{new Date(f.created_at).toLocaleString()}</div>
+                    </div>
+                    <div className="text-foreground bg-surface p-3 rounded-md border border-border shadow-inner text-sm whitespace-pre-wrap">
+                      {f.content}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* ── Visitor Count Footer ── */}
         <div className="mt-10 mb-4">
           <div className="rounded-md border border-border bg-card shadow-corp p-5 flex items-center justify-between">
@@ -1620,6 +1707,14 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
               <InfoRow icon={ExternalLink} label="Portfolio" value={
                 <a href={app.portfolio_url} target="_blank" rel="noreferrer" className="text-secondary underline">Open</a>
               } />
+            )}
+            {app.message && (
+              <div className="col-span-2">
+                <span className="text-[11px] font-semibold text-primary uppercase tracking-wider block mb-1">Cover Letter / Message</span>
+                <div className="bg-secondary/5 border border-secondary/20 rounded-md p-3 text-sm text-foreground whitespace-pre-wrap">
+                  {app.message}
+                </div>
+              </div>
             )}
           </div>
 

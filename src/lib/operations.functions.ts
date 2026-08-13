@@ -1049,6 +1049,17 @@ export const createFeedback = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+export const listAllFeedbacks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from("feedbacks")
+      .select("*, profiles!feedbacks_created_by_fkey(full_name, email)")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
 export const markFeedbackRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
@@ -1095,6 +1106,34 @@ export const listMyLeaves = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data || [];
+  });
+
+export const listAllLeaveRequests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from("leave_requests")
+      .select("*, profiles!leave_requests_user_id_fkey(full_name, email)")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+const updateLeaveStatusSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["pending", "approved", "rejected"])
+});
+
+export const oldUpdateLeaveStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => updateLeaveStatusSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase
+      .from("leave_requests")
+      .update({ status: data.status })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
   });
 
 // ─── Payouts ──────────────────────────────────────────────────────
@@ -1153,6 +1192,22 @@ export const clockIn = createServerFn({ method: "POST" })
     const today = new Date().toISOString().split('T')[0];
     const todayDateStr = new Date().toDateString();
     
+    // Enforce start and end date restrictions
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("start_date, end_date")
+      .eq("id", context.userId)
+      .single();
+
+    if (profile) {
+      if (profile.start_date && today < profile.start_date.split('T')[0]) {
+        throw new Error(`Cannot clock in before your start date (${new Date(profile.start_date).toLocaleDateString()}).`);
+      }
+      if (profile.end_date && today > profile.end_date.split('T')[0]) {
+        throw new Error(`Cannot clock in after your end date (${new Date(profile.end_date).toLocaleDateString()}).`);
+      }
+    }
+    
     // Check recent logs for active or completed shift today
     const { data: rawRecent } = await adminClient
       .from("attendance")
@@ -1194,6 +1249,22 @@ export const clockOut = createServerFn({ method: "POST" })
     const adminClient = getAdminClient();
     const today = new Date().toISOString().split('T')[0];
     const todayDateStr = new Date().toDateString();
+    
+    // Enforce start and end date restrictions
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("start_date, end_date")
+      .eq("id", context.userId)
+      .single();
+
+    if (profile) {
+      if (profile.start_date && today < profile.start_date.split('T')[0]) {
+        throw new Error(`Cannot clock out before your start date (${new Date(profile.start_date).toLocaleDateString()}).`);
+      }
+      if (profile.end_date && today > profile.end_date.split('T')[0]) {
+        throw new Error(`Cannot clock out after your end date (${new Date(profile.end_date).toLocaleDateString()}).`);
+      }
+    }
     
     const { data: rawRecent } = await adminClient
       .from("attendance")

@@ -385,6 +385,12 @@ function EmployeeDashboard() {
   
   const profile = profileQ.data;
   const displayName = profile?.full_name || email.split("@")[0] || "Employee";
+  
+  const todayStr_ = new Date().toISOString().split('T')[0];
+  const isBeforeStart = profile?.start_date && todayStr_ < profile.start_date.split('T')[0];
+  const isAfterEnd = profile?.end_date && todayStr_ > profile.end_date.split('T')[0];
+  const isClockingDisabled = isBeforeStart || isAfterEnd;
+  const clockingDisabledReason = isBeforeStart ? "Employment has not started" : (isAfterEnd ? "Employment has ended" : "");
 
   const pendingTasks = tasks.filter((t) => t.status === "pending" || t.status === "in_progress");
   const completedTasks = tasks.filter((t) => t.status === "completed");
@@ -1065,17 +1071,21 @@ function EmployeeDashboard() {
                       <div className="bg-slate-50 text-slate-600 border border-slate-100 p-4 rounded-xl text-sm font-medium">Shift Completed</div>
                     ) : (
                       <Button 
-                        variant="outline"
-                        onClick={handleClockOut} disabled={isClocking}
-                        className="w-full h-12 rounded-xl border-2 border-black text-black hover:bg-black hover:text-white transition-all font-semibold uppercase tracking-wider text-xs"
+                        size="sm" 
+                        className="w-full bg-slate-900 hover:bg-black text-white disabled:opacity-50" 
+                        onClick={handleClockOut} 
+                        disabled={isClocking || isClockingDisabled}
+                        title={clockingDisabledReason}
                       >
                         {isClocking ? <Loader2 className="h-4 w-4 animate-spin"/> : "Clock Out"}
                       </Button>
                     )
                   ) : (
                     <Button 
-                      onClick={handleClockIn} disabled={isClocking}
-                      className="w-full h-12 rounded-xl bg-black hover:bg-slate-800 text-white shadow-lg shadow-black/20 font-semibold uppercase tracking-wider text-xs transition-all hover:-translate-y-0.5"
+                      onClick={handleClockIn} 
+                      disabled={isClocking || isClockingDisabled}
+                      title={clockingDisabledReason}
+                      className="w-full h-12 rounded-xl bg-black hover:bg-slate-800 text-white shadow-lg shadow-black/20 font-semibold uppercase tracking-wider text-xs transition-all hover:-translate-y-0.5 disabled:opacity-50"
                     >
                       {isClocking ? <Loader2 className="h-4 w-4 animate-spin"/> : "Clock In"}
                     </Button>

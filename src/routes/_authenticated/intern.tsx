@@ -180,6 +180,12 @@ function InternDashboard() {
   
   const profile = profileQ.data;
   const displayName = profile?.full_name || email.split("@")[0] || "Intern";
+  
+  const todayStr_ = new Date().toISOString().split('T')[0];
+  const isBeforeStart = profile?.start_date && todayStr_ < profile.start_date.split('T')[0];
+  const isAfterEnd = profile?.end_date && todayStr_ > profile.end_date.split('T')[0];
+  const isClockingDisabled = isBeforeStart || isAfterEnd;
+  const clockingDisabledReason = isBeforeStart ? "Internship has not started" : (isAfterEnd ? "Internship has ended" : "");
 
   const mentorQ = useQuery({
     queryKey: ["mentor", profile?.mentor_id],
@@ -609,8 +615,9 @@ function InternDashboard() {
                     !todayAttendance.clock_out && (
                       <Button
                         onClick={handleClockOut}
-                        disabled={isClocking}
-                        className="bg-slate-900 hover:bg-black text-white font-bold text-xs gap-2 px-4 h-10 shadow-md"
+                        disabled={isClocking || isClockingDisabled}
+                        title={clockingDisabledReason}
+                        className="bg-slate-900 hover:bg-black text-white font-bold text-xs gap-2 px-4 h-10 shadow-md disabled:opacity-50"
                       >
                         {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4 text-emerald-400" />}
                         Clock Out Now
@@ -619,8 +626,9 @@ function InternDashboard() {
                   ) : (
                     <Button
                       onClick={handleClockIn}
-                      disabled={isClocking}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs gap-2 px-5 h-10 shadow-md shadow-emerald-600/20"
+                      disabled={isClocking || isClockingDisabled}
+                      title={clockingDisabledReason}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs gap-2 px-5 h-10 shadow-md shadow-emerald-600/20 disabled:opacity-50"
                     >
                       {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
                       Clock In Now
