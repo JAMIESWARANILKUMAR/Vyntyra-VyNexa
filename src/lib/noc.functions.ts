@@ -62,7 +62,7 @@ export const verifyNocCertificate = createServerFn({ method: "POST" })
     // Fetch corresponding profile for intern_id & dates if present
     const { data: profile } = await adminClient
       .from("profiles")
-      .select("intern_id, start_date, end_date, department, position")
+      .select("intern_id, start_date, end_date, department, position, avatar_url")
       .eq("email", appRecord.email)
       .maybeSingle();
 
@@ -107,7 +107,7 @@ export const verifyNocCertificate = createServerFn({ method: "POST" })
         subDomain: appRecord.sub_domain || "Full Stack Web Development",
         status: appRecord.status || "selected",
         issueDate: formattedDate,
-        profilePhotoUrl: appRecord.profile_photo_url || null,
+        profilePhotoUrl: profile?.avatar_url || appRecord.profile_photo_url || null,
         internId: profile?.intern_id || `VYNT-08/26-${refId}`,
         startDate: profile?.start_date || formattedDate,
         endDate: profile?.end_date || "3 Months Duration",
