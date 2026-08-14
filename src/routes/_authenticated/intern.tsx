@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { RichContentRenderer } from "@/components/rich-content-renderer";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
-import { MeetingsSection, MeetingCountdown } from "@/components/meetings-section";
+import { MeetingsSection, MeetingCountdown, getJoinButtonState } from "@/components/meetings-section";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
 import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -1977,19 +1977,33 @@ function InternDashboard() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" size="sm" onClick={() => setMeetingAlert(null)}>Close</Button>
-              <Button 
-                size="sm"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
-                onClick={() => {
-                  if (meetingAlert.meeting_link) {
-                    window.location.href = meetingAlert.meeting_link;
-                  }
-                }}
-              >
-                Join Meeting
-              </Button>
+            <div className="flex justify-end gap-2 pt-2 items-center">
+              {(() => {
+                const state = getJoinButtonState(meetingAlert.scheduled_at, meetingAlert.id);
+                return (
+                  <>
+                    <span className="text-[10px] text-slate-400 font-bold mr-auto">
+                      {state.reason}
+                    </span>
+                    <Button variant="ghost" size="sm" onClick={() => setMeetingAlert(null)}>Close</Button>
+                    <Button 
+                      size="sm"
+                      disabled={!state.enabled}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                      onClick={() => {
+                        const countKey = `meeting-join-count-${meetingAlert.id}`;
+                        const currentCount = parseInt(localStorage.getItem(countKey) || "0", 10);
+                        localStorage.setItem(countKey, (currentCount + 1).toString());
+                        if (meetingAlert.meeting_link) {
+                          window.location.href = meetingAlert.meeting_link;
+                        }
+                      }}
+                    >
+                      Join Meeting
+                    </Button>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

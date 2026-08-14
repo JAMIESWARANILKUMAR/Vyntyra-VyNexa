@@ -817,13 +817,18 @@ export const getMyDocuments = createServerFn({ method: "GET" })
     let offerLetterUrl = app.offer_letter_url || null;
     if (!offerLetterUrl) {
       try {
+        const startDateVal = profile.start_date || app.joining_date || app.internship_start_date || new Date().toISOString();
+        const duration = app.duration_months || 3;
+        const endDateVal = profile.end_date || app.internship_end_date || new Date(new Date(startDateVal).setMonth(new Date(startDateVal).getMonth() + duration)).toISOString();
+
         const { generateOfferLetterPDF } = await import("./pdf.server");
         offerLetterUrl = await generateOfferLetterPDF({
           fullName: app.full_name,
           roleApplied: app.role_applied,
           applicationId: app.id,
           salary: app.salary || "Performance Based Stipend",
-          joiningDate: app.joining_date ? new Date(app.joining_date).toLocaleDateString("en-IN") : new Date().toLocaleDateString("en-IN"),
+          joiningDate: startDateVal,
+          endDate: endDateVal,
           jobLocation: app.job_location || "Remote Work-from-Home",
         });
         

@@ -81,12 +81,43 @@ export function MeetingCountdown({ targetDate }: { targetDate: string }) {
   );
 }
 
+export function getJoinButtonState(scheduledAt: string, meetingId: string) {
+  const now = Date.now();
+  const scheduledTime = new Date(scheduledAt).getTime();
+  const windowStart = scheduledTime - 10 * 60 * 1000;
+  const windowEnd = scheduledTime + 10 * 60 * 1000;
+  
+  const countKey = `meeting-join-count-${meetingId}`;
+  let joinCount = 0;
+  try {
+    joinCount = parseInt(localStorage.getItem(countKey) || "0", 10);
+  } catch (e) {}
+  
+  if (joinCount >= 10) {
+    return { enabled: false, reason: "Limit reached (10 joins max)" };
+  }
+  
+  if (joinCount > 0) {
+    return { enabled: true, reason: `Joined ${joinCount}/10 times` };
+  }
+  
+  if (now >= windowStart && now <= windowEnd) {
+    return { enabled: true, reason: "Active" };
+  }
+  
+  if (now < windowStart) {
+    return { enabled: false, reason: "Too early (Opens 10m before)" };
+  }
+  
+  return { enabled: false, reason: "Closed (Joined limit or past window)" };
+}
+
 export function MeetingsSection({ meetings, isLoading, isError }: MeetingsSectionProps) {
   const upcoming = meetings.filter((m) => isUpcoming(m.scheduled_at));
   const past = meetings.filter((m) => !isUpcoming(m.scheduled_at));
   const todayMeetings = meetings.filter((m) => isToday(m.scheduled_at));
 
-  function joinMeeting(link: string) {
+  function joinMeeting(meetingId: string, link: string) {
     // Open in current tab only as requested
     window.location.href = link;
   }
@@ -147,8 +178,16 @@ export function MeetingsSection({ meetings, isLoading, isError }: MeetingsSectio
   );
 }
 
-function MeetingCard({ meeting, highlight, onJoin }: { meeting: Meeting; highlight?: boolean; onJoin: (l: string) => void }) {
+function MeetingCard({ meeting, highlight, onJoin }: { meeting: Meeting; highlight?: boolean; onJoin: (meetingId: string, l: string) => void }) {
   const { date, time } = formatDateTime(meeting.scheduled_at);
+  const [state, setState] = useState(() => getJoinButtonState(meeting.scheduled_at, meeting.id));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setState(getJoinButtonState(meeting.scheduled_at, meeting.id));
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [meeting.scheduled_at, meeting.id]);
   
   // Choose animated video icon class and container class based on highlight/urgency
   const iconContainerClass = highlight 
@@ -184,14 +223,24 @@ function MeetingCard({ meeting, highlight, onJoin }: { meeting: Meeting; highlig
           )}
         </div>
 
-        <Button
-          size="sm"
-          onClick={() => onJoin(meeting.meeting_link)}
-          className={`shrink-0 gap-1.5 text-xs h-8 ${highlight ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""}`}
-          variant={highlight ? "default" : "outline"}
-        >
-          <Video className="h-3.5 w-3.5" /> Join
-        </Button>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <Button
+            size="sm"
+            disabled={!state.enabled}
+            onClick={() => {
+              const countKey = `meeting-join-count-${meeting.id}`;
+              const currentCount = parseInt(localStorage.getItem(countKey) || "0", 10);
+              localStorage.setItem(countKey, (currentCount + 1).toString());
+              setState(getJoinButtonState(meeting.scheduled_at, meeting.id));
+              onJoin(meeting.id, meeting.meeting_link);
+            }}
+            className={`gap-1.5 text-xs h-8 ${highlight && state.enabled ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""}`}
+            variant={highlight && state.enabled ? "default" : "outline"}
+          >
+            <Video className="h-3.5 w-3.5" /> Join
+          </Button>
+          <span className="text-[9px] text-muted-foreground font-semibold">{state.reason}</span>
+        </div>
       </div>
     </div>
   );

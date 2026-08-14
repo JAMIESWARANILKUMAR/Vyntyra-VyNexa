@@ -9,6 +9,7 @@ export interface IOfferDetails {
   applicationId: string;
   salary?: string;
   joiningDate?: string;
+  endDate?: string;
   jobLocation?: string;
 }
 
@@ -169,15 +170,16 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   // ─── JOB DETAILS CARD (Structured Premium Table Layout) ───
   const cardY = 120;
   doc.setFillColor(lightGrey[0], lightGrey[1], lightGrey[2]);
-  doc.rect(20, cardY, 170, 48, "F");
+  doc.rect(20, cardY, 170, 60, "F");
   doc.setDrawColor(borderGrey[0], borderGrey[1], borderGrey[2]);
-  doc.rect(20, cardY, 170, 48, "S");
+  doc.rect(20, cardY, 170, 60, "S");
 
   // Table Headers / Lines
   doc.setDrawColor(235, 235, 235);
   doc.line(20, cardY + 12, 190, cardY + 12);
   doc.line(20, cardY + 24, 190, cardY + 24);
   doc.line(20, cardY + 36, 190, cardY + 36);
+  doc.line(20, cardY + 48, 190, cardY + 48);
 
   // Table content
   doc.setFont("helvetica", "bold");
@@ -191,17 +193,22 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   doc.text(details.salary || "As mutually agreed", 75, cardY + 20);
 
   doc.setFont("helvetica", "bold");
-  doc.text("Date of Joining:", 25, cardY + 32);
+  doc.text("Start Date:", 25, cardY + 32);
   doc.setFont("helvetica", "normal");
   doc.text(details.joiningDate ? new Date(details.joiningDate).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "To be confirmed", 75, cardY + 32);
 
   doc.setFont("helvetica", "bold");
-  doc.text("Job Location:", 25, cardY + 44);
+  doc.text("End Date:", 25, cardY + 44);
   doc.setFont("helvetica", "normal");
-  doc.text(details.jobLocation || "Visakhapatnam / Remote", 75, cardY + 44);
+  doc.text(details.endDate ? new Date(details.endDate).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "To be confirmed", 75, cardY + 44);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Job Location:", 25, cardY + 56);
+  doc.setFont("helvetica", "normal");
+  doc.text(details.jobLocation || "Visakhapatnam / Remote", 75, cardY + 56);
 
   // ─── SECONDARY TEXT (TERMS) ───
-  const termsY = 178;
+  const termsY = 190;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
@@ -212,10 +219,10 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
 
   const signInfo = "Kindly confirm your acceptance by signing this letter and returning a scanned copy within 7 business days, failing which this offer shall automatically expire.";
   const splitSignInfo = doc.splitTextToSize(signInfo, 170);
-  doc.text(splitSignInfo, 20, termsY + 30);
+  doc.text(splitSignInfo, 20, termsY + 28);
 
   // ─── SIGNATURE BLOCK ───
-  const signY = 228;
+  const signY = 238;
   
   // Vyntyra Signatory
   doc.setFont("helvetica", "bold");

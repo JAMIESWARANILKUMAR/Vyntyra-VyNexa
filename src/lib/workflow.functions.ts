@@ -658,11 +658,19 @@ export async function dispatchSelectionEmail(applicationId: string) {
 
   let offerLetterUrl = null;
   try {
+    const startDateVal = data.joiningDate || app.joining_date || new Date().toISOString();
+    const duration = app.duration_months || 3;
+    const endDateVal = app.internship_end_date || new Date(new Date(startDateVal).setMonth(new Date(startDateVal).getMonth() + duration)).toISOString();
+
     const { generateOfferLetterPDF } = await import("./pdf.server");
     offerLetterUrl = await generateOfferLetterPDF({
       fullName: app.full_name,
       roleApplied: app.role_applied,
       applicationId: app.id,
+      salary: data.salary || app.salary || "Performance Based Stipend",
+      joiningDate: startDateVal,
+      endDate: endDateVal,
+      jobLocation: data.jobLocation || app.job_location || "Remote Work-from-Home",
     });
   } catch (pdfErr) {
     console.warn("Offer Letter PDF generation failed:", pdfErr);
