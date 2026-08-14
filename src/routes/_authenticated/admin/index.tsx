@@ -999,7 +999,7 @@ function AdminDashboard() {
                   <div key={l.id} className="border border-border rounded-lg p-3 text-sm flex flex-col gap-2">
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="font-semibold">{l.user_id}</div>
+                        <div className="font-semibold">{l.profiles?.full_name || 'Unknown User'}</div>
                         <div className="text-xs text-muted-foreground">{new Date(l.start_date).toLocaleDateString()} to {new Date(l.end_date).toLocaleDateString()}</div>
                       </div>
                       <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${l.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : l.status === 'rejected' ? 'bg-destructive/10 text-destructive' : 'bg-amber-100 text-amber-800'}`}>{l.status}</span>

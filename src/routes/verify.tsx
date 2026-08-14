@@ -453,8 +453,6 @@ function VerifyPage() {
           <span>Candidate Email</span>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }
