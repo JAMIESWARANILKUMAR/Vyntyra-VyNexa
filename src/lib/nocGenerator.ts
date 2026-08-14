@@ -24,24 +24,18 @@ export interface NocData {
 
 import { resolveGooglePhotosUrl } from "./google-photos";
 
+import { proxyImageFetch } from "./noc.functions";
+
 export async function urlToBase64(url: string): Promise<string | null> {
   try {
     if (!url) return null;
     const resolvedUrl = await resolveGooglePhotosUrl(url);
     if (!resolvedUrl) return null;
     if (resolvedUrl.startsWith("data:image")) return resolvedUrl;
-    const res = await fetch(resolvedUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-      }
-    });
-    if (!res.ok) return null;
-    const blob = await res.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(blob);
-    });
+    
+    // Proxy the fetch through the backend to avoid CORS issues
+    const base64 = await proxyImageFetch({ data: resolvedUrl });
+    return base64 || null;
   } catch (err) {
     console.error("[nocGenerator] urlToBase64 error:", err);
     return null;

@@ -139,6 +139,26 @@ const savePdfSchema = z.object({
   pdfBase64: z.string().min(1),
 });
 
+export const proxyImageFetch = createServerFn({ method: "POST" })
+  .validator((url: string) => url)
+  .handler(async ({ data: url }) => {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+      });
+      if (!res.ok) return null;
+      const buffer = await res.arrayBuffer();
+      const contentType = res.headers.get("content-type") || "image/jpeg";
+      const b64 = Buffer.from(buffer).toString("base64");
+      return `data:${contentType};base64,${b64}`;
+    } catch (err) {
+      console.error("[proxyImageFetch] error:", err);
+      return null;
+    }
+  });
+
 export const saveNocPdf = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => savePdfSchema.parse(d))
   .handler(async ({ data }) => {
