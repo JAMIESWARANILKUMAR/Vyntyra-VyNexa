@@ -143,7 +143,8 @@ export function generateNocPdf(data: NocData): jsPDF {
 
   if (data.profilePhotoUrl && data.profilePhotoUrl.startsWith("data:image")) {
     try {
-      doc.addImage(data.profilePhotoUrl, "JPEG", photoX, photoY, photoW, photoH);
+      const format = data.profilePhotoUrl.toLowerCase().includes("png") ? "PNG" : "JPEG";
+      doc.addImage(data.profilePhotoUrl, format, photoX, photoY, photoW, photoH);
     } catch {
       _photoPlaceholder(doc, photoX, photoY, photoW, photoH);
     }
