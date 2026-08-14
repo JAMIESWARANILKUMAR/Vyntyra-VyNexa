@@ -13,38 +13,52 @@ export const verifyNocCertificate = createServerFn({ method: "POST" })
     const q = data.query.trim();
     const qLower = q.toLowerCase();
 
-    // 1. First search applications table
     let appRecord: any = null;
 
-    // Search by UUID / exact ID
-    const { data: byId } = await adminClient
-      .from("applications")
-      .select("*")
-      .eq("id", q)
-      .maybeSingle();
+    // Determine if query looks like an email or a UUID
+    const isEmail = q.includes("@");
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q);
+    
+    // Extract a possible short ID (8 hex chars) for fallback searching
+    const shortIdMatch = q.match(/[0-9a-fA-F]{8}/);
+    const shortId = shortIdMatch ? shortIdMatch[0] : null;
 
-    if (byId) {
-      appRecord = byId;
-    } else {
-      // Search by partial ID or Email
+    if (isUUID) {
+      const { data: byId } = await adminClient
+        .from("applications")
+        .select("*")
+        .eq("id", q)
+        .maybeSingle();
+      if (byId) appRecord = byId;
+    } else if (isEmail) {
       const { data: byEmail } = await adminClient
         .from("applications")
         .select("*")
-        .or(`email.ilike.${qLower},id.ilike.%${q}%,phone.eq.${q}`)
+        .eq("email", qLower)
         .order("created_at", { ascending: false })
         .limit(1);
-
-      if (byEmail && byEmail.length > 0) {
-        appRecord = byEmail[0];
-      }
+      if (byEmail && byEmail.length > 0) appRecord = byEmail[0];
+    } else {
+      // It might be a phone number
+      const { data: byPhone } = await adminClient
+        .from("applications")
+        .select("*")
+        .eq("phone", q)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (byPhone && byPhone.length > 0) appRecord = byPhone[0];
     }
 
     // 2. If not found by application table directly, try matching profiles intern_id
     if (!appRecord) {
+      const searchConditions = [`email.eq.${qLower}`];
+      if (shortId) searchConditions.push(`intern_id.ilike.%${shortId}%`);
+      else searchConditions.push(`intern_id.ilike.%${q}%`);
+
       const { data: prof } = await adminClient
         .from("profiles")
         .select("*, applications(*)")
-        .or(`intern_id.ilike.%${q}%,email.ilike.${qLower}`)
+        .or(searchConditions.join(","))
         .maybeSingle();
 
       if (prof && prof.applications) {
