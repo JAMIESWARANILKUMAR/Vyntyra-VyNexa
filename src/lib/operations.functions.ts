@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getAdminClient } from "@/integrations/supabase/admin";
 import { generateUploadUrl } from "./r2";
+import { supabase as anonClient } from "@/integrations/supabase/client";
 
 const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
@@ -1352,8 +1353,7 @@ export const getMenteeAttendance = createServerFn({ method: "GET" })
 async function checkIsAdmin(userId: string) {
   if (!userId) return false;
   try {
-    const adminClient = getAdminClient();
-    const { data, error } = await adminClient
+    const { data, error } = await anonClient
       .from('user_roles')
       .select('role')
       .eq('user_id', userId);
@@ -1396,9 +1396,7 @@ export const updateLeaveStatus = createServerFn({ method: 'POST' })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(['approved', 'rejected']) }).parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
-    const adminClient = getAdminClient();
-
-    const { error } = await adminClient.from('leave_requests').update({ status: data.status, updated_at: new Date().toISOString() }).eq('id', data.id);
+    const { error } = await anonClient.from('leave_requests').update({ status: data.status, updated_at: new Date().toISOString() }).eq('id', data.id);
     if (error) throw new Error(error.message);
     return { success: true };
   });

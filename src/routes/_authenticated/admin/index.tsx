@@ -712,12 +712,12 @@ function AdminDashboard() {
              </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Stat label="Total" value={stats.total} />
-            <Stat label="New" value={stats.new} tone="secondary" />
-            <Stat label="Reviewing" value={stats.reviewing} tone="amber" />
-            <Stat label="Shortlisted" value={stats.shortlisted} tone="emerald" />
-            <Stat label="Hired" value={stats.hired} tone="primary" />
-            <Stat label="Rejected" value={stats.rejected} tone="destructive" />
+            <Stat label="Total" value={stats.total} onClick={() => setStatusFilter("all")} />
+            <Stat label="New" value={stats.new} tone="secondary" onClick={() => setStatusFilter("new")} />
+            <Stat label="Reviewing" value={stats.reviewing} tone="amber" onClick={() => setStatusFilter("reviewing")} />
+            <Stat label="Shortlisted" value={stats.shortlisted} tone="emerald" onClick={() => setStatusFilter("shortlisted")} />
+            <Stat label="Hired" value={stats.hired} tone="primary" onClick={() => setStatusFilter("hired")} />
+            <Stat label="Rejected" value={stats.rejected} tone="destructive" onClick={() => setStatusFilter("rejected")} />
           </div>
         </div>
 
@@ -1008,10 +1008,24 @@ function AdminDashboard() {
                     {l.status === 'pending' && (
                       <div className="flex gap-2 mt-2">
                         <Button size="sm" onClick={() => {
-                          doUpdateLeave({ data: { id: l.id, status: 'approved' } }).then(() => { toast.success('Approved'); qc.invalidateQueries({queryKey: ['admin-leaves']}) })
+                          doUpdateLeave({ data: { id: l.id, status: 'approved' } })
+                            .then(() => { 
+                              toast.success('Approved'); 
+                              qc.invalidateQueries({queryKey: ['admin-leaves']}); 
+                            })
+                            .catch((err: any) => {
+                              toast.error(err.message || 'Failed to approve leave');
+                            });
                         }} className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 text-xs">Approve</Button>
                         <Button size="sm" variant="destructive" onClick={() => {
-                          doUpdateLeave({ data: { id: l.id, status: 'rejected' } }).then(() => { toast.success('Rejected'); qc.invalidateQueries({queryKey: ['admin-leaves']}) })
+                          doUpdateLeave({ data: { id: l.id, status: 'rejected' } })
+                            .then(() => { 
+                              toast.success('Rejected'); 
+                              qc.invalidateQueries({queryKey: ['admin-leaves']}); 
+                            })
+                            .catch((err: any) => {
+                              toast.error(err.message || 'Failed to reject leave');
+                            });
                         }} className="h-7 text-xs">Reject</Button>
                       </div>
                     )}
@@ -1328,7 +1342,7 @@ function JobPostingDialog({ open, onClose, editing }: { open: boolean; onClose: 
   );
 }
 
-function Stat({ label, value, tone = "default" }: { label: string; value: number; tone?: string }) {
+function Stat({ label, value, tone = "default", onClick }: { label: string; value: number; tone?: string; onClick?: () => void }) {
   const toneColor: Record<string, string> = {
     default: "text-primary",
     secondary: "text-secondary",
@@ -1338,7 +1352,10 @@ function Stat({ label, value, tone = "default" }: { label: string; value: number
     destructive: "text-destructive",
   };
   return (
-    <div className="rounded-md border border-border bg-card p-5 shadow-corp">
+    <div 
+      onClick={onClick}
+      className={`rounded-md border border-border bg-card p-5 shadow-corp select-none transition-all duration-200 ${onClick ? "cursor-pointer hover:bg-surface hover:border-gold/30 hover:shadow-elev active:scale-95" : ""}`}
+    >
       <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">{label}</div>
       <div className={"mt-2 text-3xl font-semibold tracking-tight " + (toneColor[tone] || "text-primary")}>{value}</div>
     </div>
