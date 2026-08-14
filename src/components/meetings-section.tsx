@@ -1,5 +1,6 @@
-import { Video, Clock, ExternalLink, Calendar, Loader2, AlertCircle } from "lucide-react";
+import { Video, Clock, Calendar, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 
 interface Meeting {
   id: string;
@@ -35,18 +36,59 @@ function isToday(iso: string) {
   return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
 }
 
+export function MeetingCountdown({ targetDate }: { targetDate: string }) {
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    const calculate = () => {
+      const diff = new Date(targetDate).getTime() - Date.now();
+      if (diff <= 0) {
+        setTimeLeft("Live");
+        return;
+      }
+      const secs = Math.floor(diff / 1000) % 60;
+      const mins = Math.floor(diff / (1000 * 60)) % 60;
+      const hours = Math.floor(diff / (1000 * 60 * 60)) % 24;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+      const parts = [];
+      if (days > 0) parts.push(`${days}d`);
+      if (hours > 0) parts.push(`${hours}h`);
+      if (mins > 0) parts.push(`${mins}m`);
+      parts.push(`${secs}s`);
+
+      setTimeLeft(parts.join(" "));
+    };
+
+    calculate();
+    const interval = setInterval(calculate, 1000);
+    return () => clearInterval(interval);
+  }, [targetDate]);
+
+  if (timeLeft === "Live") {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100 animate-pulse">
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        Live
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 bg-indigo-50/50 text-indigo-600 px-2 py-0.5 rounded text-[10px] font-medium border border-indigo-100/50">
+      Starts in: {timeLeft}
+    </span>
+  );
+}
+
 export function MeetingsSection({ meetings, isLoading, isError }: MeetingsSectionProps) {
   const upcoming = meetings.filter((m) => isUpcoming(m.scheduled_at));
   const past = meetings.filter((m) => !isUpcoming(m.scheduled_at));
   const todayMeetings = meetings.filter((m) => isToday(m.scheduled_at));
 
   function joinMeeting(link: string) {
-    const popup = window.open(
-      link,
-      "meeting_popup",
-      "width=1100,height=700,left=80,top=60,resizable=yes,scrollbars=yes"
-    );
-    if (!popup) window.open(link, "_blank");
+    // Open in current tab only as requested
+    window.location.href = link;
   }
 
   if (isLoading) {
@@ -107,11 +149,31 @@ export function MeetingsSection({ meetings, isLoading, isError }: MeetingsSectio
 
 function MeetingCard({ meeting, highlight, onJoin }: { meeting: Meeting; highlight?: boolean; onJoin: (l: string) => void }) {
   const { date, time } = formatDateTime(meeting.scheduled_at);
+  
+  // Choose animated video icon class and container class based on highlight/urgency
+  const iconContainerClass = highlight 
+    ? "bg-emerald-50 border-emerald-100 text-emerald-600"
+    : "bg-indigo-50 border-indigo-100 text-indigo-600";
+  
+  const pingColorClass = highlight ? "bg-emerald-400" : "bg-indigo-400";
+  const videoIconColorClass = highlight ? "text-emerald-600" : "text-indigo-600";
+
   return (
     <div className={`rounded-lg border p-3.5 transition-all hover:shadow-sm ${highlight ? "border-emerald-200 bg-emerald-50/50" : "bg-white"}`}>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start gap-4 justify-between">
+        
+        {/* Animated video meeting logo */}
+        <div className={`relative flex h-10 w-10 items-center justify-center rounded-xl border ${iconContainerClass} shrink-0 overflow-hidden`}>
+          <span className={`animate-ping absolute inline-flex h-8 w-8 rounded-full ${pingColorClass} opacity-40`} />
+          <Video className={`relative h-5 w-5 ${videoIconColorClass} animate-pulse`} />
+        </div>
+
         <div className="min-w-0 flex-1">
-          <h4 className="font-semibold text-sm truncate">{meeting.title}</h4>
+          <div className="flex flex-wrap items-center gap-2">
+            <h4 className="font-semibold text-sm truncate max-w-[200px] md:max-w-xs">{meeting.title}</h4>
+            <MeetingCountdown targetDate={meeting.scheduled_at} />
+          </div>
+          
           <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
             <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{date}</span>
             <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{time}</span>
@@ -121,6 +183,7 @@ function MeetingCard({ meeting, highlight, onJoin }: { meeting: Meeting; highlig
             <p className="text-xs text-muted-foreground mt-1.5 line-clamp-1">{meeting.description}</p>
           )}
         </div>
+
         <Button
           size="sm"
           onClick={() => onJoin(meeting.meeting_link)}

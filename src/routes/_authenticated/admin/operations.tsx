@@ -459,9 +459,11 @@ function OperationsDashboard() {
   async function handleCreateMeeting(e: React.FormEvent) {
     e.preventDefault();
     try {
+      const encodedLink = btoa(unescape(encodeURIComponent(meetingForm.meeting_link)));
       await doCreateMeeting({
         data: {
           ...meetingForm,
+          meeting_link: encodedLink,
           scheduled_at: meetingForm.start_time || new Date().toISOString(),
         }
       });

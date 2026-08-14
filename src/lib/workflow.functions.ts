@@ -7,6 +7,21 @@ import fs from "fs";
 import path from "path";
 const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
+export function safeDecodeUrl(val: string | null | undefined): string | null {
+  if (!val) return null;
+  if (val.startsWith("http://") || val.startsWith("https://")) {
+    return val;
+  }
+  try {
+    const decoded = Buffer.from(val, 'base64').toString('utf-8');
+    if (decoded.startsWith("http://") || decoded.startsWith("https://")) {
+      return decoded;
+    }
+  } catch {}
+  return val;
+}
+
+
 // ---------- Transition rules ----------
 
 export type AppStatus = "new" | "reviewing" | "interview_scheduled" | "shortlisted" | "finalised" | "selected" | "rejected" | "hired";
@@ -117,7 +132,7 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
       const adminClient = getAdminClient();
       const updateData: any = { status: to };
       if (to === "interview_scheduled") {
-        updateData.meet_link = data.meetLink || null;
+        updateData.meet_link = safeDecodeUrl(data.meetLink) || null;
         updateData.meeting_time = data.meetingTime || null;
         updateData.interviewer_name = data.interviewerName || null;
         updateData.interviewer_id = data.interviewerId || null;
@@ -209,7 +224,7 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
               idempotencyKey: `status-${data.id}-${to}-${Date.now()}`,
               attachmentUrl,
               ccEmail: data.ccEmail || null,
-              meetLink: data.meetLink || null,
+              meetLink: safeDecodeUrl(data.meetLink) || null,
               meetingTime: data.meetingTime || null,
               interviewerName: data.interviewerName || null,
             });

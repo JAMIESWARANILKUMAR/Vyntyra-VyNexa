@@ -7,6 +7,21 @@ import { supabase as anonClient } from "@/integrations/supabase/client";
 
 const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
+export function safeDecodeUrl(val: string | null | undefined): string | null {
+  if (!val) return null;
+  if (val.startsWith("http://") || val.startsWith("https://")) {
+    return val;
+  }
+  try {
+    const decoded = Buffer.from(val, 'base64').toString('utf-8');
+    if (decoded.startsWith("http://") || decoded.startsWith("https://")) {
+      return decoded;
+    }
+  } catch {}
+  return val;
+}
+
+
 const provisionSchema = z.object({
   full_name: z.string().min(2),
   email: z.string().email(),
@@ -676,7 +691,7 @@ export const createMeeting = createServerFn({ method: 'POST' })
     const payload: any = {
       title: data.title,
       description: data.description || null,
-      meeting_link: data.meeting_link,
+      meeting_link: safeDecodeUrl(data.meeting_link) || "",
       scheduled_at: scheduledAt,
       duration_minutes: data.duration_minutes || 30,
       target_role: data.target_role || 'all',
