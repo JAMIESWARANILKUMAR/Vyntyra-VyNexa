@@ -796,7 +796,7 @@ export const getMyDocuments = createServerFn({ method: "GET" })
     // Get the intern's profile to find their application id
     const { data: profile } = await adminClient
       .from("profiles")
-      .select("email")
+      .select("*")
       .eq("id", context.userId)
       .single();
 
@@ -805,7 +805,7 @@ export const getMyDocuments = createServerFn({ method: "GET" })
     // Find the application linked to this intern's email
     const { data: app } = await adminClient
       .from("applications")
-      .select("id, offer_letter_url")
+      .select("*")
       .eq("email", profile.email)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -813,19 +813,132 @@ export const getMyDocuments = createServerFn({ method: "GET" })
 
     if (!app) return { nocUrl: null, offerLetterUrl: null };
 
-    // Generate a fresh 2-hour signed URL for the NOC PDF
+    // 1. Resolve or Generate Offer Letter
+    let offerLetterUrl = app.offer_letter_url || null;
+    if (!offerLetterUrl) {
+      try {
+        const { generateOfferLetterPDF } = await import("./pdf.server");
+        offerLetterUrl = await generateOfferLetterPDF({
+          fullName: app.full_name,
+          roleApplied: app.role_applied,
+          applicationId: app.id,
+          salary: app.salary || "Performance Based Stipend",
+          joiningDate: app.joining_date ? new Date(app.joining_date).toLocaleDateString("en-IN") : new Date().toLocaleDateString("en-IN"),
+          jobLocation: app.job_location || "Remote Work-from-Home",
+        });
+        
+        if (offerLetterUrl) {
+          // Cache in database
+          await adminClient
+            .from("applications")
+            .update({ offer_letter_url: offerLetterUrl })
+            .eq("id", app.id);
+        }
+      } catch (err) {
+        console.warn("[getMyDocuments] Dynamic offer letter generation failed:", err);
+      }
+    }
+
+    // 2. Resolve or Generate NOC
     const nocPath = `nocs/${app.id}_NOC.pdf`;
     let nocUrl: string | null = null;
     const { data: signedData } = await adminClient.storage
       .from("default")
       .createSignedUrl(nocPath, 7200);
+
     if (signedData?.signedUrl) {
       nocUrl = signedData.signedUrl;
+    } else {
+      // NOC missing in storage - generate on-the-fly
+      try {
+        const { resolveGooglePhotosUrl } = await import("./google-photos");
+        let signatureBase64 = null;
+        const resolvedSigUrl = await resolveGooglePhotosUrl("https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
+        if (resolvedSigUrl) {
+          try {
+            const sigRes = await fetch(resolvedSigUrl, {
+              headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+              }
+            });
+            if (sigRes.ok) {
+              const buffer = await sigRes.arrayBuffer();
+              signatureBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
+            }
+          } catch (err) {
+            console.warn("Signature fetch failed:", err);
+          }
+        }
+
+        let photoBase64 = null;
+        const url = profile.avatar_url || app.profile_photo_url;
+        if (url) {
+          if (url.startsWith("data:image")) {
+            photoBase64 = url;
+          } else {
+            const resolvedUrl = await resolveGooglePhotosUrl(url);
+            if (resolvedUrl) {
+              try {
+                const photoRes = await fetch(resolvedUrl, {
+                  headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                  }
+                });
+                if (photoRes.ok) {
+                  const buffer = await photoRes.arrayBuffer();
+                  const contentType = photoRes.headers.get("content-type") || "image/jpeg";
+                  photoBase64 = `data:${contentType};base64,${Buffer.from(buffer).toString('base64')}`;
+                }
+              } catch (err) {
+                console.warn("Photo fetch failed:", err);
+              }
+            }
+          }
+        }
+
+        const startDate = profile.start_date ? new Date(profile.start_date) : (app.internship_start_date ? new Date(app.internship_start_date) : new Date());
+
+        const { generateNocPdf } = await import("./nocGenerator");
+        const doc = generateNocPdf({
+          fullName: app.full_name,
+          email: app.email,
+          phone: app.phone,
+          applicationId: app.id,
+          college: app.college || "Academic Institution",
+          domain: app.domain || "Technology & Software",
+          subDomain: app.sub_domain || "Full Stack Web Development",
+          internshipStartDate: startDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }),
+          profilePhotoUrl: photoBase64,
+          qrCodeBase64: null,
+          logoBase64: null,
+          signatureBase64: signatureBase64,
+          hodName: app.hod_name,
+        });
+
+        const pdfOutput = doc.output("arraybuffer");
+        const pdfBuffer = Buffer.from(pdfOutput);
+        
+        await adminClient.storage
+          .from("default")
+          .upload(nocPath, pdfBuffer, {
+            contentType: "application/pdf",
+            upsert: true
+          });
+
+        const { data: newSignedData } = await adminClient.storage
+          .from("default")
+          .createSignedUrl(nocPath, 7200);
+        if (newSignedData?.signedUrl) {
+          nocUrl = newSignedData.signedUrl;
+        }
+      } catch (err) {
+        console.warn("[getMyDocuments] Dynamic NOC generation failed:", err);
+      }
     }
 
     return {
       nocUrl,
-      offerLetterUrl: app.offer_letter_url || null,
+      offerLetterUrl,
     };
   });
 
