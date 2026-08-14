@@ -112,6 +112,7 @@ export const verifyNocCertificate = createServerFn({ method: "POST" })
         startDate: profile?.start_date || formattedDate,
         endDate: profile?.end_date || "3 Months Duration",
         pdfUrl: nocPdfUrl,
+        certificateUrl: appRecord.certificate_url || null,
         udyamReg: "UDYAM-AP-10-0143100",
         corporateAddress: "Dwaraka Nagar, Visakhapatnam - 530016, AP, India",
         isoStatus: "ISO 9001:2015 Certified & Digitally Signed",
