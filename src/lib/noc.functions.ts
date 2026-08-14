@@ -48,11 +48,11 @@ export const verifyNocCertificate = createServerFn({ method: "POST" })
         .maybeSingle();
 
       if (prof && prof.applications) {
-        appRecord = prof.applications;
+        appRecord = Array.isArray(prof.applications) ? prof.applications[0] : prof.applications;
       }
     }
 
-    if (!appRecord) {
+    if (!appRecord || !appRecord.id) {
       return {
         found: false,
         message: "No official NOC or selection record found matching the provided Registration ID or Email address.",
