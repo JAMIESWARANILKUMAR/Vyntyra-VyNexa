@@ -8,6 +8,7 @@ import { lookupApplicationStatus } from "@/lib/portal.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WorldClocks } from "@/components/world-clocks";
+import { Header } from "@/components/Header";
 
 export const Route = createFileRoute("/track")({
   head: () => ({
@@ -54,17 +55,7 @@ function TrackPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 h-14 sm:h-16 flex items-center gap-3">
-          <img src="/icon-512.png" alt="Vyntyra" className="h-8 sm:h-10 w-auto" />
-          <div className="border-l border-border pl-3">
-            <div className="text-sm font-semibold text-primary leading-none">Vyntyra Careers</div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
-              Track Application
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="flex-1 px-4 sm:px-6 py-8 sm:py-16">
         <div className="mx-auto w-full max-w-3xl space-y-6">

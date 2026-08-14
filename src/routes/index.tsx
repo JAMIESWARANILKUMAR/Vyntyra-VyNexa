@@ -68,47 +68,12 @@ const LEADERSHIP = [
   { name: "Kashish Khilani", role: "Senior Advisor", note: "Strategic Advisor · Executive Advisory Board" },
 ];
 
+import { Header } from "@/components/Header";
+
 function AboutPage() {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
-      {/* Utility bar */}
-      <div className="border-b border-border bg-primary text-primary-foreground/80 text-xs">
-        <div className="mx-auto max-w-6xl px-6 h-9 flex items-center justify-between">
-          <div className="hidden sm:flex items-center gap-4">
-            <span className="inline-flex items-center gap-1.5"><Globe2 className="h-3 w-3" /> IN · Global Delivery</span>
-            <span className="opacity-40">|</span>
-            <span className="inline-flex items-center gap-1.5"><Mail className="h-3 w-3" /> hr@vyntyraconsultancyservices.in</span>
-          </div>
-          <div className="flex items-center gap-4 ml-auto">
-            <a href="/" className="hover:text-gold">Careers</a>
-            <span className="opacity-40">|</span>
-            <a href="/status" className="hover:text-gold">Track Application</a>
-            <span className="opacity-40">|</span>
-            <a href="/verify" className="hover:text-gold text-emerald-400 font-medium flex items-center gap-1"><Shield className="h-3 w-3" /> Verify Intern</a>
-            <span className="opacity-40">|</span>
-            <a href="/auth/admin" className="hover:text-gold">Super Admin</a>
-          </div>
-        </div>
-      </div>
-
-      {/* Top bar */}
-      <header className="border-b border-border bg-card sticky top-0 z-40 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-3">
-            <img src="/icon-512.png" alt="Vyntyra Consultancy Services" className="h-11 w-auto" />
-          </a>
-          <nav className="hidden md:flex items-center gap-1 text-sm">
-            <a href="/" className="px-3 py-2 text-primary font-medium rounded-sm bg-surface">About</a>
-            <a href="/careers" className="px-3 py-2 text-muted-foreground hover:text-primary hover:bg-surface rounded-sm">Careers</a>
-            <a href="/status" className="px-3 py-2 text-muted-foreground hover:text-primary hover:bg-surface rounded-sm">Track Status</a>
-            <a href="/verify" className="px-3 py-2 text-emerald-600 dark:text-emerald-400 font-medium hover:text-emerald-500 hover:bg-surface rounded-sm flex items-center gap-1"><Shield className="h-4 w-4"/> Verify</a>
-            <div className="w-px h-5 bg-border mx-2" />
-            <a href="/careers" className="inline-flex items-center gap-1.5 bg-primary hover:bg-secondary text-primary-foreground px-4 py-2 rounded-sm text-sm font-medium transition-colors">
-              Apply Now <ArrowRight className="h-3.5 w-3.5" />
-            </a>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Shield } from "lucide-react";
+import { Header } from "@/components/Header";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -17,14 +18,7 @@ export const Route = createFileRoute("/privacy")({
 function PrivacyPage() {
   return (
     <div className="min-h-screen bg-surface">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-3">
-            <img src="/icon-512.png" alt="Vyntyra" className="h-9 w-auto" />
-          </a>
-          <a href="/" className="text-sm text-muted-foreground hover:text-primary">← Back to application</a>
-        </div>
-      </header>
+      <Header />
 
       <main className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-10 sm:py-14">
         <div className="mb-8">

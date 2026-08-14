@@ -33,6 +33,8 @@ const STATUS_STYLE: Record<string, string> = {
   hired: "bg-primary text-primary-foreground border-primary",
 };
 
+import { Header } from "@/components/Header";
+
 function StatusView() {
   const { token } = Route.useParams();
   const check = useServerFn(checkPortalToken);
@@ -46,20 +48,7 @@ function StatusView() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto max-w-5xl px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/icon-512.png" alt="Vyntyra" className="h-10 w-auto" />
-            <div className="border-l border-border pl-3">
-              <div className="text-sm font-semibold text-primary leading-none">Vyntyra Careers</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Applicant Portal</div>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground">
-            <Link to="/">Go back to Home</Link>
-          </Button>
-        </div>
-      </header>
+      <Header />
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-16">
         <div className="w-full max-w-3xl space-y-6">

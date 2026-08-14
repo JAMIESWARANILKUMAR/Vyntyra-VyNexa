@@ -42,6 +42,7 @@ import { COLLEGES, STATES, graduationYears, type StateName } from "@/lib/college
 import { WorldClocks } from "@/components/world-clocks";
 import { InstallPwaButton } from "@/components/install-pwa-button";
 import { CloudflareTurnstile } from "@/components/cloudflare-turnstile";
+import { Header } from "@/components/Header";
 
 export const Route = createFileRoute("/careers")({
   head: () => ({
@@ -443,8 +444,7 @@ function ApplicationPage() {
             }
          })}} />
       ))}
-      <UtilityBar />
-      <TopBar live={applicationsOpen} />
+      <Header live={applicationsOpen} />
       <Hero />
       <WhyJoinUs />
       <TrustStrip />
