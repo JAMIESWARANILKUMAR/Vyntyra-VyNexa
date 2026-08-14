@@ -1889,8 +1889,13 @@ function InternDashboard() {
         </div>
       )}
 
-      {/* ── PWA Install Prompt (bottom floating banner) ── */}
-      <PwaInstallBanner />
+      <PwaInstallBanner 
+        title="Install Intern Portal"
+        subtitle="Get the official Intern Portal app (Chrome App)"
+        dismissKey="vy_pwa_intern_banner_dismissed"
+        buttonColor="emerald"
+        installLabel="Install Intern App"
+      />
     </div>
   );
 }

@@ -29,6 +29,7 @@ import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { PayslipModal } from "@/components/payslip-modal";
 import { IdCardModal } from "@/components/id-card-modal";
+import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -2240,6 +2241,13 @@ function EmployeeDashboard() {
       />
       <FloatingAppsPanel />
       <FirstLoginWelcomeModal user={profile} />
+      <PwaInstallBanner 
+        title="Install Employee Portal"
+        subtitle="Get the official Employee App for offline access"
+        dismissKey="vy_pwa_employee_banner_dismissed"
+        buttonColor="blue"
+        installLabel="Install Employee App"
+      />
     </div>
   );
 }
