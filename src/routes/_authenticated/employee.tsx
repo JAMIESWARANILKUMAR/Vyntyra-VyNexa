@@ -288,6 +288,23 @@ function EmployeeDashboard() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Realtime subscription for meetings table to auto-refresh meetings
+  useEffect(() => {
+    const channel = supabase
+      .channel("employee-meetings-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "meetings" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["my-meetings"] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
+
   const sessionQ = useQuery({ queryKey: ["session"], queryFn: async () => (await supabase.auth.getSession()).data.session });
   
   const fetchInterviews = useServerFn(listAssignedInterviews);

@@ -464,7 +464,7 @@ function OperationsDashboard() {
         data: {
           ...meetingForm,
           meeting_link: encodedLink,
-          scheduled_at: meetingForm.start_time || new Date().toISOString(),
+          scheduled_at: meetingForm.start_time ? new Date(meetingForm.start_time).toISOString() : new Date().toISOString(),
         }
       });
       toast.success("Meeting scheduled!");

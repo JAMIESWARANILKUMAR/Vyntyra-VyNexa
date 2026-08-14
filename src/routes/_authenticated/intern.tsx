@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { RichContentRenderer } from "@/components/rich-content-renderer";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
-import { MeetingsSection } from "@/components/meetings-section";
+import { MeetingsSection, MeetingCountdown } from "@/components/meetings-section";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
 import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -130,6 +130,7 @@ function InternDashboard() {
   });
 
   const [isClocking, setIsClocking] = useState(false);
+  const [meetingAlert, setMeetingAlert] = useState<any>(null);
 
   async function handleClockIn() {
     setIsClocking(true);
@@ -270,6 +271,44 @@ function InternDashboard() {
       setShowForcePasswordModal(true);
     }
   }, [session]);
+
+  // Realtime subscription for meetings table to auto-refresh meetings
+  useEffect(() => {
+    const channel = supabase
+      .channel("intern-meetings-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "meetings" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["my-meetings"] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
+
+  // Check for upcoming meetings today to display a popup alert
+  useEffect(() => {
+    if (meetings.length > 0) {
+      const todayMeeting = meetings.find((m: any) => {
+        const d = new Date(m.scheduled_at);
+        const now = new Date();
+        const isToday = d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        const isUpcoming = d.getTime() > now.getTime();
+        return isToday && isUpcoming;
+      });
+
+      if (todayMeeting) {
+        const alerted = sessionStorage.getItem(`alerted-meeting-${todayMeeting.id}`);
+        if (!alerted) {
+          setMeetingAlert(todayMeeting);
+          sessionStorage.setItem(`alerted-meeting-${todayMeeting.id}`, "true");
+        }
+      }
+    }
+  }, [meetings]);
 
   async function handleForcePasswordChange(e: React.FormEvent) {
     e.preventDefault();
@@ -1896,6 +1935,65 @@ function InternDashboard() {
         buttonColor="emerald"
         installLabel="Install Intern App"
       />
+
+      {/* ── Meeting Reminder Popup Modal ── */}
+      {meetingAlert && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+            <div className="flex items-start justify-between border-b pb-3">
+              <div className="flex items-center gap-2 text-indigo-600">
+                <Video className="h-5 w-5 animate-bounce" />
+                <h2 className="text-base font-bold">Meeting Reminder</h2>
+              </div>
+              <button className="text-slate-400 hover:text-slate-600 text-sm font-semibold" onClick={() => setMeetingAlert(null)}>✕</button>
+            </div>
+
+            <p className="text-xs text-slate-500 font-medium">You have a scheduled video meeting starting today. Please click join below to enter the meeting room.</p>
+
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3">
+              <div>
+                <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Title</div>
+                <div className="text-xs font-bold text-slate-800">{meetingAlert.title}</div>
+              </div>
+              {meetingAlert.description && (
+                <div>
+                  <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Description</div>
+                  <div className="text-xs text-slate-600 line-clamp-2">{meetingAlert.description}</div>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/50">
+                <div>
+                  <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Time</div>
+                  <div className="text-xs font-bold text-slate-700">
+                    {new Date(meetingAlert.scheduled_at).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit', hour12: true })}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Countdown</div>
+                  <div className="text-xs font-bold text-indigo-600">
+                    <MeetingCountdown targetDate={meetingAlert.scheduled_at} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="ghost" size="sm" onClick={() => setMeetingAlert(null)}>Close</Button>
+              <Button 
+                size="sm"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                onClick={() => {
+                  if (meetingAlert.meeting_link) {
+                    window.location.href = meetingAlert.meeting_link;
+                  }
+                }}
+              >
+                Join Meeting
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

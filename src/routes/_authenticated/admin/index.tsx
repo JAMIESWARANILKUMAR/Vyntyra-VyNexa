@@ -1565,7 +1565,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         status,
         note,
         meetLink: status === "interview_scheduled" && meetLink ? btoa(unescape(encodeURIComponent(meetLink))) : null,
-        meetingTime: status === "interview_scheduled" ? meetingTime : null,
+        meetingTime: status === "interview_scheduled" && meetingTime ? new Date(meetingTime).toISOString() : null,
         interviewerId: status === "interview_scheduled" ? interviewerId : null,
         interviewerName: status === "interview_scheduled" ? (employees.find((e: any) => e.id === interviewerId)?.full_name || "") : null,
         ccEmail: ccEmail || null,
