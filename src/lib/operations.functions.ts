@@ -1396,8 +1396,24 @@ export const updateLeaveStatus = createServerFn({ method: 'POST' })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(['approved', 'rejected']) }).parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
-    const { error } = await anonClient.from('leave_requests').update({ status: data.status, updated_at: new Date().toISOString() }).eq('id', data.id);
-    if (error) throw new Error(error.message);
+    
+    // Try updating with updated_at timestamp first
+    let res = await anonClient
+      .from('leave_requests')
+      .update({ status: data.status, updated_at: new Date().toISOString() })
+      .eq('id', data.id);
+
+    // If it fails (e.g. because updated_at column doesn't exist in the schema cache yet)
+    if (res.error) {
+      console.warn("[updateLeaveStatus] Failed to update with updated_at, retrying without it:", res.error.message);
+      const retryRes = await anonClient
+        .from('leave_requests')
+        .update({ status: data.status })
+        .eq('id', data.id);
+      
+      if (retryRes.error) throw new Error(retryRes.error.message);
+    }
+    
     return { success: true };
   });
 
