@@ -7,7 +7,7 @@ import {
   CheckCircle2, Video, CalendarDays, User, BookOpen, Link2, FileText,
   Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
-  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard
+  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -67,6 +67,7 @@ function InternDashboard() {
   const [feedback, setFeedback] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedInvite, setCopiedInvite] = useState(false);
+  const [showReferralPopup, setShowReferralPopup] = useState(() => localStorage.getItem("dismissed-referral-popup") !== "true");
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
 
   const [showForcePasswordModal, setShowForcePasswordModal] = useState(false);
@@ -3096,6 +3097,66 @@ function InternDashboard() {
                 );
               })()}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Referral Announcement Floating Popup ── */}
+      {showReferralPopup && (
+        <div className="fixed bottom-4 right-4 z-[90] max-w-sm bg-white rounded-2xl border border-indigo-100 p-5 shadow-2xl animate-in slide-in-from-bottom-5 fade-in duration-500 hover:shadow-indigo-500/5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                  New in Portal: REFER & EARN
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-slate-800 leading-snug">
+                Vyntyra Pays For You!
+              </h4>
+              <p className="text-xs text-slate-500 leading-normal font-light">
+                Earn course fee refunds up to 30% by recommending Project VyNexa to your peers.
+              </p>
+              
+              <div className="pt-2 flex items-center gap-3">
+                <Button 
+                  size="sm"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] h-8 px-4 rounded-xl flex items-center gap-1.5 transition-all active:scale-[0.98]"
+                  onClick={() => {
+                    setActiveTab("refer");
+                    setShowReferralPopup(false);
+                    localStorage.setItem("dismissed-referral-popup", "true");
+                    toast.success("Navigated to Refer & Earn panel!");
+                  }}
+                >
+                  Find Referral Code <ArrowRight className="h-3 w-3" />
+                </Button>
+                <button 
+                  onClick={() => {
+                    setShowReferralPopup(false);
+                    localStorage.setItem("dismissed-referral-popup", "true");
+                    toast.info("Referral feature tip dismissed.");
+                  }}
+                  className="text-xs font-semibold text-slate-400 hover:text-slate-600"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => {
+                setShowReferralPopup(false);
+                localStorage.setItem("dismissed-referral-popup", "true");
+              }}
+              className="text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              ✕
+            </button>
           </div>
         </div>
       )}
