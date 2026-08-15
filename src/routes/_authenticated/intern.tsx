@@ -33,8 +33,11 @@ import {
   acceptTask, updateTaskExecution,
   listLeads, createLead, updateLeadStatus, deleteLead,
   listBugs, createBug, updateBugStatus,
-  clockIn, clockOut, getMyAttendance, getMyDocuments, regenerateMyDocuments
+  clockIn, clockOut, getMyAttendance, getMyDocuments, regenerateMyDocuments,
+  requestLeave, listMyLeaves, getMyLmsProgress, updateLmsProgress,
+  raiseSupportQuery, listMySupportQueries, requestDeadlineExtension, submitTaskUrl
 } from "@/lib/operations.functions";
+import { listMyNotifications, markUserNotificationRead } from "@/lib/notifications.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
   head: () => ({ meta: [{ title: "Intern Dashboard — Vyntyra" }] }),
@@ -58,7 +61,7 @@ const RESOURCE_ICONS: Record<string, { icon: React.ReactNode; color: string }> =
 
 function InternDashboard() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements" | "leaves" | "support">("overview");
   const [newNote, setNewNote] = useState("");
   const [feedback, setFeedback] = useState("");
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
@@ -75,6 +78,9 @@ function InternDashboard() {
       return data.session;
     },
   });
+
+  const session = sessionQ.data;
+  const email = session?.user?.email || "";
 
   const fetchTasks = useServerFn(listTasks);
   const fetchMeetings = useServerFn(listMeetings);
@@ -95,6 +101,44 @@ function InternDashboard() {
   const fetchMyDocuments = useServerFn(getMyDocuments);
   const regenerateDocs = useServerFn(regenerateMyDocuments);
 
+  // LMS tracking state
+  const [updatingCourseIdx, setUpdatingCourseIdx] = useState<number | null>(null);
+  const [courseProgressInput, setCourseProgressInput] = useState<number>(0);
+  
+  // User notifications state
+  const [showNotifications, setShowNotifications] = useState(false);
+  const fetchMyNotifications = useServerFn(listMyNotifications);
+  const doMarkUserNotificationRead = useServerFn(markUserNotificationRead);
+
+  // Leave requests state
+  const [leaveForm, setLeaveForm] = useState({ start_date: "", end_date: "", reason: "" });
+  const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
+  const doRequestLeave = useServerFn(requestLeave);
+  const fetchMyLeaves = useServerFn(listMyLeaves);
+
+  // Support queries state
+  const [supportForm, setSupportForm] = useState({ subject: "", description: "", category: "Technical" });
+  const [isSubmittingSupport, setIsSubmittingSupport] = useState(false);
+  const doRaiseSupportQuery = useServerFn(raiseSupportQuery);
+  const fetchMySupportQueries = useServerFn(listMySupportQueries);
+
+  // Deadline extension state
+  const [showExtensionModal, setShowExtensionModal] = useState<any>(null);
+  const [extensionReason, setExtensionReason] = useState("");
+  const [extensionDate, setExtensionDate] = useState("");
+  const [isSubmittingExtension, setIsSubmittingExtension] = useState(false);
+  const doRequestDeadlineExtension = useServerFn(requestDeadlineExtension);
+
+  // Submission URL state
+  const [submissionTaskId, setSubmissionTaskId] = useState<string | null>(null);
+  const [submissionUrl, setSubmissionUrl] = useState("");
+  const [isSubmittingTaskUrl, setIsSubmittingTaskUrl] = useState(false);
+  const doSubmitTaskUrl = useServerFn(submitTaskUrl);
+
+  // LMS functions
+  const fetchLmsProgress = useServerFn(getMyLmsProgress);
+  const doUpdateLmsProgress = useServerFn(updateLmsProgress);
+
   const [selectedTaskWorkspace, setSelectedTaskWorkspace] = useState<any>(null);
   const [selectedDomain, setSelectedDomain] = useState<"tech" | "non_tech" | "management">("tech");
 
@@ -110,6 +154,40 @@ function InternDashboard() {
   const queryOpts = { staleTime: 1000 * 60 * 5, gcTime: 1000 * 60 * 10 };
   const leadsQ = useQuery({ queryKey: ["my-leads"], queryFn: () => fetchLeads(), ...queryOpts });
   const bugsQ = useQuery({ queryKey: ["my-bugs"], queryFn: () => fetchBugs(), ...queryOpts });
+
+  const userNotificationsQ = useQuery({
+    queryKey: ["my-user-notifications", session?.user?.id],
+    queryFn: () => fetchMyNotifications(),
+    enabled: !!session?.user?.id,
+    refetchInterval: 10000,
+  });
+
+  const notifications = userNotificationsQ.data || [];
+  const unreadNotificationsCount = notifications.filter((n: any) => !n.is_read).length;
+
+  const lmsProgressQ = useQuery({
+    queryKey: ["my-lms-progress", session?.user?.id],
+    queryFn: () => fetchLmsProgress(),
+    enabled: !!session?.user?.id,
+  });
+
+  const lmsProgressList = lmsProgressQ.data || [];
+
+  const supportQueriesQ = useQuery({
+    queryKey: ["my-support-queries", session?.user?.id],
+    queryFn: () => fetchMySupportQueries(),
+    enabled: !!session?.user?.id,
+  });
+
+  const supportQueries = supportQueriesQ.data || [];
+
+  const leavesQ = useQuery({
+    queryKey: ["my-leaves", session?.user?.id],
+    queryFn: () => fetchMyLeaves(),
+    enabled: !!session?.user?.id,
+  });
+
+  const myLeaves = leavesQ.data || [];
 
   const tasksQ = useQuery({ queryKey: ["my-tasks"], queryFn: () => fetchTasks(), ...queryOpts });
   const meetingsQ = useQuery({ queryKey: ["my-meetings"], queryFn: () => fetchMeetings(), ...queryOpts });
@@ -167,9 +245,6 @@ function InternDashboard() {
   const announcements: any[] = announcementsQ.data || [];
   const resources: any[] = resourcesQ.data || [];
 
-  const session = sessionQ.data;
-  const email = session?.user?.email || "";
-  
   const profileQ = useQuery({ 
     queryKey: ["profile", session?.user?.id], 
     queryFn: async () => { 
@@ -289,6 +364,40 @@ function InternDashboard() {
     };
   }, [qc]);
 
+  // Realtime subscription for user events (notifications, support, leaves)
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    
+    const userChannel = supabase
+      .channel(`user-updates-${session.user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_notifications", filter: `user_id=eq.${session.user.id}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["my-user-notifications", session?.user?.id] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "support_queries", filter: `intern_id=eq.${session.user.id}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["my-support-queries", session?.user?.id] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "leave_requests", filter: `user_id=eq.${session.user.id}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["my-leaves", session?.user?.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(userChannel);
+    };
+  }, [session?.user?.id, qc]);
+
   // Check for upcoming meetings today to display a popup alert
   useEffect(() => {
     if (meetings.length > 0) {
@@ -392,6 +501,8 @@ function InternDashboard() {
     { id: "tasks",          label: `Tasks (${pendingTasks.length})` },
     { id: "meetings",       label: "Meetings" },
     { id: "resources",      label: `Resources (${resources.length})` },
+    { id: "leaves",         label: `Leaves (${myLeaves.length})` },
+    { id: "support",        label: `Support (${supportQueries.length})` },
     { id: "notes",          label: "Notes" },
     { id: "feedback",       label: "Feedback" },
   ] as const;
@@ -458,6 +569,57 @@ function InternDashboard() {
                 Clock In
               </Button>
             )}
+
+            {/* Notification Bell */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative h-8 w-8 text-slate-600 hover:text-emerald-600 rounded-full hover:bg-slate-100"
+              >
+                <Bell className="h-4.5 w-4.5" />
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none">
+                    {unreadNotificationsCount}
+                  </span>
+                )}
+              </Button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 py-3 z-50 overflow-hidden divide-y divide-slate-100 max-h-96 overflow-y-auto">
+                  <div className="px-4 pb-2 flex items-center justify-between">
+                    <span className="font-bold text-xs text-slate-800">In-App Notifications</span>
+                    <span className="text-[10px] text-slate-400 font-medium">Click to mark as read</span>
+                  </div>
+                  <div className="py-1">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-slate-400 text-xs">No alerts or notifications yet</div>
+                    ) : (
+                      notifications.map((n: any) => (
+                        <div 
+                          key={n.id} 
+                          onClick={async () => {
+                            try {
+                              await doMarkUserNotificationRead({ data: { id: n.id } });
+                              qc.invalidateQueries({ queryKey: ["my-user-notifications", session?.user?.id] });
+                            } catch (e) {}
+                          }}
+                          className={`px-4 py-2.5 text-left transition-colors cursor-pointer hover:bg-slate-50 flex flex-col gap-0.5 ${!n.is_read ? 'bg-blue-50/50' : ''}`}
+                        >
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span className="font-bold text-xs text-slate-900 leading-snug">{n.title}</span>
+                            {!n.is_read && <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />}
+                          </div>
+                          <p className="text-slate-500 text-[11px] leading-relaxed">{n.message}</p>
+                          <span className="text-[9px] text-slate-400 font-mono mt-1">{new Date(n.created_at).toLocaleDateString()} at {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center gap-2">
               <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 sm:h-9 sm:w-9" />
@@ -1112,37 +1274,136 @@ function InternDashboard() {
         {activeTab === "lms" && (
           <div className="space-y-6">
             <div className="rounded-xl border bg-white p-6 shadow-sm">
-              <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2 mb-1">
-                <BookMarked className="h-5 w-5 text-emerald-600" /> Structured Curriculum & Certification Path
-              </h2>
-              <p className="text-xs text-slate-500 mb-6">Complete mandatory training modules to earn digital skill badges.</p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-4 mb-6">
+                <div>
+                  <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2 mb-1">
+                    <BookMarked className="h-5 w-5 text-emerald-600" /> Structured Curriculum & Skill Badges
+                  </h2>
+                  <p className="text-xs text-slate-500">Complete official source training modules customized for your domain: <span className="font-bold text-emerald-600 capitalize">{selectedDomain}</span></p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400">Filter Domain:</span>
+                  <select 
+                    className="rounded-lg border p-1 text-xs font-semibold text-slate-700 bg-slate-50"
+                    value={selectedDomain}
+                    onChange={(e) => setSelectedDomain(e.target.value as any)}
+                  >
+                    <option value="tech">Engineering & Tech</option>
+                    <option value="management">Business & Management</option>
+                    <option value="non_tech">Marketing & Non-Tech</option>
+                  </select>
+                </div>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {[
-                  { title: "Vyntyra Architecture 101", category: "Core Engineering", progress: 100, badge: "Architecture Specialist" },
-                  { title: "Git, CI/CD & Code Review", category: "DevOps & Workflow", progress: 80, badge: "Git Pro" },
-                  { title: "Enterprise AI Infrastructure", category: "Machine Learning", progress: 40, badge: "AI Practitioner" }
-                ].map((m, idx) => (
-                  <div key={idx} className="rounded-xl border p-5 bg-white hover:shadow-md transition-all flex flex-col justify-between">
-                    <div>
-                      <span className="text-[10px] uppercase font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold">{m.category}</span>
-                      <h3 className="font-bold text-sm text-slate-900 mt-2">{m.title}</h3>
-                      <div className="mt-4">
-                        <div className="flex justify-between text-xs text-slate-500 mb-1">
-                          <span>Progress</span>
-                          <span className="font-bold">{m.progress}%</span>
+                  // Tech Domain
+                  { source: "Google Cloud", title: "Google Cloud Computing Foundations", url: "https://cloud.google.com/learn", domain: "tech", badge: "Cloud Scholar" },
+                  { source: "Microsoft Learn", title: "Azure Fundamentals (AZ-900)", url: "https://learn.microsoft.com/en-us/training/paths/microsoft-azure-fundamentals-describe-cloud-concepts/", domain: "tech", badge: "Azure Specialist" },
+                  { source: "AWS Training", title: "AWS Cloud Practitioner Essentials", url: "https://aws.amazon.com/training/digital/aws-cloud-practitioner-essentials/", domain: "tech", badge: "AWS Architect" },
+                  { source: "GeeksforGeeks", title: "Data Structures & Algorithms (DSA) Essentials", url: "https://www.geeksforgeeks.org/courses/dsa-self-paced", domain: "tech", badge: "DSA Expert" },
+                  
+                  // Management Domain
+                  { source: "Google Careers", title: "Google Project Management Certificate", url: "https://grow.google/project-management/", domain: "management", badge: "Agile PM Scholar" },
+                  { source: "Microsoft Learn", title: "Power BI Data Analyst (PL-300)", url: "https://learn.microsoft.com/en-us/training/paths/get-started-power-bi/", domain: "management", badge: "Data Analyst Pro" },
+                  { source: "AWS Training", title: "AWS Cloud for Business Professionals", url: "https://aws.amazon.com/training/digital/aws-cloud-for-business-professionals/", domain: "management", badge: "AWS Cloud Business" },
+                  { source: "GeeksforGeeks", title: "Business Analytics & SQL Basics", url: "https://www.geeksforgeeks.org/sql-tutorial/", domain: "management", badge: "Operations Analyst" },
+                  
+                  // Non-Tech Domain
+                  { source: "Google Digital Garage", title: "Fundamentals of Digital Marketing", url: "https://learndigital.withgoogle.com/digitalgarage/course/digital-marketing", domain: "non_tech", badge: "Marketing Associate" },
+                  { source: "Microsoft Learn", title: "Dynamics 365 Marketing Fundamentals", url: "https://learn.microsoft.com/en-us/training/paths/dynamics-365-marketing-fundamentals/", domain: "non_tech", badge: "CRM Consultant" },
+                  { source: "AWS Training", title: "Digital Marketing & CRM Integration", url: "https://aws.amazon.com/digital-marketing/", domain: "non_tech", badge: "Digital Marketer" },
+                  { source: "GeeksforGeeks", title: "Search Engine Optimization (SEO) Masterclass", url: "https://www.geeksforgeeks.org/seo-tutorial/", domain: "non_tech", badge: "SEO Expert" }
+                ]
+                .filter(m => m.domain === selectedDomain)
+                .map((m, idx) => {
+                  const dbRecord = lmsProgressList.find((p: any) => p.source === m.source && p.title === m.title);
+                  const progress = dbRecord?.progress ?? 0;
+                  const completed = dbRecord?.completed ?? false;
+
+                  return (
+                    <div key={idx} className="rounded-xl border p-5 bg-white hover:shadow-md transition-all flex flex-col justify-between border-slate-200">
+                      <div>
+                        <div className="flex justify-between items-start">
+                          <span className="text-[9px] uppercase font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold border border-emerald-100">{m.source}</span>
+                          {completed && <span className="text-[9px] uppercase font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold border border-blue-100">Completed</span>}
                         </div>
-                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${m.progress}%` }} />
+                        <h3 className="font-bold text-xs text-slate-900 mt-3 line-clamp-2 min-h-[32px]">{m.title}</h3>
+                        
+                        <div className="mt-4">
+                          <div className="flex justify-between text-[11px] text-slate-500 mb-1">
+                            <span>Track Progress</span>
+                            <span className="font-bold text-slate-700">{progress}%</span>
+                          </div>
+                          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500 rounded-full transition-all duration-350" style={{ width: `${progress}%` }} />
+                          </div>
                         </div>
+
+                        {updatingCourseIdx === idx ? (
+                          <div className="mt-4 p-2 bg-slate-50 rounded-lg border flex items-center gap-2">
+                            <input 
+                              type="range" 
+                              min="0" 
+                              max="100" 
+                              value={courseProgressInput}
+                              onChange={(e) => setCourseProgressInput(parseInt(e.target.value))}
+                              className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                            />
+                            <span className="text-xs font-mono font-bold w-8 text-right">{courseProgressInput}%</span>
+                            <Button 
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] h-6 px-2"
+                              onClick={async () => {
+                                try {
+                                  await doUpdateLmsProgress({
+                                    data: {
+                                      source: m.source,
+                                      title: m.title,
+                                      progress: courseProgressInput,
+                                      completed: courseProgressInput === 100,
+                                    }
+                                  });
+                                  toast.success("Progress saved!");
+                                  setUpdatingCourseIdx(null);
+                                  lmsProgressQ.refetch();
+                                } catch (e) {
+                                  toast.error("Failed to update progress");
+                                }
+                              }}
+                            >
+                              Save
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="mt-3 text-slate-500 hover:text-emerald-600 text-[10px] h-6 px-1.5 gap-1"
+                            onClick={() => {
+                              setUpdatingCourseIdx(idx);
+                              setCourseProgressInput(progress);
+                            }}
+                          >
+                            <RefreshCw className="h-3 w-3" /> Update Progress
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="mt-5 pt-3 border-t flex items-center justify-between text-xs">
+                        <span className="text-amber-700 font-semibold flex items-center gap-1"><Award className="h-3.5 w-3.5 text-amber-500" /> {m.badge}</span>
+                        <a 
+                          href={m.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold text-slate-700 flex items-center gap-0.5"
+                        >
+                          Learn Source ↗
+                        </a>
                       </div>
                     </div>
-                    <div className="mt-5 pt-3 border-t flex items-center justify-between text-xs">
-                      <span className="text-amber-700 font-semibold flex items-center gap-1"><Award className="h-3.5 w-3.5 text-amber-500" /> {m.badge}</span>
-                      <Button size="sm" variant="ghost" className="h-7 text-xs text-emerald-600">Resume Module</Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -1536,55 +1797,217 @@ function InternDashboard() {
               ) : (
                 <div className="divide-y">
                   {myTasks.map((task: any) => {
-                  const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
-                  return (
-                    <div key={task.id} className="p-5 hover:bg-slate-50 transition-colors">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={`h-2 w-2 rounded-full ${s.dot}`} />
-                            <h3 className="font-semibold text-sm">{task.title}</h3>
-                          </div>
-                          {task.description && <p className="text-sm text-slate-500 mt-1 line-clamp-2 pl-4">{task.description}</p>}
-                          <div className="flex flex-wrap items-center gap-3 mt-2 pl-4">
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wide ${s.badge}`}>{s.label}</span>
-                            {task.priority && <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${task.priority === "high" ? "bg-red-100 text-red-700" : task.priority === "medium" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>{task.priority}</span>}
-                            {task.due_date && <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="h-3 w-3" />Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>}
-                            {(task.project_requirements || task.task_file_url) && (
-                              <a
-                                href={task.project_requirements || task.task_file_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline inline-flex items-center gap-1"
-                              >
-                                <FileText className="h-3.5 w-3.5" /> Attached Task File ↗
+                    const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
+                    const taskDoc = task.task_doc_url || task.project_requirements || task.task_file_url;
+                    
+                    // Fallback templates if not set
+                    const reportTemplate = task.report_template_url || "https://docs.google.com/document/d/1vA5W0h8Z7_Sample_Report_Template/edit?usp=sharing";
+                    const pptTemplate = task.ppt_template_url || "https://docs.google.com/presentation/d/1tB6X0h8Z7_Sample_PPT_Template/edit?usp=sharing";
+
+                    return (
+                      <div key={task.id} className="p-6 hover:bg-slate-50/60 transition-all border-b last:border-0 flex flex-col gap-4">
+                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0 space-y-2">
+                            {/* Title & Badges */}
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                              <span className={`h-2.5 w-2.5 rounded-full ${s.dot} shrink-0`} />
+                              <h3 className="font-bold text-sm text-slate-900 leading-snug">{task.title}</h3>
+                              
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider ${s.badge}`}>{s.label}</span>
+                              {task.priority && (
+                                <span className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold ${
+                                  task.priority === "high" ? "bg-rose-50 text-rose-700 border border-rose-200" :
+                                  task.priority === "medium" ? "bg-amber-50 text-amber-700 border border-amber-200" :
+                                  "bg-slate-50 text-slate-600 border border-slate-200"
+                                }`}>
+                                  {task.priority} Priority
+                                </span>
+                              )}
+                              
+                              {/* Level Badge */}
+                              <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                {task.level || "Beginner"}
+                              </span>
+
+                              {/* Credits Badge */}
+                              <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-0.5">
+                                <CreditCard className="h-3 w-3 text-amber-600" /> {task.credits || 10} Credits
+                              </span>
+                            </div>
+
+                            {task.description && (
+                              <p className="text-slate-600 text-xs leading-relaxed max-w-4xl">{task.description}</p>
+                            )}
+
+                            {/* Technical Specs / Step-by-step Doc info */}
+                            {taskDoc && (
+                              <div className="mt-2 text-xs flex items-center gap-1.5 bg-slate-50 border p-2.5 rounded-lg w-fit">
+                                <FileText className="h-4 w-4 text-indigo-600" />
+                                <div className="font-medium text-slate-700">
+                                  Step-by-step Doc:{" "}
+                                  <a href={taskDoc} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline font-bold">
+                                    Open Documentation Guide ↗
+                                  </a>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Action links row */}
+                            <div className="flex flex-wrap items-center gap-3 mt-3 pt-1 text-[11px] text-slate-500">
+                              {task.due_date && (
+                                <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                              )}
+                              <span className="text-slate-300">|</span>
+                              <a href={reportTemplate} target="_blank" rel="noreferrer" className="text-slate-600 hover:text-emerald-600 font-semibold underline inline-flex items-center gap-1">
+                                <Download className="h-3 w-3" /> Report Template
                               </a>
+                              <span className="text-slate-300">|</span>
+                              <a href={pptTemplate} target="_blank" rel="noreferrer" className="text-slate-600 hover:text-emerald-600 font-semibold underline inline-flex items-center gap-1">
+                                <Download className="h-3 w-3" /> PPT Template
+                              </a>
+                            </div>
+                          </div>
+
+                          {/* Top Right action column */}
+                          <div className="flex flex-col items-end gap-2 shrink-0 md:pl-4">
+                            {task.accepted_at ? (
+                              <div className="text-[11px] text-emerald-700 bg-emerald-50/50 border border-emerald-200 px-2.5 py-1 rounded-lg font-medium flex items-center gap-1">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Accepted on {new Date(task.accepted_at).toLocaleDateString()}
+                              </div>
+                            ) : (
+                              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs" onClick={async () => {
+                                try {
+                                  await doAcceptTask({ data: { id: task.id } });
+                                  toast.success("Task accepted!");
+                                  qc.invalidateQueries({ queryKey: ["my-tasks"] });
+                                } catch (err: any) { toast.error("Failed to accept task"); }
+                              }}>
+                                Accept Task
+                              </Button>
+                            )}
+
+                            <div className="flex items-center gap-2">
+                              {/* Contact Mentor */}
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="h-8 text-xs gap-1 border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold"
+                                onClick={() => {
+                                  if (mentor) {
+                                    toast.info(`Mentor: ${mentor.full_name} (${mentor.email}) - feel free to contact via email/Slack!`);
+                                  } else {
+                                    toast.error("No official mentor assigned yet. Please contact Super Admin.");
+                                  }
+                                }}
+                              >
+                                <Phone className="h-3.5 w-3.5 text-indigo-600" /> Contact Mentor
+                              </Button>
+
+                              <Button size="sm" variant="outline" className="h-8 text-xs border-slate-300 hover:bg-slate-50 font-semibold" onClick={() => setSelectedTaskWorkspace(task)}>
+                                <Layers className="h-3.5 w-3.5 mr-1 text-blue-600" /> Open Workspace
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Submission Link & Deadline Extension request section */}
+                        <div className="mt-2 pt-4 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-200">
+                          {/* Submission Field */}
+                          <div className="flex-1 space-y-1">
+                            <label className="text-[11px] font-bold text-slate-700 block">Paste Public Viewable Task URL (GitHub / Google Drive / Figma)</label>
+                            {submissionTaskId === task.id ? (
+                              <div className="flex items-center gap-2 mt-1">
+                                <input 
+                                  type="url"
+                                  placeholder="https://github.com/..."
+                                  value={submissionUrl}
+                                  onChange={(e) => setSubmissionUrl(e.target.value)}
+                                  className="w-full max-w-md rounded-lg border p-1.5 text-xs bg-white text-slate-800 focus:ring-1 focus:ring-emerald-500"
+                                />
+                                <Button 
+                                  size="sm"
+                                  disabled={isSubmittingTaskUrl}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8"
+                                  onClick={async () => {
+                                    if (!submissionUrl.trim()) return;
+                                    setIsSubmittingTaskUrl(true);
+                                    try {
+                                      await doSubmitTaskUrl({ data: { taskId: task.id, submissionUrl } });
+                                      toast.success("Task submitted successfully!");
+                                      setSubmissionTaskId(null);
+                                      setSubmissionUrl("");
+                                      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+                                    } catch (e) {
+                                      toast.error("Failed to submit task URL");
+                                    } finally {
+                                      setIsSubmittingTaskUrl(false);
+                                    }
+                                  }}
+                                >
+                                  Submit URL
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setSubmissionTaskId(null)}>Cancel</Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {task.deliverable_url ? (
+                                  <div className="text-xs text-slate-600 flex items-center gap-2">
+                                    <span className="font-semibold text-emerald-600 flex items-center gap-0.5">✓ Submitted Link:</span>
+                                    <a href={task.deliverable_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline max-w-[200px] sm:max-w-md truncate text-ellipsis overflow-hidden">
+                                      {task.deliverable_url}
+                                    </a>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-slate-400 italic">No deliverable submitted yet.</span>
+                                )}
+                                <Button 
+                                  size="sm" 
+                                  variant="link" 
+                                  className="text-emerald-600 hover:text-emerald-700 font-bold text-xs h-auto p-0"
+                                  onClick={() => {
+                                    setSubmissionTaskId(task.id);
+                                    setSubmissionUrl(task.deliverable_url || "");
+                                  }}
+                                >
+                                  {task.deliverable_url ? "Update Submission Link" : "Submit Work Link"}
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Deadline Extension requested state */}
+                          <div className="shrink-0 flex items-center gap-2">
+                            {task.extension_status === "requested" ? (
+                              <div className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg flex items-center gap-1">
+                                <Clock className="h-3.5 w-3.5 text-amber-600" /> Extension Pending Approve
+                              </div>
+                            ) : task.extension_status === "approved" ? (
+                              <div className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg flex items-center gap-1">
+                                <Check className="h-3.5 w-3.5 text-emerald-600" /> Extended Deadline Approved
+                              </div>
+                            ) : task.extension_status === "rejected" ? (
+                              <div className="text-[10px] font-bold text-red-800 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg flex items-center gap-1">
+                                <HelpCircle className="h-3.5 w-3.5 text-red-600" /> Extension Request Rejected
+                              </div>
+                            ) : (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="h-8 text-xs text-slate-600 border-slate-300 hover:bg-slate-50 font-semibold"
+                                onClick={() => {
+                                  setShowExtensionModal(task);
+                                  setExtensionReason("");
+                                  setExtensionDate(task.due_date ? task.due_date.split("T")[0] : "");
+                                }}
+                              >
+                                Request Extend Deadline
+                              </Button>
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-col items-end gap-2 shrink-0">
-                          {task.accepted_at ? (
-                            <div className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md font-medium flex items-center gap-1">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Accepted on {new Date(task.accepted_at).toLocaleDateString()} at {new Date(task.accepted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                          ) : (
-                            <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white" onClick={async () => {
-                              try {
-                                await doAcceptTask({ data: { id: task.id } });
-                                toast.success("Task accepted!");
-                                qc.invalidateQueries({ queryKey: ["my-tasks"] });
-                              } catch (err: any) { toast.error("Failed to accept task"); }
-                            }}>Accept Task</Button>
-                          )}
-
-                          <Button size="sm" variant="outline" className="h-7 text-xs border-slate-300 hover:bg-slate-100" onClick={() => setSelectedTaskWorkspace(task)}>
-                            <Layers className="h-3.5 w-3.5 mr-1 text-blue-600" /> Open Workspace & Details
-                          </Button>
-                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             )}
           </div>
@@ -1744,6 +2167,278 @@ function InternDashboard() {
             }}>Submit Feedback</Button>
           </div>
         )}
+
+        {/* ─── LEAVES REQUESTS ─── */}
+        {activeTab === "leaves" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Raise Leave Form */}
+              <div className="lg:col-span-1 rounded-xl border bg-white p-6 shadow-sm h-fit">
+                <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2 mb-2">
+                  <CalendarDays className="h-5 w-5 text-indigo-600" /> Request Leave
+                </h2>
+                <p className="text-xs text-slate-500 mb-4">Request authorization for upcoming absence. Please coordinate tasks first.</p>
+                
+                <form 
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!leaveForm.start_date || !leaveForm.end_date || !leaveForm.reason.trim()) {
+                      toast.error("Please fill in all leave request fields.");
+                      return;
+                    }
+                    setIsSubmittingLeave(true);
+                    try {
+                      await doRequestLeave({ data: leaveForm });
+                      toast.success("Leave request submitted successfully!");
+                      setLeaveForm({ start_date: "", end_date: "", reason: "" });
+                      leavesQ.refetch();
+                    } catch (err: any) {
+                      toast.error(err.message || "Failed to submit leave request");
+                    } finally {
+                      setIsSubmittingLeave(false);
+                    }
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-500">Start Date</label>
+                    <input 
+                      type="date"
+                      required
+                      value={leaveForm.start_date}
+                      onChange={(e) => setLeaveForm({ ...leaveForm, start_date: e.target.value })}
+                      className="w-full rounded-lg border p-2 text-xs focus:ring-1 focus:ring-indigo-500 bg-white text-slate-800"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-500">End Date</label>
+                    <input 
+                      type="date"
+                      required
+                      value={leaveForm.end_date}
+                      onChange={(e) => setLeaveForm({ ...leaveForm, end_date: e.target.value })}
+                      className="w-full rounded-lg border p-2 text-xs focus:ring-1 focus:ring-indigo-500 bg-white text-slate-800"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-500">Reason</label>
+                    <textarea 
+                      required
+                      rows={4}
+                      placeholder="Explain reason for absence, emergency contact details..."
+                      value={leaveForm.reason}
+                      onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
+                      className="w-full rounded-lg border p-2 text-xs focus:ring-1 focus:ring-indigo-500 bg-white text-slate-800"
+                    />
+                  </div>
+                  <Button 
+                    type="submit"
+                    disabled={isSubmittingLeave}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs"
+                  >
+                    {isSubmittingLeave ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Submit Request
+                  </Button>
+                </form>
+              </div>
+
+              {/* Leave History List */}
+              <div className="lg:col-span-2 rounded-xl border bg-white p-6 shadow-sm overflow-hidden">
+                <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2 mb-4">
+                  <Clock className="h-5 w-5 text-indigo-600" /> Leave History Requests
+                </h2>
+                
+                <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
+                  {myLeaves.length === 0 ? (
+                    <div className="py-12 text-center text-slate-400 text-xs">No leave requests found.</div>
+                  ) : (
+                    myLeaves.map((l: any) => (
+                      <div key={l.id} className="py-4 first:pt-0 last:pb-0 flex items-start justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-xs text-slate-900">
+                              {new Date(l.start_date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })} — {new Date(l.end_date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </span>
+                            <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${
+                              l.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                              l.status === 'rejected' ? 'bg-red-100 text-red-800 border border-red-200' :
+                              'bg-amber-100 text-amber-800 border border-amber-200'
+                            }`}>
+                              {l.status}
+                            </span>
+                          </div>
+                          <p className="text-slate-600 text-xs leading-relaxed mt-1">{l.reason}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── SUPPORT TICKETS ─── */}
+        {activeTab === "support" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Raise Support Ticket Form */}
+              <div className="lg:col-span-1 rounded-xl border bg-white p-6 shadow-sm h-fit">
+                <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2 mb-2">
+                  <HelpCircle className="h-5 w-5 text-purple-600" /> Raise Support Query
+                </h2>
+                <p className="text-xs text-slate-500 mb-4">Need help? Open a query and a mentor/supervisor will assist you.</p>
+                
+                <form 
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!supportForm.subject.trim() || !supportForm.description.trim()) {
+                      toast.error("Please fill in subject and description.");
+                      return;
+                    }
+                    setIsSubmittingSupport(true);
+                    try {
+                      await doRaiseSupportQuery({ data: supportForm });
+                      toast.success("Support ticket raised successfully!");
+                      setSupportForm({ subject: "", description: "", category: "Technical" });
+                      supportQueriesQ.refetch();
+                    } catch (err: any) {
+                      toast.error(err.message || "Failed to raise support query");
+                    } finally {
+                      setIsSubmittingSupport(false);
+                    }
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-500">Query Category</label>
+                    <select 
+                      value={supportForm.category}
+                      onChange={(e) => setSupportForm({ ...supportForm, category: e.target.value })}
+                      className="w-full rounded-lg border p-2 text-xs bg-white text-slate-800 focus:ring-1 focus:ring-purple-500"
+                    >
+                      <option value="Technical">Technical Issue</option>
+                      <option value="LMS">LMS & Skills</option>
+                      <option value="Administrative">Administrative</option>
+                      <option value="Payroll">Payouts & Payroll</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-500">Subject</label>
+                    <input 
+                      type="text"
+                      required
+                      placeholder="Short subject description..."
+                      value={supportForm.subject}
+                      onChange={(e) => setSupportForm({ ...supportForm, subject: e.target.value })}
+                      className="w-full rounded-lg border p-2 text-xs focus:ring-1 focus:ring-purple-500 bg-white text-slate-800"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-500">Description</label>
+                    <textarea 
+                      required
+                      rows={4}
+                      placeholder="Provide detailed description of your issue..."
+                      value={supportForm.description}
+                      onChange={(e) => setSupportForm({ ...supportForm, description: e.target.value })}
+                      className="w-full rounded-lg border p-2 text-xs focus:ring-1 focus:ring-purple-500 bg-white text-slate-800"
+                    />
+                  </div>
+                  <Button 
+                    type="submit"
+                    disabled={isSubmittingSupport}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs"
+                  >
+                    {isSubmittingSupport ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Raise Ticket
+                  </Button>
+                </form>
+              </div>
+
+              {/* Support History & Meeting Sync */}
+              <div className="lg:col-span-2 rounded-xl border bg-white p-6 shadow-sm overflow-hidden">
+                <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2 mb-4">
+                  <MessageCircle className="h-5 w-5 text-purple-600" /> Support Query Tickets
+                </h2>
+                
+                <div className="divide-y divide-slate-100 max-h-[550px] overflow-y-auto space-y-4">
+                  {supportQueries.length === 0 ? (
+                    <div className="py-12 text-center text-slate-400 text-xs">No support queries raised yet.</div>
+                  ) : (
+                    supportQueries.map((q: any) => {
+                      const hasMeeting = q.meeting_id && q.meeting_status === "approved";
+                      return (
+                        <div key={q.id} className="py-4 first:pt-0 last:pb-0 flex flex-col gap-3">
+                          <div className="flex items-start justify-between gap-4 flex-wrap">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-sm text-slate-900">{q.subject}</span>
+                                <span className="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-bold border border-purple-100">{q.category}</span>
+                                <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${
+                                  q.status === 'resolved' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                                  q.status === 'assigned' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                  'bg-amber-100 text-amber-800 border border-amber-200'
+                                }`}>
+                                  {q.status.replace("_", " ")}
+                                </span>
+                              </div>
+                              <p className="text-slate-600 text-xs leading-relaxed mt-1">{q.description}</p>
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-mono">{new Date(q.created_at).toLocaleDateString()}</span>
+                          </div>
+
+                          {/* Resolution / Assigee progress details */}
+                          <div className="bg-slate-50 border p-3 rounded-lg flex flex-col gap-2 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-500">
+                              <div><strong className="text-slate-700">Assigned Resolver:</strong> {q.assigned_employee?.full_name || "Pending Super Admin assignment..."}</div>
+                              <div><strong className="text-slate-700">Intern Mentor:</strong> {q.mentor?.full_name || "Official Mentor"}</div>
+                            </div>
+                            {q.progress_notes && (
+                              <div className="border-t pt-2 mt-1">
+                                <div className="font-bold text-slate-700 text-[10px] uppercase">Progress Notes:</div>
+                                <p className="text-slate-600 mt-0.5 italic">"{q.progress_notes}"</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Scheduled Meeting sync inside Support Query tab */}
+                          {q.meeting_status === "requested" && (
+                            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-xs font-semibold flex items-center justify-between">
+                              <span>Meeting schedule requested by Employee/Mentor. Awaiting Super Admin/Admin permission approval.</span>
+                            </div>
+                          )}
+
+                          {hasMeeting && (
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+                              <div className="flex items-center gap-2">
+                                <Video className="h-5 w-5 text-emerald-600 animate-pulse" />
+                                <div>
+                                  <div className="font-bold text-slate-800">Support Sync Scheduled</div>
+                                  <div className="text-[11px] text-slate-500 mt-0.5">Please join the live Google Meet room directly from this panel.</div>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const decodedLink = atob(btoa("https://meet.google.com/vy-support-sync"));
+                                  window.location.href = decodedLink;
+                                }}
+                                className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs self-start sm:self-center transition-colors shadow-xs"
+                              >
+                                Join Sync Meeting
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       
@@ -1830,6 +2525,82 @@ function InternDashboard() {
     </div>
   </div>
 )}
+
+      {/* ── Deadline Extension Request Modal ── */}
+      {showExtensionModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+            <div className="flex items-start justify-between border-b pb-3">
+              <div>
+                <h3 className="font-bold text-sm text-slate-900">Request Deadline Extension</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">For task: {showExtensionModal.title}</p>
+              </div>
+              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full" onClick={() => setShowExtensionModal(null)}>✕</Button>
+            </div>
+            
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!extensionReason.trim() || !extensionDate) {
+                  toast.error("Please fill in all requested extension parameters.");
+                  return;
+                }
+                setIsSubmittingExtension(true);
+                try {
+                  await doRequestDeadlineExtension({
+                    data: {
+                      taskId: showExtensionModal.id,
+                      reason: extensionReason,
+                      requestedDate: new Date(extensionDate).toISOString(),
+                    }
+                  });
+                  toast.success("Extension request submitted successfully!");
+                  setShowExtensionModal(null);
+                  qc.invalidateQueries({ queryKey: ["my-tasks"] });
+                } catch (e) {
+                  toast.error("Failed to submit extension request");
+                } finally {
+                  setIsSubmittingExtension(false);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-500">Requested Due Date</label>
+                <input 
+                  type="date"
+                  required
+                  value={extensionDate}
+                  onChange={(e) => setExtensionDate(e.target.value)}
+                  className="w-full rounded-lg border p-2 text-xs bg-white text-slate-800 focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-500">Extension Reason / Blockers</label>
+                <textarea 
+                  required
+                  rows={4}
+                  placeholder="Explain why you need more time, current progress status, and estimated date of completion..."
+                  value={extensionReason}
+                  onChange={(e) => setExtensionReason(e.target.value)}
+                  className="w-full rounded-lg border p-2 text-xs bg-white text-slate-800 focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowExtensionModal(null)}>Cancel</Button>
+                <Button 
+                  type="submit"
+                  disabled={isSubmittingExtension}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold"
+                >
+                  {isSubmittingExtension ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                  Submit Request
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ── Google Docs / Sheets & Spreadsheet Viewer Modal ── */}
       {viewingDoc && (

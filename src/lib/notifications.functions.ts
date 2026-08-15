@@ -80,3 +80,52 @@ export async function insertNotification(params: {
     throw new Error(error.message);
   }
 }
+
+// ---------- User targeted notifications ----------
+
+export const listMyNotifications = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("user_notifications")
+      .select("*")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) return [];
+    return data || [];
+  });
+
+export const markUserNotificationRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase
+      .from("user_notifications")
+      .update({ is_read: true })
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export async function insertUserNotification(params: {
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  metadata?: Record<string, any>;
+}) {
+  try {
+    await supabase.from("user_notifications").insert([{
+      user_id: params.userId,
+      type: params.type,
+      title: params.title,
+      message: params.message,
+      metadata: params.metadata ?? {},
+      is_read: false,
+    }]);
+  } catch (error: any) {
+    console.warn("[user_notifications] insert failed:", error.message);
+  }
+}

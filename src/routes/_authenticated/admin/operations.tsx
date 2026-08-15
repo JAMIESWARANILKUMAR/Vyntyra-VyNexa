@@ -28,7 +28,8 @@ import {
   listLeads, createLead, updateLeadStatus, deleteLead,
   listBugs, createBug, updateBugStatus,
   sendPromotionalInternshipEmail, listAutomatedEmailLogs, deleteAutomatedEmailLog, getEmailQuotaStats, getPromotionalEmailConversionStats,
-  sendSmsNotification, getSmsQuotaStats, listSmsLogs, deleteSmsLog
+  sendSmsNotification, getSmsQuotaStats, listSmsLogs, deleteSmsLog,
+  listAllSupportQueries, assignSupportQueryEmployee, approveSupportMeeting
 } from "@/lib/operations.functions";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
@@ -166,6 +167,15 @@ function OperationsDashboard() {
   const [assignInternForm, setAssignInternForm] = useState({ internId: "", employeeId: "" });
   const [showAttendanceLogs, setShowAttendanceLogs] = useState(false);
 
+  const [selectedQueryForResolver, setSelectedQueryForResolver] = useState<any>(null);
+  const [selectedResolverEmployeeId, setSelectedResolverEmployeeId] = useState<string>("");
+  const [selectedQueryForMeeting, setSelectedQueryForMeeting] = useState<any>(null);
+  const [meetingTimeInput, setMeetingTimeInput] = useState<string>("");
+
+  const fetchAllSupportQueries = useServerFn(listAllSupportQueries);
+  const doAssignSupportQueryEmployee = useServerFn(assignSupportQueryEmployee);
+  const doApproveSupportMeeting = useServerFn(approveSupportMeeting);
+
   // Queries with Stale Time optimization for Instant Load Performance
   const queryOpts = { staleTime: 1000 * 60 * 5, gcTime: 1000 * 60 * 10 };
   const teamQ = useQuery({ queryKey: ["team-members"], queryFn: () => fetchTeam(), ...queryOpts });
@@ -177,6 +187,9 @@ function OperationsDashboard() {
   const feedbacksQ = useQuery({ queryKey: ["feedbacks"], queryFn: () => fetchFeedbacks(), ...queryOpts });
   const expensesQ = useQuery({ queryKey: ["admin-expenses"], queryFn: () => fetchExpenses(), ...queryOpts });
   const ticketsQ = useQuery({ queryKey: ["admin-tickets"], queryFn: () => fetchTickets(), ...queryOpts });
+  
+  const supportQueriesQ = useQuery({ queryKey: ["admin-support-queries"], queryFn: () => fetchAllSupportQueries(), staleTime: 0, refetchInterval: 4000 });
+  const supportQueries: any[] = supportQueriesQ.data || [];
   const fetchAllStandups = useServerFn(listAllStandups);
   const doUpdateStandupStatus = useServerFn(updateStandupStatus);
   const fetchAllDeliverables = useServerFn(listAllDeliverables);
@@ -1550,6 +1563,100 @@ function OperationsDashboard() {
           </div>
         </section>
 
+        {/* ── Intern Support Queries (Oversight & Sync approvals) ── */}
+        <section className="rounded-xl border bg-white shadow-sm overflow-hidden mt-6">
+          <div className="px-5 py-4 border-b flex items-center justify-between">
+            <h2 className="font-semibold text-sm flex items-center gap-2"><LifeBuoy className="h-4 w-4 text-purple-600" /> Intern Support Queries</h2>
+            <span className="text-xs text-slate-500 font-light">Assign resolver employees and approve scheduled sync meetings</span>
+          </div>
+          <div className="divide-y max-h-[380px] overflow-y-auto">
+            {supportQueriesQ.isLoading ? (
+              <div className="p-8 flex items-center justify-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading intern queries...</div>
+            ) : supportQueriesQ.isError ? (
+              <ErrorState message="Could not load intern queries." onRetry={() => supportQueriesQ.refetch()} />
+            ) : supportQueries.length === 0 ? (
+              <EmptyState icon={<MessageSquare className="h-6 w-6" />} message="No intern support queries raised yet." />
+            ) : (
+              supportQueries.map((q: any) => {
+                const hasMeeting = q.meeting_id && q.meeting_status === "approved";
+                return (
+                  <div key={q.id} className="p-4 hover:bg-slate-50 transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="font-semibold text-slate-900 text-sm">{q.subject}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-50 text-purple-700">{q.category}</span>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                            q.status === 'resolved' ? 'bg-emerald-100 text-emerald-800' :
+                            q.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
+                            'bg-amber-100 text-amber-800'
+                          }`}>
+                            {q.status}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-500 font-medium">
+                          Intern: <strong className="text-slate-800">{q.intern?.full_name}</strong> ({q.intern?.email}) • Mentor: <span className="font-bold text-slate-700">{q.mentor?.full_name || "Official Mentor"}</span>
+                        </div>
+                        <p className="text-xs text-slate-600 mt-2 italic">"{q.description}"</p>
+
+                        <div className="bg-slate-50 border p-2.5 rounded-lg mt-3 text-xs flex items-center justify-between">
+                          <div className="text-slate-600">
+                            <strong>Resolver:</strong> {q.assigned_employee?.full_name || <span className="text-rose-600 italic">Not Assigned</span>}
+                          </div>
+                          
+                          {q.status !== "resolved" && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="border-slate-300 hover:bg-slate-100 font-semibold"
+                              onClick={() => {
+                                setSelectedQueryForResolver(q);
+                                setSelectedResolverEmployeeId(q.assigned_employee_id || "");
+                              }}
+                            >
+                              {q.assigned_employee_id ? "Change Resolver" : "Assign Resolver"}
+                            </Button>
+                          )}
+                        </div>
+
+                        {q.progress_notes && (
+                          <p className="text-[11px] text-slate-500 italic mt-2"><strong>Resolver Notes:</strong> "{q.progress_notes}"</p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <span className="text-[10px] text-slate-400 font-mono">{new Date(q.created_at).toLocaleDateString()}</span>
+                        
+                        {q.meeting_status === "requested" && (
+                          <div className="flex items-center gap-1.5 mt-2">
+                            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1"><Video className="h-3 w-3 animate-pulse" /> Sync Meeting Requested</span>
+                            <Button 
+                              size="sm" 
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-7"
+                              onClick={() => {
+                                setSelectedQueryForMeeting(q);
+                                setMeetingTimeInput(new Date(Date.now() + 1000 * 60 * 60).toISOString().slice(0, 16)); // Default 1 hour from now
+                              }}
+                            >
+                              Approve & Schedule
+                            </Button>
+                          </div>
+                        )}
+
+                        {hasMeeting && (
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded flex items-center gap-1">
+                            ✓ Meeting Scheduled
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
+
         {/* ── Organization Peer Kudos & Shoutouts Feed ── */}
         <section className="rounded-xl border bg-white shadow-sm overflow-hidden mt-6">
           <div className="px-5 py-4 border-b flex items-center justify-between">
@@ -1970,6 +2077,103 @@ function OperationsDashboard() {
         doAssignIntern={doAssignIntern}
         doRemoveIntern={doRemoveIntern}
       />
+
+      {/* ── Dialog for Assigning Resolver Employee ── */}
+      {selectedQueryForResolver && (
+        <Dialog open={!!selectedQueryForResolver} onOpenChange={(open) => !open && setSelectedQueryForResolver(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Assign Resolver Employee</DialogTitle>
+              <DialogDescription>Assign a resolver to resolve the intern's support query.</DialogDescription>
+            </DialogHeader>
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!selectedResolverEmployeeId) return;
+                try {
+                  await doAssignSupportQueryEmployee({
+                    data: {
+                      queryId: selectedQueryForResolver.id,
+                      employeeId: selectedResolverEmployeeId
+                    }
+                  });
+                  toast.success("Resolver employee assigned successfully!");
+                  setSelectedQueryForResolver(null);
+                  setSelectedResolverEmployeeId("");
+                  qc.invalidateQueries({ queryKey: ["admin-support-queries"] });
+                } catch (err: any) {
+                  toast.error("Failed to assign resolver");
+                }
+              }}
+              className="space-y-4 py-2"
+            >
+              <div className="space-y-1.5">
+                <Label>Choose Employee Resolver</Label>
+                <Select value={selectedResolverEmployeeId} onValueChange={setSelectedResolverEmployeeId}>
+                  <SelectTrigger><SelectValue placeholder="Select employee resolver..." /></SelectTrigger>
+                  <SelectContent>
+                    {employees.map((emp: any) => (
+                      <SelectItem key={emp.id} value={emp.id}>{emp.full_name} ({emp.department || "General"})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => setSelectedQueryForResolver(null)}>Cancel</Button>
+                <Button type="submit" disabled={!selectedResolverEmployeeId}>Assign Resolver</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* ── Dialog for Approving Support Meeting ── */}
+      {selectedQueryForMeeting && (
+        <Dialog open={!!selectedQueryForMeeting} onOpenChange={(open) => !open && setSelectedQueryForMeeting(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Approve & Schedule Support Sync</DialogTitle>
+              <DialogDescription>Approve the sync meeting request and schedule a Google Meet room.</DialogDescription>
+            </DialogHeader>
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!meetingTimeInput) return;
+                try {
+                  await doApproveSupportMeeting({
+                    data: {
+                      queryId: selectedQueryForMeeting.id,
+                      meetingTime: new Date(meetingTimeInput).toISOString()
+                    }
+                  });
+                  toast.success("Meeting approved and Google Meet sync room linked!");
+                  setSelectedQueryForMeeting(null);
+                  setMeetingTimeInput("");
+                  qc.invalidateQueries({ queryKey: ["admin-support-queries"] });
+                  qc.invalidateQueries({ queryKey: ["meetings"] });
+                } catch (err: any) {
+                  toast.error("Failed to approve meeting");
+                }
+              }}
+              className="space-y-4 py-2"
+            >
+              <div className="space-y-1.5">
+                <Label>Scheduled Sync Date & Time</Label>
+                <Input 
+                  type="datetime-local" 
+                  required 
+                  value={meetingTimeInput}
+                  onChange={e => setMeetingTimeInput(e.target.value)}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => setSelectedQueryForMeeting(null)}>Cancel</Button>
+                <Button type="submit" disabled={!meetingTimeInput}>Approve Sync</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* ── Google Docs / Sheets & Spreadsheet Viewer Modal ── */}
       {viewingDoc && (

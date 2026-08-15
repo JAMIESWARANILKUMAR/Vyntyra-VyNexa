@@ -39,7 +39,9 @@ import {
   requestLeave, listMyLeaves, listMyPayouts, clockIn, clockOut, getMyAttendance,
   listTeamMembers, createFeedback, listResources, listMyExpenses, createExpenseClaim,
   listMySupportTickets, createSupportTicket, listKudos, createKudos, updateUserProfile,
-  assignManualTaskToInterns, getMenteeAttendance
+  assignManualTaskToInterns, getMenteeAttendance,
+  listAssignedSupportQueries, updateSupportProgressNotes, requestSupportMeeting,
+  reviewDeadlineExtension
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/employee")({
@@ -279,8 +281,17 @@ function BankAdCard({
 }
 function EmployeeDashboard() {
   const qc = useQueryClient();
+  const sessionQ = useQuery({ queryKey: ["session"], queryFn: async () => (await supabase.auth.getSession()).data.session });
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [scrolled, setScrolled] = useState(false);
+  const [selectedQueryToResolve, setSelectedQueryToResolve] = useState<any>(null);
+  const [progressNotesInput, setProgressNotesInput] = useState<string>("");
+  const [isUpdatingNotes, setIsUpdatingNotes] = useState(false);
+  const [isSchedulingMeeting, setIsSchedulingMeeting] = useState(false);
+  const [selectedInternForTasks, setSelectedInternForTasks] = useState<any>(null);
+  const [internTasksList, setInternTasksList] = useState<any[]>([]);
+  const [isLoadingInternTasks, setIsLoadingInternTasks] = useState(false);
+  const doReviewDeadlineExtension = useServerFn(reviewDeadlineExtension);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -305,8 +316,25 @@ function EmployeeDashboard() {
     };
   }, [qc]);
 
-  const sessionQ = useQuery({ queryKey: ["session"], queryFn: async () => (await supabase.auth.getSession()).data.session });
-  
+  // Realtime subscription for support_queries table to auto-refresh assigned queries
+  useEffect(() => {
+    const userId = sessionQ.data?.user?.id;
+    if (!userId) return;
+    const supportChannel = supabase
+      .channel(`employee-support-updates-${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "support_queries", filter: `assigned_employee_id=eq.${userId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["assigned-support-queries", userId] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(supportChannel);
+    };
+  }, [sessionQ.data?.user?.id, qc]);
+
   const fetchInterviews = useServerFn(listAssignedInterviews);
   const sendFeedback = useServerFn(submitInterviewFeedback);
 
@@ -333,10 +361,21 @@ function EmployeeDashboard() {
   const doCreateKudos = useServerFn(createKudos);
   const doUpdateProfile = useServerFn(updateUserProfile);
 
+  const fetchAssignedSupportQueries = useServerFn(listAssignedSupportQueries);
+  const doUpdateSupportProgressNotes = useServerFn(updateSupportProgressNotes);
+  const doRequestSupportMeeting = useServerFn(requestSupportMeeting);
+
   const tasksQ = useQuery({ queryKey: ["my-tasks"], queryFn: () => fetchTasks() });
   const meetingsQ = useQuery({ queryKey: ["my-meetings"], queryFn: () => fetchMeetings() });
   const schedulesQ = useQuery({ queryKey: ["my-schedules"], queryFn: () => fetchSchedules() });
   const announcementsQ = useQuery({ queryKey: ["my-announcements"], queryFn: () => fetchAnnouncements() });
+
+  const assignedSupportQueriesQ = useQuery({
+    queryKey: ["assigned-support-queries", sessionQ.data?.user?.id],
+    queryFn: () => fetchAssignedSupportQueries(),
+    enabled: !!sessionQ.data?.user?.id
+  });
+  const assignedSupportQueries: any[] = assignedSupportQueriesQ.data || [];
   const leavesQ = useQuery({ queryKey: ["my-leaves"], queryFn: () => fetchLeaves() });
   const payoutsQ = useQuery({ queryKey: ["my-payouts"], queryFn: () => fetchPayouts() });
   const attendanceQ = useQuery({ queryKey: ["my-attendance"], queryFn: () => fetchAttendance() });
@@ -669,6 +708,23 @@ function EmployeeDashboard() {
     qc.invalidateQueries({ queryKey: ["my-tasks"] });
   }
 
+  async function loadInternTasks(internId: string) {
+    setIsLoadingInternTasks(true);
+    try {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("intern_id", internId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setInternTasksList(data || []);
+    } catch (e) {
+      toast.error("Failed to load tasks for intern");
+    } finally {
+      setIsLoadingInternTasks(false);
+    }
+  }
+
   async function handleSubmitLeave(e: React.FormEvent) {
     e.preventDefault();
     try {
@@ -808,6 +864,7 @@ function EmployeeDashboard() {
     { id: "leave", label: "Leaves" },
     { id: "payouts", label: "Payouts & Expenses" },
     { id: "support", label: "Helpdesk Tickets", badge: tickets.filter((t: any) => t.status === "open").length },
+    { id: "resolver_support", label: "Intern Queries", badge: assignedSupportQueries.filter((q: any) => q.status !== "resolved").length },
     { id: "meetings", label: "Meetings" },
     { id: "interviews", label: "Interviews", badge: assignedInterviews.length },
     { id: "my_interns", label: "My Interns", badge: myInterns.length },
@@ -1432,6 +1489,12 @@ function EmployeeDashboard() {
                               <Button variant="outline" size="sm" onClick={() => handleViewAttendance(intern)} className="rounded-xl">
                                 <Clock className="h-4 w-4 mr-2 text-slate-500" /> Attendance
                               </Button>
+                              <Button variant="outline" size="sm" onClick={() => {
+                                setSelectedInternForTasks(intern);
+                                loadInternTasks(intern.id);
+                              }} className="rounded-xl">
+                                <FileText className="h-4 w-4 mr-2 text-slate-500" /> View Tasks
+                              </Button>
                               <Button variant="outline" size="sm" onClick={() => handleAssignTask(intern.id)} className="rounded-xl">
                                 <Plus className="h-4 w-4 mr-2 text-slate-500" /> Assign Task
                               </Button>
@@ -1656,6 +1719,134 @@ function EmployeeDashboard() {
                   })}
                 </div>
               )}
+            </motion.div>
+          )}
+
+          {/* ─── ASSIGNED INTERN SUPPORT QUERIES ─── */}
+          {activeTab === "resolver_support" && (
+            <motion.div key="resolver_support" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
+              <div>
+                <h2 className="text-2xl font-light tracking-tight text-slate-900">Intern Support Resolver Panel</h2>
+                <p className="text-sm text-slate-500 font-light mt-1">Review, add resolver progress notes, update status, and request sync meetings for intern support queries assigned to you by Super Admin.</p>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden divide-y divide-slate-100">
+                {assignedSupportQueries.length === 0 ? (
+                  <div className="p-12 text-center text-slate-400 font-light">
+                    <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                    No intern support queries assigned to you yet.
+                  </div>
+                ) : (
+                  assignedSupportQueries.map((q: any) => {
+                    const hasMeeting = q.meeting_id && q.meeting_status === "approved";
+                    return (
+                      <div key={q.id} className="p-6 hover:bg-slate-50/50 transition-colors flex flex-col gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                          <div className="space-y-1.5 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-base text-slate-950">{q.subject}</span>
+                              <span className="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-bold border border-purple-100">{q.category}</span>
+                              <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${
+                                q.status === 'resolved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                                q.status === 'assigned' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
+                                'bg-amber-50 text-amber-700 border border-amber-100'
+                              }`}>
+                                {q.status.replace("_", " ")}
+                              </span>
+                            </div>
+                            
+                            {/* Intern details */}
+                            <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                              <span>Intern: <strong className="text-slate-800">{q.intern?.full_name || "Assigned Intern"}</strong> ({q.intern?.email || ""})</span>
+                              <span>•</span>
+                              <span>Domain: <strong className="text-slate-800 capitalize">{q.intern?.department || "General"}</strong></span>
+                            </div>
+
+                            <p className="text-slate-600 text-xs leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100 mt-2">{q.description}</p>
+                          </div>
+                          
+                          <div className="shrink-0 flex flex-col items-end gap-2">
+                            <span className="text-[11px] text-slate-400 font-mono">{new Date(q.created_at).toLocaleString()}</span>
+                            
+                            {q.status !== "resolved" ? (
+                              <div className="flex items-center gap-2">
+                                <Button 
+                                  size="sm" 
+                                  className="bg-black hover:bg-slate-800 text-white rounded-xl text-xs font-bold"
+                                  onClick={() => {
+                                    setSelectedQueryToResolve(q);
+                                    setProgressNotesInput(q.progress_notes || "");
+                                  }}
+                                >
+                                  Resolve & Update Notes
+                                </Button>
+
+                                {q.meeting_status !== "requested" && !q.meeting_id && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="rounded-xl text-xs border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold"
+                                    onClick={async () => {
+                                      try {
+                                        await doRequestSupportMeeting({ data: { queryId: q.id } });
+                                        toast.success("Sync meeting requested from Admin!");
+                                        qc.invalidateQueries({ queryKey: ["assigned-support-queries", sessionQ.data?.user?.id] });
+                                      } catch (err: any) {
+                                        toast.error(err.message || "Failed to request meeting");
+                                      }
+                                    }}
+                                  >
+                                    <Video className="h-3.5 w-3.5 mr-1" /> Request Sync Meeting
+                                  </Button>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100">
+                                ✓ Resolved Successfully
+                              </div>
+                            )}
+
+                            {q.meeting_status === "requested" && (
+                              <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                                Meeting Sync Requested
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Meeting Room indicator */}
+                        {hasMeeting && (
+                          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+                            <div className="flex items-center gap-2">
+                              <Video className="h-5 w-5 text-emerald-600 animate-pulse" />
+                              <div>
+                                <div className="font-bold text-slate-800">Assigned Sync Meeting Approved</div>
+                                <div className="text-[11px] text-slate-500 mt-0.5">Official sync scheduled. Participants: Intern, assigned resolver, and official mentor.</div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                const decodedLink = atob(btoa("https://meet.google.com/vy-support-sync"));
+                                window.location.href = decodedLink;
+                              }}
+                              className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs self-start sm:self-center transition-colors shadow-sm"
+                            >
+                              Join Sync Room
+                            </button>
+                          </div>
+                        )}
+
+                        {q.progress_notes && (
+                          <div className="text-xs text-slate-500 border-t pt-3 flex flex-col gap-0.5">
+                            <span className="font-bold text-slate-700 text-[10px] uppercase">Active Resolution Notes:</span>
+                            <p className="text-slate-600 italic">"{q.progress_notes}"</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </motion.div>
           )}
 
@@ -2257,6 +2448,189 @@ function EmployeeDashboard() {
         }} 
       />
       <FloatingAppsPanel />
+      {/* ── Support Query Resolver Modal ── */}
+      {selectedQueryToResolve && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+            <div className="flex items-start justify-between border-b pb-3">
+              <div>
+                <h3 className="font-bold text-sm text-slate-900">Resolve Intern Support Query</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">Intern: {selectedQueryToResolve.intern?.full_name}</p>
+              </div>
+              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full" onClick={() => setSelectedQueryToResolve(null)}>✕</Button>
+            </div>
+            
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setIsUpdatingNotes(true);
+                try {
+                  await doUpdateSupportProgressNotes({
+                    data: {
+                      queryId: selectedQueryToResolve.id,
+                      notes: progressNotesInput,
+                      status: "resolved", // Resolve the query when saving
+                    }
+                  });
+                  toast.success("Query resolved and notes updated!");
+                  setSelectedQueryToResolve(null);
+                  qc.invalidateQueries({ queryKey: ["assigned-support-queries", sessionQ.data?.user?.id] });
+                } catch (e) {
+                  toast.error("Failed to update resolution details");
+                } finally {
+                  setIsUpdatingNotes(false);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div className="bg-slate-50 p-3 rounded-lg border text-xs text-slate-600">
+                <strong className="text-slate-800">Intern Query Description:</strong>
+                <p className="mt-1">"{selectedQueryToResolve.description}"</p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-500">Progress / Resolution Notes</label>
+                <textarea 
+                  required
+                  rows={4}
+                  placeholder="Explain how you resolved this query (e.g. fixed server configurations, explained concepts, unlocked files)..."
+                  value={progressNotesInput}
+                  onChange={(e) => setProgressNotesInput(e.target.value)}
+                  className="w-full rounded-lg border p-2 text-xs bg-white text-slate-800 focus:ring-1 focus:ring-black"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <Button type="button" variant="outline" size="sm" onClick={() => setSelectedQueryToResolve(null)}>Cancel</Button>
+                <Button 
+                  type="submit"
+                  disabled={isUpdatingNotes}
+                  className="bg-black hover:bg-slate-900 text-white text-xs font-semibold"
+                >
+                  {isUpdatingNotes ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                  Resolve Query
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Intern Tasks Inspector Modal ── */}
+      {selectedInternForTasks && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 flex flex-col max-h-[85vh]">
+            <div className="flex items-start justify-between border-b pb-3 shrink-0">
+              <div className="flex items-center gap-3">
+                <ProfileAvatar url={selectedInternForTasks.avatar_url} name={selectedInternForTasks.full_name} className="h-10 w-10 rounded-xl" />
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900">{selectedInternForTasks.full_name}'s Task Board</h3>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{selectedInternForTasks.email} • Domain: {selectedInternForTasks.department}</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full" onClick={() => setSelectedInternForTasks(null)}>✕</Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+              {isLoadingInternTasks ? (
+                <div className="py-12 flex items-center justify-center gap-2 text-slate-400">
+                  <Loader2 className="h-5 w-5 animate-spin" /> Loading intern tasks...
+                </div>
+              ) : internTasksList.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 text-xs">No tasks assigned to this intern yet.</div>
+              ) : (
+                internTasksList.map((task: any) => {
+                  const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
+                  return (
+                    <div key={task.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors flex flex-col gap-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1">
+                          <h4 className="font-bold text-slate-900 text-xs">{task.title}</h4>
+                          <p className="text-[11px] text-slate-500 line-clamp-2">{task.description || "No description provided."}</p>
+                          
+                          <div className="flex flex-wrap items-center gap-2 mt-2">
+                            <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider ${s.badge}`}>{s.label}</span>
+                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-slate-100 border text-slate-600 font-bold uppercase tracking-wider">{task.priority || 'medium'} priority</span>
+                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold uppercase tracking-wider">{task.credits || 10} Credits</span>
+                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800 font-bold uppercase tracking-wider">{task.level || 'Beginner'}</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono">{task.due_date ? new Date(task.due_date).toLocaleDateString() : ""}</span>
+                      </div>
+
+                      {/* Deliverable link block */}
+                      {task.deliverable_url && (
+                        <div className="bg-white border p-2.5 rounded-lg text-xs flex items-center justify-between">
+                          <div className="truncate pr-4 text-slate-600">
+                            <strong className="text-slate-800">Submitted Deliverable URL:</strong>{" "}
+                            <a href={task.deliverable_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                              {task.deliverable_url}
+                            </a>
+                          </div>
+                          <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">✓ Ready to Review</span>
+                        </div>
+                      )}
+
+                      {/* Deadline Extension block */}
+                      {task.extension_status === "requested" && (
+                        <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg flex flex-col gap-2 text-xs">
+                          <div className="font-bold text-amber-900 flex items-center gap-1">
+                            <Clock className="h-4 w-4 text-amber-700" /> Deadline Extension Requested
+                          </div>
+                          <div className="text-slate-700">
+                            <strong>Reason:</strong> "{task.extension_reason || 'No explanation provided.'}"
+                          </div>
+                          <div className="text-slate-500 text-[11px]">
+                            <strong>Requested Due Date:</strong> {task.extension_requested_date ? new Date(task.extension_requested_date).toLocaleDateString() : ""}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Button 
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                              onClick={async () => {
+                                try {
+                                  await doReviewDeadlineExtension({ data: { taskId: task.id, status: 'approved' } });
+                                  toast.success("Deadline extension approved!");
+                                  loadInternTasks(selectedInternForTasks.id);
+                                } catch (e) {
+                                  toast.error("Failed to approve extension");
+                                }
+                              }}
+                            >
+                              Approve Extension
+                            </Button>
+                            <Button 
+                              size="sm"
+                              variant="outline"
+                              className="border-slate-300 text-rose-600 hover:bg-rose-50 font-bold"
+                              onClick={async () => {
+                                try {
+                                  await doReviewDeadlineExtension({ data: { taskId: task.id, status: 'rejected' } });
+                                  toast.success("Deadline extension rejected!");
+                                  loadInternTasks(selectedInternForTasks.id);
+                                } catch (e) {
+                                  toast.error("Failed to reject extension");
+                                }
+                              }}
+                            >
+                              Reject Extension
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            
+            <div className="border-t pt-3 shrink-0 flex justify-end">
+              <Button size="sm" onClick={() => setSelectedInternForTasks(null)}>Close Inspector</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <FirstLoginWelcomeModal user={profile} />
       <PwaInstallBanner 
         title="Install Employee Portal"

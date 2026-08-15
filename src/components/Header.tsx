@@ -61,7 +61,7 @@ export function Header({ live = true }: HeaderProps) {
               Track
             </Link>
             <span className="opacity-40">|</span>
-            <Link to="/verify" className="hover:text-gold text-emerald-400 font-medium flex items-center gap-1">
+            <Link to="/verify" search={{ id: undefined, ref: undefined, email: undefined, q: undefined, tab: undefined }} className="hover:text-gold text-emerald-400 font-medium flex items-center gap-1">
               <Shield className="h-3 w-3" /> Verify Intern
             </Link>
             <span className="opacity-40">|</span>
@@ -131,6 +131,7 @@ export function Header({ live = true }: HeaderProps) {
               </Link>
               <Link 
                 to="/verify" 
+                search={{ id: undefined, ref: undefined, email: undefined, q: undefined, tab: undefined }}
                 className={`px-3 py-2 rounded-sm transition-colors flex items-center gap-1 ${
                   isActive("/verify") 
                     ? "text-emerald-600 dark:text-emerald-400 font-medium bg-surface" 
@@ -241,6 +242,7 @@ export function Header({ live = true }: HeaderProps) {
               </Link>
               <Link 
                 to="/verify" 
+                search={{ id: undefined, ref: undefined, email: undefined, q: undefined, tab: undefined }}
                 onClick={() => setMenuOpen(false)} 
                 className={`px-2 py-2.5 border-b border-border hover:bg-surface rounded-sm transition-colors flex items-center gap-1.5 ${
                   isActive("/verify") ? "text-emerald-500 font-semibold" : "text-emerald-500/80"

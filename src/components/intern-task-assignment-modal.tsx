@@ -20,6 +20,7 @@ interface ParsedTask {
   task_file_url: string;
   due_date: string;
   priority: "low" | "medium" | "high";
+  domain?: string;
 }
 
 export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -92,6 +93,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
       const fileIdx = headers.findIndex((h) => h.includes("url") || h.includes("file") || h.includes("link") || h.includes("resource"));
       const dueIdx = headers.findIndex((h) => h.includes("due") || h.includes("date") || h.includes("deadline"));
       const priorityIdx = headers.findIndex((h) => h.includes("priority") || h.includes("importance"));
+      const domainIdx = headers.findIndex((h) => h.includes("domain") || h.includes("dept") || h.includes("department"));
 
       const tasks: ParsedTask[] = [];
 
@@ -102,6 +104,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
         const description = descIdx !== -1 && row[descIdx] ? row[descIdx] : "Complete designated internship project requirements.";
         const task_file_url = fileIdx !== -1 && row[fileIdx] ? row[fileIdx] : "";
         const due_date = dueIdx !== -1 && row[dueIdx] ? row[dueIdx] : "";
+        const domain = domainIdx !== -1 && row[domainIdx] ? row[domainIdx] : "all";
         let priority: "low" | "medium" | "high" = "medium";
         if (priorityIdx !== -1 && row[priorityIdx]) {
           const p = row[priorityIdx].toLowerCase();
@@ -109,7 +112,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
           else if (p.includes("low")) priority = "low";
         }
 
-        tasks.push({ title, description, task_file_url, due_date, priority });
+        tasks.push({ title, description, task_file_url, due_date, priority, domain });
       }
 
       setParsedCsvTasks(tasks);
@@ -202,11 +205,11 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   };
 
   const handleDownloadSampleCsv = () => {
-    const sampleCsvContent = `Title,Description,File URL,Deadline,Priority
-Build Full-Stack E-Commerce Dashboard,Develop React frontend with TanStack Router and Supabase REST API authentication,https://drive.google.com/file/d/sample-doc-1/view,2026-08-30,High
-Implement Microservices Billing Engine,Design Node.js Express microservice for invoice generation & GST calculation,https://github.com/vyntyra/sample-repo-specs,2026-08-28,Medium
-AI Chatbot Integration & UI Polish,Integrate Gemini AI assistant SDK with dynamic stream rendering & Tailwind CSS,https://drive.google.com/file/d/sample-doc-3/view,2026-09-05,High
-Automated CI/CD Pipeline & Dockerization,Write GitHub Actions workflow for automated testing and Vercel production deployment,https://drive.google.com/file/d/sample-doc-4/view,2026-09-02,Medium`;
+    const sampleCsvContent = `Title,Description,File URL,Deadline,Priority,Domain
+Build Full-Stack E-Commerce Dashboard,Develop React frontend with TanStack Router and Supabase REST API authentication,https://drive.google.com/file/d/sample-doc-1/view,2026-08-30,High,tech
+Implement Microservices Billing Engine,Design Node.js Express microservice for invoice generation & GST calculation,https://github.com/vyntyra/sample-repo-specs,2026-08-28,Medium,tech
+AI Chatbot Integration & UI Polish,Integrate Gemini AI assistant SDK with dynamic stream rendering & Tailwind CSS,https://drive.google.com/file/d/sample-doc-3/view,2026-09-05,High,tech
+Business Operations Auditing,Analyze operational efficiency across departments and prepare recommendations reports,https://drive.google.com/file/d/sample-doc-4/view,2026-09-02,Medium,management`;
 
     const blob = new Blob([sampleCsvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);

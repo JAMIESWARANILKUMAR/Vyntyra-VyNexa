@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask } from "@/lib/operations.functions";
+import { listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, reviewDeadlineExtension } from "@/lib/operations.functions";
 import { Button } from "@/components/ui/button";
+import { Award, CreditCard } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,7 @@ export function AdminInternTasksView() {
   const fetchTasks = useServerFn(listAllInternTasksWithProgress);
   const doReview = useServerFn(reviewInternTaskByAdmin);
   const doDelete = useServerFn(deleteTask);
+  const doReviewDeadlineExtension = useServerFn(reviewDeadlineExtension);
 
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -214,6 +216,14 @@ export function AdminInternTasksView() {
                     <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-600">
                       Priority: {t.priority || "medium"}
                     </Badge>
+
+                    <Badge variant="outline" className="text-[10px] uppercase font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
+                      Level: {t.level || "Beginner"}
+                    </Badge>
+
+                    <Badge variant="outline" className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 border-amber-200 flex items-center gap-0.5">
+                      <CreditCard className="h-3 w-3 text-amber-600" /> {t.credits || 10} Credits
+                    </Badge>
                   </div>
 
                   <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">{t.description}</p>
@@ -258,6 +268,54 @@ export function AdminInternTasksView() {
                           &ldquo;{t.progress_notes}&rdquo;
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Deadline Extension Review block */}
+                  {t.extension_status === "requested" && (
+                    <div className="mt-2 p-3 rounded-lg bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200 text-xs space-y-1.5">
+                      <div className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5 text-amber-700" /> Intern Requested Deadline Extension:
+                      </div>
+                      <div className="text-slate-700 dark:text-slate-200">
+                        <strong>Reason:</strong> "{t.extension_reason || 'No explanation provided.'}"
+                      </div>
+                      <div className="text-slate-500 text-[11px]">
+                        <strong>Requested New Date:</strong> {t.extension_requested_date ? new Date(t.extension_requested_date).toLocaleDateString() : ""}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <Button 
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-6 px-2 text-[10px]"
+                          onClick={async () => {
+                            try {
+                              await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'approved' } });
+                              toast.success("Deadline extension approved!");
+                              qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                            } catch (e) {
+                              toast.error("Failed to approve extension");
+                            }
+                          }}
+                        >
+                          Approve
+                        </Button>
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          className="border-slate-300 text-rose-600 hover:bg-rose-50 font-bold h-6 px-2 text-[10px]"
+                          onClick={async () => {
+                            try {
+                              await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'rejected' } });
+                              toast.success("Deadline extension rejected!");
+                              qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                            } catch (e) {
+                              toast.error("Failed to reject extension");
+                            }
+                          }}
+                        >
+                          Reject
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>

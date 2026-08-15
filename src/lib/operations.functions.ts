@@ -425,50 +425,93 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
       task_file_url: z.string().optional(),
       due_date: z.string().optional(),
       priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
+      domain: z.string().optional(),
     })).min(1),
     target_intern_ids: z.array(z.string()).optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
-    let internIds = data.target_intern_ids || [];
-    if (!internIds.length) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, role, department")
-        .or("role.eq.intern,department.ilike.%intern%,position.ilike.%intern%");
-      internIds = (profiles || []).map((p: any) => p.id);
+    // 1. Fetch active intern profiles with department and position
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, role, department, position")
+      .or("role.eq.intern,department.ilike.%intern%,position.ilike.%intern%");
+    
+    let activeInterns = profiles || [];
+    
+    // If selected specific intern IDs, filter to those
+    if (data.target_intern_ids && data.target_intern_ids.length > 0) {
+      activeInterns = activeInterns.filter((p: any) => data.target_intern_ids!.includes(p.id));
     }
-    if (!internIds.length) {
+
+    if (!activeInterns.length) {
+      // Fallback to user roles
       const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "intern");
-      internIds = (roles || []).map((r: any) => r.user_id);
+      const roleUserIds = (roles || []).map((r: any) => r.user_id);
+      
+      const { data: fallbackProfiles } = await supabase
+        .from("profiles")
+        .select("id, department, position")
+        .in("id", roleUserIds);
+      activeInterns = fallbackProfiles || [];
     }
-    if (!internIds.length) {
-      const { data: allProfiles } = await supabase.from("profiles").select("id");
-      internIds = (allProfiles || []).map((p: any) => p.id);
-    }
-    if (!internIds.length) throw new Error("No active interns found in system to assign tasks to.");
+
+    if (!activeInterns.length) throw new Error("No active interns found in system to assign tasks to.");
 
     const taskPayloads: any[] = [];
     const now = new Date().toISOString();
 
-    for (let i = 0; i < internIds.length; i++) {
-      const internId = internIds[i];
-      const taskItem = data.tasks[i % data.tasks.length];
-      taskPayloads.push({
-        title: taskItem.title,
-        description: taskItem.description || "Assigned Internship Project Task",
-        project_requirements: taskItem.task_file_url || null,
-        deliverable_url: null,
-        due_date: taskItem.due_date || null,
-        priority: taskItem.priority || "medium",
-        assigned_to: internId,
-        target_user_id: internId,
-        target_role: "intern",
-        status: "pending",
-        is_pool_task: false,
-        created_by: context.userId,
-        created_at: now,
-      });
+    // Helper to check domain match
+    const matchInternDomain = (profile: any, domainStr: string | undefined): boolean => {
+      if (!domainStr || domainStr.toLowerCase() === "all" || domainStr.trim() === "") return true;
+      
+      const dept = (profile.department || "").toLowerCase();
+      const pos = (profile.position || "").toLowerCase();
+      const target = domainStr.toLowerCase().trim();
+      
+      if (target === "tech" || target === "engineering" || target === "technology") {
+        return dept.includes("tech") || dept.includes("eng") || dept.includes("soft") || dept.includes("dev") || dept.includes("data") || dept.includes("web") || dept.includes("ml") || dept.includes("ai") ||
+               pos.includes("tech") || pos.includes("eng") || pos.includes("soft") || pos.includes("dev") || pos.includes("data") || pos.includes("web") || pos.includes("ml") || pos.includes("ai");
+      }
+      
+      if (target === "non_tech" || target === "marketing" || target === "sales" || target === "design") {
+        return dept.includes("market") || dept.includes("sales") || dept.includes("crm") || dept.includes("design") || dept.includes("social") ||
+               pos.includes("market") || pos.includes("sales") || pos.includes("crm") || pos.includes("design") || pos.includes("social");
+      }
+      
+      if (target === "management" || target === "business" || target === "mba" || target === "operations") {
+        return dept.includes("manage") || dept.includes("mba") || dept.includes("bba") || dept.includes("ops") || dept.includes("operation") || dept.includes("business") ||
+               pos.includes("manage") || pos.includes("mba") || pos.includes("bba") || pos.includes("ops") || pos.includes("operation") || pos.includes("business");
+      }
+      
+      return dept.includes(target) || pos.includes(target);
+    };
+
+    // Assign tasks to matching interns
+    for (const taskItem of data.tasks) {
+      const targetInterns = activeInterns.filter((profile: any) => matchInternDomain(profile, taskItem.domain));
+      const internsToAssign = targetInterns.length > 0 ? targetInterns : activeInterns; // Fallback to all if no domain match
+      
+      for (const intern of internsToAssign) {
+        taskPayloads.push({
+          title: taskItem.title,
+          description: taskItem.description || "Assigned Internship Project Task",
+          project_requirements: taskItem.task_file_url || null,
+          deliverable_url: null,
+          due_date: taskItem.due_date || null,
+          priority: taskItem.priority || "medium",
+          assigned_to: intern.id,
+          target_user_id: intern.id,
+          target_role: "intern",
+          status: "pending",
+          is_pool_task: false,
+          created_by: context.userId,
+          created_at: now,
+          task_domain: taskItem.domain || "all"
+        });
+      }
     }
+
+    if (taskPayloads.length === 0) throw new Error("No tasks were mapped to any interns. Please verify domain matching values.");
 
     const { error } = await supabase.from("tasks").insert(taskPayloads);
     if (error) {
@@ -484,7 +527,7 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
     return {
       success: true,
       assignedCount: taskPayloads.length,
-      internCount: internIds.length,
+      internCount: activeInterns.length,
     };
   });
 
@@ -2999,6 +3042,298 @@ export const deleteSmsLog = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const { error } = await supabase.from('sms_logs').delete().eq('id', data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ---------- LMS Progress ----------
+
+export const getMyLmsProgress = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("lms_progress")
+      .select("*")
+      .eq("user_id", context.userId);
+    if (error) return [];
+    return data || [];
+  });
+
+export const updateLmsProgress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    source: z.string(),
+    title: z.string(),
+    progress: z.number().min(0).max(100),
+    completed: z.boolean(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase
+      .from("lms_progress")
+      .upsert({
+        user_id: context.userId,
+        source: data.source,
+        title: data.title,
+        progress: data.progress,
+        completed: data.completed,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id, source, title" });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ---------- Support Queries System ----------
+
+export const raiseSupportQuery = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    subject: z.string().min(1),
+    description: z.string().min(1),
+    category: z.string(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("mentor_id")
+      .eq("id", context.userId)
+      .single();
+
+    const { error } = await supabase.from("support_queries").insert({
+      intern_id: context.userId,
+      subject: data.subject,
+      description: data.description,
+      category: data.category,
+      mentor_id: profile?.mentor_id || null,
+      status: "pending_assignment",
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const listMySupportQueries = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("support_queries")
+      .select("*, assigned_employee:profiles!support_queries_assigned_employee_id_fkey(full_name, email), mentor:profiles!support_queries_mentor_id_fkey(full_name, email)")
+      .eq("intern_id", context.userId)
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+export const listAssignedSupportQueries = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("support_queries")
+      .select("*, intern:profiles!support_queries_intern_id_fkey(full_name, email, department, position), mentor:profiles!support_queries_mentor_id_fkey(full_name, email)")
+      .or(`assigned_employee_id.eq.${context.userId},mentor_id.eq.${context.userId}`)
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+export const listAllSupportQueries = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from("support_queries")
+      .select("*, intern:profiles!support_queries_intern_id_fkey(full_name, email, department, position), assigned_employee:profiles!support_queries_assigned_employee_id_fkey(full_name, email), mentor:profiles!support_queries_mentor_id_fkey(full_name, email)")
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data || [];
+  });
+
+export const assignSupportQueryEmployee = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    queryId: z.string().uuid(),
+    employeeId: z.string().uuid(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase
+      .from("support_queries")
+      .update({
+        assigned_employee_id: data.employeeId,
+        status: "assigned",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.queryId);
+    if (error) throw new Error(error.message);
+
+    try {
+      const { insertUserNotification } = await import("./notifications.functions");
+      await insertUserNotification({
+        userId: data.employeeId,
+        type: "support",
+        title: "New Support Query Assigned",
+        message: `You have been assigned to resolve a support query.`,
+        metadata: { queryId: data.queryId }
+      });
+    } catch (e) {
+      console.warn("Could not insert user notification:", e);
+    }
+
+    return { success: true };
+  });
+
+export const requestSupportMeeting = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    queryId: z.string().uuid(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase
+      .from("support_queries")
+      .update({
+        meeting_status: "requested",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.queryId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const approveSupportMeeting = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    queryId: z.string().uuid(),
+    meetingTime: z.string(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const { data: query } = await supabase
+      .from("support_queries")
+      .select("*")
+      .eq("id", data.queryId)
+      .single();
+
+    if (!query) throw new Error("Support query not found");
+
+    const { data: meeting, error: meetErr } = await supabase
+      .from("meetings")
+      .insert({
+        title: `Support Sync: ${query.subject}`,
+        description: `Interlinked support sync between intern, mentor, and assigned resolver.`,
+        scheduled_at: data.meetingTime,
+        meeting_link: btoa("https://meet.google.com/vy-support-sync"),
+        created_by: query.intern_id,
+      })
+      .select("id")
+      .single();
+
+    if (meetErr) throw new Error(meetErr.message);
+
+    const { error: queryErr } = await supabase
+      .from("support_queries")
+      .update({
+        meeting_id: meeting.id,
+        meeting_status: "approved",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.queryId);
+
+    if (queryErr) throw new Error(queryErr.message);
+
+    try {
+      const { insertUserNotification } = await import("./notifications.functions");
+      const msg = `Support sync meeting scheduled for ${new Date(data.meetingTime).toLocaleString()}`;
+      if (query.intern_id) await insertUserNotification({ userId: query.intern_id, type: "meeting", title: "Support Meeting Scheduled", message: msg });
+      if (query.assigned_employee_id) await insertUserNotification({ userId: query.assigned_employee_id, type: "meeting", title: "Support Meeting Scheduled", message: msg });
+      if (query.mentor_id) await insertUserNotification({ userId: query.mentor_id, type: "meeting", title: "Support Meeting Scheduled", message: msg });
+    } catch (e) {
+      console.warn("Could not insert notifications:", e);
+    }
+
+    return { success: true };
+  });
+
+export const updateSupportProgressNotes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    queryId: z.string().uuid(),
+    progressNotes: z.string(),
+    status: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const updatePayload: any = {
+      progress_notes: data.progressNotes,
+      updated_at: new Date().toISOString(),
+    };
+    if (data.status) updatePayload.status = data.status;
+
+    const { error } = await supabase
+      .from("support_queries")
+      .update(updatePayload)
+      .eq("id", data.queryId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ---------- Task Extensions & Submission links ----------
+
+export const requestDeadlineExtension = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    taskId: z.string().uuid(),
+    reason: z.string().min(1),
+    requestedDate: z.string(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase
+      .from("tasks")
+      .update({
+        extended_due_date: data.requestedDate,
+        extension_reason: data.reason,
+        extension_status: "requested",
+      })
+      .eq("id", data.taskId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const reviewDeadlineExtension = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    taskId: z.string().uuid(),
+    approve: z.boolean(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const { data: task } = await supabase
+      .from("tasks")
+      .select("extended_due_date")
+      .eq("id", data.taskId)
+      .single();
+
+    const updatePayload: any = {
+      extension_status: data.approve ? "approved" : "rejected",
+    };
+    if (data.approve && task?.extended_due_date) {
+      updatePayload.due_date = task.extended_due_date;
+    }
+
+    const { error } = await supabase
+      .from("tasks")
+      .update(updatePayload)
+      .eq("id", data.taskId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const submitTaskUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    taskId: z.string().uuid(),
+    submissionUrl: z.string().url(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase
+      .from("tasks")
+      .update({
+        deliverable_url: data.submissionUrl,
+        status: "submitted",
+      })
+      .eq("id", data.taskId);
     if (error) throw new Error(error.message);
     return { success: true };
   });
