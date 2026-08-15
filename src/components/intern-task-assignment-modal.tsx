@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { bulkAssignTasksFromCsv, assignManualTaskToInterns, listTaskTemplates } from "@/lib/operations.functions";
+import { bulkAssignTasksFromCsv, assignManualTaskToInterns, listTaskTemplates, listTeamMembers } from "@/lib/operations.functions";
 import { parseDocumentAndAssignTasks } from "@/lib/ai-tasks.functions";
 import { Upload, FileSpreadsheet, Plus, CheckCircle2, Loader2, Sparkles, Link2, Users, FileText, BookTemplate } from "lucide-react";
 import { toast } from "sonner";
@@ -34,17 +34,14 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   const doManualAssign = useServerFn(assignManualTaskToInterns);
   const doAiAssign = useServerFn(parseDocumentAndAssignTasks);
   const fetchTaskTemplates = useServerFn(listTaskTemplates);
+  const fetchTeamMembers = useServerFn(listTeamMembers);
 
   // Fetch active interns list for manual selection
   const internsQ = useQuery({
     queryKey: ["active-interns-for-tasks"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, department, position, intern_id")
-        .or("role.eq.intern,department.ilike.%intern%,position.ilike.%intern%")
-        .order("full_name");
-      return data || [];
+      const members = await fetchTeamMembers();
+      return members.filter((m: any) => m.role === "intern" || (m.department || "").toLowerCase().includes("intern") || (m.position || "").toLowerCase().includes("intern"));
     },
     enabled: open,
   });

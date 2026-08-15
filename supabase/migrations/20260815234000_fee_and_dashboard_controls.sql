@@ -26,16 +26,16 @@ USING (true);
 -- Only admins can modify settings
 CREATE POLICY "Admins can insert dashboard settings"
 ON public.dashboard_settings FOR INSERT TO authenticated
-WITH CHECK (public.has_role(auth.uid(), 'admin'::app_role));
+WITH CHECK (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
 
 CREATE POLICY "Admins can update dashboard settings"
 ON public.dashboard_settings FOR UPDATE TO authenticated
-USING (public.has_role(auth.uid(), 'admin'::app_role))
-WITH CHECK (public.has_role(auth.uid(), 'admin'::app_role));
+USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'))
+WITH CHECK (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
 
 CREATE POLICY "Admins can delete dashboard settings"
 ON public.dashboard_settings FOR DELETE TO authenticated
-USING (public.has_role(auth.uid(), 'admin'::app_role));
+USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
 
 -- Seed some default intern modules
 INSERT INTO public.dashboard_settings (portal_type, module_name, is_enabled) VALUES

@@ -20,13 +20,8 @@ CREATE TABLE IF NOT EXISTS public.automated_emails_log (
 ALTER TABLE public.automated_emails_log ENABLE ROW LEVEL SECURITY;
 
 -- Policies for automated_emails_log
-CREATE POLICY "Automated email logs are viewable by admins" 
-  ON public.automated_emails_log FOR SELECT USING (
-    (auth.uid() IN (SELECT user_id FROM public.user_roles WHERE role IN ('admin', 'super_admin')))
-  );
-
-CREATE POLICY "Automated email logs can be inserted by everyone (or service role)" 
-  ON public.automated_emails_log FOR INSERT WITH CHECK (true);
+CREATE POLICY "Admins can view automated email logs" ON public.automated_emails_log FOR SELECT USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
+CREATE POLICY "Admins can insert automated email logs" ON public.automated_emails_log FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
 
 -- 2. Enable Realtime for applications table so interns update live
 BEGIN;
