@@ -61,6 +61,13 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   const uniqueDomains = Array.from(new Set(interns.map((i: any) => i.department || "General"))).filter(Boolean);
   const [targetDomain, setTargetDomain] = useState<string>("All Domains");
 
+  // Sub-Domains extracted from current interns
+  const uniqueSubDomains = Array.from(new Set(interns
+    .filter((i: any) => targetDomain === "All Domains" || (i.department || "General") === targetDomain)
+    .map((i: any) => i.position || "General")
+  )).filter(Boolean);
+  const [targetSubDomain, setTargetSubDomain] = useState<string>("All Sub-Domains");
+
 
   // Manual Form State
   const [manualTitle, setManualTitle] = useState("");
@@ -226,10 +233,15 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
     }
 
     let targetIds = selectAll ? [] : selectedInternIds; // empty = auto assign all
-    if (targetDomain !== "All Domains") {
-      targetIds = interns.filter((i: any) => (i.department || "General") === targetDomain).map((i: any) => i.id);
+    if (targetDomain !== "All Domains" || targetSubDomain !== "All Sub-Domains") {
+      targetIds = interns.filter((i: any) => {
+        const matchDomain = targetDomain === "All Domains" || (i.department || "General") === targetDomain;
+        const matchSubDomain = targetSubDomain === "All Sub-Domains" || (i.position || "General") === targetSubDomain;
+        return matchDomain && matchSubDomain;
+      }).map((i: any) => i.id);
+      
       if (targetIds.length === 0) {
-        toast.error(`No interns found in the selected domain: ${targetDomain}`);
+        toast.error(`No interns found matching the selected domain/sub-domain criteria.`);
         return;
       }
     }
@@ -306,15 +318,28 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
                 Upload CSV or Excel Task List
               </div>
               
-              <div className="mt-4 mb-4 flex flex-col sm:flex-row justify-center items-center gap-3">
+              <div className="mt-4 mb-4 flex flex-col sm:flex-row justify-center items-center gap-3 flex-wrap">
                 <span className="text-sm font-semibold text-slate-700">Target Intern Domain:</span>
-                <Select value={targetDomain} onValueChange={setTargetDomain}>
+                <Select value={targetDomain} onValueChange={(val) => { setTargetDomain(val); setTargetSubDomain("All Sub-Domains"); }}>
                   <SelectTrigger className="w-64 h-9 text-sm bg-white border-slate-300">
                     <SelectValue placeholder="Select Domain" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="All Domains">All Domains (Assign to Everyone)</SelectItem>
                     {uniqueDomains.map((d: any) => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <span className="text-sm font-semibold text-slate-700 sm:ml-4">Sub-Domain:</span>
+                <Select value={targetSubDomain} onValueChange={setTargetSubDomain}>
+                  <SelectTrigger className="w-64 h-9 text-sm bg-white border-slate-300">
+                    <SelectValue placeholder="Select Sub-Domain" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All Sub-Domains">All Sub-Domains</SelectItem>
+                    {uniqueSubDomains.map((d: any) => (
                       <SelectItem key={d} value={d}>{d}</SelectItem>
                     ))}
                   </SelectContent>
