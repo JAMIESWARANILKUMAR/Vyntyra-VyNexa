@@ -41,7 +41,7 @@ import {
   listMySupportTickets, createSupportTicket, listKudos, createKudos, updateUserProfile,
   assignManualTaskToInterns, getMenteeAttendance,
   listAssignedSupportQueries, updateSupportProgressNotes, requestSupportMeeting,
-  reviewDeadlineExtension
+  reviewDeadlineExtension, getDashboardSettings
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/employee")({
@@ -857,24 +857,32 @@ function EmployeeDashboard() {
   const todayStr = new Date().toISOString().split('T')[0];
   const todayAttendance = attendanceLogs.find(a => a.date === todayStr);
 
+  const fetchDashboardSettings = useServerFn(getDashboardSettings);
+  const dashboardSettingsQ = useQuery({ queryKey: ["dashboard-settings"], queryFn: () => fetchDashboardSettings() });
+  const dSettings = dashboardSettingsQ.data || [];
+  const isModuleEnabled = (moduleName: string) => {
+    const s = dSettings.find((ds: any) => ds.module_name === moduleName && ds.portal_type === 'employee');
+    return s ? s.is_enabled : true; // Default to true if not found
+  };
+
   const TABS = [
-    { id: "overview", label: "Overview" },
-    { id: "tasks", label: `Tasks`, badge: pendingTasks.length },
-    { id: "attendance", label: "Attendance & Time" },
-    { id: "leave", label: "Leaves" },
-    { id: "payouts", label: "Payouts & Expenses" },
-    { id: "support", label: "Helpdesk Tickets", badge: tickets.filter((t: any) => t.status === "open").length },
-    { id: "resolver_support", label: "Intern Queries", badge: assignedSupportQueries.filter((q: any) => q.status !== "resolved").length },
-    { id: "meetings", label: "Meetings" },
-    { id: "interviews", label: "Interviews", badge: assignedInterviews.length },
-    { id: "my_interns", label: "My Interns", badge: myInterns.length },
-    { id: "announcements", label: `News`, badge: announcements.length },
-    { id: "team", label: "Team & Kudos" },
-    { id: "resources", label: "Resources & LMS" },
-    { id: "locker", label: "Doc Locker" },
-    { id: "contact", label: "Profile (ESS)" },
-    { id: "security", label: "Security & NOC" },
-  ] as const;
+    { id: "overview", label: "Overview", enabled: true },
+    { id: "tasks", label: `Tasks`, badge: pendingTasks.length, enabled: isModuleEnabled("tasks") },
+    { id: "attendance", label: "Attendance & Time", enabled: isModuleEnabled("attendance") },
+    { id: "leave", label: "Leaves", enabled: isModuleEnabled("leave") },
+    { id: "payouts", label: "Payouts & Expenses", enabled: isModuleEnabled("payouts") },
+    { id: "support", label: "Helpdesk Tickets", badge: tickets.filter((t: any) => t.status === "open").length, enabled: isModuleEnabled("support") },
+    { id: "resolver_support", label: "Intern Queries", badge: assignedSupportQueries.filter((q: any) => q.status !== "resolved").length, enabled: isModuleEnabled("resolver_support") },
+    { id: "meetings", label: "Meetings", enabled: isModuleEnabled("meetings") },
+    { id: "interviews", label: "Interviews", badge: assignedInterviews.length, enabled: isModuleEnabled("interviews") },
+    { id: "my_interns", label: "My Interns", badge: myInterns.length, enabled: isModuleEnabled("my_interns") },
+    { id: "announcements", label: `News`, badge: announcements.length, enabled: isModuleEnabled("announcements") },
+    { id: "team", label: "Team & Kudos", enabled: isModuleEnabled("team") },
+    { id: "resources", label: "Resources & LMS", enabled: isModuleEnabled("resources") },
+    { id: "locker", label: "Doc Locker", enabled: isModuleEnabled("locker") },
+    { id: "contact", label: "Profile (ESS)", enabled: isModuleEnabled("contact") },
+    { id: "security", label: "Security & NOC", enabled: isModuleEnabled("security") },
+  ].filter(t => t.enabled);
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-slate-800 font-sans selection:bg-black selection:text-white">
@@ -1013,7 +1021,7 @@ function EmployeeDashboard() {
                 <motion.div variants={itemVariants} initial="initial" animate="animate" className="lg:col-span-1">
                   <div className="text-sm font-semibold tracking-wide text-slate-900 mb-3 uppercase">Calendar</div>
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-                    <MonthlyCalendar events={schedules} />
+                    <MonthlyCalendar events={[...schedules, ...meetings]} />
                   </div>
                 </motion.div>
 

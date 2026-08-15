@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import QRCode from "qrcode";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getAdminClient } from "@/integrations/supabase/admin";
 import { generateUploadUrl } from "./r2";
@@ -262,7 +263,7 @@ export const listTasks = createServerFn({ method: "GET" })
 
     const { data, error } = await supabase
       .from("tasks")
-      .select("*, profiles!tasks_assigned_to_fkey(full_name)")
+      .select("*, profiles!tasks_assigned_to_fkey(full_name, mentor_id)")
       .order("created_at", { ascending: false });
 
     let rawList = data;
@@ -279,6 +280,7 @@ export const listTasks = createServerFn({ method: "GET" })
       if (role === 'admin' || role === 'super_admin') return true;
       if (t.assigned_to && t.assigned_to === context.userId) return true;
       if (t.target_user_id && t.target_user_id === context.userId) return true;
+      if (t.profiles?.mentor_id && t.profiles.mentor_id === context.userId) return true;
       if (t.is_pool_task) return true;
       if (!t.target_role || t.target_role === 'all' || t.target_role === role) return true;
       return false;
@@ -540,6 +542,7 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
     due_date: z.string().optional(),
     priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
     target_intern_ids: z.array(z.string()).min(1),
+    save_template: z.boolean().optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const now = new Date().toISOString();
@@ -567,6 +570,16 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
       });
       const { error: err2 } = await supabase.from("tasks").insert(fallbackPayloads);
       if (err2) throw new Error(err2.message);
+    }
+
+    if (data.save_template) {
+      await supabase.from("task_templates").insert({
+        title: data.title,
+        description: data.description || "",
+        task_file_url: data.task_file_url || null,
+        priority: data.priority || "medium",
+        domain: "general"
+      });
     }
 
     return { success: true, count: taskPayloads.length };
@@ -655,6 +668,17 @@ export const listSchedules = createServerFn({ method: "GET" })
     });
   });
 
+export const listTaskTemplates = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabase
+      .from("task_templates")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
 export const createSchedule = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => scheduleSchema.parse(d))
@@ -721,6 +745,8 @@ export const listMeetings = createServerFn({ method: 'GET' })
 
     return filtered.map((m: any) => ({
       ...m,
+      event_date: m.scheduled_at || m.start_time || m.created_at,
+      event_time: m.scheduled_at || m.start_time || m.created_at,
       scheduled_at: m.scheduled_at || m.start_time || m.created_at,
       start_time: m.start_time || m.scheduled_at || m.created_at,
     }));
@@ -946,6 +972,14 @@ export const getMyDocuments = createServerFn({ method: "GET" })
 
         const startDate = profile.start_date ? new Date(profile.start_date) : (app.internship_start_date ? new Date(app.internship_start_date) : new Date());
 
+        const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
+        let generatedQrBase64 = null;
+        try {
+          generatedQrBase64 = await QRCode.toDataURL(verificationUrl, { margin: 1, color: { dark: '#0f172a', light: '#ffffff' } });
+        } catch (qrErr) {
+          console.warn("Failed to generate QR Code for NOC:", qrErr);
+        }
+
         const { generateNocPdf } = await import("./nocGenerator");
         const doc = generateNocPdf({
           fullName: app.full_name,
@@ -957,7 +991,7 @@ export const getMyDocuments = createServerFn({ method: "GET" })
           subDomain: app.sub_domain || "Full Stack Web Development",
           internshipStartDate: startDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }),
           profilePhotoUrl: photoBase64,
-          qrCodeBase64: null,
+          qrCodeBase64: generatedQrBase64,
           logoBase64: null,
           signatureBase64: signatureBase64,
           hodName: app.hod_name,
@@ -1076,7 +1110,7 @@ export const regenerateMyDocuments = createServerFn({ method: "POST" })
           try {
             const photoRes = await fetch(resolvedUrl, {
               headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/120.0.0.0"
               }
             });
             if (photoRes.ok) {
@@ -1093,6 +1127,14 @@ export const regenerateMyDocuments = createServerFn({ method: "POST" })
 
     const startDate = profile.start_date ? new Date(profile.start_date) : (app.internship_start_date ? new Date(app.internship_start_date) : new Date());
 
+    const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
+    let generatedQrBase64 = null;
+    try {
+      generatedQrBase64 = await QRCode.toDataURL(verificationUrl, { margin: 1, color: { dark: '#0f172a', light: '#ffffff' } });
+    } catch (qrErr) {
+      console.warn("Failed to generate QR Code for fallback NOC:", qrErr);
+    }
+
     const { generateNocPdf } = await import("./nocGenerator");
     const doc = generateNocPdf({
       fullName: app.full_name,
@@ -1104,7 +1146,7 @@ export const regenerateMyDocuments = createServerFn({ method: "POST" })
       subDomain: app.sub_domain || "Full Stack Web Development",
       internshipStartDate: startDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }),
       profilePhotoUrl: photoBase64,
-      qrCodeBase64: null,
+      qrCodeBase64: generatedQrBase64,
       logoBase64: null,
       signatureBase64: signatureBase64,
       hodName: app.hod_name,
@@ -1199,7 +1241,7 @@ export const deleteNote = createServerFn({ method: "POST" })
 
 const feedbackSchema = z.object({
   content: z.string().min(1),
-  target_user_id: z.string().uuid(),
+  target_user_id: z.string().uuid().optional(),
 });
 
 export const listFeedbacks = createServerFn({ method: "GET" })
@@ -1218,11 +1260,14 @@ export const createFeedback = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => feedbackSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await supabase.from("feedbacks").insert({
+    const insertData: any = {
       content: data.content,
-      target_user_id: data.target_user_id,
       created_by: context.userId,
-    });
+    };
+    if (data.target_user_id) {
+      insertData.target_user_id = data.target_user_id;
+    }
+    const { error } = await supabase.from("feedbacks").insert(insertData);
     if (error) throw new Error(error.message);
     return { success: true };
   });
@@ -3410,4 +3455,87 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
 
     if (error) return [];
     return applications || [];
+  });
+
+// ─── Fee Management ──────────────────────────────────────────────────
+export const updateInternFeeSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    internId: z.string().uuid(),
+    exam_fee_amount: z.number().optional(),
+    is_fee_exempted: z.boolean().optional(),
+    exam_fee_paid: z.boolean().optional(),
+    fee_payment_scheduled: z.boolean().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const updateData: any = {};
+    if (data.exam_fee_amount !== undefined) updateData.exam_fee_amount = data.exam_fee_amount;
+    if (data.is_fee_exempted !== undefined) updateData.is_fee_exempted = data.is_fee_exempted;
+    if (data.exam_fee_paid !== undefined) updateData.exam_fee_paid = data.exam_fee_paid;
+    if (data.fee_payment_scheduled !== undefined) updateData.fee_payment_scheduled = data.fee_payment_scheduled;
+
+    const { error } = await supabase
+      .from("profiles")
+      .update(updateData)
+      .eq("id", data.internId);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+// ─── Dashboard Settings ──────────────────────────────────────────────
+export const getDashboardSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from("dashboard_settings")
+      .select("*");
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const initializeDashboardSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const INTERN_MODULES = [
+      "attendance", "onboarding", "lms", "kanban", "standups", "deliverables", 
+      "ppo", "tasks", "meetings", "resources", "leaves", "support", "refer", "notes", "feedback"
+    ];
+    const EMPLOYEE_MODULES = [
+      "tasks", "attendance", "leave", "payouts", "support", "resolver_support",
+      "meetings", "interviews", "my_interns", "announcements", "team", "resources",
+      "locker", "contact", "security"
+    ];
+    
+    const { data: existing } = await supabase.from("dashboard_settings").select("portal_type, module_name");
+    const existingSet = new Set((existing || []).map(x => `${x.portal_type}_${x.module_name}`));
+    
+    const toInsert = [];
+    for (const m of INTERN_MODULES) {
+      if (!existingSet.has(`intern_${m}`)) toInsert.push({ portal_type: "intern", module_name: m, is_enabled: true });
+    }
+    for (const m of EMPLOYEE_MODULES) {
+      if (!existingSet.has(`employee_${m}`)) toInsert.push({ portal_type: "employee", module_name: m, is_enabled: true });
+    }
+    
+    if (toInsert.length > 0) {
+      const { error } = await supabase.from("dashboard_settings").insert(toInsert);
+      if (error) throw new Error(error.message);
+    }
+    return { success: true, count: toInsert.length };
+  });
+
+export const updateDashboardSetting = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    id: z.string().uuid(),
+    is_enabled: z.boolean(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase
+      .from("dashboard_settings")
+      .update({ is_enabled: data.is_enabled, updated_at: new Date().toISOString() })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
   });

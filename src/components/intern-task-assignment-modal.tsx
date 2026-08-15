@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { bulkAssignTasksFromCsv, assignManualTaskToInterns } from "@/lib/operations.functions";
-import { Upload, FileSpreadsheet, Plus, CheckCircle2, Loader2, Sparkles, Link2, Users } from "lucide-react";
+import { bulkAssignTasksFromCsv, assignManualTaskToInterns, listTaskTemplates } from "@/lib/operations.functions";
+import { parseDocumentAndAssignTasks } from "@/lib/ai-tasks.functions";
+import { Upload, FileSpreadsheet, Plus, CheckCircle2, Loader2, Sparkles, Link2, Users, FileText, BookTemplate } from "lucide-react";
 import { toast } from "sonner";
 
 interface ParsedTask {
@@ -25,11 +26,13 @@ interface ParsedTask {
 
 export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"csv" | "manual">("csv");
+  const [activeTab, setActiveTab] = useState<"csv" | "manual" | "ai">("csv");
 
   // Server functions
   const doBulkAssign = useServerFn(bulkAssignTasksFromCsv);
   const doManualAssign = useServerFn(assignManualTaskToInterns);
+  const doAiAssign = useServerFn(parseDocumentAndAssignTasks);
+  const fetchTaskTemplates = useServerFn(listTaskTemplates);
 
   // Fetch active interns list for manual selection
   const internsQ = useQuery({
@@ -45,7 +48,14 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
     enabled: open,
   });
 
+  const templatesQ = useQuery({
+    queryKey: ["task-templates"],
+    queryFn: () => fetchTaskTemplates(),
+    enabled: open,
+  });
+
   const interns = internsQ.data || [];
+  const taskTemplates = templatesQ.data || [];
   const [selectedInternIds, setSelectedInternIds] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(true);
 
@@ -55,6 +65,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   const [manualFileUrl, setManualFileUrl] = useState("");
   const [manualDueDate, setManualDueDate] = useState("");
   const [manualPriority, setManualPriority] = useState<"low" | "medium" | "high">("medium");
+  const [saveTemplate, setSaveTemplate] = useState(false);
   const [isSubmittingManual, setIsSubmittingManual] = useState(false);
 
   // CSV Import State
@@ -62,6 +73,30 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   const [parsedCsvTasks, setParsedCsvTasks] = useState<ParsedTask[]>([]);
   const [fileName, setFileName] = useState("");
   const [isSubmittingCsv, setIsSubmittingCsv] = useState(false);
+
+  // AI Assignment State
+  const [documentText, setDocumentText] = useState("");
+  const [isSubmittingAi, setIsSubmittingAi] = useState(false);
+
+  // Handle AI submit
+  const handleAiSubmit = async () => {
+    if (!documentText.trim()) {
+      toast.error("Please paste the document or syllabus text.");
+      return;
+    }
+    setIsSubmittingAi(true);
+    try {
+      const res = await doAiAssign({ data: { documentText } });
+      toast.success(`Successfully parsed ${res.parsedCount} tasks and assigned to ${res.assignedCount} interns!`);
+      setDocumentText("");
+      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      onClose();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate tasks via AI.");
+    } finally {
+      setIsSubmittingAi(false);
+    }
+  };
 
   // Handle CSV file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,10 +198,12 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
           due_date: manualDueDate,
           priority: manualPriority,
           target_intern_ids: targetIds,
+          save_template: saveTemplate,
         },
       });
       qc.invalidateQueries({ queryKey: ["my-tasks"] });
       qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      if (saveTemplate) qc.invalidateQueries({ queryKey: ["task-templates"] });
       toast.success(`Task assigned successfully to ${targetIds.length} intern(s)!`);
       onClose();
     } catch (err: any) {
@@ -205,11 +242,11 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   };
 
   const handleDownloadSampleCsv = () => {
-    const sampleCsvContent = `Title,Description,File URL,Deadline,Priority,Domain
-Build Full-Stack E-Commerce Dashboard,Develop React frontend with TanStack Router and Supabase REST API authentication,https://drive.google.com/file/d/sample-doc-1/view,2026-08-30,High,tech
-Implement Microservices Billing Engine,Design Node.js Express microservice for invoice generation & GST calculation,https://github.com/vyntyra/sample-repo-specs,2026-08-28,Medium,tech
-AI Chatbot Integration & UI Polish,Integrate Gemini AI assistant SDK with dynamic stream rendering & Tailwind CSS,https://drive.google.com/file/d/sample-doc-3/view,2026-09-05,High,tech
-Business Operations Auditing,Analyze operational efficiency across departments and prepare recommendations reports,https://drive.google.com/file/d/sample-doc-4/view,2026-09-02,Medium,management`;
+    const sampleCsvContent = `"Title","Description","File URL","Deadline","Priority","Domain"
+"Build Full-Stack E-Commerce Dashboard","Develop React frontend with TanStack Router and Supabase REST API authentication","https://drive.google.com/file/d/sample-doc-1/view","2026-08-30","High","tech"
+"Implement Microservices Billing Engine","Design Node.js Express microservice for invoice generation & GST calculation","https://github.com/vyntyra/sample-repo-specs","2026-08-28","Medium","tech"
+"AI Chatbot Integration & UI Polish","Integrate Gemini AI assistant SDK with dynamic stream rendering & Tailwind CSS","https://drive.google.com/file/d/sample-doc-3/view","2026-09-05","High","tech"
+"Business Operations Auditing","Analyze operational efficiency across departments and prepare recommendations reports","https://drive.google.com/file/d/sample-doc-4/view","2026-09-02","Medium","management"`;
 
     const blob = new Blob([sampleCsvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -236,12 +273,15 @@ Business Operations Auditing,Analyze operational efficiency across departments a
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full mt-2">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="csv" className="flex items-center gap-2 font-medium">
-              <FileSpreadsheet className="h-4 w-4 text-emerald-600" /> Bulk Upload (CSV / Excel)
+              <FileSpreadsheet className="h-4 w-4 text-emerald-600" /> Bulk Upload
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="flex items-center gap-2 font-medium">
+              <Sparkles className="h-4 w-4 text-amber-500" /> AI Auto-Assign
             </TabsTrigger>
             <TabsTrigger value="manual" className="flex items-center gap-2 font-medium">
-              <Plus className="h-4 w-4 text-indigo-600" /> Single / Manual Task Assignment
+              <Plus className="h-4 w-4 text-indigo-600" /> Manual Single Task
             </TabsTrigger>
           </TabsList>
 
@@ -364,8 +404,65 @@ Business Operations Auditing,Analyze operational efficiency across departments a
             </Button>
           </TabsContent>
 
-          {/* ─── TAB 2: MANUAL SINGLE TASK CREATION ─── */}
-          <TabsContent value="manual" className="space-y-4">
+          {/* ─── TAB 2: AI ASSIGNMENT ─── */}
+          <TabsContent value="ai" className="space-y-4">
+            <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-6 text-center">
+              <Sparkles className="h-8 w-8 text-amber-500 mx-auto mb-2" />
+              <div className="text-sm font-bold text-amber-900">
+                AI Auto-Assign from Syllabus or Document
+              </div>
+              <div className="text-xs text-amber-700 mt-2 max-w-lg mx-auto leading-relaxed">
+                Paste your syllabus or document text here. The AI will automatically extract actionable tasks, detect the appropriate domain, and randomly assign the tasks to interns in that domain.
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold text-slate-700">Document Text</Label>
+              <Textarea
+                placeholder="Paste the syllabus or project requirements here..."
+                rows={10}
+                value={documentText}
+                onChange={(e) => setDocumentText(e.target.value)}
+                className="font-mono text-xs mt-1 border-amber-200 focus-visible:ring-amber-500"
+              />
+            </div>
+
+            <Button
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold flex items-center justify-center gap-2 mt-2"
+              onClick={handleAiSubmit}
+              disabled={isSubmittingAi}
+            >
+              {isSubmittingAi ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {isSubmittingAi ? "Parsing & Assigning..." : "Generate & Assign Tasks"}
+            </Button>
+          </TabsContent>
+
+          {/* ─── TAB 3: MANUAL SINGLE TASK CREATION ─── */}
+          <TabsContent value="manual" className="space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-full">
+                <Label className="text-xs font-semibold text-slate-700">Load from Template (Optional)</Label>
+                <Select onValueChange={(val) => {
+                  const t = taskTemplates.find(x => x.id === val);
+                  if (t) {
+                    setManualTitle(t.title);
+                    setManualDescription(t.description || "");
+                    setManualFileUrl(t.task_file_url || "");
+                    setManualPriority((t.priority as any) || "medium");
+                  }
+                }}>
+                  <SelectTrigger className="mt-1 h-9 bg-slate-50 border-slate-200">
+                    <SelectValue placeholder="Select a saved template..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {taskTemplates.map(t => (
+                      <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <form onSubmit={handleManualSubmit} className="space-y-4">
               <div>
                 <Label className="text-xs font-bold text-slate-700">Task Title *</Label>
@@ -451,6 +548,13 @@ Business Operations Auditing,Analyze operational efficiency across departments a
                     ))}
                   </div>
                 )}
+              </div>
+
+              <div className="flex items-center space-x-2 bg-slate-50 border border-slate-100 p-3 rounded-lg">
+                <Checkbox id="save-template" checked={saveTemplate} onCheckedChange={(c) => setSaveTemplate(!!c)} />
+                <Label htmlFor="save-template" className="text-sm font-medium text-slate-700 cursor-pointer flex items-center gap-2">
+                  <BookTemplate className="h-4 w-4 text-indigo-500" /> Save as Task Template for future use
+                </Label>
               </div>
 
               <Button

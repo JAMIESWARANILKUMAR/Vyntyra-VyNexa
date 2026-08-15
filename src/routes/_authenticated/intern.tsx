@@ -36,7 +36,7 @@ import {
   clockIn, clockOut, getMyAttendance, getMyDocuments, regenerateMyDocuments,
   requestLeave, listMyLeaves, getMyLmsProgress, updateLmsProgress,
   raiseSupportQuery, listMySupportQueries, requestDeadlineExtension, submitTaskUrl,
-  getOrCreateReferralCode, getMyReferralConversions
+  getOrCreateReferralCode, getMyReferralConversions, getDashboardSettings
 } from "@/lib/operations.functions";
 import { listMyNotifications, markUserNotificationRead } from "@/lib/notifications.functions";
 
@@ -512,24 +512,32 @@ function InternDashboard() {
   const deliverables: any[] = deliverablesQ.data || [];
   const accessRequests: any[] = accessRequestsQ.data || [];
 
+  const fetchDashboardSettings = useServerFn(getDashboardSettings);
+  const dashboardSettingsQ = useQuery({ queryKey: ["dashboard-settings"], queryFn: () => fetchDashboardSettings() });
+  const dSettings = dashboardSettingsQ.data || [];
+  const isModuleEnabled = (moduleName: string) => {
+    const s = dSettings.find((ds: any) => ds.module_name === moduleName && ds.portal_type === 'intern');
+    return s ? s.is_enabled : true; // Default to true if not found
+  };
+
   const TABS = [
-    { id: "overview",       label: "Overview" },
-    { id: "attendance",     label: `Attendance (${attendanceLogs.length})` },
-    { id: "onboarding",     label: "Onboarding" },
-    { id: "lms",            label: "LMS & Skills" },
-    { id: "kanban",         label: "Sprint Board" },
-    { id: "standups",       label: `Standups (${standups.length})` },
-    { id: "deliverables",   label: `Deliverables (${deliverables.length})` },
-    { id: "ppo",            label: "PPO & Credentials" },
-    { id: "tasks",          label: `Tasks (${pendingTasks.length})` },
-    { id: "meetings",       label: "Meetings" },
-    { id: "resources",      label: `Resources (${resources.length})` },
-    { id: "leaves",         label: `Leaves (${myLeaves.length})` },
-    { id: "support",        label: `Support (${supportQueries.length})` },
-    { id: "refer",          label: "Refer & Earn" },
-    { id: "notes",          label: "Notes" },
-    { id: "feedback",       label: "Feedback" },
-  ] as const;
+    { id: "overview",       label: "Overview", enabled: true },
+    { id: "attendance",     label: `Attendance (${attendanceLogs.length})`, enabled: isModuleEnabled("attendance") },
+    { id: "onboarding",     label: "Onboarding", enabled: isModuleEnabled("onboarding") },
+    { id: "lms",            label: "LMS & Skills", enabled: isModuleEnabled("lms") },
+    { id: "kanban",         label: "Sprint Board", enabled: isModuleEnabled("kanban") },
+    { id: "standups",       label: `Standups (${standups.length})`, enabled: isModuleEnabled("standups") },
+    { id: "deliverables",   label: `Deliverables (${deliverables.length})`, enabled: isModuleEnabled("deliverables") },
+    { id: "ppo",            label: "PPO & Credentials", enabled: isModuleEnabled("ppo") },
+    { id: "tasks",          label: `Tasks (${pendingTasks.length})`, enabled: isModuleEnabled("tasks") },
+    { id: "meetings",       label: "Meetings", enabled: isModuleEnabled("meetings") },
+    { id: "resources",      label: `Resources (${resources.length})`, enabled: isModuleEnabled("resources") },
+    { id: "leaves",         label: `Leaves (${myLeaves.length})`, enabled: isModuleEnabled("leaves") },
+    { id: "support",        label: `Support (${supportQueries.length})`, enabled: isModuleEnabled("support") },
+    { id: "refer",          label: "Refer & Earn", enabled: isModuleEnabled("refer") },
+    { id: "notes",          label: "Notes", enabled: isModuleEnabled("notes") },
+    { id: "feedback",       label: "Feedback", enabled: isModuleEnabled("feedback") },
+  ].filter(t => t.enabled);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -1003,7 +1011,7 @@ function InternDashboard() {
               {/* Calendar */}
               <div className="lg:col-span-1">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2"><CalendarDays className="h-4 w-4" />Calendar</h2>
-                <MonthlyCalendar events={schedules} />
+                <MonthlyCalendar events={[...schedules, ...meetings]} />
               </div>
 
               <div className="lg:col-span-2 space-y-6">
@@ -1757,7 +1765,10 @@ function InternDashboard() {
                           </div>
                           <div className="flex items-start gap-1.5">
                             <CreditCard className="h-3.5 w-3.5 text-amber-700 shrink-0 mt-0.5" />
-                            <span><strong>Exam Fee:</strong> <strong>₹199 (Inclusive of all GST)</strong> — Mandatory skilling & credential verification fee.</span>
+                            <span>
+                              <strong>Exam Fee:</strong> <strong>{profile?.is_fee_exempted ? "FEE exemption provided by VYNTYRA" : `₹${profile?.exam_fee_amount ?? 199} (Inclusive of all GST)`}</strong>
+                              {!profile?.is_fee_exempted && " — Mandatory skilling & credential verification fee."}
+                            </span>
                           </div>
                           <div className="flex items-start gap-1.5">
                             <RefreshCw className="h-3.5 w-3.5 text-amber-700 shrink-0 mt-0.5" />
@@ -1769,6 +1780,23 @@ function InternDashboard() {
                           </div>
                         </div>
                       </div>
+
+                      {profile?.fee_payment_scheduled && !profile?.exam_fee_paid && !profile?.is_fee_exempted && (
+                        <div className="mt-4 p-4 rounded-xl border border-red-200 bg-red-50 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-red-100 rounded-full text-red-600">
+                              <DollarSign className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-bold text-red-900">Exam Fee Payment Pending</h4>
+                              <p className="text-xs text-red-700">Please pay the mandatory exam fee of ₹{profile?.exam_fee_amount ?? 199} to unlock your final certification exam and refer-and-earn privileges.</p>
+                            </div>
+                          </div>
+                          <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => toast.info("Payment gateway integration pending. Contact your administrator.")}>
+                            Pay Now
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -2043,7 +2071,7 @@ function InternDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2"><CalendarDays className="h-4 w-4" />Calendar</h2>
-              <MonthlyCalendar events={schedules} />
+              <MonthlyCalendar events={[...schedules, ...meetings]} />
             </div>
             <div className="lg:col-span-2">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2"><Video className="h-4 w-4" />Meetings</h2>
@@ -2504,6 +2532,22 @@ function InternDashboard() {
               }
             `}} />
 
+            {!profile?.exam_fee_paid && !profile?.is_fee_exempted ? (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-10 text-center space-y-4 shadow-inner mt-4">
+                <div className="mx-auto w-16 h-16 bg-slate-200/50 rounded-full flex items-center justify-center text-slate-400 mb-2">
+                  <Lock className="h-8 w-8" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800">Refer & Earn is Locked</h3>
+                <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                  You must complete your mandatory skilling & credential verification fee payment to unlock the Refer & Earn program.
+                </p>
+                {profile?.fee_payment_scheduled && (
+                  <Button className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm" onClick={() => setActiveTab("onboarding")}>
+                    Go to Onboarding to Pay
+                  </Button>
+                )}
+              </div>
+            ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column: Code, Stats & Sharing */}
               <div className="lg:col-span-1 space-y-6">
@@ -2605,7 +2649,7 @@ function InternDashboard() {
                               : "bg-slate-50 border-slate-200/80 text-slate-500"
                           }`}>
                             <div className="text-xs font-bold">Tier 1: 5 Referrals</div>
-                            <div className="text-[10px] mt-1 font-semibold">15% Course Refund</div>
+                            <div className="text-[10px] mt-1 font-semibold">25% Course Refund</div>
                             {completedCount >= 5 && <div className="text-[9px] font-bold text-emerald-600 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> ✓ Achieved!</div>}
                           </div>
                           
@@ -2615,7 +2659,7 @@ function InternDashboard() {
                               : "bg-slate-50 border-slate-200/80 text-slate-500"
                           }`}>
                             <div className="text-xs font-bold">Tier 2: 10 Referrals</div>
-                            <div className="text-[10px] mt-1 font-semibold">30% Course Refund</div>
+                            <div className="text-[10px] mt-1 font-semibold">50% Course Refund</div>
                             {completedCount >= 10 && <div className="text-[9px] font-bold text-emerald-600 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> ✓ Achieved!</div>}
                           </div>
                         </div>
@@ -2758,6 +2802,7 @@ function InternDashboard() {
                 </div>
               </div>
             </div>
+            )}
           </div>
         )}
       </main>
@@ -3119,7 +3164,7 @@ function InternDashboard() {
                 Vyntyra Pays For You!
               </h4>
               <p className="text-xs text-slate-500 leading-normal font-light">
-                Earn course fee refunds up to 30% by recommending Project VyNexa to your peers.
+                Earn course fee refunds up to 50% by recommending Project VyNexa to your peers.
               </p>
               
               <div className="pt-2 flex items-center gap-3">

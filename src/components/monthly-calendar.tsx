@@ -7,6 +7,8 @@ interface CalendarEvent {
   event_date: string;
   event_time?: string;
   target_role?: string;
+  description?: string;
+  meeting_url?: string;
 }
 
 interface MonthlyCalendarProps {
@@ -113,10 +115,18 @@ export function MonthlyCalendar({ events = [] }: MonthlyCalendarProps) {
           ) : (
             <div className="space-y-2">
               {selectedEvents.map((e) => (
-                <div key={e.id} className="flex items-center gap-2 text-xs">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                  <span className="font-medium truncate">{e.title}</span>
-                  {e.event_time && <span className="text-muted-foreground ml-auto shrink-0">{e.event_time}</span>}
+                <div key={e.id} className="flex flex-col gap-1 text-xs border-b border-slate-100 last:border-0 pb-2 last:pb-0">
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{e.title}</span>
+                    {e.event_time && <span className="text-muted-foreground ml-auto shrink-0 font-mono text-[10px]">{new Date(e.event_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>}
+                  </div>
+                  {e.description && <div className="pl-3.5 text-slate-500 text-[10px] leading-relaxed">{e.description}</div>}
+                  {e.meeting_url && (
+                    <a href={e.meeting_url} target="_blank" rel="noreferrer" className="pl-3.5 text-indigo-600 hover:underline text-[10px] font-medium flex items-center gap-1 mt-0.5">
+                      Join Meeting
+                    </a>
+                  )}
                 </div>
               ))}
             </div>

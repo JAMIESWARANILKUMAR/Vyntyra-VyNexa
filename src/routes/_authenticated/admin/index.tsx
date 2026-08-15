@@ -135,12 +135,14 @@ function AdminDashboard() {
 
   const leavesQ = useQuery({
     queryKey: ["admin-leaves"],
-    queryFn: () => fetchLeaveRequests()
+    queryFn: () => fetchLeaveRequests(),
+    refetchInterval: 15_000,
   });
 
   const feedbacksQ = useQuery({
     queryKey: ["admin-feedbacks"],
-    queryFn: () => fetchFeedbacks()
+    queryFn: () => fetchFeedbacks(),
+    refetchInterval: 15_000,
   });
 
   useEffect(() => {
@@ -521,6 +523,12 @@ function AdminDashboard() {
               className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
             >
               <Shield className="h-4 w-4" /> <span className="hidden sm:inline">Security</span>
+            </Link>
+            <Link
+              to="/admin/settings"
+              className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
+            >
+              <Settings2 className="h-4 w-4" /> <span className="hidden sm:inline">Settings</span>
             </Link>
             <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Sign out</span>
