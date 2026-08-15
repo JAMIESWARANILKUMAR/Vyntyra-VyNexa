@@ -19,6 +19,7 @@ interface ParsedTask {
   title: string;
   description: string;
   task_file_url: string;
+  task_doc_url: string;
   due_date: string;
   priority: "low" | "medium" | "high";
   domain?: string;
@@ -58,6 +59,11 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   const taskTemplates = templatesQ.data || [];
   const [selectedInternIds, setSelectedInternIds] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(true);
+
+  // Domains extracted from current interns
+  const uniqueDomains = Array.from(new Set(interns.map((i: any) => i.department || "General"))).filter(Boolean);
+  const [targetDomain, setTargetDomain] = useState<string>("All Domains");
+
 
   // Manual Form State
   const [manualTitle, setManualTitle] = useState("");
@@ -125,7 +131,8 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
       
       const titleIdx = headers.findIndex((h) => h.includes("title") || h.includes("name") || h.includes("task"));
       const descIdx = headers.findIndex((h) => h.includes("desc") || h.includes("detail") || h.includes("requirement"));
-      const fileIdx = headers.findIndex((h) => h.includes("url") || h.includes("file") || h.includes("link") || h.includes("resource"));
+      const fileIdx = headers.findIndex((h) => h.includes("file") || h.includes("resource") || (h.includes("url") && !h.includes("handbook") && !h.includes("doc")));
+      const docIdx = headers.findIndex((h) => h.includes("handbook") || h.includes("doc"));
       const dueIdx = headers.findIndex((h) => h.includes("due") || h.includes("date") || h.includes("deadline"));
       const priorityIdx = headers.findIndex((h) => h.includes("priority") || h.includes("importance"));
       const domainIdx = headers.findIndex((h) => h.includes("domain") || h.includes("dept") || h.includes("department"));
@@ -138,6 +145,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
         const title = titleIdx !== -1 && row[titleIdx] ? row[titleIdx] : row[0] || `Internship Task ${i}`;
         const description = descIdx !== -1 && row[descIdx] ? row[descIdx] : "Complete designated internship project requirements.";
         const task_file_url = fileIdx !== -1 && row[fileIdx] ? row[fileIdx] : "";
+        const task_doc_url = docIdx !== -1 && row[docIdx] ? row[docIdx] : "";
         const due_date = dueIdx !== -1 && row[dueIdx] ? row[dueIdx] : "";
         const domain = domainIdx !== -1 && row[domainIdx] ? row[domainIdx] : "all";
         let priority: "low" | "medium" | "high" = "medium";
@@ -147,7 +155,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
           else if (p.includes("low")) priority = "low";
         }
 
-        tasks.push({ title, description, task_file_url, due_date, priority, domain });
+        tasks.push({ title, description, task_file_url, task_doc_url, due_date, priority, domain });
       }
 
       setParsedCsvTasks(tasks);
@@ -220,7 +228,15 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
       return;
     }
 
-    const targetIds = selectAll ? [] : selectedInternIds; // empty = auto assign all
+    let targetIds = selectAll ? [] : selectedInternIds; // empty = auto assign all
+    if (targetDomain !== "All Domains") {
+      targetIds = interns.filter((i: any) => (i.department || "General") === targetDomain).map((i: any) => i.id);
+      if (targetIds.length === 0) {
+        toast.error(`No interns found in the selected domain: ${targetDomain}`);
+        return;
+      }
+    }
+    
     setIsSubmittingCsv(true);
     try {
       const res = await doBulkAssign({
@@ -242,11 +258,11 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   };
 
   const handleDownloadSampleCsv = () => {
-    const sampleCsvContent = `"Title","Description","File URL","Deadline","Priority","Domain"
-"Build Full-Stack E-Commerce Dashboard","Develop React frontend with TanStack Router and Supabase REST API authentication","https://drive.google.com/file/d/sample-doc-1/view","2026-08-30","High","tech"
-"Implement Microservices Billing Engine","Design Node.js Express microservice for invoice generation & GST calculation","https://github.com/vyntyra/sample-repo-specs","2026-08-28","Medium","tech"
-"AI Chatbot Integration & UI Polish","Integrate Gemini AI assistant SDK with dynamic stream rendering & Tailwind CSS","https://drive.google.com/file/d/sample-doc-3/view","2026-09-05","High","tech"
-"Business Operations Auditing","Analyze operational efficiency across departments and prepare recommendations reports","https://drive.google.com/file/d/sample-doc-4/view","2026-09-02","Medium","management"`;
+    const sampleCsvContent = `"Title","Description","File URL","Handbook URL","Deadline","Priority","Domain"
+"Build Full-Stack E-Commerce Dashboard","Develop React frontend with TanStack Router and Supabase REST API authentication","https://drive.google.com/file/d/sample-doc-1/view","https://drive.google.com/handbook-1","2026-08-30","High","tech"
+"Implement Microservices Billing Engine","Design Node.js Express microservice for invoice generation & GST calculation","https://github.com/vyntyra/sample-repo-specs","https://drive.google.com/handbook-2","2026-08-28","Medium","tech"
+"AI Chatbot Integration & UI Polish","Integrate Gemini AI assistant SDK with dynamic stream rendering & Tailwind CSS","https://drive.google.com/file/d/sample-doc-3/view","","2026-09-05","High","tech"
+"Business Operations Auditing","Analyze operational efficiency across departments and prepare recommendations reports","https://drive.google.com/file/d/sample-doc-4/view","","2026-09-02","Medium","management"`;
 
     const blob = new Blob([sampleCsvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -292,8 +308,24 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
               <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                 Upload CSV or Excel Task List
               </div>
+              
+              <div className="mt-4 mb-4 flex flex-col sm:flex-row justify-center items-center gap-3">
+                <span className="text-sm font-semibold text-slate-700">Target Intern Domain:</span>
+                <Select value={targetDomain} onValueChange={setTargetDomain}>
+                  <SelectTrigger className="w-64 h-9 text-sm bg-white border-slate-300">
+                    <SelectValue placeholder="Select Domain" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All Domains">All Domains (Assign to Everyone)</SelectItem>
+                    {uniqueDomains.map((d: any) => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="text-xs text-slate-500 mt-1 mb-3">
-                Required Columns: <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Title</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Description</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">File URL</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Deadline</code>
+                Required Columns: <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Title</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Description</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">File URL</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Handbook URL</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Deadline</code>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

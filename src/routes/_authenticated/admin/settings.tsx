@@ -8,7 +8,7 @@ import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { getDashboardSettings, updateDashboardSetting, updateInternFeeSettings, initializeDashboardSettings } from "@/lib/operations.functions";
+import { getDashboardSettings, updateDashboardSetting, updateInternFeeSettings, initializeDashboardSettings, listTeamMembers } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: AdminSettingsPage,
@@ -20,8 +20,11 @@ function AdminSettingsPage() {
   const doUpdateDashboardSetting = useServerFn(updateDashboardSetting);
   const doUpdateInternFeeSettings = useServerFn(updateInternFeeSettings);
   const doInitializeDashboardSettings = useServerFn(initializeDashboardSettings);
+  const fetchTeamMembers = useServerFn(listTeamMembers);
   
+  const [targetType, setTargetType] = useState<"single" | "selected" | "all">("single");
   const [internId, setInternId] = useState("");
+  const [selectedInternIds, setSelectedInternIds] = useState<string[]>([]);
   const [examFeeAmount, setExamFeeAmount] = useState<number>(199);
   const [isFeeExempted, setIsFeeExempted] = useState(false);
   const [examFeePaid, setExamFeePaid] = useState(false);
@@ -31,6 +34,13 @@ function AdminSettingsPage() {
     queryKey: ["admin-dashboard-settings"],
     queryFn: () => fetchDashboardSettings(),
   });
+
+  const membersQ = useQuery({
+    queryKey: ["admin-intern-list"],
+    queryFn: () => fetchTeamMembers(),
+  });
+  const allInterns = (membersQ.data || []).filter((m: any) => m.role === "intern");
+
 
   const updateSettingsMut = useMutation({
     mutationFn: async ({ id, is_enabled }: { id: string, is_enabled: boolean }) => {
@@ -58,18 +68,25 @@ function AdminSettingsPage() {
   }
 
   async function handleUpdateFee() {
-    if (!internId) return toast.error("Please provide an Intern ID.");
+    if (targetType === "single" && !internId) return toast.error("Please provide an Intern ID.");
+    if (targetType === "selected" && selectedInternIds.length === 0) return toast.error("Please select at least one intern.");
+    
     try {
+      let finalInternIds: string[] | undefined = undefined;
+      if (targetType === "all") finalInternIds = allInterns.map((i: any) => i.id);
+      if (targetType === "selected") finalInternIds = selectedInternIds;
+
       await doUpdateInternFeeSettings({
         data: {
-          internId,
+          internId: targetType === "single" ? internId : undefined,
+          internIds: finalInternIds,
           exam_fee_amount: examFeeAmount,
           is_fee_exempted: isFeeExempted,
           exam_fee_paid: examFeePaid,
           fee_payment_scheduled: feePaymentScheduled,
         }
       });
-      toast.success("Fee settings updated for intern.");
+      toast.success("Fee settings updated successfully.");
     } catch (err: any) {
       toast.error(err.message || "Failed to update fee settings.");
     }
@@ -134,10 +151,57 @@ function AdminSettingsPage() {
             <p className="text-sm text-slate-600">Update the final certification exam fee for a specific intern, grant fee exemptions (provided by VYNTYRA), or schedule payment announcements.</p>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 uppercase">Intern ID (UUID)</label>
-                <Input placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000" value={internId} onChange={e => setInternId(e.target.value)} />
+              <div className="space-y-3 sm:col-span-2">
+                <label className="text-xs font-bold text-slate-700 uppercase">Target Audience</label>
+                <div className="flex flex-wrap items-center gap-4">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="radio" name="targetType" checked={targetType === "single"} onChange={() => setTargetType("single")} className="accent-amber-600" />
+                    Single Intern ID
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="radio" name="targetType" checked={targetType === "selected"} onChange={() => setTargetType("selected")} className="accent-amber-600" />
+                    Selected Interns
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="radio" name="targetType" checked={targetType === "all"} onChange={() => setTargetType("all")} className="accent-amber-600" />
+                    Apply to All Interns
+                  </label>
+                </div>
               </div>
+
+              {targetType === "single" && (
+                <div className="space-y-2 sm:col-span-2">
+                  <label className="text-xs font-bold text-slate-700 uppercase">Intern ID (UUID)</label>
+                  <Input placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000" value={internId} onChange={e => setInternId(e.target.value)} />
+                </div>
+              )}
+
+              {targetType === "selected" && (
+                <div className="space-y-2 sm:col-span-2">
+                  <label className="text-xs font-bold text-slate-700 uppercase">Select Interns</label>
+                  <div className="max-h-48 overflow-y-auto border rounded-xl bg-slate-50 p-2 space-y-1">
+                    {allInterns.map((intern: any) => (
+                      <label key={intern.id} className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={selectedInternIds.includes(intern.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedInternIds(prev => [...prev, intern.id]);
+                            else setSelectedInternIds(prev => prev.filter(id => id !== intern.id));
+                          }}
+                          className="accent-amber-600 rounded"
+                        />
+                        <div className="text-sm">
+                          <span className="font-semibold text-slate-800">{intern.full_name || "Unknown"}</span>
+                          <span className="text-xs text-slate-500 ml-2">({intern.email})</span>
+                        </div>
+                      </label>
+                    ))}
+                    {allInterns.length === 0 && <div className="text-xs text-slate-500 p-2 italic">No interns found.</div>}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-700 uppercase">Exam Fee Amount (₹)</label>
                 <Input type="number" value={examFeeAmount} onChange={e => setExamFeeAmount(Number(e.target.value))} />

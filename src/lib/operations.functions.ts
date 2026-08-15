@@ -425,6 +425,7 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
       title: z.string().min(1),
       description: z.string().optional(),
       task_file_url: z.string().optional(),
+      task_doc_url: z.string().optional(),
       due_date: z.string().optional(),
       priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
       domain: z.string().optional(),
@@ -498,6 +499,7 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
           title: taskItem.title,
           description: taskItem.description || "Assigned Internship Project Task",
           project_requirements: taskItem.task_file_url || null,
+          task_doc_url: taskItem.task_doc_url || null,
           deliverable_url: null,
           due_date: taskItem.due_date || null,
           priority: taskItem.priority || "medium",
@@ -3461,7 +3463,8 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
 export const updateInternFeeSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
-    internId: z.string().uuid(),
+    internId: z.string().uuid().optional(),
+    internIds: z.array(z.string().uuid()).optional(),
     exam_fee_amount: z.number().optional(),
     is_fee_exempted: z.boolean().optional(),
     exam_fee_paid: z.boolean().optional(),
@@ -3474,12 +3477,22 @@ export const updateInternFeeSettings = createServerFn({ method: "POST" })
     if (data.exam_fee_paid !== undefined) updateData.exam_fee_paid = data.exam_fee_paid;
     if (data.fee_payment_scheduled !== undefined) updateData.fee_payment_scheduled = data.fee_payment_scheduled;
 
-    const { error } = await supabase
-      .from("profiles")
-      .update(updateData)
-      .eq("id", data.internId);
+    if (data.internIds && data.internIds.length > 0) {
+      const { error } = await supabase
+        .from("profiles")
+        .update(updateData)
+        .in("id", data.internIds);
+      if (error) throw new Error(error.message);
+    } else if (data.internId) {
+      const { error } = await supabase
+        .from("profiles")
+        .update(updateData)
+        .eq("id", data.internId);
+      if (error) throw new Error(error.message);
+    } else {
+      throw new Error("Missing intern ID(s) to update");
+    }
 
-    if (error) throw new Error(error.message);
     return { success: true };
   });
 
