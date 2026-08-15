@@ -190,6 +190,7 @@ type ApplicationForm = {
   tp_officer_contact: string;
   tp_officer_email: string;
   job_posting_id: string;
+  referral_code_used: string;
 };
 
 type ProjectEntry = {
@@ -209,6 +210,7 @@ function ApplicationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [agreementOpen, setAgreementOpen] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [hasReferral, setHasReferral] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -249,6 +251,7 @@ function ApplicationPage() {
     hod_name: "", hod_contact: "", hod_email: "",
     tp_officer_name: "", tp_officer_contact: "", tp_officer_email: "",
     job_posting_id: "",
+    referral_code_used: "",
   });
   const [projects, setProjects] = useState<ProjectEntry[]>([]);
   const update = (k: keyof ApplicationForm) => (v: string) => setForm((s: ApplicationForm) => ({ ...s, [k]: v }));
@@ -840,6 +843,35 @@ function ApplicationPage() {
                   <Textarea rows={5} value={form.message} onChange={(e) => update("message")(e.target.value)}
                     placeholder="Tell us briefly about your motivation, relevant experience, and what you'd bring to the team…" />
                 </Field>
+
+                <div className="mt-6 border-t border-border/50 pt-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="hasReferral" 
+                      checked={hasReferral}
+                      onCheckedChange={(checked: any) => {
+                        setHasReferral(checked === true);
+                        if (checked !== true) update("referral_code_used")("");
+                      }}
+                    />
+                    <label htmlFor="hasReferral" className="text-sm font-medium text-foreground cursor-pointer select-none">
+                      Do you have a referral code?
+                    </label>
+                  </div>
+                  {hasReferral && (
+                    <div className="pl-6 pt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <Field label="Enter Referral Code" required>
+                        <Input 
+                          value={form.referral_code_used || ""}
+                          onChange={(e) => update("referral_code_used")(e.target.value.toUpperCase())}
+                          placeholder="e.g. JAVYE4"
+                          maxLength={6}
+                          className="max-w-[200px] uppercase font-mono tracking-wider font-bold"
+                        />
+                      </Field>
+                    </div>
+                  )}
+                </div>
               </Section>
 
               <div className={`rounded-sm border p-5 ${agreed ? "border-secondary/40 bg-secondary/5" : "border-border bg-surface"}`}>

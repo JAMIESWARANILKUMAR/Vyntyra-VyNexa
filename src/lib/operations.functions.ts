@@ -3337,3 +3337,77 @@ export const submitTaskUrl = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { success: true };
   });
+
+export const getOrCreateReferralCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, intern_id, referral_code")
+      .eq("id", context.userId)
+      .single();
+
+    if (error || !profile) throw new Error("Profile not found");
+
+    if (profile.referral_code) {
+      return { referralCode: profile.referral_code };
+    }
+
+    // Generate unique referral code: first 2 of name + "VY" + last 2 of ID
+    const namePart = (profile.full_name || "VY")
+      .trim()
+      .replace(/[^a-zA-Z]/g, "")
+      .slice(0, 2)
+      .toUpperCase()
+      .padEnd(2, "A");
+      
+    const brandingPart = "VY";
+    
+    let idPart = "";
+    if (profile.intern_id && profile.intern_id.length >= 2) {
+      idPart = profile.intern_id.slice(-2).toUpperCase();
+    } else {
+      idPart = profile.id.slice(-2).toUpperCase();
+    }
+    
+    const code = `${namePart}${brandingPart}${idPart}`.slice(0, 6);
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ referral_code: code })
+      .eq("id", context.userId);
+
+    if (updateError) {
+      // Fallback for duplicates
+      const fallbackCode = `${code.slice(0, 5)}${Math.floor(Math.random() * 10)}`;
+      const { error: fallbackErr } = await supabase
+        .from("profiles")
+        .update({ referral_code: fallbackCode })
+        .eq("id", context.userId);
+      if (fallbackErr) throw new Error(fallbackErr.message);
+      return { referralCode: fallbackCode };
+    }
+
+    return { referralCode: code };
+  });
+
+export const getMyReferralConversions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("referral_code")
+      .eq("id", context.userId)
+      .single();
+
+    if (!profile || !profile.referral_code) return [];
+
+    const { data: applications, error } = await supabase
+      .from("applications")
+      .select("id, full_name, status, created_at")
+      .eq("referral_code_used", profile.referral_code)
+      .order("created_at", { ascending: false });
+
+    if (error) return [];
+    return applications || [];
+  });

@@ -45,6 +45,7 @@ const submitSchema = z.object({
   projects: z.array(projectSchema).max(30).optional(),
   agreement_accepted: z.literal(true),
   turnstile_token: z.string().optional(),
+  referral_code_used: z.string().trim().max(20).optional().or(z.literal("")),
 });
 
 async function checkIsAdmin(userId: string) {
@@ -129,7 +130,8 @@ export const submitApplication = createServerFn({ method: "POST" })
       sub_domain: data.sub_domain || null,
       profile_photo_url: resolvedPhotoUrl || null,
       agreement_accepted: true,
-      status: 'new'
+      status: 'new',
+      referral_code_used: data.referral_code_used || null,
     };
 
     let { error: insertError } = await supabase

@@ -35,7 +35,8 @@ import {
   listBugs, createBug, updateBugStatus,
   clockIn, clockOut, getMyAttendance, getMyDocuments, regenerateMyDocuments,
   requestLeave, listMyLeaves, getMyLmsProgress, updateLmsProgress,
-  raiseSupportQuery, listMySupportQueries, requestDeadlineExtension, submitTaskUrl
+  raiseSupportQuery, listMySupportQueries, requestDeadlineExtension, submitTaskUrl,
+  getOrCreateReferralCode, getMyReferralConversions
 } from "@/lib/operations.functions";
 import { listMyNotifications, markUserNotificationRead } from "@/lib/notifications.functions";
 
@@ -61,7 +62,7 @@ const RESOURCE_ICONS: Record<string, { icon: React.ReactNode; color: string }> =
 
 function InternDashboard() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements" | "leaves" | "support">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements" | "leaves" | "support" | "refer">("overview");
   const [newNote, setNewNote] = useState("");
   const [feedback, setFeedback] = useState("");
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
@@ -188,6 +189,25 @@ function InternDashboard() {
   });
 
   const myLeaves = leavesQ.data || [];
+
+  const fetchReferralCode = useServerFn(getOrCreateReferralCode);
+  const fetchReferralConversions = useServerFn(getMyReferralConversions);
+
+  const referralCodeQ = useQuery({
+    queryKey: ["my-referral-code", session?.user?.id],
+    queryFn: () => fetchReferralCode(),
+    enabled: !!session?.user?.id,
+  });
+
+  const referralConversionsQ = useQuery({
+    queryKey: ["my-referrals", session?.user?.id],
+    queryFn: () => fetchReferralConversions(),
+    enabled: !!session?.user?.id,
+    refetchInterval: 5000,
+  });
+
+  const referralCode = referralCodeQ.data?.referralCode || "";
+  const referralConversions: any[] = referralConversionsQ.data || [];
 
   const tasksQ = useQuery({ queryKey: ["my-tasks"], queryFn: () => fetchTasks(), ...queryOpts });
   const meetingsQ = useQuery({ queryKey: ["my-meetings"], queryFn: () => fetchMeetings(), ...queryOpts });
@@ -503,6 +523,7 @@ function InternDashboard() {
     { id: "resources",      label: `Resources (${resources.length})` },
     { id: "leaves",         label: `Leaves (${myLeaves.length})` },
     { id: "support",        label: `Support (${supportQueries.length})` },
+    { id: "refer",          label: "Refer & Earn" },
     { id: "notes",          label: "Notes" },
     { id: "feedback",       label: "Feedback" },
   ] as const;
@@ -2433,6 +2454,197 @@ function InternDashboard() {
                         </div>
                       );
                     })
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── REFER & EARN ─── */}
+        {activeTab === "refer" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column: Code, Stats & Sharing */}
+              <div className="lg:col-span-1 space-y-6">
+                
+                {/* Code Generation Card */}
+                <div className="rounded-xl border bg-white p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+                  <div className="absolute top-0 right-0 h-16 w-16 bg-emerald-500/10 rounded-bl-full flex items-center justify-center">
+                    <Award className="h-5 w-5 text-emerald-600 translate-x-2 -translate-y-2" />
+                  </div>
+                  
+                  <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2 mb-1">
+                    Refer & Earn
+                  </h2>
+                  <p className="text-xs text-slate-500 mb-6">Vyntyra Pays For You! Share your code and earn course refunds.</p>
+                  
+                  {referralCodeQ.isLoading ? (
+                    <div className="py-6 flex items-center gap-2 text-slate-400 text-xs"><Loader2 className="h-4 w-4 animate-spin" /> Generating Code...</div>
+                  ) : (
+                    <div className="w-full space-y-4">
+                      <div className="bg-slate-50 border-2 border-dashed border-slate-200 p-4 rounded-xl font-mono text-2xl font-black tracking-widest text-indigo-700 bg-slate-50/50 flex items-center justify-center gap-2 select-all relative group">
+                        {referralCode}
+                      </div>
+                      
+                      <Button
+                        onClick={() => {
+                          navigator.clipboard.writeText(referralCode);
+                          toast.success("Referral Code copied to clipboard!");
+                        }}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
+                      >
+                        Copy Code
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Progress & Milestone Tracking */}
+                <div className="rounded-xl border bg-white p-6 shadow-sm space-y-5">
+                  <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                    <Target className="h-4.5 w-4.5 text-indigo-600" /> Milestone Tracking
+                  </h3>
+                  
+                  {(() => {
+                    const completedCount = referralConversions.filter((r: any) => 
+                      r.status === 'selected' || r.status === 'hired' || r.status === 'completed'
+                    ).length;
+                    
+                    const nextMilestone = completedCount >= 5 ? 10 : 5;
+                    const progressPercent = Math.min((completedCount / nextMilestone) * 100, 100);
+                    
+                    return (
+                      <div className="space-y-4">
+                        <div className="flex justify-between text-xs text-slate-600">
+                          <span>Progress to next tier:</span>
+                          <span className="font-bold text-indigo-600">{completedCount} / {nextMilestone} Referrals</span>
+                        </div>
+                        
+                        {/* Progress Bar */}
+                        <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                          <div 
+                            className="bg-indigo-600 h-full rounded-full transition-all duration-500 ease-out"
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+
+                        {/* Tiers List */}
+                        <div className="grid grid-cols-2 gap-3 pt-2">
+                          <div className={`p-3 rounded-lg border text-center transition-all ${
+                            completedCount >= 5 
+                              ? "bg-emerald-50/50 border-emerald-200 text-emerald-800" 
+                              : "bg-slate-50/50 border-slate-200 text-slate-500"
+                          }`}>
+                            <div className="text-xs font-bold">Tier 1: 5 Referrals</div>
+                            <div className="text-[10px] mt-1 font-semibold">15% Course Refund</div>
+                            {completedCount >= 5 && <div className="text-[9px] font-bold text-emerald-600 mt-1">✓ Achieved!</div>}
+                          </div>
+                          <div className={`p-3 rounded-lg border text-center transition-all ${
+                            completedCount >= 10 
+                              ? "bg-emerald-50/50 border-emerald-200 text-emerald-800" 
+                              : "bg-slate-50/50 border-slate-200 text-slate-500"
+                          }`}>
+                            <div className="text-xs font-bold">Tier 2: 10 Referrals</div>
+                            <div className="text-[10px] mt-1 font-semibold">30% Course Refund</div>
+                            {completedCount >= 10 && <div className="text-[9px] font-bold text-emerald-600 mt-1">✓ Achieved!</div>}
+                          </div>
+                        </div>
+
+                        <p className="text-[10px] text-slate-400 italic text-center pt-1 leading-relaxed">
+                          *A referral is marked as completed once their application is selected/hired. Refunds are directly adjusted by Vyntyra.
+                        </p>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Social Share Box */}
+                <div className="rounded-xl border bg-white p-6 shadow-sm space-y-3">
+                  <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                    <Send className="h-4 w-4 text-indigo-600" /> Share Invitation
+                  </h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">Send this template message directly to friends who want to apply.</p>
+                  
+                  <div className="bg-slate-50 border p-3 rounded-lg text-xs font-light text-slate-600 font-mono select-all leading-normal whitespace-pre-wrap">
+                    {`Hey! I'm currently doing an industrial internship at Vyntyra Consultancy Services. Apply using my unique referral code "${referralCode}" to join Project VyNexa: https://careers.vyntyraconsultancyservices.in/careers`}
+                  </div>
+
+                  <Button
+                    onClick={() => {
+                      const shareText = `Hey! I'm currently doing an industrial internship at Vyntyra Consultancy Services. Apply using my unique referral code "${referralCode}" to join Project VyNexa: https://careers.vyntyraconsultancyservices.in/careers`;
+                      navigator.clipboard.writeText(shareText);
+                      toast.success("Invitation message copied!");
+                    }}
+                    variant="outline"
+                    className="w-full border-slate-300 text-xs font-semibold"
+                  >
+                    Copy Invite Message
+                  </Button>
+                </div>
+
+              </div>
+
+              {/* Right Column: Status Log Tracker */}
+              <div className="lg:col-span-2 rounded-xl border bg-white p-6 shadow-sm flex flex-col h-full min-h-[400px]">
+                <div className="border-b pb-4 mb-4">
+                  <h3 className="font-semibold text-slate-800 text-base flex items-center gap-2">
+                    <Users className="h-5 w-5 text-indigo-600" /> Referred Candidates Tracker
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">Track the application status and progress of friends you referred.</p>
+                </div>
+
+                <div className="flex-1 overflow-x-auto">
+                  {referralConversionsQ.isLoading ? (
+                    <div className="p-8 flex items-center justify-center gap-2 text-slate-400 text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading referrals...</div>
+                  ) : referralConversions.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400 gap-2">
+                      <Users className="h-8 w-8 text-slate-300" />
+                      <div className="text-xs font-semibold">No referrals yet</div>
+                      <div className="text-[11px]">Share your code to start tracking referred applications here.</div>
+                    </div>
+                  ) : (
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="border-b text-[10px] uppercase font-bold text-slate-400">
+                          <th className="py-2.5 px-3">Friend Name</th>
+                          <th className="py-2.5 px-3">Date Applied</th>
+                          <th className="py-2.5 px-3 text-center">Status</th>
+                          <th className="py-2.5 px-3 text-right">Referral State</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {referralConversions.map((r: any) => {
+                          const isCompleted = r.status === 'selected' || r.status === 'hired' || r.status === 'completed';
+                          const isRejected = r.status === 'rejected';
+                          
+                          return (
+                            <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="py-3 px-3 font-semibold text-slate-800">{r.full_name}</td>
+                              <td className="py-3 px-3 text-slate-500 font-mono">{new Date(r.created_at).toLocaleDateString()}</td>
+                              <td className="py-3 px-3 text-center">
+                                <span className={`inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                                  isCompleted ? 'bg-emerald-100 text-emerald-800' :
+                                  isRejected ? 'bg-slate-100 text-slate-600' :
+                                  'bg-blue-100 text-blue-800'
+                                }`}>
+                                  {r.status}
+                                </span>
+                              </td>
+                              <td className="py-3 px-3 text-right">
+                                {isCompleted ? (
+                                  <span className="inline-flex items-center gap-1 font-bold text-emerald-600 text-[10px]"><Check className="h-3 w-3" /> Completed</span>
+                                ) : isRejected ? (
+                                  <span className="font-semibold text-slate-400 text-[10px]">Cancelled</span>
+                                ) : (
+                                  <span className="font-bold text-amber-600 text-[10px] animate-pulse">In Progress</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   )}
                 </div>
               </div>
