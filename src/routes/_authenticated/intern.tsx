@@ -65,6 +65,8 @@ function InternDashboard() {
   const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements" | "leaves" | "support" | "refer">("overview");
   const [newNote, setNewNote] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedInvite, setCopiedInvite] = useState(false);
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
 
   const [showForcePasswordModal, setShowForcePasswordModal] = useState(false);
@@ -2463,46 +2465,109 @@ function InternDashboard() {
 
         {/* ─── REFER & EARN ─── */}
         {activeTab === "refer" && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Custom Animations Style Sheet Injection */}
+            <style dangerouslySetInnerHTML={{__html: `
+              @keyframes shine {
+                0% { background-position: -200% 0; }
+                100% { background-position: 200% 0; }
+              }
+              .animate-shine {
+                background: linear-gradient(120deg, #f5f3ff 30%, #e0e7ff 50%, #f5f3ff 70%);
+                background-size: 200% 100%;
+                animation: shine 3.5s infinite linear;
+              }
+              @keyframes float {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-5px); }
+              }
+              .animate-float {
+                animation: float 3s ease-in-out infinite;
+              }
+              @keyframes shimmer {
+                0% { background-position: -200% 0; }
+                100% { background-position: 200% 0; }
+              }
+              .animate-shimmer {
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+                background-size: 200% 100%;
+                animation: shimmer 1.8s infinite linear;
+              }
+              @keyframes pulse-ring {
+                0% { transform: scale(0.95); opacity: 0.8; }
+                50% { transform: scale(1.08); opacity: 0.4; }
+                100% { transform: scale(0.95); opacity: 0.8; }
+              }
+              .animate-pulse-ring {
+                animation: pulse-ring 2.5s ease-in-out infinite;
+              }
+            `}} />
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column: Code, Stats & Sharing */}
               <div className="lg:col-span-1 space-y-6">
                 
                 {/* Code Generation Card */}
-                <div className="rounded-xl border bg-white p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+                <div className="rounded-xl border bg-white p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
                   <div className="absolute top-0 right-0 h-16 w-16 bg-emerald-500/10 rounded-bl-full flex items-center justify-center">
-                    <Award className="h-5 w-5 text-emerald-600 translate-x-2 -translate-y-2" />
+                    <Award className="h-5 w-5 text-emerald-600 translate-x-2 -translate-y-2 animate-float" />
                   </div>
                   
-                  <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2 mb-1">
+                  <h2 className="font-bold text-slate-800 text-base flex items-center gap-2 mb-1">
                     Refer & Earn
                   </h2>
-                  <p className="text-xs text-slate-500 mb-6">Vyntyra Pays For You! Share your code and earn course refunds.</p>
+                  <p className="text-xs text-slate-500 mb-6 px-4">
+                    Vyntyra Pays For You! Share your code and earn course refunds.
+                  </p>
                   
                   {referralCodeQ.isLoading ? (
-                    <div className="py-6 flex items-center gap-2 text-slate-400 text-xs"><Loader2 className="h-4 w-4 animate-spin" /> Generating Code...</div>
+                    <div className="py-6 flex items-center gap-2 text-slate-400 text-xs justify-center"><Loader2 className="h-4 w-4 animate-spin text-indigo-600" /> Generating unique code...</div>
                   ) : (
                     <div className="w-full space-y-4">
-                      <div className="bg-slate-50 border-2 border-dashed border-slate-200 p-4 rounded-xl font-mono text-2xl font-black tracking-widest text-indigo-700 bg-slate-50/50 flex items-center justify-center gap-2 select-all relative group">
+                      {/* Premium Referral Code Container */}
+                      <div 
+                        onClick={() => {
+                          navigator.clipboard.writeText(referralCode);
+                          setCopiedCode(true);
+                          toast.success("Referral Code copied to clipboard!");
+                          setTimeout(() => setCopiedCode(false), 2000);
+                        }}
+                        className="relative animate-shine border-2 border-dashed border-indigo-200/80 p-5 rounded-xl font-mono text-3xl font-extrabold tracking-widest text-indigo-700 overflow-hidden flex items-center justify-center gap-2 select-all shadow-inner group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer"
+                      >
                         {referralCode}
+                        <span className="absolute bottom-1 right-2 text-[9px] font-sans font-medium text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200">Click to copy</span>
                       </div>
                       
                       <Button
                         onClick={() => {
                           navigator.clipboard.writeText(referralCode);
-                          toast.success("Referral Code copied to clipboard!");
+                          setCopiedCode(true);
+                          toast.success("Referral Code copied!");
+                          setTimeout(() => setCopiedCode(false), 2000);
                         }}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
+                        className={`w-full font-bold text-xs h-10 transition-all duration-300 flex items-center justify-center gap-2 shadow-xs ${
+                          copiedCode 
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white" 
+                            : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                        }`}
                       >
-                        Copy Code
+                        {copiedCode ? (
+                          <>
+                            <Check className="h-4 w-4 animate-bounce" /> Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Link2 className="h-4 w-4" /> Copy Referral Code
+                          </>
+                        )}
                       </Button>
                     </div>
                   )}
                 </div>
 
                 {/* Progress & Milestone Tracking */}
-                <div className="rounded-xl border bg-white p-6 shadow-sm space-y-5">
-                  <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                <div className="rounded-xl border bg-white p-6 shadow-sm space-y-5 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
+                  <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5 border-b pb-2.5">
                     <Target className="h-4.5 w-4.5 text-indigo-600" /> Milestone Tracking
                   </h3>
                   
@@ -2517,41 +2582,44 @@ function InternDashboard() {
                     return (
                       <div className="space-y-4">
                         <div className="flex justify-between text-xs text-slate-600">
-                          <span>Progress to next tier:</span>
+                          <span className="font-medium">Progress to next tier:</span>
                           <span className="font-bold text-indigo-600">{completedCount} / {nextMilestone} Referrals</span>
                         </div>
                         
-                        {/* Progress Bar */}
-                        <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                        {/* Progress Bar with Shimmer Animation */}
+                        <div className="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden relative shadow-inner">
                           <div 
-                            className="bg-indigo-600 h-full rounded-full transition-all duration-500 ease-out"
+                            className="bg-indigo-600 h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
                             style={{ width: `${progressPercent}%` }}
-                          />
+                          >
+                            <div className="absolute inset-0 animate-shimmer" />
+                          </div>
                         </div>
 
-                        {/* Tiers List */}
-                        <div className="grid grid-cols-2 gap-3 pt-2">
-                          <div className={`p-3 rounded-lg border text-center transition-all ${
+                        {/* Milestone Target Tiers */}
+                        <div className="grid grid-cols-2 gap-3 pt-1">
+                          <div className={`p-3.5 rounded-xl border text-center transition-all duration-300 transform hover:scale-[1.03] ${
                             completedCount >= 5 
-                              ? "bg-emerald-50/50 border-emerald-200 text-emerald-800" 
-                              : "bg-slate-50/50 border-slate-200 text-slate-500"
+                              ? "bg-emerald-50/70 border-emerald-200 text-emerald-950 shadow-xs" 
+                              : "bg-slate-50 border-slate-200/80 text-slate-500"
                           }`}>
                             <div className="text-xs font-bold">Tier 1: 5 Referrals</div>
                             <div className="text-[10px] mt-1 font-semibold">15% Course Refund</div>
-                            {completedCount >= 5 && <div className="text-[9px] font-bold text-emerald-600 mt-1">✓ Achieved!</div>}
+                            {completedCount >= 5 && <div className="text-[9px] font-bold text-emerald-600 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> ✓ Achieved!</div>}
                           </div>
-                          <div className={`p-3 rounded-lg border text-center transition-all ${
+                          
+                          <div className={`p-3.5 rounded-xl border text-center transition-all duration-300 transform hover:scale-[1.03] ${
                             completedCount >= 10 
-                              ? "bg-emerald-50/50 border-emerald-200 text-emerald-800" 
-                              : "bg-slate-50/50 border-slate-200 text-slate-500"
+                              ? "bg-emerald-50/70 border-emerald-200 text-emerald-950 shadow-xs" 
+                              : "bg-slate-50 border-slate-200/80 text-slate-500"
                           }`}>
                             <div className="text-xs font-bold">Tier 2: 10 Referrals</div>
                             <div className="text-[10px] mt-1 font-semibold">30% Course Refund</div>
-                            {completedCount >= 10 && <div className="text-[9px] font-bold text-emerald-600 mt-1">✓ Achieved!</div>}
+                            {completedCount >= 10 && <div className="text-[9px] font-bold text-emerald-600 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> ✓ Achieved!</div>}
                           </div>
                         </div>
 
-                        <p className="text-[10px] text-slate-400 italic text-center pt-1 leading-relaxed">
+                        <p className="text-[10px] text-slate-400 leading-normal text-center pt-1">
                           *A referral is marked as completed once their application is selected/hired. Refunds are directly adjusted by Vyntyra.
                         </p>
                       </div>
@@ -2560,13 +2628,13 @@ function InternDashboard() {
                 </div>
 
                 {/* Social Share Box */}
-                <div className="rounded-xl border bg-white p-6 shadow-sm space-y-3">
+                <div className="rounded-xl border bg-white p-6 shadow-sm space-y-3.5 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
                   <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
                     <Send className="h-4 w-4 text-indigo-600" /> Share Invitation
                   </h3>
                   <p className="text-xs text-slate-500 leading-relaxed">Send this template message directly to friends who want to apply.</p>
                   
-                  <div className="bg-slate-50 border p-3 rounded-lg text-xs font-light text-slate-600 font-mono select-all leading-normal whitespace-pre-wrap">
+                  <div className="bg-slate-50 border p-3.5 rounded-xl text-xs font-light text-slate-600 font-mono select-all leading-normal whitespace-pre-wrap max-h-[140px] overflow-y-auto shadow-inner relative group border-slate-200/80">
                     {`Hey! I'm currently doing an industrial internship at Vyntyra Consultancy Services. Apply using my unique referral code "${referralCode}" to join Project VyNexa: https://careers.vyntyraconsultancyservices.in/careers`}
                   </div>
 
@@ -2574,43 +2642,78 @@ function InternDashboard() {
                     onClick={() => {
                       const shareText = `Hey! I'm currently doing an industrial internship at Vyntyra Consultancy Services. Apply using my unique referral code "${referralCode}" to join Project VyNexa: https://careers.vyntyraconsultancyservices.in/careers`;
                       navigator.clipboard.writeText(shareText);
-                      toast.success("Invitation message copied!");
+                      setCopiedInvite(true);
+                      toast.success("Invitation message copied to clipboard!");
+                      setTimeout(() => setCopiedInvite(false), 2000);
                     }}
                     variant="outline"
-                    className="w-full border-slate-300 text-xs font-semibold"
+                    className={`w-full text-xs font-semibold h-10 transition-all duration-300 flex items-center justify-center gap-2 border-slate-300 ${
+                      copiedInvite 
+                        ? "bg-emerald-50 border-emerald-300 text-emerald-800" 
+                        : "bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
                   >
-                    Copy Invite Message
+                    {copiedInvite ? (
+                      <>
+                        <Check className="h-4 w-4 animate-bounce" /> Message Copied!
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="h-4 w-4" /> Copy Invite Message
+                      </>
+                    )}
                   </Button>
                 </div>
 
               </div>
 
               {/* Right Column: Status Log Tracker */}
-              <div className="lg:col-span-2 rounded-xl border bg-white p-6 shadow-sm flex flex-col h-full min-h-[400px]">
-                <div className="border-b pb-4 mb-4">
-                  <h3 className="font-semibold text-slate-800 text-base flex items-center gap-2">
-                    <Users className="h-5 w-5 text-indigo-600" /> Referred Candidates Tracker
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1">Track the application status and progress of friends you referred.</p>
+              <div className="lg:col-span-2 rounded-xl border bg-white p-6 shadow-sm flex flex-col h-full min-h-[450px] transition-all duration-300 hover:shadow-md">
+                <div className="border-b pb-4 mb-4 flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                      <Users className="h-5 w-5 text-indigo-600" /> Referred Candidates Tracker
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">Track the application status and progress of friends you referred.</p>
+                  </div>
+                  {referralConversions.length > 0 && (
+                    <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full animate-pulse">
+                      {referralConversions.length} Referrals Total
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex-1 overflow-x-auto">
                   {referralConversionsQ.isLoading ? (
-                    <div className="p-8 flex items-center justify-center gap-2 text-slate-400 text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading referrals...</div>
+                    <div className="p-8 flex flex-col items-center justify-center gap-3 text-slate-400 text-sm h-full min-h-[250px]">
+                      <Loader2 className="h-8 w-8 animate-spin text-indigo-600" /> 
+                      <span>Loading referral conversions...</span>
+                    </div>
                   ) : referralConversions.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400 gap-2">
-                      <Users className="h-8 w-8 text-slate-300" />
-                      <div className="text-xs font-semibold">No referrals yet</div>
-                      <div className="text-[11px]">Share your code to start tracking referred applications here.</div>
+                    <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-8 text-slate-400 gap-4">
+                      {/* Animated Representative Icon */}
+                      <div className="relative flex items-center justify-center">
+                        <div className="absolute h-16 w-16 bg-indigo-500/10 rounded-full animate-pulse-ring" />
+                        <div className="relative h-12 w-12 bg-indigo-50 border border-indigo-100 rounded-full flex items-center justify-center shadow-xs">
+                          <Users className="h-6 w-6 text-indigo-600 animate-float" />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="text-sm font-bold text-slate-700">No referrals yet</div>
+                        <div className="text-xs text-slate-500 max-w-[280px] mx-auto leading-relaxed">
+                          Share your code to start tracking referred applications here.
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
                         <tr className="border-b text-[10px] uppercase font-bold text-slate-400">
-                          <th className="py-2.5 px-3">Friend Name</th>
-                          <th className="py-2.5 px-3">Date Applied</th>
-                          <th className="py-2.5 px-3 text-center">Status</th>
-                          <th className="py-2.5 px-3 text-right">Referral State</th>
+                          <th className="py-3 px-4">Friend Name</th>
+                          <th className="py-3 px-4">Date Applied</th>
+                          <th className="py-3 px-4 text-center">Status</th>
+                          <th className="py-3 px-4 text-right">Referral State</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -2619,25 +2722,30 @@ function InternDashboard() {
                           const isRejected = r.status === 'rejected';
                           
                           return (
-                            <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="py-3 px-3 font-semibold text-slate-800">{r.full_name}</td>
-                              <td className="py-3 px-3 text-slate-500 font-mono">{new Date(r.created_at).toLocaleDateString()}</td>
-                              <td className="py-3 px-3 text-center">
-                                <span className={`inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                                  isCompleted ? 'bg-emerald-100 text-emerald-800' :
-                                  isRejected ? 'bg-slate-100 text-slate-600' :
-                                  'bg-blue-100 text-blue-800'
+                            <tr key={r.id} className="hover:bg-slate-50/50 transition-all duration-200">
+                              <td className="py-3.5 px-4 font-semibold text-slate-800 flex items-center gap-2">
+                                <div className="h-7 w-7 rounded-full bg-indigo-50 flex items-center justify-center text-[10px] font-bold text-indigo-600">
+                                  {r.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+                                </div>
+                                <span>{r.full_name}</span>
+                              </td>
+                              <td className="py-3.5 px-4 text-slate-500 font-mono">{new Date(r.created_at).toLocaleDateString()}</td>
+                              <td className="py-3.5 px-4 text-center">
+                                <span className={`inline-block text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${
+                                  isCompleted ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                                  isRejected ? 'bg-slate-100 text-slate-600 border border-slate-200' :
+                                  'bg-blue-100 text-blue-800 border border-blue-200'
                                 }`}>
                                   {r.status}
                                 </span>
                               </td>
-                              <td className="py-3 px-3 text-right">
+                              <td className="py-3.5 px-4 text-right">
                                 {isCompleted ? (
-                                  <span className="inline-flex items-center gap-1 font-bold text-emerald-600 text-[10px]"><Check className="h-3 w-3" /> Completed</span>
+                                  <span className="inline-flex items-center gap-1 font-bold text-emerald-600 text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100"><Check className="h-3 w-3" /> Completed</span>
                                 ) : isRejected ? (
-                                  <span className="font-semibold text-slate-400 text-[10px]">Cancelled</span>
+                                  <span className="font-semibold text-slate-400 text-[10px] bg-slate-50 px-2 py-0.5 rounded border">Cancelled</span>
                                 ) : (
-                                  <span className="font-bold text-amber-600 text-[10px] animate-pulse">In Progress</span>
+                                  <span className="inline-flex items-center gap-1 font-bold text-amber-600 text-[10px] bg-amber-50 px-2 py-0.5 rounded border border-amber-100"><Loader2 className="h-3 w-3 animate-spin" /> In Progress</span>
                                 )}
                               </td>
                             </tr>
