@@ -29,7 +29,29 @@ import { proxyImageFetch } from "./noc.functions";
 export async function urlToBase64(url: string): Promise<string | null> {
   try {
     if (!url) return null;
-    const resolvedUrl = await resolveGooglePhotosUrl(url);
+
+    // Server-side local file direct read fallback
+    if (url.startsWith("/") && typeof window === "undefined") {
+      try {
+        const fs = await import("fs");
+        const path = await import("path");
+        const filePath = path.join(process.cwd(), "public", url);
+        if (fs.existsSync(filePath)) {
+          const buffer = fs.readFileSync(filePath);
+          const ext = url.split(".").pop() || "png";
+          return `data:image/${ext};base64,${buffer.toString("base64")}`;
+        }
+      } catch (e) {
+        console.warn("[nocGenerator] Local read failed for:", url, e);
+      }
+    }
+
+    let targetUrl = url;
+    if (targetUrl.startsWith("/") && typeof window !== "undefined") {
+      targetUrl = window.location.origin + targetUrl;
+    }
+
+    const resolvedUrl = await resolveGooglePhotosUrl(targetUrl);
     if (!resolvedUrl) return null;
     if (resolvedUrl.startsWith("data:image")) return resolvedUrl;
     

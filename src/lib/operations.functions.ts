@@ -985,24 +985,10 @@ export const getMyDocuments = createServerFn({ method: "GET" })
     } else {
       // NOC missing in storage - generate on-the-fly
       try {
+        const { generateNocPdf, urlToBase64 } = await import("./nocGenerator");
         const { resolveGooglePhotosUrl } = await import("./google-photos");
-        let signatureBase64 = null;
-        const resolvedSigUrl = await resolveGooglePhotosUrl("https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
-        if (resolvedSigUrl) {
-          try {
-            const sigRes = await fetch(resolvedSigUrl, {
-              headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-              }
-            });
-            if (sigRes.ok) {
-              const buffer = await sigRes.arrayBuffer();
-              signatureBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
-            }
-          } catch (err) {
-            console.warn("Signature fetch failed:", err);
-          }
-        }
+
+        const signatureBase64 = await urlToBase64("/signature.png");
 
         let photoBase64 = null;
         const url = profile.avatar_url || app.profile_photo_url;
@@ -1040,22 +1026,8 @@ export const getMyDocuments = createServerFn({ method: "GET" })
           console.warn("Failed to generate QR Code for NOC:", qrErr);
         }
 
-        let logoBase64 = null;
-        try {
-          const logoRes = await fetch("https://careers.vyntyraconsultancyservices.in/icon-512.png", {
-            headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            }
-          });
-          if (logoRes.ok) {
-            const buffer = await logoRes.arrayBuffer();
-            logoBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
-          }
-        } catch (logoErr) {
-          console.warn("Failed to fetch Vyntyra logo:", logoErr);
-        }
+        const logoBase64 = await urlToBase64("/icon-512.png");
 
-        const { generateNocPdf } = await import("./nocGenerator");
         const doc = generateNocPdf({
           fullName: app.full_name,
           email: app.email,
@@ -1154,24 +1126,8 @@ export const regenerateMyDocuments = createServerFn({ method: "POST" })
     if (!app) throw new Error("Application not found");
 
     // 3. fetch signature
-    const { resolveGooglePhotosUrl } = await import("./google-photos");
-    let signatureBase64 = null;
-    const resolvedSigUrl = await resolveGooglePhotosUrl("https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
-    if (resolvedSigUrl) {
-      try {
-        const sigRes = await fetch(resolvedSigUrl, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-          }
-        });
-        if (sigRes.ok) {
-          const buffer = await sigRes.arrayBuffer();
-          signatureBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
-        }
-      } catch (err) {
-        console.warn("Signature fetch failed:", err);
-      }
-    }
+    const { urlToBase64 } = await import("./nocGenerator");
+    const signatureBase64 = await urlToBase64("/signature.png");
 
     // 4. fetch photo
     let photoBase64 = null;
@@ -1210,20 +1166,7 @@ export const regenerateMyDocuments = createServerFn({ method: "POST" })
       console.warn("Failed to generate QR Code for fallback NOC:", qrErr);
     }
 
-    let logoBase64 = null;
-    try {
-      const logoRes = await fetch("https://careers.vyntyraconsultancyservices.in/icon-512.png", {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-      });
-      if (logoRes.ok) {
-        const buffer = await logoRes.arrayBuffer();
-        logoBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
-      }
-    } catch (logoErr) {
-      console.warn("Failed to fetch Vyntyra logo for fallback NOC:", logoErr);
-    }
+    const logoBase64 = await urlToBase64("/icon-512.png");
 
     const { generateNocPdf } = await import("./nocGenerator");
     const doc = generateNocPdf({

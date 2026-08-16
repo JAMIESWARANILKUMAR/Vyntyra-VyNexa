@@ -1441,8 +1441,8 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         photoBase64 = await urlToBase64(app.profile_photo_url);
       }
 
-      const logoBase64 = await urlToBase64("https://careers.vyntyraconsultancyservices.in/icon-512.png");
-      const signatureBase64 = await urlToBase64("https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
+      const logoBase64 = await urlToBase64("/icon-512.png");
+      const signatureBase64 = await urlToBase64("/signature.png");
 
       const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
       const QRCode = (await import("qrcode")).default;

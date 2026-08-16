@@ -536,39 +536,9 @@ export async function dispatchSelectionEmail(applicationId: string) {
     console.warn("QR code fetch failed in dispatchSelectionEmail:", qrErr);
   }
 
-  let logoBase64 = null;
-  try {
-    const logoRes = await fetch("https://careers.vyntyraconsultancyservices.in/icon-512.png", {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      }
-    });
-    if (logoRes.ok) {
-      const buffer = await logoRes.arrayBuffer();
-      logoBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
-    }
-  } catch (logoErr) {
-    console.warn("Logo fetch failed in dispatchSelectionEmail:", logoErr);
-  }
-
-  let signatureBase64 = null;
-  try {
-    const { resolveGooglePhotosUrl } = await import("./google-photos");
-    const resolvedSigUrl = await resolveGooglePhotosUrl("https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
-    if (resolvedSigUrl) {
-      const sigRes = await fetch(resolvedSigUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-      });
-      if (sigRes.ok) {
-        const buffer = await sigRes.arrayBuffer();
-        signatureBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
-      }
-    }
-  } catch (sigErr) {
-    console.warn("Signature fetch failed in dispatchSelectionEmail:", sigErr);
-  }
+  const { urlToBase64 } = await import("./nocGenerator");
+  const logoBase64 = await urlToBase64("/icon-512.png");
+  const signatureBase64 = await urlToBase64("/signature.png");
 
   let photoBase64 = null;
   if (app.profile_photo_url) {
