@@ -80,8 +80,13 @@ function TermsPage() {
 
         </div>
 
-        <p className="mt-6 text-xs text-muted-foreground flex items-center gap-2">
-          <Shield className="h-3.5 w-3.5 text-secondary" /> This terms page governs access and portal usage for candidates.
+        <p className="mt-6 text-xs text-muted-foreground flex flex-col gap-1.5">
+          <span className="flex items-center gap-2">
+            <Shield className="h-3.5 w-3.5 text-secondary" /> This terms page governs access and portal usage for candidates.
+          </span>
+          <span className="text-[10px] text-muted-foreground/80">
+            Managed by Legal Authorized Person: <strong>JAMI ESWAR ANIL KUMAR</strong> (Founder &amp; Director) · <a href="mailto:jamieswaranilkumar@vyntyraconsultancyservices.in" className="text-secondary hover:underline">jamieswaranilkumar@vyntyraconsultancyservices.in</a>
+          </span>
         </p>
       </main>
     </div>

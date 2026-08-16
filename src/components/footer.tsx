@@ -136,9 +136,14 @@ export function Footer() {
 
         {/* Bottom Section */}
         <div className="mt-8 pt-4 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-primary-foreground/40 font-medium">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-gold/50" />
-            © {new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-gold/50" />
+              © {new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.
+            </div>
+            <div className="text-[10px] text-white/40">
+              Managed by Legal Authorized Person: <span className="text-white/60">JAMI ESWAR ANIL KUMAR</span> (Founder &amp; Director) · <a href="mailto:jamieswaranilkumar@vyntyraconsultancyservices.in" className="hover:text-gold transition-colors">jamieswaranilkumar@vyntyraconsultancyservices.in</a>
+            </div>
           </div>
           
           <VisitorCounter />

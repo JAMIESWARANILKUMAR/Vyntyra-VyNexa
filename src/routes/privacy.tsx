@@ -92,9 +92,9 @@ function PrivacyPage() {
           <Section title="8. Grievance Officer Contact Details">
             In accordance with Section 8(9) of the DPDPA, 2023, for questions, rights requests, or complaints:
             <div className="mt-3 p-4 bg-muted/30 border rounded-lg space-y-1 text-xs">
-              <div><strong>Grievance Officer:</strong> Data Protection & Grievance Officer</div>
-              <div><strong>Designation:</strong> Data Protection & Grievance Officer</div>
-              <div><strong>Email:</strong> <a href="mailto:grievance@vyntyraconsultancyservices.in" className="text-secondary hover:underline">grievance@vyntyraconsultancyservices.in</a></div>
+              <div><strong>Grievance Officer:</strong> JAMI ESWAR ANIL KUMAR</div>
+              <div><strong>Designation:</strong> Founder &amp; Director</div>
+              <div><strong>Email:</strong> <a href="mailto:jamieswaranilkumar@vyntyraconsultancyservices.in" className="text-secondary hover:underline">jamieswaranilkumar@vyntyraconsultancyservices.in</a></div>
               <div><strong>Address:</strong> Dwaraka Nagar, Visakhapatnam - 530016, AP, India</div>
               <div><strong>Response Timeline:</strong> Within 30 days of receiving the request.</div>
             </div>
