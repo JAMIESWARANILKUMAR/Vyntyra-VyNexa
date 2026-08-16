@@ -1,12 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   ShieldCheck, Mail, Clock, Award, Search, Trash2, 
-  AlertCircle, CheckCircle, RefreshCw, X, Send
+  AlertCircle, CheckCircle, RefreshCw, X, Send,
+  CheckCircle2, FileText, UploadCloud, Download, Users,
+  Play, Pause, Square, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { getEmailQuotaStats, getPromotionalEmailConversionStats } from "@/lib/operations.functions";
 
@@ -468,7 +472,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
             <Textarea 
               rows={5}
               value={inputText}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                 setInputText(e.target.value);
                 handleParse(e.target.value);
               }}

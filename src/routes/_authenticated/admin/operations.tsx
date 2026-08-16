@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Building2, Plus, Mail, ClipboardList, Calendar, Trash2, Users,
   ShieldAlert, Loader2, AlertCircle, UserCheck, UserX, Clock,
@@ -33,6 +33,8 @@ import {
 } from "@/lib/operations.functions";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
+import { EmployeeEvaluationForm } from "@/components/employee-evaluation-form";
+import { EmailAutomationHub } from "@/components/email-automation-hub";
 import { SmartAvatar } from "@/components/SmartAvatar";
 import { AdminInternTasksView } from "@/components/admin-intern-tasks-view";
 import { toast } from "sonner";

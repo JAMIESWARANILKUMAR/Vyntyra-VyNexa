@@ -3548,7 +3548,7 @@ export const initializeDashboardSettings = createServerFn({ method: "POST" })
     ];
     
     const { data: existing } = await supabase.from("dashboard_settings").select("portal_type, module_name");
-    const existingSet = new Set((existing || []).map(x => `${x.portal_type}_${x.module_name}`));
+    const existingSet = new Set((existing || []).map((x: any) => `${x.portal_type}_${x.module_name}`));
     
     const toInsert = [];
     for (const m of INTERN_MODULES) {

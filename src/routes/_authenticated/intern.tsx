@@ -7,7 +7,7 @@ import {
   CheckCircle2, Video, CalendarDays, User, BookOpen, Link2, FileText,
   Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
-  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight
+  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -562,7 +562,7 @@ function InternDashboard() {
             {TABS.map((t) => (
               <button 
                 key={t.id} 
-                onClick={() => setActiveTab(t.id)}
+                onClick={() => setActiveTab(t.id as any)}
                 className={`shrink-0 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
                   activeTab === t.id 
                     ? "bg-emerald-600 text-white shadow-xs" 
@@ -677,7 +677,7 @@ function InternDashboard() {
           {TABS.map((t) => (
             <button 
               key={t.id} 
-              onClick={() => setActiveTab(t.id)}
+              onClick={() => setActiveTab(t.id as any)}
               className={`shrink-0 px-3 py-1 text-xs font-semibold rounded-full transition-all whitespace-nowrap ${
                 activeTab === t.id 
                   ? "bg-emerald-600 text-white shadow-xs" 

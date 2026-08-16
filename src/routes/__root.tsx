@@ -43,16 +43,15 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (
-      error.message?.includes("Unauthorized") ||
-      error.message?.includes("Invalid token")
-    ) {
-      import("@/integrations/supabase/client").then(({ supabase }) => {
-        supabase.auth.signOut().then(() => {
-          window.location.href = "/auth/employee";
-        });
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      supabase.auth.getUser().then(({ data: { user }, error: authError }) => {
+        if (authError || !user) {
+          supabase.auth.signOut().then(() => {
+            window.location.href = "/auth/employee";
+          });
+        }
       });
-    }
+    });
   }, [error]);
 
   return (

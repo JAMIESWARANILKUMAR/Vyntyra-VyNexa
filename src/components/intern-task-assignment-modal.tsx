@@ -508,7 +508,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
               <div className="w-full">
                 <Label className="text-xs font-semibold text-slate-700">Load from Template (Optional)</Label>
                 <Select onValueChange={(val) => {
-                  const t = taskTemplates.find(x => x.id === val);
+                  const t = taskTemplates.find((x: any) => x.id === val);
                   if (t) {
                     setManualTitle(t.title);
                     setManualDescription(t.description || "");
@@ -520,7 +520,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
                     <SelectValue placeholder="Select a saved template..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {taskTemplates.map(t => (
+                    {taskTemplates.map((t: any) => (
                       <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
                     ))}
                   </SelectContent>
