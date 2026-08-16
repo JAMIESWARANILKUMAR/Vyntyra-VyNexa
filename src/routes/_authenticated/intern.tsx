@@ -3044,12 +3044,18 @@ function InternDashboard() {
                   size="lg" 
                   disabled={!paymentGatewaySelected}
                   onClick={() => {
-                    toast.info(`Initializing ${paymentGatewaySelected} Corporate Gateway...`);
-                    // In a real application, we would initialize the SDK here
-                    setTimeout(() => {
-                      toast.success("Payment successful (Simulated)");
+                    if (paymentGatewaySelected === "payu") {
+                      toast.info("Redirecting to PayU Secure Gateway...");
+                      window.open("https://u.payu.in/QrOSWDsurgyy", "_blank");
                       setShowPaymentModal(false);
-                    }, 2000);
+                    } else {
+                      toast.info(`Initializing ${paymentGatewaySelected} Corporate Gateway...`);
+                      // In a real application, we would initialize the SDK here
+                      setTimeout(() => {
+                        toast.success("Payment successful (Simulated)");
+                        setShowPaymentModal(false);
+                      }, 2000);
+                    }
                   }}
                   className={`w-full text-base font-bold h-14 ${paymentGatewaySelected === "razorpay" ? "bg-blue-600 hover:bg-blue-700" : paymentGatewaySelected === "payu" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-800"}`}
                 >
