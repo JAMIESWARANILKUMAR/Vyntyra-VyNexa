@@ -1934,6 +1934,21 @@ function InternDashboard() {
                                 <Clock className="h-3.5 w-3.5 text-slate-400" /> Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                               </div>
                             )}
+                            
+                            {/* Mentor Contact in Task */}
+                            {mentor && (
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[11px] text-slate-500 bg-indigo-50/50 p-2 rounded-lg border border-indigo-100/50">
+                                <span className="font-semibold text-indigo-700">Mentor: {mentor.full_name}</span>
+                                <a href={`mailto:${mentor.email}`} className="flex items-center gap-1 hover:text-indigo-700 transition-colors">
+                                  <Mail className="h-3 w-3" /> {mentor.email}
+                                </a>
+                                {mentor.phone_number && (
+                                  <a href={`tel:${mentor.phone_number}`} className="flex items-center gap-1 hover:text-indigo-700 transition-colors">
+                                    <Phone className="h-3 w-3" /> {mentor.phone_number}
+                                  </a>
+                                )}
+                              </div>
+                            )}
                           </div>
 
                           {/* Top Right action column */}
