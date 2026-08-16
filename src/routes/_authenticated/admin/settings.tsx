@@ -237,13 +237,6 @@ function AdminSettingsPage() {
                 <Switch checked={examFeePaid} onCheckedChange={setExamFeePaid} />
               </div>
 
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-indigo-50/50">
-                <div>
-                  <div className="text-sm font-bold text-indigo-900">Enable Payment Gateway</div>
-                  <div className="text-xs text-indigo-700/70">Allow intern to pay via RazorPay/PayU</div>
-                </div>
-                <Switch checked={isPaymentEnabled} onCheckedChange={setIsPaymentEnabled} className="data-[state=checked]:bg-indigo-600" />
-              </div>
             </div>
 
             <Button onClick={handleUpdateFee} className="mt-4 bg-amber-600 hover:bg-amber-700 text-white">

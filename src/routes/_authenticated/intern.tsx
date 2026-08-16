@@ -1795,15 +1795,9 @@ function InternDashboard() {
                               <p className="text-xs text-red-700">Please pay the mandatory exam fee of ₹{profile?.exam_fee_amount ?? 199} to unlock your final certification exam and refer-and-earn privileges.</p>
                             </div>
                           </div>
-                          {profile?.is_payment_enabled ? (
-                            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => setShowPaymentModal(true)}>
-                              Pay Now
-                            </Button>
-                          ) : (
-                            <Button size="sm" variant="outline" className="text-red-700 border-red-200 bg-white" onClick={() => toast.info("Payment gateway integration pending. Contact your administrator.")}>
-                              Pending Gateway
-                            </Button>
-                          )}
+                          <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white font-semibold" onClick={() => setShowPaymentModal(true)}>
+                            Pay Now
+                          </Button>
                         </div>
                       )}
                     </div>
