@@ -2656,10 +2656,6 @@ function InternDashboard() {
                             completedCount >= 5 
                               ? "bg-emerald-50/70 border-emerald-200 text-emerald-950 shadow-xs" 
                               : "bg-slate-50 border-slate-200/80 text-slate-500"
-                          <div className={`p-3.5 rounded-xl border text-center transition-all duration-300 transform hover:scale-[1.03] ${
-                            completedCount >= 5 
-                              ? "bg-emerald-50/70 border-emerald-200 text-emerald-950 shadow-xs" 
-                              : "bg-slate-50 border-slate-200/80 text-slate-500"
                           }`}>
                             <div className="text-xs font-bold">Tier 1: 5 Referrals</div>
                             <div className="text-[10px] mt-1 font-semibold">25% Course Refund (₹{Math.round((profile?.exam_fee_amount ?? 199) * 0.25)})</div>
