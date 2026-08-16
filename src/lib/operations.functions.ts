@@ -1252,6 +1252,46 @@ export const regenerateMyDocuments = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+// ── Admin: Purge all NOCs to force regeneration with QR + Logo ────────────
+export const purgeAllNocs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const adminClient = getAdminClient();
+
+    // Verify the caller is admin
+    const { data: role } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .single();
+    if (role?.role !== "admin") throw new Error("Unauthorized: Admin only");
+
+    // 1. Delete all NOC PDFs from storage bucket
+    let deletedCount = 0;
+    const { data: files } = await adminClient.storage
+      .from("default")
+      .list("nocs", { limit: 1000 });
+
+    if (files && files.length > 0) {
+      const paths = files.map((f: any) => "nocs/" + f.name);
+      await adminClient.storage.from("default").remove(paths);
+      deletedCount = paths.length;
+    }
+
+    // 2. Clear noc_url from all applications
+    const { data: updated } = await adminClient
+      .from("applications")
+      .update({ noc_url: null })
+      .not("noc_url", "is", null)
+      .select("id");
+
+    return {
+      success: true,
+      filesDeleted: deletedCount,
+      applicationsCleared: updated?.length || 0,
+    };
+  });
+
 export const updateUserProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => profileUpdateSchema.parse(d))

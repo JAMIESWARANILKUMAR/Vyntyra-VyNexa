@@ -3,12 +3,12 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Settings2, ShieldCheck, CreditCard, Lock, ArrowLeft, Save } from "lucide-react";
+import { Loader2, Settings2, ShieldCheck, CreditCard, Lock, ArrowLeft, Save, RefreshCw, FileText } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { getDashboardSettings, updateDashboardSetting, updateInternFeeSettings, initializeDashboardSettings, listTeamMembers } from "@/lib/operations.functions";
+import { getDashboardSettings, updateDashboardSetting, updateInternFeeSettings, initializeDashboardSettings, listTeamMembers, purgeAllNocs } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: AdminSettingsPage,
@@ -21,6 +21,7 @@ function AdminSettingsPage() {
   const doUpdateInternFeeSettings = useServerFn(updateInternFeeSettings);
   const doInitializeDashboardSettings = useServerFn(initializeDashboardSettings);
   const fetchTeamMembers = useServerFn(listTeamMembers);
+  const doPurgeAllNocs = useServerFn(purgeAllNocs);
   
   const [targetType, setTargetType] = useState<"single" | "selected" | "all">("single");
   const [internId, setInternId] = useState("");
@@ -241,6 +242,33 @@ function AdminSettingsPage() {
 
             <Button onClick={handleUpdateFee} className="mt-4 bg-amber-600 hover:bg-amber-700 text-white">
               <Save className="h-4 w-4 mr-2" /> Update Fee Profile
+            </Button>
+          </div>
+        </div>
+
+        {/* NOC Regeneration */}
+        <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
+          <div className="p-5 border-b bg-slate-50 flex items-center gap-2">
+            <FileText className="h-5 w-5 text-rose-600" />
+            <h2 className="text-lg font-bold text-slate-800">NOC Certificate Management</h2>
+          </div>
+          <div className="p-6">
+            <p className="text-sm text-muted-foreground mb-4">Purge all existing cached NOC certificates from storage and force regeneration with the latest template (includes QR verification code and Vyntyra logo). NOCs will be regenerated automatically the next time each intern accesses their dashboard.</p>
+            <Button
+              variant="destructive"
+              className="gap-2"
+              onClick={async () => {
+                if (!confirm("This will delete all cached NOC PDFs and force regeneration. Continue?")) return;
+                try {
+                  toast.info("Purging NOCs...");
+                  const result = await doPurgeAllNocs();
+                  toast.success(`Done! Deleted ${result.filesDeleted} NOC file(s), cleared ${result.applicationsCleared} application URL(s). NOCs will regenerate on next access.`);
+                } catch (err: any) {
+                  toast.error(err.message || "Failed to purge NOCs");
+                }
+              }}
+            >
+              <RefreshCw className="h-4 w-4" /> Regenerate All NOCs
             </Button>
           </div>
         </div>
