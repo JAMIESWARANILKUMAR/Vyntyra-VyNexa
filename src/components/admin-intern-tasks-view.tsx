@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, reviewDeadlineExtension, bulkDeleteTasks, deleteTaskBatch } from "@/lib/operations.functions";
+import { listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, reviewDeadlineExtension, bulkDeleteTasks, deleteTaskBatch, deleteAllInternTasks } from "@/lib/operations.functions";
 import { Button } from "@/components/ui/button";
 import { Award, CreditCard } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -25,8 +25,10 @@ export function AdminInternTasksView() {
   const doBulkDelete = useServerFn(bulkDeleteTasks);
   const doReviewDeadlineExtension = useServerFn(reviewDeadlineExtension);
   const doDeleteBatch = useServerFn(deleteTaskBatch);
+  const doClearAllTasks = useServerFn(deleteAllInternTasks);
 
   const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
@@ -153,6 +155,18 @@ export function AdminInternTasksView() {
     }
   };
 
+  const handleClearAllTasks = async () => {
+    try {
+      await doClearAllTasks();
+      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+      toast.success("All intern tasks have been cleared.");
+      setClearAllModalOpen(false);
+    } catch (err: any) {
+      toast.error("Failed to clear tasks: " + err.message);
+    }
+  };
+
   const handleExtractAll = () => {
     const tasksToExtract = selectedTaskIds.length > 0 
       ? filteredTasks.filter(t => selectedTaskIds.includes(t.id)) 
@@ -201,12 +215,21 @@ export function AdminInternTasksView() {
           </p>
         </div>
 
-        <Button
-          onClick={() => setAssignModalOpen(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md shrink-0"
-        >
-          <Plus className="h-4 w-4 mr-2" /> Assign Tasks (CSV / Manual)
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+          <Button
+            onClick={() => setClearAllModalOpen(true)}
+            variant="destructive"
+            className="font-semibold shadow-md shrink-0"
+          >
+            <Trash2 className="h-4 w-4 mr-2" /> Clear All Tasks
+          </Button>
+          <Button
+            onClick={() => setAssignModalOpen(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md shrink-0"
+          >
+            <Plus className="h-4 w-4 mr-2" /> Assign Tasks (CSV / Manual)
+          </Button>
+        </div>
       </div>
 
       {/* Metric Cards */}
@@ -591,7 +614,30 @@ export function AdminInternTasksView() {
       )}
 
       {/* Bulk / Manual Task Assignment Modal */}
-      <InternTaskAssignmentModal open={assignModalOpen} onClose={() => setAssignModalOpen(false)} />
+      <InternTaskAssignmentModal open={assignModalOpen} onOpenChange={setAssignModalOpen} />
+
+      {/* Clear All Confirmation Modal */}
+      <Dialog open={clearAllModalOpen} onOpenChange={setClearAllModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-rose-600">
+              <AlertTriangle className="h-5 w-5" /> Confirm Clear All
+            </DialogTitle>
+            <DialogDescription className="text-slate-600 pt-2">
+              Are you sure you want to delete <strong>ALL</strong> intern tasks? 
+              This action will irreversibly wipe the entire task board for every active intern.
+              <br /><br />
+              This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setClearAllModalOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleClearAllTasks}>
+              Yes, Clear All Tasks
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

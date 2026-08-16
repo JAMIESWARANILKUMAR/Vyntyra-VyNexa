@@ -339,6 +339,15 @@ export const deleteTaskBatch = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+export const deleteAllInternTasks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    // Delete all tasks targeted to interns
+    const { error } = await supabase.from("tasks").delete().eq("target_role", "intern");
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
 export const acceptTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
