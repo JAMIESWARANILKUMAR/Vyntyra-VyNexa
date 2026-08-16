@@ -74,7 +74,7 @@ export function AdminInternTasksView() {
     acc[key].push(t);
     return acc;
   }, {} as Record<string, any[]>);
-  const groupedTaskEntries = Object.values(groupedTasks).sort((a, b) => new Date(b[0].created_at).getTime() - new Date(a[0].created_at).getTime());
+  const groupedTaskEntries = (Object.values(groupedTasks) as any[][]).sort((a, b) => new Date(b[0].created_at).getTime() - new Date(a[0].created_at).getTime());
 
   // Calculate statistics
   const totalCount = tasks.length;
@@ -550,7 +550,7 @@ export function AdminInternTasksView() {
                 
                 {isExpanded && (
                   <div className="border-l-2 sm:border-l-4 border-indigo-200 dark:border-indigo-800 ml-4 sm:ml-6 divide-y bg-white dark:bg-slate-950">
-                    {group.map(t => renderTask(t))}
+                    {group.map((t: any) => renderTask(t))}
                   </div>
                 )}
               </div>

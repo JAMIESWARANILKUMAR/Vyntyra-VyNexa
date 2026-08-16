@@ -2207,6 +2207,75 @@ function OperationsDashboard() {
           onClose={() => setViewingDoc(null)}
         />
       )}
+
+      {/* Edit Task Dialog */}
+      <Dialog open={!!editingTaskByAdmin} onOpenChange={(open) => !open && setEditingTaskByAdmin(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-blue-600" /> Edit Task
+            </DialogTitle>
+          </DialogHeader>
+          {editingTaskByAdmin && (
+            <form onSubmit={handleEditTaskByAdminSubmit} className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label>Title</Label>
+                <Input
+                  required
+                  value={editingTaskByAdmin.title}
+                  onChange={(e) =>
+                    setEditingTaskByAdmin({ ...editingTaskByAdmin, title: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Description</Label>
+                <Textarea
+                  rows={3}
+                  value={editingTaskByAdmin.description || ""}
+                  onChange={(e) =>
+                    setEditingTaskByAdmin({ ...editingTaskByAdmin, description: e.target.value })
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Priority</Label>
+                  <Select
+                    value={editingTaskByAdmin.priority || "medium"}
+                    onValueChange={(v) =>
+                      setEditingTaskByAdmin({ ...editingTaskByAdmin, priority: v })
+                    }
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Due Date</Label>
+                  <Input
+                    type="date"
+                    value={editingTaskByAdmin.due_date || ""}
+                    onChange={(e) =>
+                      setEditingTaskByAdmin({ ...editingTaskByAdmin, due_date: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => setEditingTaskByAdmin(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Save Changes</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -2777,75 +2846,6 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
           </table>
         </div>
       </div>
-
-      {/* Edit Task Dialog */}
-      <Dialog open={!!editingTaskByAdmin} onOpenChange={(open) => !open && setEditingTaskByAdmin(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ClipboardList className="h-5 w-5 text-blue-600" /> Edit Task
-            </DialogTitle>
-          </DialogHeader>
-          {editingTaskByAdmin && (
-            <form onSubmit={handleEditTaskByAdminSubmit} className="space-y-4 py-2">
-              <div className="space-y-1.5">
-                <Label>Title</Label>
-                <Input
-                  required
-                  value={editingTaskByAdmin.title}
-                  onChange={(e) =>
-                    setEditingTaskByAdmin({ ...editingTaskByAdmin, title: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Description</Label>
-                <Textarea
-                  rows={3}
-                  value={editingTaskByAdmin.description || ""}
-                  onChange={(e) =>
-                    setEditingTaskByAdmin({ ...editingTaskByAdmin, description: e.target.value })
-                  }
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label>Priority</Label>
-                  <Select
-                    value={editingTaskByAdmin.priority || "medium"}
-                    onValueChange={(v) =>
-                      setEditingTaskByAdmin({ ...editingTaskByAdmin, priority: v })
-                    }
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Due Date</Label>
-                  <Input
-                    type="date"
-                    value={editingTaskByAdmin.due_date || ""}
-                    onChange={(e) =>
-                      setEditingTaskByAdmin({ ...editingTaskByAdmin, due_date: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="ghost" onClick={() => setEditingTaskByAdmin(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit">Save Changes</Button>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
