@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, reviewDeadlineExtension, bulkDeleteTasks } from "@/lib/operations.functions";
+import { listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, reviewDeadlineExtension, bulkDeleteTasks, deleteTaskBatch } from "@/lib/operations.functions";
 import { Button } from "@/components/ui/button";
 import { Award, CreditCard } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -24,9 +24,15 @@ export function AdminInternTasksView() {
   const doDelete = useServerFn(deleteTask);
   const doBulkDelete = useServerFn(bulkDeleteTasks);
   const doReviewDeadlineExtension = useServerFn(reviewDeadlineExtension);
+  const doDeleteBatch = useServerFn(deleteTaskBatch);
 
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+
+  const toggleExpand = (key: string) => {
+    setExpandedGroups(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  };
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   
@@ -59,6 +65,15 @@ export function AdminInternTasksView() {
     return titleMatches && statusMatches && priorityMatches;
   });
 
+  // Group tasks by batch
+  const groupedTasks = filteredTasks.reduce((acc, t) => {
+    const key = `${t.title}-${t.created_at}`;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(t);
+    return acc;
+  }, {} as Record<string, any[]>);
+  const groupedTaskEntries = Object.values(groupedTasks).sort((a, b) => new Date(b[0].created_at).getTime() - new Date(a[0].created_at).getTime());
+
   // Calculate statistics
   const totalCount = tasks.length;
   const inProgressCount = tasks.filter((t) => t.status === "in_progress").length;
@@ -80,6 +95,18 @@ export function AdminInternTasksView() {
       setSelectedTaskForReview(null);
     } catch (err: any) {
       toast.error("Failed to update task: " + err.message);
+    }
+  };
+
+  const handleDeleteBatch = async (title: string, created_at: string) => {
+    if (!confirm(`Are you sure you want to delete this mass-assigned task? This will delete it for ALL assigned interns.`)) return;
+    try {
+      await doDeleteBatch({ data: { title, created_at } });
+      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+      toast.success("Batch deleted successfully.");
+    } catch (err: any) {
+      toast.error("Failed to delete batch: " + err.message);
     }
   };
 
@@ -271,193 +298,238 @@ export function AdminInternTasksView() {
 
       {/* Intern Tasks Progress Table */}
       <div className="rounded-xl border bg-white dark:bg-slate-950 shadow-sm overflow-hidden divide-y">
-        {filteredTasks.length === 0 ? (
+        {groupedTaskEntries.length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-xs">
             No intern tasks found matching criteria. Click <strong className="text-indigo-600">Assign Tasks</strong> to start!
           </div>
         ) : (
-          filteredTasks.map((t) => {
-            const internProfile = t.assigned_profile;
-            const internName = internProfile?.full_name || internProfile?.email || "Assigned Intern";
-            const taskFile = t.project_requirements || t.task_file_url;
-            const submissionFile = t.deliverable_url;
+          groupedTaskEntries.map((group) => {
+            const isBatch = group.length > 1;
+            const rep = group[0];
+            const groupKey = `${rep.title}-${rep.created_at}`;
+            const isExpanded = expandedGroups.includes(groupKey);
 
-            return (
-              <div key={t.id} className="p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                {/* Bulk Checkbox */}
-                <div className="mt-1">
-                  <Checkbox 
-                    checked={selectedTaskIds.includes(t.id)} 
-                    onCheckedChange={(checked) => handleToggleSelect(t.id, checked as boolean)}
-                  />
-                </div>
+            const renderTask = (t: any) => {
+              const internProfile = t.assigned_profile;
+              const internName = internProfile?.full_name || internProfile?.email || "Assigned Intern";
+              const taskFile = t.project_requirements || t.task_file_url;
+              const submissionFile = t.deliverable_url;
 
-                {/* Intern & Task Info */}
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{t.title}</span>
-
-                    {/* Status Badge */}
-                    {t.status === "completed" && (
-                      <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px]">
-                        <CheckCircle2 className="h-3 w-3 mr-1" /> Completed
-                      </Badge>
-                    )}
-                    {(t.status === "submitted" || submissionFile) && t.status !== "completed" && (
-                      <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200 text-[10px]">
-                        <Sparkles className="h-3 w-3 mr-1" /> Submitted
-                      </Badge>
-                    )}
-                    {t.status === "in_progress" && (
-                      <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px]">
-                        <Clock className="h-3 w-3 mr-1" /> In Progress
-                      </Badge>
-                    )}
-                    {t.status === "pending" && (
-                      <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-[10px]">
-                        Pending Start
-                      </Badge>
-                    )}
-
-                    <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-600">
-                      Priority: {t.priority || "medium"}
-                    </Badge>
-
-                    <Badge variant="outline" className="text-[10px] uppercase font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
-                      Level: {t.level || "Beginner"}
-                    </Badge>
-
-                    <Badge variant="outline" className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 border-amber-200 flex items-center gap-0.5">
-                      <CreditCard className="h-3 w-3 text-amber-600" /> {t.credits || 10} Credits
-                    </Badge>
+              return (
+                <div key={t.id} className="p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  {/* Bulk Checkbox */}
+                  <div className="mt-1">
+                    <Checkbox 
+                      checked={selectedTaskIds.includes(t.id)} 
+                      onCheckedChange={(checked) => handleToggleSelect(t.id, checked as boolean)}
+                    />
                   </div>
 
-                  <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">{t.description}</p>
+                  {/* Intern & Task Info */}
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{t.title}</span>
 
-                  <div className="flex items-center gap-4 text-[11px] text-slate-500 flex-wrap pt-1">
-                    <span className="flex items-center gap-1 font-semibold text-slate-800 dark:text-slate-200">
-                      <User className="h-3.5 w-3.5 text-indigo-500" /> {internName} {internProfile?.intern_id ? `(${internProfile.intern_id})` : ""}
-                    </span>
+                      {/* Status Badge */}
+                      {t.status === "completed" && (
+                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px]">
+                          <CheckCircle2 className="h-3 w-3 mr-1" /> Completed
+                        </Badge>
+                      )}
+                      {(t.status === "submitted" || submissionFile) && t.status !== "completed" && (
+                        <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200 text-[10px]">
+                          <Sparkles className="h-3 w-3 mr-1" /> Submitted
+                        </Badge>
+                      )}
+                      {t.status === "in_progress" && (
+                        <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px]">
+                          <Clock className="h-3 w-3 mr-1" /> In Progress
+                        </Badge>
+                      )}
+                      {t.status === "pending" && (
+                        <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-[10px]">
+                          Pending Start
+                        </Badge>
+                      )}
 
-                    {t.due_date && (
-                      <span>Deadline: <strong className="text-slate-700 dark:text-slate-300">{t.due_date}</strong></span>
-                    )}
+                      <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-600">
+                        Priority: {t.priority || "medium"}
+                      </Badge>
 
-                    {taskFile && (
-                      <a
-                        href={taskFile}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium"
-                      >
-                        <FileText className="h-3.5 w-3.5" /> View Task File
-                      </a>
-                    )}
-                  </div>
+                      <Badge variant="outline" className="text-[10px] uppercase font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
+                        Level: {t.level || "Beginner"}
+                      </Badge>
 
-                  {/* Intern Submission Info */}
-                  {submissionFile && (
-                    <div className="mt-2 p-2.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 text-xs space-y-1">
-                      <div className="font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-1">
-                        <Sparkles className="h-3.5 w-3.5" /> Intern Deliverable Submitted:
-                      </div>
-                      <a
-                        href={submissionFile}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-indigo-700 dark:text-indigo-400 underline font-medium truncate block"
-                      >
-                        {submissionFile}
-                      </a>
-                      {t.progress_notes && (
-                        <div className="text-slate-600 dark:text-slate-300 text-[11px] italic">
-                          &ldquo;{t.progress_notes}&rdquo;
-                        </div>
+                      <Badge variant="outline" className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 border-amber-200 flex items-center gap-0.5">
+                        <CreditCard className="h-3 w-3 text-amber-600" /> {t.credits || 10} Credits
+                      </Badge>
+                    </div>
+
+                    <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">{t.description}</p>
+
+                    <div className="flex items-center gap-4 text-[11px] text-slate-500 flex-wrap pt-1">
+                      <span className="flex items-center gap-1 font-semibold text-slate-800 dark:text-slate-200">
+                        <User className="h-3.5 w-3.5 text-indigo-500" /> {internName} {internProfile?.intern_id ? `(${internProfile.intern_id})` : ""}
+                      </span>
+
+                      {t.due_date && (
+                        <span>Deadline: <strong className="text-slate-700 dark:text-slate-300">{t.due_date}</strong></span>
+                      )}
+
+                      {taskFile && (
+                        <a
+                          href={taskFile}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium"
+                        >
+                          <FileText className="h-3.5 w-3.5" /> View Task File
+                        </a>
                       )}
                     </div>
-                  )}
 
-                  {/* Deadline Extension Review block */}
-                  {t.extension_status === "requested" && (
-                    <div className="mt-2 p-3 rounded-lg bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200 text-xs space-y-1.5">
-                      <div className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5 text-amber-700" /> Intern Requested Deadline Extension:
-                      </div>
-                      <div className="text-slate-700 dark:text-slate-200">
-                        <strong>Reason:</strong> "{t.extension_reason || 'No explanation provided.'}"
-                      </div>
-                      <div className="text-slate-500 text-[11px]">
-                        <strong>Requested New Date:</strong> {t.extension_requested_date ? new Date(t.extension_requested_date).toLocaleDateString() : ""}
-                      </div>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <Button 
-                          size="sm"
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-6 px-2 text-[10px]"
-                          onClick={async () => {
-                            try {
-                              await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'approved' } });
-                              toast.success("Deadline extension approved!");
-                              qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
-                            } catch (e) {
-                              toast.error("Failed to approve extension");
-                            }
-                          }}
+                    {/* Intern Submission Info */}
+                    {submissionFile && (
+                      <div className="mt-2 p-2.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 text-xs space-y-1">
+                        <div className="font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-1">
+                          <Sparkles className="h-3.5 w-3.5" /> Intern Deliverable Submitted:
+                        </div>
+                        <a
+                          href={submissionFile}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-indigo-700 dark:text-indigo-400 underline font-medium truncate block"
                         >
-                          Approve
-                        </Button>
-                        <Button 
-                          size="sm"
-                          variant="outline"
-                          className="border-slate-300 text-rose-600 hover:bg-rose-50 font-bold h-6 px-2 text-[10px]"
-                          onClick={async () => {
-                            try {
-                              await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'rejected' } });
-                              toast.success("Deadline extension rejected!");
-                              qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
-                            } catch (e) {
-                              toast.error("Failed to reject extension");
-                            }
-                          }}
-                        >
-                          Reject
-                        </Button>
+                          {submissionFile}
+                        </a>
+                        {t.progress_notes && (
+                          <div className="text-slate-600 dark:text-slate-300 text-[11px] italic">
+                            &ldquo;{t.progress_notes}&rdquo;
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
+                    )}
+
+                    {/* Deadline Extension Review block */}
+                    {t.extension_status === "requested" && (
+                      <div className="mt-2 p-3 rounded-lg bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200 text-xs space-y-1.5">
+                        <div className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5 text-amber-700" /> Intern Requested Deadline Extension:
+                        </div>
+                        <div className="text-slate-700 dark:text-slate-200">
+                          <strong>Reason:</strong> "{t.extension_reason || 'No explanation provided.'}"
+                        </div>
+                        <div className="text-slate-500 text-[11px]">
+                          <strong>Requested New Date:</strong> {t.extension_requested_date ? new Date(t.extension_requested_date).toLocaleDateString() : ""}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <Button 
+                            size="sm"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-6 px-2 text-[10px]"
+                            onClick={async () => {
+                              try {
+                                await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'approved' } });
+                                toast.success("Deadline extension approved!");
+                                qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                              } catch (e) {
+                                toast.error("Failed to approve extension");
+                              }
+                            }}
+                          >
+                            Approve
+                          </Button>
+                          <Button 
+                            size="sm"
+                            variant="outline"
+                            className="border-slate-300 text-rose-600 hover:bg-rose-50 font-bold h-6 px-2 text-[10px]"
+                            onClick={async () => {
+                              try {
+                                await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'rejected' } });
+                                toast.success("Deadline extension rejected!");
+                                qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                              } catch (e) {
+                                toast.error("Failed to reject extension");
+                              }
+                            }}
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Admin Quick Actions */}
+                  <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                      onClick={() => handleUpdateStatus(t.id, "completed")}
+                    >
+                      <Check className="h-3.5 w-3.5 mr-1" /> Approve / Complete
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs text-amber-700 border-amber-200 hover:bg-amber-50"
+                      onClick={() => {
+                        setSelectedTaskForReview(t);
+                        setAdminRemarks(t.progress_notes || "");
+                      }}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5 mr-1" /> Review / Feedback
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-red-600"
+                      onClick={() => handleDeleteTask(t.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
+              );
+            };
 
-                {/* Admin Quick Actions */}
-                <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                    onClick={() => handleUpdateStatus(t.id, "completed")}
-                  >
-                    <Check className="h-3.5 w-3.5 mr-1" /> Approve / Complete
-                  </Button>
+            if (!isBatch) return renderTask(rep);
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs text-amber-700 border-amber-200 hover:bg-amber-50"
-                    onClick={() => {
-                      setSelectedTaskForReview(t);
-                      setAdminRemarks(t.progress_notes || "");
-                    }}
-                  >
-                    <RotateCcw className="h-3.5 w-3.5 mr-1" /> Review / Feedback
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 w-8 p-0 text-slate-400 hover:text-red-600"
-                    onClick={() => handleDeleteTask(t.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+            return (
+              <div key={groupKey} className="flex flex-col border-b last:border-0 border-slate-200 dark:border-slate-800">
+                <div 
+                  className="p-4 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-between cursor-pointer" 
+                  onClick={() => toggleExpand(groupKey)}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                    <Badge variant="outline" className="w-fit bg-indigo-100 text-indigo-700 border-indigo-200 flex items-center gap-1 px-2.5">
+                      <Sparkles className="h-3 w-3" /> Mass Assigned Batch
+                    </Badge>
+                    <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{rep.title}</span>
+                    <span className="text-xs text-slate-500 font-medium">({group.length} Interns Assigned)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteBatch(rep.title, rep.created_at); }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-8 text-xs font-semibold px-3">
+                      {isExpanded ? "Collapse" : "Expand"}
+                    </Button>
+                  </div>
                 </div>
+                
+                {isExpanded && (
+                  <div className="border-l-2 sm:border-l-4 border-indigo-200 dark:border-indigo-800 ml-4 sm:ml-6 divide-y bg-white dark:bg-slate-950">
+                    {group.map(t => renderTask(t))}
+                  </div>
+                )}
               </div>
             );
           })

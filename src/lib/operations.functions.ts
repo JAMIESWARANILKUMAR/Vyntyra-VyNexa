@@ -330,6 +330,15 @@ export const deleteTask = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+export const deleteTaskBatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ title: z.string(), created_at: z.string() }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabase.from("tasks").delete().eq("title", data.title).eq("created_at", data.created_at);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
 export const acceptTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
@@ -2735,10 +2744,49 @@ export const listAutomatedEmailLogs = createServerFn({ method: "GET" })
       email_type: "selection",
     }));
 
+    // Fetch applicant and intern profiles for these emails to show progression status
+    const allEmails = [
+      ...(promoLogs || []).map((l: any) => l.recipient_email),
+      ...(selectionLogs || []).map((l: any) => l.recipient_email)
+    ].filter(Boolean);
+    const uniqueEmails = Array.from(new Set(allEmails));
+
+    const apps: any[] = [];
+    const interns: any[] = [];
+    
+    // Chunking to avoid URL length / IN clause limits
+    const chunkSize = 500;
+    for (let i = 0; i < uniqueEmails.length; i += chunkSize) {
+      const chunk = uniqueEmails.slice(i, i + chunkSize);
+      
+      const [appRes, internRes] = await Promise.all([
+        adminClient.from("applications").select("email, status").in("email", chunk),
+        adminClient.from("intern_profiles").select("email, status").in("email", chunk)
+      ]);
+      
+      if (appRes.data) apps.push(...appRes.data);
+      if (internRes.data) interns.push(...internRes.data);
+    }
+
+    const getRecipientStatus = (email: string) => {
+      if (!email) return "Not Applied";
+      const intern = interns.find(i => i.email === email);
+      if (intern) return "Hired";
+      
+      const app = apps.find(a => a.email === email);
+      if (app) {
+        if (app.status === "selected" || app.status === "hired") return "Selected";
+        if (app.status === "rejected") return "Rejected";
+        return "Applied";
+      }
+      
+      return "Not Applied";
+    };
+
     // Merge: promotional first (already most recent first), then selection
     const allLogs = [
-      ...(promoLogs || []).map((l: any) => ({ ...l, email_type: "promotional" })),
-      ...normalizedSelection,
+      ...(promoLogs || []).map((l: any) => ({ ...l, email_type: "promotional", applicant_status: getRecipientStatus(l.recipient_email) })),
+      ...normalizedSelection.map((l: any) => ({ ...l, applicant_status: getRecipientStatus(l.recipient_email) })),
     ];
 
     // Re-sort combined by sent_at descending

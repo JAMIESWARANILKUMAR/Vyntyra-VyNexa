@@ -717,10 +717,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                     const sentDate = dateObj.toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" });
                     const sentTime = dateObj.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
 
-                    const emailKey = log.recipient_email?.toLowerCase().trim();
-                    const matchedLog = conv.logs.find((l: any) => l.recipient_email?.toLowerCase().trim() === emailKey);
-                    const isMatched = matchedLog?.conversionStatus === "matched";
-                    const matchedApp = matchedLog?.matchedApplication;
+                    const isMatched = log.applicant_status && log.applicant_status !== "Not Applied";
 
                     const isSelectionEmail = String(log.id).startsWith("sel_");
                     return (
@@ -733,10 +730,10 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                           )}
                         </td>
                         <td className="px-5 py-3.5 font-bold text-slate-900">{log.recipient_email}</td>
-                        <td className="px-5 py-3.5 text-slate-600">{log.recipient_name || "â€”"}</td>
-                        <td className="px-5 py-3.5 text-slate-600">{log.university_name || "â€”"}</td>
-                        <td className="px-5 py-3.5 text-slate-600 font-medium">{log.domain || "â€”"}</td>
-                        <td className="px-5 py-3.5 text-emerald-700 font-bold">{log.sub_domain || "â€”"}</td>
+                        <td className="px-5 py-3.5 text-slate-600">{log.recipient_name || "—"}</td>
+                        <td className="px-5 py-3.5 text-slate-600">{log.university_name || "—"}</td>
+                        <td className="px-5 py-3.5 text-slate-600 font-medium">{log.domain || "—"}</td>
+                        <td className="px-5 py-3.5 text-emerald-700 font-bold">{log.sub_domain || "—"}</td>
                         <td className="px-5 py-3.5">
                           {log.provider === "brevo" ? (
                             <span className="bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
@@ -768,8 +765,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                         </td>
                         <td className="px-5 py-3.5">
                           {isMatched ? (
-                            <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-extrabold px-2.5 py-1 rounded-full inline-flex items-center gap-1 shadow-xs">
-                              <CheckCircle2 className="h-3 w-3 text-emerald-600" /> REGISTERED ({matchedApp?.status || "applied"})
+                            <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-extrabold px-2.5 py-1 rounded-full inline-flex items-center gap-1 shadow-xs uppercase">
+                              <CheckCircle2 className="h-3 w-3 text-emerald-600" /> REGISTERED ({log.applicant_status})
                             </span>
                           ) : (
                             <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md">PENDING</span>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,6 +68,17 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
     .map((i: any) => i.position || "General")
   )).filter(Boolean);
   const [targetSubDomain, setTargetSubDomain] = useState<string>("All Sub-Domains");
+
+  useEffect(() => {
+    if (!internsQ.data || internsQ.data.length === 0) return;
+    const filteredInterns = internsQ.data.filter((i: any) => {
+      const matchDomain = targetDomain === "All Domains" || (i.department || "General") === targetDomain;
+      const matchSubDomain = targetSubDomain === "All Sub-Domains" || (i.position || "General") === targetSubDomain;
+      return matchDomain && matchSubDomain;
+    });
+    setSelectedInternIds(filteredInterns.map((i: any) => i.id));
+    setSelectAll(true);
+  }, [targetDomain, targetSubDomain, internsQ.data]);
 
 
   // Manual Form State
