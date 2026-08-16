@@ -3504,7 +3504,8 @@ export const updateInternFeeSettings = createServerFn({ method: "POST" })
     if (data.is_fee_exempted !== undefined) updateData.is_fee_exempted = data.is_fee_exempted;
     if (data.exam_fee_paid !== undefined) updateData.exam_fee_paid = data.exam_fee_paid;
     if (data.fee_payment_scheduled !== undefined) updateData.fee_payment_scheduled = data.fee_payment_scheduled;
-    if (data.is_payment_enabled !== undefined) updateData.is_payment_enabled = data.is_payment_enabled;
+    // Removed is_payment_enabled as it does not exist in the database schema yet
+    // if (data.is_payment_enabled !== undefined) updateData.is_payment_enabled = data.is_payment_enabled;
 
     if (data.internIds && data.internIds.length > 0) {
       const { error } = await supabase
