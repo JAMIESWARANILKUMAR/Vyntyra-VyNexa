@@ -30,6 +30,7 @@ import { ProfileAvatar } from "@/components/profile-avatar";
 import { PayslipModal } from "@/components/payslip-modal";
 import { IdCardModal } from "@/components/id-card-modal";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
+import { EmployeeReferEarn } from "@/components/employee-refer-earn";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -882,6 +883,7 @@ function EmployeeDashboard() {
     { id: "locker", label: "Doc Locker", enabled: isModuleEnabled("locker") },
     { id: "contact", label: "Profile (ESS)", enabled: isModuleEnabled("contact") },
     { id: "security", label: "Security & NOC", enabled: isModuleEnabled("security") },
+    { id: "refer", label: "Refer & Earn", enabled: isModuleEnabled("refer") },
   ].filter(t => t.enabled);
 
   return (
@@ -2308,6 +2310,12 @@ function EmployeeDashboard() {
                   ))}
                 </div>
               </div>
+            </motion.div>
+          )}
+
+          {activeTab === "refer" && (
+            <motion.div key="refer" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full">
+              <EmployeeReferEarn />
             </motion.div>
           )}
 

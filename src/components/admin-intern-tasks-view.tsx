@@ -118,6 +118,7 @@ export function AdminInternTasksView() {
     try {
       await doBulkDelete({ data: { taskIds: selectedTaskIds } });
       qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
       setSelectedTaskIds([]);
       toast.success(`${selectedTaskIds.length} tasks deleted successfully.`);
     } catch (err: any) {

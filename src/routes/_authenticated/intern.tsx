@@ -7,7 +7,7 @@ import {
   CheckCircle2, Video, CalendarDays, User, BookOpen, Link2, FileText,
   Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
-  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, X
+  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, X, Trophy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -292,7 +292,7 @@ function InternDashboard() {
   const mentorQ = useQuery({
     queryKey: ["mentor", profile?.mentor_id],
     queryFn: async () => {
-      const { data } = await supabase.from('profiles').select('full_name, email, department').eq('id', profile?.mentor_id).single();
+      const { data } = await supabase.from('profiles').select('full_name, email, department, phone_number').eq('id', profile?.mentor_id).single();
       return data;
     },
     enabled: !!profile?.mentor_id
@@ -480,6 +480,7 @@ function InternDashboard() {
   const myTasks = tasks.filter((t: any) => !(t.is_pool_task === true && !t.assigned_to));
   const pendingTasks = myTasks.filter((t) => t.status === "pending" || t.status === "in_progress");
   const completedTasks = myTasks.filter((t) => t.status === "completed");
+  const totalPoints = completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
   const progress = myTasks.length > 0 ? Math.round((completedTasks.length / myTasks.length) * 100) : 0;
 
   async function handleSignOut() {
@@ -997,6 +998,7 @@ function InternDashboard() {
               {[
                 { icon: <ClipboardList className="h-5 w-5 text-amber-600" />, label: "Pending Tasks", value: pendingTasks.length, color: "bg-amber-50 border-amber-100" },
                 { icon: <CheckCircle2 className="h-5 w-5 text-emerald-600" />, label: "Completed", value: completedTasks.length, color: "bg-emerald-50 border-emerald-100" },
+                { icon: <Trophy className="h-5 w-5 text-yellow-500" />, label: "Total Points", value: totalPoints, color: "bg-yellow-50 border-yellow-100" },
                 { icon: <Video className="h-5 w-5 text-blue-600" />, label: "Meetings", value: meetings.filter(m => new Date(m.scheduled_at) >= new Date()).length, color: "bg-blue-50 border-blue-100" },
                 { icon: <BookOpen className="h-5 w-5 text-purple-600" />, label: "Resources", value: resources.length, color: "bg-purple-50 border-purple-100" },
               ].map((s, i) => (
@@ -1769,7 +1771,7 @@ function InternDashboard() {
                           <div className="flex items-start gap-1.5">
                             <CreditCard className="h-3.5 w-3.5 text-amber-700 shrink-0 mt-0.5" />
                             <span>
-                              <strong>Exam Fee:</strong> <strong>{profile?.is_fee_exempted ? "FEE exemption provided by VYNTYRA" : `₹${profile?.exam_fee_amount ?? 199} (Inclusive of all GST)`}</strong>
+                              <strong>Exam Fee:</strong> <strong>{profile?.is_fee_exempted ? "FEE exemption provided by VYNTYRA" : `₹${profile?.exam_fee_amount} (Inclusive of all GST)`}</strong>
                               {!profile?.is_fee_exempted && " — Mandatory skilling & credential verification fee."}
                             </span>
                           </div>
@@ -1792,7 +1794,7 @@ function InternDashboard() {
                             </div>
                             <div>
                               <h4 className="text-sm font-bold text-red-900">Exam Fee Payment Pending</h4>
-                              <p className="text-xs text-red-700">Please pay the mandatory exam fee of ₹{profile?.exam_fee_amount ?? 199} to unlock your final certification exam and refer-and-earn privileges.</p>
+                              <p className="text-xs text-red-700">Please pay the mandatory exam fee of ₹{profile?.exam_fee_amount} to unlock your final certification exam and refer-and-earn privileges.</p>
                             </div>
                           </div>
                           <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white font-semibold" onClick={() => setShowPaymentModal(true)}>
@@ -1841,9 +1843,18 @@ function InternDashboard() {
             <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b flex items-center justify-between">
                 <h2 className="font-semibold flex items-center gap-2"><ClipboardList className="h-5 w-5 text-emerald-600" />My Tasks</h2>
-                <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-tasks"] })} className="gap-1.5">
-                  <RefreshCw className={`h-3.5 w-3.5 ${tasksQ.isFetching ? "animate-spin" : ""}`} />Refresh
-                </Button>
+                <div className="flex items-center gap-3">
+                  {mentor && (
+                    <div className="hidden md:flex text-xs bg-indigo-50/80 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100 items-center gap-3">
+                      <span className="font-semibold">Mentor: {mentor.full_name}</span>
+                      <a href={`mailto:${mentor.email}`} className="flex items-center gap-1 hover:text-indigo-900 transition-colors"><Mail className="h-3 w-3" /> {mentor.email}</a>
+                      {mentor.phone_number && <a href={`tel:${mentor.phone_number}`} className="flex items-center gap-1 hover:text-indigo-900 transition-colors"><Phone className="h-3 w-3" /> {mentor.phone_number}</a>}
+                    </div>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-tasks"] })} className="gap-1.5">
+                    <RefreshCw className={`h-3.5 w-3.5 ${tasksQ.isFetching ? "animate-spin" : ""}`} />Refresh
+                  </Button>
+                </div>
               </div>
               {tasksQ.isLoading ? (
                 <div className="p-12 flex items-center justify-center gap-2 text-slate-400"><Loader2 className="h-5 w-5 animate-spin" />Loading tasks...</div>
@@ -2654,7 +2665,7 @@ function InternDashboard() {
                               : "bg-slate-50 border-slate-200/80 text-slate-500"
                           }`}>
                             <div className="text-xs font-bold">Tier 1: 5 Referrals</div>
-                            <div className="text-[10px] mt-1 font-semibold">25% Course Refund (₹{Math.round((profile?.exam_fee_amount ?? 199) * 0.25)})</div>
+                            <div className="text-[10px] mt-1 font-semibold">25% Course Refund (₹{Math.round((profile?.exam_fee_amount || 0) * 0.25)})</div>
                             {completedCount >= 5 && <div className="text-[9px] font-bold text-emerald-600 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> ✓ Achieved!</div>}
                           </div>
                           
@@ -2664,7 +2675,7 @@ function InternDashboard() {
                               : "bg-slate-50 border-slate-200/80 text-slate-500"
                           }`}>
                             <div className="text-xs font-bold">Tier 2: 10 Referrals</div>
-                            <div className="text-[10px] mt-1 font-semibold">50% Course Refund (₹{Math.round((profile?.exam_fee_amount ?? 199) * 0.50)})</div>
+                            <div className="text-[10px] mt-1 font-semibold">50% Course Refund (₹{Math.round((profile?.exam_fee_amount || 0) * 0.50)})</div>
                             {completedCount >= 10 && <div className="text-[9px] font-bold text-emerald-600 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> ✓ Achieved!</div>}
                           </div>
                         </div>
@@ -3012,7 +3023,7 @@ function InternDashboard() {
                     <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M22.43 2.73a1.47 1.47 0 00-1.46-1.14H8.79A1.47 1.47 0 007.41 2.7L.58 20.89a1.47 1.47 0 001.37 1.99h12.18a1.47 1.47 0 001.38-1.07l6.9-19.08z"/></svg>
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-lg">RazorPay</h4>
+                    <h4 className="font-bold text-slate-900 text-lg">RazorPay <span className="text-sm font-normal text-slate-500">(Under Integration)</span></h4>
                     <p className="text-xs text-slate-500">UPI, Cards, Netbanking, Wallets</p>
                   </div>
                   {paymentGatewaySelected === "razorpay" && <Check className="h-6 w-6 text-blue-600 ml-auto" />}
@@ -3040,7 +3051,15 @@ function InternDashboard() {
                   onClick={() => {
                     if (paymentGatewaySelected === "payu") {
                       toast.info("Redirecting to PayU Secure Gateway...");
-                      window.open("https://u.payu.in/QrOSWDsurgyy", "_blank");
+                      
+                      const amount = profile?.exam_fee_amount || 0;
+                      const email = profile?.email || "";
+                      const phone = profile?.phone || "";
+                      const description = "Exam Fee Payment";
+                      
+                      const payuUrl = `https://u.payu.in/QrOSWDsurgyy?amount=${amount}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}&description=${encodeURIComponent(description)}`;
+                      window.open(payuUrl, "_blank");
+                      
                       setShowPaymentModal(false);
                     } else {
                       toast.info(`Initializing ${paymentGatewaySelected} Corporate Gateway...`);
@@ -3053,7 +3072,7 @@ function InternDashboard() {
                   }}
                   className={`w-full text-base font-bold h-14 ${paymentGatewaySelected === "razorpay" ? "bg-blue-600 hover:bg-blue-700" : paymentGatewaySelected === "payu" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-800"}`}
                 >
-                  Pay ₹{profile?.exam_fee_amount ?? 199} Securely
+                  Pay ₹{profile?.exam_fee_amount || 0} Securely
                 </Button>
                 
                 <div className="text-center space-y-1">

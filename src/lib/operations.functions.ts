@@ -278,10 +278,16 @@ export const listTasks = createServerFn({ method: "GET" })
 
     return (rawList || []).filter((t: any) => {
       if (role === 'admin' || role === 'super_admin') return true;
-      if (t.assigned_to && t.assigned_to === context.userId) return true;
-      if (t.target_user_id && t.target_user_id === context.userId) return true;
-      if (t.profiles?.mentor_id && t.profiles.mentor_id === context.userId) return true;
       if (t.is_pool_task) return true;
+      
+      const isAssignedToMe = (t.assigned_to && t.assigned_to === context.userId) || (t.target_user_id && t.target_user_id === context.userId);
+      const isAssignedToSomeoneElse = (t.assigned_to && t.assigned_to !== context.userId) || (t.target_user_id && t.target_user_id !== context.userId);
+      
+      if (isAssignedToMe) return true;
+      if (t.profiles?.mentor_id && t.profiles.mentor_id === context.userId) return true;
+      
+      if (isAssignedToSomeoneElse) return false;
+
       if (!t.target_role || t.target_role === 'all' || t.target_role === role) return true;
       return false;
     });
