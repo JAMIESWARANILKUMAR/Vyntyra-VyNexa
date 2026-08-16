@@ -1136,6 +1136,7 @@ export const regenerateMyDocuments = createServerFn({ method: "POST" })
       if (url.startsWith("data:image")) {
         photoBase64 = url;
       } else {
+        const { resolveGooglePhotosUrl } = await import("./google-photos");
         const resolvedUrl = await resolveGooglePhotosUrl(url);
         if (resolvedUrl) {
           try {
