@@ -33,8 +33,7 @@ import {
 } from "@/lib/operations.functions";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
-import { EmployeeEvaluationForm } from "@/components/employee-evaluation-form";
-import { EmailAutomationHub } from "@/components/email-automation-hub";
+import EmailAutomationHub from "@/components/email-automation-hub";
 import { SmartAvatar } from "@/components/SmartAvatar";
 import { AdminInternTasksView } from "@/components/admin-intern-tasks-view";
 import { toast } from "sonner";
