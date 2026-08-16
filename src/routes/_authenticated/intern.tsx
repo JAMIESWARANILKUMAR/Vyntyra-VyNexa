@@ -7,7 +7,7 @@ import {
   CheckCircle2, Video, CalendarDays, User, BookOpen, Link2, FileText,
   Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
-  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, X, Trophy
+  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, X, Trophy, Flame
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -226,6 +226,57 @@ function InternDashboard() {
   const docsQ = useQuery({ queryKey: ["my-documents"], queryFn: () => fetchMyDocuments(), staleTime: 1000 * 60 * 30 });
 
   const attendanceLogs: any[] = attendanceQ.data || [];
+
+  // Helper to get local date string YYYY-MM-DD
+  const getLocalDateString = (dateInput: any) => {
+    if (!dateInput) return "";
+    const d = new Date(dateInput);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper to calculate day streak based on attendance logs
+  const calculateStreak = (logs: any[]) => {
+    if (!logs || logs.length === 0) return 0;
+    
+    const dates = Array.from(new Set(logs.map(log => getLocalDateString(log.date))))
+      .filter(Boolean)
+      .sort((a, b) => b.localeCompare(a));
+
+    if (dates.length === 0) return 0;
+
+    const todayStrStr = getLocalDateString(new Date());
+    
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = getLocalDateString(yesterday);
+
+    const newestDate = dates[0];
+    if (newestDate !== todayStrStr && newestDate !== yesterdayStr) {
+      return 0;
+    }
+
+    let streak = 1;
+    for (let i = 0; i < dates.length - 1; i++) {
+      const current = new Date(dates[i]);
+      const next = new Date(dates[i+1]);
+      
+      const diffTime = Math.abs(current.getTime() - next.getTime());
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) {
+        streak++;
+      } else if (diffDays > 1) {
+        break;
+      }
+    }
+    return streak;
+  };
+
+  const dayStreak = calculateStreak(attendanceLogs);
+
   const todayStr = new Date().toISOString().split('T')[0];
   const todayDateStr = new Date().toDateString();
   const todayAttendance = attendanceLogs.find((a: any) => {
@@ -481,8 +532,10 @@ function InternDashboard() {
   const myTasks = tasks.filter((t: any) => !(t.is_pool_task === true && !t.assigned_to));
   const pendingTasks = myTasks.filter((t) => t.status === "pending" || t.status === "in_progress");
   const completedTasks = myTasks.filter((t) => t.status === "completed");
-  const totalPoints = completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
-  const progress = myTasks.length > 0 ? Math.round((completedTasks.length / myTasks.length) * 100) : 0;
+  const earnedCredits = completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
+  const totalAssignedCredits = myTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
+  const totalPoints = earnedCredits; // for backwards compatibility
+  const progress = totalAssignedCredits > 0 ? Math.round((earnedCredits / totalAssignedCredits) * 100) : 0;
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -995,19 +1048,20 @@ function InternDashboard() {
             )}
 
             {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {[
                 { icon: <ClipboardList className="h-5 w-5 text-amber-600" />, label: "Pending Tasks", value: pendingTasks.length, color: "bg-amber-50 border-amber-100" },
                 { icon: <CheckCircle2 className="h-5 w-5 text-emerald-600" />, label: "Completed", value: completedTasks.length, color: "bg-emerald-50 border-emerald-100" },
-                { icon: <Trophy className="h-5 w-5 text-yellow-500" />, label: "Total Points", value: totalPoints, color: "bg-yellow-50 border-yellow-100" },
+                { icon: <CreditCard className="h-5 w-5 text-indigo-600" />, label: "Credits Score", value: `${earnedCredits} / ${totalAssignedCredits}`, color: "bg-indigo-50 border-indigo-100" },
+                { icon: <Flame className="h-5 w-5 text-orange-500 animate-pulse" />, label: "Day Streak", value: `${dayStreak} Days`, color: "bg-orange-50 border-orange-100" },
                 { icon: <Video className="h-5 w-5 text-blue-600" />, label: "Meetings", value: meetings.filter(m => new Date(m.scheduled_at) >= new Date()).length, color: "bg-blue-50 border-blue-100" },
                 { icon: <BookOpen className="h-5 w-5 text-purple-600" />, label: "Resources", value: resources.length, color: "bg-purple-50 border-purple-100" },
               ].map((s, i) => (
                 <div key={i} className={`rounded-xl border p-4 flex items-center gap-3 ${s.color}`}>
                   <div className="h-9 w-9 rounded-lg bg-white flex items-center justify-center shadow-sm">{s.icon}</div>
                   <div>
-                    <div className="text-2xl font-bold text-slate-800">{s.value}</div>
-                    <div className="text-xs text-slate-500 uppercase tracking-wider">{s.label}</div>
+                    <div className="text-xl font-bold text-slate-800 truncate">{s.value}</div>
+                    <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{s.label}</div>
                   </div>
                 </div>
               ))}
@@ -1638,14 +1692,16 @@ function InternDashboard() {
                 <div className="p-5 rounded-xl border bg-amber-50/50 border-amber-200 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-xs uppercase text-amber-800">PPO Conversion Score</span>
-                    <span className="font-mono font-bold text-base text-amber-900">88 / 100</span>
+                    <span className="font-mono font-bold text-base text-amber-900">
+                      {Math.min(100, Math.round(progress * 0.8 + Math.min(20, dayStreak * 2)))} / 100
+                    </span>
                   </div>
                   <div className="h-3 bg-amber-200/60 rounded-full overflow-hidden">
-                    <div className="h-full bg-amber-500 rounded-full" style={{ width: '88%' }} />
+                    <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.min(100, Math.round(progress * 0.8 + Math.min(20, dayStreak * 2)))}%` }} />
                   </div>
                   <div className="text-xs text-amber-800 space-y-1">
-                    <div>✓ Task Completion Rate &gt; 85%</div>
-                    <div>✓ Daily Standup Compliance &gt; 90%</div>
+                    <div>{progress >= 85 ? "✓" : "○"} Task Credits Progress ({progress}%)</div>
+                    <div>{dayStreak >= 5 ? "✓" : "○"} Day Clock-In Streak ({dayStreak} Days)</div>
                     <div>✓ Mid-Term Appraisal Grade: Exceeds Expectations</div>
                   </div>
                 </div>
