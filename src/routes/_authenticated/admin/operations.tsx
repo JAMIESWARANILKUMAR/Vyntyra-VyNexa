@@ -2347,6 +2347,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
   const [form, setForm] = useState(user || {});
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingLetter, setUploadingLetter] = useState(false);
+  const [uploadingCertificate, setUploadingCertificate] = useState(false);
 
   useEffect(() => {
     if (user) setForm(user);
@@ -2373,7 +2374,8 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
         security_level: cleanValue(form.security_level),
         emergency_contact: cleanValue(form.emergency_contact),
         bank_details: cleanValue(form.bank_details),
-        department: cleanValue(form.department)
+        department: cleanValue(form.department),
+        certificate_url: cleanValue(form.certificate_url)
       } });
       toast.success("Profile updated successfully");
       qc.invalidateQueries({ queryKey: ["team-members"] });
@@ -2383,18 +2385,26 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
     }
   }
 
-  async function handleFileUpload(file: File, type: "avatar" | "letter") {
+  async function handleFileUpload(file: File, type: "avatar" | "letter" | "certificate") {
     const isAvatar = type === "avatar";
-    isAvatar ? setUploadingAvatar(true) : setUploadingLetter(true);
+    const isLetter = type === "letter";
+    if (isAvatar) setUploadingAvatar(true);
+    else if (isLetter) setUploadingLetter(true);
+    else setUploadingCertificate(true);
     try {
       const uploadInfo = await doGetUploadUrl({ data: { filename: file.name, contentType: file.type } });
       await fetch(uploadInfo.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-      setForm((prev: any) => ({ ...prev, [isAvatar ? "avatar_url" : "offer_letter_url"]: uploadInfo.fileUrl }));
-      toast.success(isAvatar ? "Avatar uploaded" : "Offer letter uploaded");
+      setForm((prev: any) => ({ 
+        ...prev, 
+        [isAvatar ? "avatar_url" : isLetter ? "offer_letter_url" : "certificate_url"]: uploadInfo.fileUrl 
+      }));
+      toast.success(isAvatar ? "Avatar uploaded" : isLetter ? "Offer letter uploaded" : "Certificate uploaded");
     } catch (err: any) {
       toast.error("Upload failed");
     } finally {
-      isAvatar ? setUploadingAvatar(false) : setUploadingLetter(false);
+      if (isAvatar) setUploadingAvatar(false);
+      else if (isLetter) setUploadingLetter(false);
+      else setUploadingCertificate(false);
     }
   }
 
@@ -2447,6 +2457,24 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
             {form.offer_letter_url && (
               <a href={form.offer_letter_url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
                 <FileText className="h-3 w-3" /> View Offer Letter
+              </a>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Certificate</Label>
+            <div className="flex gap-2">
+              <Input value={form.certificate_url || ""} onChange={e => setForm({...form, certificate_url: e.target.value})} placeholder="https://example.com/certificate.pdf" />
+              <div className="relative shrink-0">
+                <Button type="button" variant="outline" disabled={uploadingCertificate} className="w-[100px]">
+                  {uploadingCertificate ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload"}
+                </Button>
+                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="application/pdf,image/*" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "certificate"); }} />
+              </div>
+            </div>
+            {form.certificate_url && (
+              <a href={form.certificate_url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
+                <FileText className="h-3 w-3" /> View Certificate
               </a>
             )}
           </div>

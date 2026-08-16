@@ -1099,6 +1099,7 @@ const profileUpdateSchema = z.object({
   emergency_contact: z.string().optional().nullable(),
   bank_details: z.string().optional().nullable(),
   department: z.string().optional().nullable(),
+  certificate_url: z.string().optional().nullable(),
 });
 
 export const regenerateMyDocuments = createServerFn({ method: "POST" })
@@ -1260,6 +1261,7 @@ export const updateUserProfile = createServerFn({ method: "POST" })
         if (updates.end_date !== undefined) coreUpdates.end_date = updates.end_date;
         if (updates.avatar_url !== undefined) coreUpdates.avatar_url = updates.avatar_url;
         if (updates.offer_letter_url !== undefined) coreUpdates.offer_letter_url = updates.offer_letter_url;
+        if (updates.certificate_url !== undefined) coreUpdates.certificate_url = updates.certificate_url;
         
         const { error: fallbackError } = await supabase.from("profiles").upsert(coreUpdates);
         if (fallbackError) throw new Error(fallbackError.message);
