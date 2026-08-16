@@ -129,3 +129,29 @@ export async function insertUserNotification(params: {
     console.warn("[user_notifications] insert failed:", error.message);
   }
 }
+
+export const sendTaskNotification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    taskId: z.string().uuid(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const { data: task, error } = await supabase
+      .from("tasks")
+      .select("id, title, due_date, assigned_to")
+      .eq("id", data.taskId)
+      .single();
+
+    if (error || !task) throw new Error("Task not found");
+    if (!task.assigned_to) throw new Error("Task is not assigned to any intern");
+
+    await insertUserNotification({
+      userId: task.assigned_to,
+      type: "task",
+      title: "New Task Alert",
+      message: `You have been assigned a new task: "${task.title}". Please check your tasks dashboard and start working. Due: ${task.due_date ? new Date(task.due_date).toLocaleDateString() : "No deadline"}.`,
+      metadata: { taskId: task.id },
+    });
+
+    return { success: true };
+  });

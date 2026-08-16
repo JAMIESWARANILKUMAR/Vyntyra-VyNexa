@@ -10,8 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { InternTaskAssignmentModal } from "@/components/intern-task-assignment-modal";
 import {
   ClipboardList, Search, Plus, CheckCircle2, Clock, AlertTriangle, ExternalLink,
-  Trash2, Sparkles, Filter, FileText, Check, RotateCcw, User, Eye, Download
+  Trash2, Sparkles, Filter, FileText, Check, RotateCcw, User, Eye, Download, Bell
 } from "lucide-react";
+import { sendTaskNotification } from "@/lib/notifications.functions";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +27,7 @@ export function AdminInternTasksView() {
   const doReviewDeadlineExtension = useServerFn(reviewDeadlineExtension);
   const doDeleteBatch = useServerFn(deleteTaskBatch);
   const doClearAllTasks = useServerFn(deleteAllInternTasks);
+  const doSendNotification = useServerFn(sendTaskNotification);
 
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
@@ -504,6 +506,27 @@ export function AdminInternTasksView() {
                     >
                       <RotateCcw className="h-3.5 w-3.5 mr-1" /> Review / Feedback
                     </Button>
+
+                    {t.assigned_to && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs text-blue-700 border-blue-200 hover:bg-blue-50"
+                        onClick={async () => {
+                          const loadingToast = toast.loading("Sending notification to intern...");
+                          try {
+                            await doSendNotification({ data: { taskId: t.id } });
+                            toast.dismiss(loadingToast);
+                            toast.success("Notification sent successfully!");
+                          } catch (err: any) {
+                            toast.dismiss(loadingToast);
+                            toast.error("Failed to send notification: " + err.message);
+                          }
+                        }}
+                      >
+                        <Bell className="h-3.5 w-3.5 mr-1" /> Send Notification
+                      </Button>
+                    )}
 
                     <Button
                       size="sm"
