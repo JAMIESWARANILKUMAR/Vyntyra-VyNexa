@@ -1,35 +1,36 @@
 import { createMiddleware } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { supabase } from './client';
+import { redirect, isRedirect } from '@tanstack/react-router'
 
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
     const request = getRequest();
 
     if (!request?.headers) {
-      throw new Error('Unauthorized: No request headers available');
+      throw redirect({ to: '/' });
     }
 
     const authHeader = request.headers.get('authorization');
 
     if (!authHeader) {
-      throw new Error('Unauthorized: No authorization header provided');
+      throw redirect({ to: '/' });
     }
 
     if (!authHeader.startsWith('Bearer ')) {
-      throw new Error('Unauthorized: Only Bearer tokens are supported');
+      throw redirect({ to: '/' });
     }
 
     const token = authHeader.replace('Bearer ', '');
     if (!token) {
-      throw new Error('Unauthorized: No token provided');
+      throw redirect({ to: '/' });
     }
 
     try {
         const { data: { user }, error } = await supabase.auth.getUser(token);
         
         if (error || !user) {
-           throw new Error('Unauthorized: Invalid token');
+           throw redirect({ to: '/' });
         }
 
         return next({
@@ -39,8 +40,11 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
             },
         });
     } catch (error) {
+        if (isRedirect(error)) {
+            throw error;
+        }
         console.error("Supabase auth verification error", error);
-        throw new Error('Unauthorized: Invalid token');
+        throw redirect({ to: '/' });
     }
   },
 );
