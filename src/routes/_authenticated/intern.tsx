@@ -3088,17 +3088,17 @@ function InternDashboard() {
             <div className="p-8 space-y-6">
               <div className="flex flex-col gap-4">
                 <button
-                  onClick={() => setPaymentGatewaySelected("razorpay")}
-                  className={`flex items-center gap-4 p-5 rounded-2xl border-2 transition-all duration-200 text-left ${paymentGatewaySelected === "razorpay" ? "border-blue-600 bg-blue-50/50 shadow-md shadow-blue-900/5" : "border-slate-200 hover:border-blue-400 hover:bg-slate-50"}`}
+                  disabled
+                  type="button"
+                  className="flex items-center gap-4 p-5 rounded-2xl border-2 border-slate-100 bg-slate-50/50 cursor-not-allowed opacity-60 text-left w-full"
                 >
-                  <div className="h-12 w-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                  <div className="h-12 w-12 rounded-xl bg-slate-200 text-slate-400 flex items-center justify-center shrink-0">
                     <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M22.43 2.73a1.47 1.47 0 00-1.46-1.14H8.79A1.47 1.47 0 007.41 2.7L.58 20.89a1.47 1.47 0 001.37 1.99h12.18a1.47 1.47 0 001.38-1.07l6.9-19.08z"/></svg>
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-lg">RazorPay <span className="text-sm font-normal text-slate-500">(Under Integration)</span></h4>
-                    <p className="text-xs text-slate-500">UPI, Cards, Netbanking, Wallets</p>
+                    <h4 className="font-bold text-slate-400 text-lg">RazorPay <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full ml-1.5 uppercase tracking-wide">Enabled Shortly</span></h4>
+                    <p className="text-xs text-slate-400">UPI, Cards, Netbanking, Wallets</p>
                   </div>
-                  {paymentGatewaySelected === "razorpay" && <Check className="h-6 w-6 text-blue-600 ml-auto" />}
                 </button>
 
                 <button
