@@ -520,16 +520,19 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
       .select("assigned_to, title");
     const existingSet = new Set((existingTasks || []).map((t: any) => `${t.assigned_to}-${(t.title || "").trim().toLowerCase()}`));
 
-    // Distribute tasks to matching interns (Round-Robin)
-    let internIndex = 0;
+    // Distribute tasks to matching interns (1 per intern max)
+    const assignedInternIds = new Set<string>();
     for (const taskItem of data.tasks) {
       const targetInterns = activeInterns.filter((profile: any) => matchInternDomain(profile, taskItem.domain));
       const internsToAssign = targetInterns.length > 0 ? targetInterns : activeInterns; // Fallback to all if no domain match
       
-      if (internsToAssign.length === 0) continue;
+      const unassignedInterns = internsToAssign.filter((i: any) => !assignedInternIds.has(i.id));
+      if (unassignedInterns.length === 0) {
+        continue; // Drop extra tasks if all matching interns already got one!
+      }
 
-      const intern = internsToAssign[internIndex % internsToAssign.length];
-      internIndex++;
+      const intern = unassignedInterns[0];
+      assignedInternIds.add(intern.id);
 
       const fingerprint = `${intern.id}-${(taskItem.title || "").trim().toLowerCase()}`;
       if (existingSet.has(fingerprint)) continue; // Skip duplicates

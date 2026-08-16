@@ -614,7 +614,7 @@ export function AdminInternTasksView() {
       )}
 
       {/* Bulk / Manual Task Assignment Modal */}
-      <InternTaskAssignmentModal open={assignModalOpen} onOpenChange={setAssignModalOpen} />
+      <InternTaskAssignmentModal open={assignModalOpen} onClose={() => setAssignModalOpen(false)} />
 
       {/* Clear All Confirmation Modal */}
       <Dialog open={clearAllModalOpen} onOpenChange={setClearAllModalOpen}>
