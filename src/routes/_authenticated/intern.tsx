@@ -39,6 +39,7 @@ import {
   getOrCreateReferralCode, getMyReferralConversions, getDashboardSettings
 } from "@/lib/operations.functions";
 import { listMyNotifications, markUserNotificationRead } from "@/lib/notifications.functions";
+import { generatePayuCheckout } from "@/lib/payu.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
   head: () => ({ meta: [{ title: "Intern Dashboard — Vyntyra" }] }),
@@ -3063,19 +3064,58 @@ function InternDashboard() {
                 <Button 
                   size="lg" 
                   disabled={!paymentGatewaySelected}
-                  onClick={() => {
+                  onClick={async () => {
                     if (paymentGatewaySelected === "payu") {
-                      toast.info("Redirecting to PayU Secure Gateway...");
+                      toast.info("Preparing PayU Secure Checkout...");
                       
-                      const amount = profile?.exam_fee_amount || 0;
-                      const email = profile?.email || "";
-                      const phone = profile?.phone || "";
-                      const description = "Exam Fee Payment";
-                      
-                      const payuUrl = `https://u.payu.in/QrOSWDsurgyy?amount=${amount}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}&description=${encodeURIComponent(description)}`;
-                      window.open(payuUrl, "_blank");
-                      
-                      setShowPaymentModal(false);
+                      try {
+                        const payuData = await generatePayuCheckout({
+                          data: {
+                            firstname: profile?.full_name || displayName,
+                            email: profile?.email || email,
+                            phone: profile?.phone_number || profile?.phone || "",
+                            amount: profile?.exam_fee_amount || 699,
+                            productinfo: "Exam Fee Payment - Vyntyra VyNexa Internship",
+                            userId: session?.user?.id || "",
+                          },
+                        });
+
+                        // Create a hidden form and auto-submit to PayU
+                        const form = document.createElement("form");
+                        form.method = "POST";
+                        form.action = payuData.action;
+                        form.target = "_blank";
+
+                        const fields: Record<string, string> = {
+                          key: payuData.key,
+                          txnid: payuData.txnid,
+                          amount: payuData.amount,
+                          productinfo: payuData.productinfo,
+                          firstname: payuData.firstname,
+                          email: payuData.email,
+                          phone: payuData.phone,
+                          surl: payuData.surl,
+                          furl: payuData.furl,
+                          hash: payuData.hash,
+                        };
+
+                        Object.entries(fields).forEach(([name, value]) => {
+                          const input = document.createElement("input");
+                          input.type = "hidden";
+                          input.name = name;
+                          input.value = value;
+                          form.appendChild(input);
+                        });
+
+                        document.body.appendChild(form);
+                        form.submit();
+                        document.body.removeChild(form);
+
+                        setShowPaymentModal(false);
+                      } catch (err: any) {
+                        console.error("PayU checkout error:", err);
+                        toast.error(err?.message || "Failed to initialize PayU checkout");
+                      }
                     } else {
                       toast.info(`Initializing ${paymentGatewaySelected} Corporate Gateway...`);
                       // In a real application, we would initialize the SDK here
