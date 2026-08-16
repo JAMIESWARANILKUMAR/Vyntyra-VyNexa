@@ -115,10 +115,20 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.name.toLowerCase().endsWith(".xlsx") || file.name.toLowerCase().endsWith(".xls")) {
+      toast.error("Excel files (.xlsx) are not supported directly. Please save the file as a CSV and upload the CSV file.");
+      return;
+    }
+
     setFileName(file.name);
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
+      if (text.startsWith("PK") || text.includes("\x00")) {
+        toast.error("Invalid file format. Please upload a valid plain text CSV file.");
+        return;
+      }
       setCsvRawText(text);
       parseCsvText(text);
     };
@@ -300,7 +310,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
             <Sparkles className="h-5 w-5 text-indigo-600" /> Assign Tasks to Interns
           </DialogTitle>
           <DialogDescription>
-            Assign tasks manually or bulk upload a CSV/Excel file. Tasks will be distributed so every intern gets their assigned task in their portal.
+            Assign tasks manually or bulk upload a CSV file. Tasks will be distributed so every intern gets their assigned task in their portal.
           </DialogDescription>
         </DialogHeader>
 
@@ -322,7 +332,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
             <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-6 text-center bg-slate-50/50 dark:bg-slate-900/50 hover:bg-slate-50 transition-colors">
               <Upload className="h-8 w-8 text-indigo-500 mx-auto mb-2" />
               <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Upload CSV or Excel Task List
+                Upload CSV Task List
               </div>
               
               <div className="mt-4 mb-4 flex flex-col sm:flex-row justify-center items-center gap-3 flex-wrap">
