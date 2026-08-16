@@ -780,6 +780,201 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                           </Button>
                         </td>
                       </tr>
+                  className="border-rose-500 text-rose-400 hover:bg-rose-950/40 text-xs px-4 py-2.5 rounded-xl gap-1.5"
+                >
+                  <Square className="h-3.5 w-3.5 fill-rose-400" /> Stop Campaign
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs text-slate-300 font-medium">
+              <span>
+                Progress: <strong>{currentIndex}</strong> / {recipients.length} ({recipients.length > 0 ? Math.round((currentIndex / recipients.length) * 100) : 0}%)
+              </span>
+              {isAutomating && countdown > 0 && (
+                <span className="text-emerald-400 font-mono font-bold flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5 animate-spin" /> Next email in {countdown}s
+                </span>
+              )}
+            </div>
+            <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden border border-slate-700">
+              <div 
+                className="bg-emerald-500 h-full transition-all duration-500 ease-out" 
+                style={{ width: `${recipients.length > 0 ? (currentIndex / recipients.length) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Campaign Metrics */}
+          <div className="grid grid-cols-3 gap-4 pt-2 border-t border-slate-800 text-center text-xs">
+            <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-800">
+              <div className="text-slate-400">Total Queued</div>
+              <div className="text-base font-bold text-white mt-0.5">{recipients.length}</div>
+            </div>
+            <div className="bg-emerald-950/40 p-3 rounded-xl border border-emerald-900/50">
+              <div className="text-emerald-400">Successfully Sent</div>
+              <div className="text-base font-bold text-emerald-400 mt-0.5">{sentCount}</div>
+            </div>
+            <div className="bg-rose-950/40 p-3 rounded-xl border border-rose-900/50">
+              <div className="text-rose-400">Failed / Errors</div>
+              <div className="text-base font-bold text-rose-400 mt-0.5">{failedCount}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* â”€â”€ Sent Emails Log Management Table â”€â”€ */}
+        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden space-y-4">
+          <div className="p-5 border-b bg-slate-50/50 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                <Mail className="h-4 w-4 text-emerald-600" /> Sent Emails Log Management
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Track all sent promotional email dispatches with recipient email, name, university/organization, sent date, sent time, email ID, and delivery status.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <Input 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search email, name, university..."
+                  className="pl-8 text-xs h-8 w-56 rounded-lg border-slate-200"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-8 text-xs w-32 rounded-lg border-slate-200">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button variant="outline" size="sm" onClick={() => emailLogsQ.refetch()} className="h-8 text-xs gap-1.5">
+                <RefreshCw className={`h-3.5 w-3.5 ${emailLogsQ.isFetching ? "animate-spin" : ""}`} /> Refresh Log
+              </Button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-slate-100/70 text-slate-700 uppercase tracking-wider font-semibold border-b text-[10px]">
+                <tr>
+                  <th className="px-5 py-3">Type</th>
+                  <th className="px-5 py-3">Recipient Email</th>
+                  <th className="px-5 py-3">Recipient Name</th>
+                  <th className="px-5 py-3">University / Organization</th>
+                  <th className="px-5 py-3">Domain</th>
+                  <th className="px-5 py-3">Sub-Domain</th>
+                  <th className="px-5 py-3">Provider</th>
+                  <th className="px-5 py-3">Subject</th>
+                  <th className="px-5 py-3">Sent Date</th>
+                  <th className="px-5 py-3">Sent Time</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3">Internship Registration</th>
+                  <th className="px-5 py-3">Email / Message ID</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {emailLogsQ.isLoading ? (
+                  <tr>
+                    <td colSpan={11} className="p-8 text-center text-slate-400">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin text-emerald-600" /> Loading sent email logs...
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan={11} className="p-8 text-center text-slate-400">
+                      No sent email logs found matching your criteria.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredLogs.map((log: any) => {
+                    const dateObj = new Date(log.sent_at || log.created_at);
+                    const sentDate = dateObj.toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" });
+                    const sentTime = dateObj.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
+
+                    const emailKey = log.recipient_email?.toLowerCase().trim();
+                    const matchedLog = conv.logs.find((l: any) => l.recipient_email?.toLowerCase().trim() === emailKey);
+                    const isMatched = matchedLog?.conversionStatus === "matched";
+                    const matchedApp = matchedLog?.matchedApplication;
+
+                    const isSelectionEmail = String(log.id).startsWith("sel_");
+                    return (
+                      <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-5 py-3.5">
+                          {isSelectionEmail ? (
+                            <span className="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap">Selection</span>
+                          ) : (
+                            <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap">Promotional</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5 font-bold text-slate-900">{log.recipient_email}</td>
+                        <td className="px-5 py-3.5 text-slate-600">{log.recipient_name || "â€”"}</td>
+                        <td className="px-5 py-3.5 text-slate-600">{log.university_name || "â€”"}</td>
+                        <td className="px-5 py-3.5 text-slate-600 font-medium">{log.domain || "â€”"}</td>
+                        <td className="px-5 py-3.5 text-emerald-700 font-bold">{log.sub_domain || "â€”"}</td>
+                        <td className="px-5 py-3.5">
+                          {log.provider === "brevo" ? (
+                            <span className="bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                              Brevo
+                            </span>
+                          ) : (
+                            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                              Resend
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-700 max-w-xs truncate" title={log.subject}>{log.subject}</td>
+                        <td className="px-5 py-3.5 text-slate-600 font-mono">{sentDate}</td>
+                        <td className="px-5 py-3.5 text-slate-600 font-mono">{sentTime}</td>
+                        <td className="px-5 py-3.5">
+                          {log.status === "sent" ? (
+                            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                              <CheckCircle2 className="h-3 w-3" /> Sent
+                            </span>
+                          ) : log.status === "pending" ? (
+                            <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                              <Clock className="h-3 w-3" /> Pending
+                            </span>
+                          ) : (
+                            <span className="bg-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" /> Failed
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {isMatched ? (
+                            <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-extrabold px-2.5 py-1 rounded-full inline-flex items-center gap-1 shadow-xs">
+                              <CheckCircle2 className="h-3 w-3 text-emerald-600" /> REGISTERED ({matchedApp?.status || "applied"})
+                            </span>
+                          ) : (
+                            <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md">PENDING</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-500 font-mono text-[10px] truncate max-w-[120px]" title={log.id}>
+                          {log.id}
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          <Button variant="ghost" size="sm" className="h-7 text-[10px] font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50">
+                            Resend
+                          </Button>
+                        </td>
+                      </tr>
                     );
                   })
                 )}
@@ -788,7 +983,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 

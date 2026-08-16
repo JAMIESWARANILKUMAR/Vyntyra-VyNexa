@@ -27,8 +27,10 @@ import { Route as AuthenticatedInternRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedEmployeeRouteImport } from './routes/_authenticated/employee'
 import { Route as AuthenticatedCmsRouteImport } from './routes/_authenticated/cms'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin/security'
 import { Route as AuthenticatedAdminOperationsRouteImport } from './routes/_authenticated/admin/operations'
+import { Route as AuthenticatedAdminEmailCampaignsRouteImport } from './routes/_authenticated/admin/email-campaigns'
 
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
@@ -119,6 +121,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/admin/settings',
+    path: '/admin/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminSecurityRoute =
   AuthenticatedAdminSecurityRouteImport.update({
     id: '/admin/security',
@@ -129,6 +137,12 @@ const AuthenticatedAdminOperationsRoute =
   AuthenticatedAdminOperationsRouteImport.update({
     id: '/admin/operations',
     path: '/admin/operations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminEmailCampaignsRoute =
+  AuthenticatedAdminEmailCampaignsRouteImport.update({
+    id: '/admin/email-campaigns',
+    path: '/admin/email-campaigns',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -149,8 +163,10 @@ export interface FileRoutesByFullPath {
   '/auth/employee': typeof AuthEmployeeRoute
   '/auth/intern': typeof AuthInternRoute
   '/status/$token': typeof StatusTokenRoute
+  '/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
   '/admin/operations': typeof AuthenticatedAdminOperationsRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -170,8 +186,10 @@ export interface FileRoutesByTo {
   '/auth/employee': typeof AuthEmployeeRoute
   '/auth/intern': typeof AuthInternRoute
   '/status/$token': typeof StatusTokenRoute
+  '/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
   '/admin/operations': typeof AuthenticatedAdminOperationsRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -193,8 +211,10 @@ export interface FileRoutesById {
   '/auth/employee': typeof AuthEmployeeRoute
   '/auth/intern': typeof AuthInternRoute
   '/status/$token': typeof StatusTokenRoute
+  '/_authenticated/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
   '/_authenticated/admin/operations': typeof AuthenticatedAdminOperationsRoute
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -216,8 +236,10 @@ export interface FileRouteTypes {
     | '/auth/employee'
     | '/auth/intern'
     | '/status/$token'
+    | '/admin/email-campaigns'
     | '/admin/operations'
     | '/admin/security'
+    | '/admin/settings'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -237,8 +259,10 @@ export interface FileRouteTypes {
     | '/auth/employee'
     | '/auth/intern'
     | '/status/$token'
+    | '/admin/email-campaigns'
     | '/admin/operations'
     | '/admin/security'
+    | '/admin/settings'
     | '/admin'
   id:
     | '__root__'
@@ -259,8 +283,10 @@ export interface FileRouteTypes {
     | '/auth/employee'
     | '/auth/intern'
     | '/status/$token'
+    | '/_authenticated/admin/email-campaigns'
     | '/_authenticated/admin/operations'
     | '/_authenticated/admin/security'
+    | '/_authenticated/admin/settings'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -407,6 +433,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/security': {
       id: '/_authenticated/admin/security'
       path: '/admin/security'
@@ -421,6 +454,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminOperationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/email-campaigns': {
+      id: '/_authenticated/admin/email-campaigns'
+      path: '/admin/email-campaigns'
+      fullPath: '/admin/email-campaigns'
+      preLoaderRoute: typeof AuthenticatedAdminEmailCampaignsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -429,8 +469,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEmployeeRoute: typeof AuthenticatedEmployeeRoute
   AuthenticatedInternRoute: typeof AuthenticatedInternRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
+  AuthenticatedAdminEmailCampaignsRoute: typeof AuthenticatedAdminEmailCampaignsRoute
   AuthenticatedAdminOperationsRoute: typeof AuthenticatedAdminOperationsRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
@@ -439,8 +481,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEmployeeRoute: AuthenticatedEmployeeRoute,
   AuthenticatedInternRoute: AuthenticatedInternRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
+  AuthenticatedAdminEmailCampaignsRoute: AuthenticatedAdminEmailCampaignsRoute,
   AuthenticatedAdminOperationsRoute: AuthenticatedAdminOperationsRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
+  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
