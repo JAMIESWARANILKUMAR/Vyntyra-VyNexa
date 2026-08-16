@@ -538,62 +538,36 @@ export async function dispatchSelectionEmail(applicationId: string) {
 
   let logoBase64 = null;
   try {
-    const projectRoot = process.cwd();
-    const publicLogoPath = path.join(projectRoot, "public", "icon-512.png");
-    if (fs.existsSync(publicLogoPath)) {
-      const buffer = fs.readFileSync(publicLogoPath);
-      logoBase64 = `data:image/png;base64,${buffer.toString("base64")}`;
+    const logoRes = await fetch("https://careers.vyntyraconsultancyservices.in/icon-512.png", {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      }
+    });
+    if (logoRes.ok) {
+      const buffer = await logoRes.arrayBuffer();
+      logoBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
     }
   } catch (logoErr) {
-    console.warn("Logo local load failed:", logoErr);
-  }
-
-  if (!logoBase64) {
-    try {
-      const logoRes = await fetch("https://careers.vyntyraconsultancyservices.in/icon-512.png", {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        }
-      });
-      if (logoRes.ok) {
-        const buffer = await logoRes.arrayBuffer();
-        logoBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
-      }
-    } catch (logoErr) {
-      console.warn("Logo fetch failed in dispatchSelectionEmail:", logoErr);
-    }
+    console.warn("Logo fetch failed in dispatchSelectionEmail:", logoErr);
   }
 
   let signatureBase64 = null;
   try {
-    const projectRoot = process.cwd();
-    const publicSigPath = path.join(projectRoot, "public", "signature.png");
-    if (fs.existsSync(publicSigPath)) {
-      const buffer = fs.readFileSync(publicSigPath);
-      signatureBase64 = `data:image/png;base64,${buffer.toString("base64")}`;
+    const { resolveGooglePhotosUrl } = await import("./google-photos");
+    const resolvedSigUrl = await resolveGooglePhotosUrl("https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
+    if (resolvedSigUrl) {
+      const sigRes = await fetch(resolvedSigUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+      });
+      if (sigRes.ok) {
+        const buffer = await sigRes.arrayBuffer();
+        signatureBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
+      }
     }
   } catch (sigErr) {
-    console.warn("Signature local load failed:", sigErr);
-  }
-
-  if (!signatureBase64) {
-    try {
-      const { resolveGooglePhotosUrl } = await import("./google-photos");
-      const resolvedSigUrl = await resolveGooglePhotosUrl("https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
-      if (resolvedSigUrl) {
-        const sigRes = await fetch(resolvedSigUrl, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-          }
-        });
-        if (sigRes.ok) {
-          const buffer = await sigRes.arrayBuffer();
-          signatureBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
-        }
-      }
-    } catch (sigErr) {
-      console.warn("Signature fetch failed in dispatchSelectionEmail:", sigErr);
-    }
+    console.warn("Signature fetch failed in dispatchSelectionEmail:", sigErr);
   }
 
   let photoBase64 = null;

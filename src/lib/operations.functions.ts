@@ -1042,15 +1042,17 @@ export const getMyDocuments = createServerFn({ method: "GET" })
 
         let logoBase64 = null;
         try {
-          const fs = await import('fs');
-          const path = await import('path');
-          const logoPath = path.join(process.cwd(), "public", "icon-512.png");
-          if (fs.existsSync(logoPath)) {
-            const buffer = fs.readFileSync(logoPath);
-            logoBase64 = `data:image/png;base64,${buffer.toString("base64")}`;
+          const logoRes = await fetch("https://careers.vyntyraconsultancyservices.in/icon-512.png", {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+          });
+          if (logoRes.ok) {
+            const buffer = await logoRes.arrayBuffer();
+            logoBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
           }
         } catch (logoErr) {
-          console.warn("Failed to read local logo:", logoErr);
+          console.warn("Failed to fetch Vyntyra logo:", logoErr);
         }
 
         const { generateNocPdf } = await import("./nocGenerator");
@@ -1210,15 +1212,17 @@ export const regenerateMyDocuments = createServerFn({ method: "POST" })
 
     let logoBase64 = null;
     try {
-      const fs = await import('fs');
-      const path = await import('path');
-      const logoPath = path.join(process.cwd(), "public", "icon-512.png");
-      if (fs.existsSync(logoPath)) {
-        const buffer = fs.readFileSync(logoPath);
-        logoBase64 = `data:image/png;base64,${buffer.toString("base64")}`;
+      const logoRes = await fetch("https://careers.vyntyraconsultancyservices.in/icon-512.png", {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+      });
+      if (logoRes.ok) {
+        const buffer = await logoRes.arrayBuffer();
+        logoBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
       }
     } catch (logoErr) {
-      console.warn("Failed to read local logo for fallback NOC:", logoErr);
+      console.warn("Failed to fetch Vyntyra logo for fallback NOC:", logoErr);
     }
 
     const { generateNocPdf } = await import("./nocGenerator");

@@ -1441,11 +1441,12 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         photoBase64 = await urlToBase64(app.profile_photo_url);
       }
 
-      const logoBase64 = await urlToBase64(window.location.origin + "/icon-512.png");
+      const logoBase64 = await urlToBase64("https://careers.vyntyraconsultancyservices.in/icon-512.png");
+      const signatureBase64 = await urlToBase64("https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
 
       const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`;
-      const qrBase64 = await urlToBase64(qrApiUrl);
+      const QRCode = (await import("qrcode")).default;
+      const qrBase64 = await QRCode.toDataURL(verificationUrl, { margin: 1, color: { dark: '#0f172a', light: '#ffffff' } });
 
       const selectionDate = new Date();
       const calcStartDate = new Date(selectionDate.getTime() + 4 * 24 * 60 * 60 * 1000);
@@ -1463,6 +1464,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         profilePhotoUrl: photoBase64,
         qrCodeBase64: qrBase64,
         logoBase64: logoBase64,
+        signatureBase64: signatureBase64,
         hodName: app.hod_name,
       });
 

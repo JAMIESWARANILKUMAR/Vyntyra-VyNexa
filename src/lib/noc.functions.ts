@@ -143,7 +143,8 @@ export const proxyImageFetch = createServerFn({ method: "POST" })
   .validator((d: any) => z.object({ data: z.string() }).parse(d))
   .handler(async ({ data }) => {
     try {
-      const url = data.data;
+      const { resolveGooglePhotosUrl } = await import("./google-photos");
+      const url = await resolveGooglePhotosUrl(data.data) || data.data;
       const res = await fetch(url, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
