@@ -42,6 +42,19 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
 
+  useEffect(() => {
+    if (
+      error.message?.includes("Unauthorized") ||
+      error.message?.includes("Invalid token")
+    ) {
+      import("@/integrations/supabase/client").then(({ supabase }) => {
+        supabase.auth.signOut().then(() => {
+          window.location.href = "/auth/employee";
+        });
+      });
+    }
+  }, [error]);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
