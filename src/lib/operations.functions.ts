@@ -490,12 +490,21 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
       return dept.includes(target) || pos.includes(target);
     };
 
+    // Fetch existing tasks to prevent duplicates
+    const { data: existingTasks } = await supabase
+      .from("tasks")
+      .select("assigned_to, title");
+    const existingSet = new Set((existingTasks || []).map((t: any) => `${t.assigned_to}-${(t.title || "").trim().toLowerCase()}`));
+
     // Assign tasks to matching interns
     for (const taskItem of data.tasks) {
       const targetInterns = activeInterns.filter((profile: any) => matchInternDomain(profile, taskItem.domain));
       const internsToAssign = targetInterns.length > 0 ? targetInterns : activeInterns; // Fallback to all if no domain match
       
       for (const intern of internsToAssign) {
+        const fingerprint = `${intern.id}-${(taskItem.title || "").trim().toLowerCase()}`;
+        if (existingSet.has(fingerprint)) continue; // Skip duplicates
+
         taskPayloads.push({
           title: taskItem.title,
           description: taskItem.description || "Assigned Internship Project Task",
@@ -517,7 +526,9 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
       }
     }
 
-    if (taskPayloads.length === 0) throw new Error("No tasks were mapped to any interns. Please verify domain matching values.");
+    if (taskPayloads.length === 0) {
+      return { success: true, assignedCount: 0, internCount: activeInterns.length, skippedDuplicates: true };
+    }
 
     const { error } = await supabase.from("tasks").insert(taskPayloads);
     if (error) {
@@ -550,20 +561,34 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const now = new Date().toISOString();
-    const taskPayloads = data.target_intern_ids.map(internId => ({
-      title: data.title,
-      description: data.description || "Manual Internship Task",
-      project_requirements: data.task_file_url || null,
-      due_date: data.due_date || null,
-      priority: data.priority || "medium",
-      assigned_to: internId,
-      target_user_id: internId,
-      target_role: "intern",
-      status: "pending",
-      is_pool_task: false,
-      created_by: context.userId,
-      created_at: now,
-    }));
+
+    // Fetch existing tasks to prevent duplicates
+    const { data: existingTasks } = await supabase
+      .from("tasks")
+      .select("assigned_to, title")
+      .in("assigned_to", data.target_intern_ids);
+    const existingSet = new Set((existingTasks || []).map((t: any) => `${t.assigned_to}-${(t.title || "").trim().toLowerCase()}`));
+
+    const taskPayloads = data.target_intern_ids
+      .filter(internId => !existingSet.has(`${internId}-${data.title.trim().toLowerCase()}`))
+      .map(internId => ({
+        title: data.title,
+        description: data.description || "Manual Internship Task",
+        project_requirements: data.task_file_url || null,
+        due_date: data.due_date || null,
+        priority: data.priority || "medium",
+        assigned_to: internId,
+        target_user_id: internId,
+        target_role: "intern",
+        status: "pending",
+        is_pool_task: false,
+        created_by: context.userId,
+        created_at: now,
+      }));
+
+    if (taskPayloads.length === 0) {
+      return { success: true, count: 0, skippedDuplicates: true };
+    }
 
     const { error } = await supabase.from("tasks").insert(taskPayloads);
     if (error) {
@@ -3579,6 +3604,16 @@ export const updateDashboardSetting = createServerFn({ method: "POST" })
       .from("dashboard_settings")
       .update({ is_enabled: data.is_enabled, updated_at: new Date().toISOString() })
       .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const bulkDeleteTasks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ taskIds: z.array(z.string().uuid()) }).parse(d))
+  .handler(async ({ data }) => {
+    if (!data.taskIds.length) return { success: true };
+    const { error } = await supabase.from("tasks").delete().in("id", data.taskIds);
     if (error) throw new Error(error.message);
     return { success: true };
   });

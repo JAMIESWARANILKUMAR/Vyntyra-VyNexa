@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, reviewDeadlineExtension } from "@/lib/operations.functions";
+import { listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, reviewDeadlineExtension, bulkDeleteTasks } from "@/lib/operations.functions";
 import { Button } from "@/components/ui/button";
 import { Award, CreditCard } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -10,23 +10,28 @@ import { Badge } from "@/components/ui/badge";
 import { InternTaskAssignmentModal } from "@/components/intern-task-assignment-modal";
 import {
   ClipboardList, Search, Plus, CheckCircle2, Clock, AlertTriangle, ExternalLink,
-  Trash2, Sparkles, Filter, FileText, Check, RotateCcw, User, Eye
+  Trash2, Sparkles, Filter, FileText, Check, RotateCcw, User, Eye, Download
 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export function AdminInternTasksView() {
   const qc = useQueryClient();
   const fetchTasks = useServerFn(listAllInternTasksWithProgress);
   const doReview = useServerFn(reviewInternTaskByAdmin);
   const doDelete = useServerFn(deleteTask);
+  const doBulkDelete = useServerFn(bulkDeleteTasks);
   const doReviewDeadlineExtension = useServerFn(reviewDeadlineExtension);
 
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  
+  // Bulk Selection State
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
 
   // Review modal state
   const [selectedTaskForReview, setSelectedTaskForReview] = useState<any>(null);
@@ -88,6 +93,71 @@ export function AdminInternTasksView() {
     } catch (err: any) {
       toast.error("Failed to delete task: " + err.message);
     }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTaskIds(filteredTasks.map(t => t.id));
+    } else {
+      setSelectedTaskIds([]);
+    }
+  };
+
+  const handleToggleSelect = (taskId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedTaskIds(prev => [...prev, taskId]);
+    } else {
+      setSelectedTaskIds(prev => prev.filter(id => id !== taskId));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedTaskIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedTaskIds.length} selected task(s)?`)) return;
+    
+    try {
+      await doBulkDelete({ data: { taskIds: selectedTaskIds } });
+      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      setSelectedTaskIds([]);
+      toast.success(`${selectedTaskIds.length} tasks deleted successfully.`);
+    } catch (err: any) {
+      toast.error("Failed to delete tasks: " + err.message);
+    }
+  };
+
+  const handleExtractAll = () => {
+    const tasksToExtract = selectedTaskIds.length > 0 
+      ? filteredTasks.filter(t => selectedTaskIds.includes(t.id)) 
+      : filteredTasks;
+      
+    if (tasksToExtract.length === 0) {
+      toast.error("No tasks to extract.");
+      return;
+    }
+
+    const headers = ["Intern Name", "Intern Email", "Task Title", "Status", "Priority", "Assigned Date", "Deadline", "Task Description"];
+    const rows = tasksToExtract.map(t => [
+      `"${t.assigned_profile?.full_name || ''}"`,
+      `"${t.assigned_profile?.email || ''}"`,
+      `"${(t.title || '').replace(/"/g, '""')}"`,
+      `"${t.status || ''}"`,
+      `"${t.priority || ''}"`,
+      `"${new Date(t.created_at).toLocaleDateString()}"`,
+      `"${t.due_date || 'N/A'}"`,
+      `"${(t.description || '').replace(/"/g, '""')}"`
+    ]);
+    
+    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `intern_tasks_export_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Tasks exported to CSV successfully.");
   };
 
   return (
@@ -171,6 +241,33 @@ export function AdminInternTasksView() {
         </div>
       </div>
 
+      {/* Bulk Actions & Select All */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-slate-900 border rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          <Checkbox 
+            id="select-all" 
+            checked={filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length} 
+            onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+          />
+          <label htmlFor="select-all" className="text-sm font-medium cursor-pointer text-slate-700 dark:text-slate-300">
+            Select All <span className="text-slate-500">({selectedTaskIds.length} selected)</span>
+          </label>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {selectedTaskIds.length > 0 && (
+            <Button size="sm" variant="destructive" onClick={handleBulkDelete} className="h-8 text-xs font-semibold">
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete Selected
+            </Button>
+          )}
+          <Button size="sm" variant="outline" onClick={handleExtractAll} className="h-8 text-xs font-semibold bg-white dark:bg-slate-950">
+            <Download className="h-3.5 w-3.5 mr-1.5 text-indigo-600" /> Extract {selectedTaskIds.length > 0 ? "Selected" : "All"}
+          </Button>
+        </div>
+      </div>
+
+
+
       {/* Intern Tasks Progress Table */}
       <div className="rounded-xl border bg-white dark:bg-slate-950 shadow-sm overflow-hidden divide-y">
         {filteredTasks.length === 0 ? (
@@ -186,6 +283,14 @@ export function AdminInternTasksView() {
 
             return (
               <div key={t.id} className="p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                {/* Bulk Checkbox */}
+                <div className="mt-1">
+                  <Checkbox 
+                    checked={selectedTaskIds.includes(t.id)} 
+                    onCheckedChange={(checked) => handleToggleSelect(t.id, checked as boolean)}
+                  />
+                </div>
+
                 {/* Intern & Task Info */}
                 <div className="space-y-1.5 flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
