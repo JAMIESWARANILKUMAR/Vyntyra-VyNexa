@@ -40,7 +40,11 @@ function AdminSettingsPage() {
     queryKey: ["admin-intern-list"],
     queryFn: () => fetchTeamMembers(),
   });
-  const allInterns = (membersQ.data || []).filter((m: any) => m.role === "intern");
+  const allInterns = (membersQ.data || []).filter((m: any) => 
+    m.role === "intern" || 
+    (m.department || "").toLowerCase().includes("intern") || 
+    (m.position || "").toLowerCase().includes("intern")
+  );
 
 
   const updateSettingsMut = useMutation({

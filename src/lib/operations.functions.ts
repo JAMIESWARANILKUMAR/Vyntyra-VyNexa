@@ -124,10 +124,10 @@ export const listTeamMembers = createServerFn({ method: "GET" })
       const full_name = p.full_name || authUser?.user_metadata?.full_name || email.split("@")[0];
 
       membersMap.set(p.id, {
+        ...p,
         id: p.id,
         user_id: p.id,
         role: assignedRole,
-        ...p,
         email,
         full_name,
       });
