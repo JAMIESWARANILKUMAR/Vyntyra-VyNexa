@@ -20,6 +20,7 @@ interface ParsedTask {
   description: string;
   task_file_url: string;
   task_doc_url: string;
+  report_template_url: string;
   due_date: string;
   priority: "low" | "medium" | "high";
   domain?: string;
@@ -74,6 +75,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   const [manualDescription, setManualDescription] = useState("");
   const [manualFileUrl, setManualFileUrl] = useState("");
   const [manualDocUrl, setManualDocUrl] = useState("");
+  const [manualReportUrl, setManualReportUrl] = useState("");
   const [manualDueDate, setManualDueDate] = useState("");
   const [manualPriority, setManualPriority] = useState<"low" | "medium" | "high">("medium");
   const [saveTemplate, setSaveTemplate] = useState(false);
@@ -136,8 +138,9 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
       
       const titleIdx = headers.findIndex((h) => h.includes("title") || h.includes("name") || h.includes("task"));
       const descIdx = headers.findIndex((h) => h.includes("desc") || h.includes("detail") || h.includes("requirement"));
-      const fileIdx = headers.findIndex((h) => h.includes("file") || h.includes("resource") || (h.includes("url") && !h.includes("handbook") && !h.includes("doc")));
+      const fileIdx = headers.findIndex((h) => h.includes("file") || h.includes("resource") || (h.includes("url") && !h.includes("handbook") && !h.includes("doc") && !h.includes("report")));
       const docIdx = headers.findIndex((h) => h.includes("handbook") || h.includes("doc"));
+      const reportIdx = headers.findIndex((h) => h.includes("report"));
       const dueIdx = headers.findIndex((h) => h.includes("due") || h.includes("date") || h.includes("deadline"));
       const priorityIdx = headers.findIndex((h) => h.includes("priority") || h.includes("importance"));
       const domainIdx = headers.findIndex((h) => h.includes("domain") || h.includes("dept") || h.includes("department"));
@@ -151,6 +154,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
         const description = descIdx !== -1 && row[descIdx] ? row[descIdx] : "Complete designated internship project requirements.";
         const task_file_url = fileIdx !== -1 && row[fileIdx] ? row[fileIdx] : "";
         const task_doc_url = docIdx !== -1 && row[docIdx] ? row[docIdx] : "";
+        const report_template_url = reportIdx !== -1 && row[reportIdx] ? row[reportIdx] : "";
         const due_date = dueIdx !== -1 && row[dueIdx] ? row[dueIdx] : "";
         const domain = domainIdx !== -1 && row[domainIdx] ? row[domainIdx] : "all";
         let priority: "low" | "medium" | "high" = "medium";
@@ -160,7 +164,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
           else if (p.includes("low")) priority = "low";
         }
 
-        tasks.push({ title, description, task_file_url, task_doc_url, due_date, priority, domain });
+        tasks.push({ title, description, task_file_url, task_doc_url, report_template_url, due_date, priority, domain });
       }
 
       setParsedCsvTasks(tasks);
@@ -209,6 +213,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
           description: manualDescription,
           task_file_url: manualFileUrl,
           task_doc_url: manualDocUrl,
+          report_template_url: manualReportUrl,
           due_date: manualDueDate,
           priority: manualPriority,
           target_intern_ids: targetIds,
@@ -269,11 +274,11 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   };
 
   const handleDownloadSampleCsv = () => {
-    const sampleCsvContent = `"Title","Description","File URL","Handbook URL","Deadline","Priority","Domain"
-"Build Full-Stack E-Commerce Dashboard","Develop React frontend with TanStack Router and Supabase REST API authentication","https://drive.google.com/file/d/sample-doc-1/view","https://drive.google.com/handbook-1","2026-08-30","High","tech"
-"Implement Microservices Billing Engine","Design Node.js Express microservice for invoice generation & GST calculation","https://github.com/vyntyra/sample-repo-specs","https://drive.google.com/handbook-2","2026-08-28","Medium","tech"
-"AI Chatbot Integration & UI Polish","Integrate Gemini AI assistant SDK with dynamic stream rendering & Tailwind CSS","https://drive.google.com/file/d/sample-doc-3/view","","2026-09-05","High","tech"
-"Business Operations Auditing","Analyze operational efficiency across departments and prepare recommendations reports","https://drive.google.com/file/d/sample-doc-4/view","","2026-09-02","Medium","management"`;
+    const sampleCsvContent = `"Title","Description","File URL","Handbook URL","Report Doc URL","Deadline","Priority","Domain"
+"Build Full-Stack E-Commerce Dashboard","Develop React frontend with TanStack Router and Supabase REST API authentication","https://drive.google.com/file/d/sample-doc-1/view","https://drive.google.com/handbook-1","https://docs.google.com/document/d/report-1","2026-08-30","High","tech"
+"Implement Microservices Billing Engine","Design Node.js Express microservice for invoice generation & GST calculation","https://github.com/vyntyra/sample-repo-specs","https://drive.google.com/handbook-2","https://docs.google.com/document/d/report-2","2026-08-28","Medium","tech"
+"AI Chatbot Integration & UI Polish","Integrate Gemini AI assistant SDK with dynamic stream rendering & Tailwind CSS","https://drive.google.com/file/d/sample-doc-3/view","","","2026-09-05","High","tech"
+"Business Operations Auditing","Analyze operational efficiency across departments and prepare recommendations reports","https://drive.google.com/file/d/sample-doc-4/view","","","2026-09-02","Medium","management"`;
 
     const blob = new Blob([sampleCsvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -349,7 +354,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
               </div>
 
               <div className="text-xs text-slate-500 mt-1 mb-3">
-                Required Columns: <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Title</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Description</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">File URL</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Handbook URL</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Deadline</code>
+                Required Columns: <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Title</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Description</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">File URL</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Handbook URL</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Report URL</code>, <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded">Deadline</code>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -377,7 +382,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
             <div>
               <Label className="text-xs font-semibold text-slate-700">Or Paste CSV / Tab-Separated Data Directly:</Label>
               <Textarea
-                placeholder="Title, Description, File URL, Deadline, Priority&#10;Full Stack E-Commerce App, Build API & React Frontend, https://drive.google.com/..., 2026-08-30, High"
+                placeholder="Title, Description, File URL, Handbook URL, Report URL, Deadline, Priority&#10;Full Stack E-Commerce App, Build API & React Frontend, https://drive.google.com/..., https://..., https://..., 2026-08-30, High"
                 rows={3}
                 value={csvRawText}
                 onChange={(e) => {

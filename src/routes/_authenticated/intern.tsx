@@ -1900,33 +1900,35 @@ function InternDashboard() {
                               <p className="text-slate-600 text-xs leading-relaxed max-w-4xl">{task.description}</p>
                             )}
 
-                            {/* Technical Specs / Step-by-step Doc info */}
-                            {taskDoc && (
-                              <div className="mt-2 text-xs flex items-center gap-1.5 bg-slate-50 border p-2.5 rounded-lg w-fit">
-                                <FileText className="h-4 w-4 text-indigo-600" />
-                                <div className="font-medium text-slate-700">
-                                  Step-by-step Doc:{" "}
-                                  <a href={taskDoc} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline font-bold">
-                                    Open Documentation Guide ↗
-                                  </a>
-                                </div>
+                            {/* Action links row & Resources */}
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              {(task.task_file_url || task.project_requirements) && (
+                                <a href={task.task_file_url || task.project_requirements} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+                                  <FolderOpen className="h-3.5 w-3.5" /> Project Files
+                                </a>
+                              )}
+                              {task.task_doc_url && (
+                                <a href={task.task_doc_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+                                  <BookOpen className="h-3.5 w-3.5" /> Handbook Guide
+                                </a>
+                              )}
+                              {reportTemplate && (
+                                <a href={reportTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 text-xs font-semibold px-4 py-2 rounded-xl shadow-sm transition-all hover:shadow-md">
+                                  <FileText className="h-3.5 w-3.5 text-blue-600" /> Report Template
+                                </a>
+                              )}
+                              {pptTemplate && (
+                                <a href={pptTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 text-xs font-semibold px-4 py-2 rounded-xl shadow-sm transition-all hover:shadow-md">
+                                  <Play className="h-3.5 w-3.5 text-orange-500" /> PPT Template
+                                </a>
+                              )}
+                            </div>
+                            
+                            {task.due_date && (
+                              <div className="flex items-center gap-1.5 mt-3 pt-2 border-t text-[11px] font-medium text-slate-500">
+                                <Clock className="h-3.5 w-3.5 text-slate-400" /> Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                               </div>
                             )}
-
-                            {/* Action links row */}
-                            <div className="flex flex-wrap items-center gap-3 mt-3 pt-1 text-[11px] text-slate-500">
-                              {task.due_date && (
-                                <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-                              )}
-                              <span className="text-slate-300">|</span>
-                              <a href={reportTemplate} target="_blank" rel="noreferrer" className="text-slate-600 hover:text-emerald-600 font-semibold underline inline-flex items-center gap-1">
-                                <Download className="h-3 w-3" /> Report Template
-                              </a>
-                              <span className="text-slate-300">|</span>
-                              <a href={pptTemplate} target="_blank" rel="noreferrer" className="text-slate-600 hover:text-emerald-600 font-semibold underline inline-flex items-center gap-1">
-                                <Download className="h-3 w-3" /> PPT Template
-                              </a>
-                            </div>
                           </div>
 
                           {/* Top Right action column */}
