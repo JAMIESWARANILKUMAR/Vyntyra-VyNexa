@@ -238,8 +238,8 @@ function VerifyPage() {
                 <div>Address: <span className="text-foreground">{certificate.corporateAddress}</span></div>
               </div>
 
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                {activeTab === "noc" && certificate.pdfUrl && (
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
+                {certificate.pdfUrl && (
                   <a
                     href={certificate.pdfUrl}
                     target="_blank"
@@ -247,11 +247,11 @@ function VerifyPage() {
                     className="flex-1 sm:flex-initial"
                   >
                     <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 shadow-sm">
-                      <FileDown className="h-4 w-4" /> Download Official NOC
+                      <FileDown className="h-4 w-4" /> Download Offer Letter (NOC)
                     </Button>
                   </a>
                 )}
-                {activeTab === "certificate" && certificate.certificateUrl && (
+                {certificate.certificateUrl && (
                   <a
                     href={certificate.certificateUrl}
                     target="_blank"

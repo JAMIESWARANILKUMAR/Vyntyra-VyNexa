@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { listApplications, updateAdminNotes, getResumeSignedUrl, regenerateInterviewQuestions, listApplicationProjects, deleteApplication, listEmployees, updateApplicantByAdmin } from "@/lib/applications.functions";
+import { listApplications, updateAdminNotes, getResumeSignedUrl, regenerateInterviewQuestions, listApplicationProjects, deleteApplication, listEmployees, updateApplicantByAdmin, createApplicantByAdmin } from "@/lib/applications.functions";
 import { generatePayslipPdf } from "@/lib/payslip";
 import { generateNocPdf, urlToBase64 } from "@/lib/nocGenerator";
 import { saveNocPdf, saveInternshipCertificatePdf } from "@/lib/noc.functions";
@@ -269,6 +269,7 @@ function AdminDashboard() {
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<any>(null);
   const [selectionTrackerOpen, setSelectionTrackerOpen] = useState(false);
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
 
   const { data: apps = [], isLoading, error } = useQuery({
     queryKey: ["applications"],
@@ -856,6 +857,14 @@ function AdminDashboard() {
               <Button variant="outline" size="sm" onClick={exportCsv}>
                 <FileDown className="h-4 w-4 mr-1.5" /> Export All
               </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-primary hover:bg-secondary text-primary-foreground font-semibold flex items-center gap-1.5"
+                onClick={() => setAddMemberOpen(true)}
+              >
+                <Plus className="h-4 w-4" /> Add Member
+              </Button>
             </div>
           </div>
           <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
@@ -1140,7 +1149,10 @@ function AdminDashboard() {
         open={selectionTrackerOpen}
         onClose={() => setSelectionTrackerOpen(false)}
       />
-
+      <AddMemberDialog
+        open={addMemberOpen}
+        onClose={() => setAddMemberOpen(false)}
+      />
 
     </div>
   );
@@ -2232,6 +2244,7 @@ function EditApplicantDialog({ app, open, onClose }: { app: any; open: boolean; 
     status: "new",
     admin_notes: "",
     profile_photo_url: "",
+    certificate_url: "",
   });
 
   useEffect(() => {
@@ -2250,6 +2263,7 @@ function EditApplicantDialog({ app, open, onClose }: { app: any; open: boolean; 
         status: app.status || "new",
         admin_notes: app.admin_notes || "",
         profile_photo_url: app.profile_photo_url || "",
+        certificate_url: app.certificate_url || "",
       });
     }
   }, [app]);
@@ -2271,6 +2285,7 @@ function EditApplicantDialog({ app, open, onClose }: { app: any; open: boolean; 
         status: formData.status,
         admin_notes: formData.admin_notes || null,
         profile_photo_url: formData.profile_photo_url || null,
+        certificate_url: formData.certificate_url || null,
       }
     }),
     onSuccess: () => {
@@ -2360,6 +2375,11 @@ function EditApplicantDialog({ app, open, onClose }: { app: any; open: boolean; 
               <label className="text-xs font-semibold text-muted-foreground uppercase">Profile Photo URL</label>
               <Input className="mt-1" placeholder="https://..." value={formData.profile_photo_url} onChange={(e) => setFormData({ ...formData, profile_photo_url: e.target.value })} />
             </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Certificate URL</label>
+              <Input className="mt-1" placeholder="https://..." value={formData.certificate_url} onChange={(e) => setFormData({ ...formData, certificate_url: e.target.value })} />
+            </div>
           </div>
 
           <div>
@@ -2371,6 +2391,176 @@ function EditApplicantDialog({ app, open, onClose }: { app: any; open: boolean; 
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
             <Button type="submit" disabled={saveMut.isPending}>
               {saveMut.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving Changes…</> : "Save Applicant Changes"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ── Admin Add Member Dialog ── */
+function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const qc = useQueryClient();
+  const createApplicantMut = useServerFn(createApplicantByAdmin);
+
+  const [formData, setFormData] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    role_applied: "Intern",
+    domain: "Technology & Software",
+    sub_domain: "Full Stack Web Development",
+    college: "",
+    state: "",
+    graduation_year: "",
+    availability: "",
+    status: "hired",
+    admin_notes: "",
+    profile_photo_url: "",
+    certificate_url: "",
+  });
+
+  const resetForm = () => {
+    setFormData({
+      full_name: "",
+      email: "",
+      phone: "",
+      role_applied: "Intern",
+      domain: "Technology & Software",
+      sub_domain: "Full Stack Web Development",
+      college: "",
+      state: "",
+      graduation_year: "",
+      availability: "",
+      status: "hired",
+      admin_notes: "",
+      profile_photo_url: "",
+      certificate_url: "",
+    });
+  };
+
+  const createMut = useMutation({
+    mutationFn: () => createApplicantMut({
+      data: {
+        full_name: formData.full_name,
+        email: formData.email,
+        phone: formData.phone,
+        role_applied: formData.role_applied,
+        domain: formData.domain || null,
+        sub_domain: formData.sub_domain || null,
+        college: formData.college || null,
+        state: formData.state || null,
+        graduation_year: formData.graduation_year ? parseInt(formData.graduation_year, 10) : null,
+        availability: formData.availability || null,
+        status: formData.status,
+        admin_notes: formData.admin_notes || null,
+        profile_photo_url: formData.profile_photo_url || null,
+        certificate_url: formData.certificate_url || null,
+      }
+    }),
+    onSuccess: () => {
+      toast.success("New member added successfully!");
+      qc.invalidateQueries({ queryKey: ["applications"] });
+      resetForm();
+      onClose();
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl text-primary tracking-tight font-semibold flex items-center gap-2">
+            <Plus className="h-5 w-5 text-secondary" /> Add New Member (Direct Entry)
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={(e) => { e.preventDefault(); createMut.mutate(); }} className="space-y-4 mt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Full Name *</label>
+              <Input className="mt-1" placeholder="e.g. Jamie Eswar" value={formData.full_name} onChange={(e) => setFormData({ ...formData, full_name: e.target.value })} required />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Email Address *</label>
+              <Input className="mt-1" type="email" placeholder="e.g. name@domain.com" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Phone Number *</label>
+              <Input className="mt-1" placeholder="e.g. +91 98765 43210" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Designation / Role Applied *</label>
+              <Input className="mt-1" placeholder="e.g. Intern, Web Developer" value={formData.role_applied} onChange={(e) => setFormData({ ...formData, role_applied: e.target.value })} required />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Domain Track</label>
+              <Input className="mt-1" placeholder="e.g. Technology & Software" value={formData.domain} onChange={(e) => setFormData({ ...formData, domain: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Sub-Domain Specialization</label>
+              <Input className="mt-1" placeholder="e.g. Full Stack Web Development" value={formData.sub_domain} onChange={(e) => setFormData({ ...formData, sub_domain: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">College / University</label>
+              <Input className="mt-1" placeholder="e.g. Andhra University" value={formData.college} onChange={(e) => setFormData({ ...formData, college: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">State</label>
+              <Input className="mt-1" placeholder="e.g. Andhra Pradesh" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Graduation Year</label>
+              <Input className="mt-1" type="number" placeholder="2026" value={formData.graduation_year} onChange={(e) => setFormData({ ...formData, graduation_year: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Internship Start Date / Availability</label>
+              <Input className="mt-1" placeholder="e.g. 2026-08-15" value={formData.availability} onChange={(e) => setFormData({ ...formData, availability: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Status</label>
+              <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {["new", "reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected", "hired"].map((s) => (
+                    <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Profile Photo URL</label>
+              <Input className="mt-1" placeholder="https://..." value={formData.profile_photo_url} onChange={(e) => setFormData({ ...formData, profile_photo_url: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Certificate URL</label>
+              <Input className="mt-1" placeholder="https://..." value={formData.certificate_url} onChange={(e) => setFormData({ ...formData, certificate_url: e.target.value })} />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Admin Notes / Remarks</label>
+            <Textarea className="mt-1" rows={3} placeholder="Add any private notes about the new member..." value={formData.admin_notes} onChange={(e) => setFormData({ ...formData, admin_notes: e.target.value })} />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => { resetForm(); onClose(); }}>Cancel</Button>
+            <Button type="submit" disabled={createMut.isPending}>
+              {createMut.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Adding Member…</> : "Add Member"}
             </Button>
           </div>
         </form>

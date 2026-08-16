@@ -483,6 +483,7 @@ const updateApplicantSchema = z.object({
   status: z.string().trim().optional(),
   admin_notes: z.string().trim().max(2000).optional().nullable(),
   profile_photo_url: z.string().trim().max(600).optional().nullable(),
+  certificate_url: z.string().trim().max(600).optional().nullable(),
 });
 
 export const updateApplicantByAdmin = createServerFn({ method: "POST" })
@@ -519,6 +520,7 @@ export const updateApplicantByAdmin = createServerFn({ method: "POST" })
     if (updateFields.status !== undefined) payload.status = updateFields.status;
     if (updateFields.admin_notes !== undefined) payload.admin_notes = updateFields.admin_notes;
     if (updateFields.profile_photo_url !== undefined) payload.profile_photo_url = updateFields.profile_photo_url;
+    if (updateFields.certificate_url !== undefined) payload.certificate_url = updateFields.certificate_url;
 
     const { error: updateErr } = await supabase
       .from("applications")
@@ -540,4 +542,69 @@ export const updateApplicantByAdmin = createServerFn({ method: "POST" })
     }
 
     return { ok: true, id };
+  });
+
+const createApplicantSchema = z.object({
+  full_name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(255),
+  phone: z.string().trim().min(6).max(30),
+  role_applied: z.string().trim().min(1).max(120),
+  domain: z.string().trim().max(160).optional().nullable(),
+  sub_domain: z.string().trim().max(160).optional().nullable(),
+  college: z.string().trim().max(240).optional().nullable(),
+  state: z.string().trim().max(80).optional().nullable(),
+  graduation_year: z.number().int().optional().nullable(),
+  availability: z.string().trim().max(120).optional().nullable(),
+  status: z.string().trim().default("selected"),
+  admin_notes: z.string().trim().max(2000).optional().nullable(),
+  profile_photo_url: z.string().trim().max(600).optional().nullable(),
+  certificate_url: z.string().trim().max(600).optional().nullable(),
+});
+
+export const createApplicantByAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => createApplicantSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const isAdmin = await checkIsAdmin(context.userId);
+    if (!isAdmin) {
+      throw new Error("Unauthorized: Only administrators can create applicants.");
+    }
+
+    const payload = {
+      full_name: data.full_name,
+      email: data.email.toLowerCase(),
+      phone: data.phone,
+      role_applied: data.role_applied,
+      domain: data.domain || null,
+      sub_domain: data.sub_domain || null,
+      college: data.college || null,
+      state: data.state || null,
+      graduation_year: data.graduation_year || null,
+      availability: data.availability || null,
+      status: data.status,
+      admin_notes: data.admin_notes || null,
+      profile_photo_url: data.profile_photo_url || null,
+      certificate_url: data.certificate_url || null,
+    };
+
+    const { data: newApp, error: insertErr } = await supabase
+      .from("applications")
+      .insert([payload])
+      .select("id")
+      .single();
+
+    if (insertErr || !newApp) {
+      throw new Error(insertErr?.message || "Failed to create applicant.");
+    }
+
+    // Log the initial status event
+    await supabase.from("application_status_events").insert([{
+      application_id: newApp.id,
+      from_status: null,
+      to_status: data.status,
+      note: `[Admin Created Member Directly] Initial status set to '${data.status}'`,
+      changed_by: context.userId,
+    }]);
+
+    return { ok: true, id: newApp.id };
   });

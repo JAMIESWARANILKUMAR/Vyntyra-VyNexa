@@ -50,6 +50,7 @@ export const verifyNocCertificate = createServerFn({ method: "POST" })
     }
 
     // 2. If not found by application table directly, try matching profiles intern_id
+    let profileRecord: any = null;
     if (!appRecord) {
       const searchConditions = [`email.eq.${qLower}`];
       if (shortId) searchConditions.push(`intern_id.ilike.%${shortId}%`);
@@ -61,9 +62,30 @@ export const verifyNocCertificate = createServerFn({ method: "POST" })
         .or(searchConditions.join(","))
         .maybeSingle();
 
-      if (prof && prof.applications) {
-        appRecord = Array.isArray(prof.applications) ? prof.applications[0] : prof.applications;
+      if (prof) {
+        profileRecord = prof;
+        if (prof.applications) {
+          appRecord = Array.isArray(prof.applications) ? prof.applications[0] : prof.applications;
+        }
       }
+    }
+
+    if (!appRecord && profileRecord) {
+      // Synthesize appRecord from profile details
+      appRecord = {
+        id: profileRecord.id,
+        full_name: profileRecord.full_name,
+        email: profileRecord.email,
+        phone: profileRecord.emergency_contact || "",
+        college: "Academic Institution",
+        state: "Andhra Pradesh",
+        domain: profileRecord.department || "Technology & Software",
+        sub_domain: profileRecord.position || "Full Stack Web Development",
+        status: "hired",
+        created_at: profileRecord.created_at || new Date().toISOString(),
+        profile_photo_url: profileRecord.avatar_url || null,
+        certificate_url: null
+      };
     }
 
     if (!appRecord || !appRecord.id) {
