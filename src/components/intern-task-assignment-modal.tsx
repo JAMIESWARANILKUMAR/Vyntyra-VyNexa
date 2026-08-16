@@ -586,6 +586,18 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
                   />
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <Label className="text-xs font-bold text-slate-700">Report Template URL (Optional)</Label>
+                  <Input
+                    placeholder="https://docs.google.com/document/d/..."
+                    value={manualReportUrl}
+                    onChange={(e) => setManualReportUrl(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>

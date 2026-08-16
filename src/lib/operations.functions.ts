@@ -496,34 +496,38 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
       .select("assigned_to, title");
     const existingSet = new Set((existingTasks || []).map((t: any) => `${t.assigned_to}-${(t.title || "").trim().toLowerCase()}`));
 
-    // Assign tasks to matching interns
+    // Distribute tasks to matching interns (Round-Robin)
+    let internIndex = 0;
     for (const taskItem of data.tasks) {
       const targetInterns = activeInterns.filter((profile: any) => matchInternDomain(profile, taskItem.domain));
       const internsToAssign = targetInterns.length > 0 ? targetInterns : activeInterns; // Fallback to all if no domain match
       
-      for (const intern of internsToAssign) {
-        const fingerprint = `${intern.id}-${(taskItem.title || "").trim().toLowerCase()}`;
-        if (existingSet.has(fingerprint)) continue; // Skip duplicates
+      if (internsToAssign.length === 0) continue;
 
-        taskPayloads.push({
-          title: taskItem.title,
-          description: taskItem.description || "Assigned Internship Project Task",
-          project_requirements: taskItem.task_file_url || null,
-          task_doc_url: taskItem.task_doc_url || null,
-          report_template_url: taskItem.report_template_url || null,
-          deliverable_url: null,
-          due_date: taskItem.due_date || null,
-          priority: taskItem.priority || "medium",
-          assigned_to: intern.id,
-          target_user_id: intern.id,
-          target_role: "intern",
-          status: "pending",
-          is_pool_task: false,
-          created_by: context.userId,
-          created_at: now,
-          task_domain: taskItem.domain || "all"
-        });
-      }
+      const intern = internsToAssign[internIndex % internsToAssign.length];
+      internIndex++;
+
+      const fingerprint = `${intern.id}-${(taskItem.title || "").trim().toLowerCase()}`;
+      if (existingSet.has(fingerprint)) continue; // Skip duplicates
+
+      taskPayloads.push({
+        title: taskItem.title,
+        description: taskItem.description || "Assigned Internship Project Task",
+        project_requirements: taskItem.task_file_url || null,
+        task_doc_url: taskItem.task_doc_url || null,
+        report_template_url: taskItem.report_template_url || null,
+        deliverable_url: null,
+        due_date: taskItem.due_date || null,
+        priority: taskItem.priority || "medium",
+        assigned_to: intern.id,
+        target_user_id: intern.id,
+        target_role: "intern",
+        status: "pending",
+        is_pool_task: false,
+        created_by: context.userId,
+        created_at: now,
+        task_domain: taskItem.domain || "all"
+      });
     }
 
     if (taskPayloads.length === 0) {
