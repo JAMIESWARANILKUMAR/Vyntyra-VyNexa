@@ -14,8 +14,10 @@ import { Route as TrackRouteImport } from './routes/track'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as StatusRouteImport } from './routes/status'
 import { Route as SecurityCheckRouteImport } from './routes/security-check'
+import { Route as RefundsRouteImport } from './routes/refunds'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as CareersRouteImport } from './routes/careers'
+import { Route as AgreementRouteImport } from './routes/agreement'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StatusTokenRouteImport } from './routes/status.$token'
@@ -57,6 +59,11 @@ const SecurityCheckRoute = SecurityCheckRouteImport.update({
   path: '/security-check',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RefundsRoute = RefundsRouteImport.update({
+  id: '/refunds',
+  path: '/refunds',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -65,6 +72,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const CareersRoute = CareersRouteImport.update({
   id: '/careers',
   path: '/careers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgreementRoute = AgreementRouteImport.update({
+  id: '/agreement',
+  path: '/agreement',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -148,8 +160,10 @@ const AuthenticatedAdminEmailCampaignsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agreement': typeof AgreementRoute
   '/careers': typeof CareersRoute
   '/privacy': typeof PrivacyRoute
+  '/refunds': typeof RefundsRoute
   '/security-check': typeof SecurityCheckRoute
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
@@ -171,8 +185,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agreement': typeof AgreementRoute
   '/careers': typeof CareersRoute
   '/privacy': typeof PrivacyRoute
+  '/refunds': typeof RefundsRoute
   '/security-check': typeof SecurityCheckRoute
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
@@ -196,8 +212,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/agreement': typeof AgreementRoute
   '/careers': typeof CareersRoute
   '/privacy': typeof PrivacyRoute
+  '/refunds': typeof RefundsRoute
   '/security-check': typeof SecurityCheckRoute
   '/status': typeof StatusRouteWithChildren
   '/terms': typeof TermsRoute
@@ -221,8 +239,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agreement'
     | '/careers'
     | '/privacy'
+    | '/refunds'
     | '/security-check'
     | '/status'
     | '/terms'
@@ -244,8 +264,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agreement'
     | '/careers'
     | '/privacy'
+    | '/refunds'
     | '/security-check'
     | '/status'
     | '/terms'
@@ -268,8 +290,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/agreement'
     | '/careers'
     | '/privacy'
+    | '/refunds'
     | '/security-check'
     | '/status'
     | '/terms'
@@ -293,8 +317,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AgreementRoute: typeof AgreementRoute
   CareersRoute: typeof CareersRoute
   PrivacyRoute: typeof PrivacyRoute
+  RefundsRoute: typeof RefundsRoute
   SecurityCheckRoute: typeof SecurityCheckRoute
   StatusRoute: typeof StatusRouteWithChildren
   TermsRoute: typeof TermsRoute
@@ -342,6 +368,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SecurityCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/refunds': {
+      id: '/refunds'
+      path: '/refunds'
+      fullPath: '/refunds'
+      preLoaderRoute: typeof RefundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -354,6 +387,13 @@ declare module '@tanstack/react-router' {
       path: '/careers'
       fullPath: '/careers'
       preLoaderRoute: typeof CareersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agreement': {
+      id: '/agreement'
+      path: '/agreement'
+      fullPath: '/agreement'
+      preLoaderRoute: typeof AgreementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -505,8 +545,10 @@ const StatusRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AgreementRoute: AgreementRoute,
   CareersRoute: CareersRoute,
   PrivacyRoute: PrivacyRoute,
+  RefundsRoute: RefundsRoute,
   SecurityCheckRoute: SecurityCheckRoute,
   StatusRoute: StatusRouteWithChildren,
   TermsRoute: TermsRoute,

@@ -1,14 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Shield } from "lucide-react";
+import { Shield, ArrowLeft } from "lucide-react";
 import { Header } from "@/components/Header";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Applicant Terms — Vyntyra Careers" },
+      { title: "Terms and Conditions — Vyntyra Careers" },
       { name: "description", content: "Terms of use for the Vyntyra Careers applicant portal and Project VyNexa application form." },
-      { property: "og:title", content: "Applicant Terms — Vyntyra Careers" },
-      { property: "og:description", content: "Terms of use for the Vyntyra Careers applicant portal." },
+      { property: "og:title", content: "Terms and Conditions — Vyntyra Careers" },
+      { property: "og:description", content: "Terms and Conditions aligned with DPDPA 2023." },
       { name: "robots", content: "index,follow" },
     ],
   }),
@@ -20,61 +21,67 @@ function TermsPage() {
     <div className="min-h-screen bg-surface">
       <Header />
 
-      <main className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-10 sm:py-14">
+      <main className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-10 sm:py-14">
         <div className="mb-8">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-secondary font-semibold mb-2">Legal · Applicants</div>
-          <h1 className="text-3xl sm:text-4xl font-semibold text-primary tracking-tight">Applicant Terms</h1>
+          <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-4">
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to Careers
+          </Link>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-secondary font-semibold mb-2">Legal · User Rules</div>
+          <h1 className="text-3xl sm:text-4xl font-semibold text-primary tracking-tight">Terms and Conditions</h1>
           <p className="text-sm text-muted-foreground mt-3">
-            Effective date: 09 July 2026 · Maintained by Vyntyra Consultancy Services
+            Last Updated: August 17, 2026 · Vyntyra Consultancy Services
           </p>
         </div>
 
         <div className="rounded-md border border-border bg-card shadow-corp p-6 sm:p-8 space-y-6 text-sm leading-relaxed text-foreground">
-          <Section title="1. Scope">
-            These terms govern your use of the Vyntyra Careers applicant portal (the "Portal") operated by Vyntyra
-            Consultancy Services ("Vyntyra", "we", "us") to submit applications for Project VyNexa and other openings.
-            By submitting an application you agree to these terms and to the accompanying{" "}
-            <a href="/privacy" className="text-secondary underline underline-offset-4 hover:text-primary">Privacy Notice</a>.
+          
+          <Section title="1. Acceptance of Terms">
+            By accessing or using the website of Vyntyra Consultancy Services ("Company", "we", "us"), applying for internships, or accessing instructional materials, you agree to be bound by these Terms and Conditions and our Privacy Policy.
           </Section>
-          <Section title="2. Eligibility & accuracy">
-            You confirm that you are legally eligible to work in the location you have applied to and that all
-            information you submit — including contact details, academic details, resume, portfolio, and project
-            documents — is accurate and your own. Misrepresentation may result in disqualification.
+
+          <Section title="2. Eligibility">
+            You must be currently enrolled in an accredited educational institution or be a recent graduate eligible for practical skill development. If you are under 18 years of age, your parent or legal guardian must review and agree to these Terms on your behalf.
           </Section>
-          <Section title="3. Your submission">
-            You retain ownership of the content you submit. You grant Vyntyra a limited, non-exclusive licence to
-            store, review, share internally with the hiring team, and process your submission for the purpose of
-            evaluating your application and communicating with you about it.
+
+          <Section title="3. Duties of Users (Section 15, DPDPA 2023)">
+            As a user and applicant on our platform, you agree to:
+            <ul className="list-disc pl-5 mt-2 space-y-1 text-foreground/80">
+              <li>Furnish authentic, truthful, and verifiable academic records and identity proofs.</li>
+              <li>Not impersonate any person or entity or suppress material information.</li>
+              <li>Refrain from lodging false, frivolous, or malicious complaints.</li>
+              <li>Keep login credentials and platform access confidential.</li>
+            </ul>
           </Section>
-          <Section title="4. Automated processing">
-            We may use automated tooling to parse your resume, generate interview preparation notes for the hiring
-            team, and send status updates by email. Hiring decisions are made by humans; automated tooling only
-            assists reviewers and never rejects an application on its own.
+
+          <Section title="4. Intellectual Property Rights">
+            All website content, branding, UI designs, code snippets, course modules, assignments, and proprietary tools remain the exclusive intellectual property of Vyntyra Consultancy Services.
+            <br /><br />
+            You are granted a revocable, non-exclusive, non-transferable license to access materials solely for your learning and internship evaluation. Unauthorized distribution, reverse engineering, scraping, or commercial exploitation of our platform is strictly prohibited.
           </Section>
-          <Section title="5. Acceptable use">
-            Do not submit malware, unlawful content, or information belonging to a third party without their consent.
-            Do not attempt to interfere with the Portal, its security controls, or other applicants' data.
+
+          <Section title="5. Prohibited Conduct">
+            Users shall not:
+            <ul className="list-disc pl-5 mt-2 space-y-1 text-foreground/80">
+              <li>Transmit viruses, worms, Trojan horses, or harmful code.</li>
+              <li>Attempt unauthorized access to internal servers, databases, or fellow applicant records.</li>
+              <li>Use our communication boards for harassment, spamming, academic dishonesty, or hate speech.</li>
+            </ul>
           </Section>
-          <Section title="6. Communications">
-            By applying you agree that we may contact you at the email address and phone number you provide about
-            your application status, interview scheduling, and role updates. You may withdraw your application at any
-            time by contacting hr@vyntyraconsultancyservices.in.
+
+          <Section title="6. Limitation of Liability & Disclaimer">
+            The website and internship application portal are provided on an "AS IS" and "AS AVAILABLE" basis. We do not guarantee that submitting an application guarantees an internship offer or certificate.
+            <br /><br />
+            To the maximum extent permitted by law, Vyntyra Consultancy Services shall not be liable for any indirect, incidental, or consequential damages arising from website downtime, lost data, or application transmission failures.
           </Section>
-          <Section title="7. No offer or guarantee">
-            Submitting an application does not create an employment relationship or a guarantee of interview or
-            offer. Any offer of employment will be made in writing on separate terms.
+
+          <Section title="7. Governing Law and Jurisdiction">
+            These terms are governed by the laws of India. Any disputes arising out of these Terms shall be subject to the exclusive jurisdiction of the courts located in Visakhapatnam, Andhra Pradesh, India.
           </Section>
-          <Section title="8. Changes">
-            We may update these terms. The "Effective date" above reflects the latest version. Continued use of the
-            Portal after an update constitutes acceptance of the revised terms.
-          </Section>
-          <Section title="9. Contact">
-            Questions about these terms: <a className="text-secondary underline underline-offset-4" href="mailto:hr@vyntyraconsultancyservices.in">hr@vyntyraconsultancyservices.in</a>.
-          </Section>
+
         </div>
 
         <p className="mt-6 text-xs text-muted-foreground flex items-center gap-2">
-          <Shield className="h-3.5 w-3.5 text-secondary" /> This page is maintained by Vyntyra Consultancy Services and answers common questions about applying through this portal. It is not a legal certification.
+          <Shield className="h-3.5 w-3.5 text-secondary" /> This terms page governs access and portal usage for candidates.
         </p>
       </main>
     </div>
@@ -85,7 +92,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <section>
       <h2 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">{title}</h2>
-      <p className="text-foreground/90">{children}</p>
+      <div className="text-foreground/90">{children}</div>
     </section>
   );
 }

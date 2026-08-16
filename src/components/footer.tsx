@@ -144,9 +144,10 @@ export function Footer() {
           <VisitorCounter />
           
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-            <Link to="/privacy" className="hover:text-gold transition-colors">Privacy Notice</Link>
-            <Link to="/terms" className="hover:text-gold transition-colors">Applicant Terms</Link>
-            <Link to="/track" className="hover:text-gold transition-colors">Security Policy</Link>
+            <Link to="/privacy" className="hover:text-gold transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-gold transition-colors">Terms &amp; Conditions</Link>
+            <Link to="/agreement" className="hover:text-gold transition-colors">User Agreement</Link>
+            <Link to="/refunds" className="hover:text-gold transition-colors">Refund Policy</Link>
           </div>
         </div>
       </div>
