@@ -507,6 +507,12 @@ function AdminDashboard() {
               <Users className="h-4 w-4" /> <span className="hidden sm:inline">Operations</span>
             </Link>
             <Link
+              to="/admin/email-campaigns"
+              className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
+            >
+              <Mail className="h-4 w-4" /> <span className="hidden sm:inline">Email Campaigns</span>
+            </Link>
+            <Link
               to="/cms"
               className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
             >
@@ -1435,9 +1441,9 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         photoBase64 = await urlToBase64(app.profile_photo_url);
       }
 
-      const logoBase64 = await urlToBase64("/icon-512.png");
+      const logoBase64 = await urlToBase64(window.location.origin + "/icon-512.png");
 
-      const verificationUrl = `https://careers.vyntyraconsultancyservices.in/status/${app.id}`;
+      const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`;
       const qrBase64 = await urlToBase64(qrApiUrl);
 

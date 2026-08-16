@@ -75,6 +75,9 @@ function InternDashboard() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentGatewaySelected, setPaymentGatewaySelected] = useState<"razorpay" | "payu" | null>(null);
+
   const sessionQ = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
@@ -1792,9 +1795,15 @@ function InternDashboard() {
                               <p className="text-xs text-red-700">Please pay the mandatory exam fee of ₹{profile?.exam_fee_amount ?? 199} to unlock your final certification exam and refer-and-earn privileges.</p>
                             </div>
                           </div>
-                          <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => toast.info("Payment gateway integration pending. Contact your administrator.")}>
-                            Pay Now
-                          </Button>
+                          {profile?.is_payment_enabled ? (
+                            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => setShowPaymentModal(true)}>
+                              Pay Now
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="outline" className="text-red-700 border-red-200 bg-white" onClick={() => toast.info("Payment gateway integration pending. Contact your administrator.")}>
+                              Pending Gateway
+                            </Button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -2647,9 +2656,13 @@ function InternDashboard() {
                             completedCount >= 5 
                               ? "bg-emerald-50/70 border-emerald-200 text-emerald-950 shadow-xs" 
                               : "bg-slate-50 border-slate-200/80 text-slate-500"
+                          <div className={`p-3.5 rounded-xl border text-center transition-all duration-300 transform hover:scale-[1.03] ${
+                            completedCount >= 5 
+                              ? "bg-emerald-50/70 border-emerald-200 text-emerald-950 shadow-xs" 
+                              : "bg-slate-50 border-slate-200/80 text-slate-500"
                           }`}>
                             <div className="text-xs font-bold">Tier 1: 5 Referrals</div>
-                            <div className="text-[10px] mt-1 font-semibold">25% Course Refund</div>
+                            <div className="text-[10px] mt-1 font-semibold">25% Course Refund (₹{Math.round((profile?.exam_fee_amount ?? 199) * 0.25)})</div>
                             {completedCount >= 5 && <div className="text-[9px] font-bold text-emerald-600 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> ✓ Achieved!</div>}
                           </div>
                           
@@ -2659,13 +2672,13 @@ function InternDashboard() {
                               : "bg-slate-50 border-slate-200/80 text-slate-500"
                           }`}>
                             <div className="text-xs font-bold">Tier 2: 10 Referrals</div>
-                            <div className="text-[10px] mt-1 font-semibold">50% Course Refund</div>
+                            <div className="text-[10px] mt-1 font-semibold">50% Course Refund (₹{Math.round((profile?.exam_fee_amount ?? 199) * 0.50)})</div>
                             {completedCount >= 10 && <div className="text-[9px] font-bold text-emerald-600 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> ✓ Achieved!</div>}
                           </div>
                         </div>
 
                         <p className="text-[10px] text-slate-400 leading-normal text-center pt-1">
-                          *A referral is marked as completed once their application is selected/hired. Refunds are directly adjusted by Vyntyra.
+                          *A referral is marked as completed once their application is selected/hired. Refunds are directly adjusted by Vyntyra. You have 14 days to get your refund to credit back.
                         </p>
                       </div>
                     );
@@ -2983,6 +2996,81 @@ function InternDashboard() {
 
       {/* ── First-Time Login Animated Welcome Modal ── */}
       <FirstLoginWelcomeModal user={profile} mustChangePassword={!!session?.user?.user_metadata?.must_change_password} />
+
+      {/* ── Premium Payment Gateway Modal ── */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-[200] bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-0 shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900">Secure Checkout</h3>
+                <p className="text-xs text-slate-500 mt-1">Select your preferred payment gateway</p>
+              </div>
+              <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="flex flex-col gap-4">
+                <button
+                  onClick={() => setPaymentGatewaySelected("razorpay")}
+                  className={`flex items-center gap-4 p-5 rounded-2xl border-2 transition-all duration-200 text-left ${paymentGatewaySelected === "razorpay" ? "border-blue-600 bg-blue-50/50 shadow-md shadow-blue-900/5" : "border-slate-200 hover:border-blue-400 hover:bg-slate-50"}`}
+                >
+                  <div className="h-12 w-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M22.43 2.73a1.47 1.47 0 00-1.46-1.14H8.79A1.47 1.47 0 007.41 2.7L.58 20.89a1.47 1.47 0 001.37 1.99h12.18a1.47 1.47 0 001.38-1.07l6.9-19.08z"/></svg>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-lg">RazorPay</h4>
+                    <p className="text-xs text-slate-500">UPI, Cards, Netbanking, Wallets</p>
+                  </div>
+                  {paymentGatewaySelected === "razorpay" && <Check className="h-6 w-6 text-blue-600 ml-auto" />}
+                </button>
+
+                <button
+                  onClick={() => setPaymentGatewaySelected("payu")}
+                  className={`flex items-center gap-4 p-5 rounded-2xl border-2 transition-all duration-200 text-left ${paymentGatewaySelected === "payu" ? "border-emerald-600 bg-emerald-50/50 shadow-md shadow-emerald-900/5" : "border-slate-200 hover:border-emerald-400 hover:bg-slate-50"}`}
+                >
+                  <div className="h-12 w-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <span className="font-black text-xl tracking-tighter">PayU</span>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-lg">PayU</h4>
+                    <p className="text-xs text-slate-500">Corporate & International Payments</p>
+                  </div>
+                  {paymentGatewaySelected === "payu" && <Check className="h-6 w-6 text-emerald-600 ml-auto" />}
+                </button>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+                <Button 
+                  size="lg" 
+                  disabled={!paymentGatewaySelected}
+                  onClick={() => {
+                    toast.info(`Initializing ${paymentGatewaySelected} Corporate Gateway...`);
+                    // In a real application, we would initialize the SDK here
+                    setTimeout(() => {
+                      toast.success("Payment successful (Simulated)");
+                      setShowPaymentModal(false);
+                    }, 2000);
+                  }}
+                  className={`w-full text-base font-bold h-14 ${paymentGatewaySelected === "razorpay" ? "bg-blue-600 hover:bg-blue-700" : paymentGatewaySelected === "payu" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-800"}`}
+                >
+                  Pay ₹{profile?.exam_fee_amount ?? 199} Securely
+                </Button>
+                
+                <div className="text-center space-y-1">
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Maintained by JAMI ESWAR ANIL KUMAR</p>
+                  <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
+                    <a href="https://internships.vyntyraconsultancyservices.in" target="_blank" rel="noreferrer" className="hover:text-emerald-600 hover:underline">Privacy Policy</a>
+                    <span>&bull;</span>
+                    <a href="https://internships.vyntyraconsultancyservices.in" target="_blank" rel="noreferrer" className="hover:text-emerald-600 hover:underline">Refund Policy</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Force Password Reset Modal ── */}
       {showForcePasswordModal && (

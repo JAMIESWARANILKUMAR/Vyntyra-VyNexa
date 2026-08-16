@@ -982,6 +982,19 @@ export const getMyDocuments = createServerFn({ method: "GET" })
           console.warn("Failed to generate QR Code for NOC:", qrErr);
         }
 
+        let logoBase64 = null;
+        try {
+          const fs = await import('fs');
+          const path = await import('path');
+          const logoPath = path.join(process.cwd(), "public", "icon-512.png");
+          if (fs.existsSync(logoPath)) {
+            const buffer = fs.readFileSync(logoPath);
+            logoBase64 = `data:image/png;base64,${buffer.toString("base64")}`;
+          }
+        } catch (logoErr) {
+          console.warn("Failed to read local logo:", logoErr);
+        }
+
         const { generateNocPdf } = await import("./nocGenerator");
         const doc = generateNocPdf({
           fullName: app.full_name,
@@ -994,7 +1007,7 @@ export const getMyDocuments = createServerFn({ method: "GET" })
           internshipStartDate: startDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }),
           profilePhotoUrl: photoBase64,
           qrCodeBase64: generatedQrBase64,
-          logoBase64: null,
+          logoBase64: logoBase64,
           signatureBase64: signatureBase64,
           hodName: app.hod_name,
         });
@@ -1137,6 +1150,19 @@ export const regenerateMyDocuments = createServerFn({ method: "POST" })
       console.warn("Failed to generate QR Code for fallback NOC:", qrErr);
     }
 
+    let logoBase64 = null;
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const logoPath = path.join(process.cwd(), "public", "icon-512.png");
+      if (fs.existsSync(logoPath)) {
+        const buffer = fs.readFileSync(logoPath);
+        logoBase64 = `data:image/png;base64,${buffer.toString("base64")}`;
+      }
+    } catch (logoErr) {
+      console.warn("Failed to read local logo for fallback NOC:", logoErr);
+    }
+
     const { generateNocPdf } = await import("./nocGenerator");
     const doc = generateNocPdf({
       fullName: app.full_name,
@@ -1149,7 +1175,7 @@ export const regenerateMyDocuments = createServerFn({ method: "POST" })
       internshipStartDate: startDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }),
       profilePhotoUrl: photoBase64,
       qrCodeBase64: generatedQrBase64,
-      logoBase64: null,
+      logoBase64: logoBase64,
       signatureBase64: signatureBase64,
       hodName: app.hod_name,
     });
@@ -2534,18 +2560,17 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
 
       // Record log in automated_emails_log using Admin Client
       const adminClient = getAdminClient();
+      const now = new Date();
       const { error: logError } = await adminClient.from("automated_emails_log").insert({
         recipient_email: recipientEmail,
         recipient_name: recipientName,
-        university_name: universityName || null,
+        university_or_organization: universityName || null,
         domain: domain || null,
         sub_domain: subDomain || null,
-        subject: subject,
-        status: status,
-        provider: providerUsed,
-        resend_id: resendId,
-        error_message: errorMessage,
-        sent_at: new Date().toISOString(),
+        email_template_id: subject, // Temporarily using subject as the template ID since we don't have a template ID
+        delivery_status: status,
+        sent_date: now.toISOString().split('T')[0],
+        sent_time: now.toISOString().split('T')[1].substring(0, 8)
       });
 
       if (logError) {
@@ -3469,6 +3494,7 @@ export const updateInternFeeSettings = createServerFn({ method: "POST" })
     is_fee_exempted: z.boolean().optional(),
     exam_fee_paid: z.boolean().optional(),
     fee_payment_scheduled: z.boolean().optional(),
+    is_payment_enabled: z.boolean().optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const updateData: any = {};
@@ -3476,6 +3502,7 @@ export const updateInternFeeSettings = createServerFn({ method: "POST" })
     if (data.is_fee_exempted !== undefined) updateData.is_fee_exempted = data.is_fee_exempted;
     if (data.exam_fee_paid !== undefined) updateData.exam_fee_paid = data.exam_fee_paid;
     if (data.fee_payment_scheduled !== undefined) updateData.fee_payment_scheduled = data.fee_payment_scheduled;
+    if (data.is_payment_enabled !== undefined) updateData.is_payment_enabled = data.is_payment_enabled;
 
     if (data.internIds && data.internIds.length > 0) {
       const { error } = await supabase

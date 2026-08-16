@@ -73,6 +73,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   const [manualTitle, setManualTitle] = useState("");
   const [manualDescription, setManualDescription] = useState("");
   const [manualFileUrl, setManualFileUrl] = useState("");
+  const [manualDocUrl, setManualDocUrl] = useState("");
   const [manualDueDate, setManualDueDate] = useState("");
   const [manualPriority, setManualPriority] = useState<"low" | "medium" | "high">("medium");
   const [saveTemplate, setSaveTemplate] = useState(false);
@@ -207,6 +208,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
           title: manualTitle,
           description: manualDescription,
           task_file_url: manualFileUrl,
+          task_doc_url: manualDocUrl,
           due_date: manualDueDate,
           priority: manualPriority,
           target_intern_ids: targetIds,
@@ -416,7 +418,12 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
             <div className="border rounded-xl p-4 bg-white dark:bg-slate-950 space-y-3">
               <div className="flex items-center justify-between">
                 <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <Users className="h-4 w-4 text-indigo-600" /> Target Interns ({interns.length} Available)
+                  <Users className="h-4 w-4 text-indigo-600" /> Target Interns (
+                  {interns.filter((i: any) => {
+                    const matchDomain = targetDomain === "All Domains" || (i.department || "General") === targetDomain;
+                    const matchSubDomain = targetSubDomain === "All Sub-Domains" || (i.position || "General") === targetSubDomain;
+                    return matchDomain && matchSubDomain;
+                  }).length} Available)
                 </Label>
                 <div className="flex items-center gap-2">
                   <Checkbox id="selectAllBulk" checked={selectAll} onCheckedChange={(v) => handleToggleSelectAll(!!v)} />
@@ -428,7 +435,11 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
 
               {!selectAll && (
                 <div className="max-h-36 overflow-y-auto divide-y border rounded p-2 text-xs">
-                  {interns.map((i) => (
+                  {interns.filter((i: any) => {
+                    const matchDomain = targetDomain === "All Domains" || (i.department || "General") === targetDomain;
+                    const matchSubDomain = targetSubDomain === "All Sub-Domains" || (i.position || "General") === targetSubDomain;
+                    return matchDomain && matchSubDomain;
+                  }).map((i) => (
                     <div key={i.id} className="flex items-center justify-between py-1.5 px-2 hover:bg-slate-50 dark:hover:bg-slate-900 rounded">
                       <div>
                         <div className="font-semibold text-slate-800 dark:text-slate-200">{i.full_name || i.email}</div>
@@ -551,6 +562,18 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
                   />
                 </div>
                 <div>
+                  <Label className="text-xs font-bold text-slate-700">Handbook URL</Label>
+                  <Input
+                    placeholder="https://drive.google.com/handbook..."
+                    value={manualDocUrl}
+                    onChange={(e) => setManualDocUrl(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                   <Label className="text-xs font-bold text-slate-700">Deadline Date</Label>
                   <Input
                     type="date"
@@ -559,20 +582,19 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
                     className="mt-1"
                   />
                 </div>
-              </div>
-
-              <div>
-                <Label className="text-xs font-bold text-slate-700">Priority Level</Label>
-                <Select value={manualPriority} onValueChange={(v) => setManualPriority(v as any)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low Priority</SelectItem>
-                    <SelectItem value="medium">Medium Priority</SelectItem>
-                    <SelectItem value="high">High Priority</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <Label className="text-xs font-bold text-slate-700">Priority Level</Label>
+                  <Select value={manualPriority} onValueChange={(v) => setManualPriority(v as any)}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low Priority</SelectItem>
+                      <SelectItem value="medium">Medium Priority</SelectItem>
+                      <SelectItem value="high">High Priority</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Target Intern Selection */}
@@ -590,16 +612,33 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
                 </div>
 
                 {!selectAll && (
-                  <div className="max-h-36 overflow-y-auto divide-y border rounded p-2 text-xs">
-                    {interns.map((i) => (
-                      <div key={i.id} className="flex items-center justify-between py-1.5 px-2 hover:bg-slate-50 dark:hover:bg-slate-900 rounded">
-                        <div>
-                          <div className="font-semibold text-slate-800 dark:text-slate-200">{i.full_name || i.email}</div>
-                          <div className="text-[10px] text-slate-500">{i.department || "Internship"} &middot; {i.intern_id || i.email}</div>
+                  <div className="max-h-64 overflow-y-auto divide-y border rounded bg-slate-50/50 text-xs">
+                    {uniqueDomains.map((domain: any) => {
+                      const domainInterns = interns.filter((i: any) => (i.department || "General") === domain);
+                      if (domainInterns.length === 0) return null;
+                      
+                      return (
+                        <div key={domain} className="p-3">
+                          <h4 className="font-bold text-slate-800 mb-2 border-b pb-1 flex items-center justify-between">
+                            <span>Domain: <span className="text-indigo-700">{domain}</span></span>
+                            <span className="text-[10px] text-slate-500 font-normal">{domainInterns.length} Interns</span>
+                          </h4>
+                          <div className="space-y-1">
+                            {domainInterns.map((i: any) => (
+                              <div key={i.id} className="flex items-center justify-between py-1.5 px-2 bg-white hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded-lg ml-2 transition-colors">
+                                <div>
+                                  <div className="font-semibold text-slate-800">{i.full_name || i.email}</div>
+                                  <div className="text-[10px] text-slate-500">
+                                    <span className="font-medium text-emerald-600">{i.position || "General"}</span> &middot; {i.intern_id || i.email}
+                                  </div>
+                                </div>
+                                <Checkbox checked={selectedInternIds.includes(i.id)} onCheckedChange={() => handleToggleIntern(i.id)} />
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <Checkbox checked={selectedInternIds.includes(i.id)} onCheckedChange={() => handleToggleIntern(i.id)} />
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </div>
