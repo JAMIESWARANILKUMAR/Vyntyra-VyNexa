@@ -682,13 +682,13 @@ function ApplicationPage() {
 
               <Section title="Education & Department Contacts" step="02">
                 <div className="grid md:grid-cols-2 gap-5">
-                  <Field label="State">
+                  <Field label="State" required>
                     <Select value={form.state} onValueChange={handleStateChange}>
                       <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
                       <SelectContent>{STATES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
                     </Select>
                   </Field>
-                  <Field label="College / Institution">
+                  <Field label="College / Institution" required>
                     <Select value={form.college} onValueChange={update("college")} disabled={!form.state}>
                       <SelectTrigger><SelectValue placeholder={form.state ? "Select college" : "Select state first"} /></SelectTrigger>
                       <SelectContent className="max-h-72">
@@ -698,7 +698,7 @@ function ApplicationPage() {
                       </SelectContent>
                     </Select>
                   </Field>
-                  <Field label="Graduation year">
+                  <Field label="Graduation year" required>
                     <Select value={form.graduation_year} onValueChange={update("graduation_year")}>
                       <SelectTrigger><SelectValue placeholder="Select year" /></SelectTrigger>
                       <SelectContent>{graduationYears().map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
@@ -751,7 +751,7 @@ function ApplicationPage() {
                       <SelectContent>{AVAILABILITY.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
                     </Select>
                   </Field>
-                  <Field label="Resume / CV — PDF, DOC, DOCX or RTF (max 5 MB)" className="md:col-span-2">
+                  <Field label="Resume / CV — PDF, DOC, DOCX or RTF (max 5 MB)" className="md:col-span-2" required>
                     {resumeName ? (
                       <div className="flex items-center justify-between gap-3 rounded-sm border border-secondary/40 bg-secondary/5 px-4 py-3">
                         <div className="flex items-center gap-3 min-w-0">
@@ -1359,6 +1359,7 @@ function AgreementDialog({ open, onOpenChange, onAccept }: { open: boolean; onOp
             ["Non-Discrimination", "Vyntyra is an equal-opportunity employer. Applications are evaluated on merit, without regard to race, gender, religion, age, disability, or any protected characteristic."],
             ["Your Rights", "You have the right to access, correct, or request deletion of your personal data. Contact our data-protection team at hr@vyntyraconsultancyservices.in for any privacy requests."],
             ["Communication", "By submitting, you consent to receive application-status emails at the address provided. You will not receive marketing communications."],
+            ["Contact & Use", "I shall agree to all the terms and conditions, let Vyntyra & officials can contact and use my information for employment."]
           ].map(([h, p], i) => (
             <div key={h}>
               <h4 className="font-semibold text-primary mb-1">{i + 1}. {h}</h4>
