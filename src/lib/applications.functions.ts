@@ -484,6 +484,12 @@ const updateApplicantSchema = z.object({
   admin_notes: z.string().trim().max(2000).optional().nullable(),
   profile_photo_url: z.string().trim().max(600).optional().nullable(),
   certificate_url: z.string().trim().max(600).optional().nullable(),
+  offer_letter_url: z.string().trim().optional().nullable(),
+  noc_url: z.string().trim().optional().nullable(),
+  mentor_id: z.string().trim().optional().nullable(),
+  department: z.string().trim().optional().nullable(),
+  position: z.string().trim().optional().nullable(),
+  stipend: z.string().trim().optional().nullable(),
 });
 
 export const updateApplicantByAdmin = createServerFn({ method: "POST" })
@@ -521,6 +527,8 @@ export const updateApplicantByAdmin = createServerFn({ method: "POST" })
     if (updateFields.admin_notes !== undefined) payload.admin_notes = updateFields.admin_notes;
     if (updateFields.profile_photo_url !== undefined) payload.profile_photo_url = updateFields.profile_photo_url;
     if (updateFields.certificate_url !== undefined) payload.certificate_url = updateFields.certificate_url;
+    if (updateFields.offer_letter_url !== undefined) payload.offer_letter_url = updateFields.offer_letter_url;
+    if (updateFields.noc_url !== undefined) payload.noc_url = updateFields.noc_url;
 
     const { error: updateErr } = await supabase
       .from("applications")
@@ -528,6 +536,32 @@ export const updateApplicantByAdmin = createServerFn({ method: "POST" })
       .eq("id", id);
 
     if (updateErr) throw new Error(updateErr.message);
+
+    // Sync to profiles table if corresponding intern profile exists
+    try {
+      const { getAdminClient } = await import("@/integrations/supabase/admin");
+      const adminClient = getAdminClient();
+      const targetEmail = updateFields.email ? updateFields.email.toLowerCase() : existing.email;
+      
+      const profileUpdates: Record<string, any> = {};
+      if (updateFields.full_name !== undefined) profileUpdates.full_name = updateFields.full_name;
+      if (updateFields.phone !== undefined) profileUpdates.phone = updateFields.phone;
+      if (updateFields.profile_photo_url !== undefined) profileUpdates.avatar_url = updateFields.profile_photo_url;
+      if (updateFields.certificate_url !== undefined) profileUpdates.certificate_url = updateFields.certificate_url;
+      if (updateFields.offer_letter_url !== undefined) profileUpdates.offer_letter_url = updateFields.offer_letter_url;
+      if (updateFields.noc_url !== undefined) profileUpdates.noc_url = updateFields.noc_url;
+      if (updateFields.mentor_id !== undefined) profileUpdates.mentor_id = updateFields.mentor_id;
+      if (updateFields.department !== undefined) profileUpdates.department = updateFields.department;
+      if (updateFields.position !== undefined) profileUpdates.position = updateFields.position;
+      if (updateFields.sub_domain || updateFields.role_applied) profileUpdates.position = updateFields.sub_domain || updateFields.role_applied;
+      if (updateFields.domain) profileUpdates.department = updateFields.domain;
+
+      if (Object.keys(profileUpdates).length > 0 && targetEmail) {
+        await adminClient.from("profiles").update(profileUpdates).eq("email", targetEmail);
+      }
+    } catch (profileSyncErr) {
+      console.warn("Profile sync in updateApplicantByAdmin (non-fatal):", profileSyncErr);
+    }
 
     // If status changed, log event
     if (updateFields.status && updateFields.status !== existing.status) {
@@ -538,7 +572,6 @@ export const updateApplicantByAdmin = createServerFn({ method: "POST" })
         note: `[Admin Updated Details]\nStatus updated from '${existing.status}' to '${updateFields.status}'`,
         changed_by: context.userId,
       }]);
-
     }
 
     return { ok: true, id };

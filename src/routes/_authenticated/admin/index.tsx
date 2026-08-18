@@ -45,8 +45,8 @@ import { getApplicationsOpen, setApplicationsOpen } from "@/lib/settings.functio
 import { listJobPostings, createJobPosting, updateJobPosting, toggleJobPosting, deleteJobPosting } from "@/lib/job-postings.functions";
 import { listAdminNotifications, markAllNotificationsRead } from "@/lib/notifications.functions";
 import { getVisitorCount } from "@/lib/visitor.functions";
-import { listAllLeaveRequests, listAllFeedbacks, updateLeaveStatus } from "@/lib/operations.functions";
-import { Sparkles, RefreshCw, GraduationCap, FolderGit2, Link2, FileSpreadsheet, Award } from "lucide-react";
+import { listAllLeaveRequests, listAllFeedbacks, updateLeaveStatus, deleteStoredOfferLetterAndRegenerate, deleteStoredNocAndRegenerate, deleteStoredOfferLetter, deleteStoredNoc } from "@/lib/operations.functions";
+import { Sparkles, RefreshCw, GraduationCap, FolderGit2, Link2, FileSpreadsheet, Award, MessageCircle } from "lucide-react";
 import { WorldClocks } from "@/components/world-clocks";
 import { InstallPwaButton } from "@/components/install-pwa-button";
 import { Switch } from "@/components/ui/switch";
@@ -1388,6 +1388,164 @@ function Stat({ label, value, tone = "default", onClick }: { label: string; valu
   );
 }
 
+/* ── Custom WhatsApp Message / Group Dispatcher Modal ── */
+function CustomWhatsAppModal({
+  open,
+  onClose,
+  recipientName,
+  recipientPhone,
+  recipientEmail,
+  applicationId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  recipientName: string;
+  recipientPhone?: string | null;
+  recipientEmail?: string | null;
+  applicationId?: string | null;
+}) {
+  const defaultGroupUrl = "https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5";
+  const [targetType, setTargetType] = useState<"group" | "direct">("group");
+  const [customPhone, setCustomPhone] = useState(recipientPhone || "");
+  const [message, setMessage] = useState(
+    `Hello ${recipientName || "Candidate"}!\n\nWelcome to Project VyNexa at Vyntyra Consultancy Services. Please join our official WhatsApp Community Group for updates, mentoring sessions, and announcements:\n👉 ${defaultGroupUrl}\n\nFeel free to reach out if you have any questions!\n\nBest regards,\nVyntyra Consultancy Services Team`
+  );
+
+  const presets = [
+    {
+      title: "Join Official WhatsApp Group",
+      text: `Hello ${recipientName || "Candidate"}!\n\nWelcome to Project VyNexa at Vyntyra Consultancy Services. Please join our official WhatsApp Community Group for onboarding, mentoring, and team updates:\n👉 ${defaultGroupUrl}\n\nBest regards,\nVyntyra Team`,
+    },
+    {
+      title: "Offer Letter & NOC Ready",
+      text: `Dear ${recipientName || "Candidate"},\n\nCongratulations! Your official Offer Letter and NOC verification document have been generated and updated on your Project VyNexa portal.\n\nPlease log in to review and download your documents. Also join the official WhatsApp group here: ${defaultGroupUrl}\n\nBest regards,\nVyntyra Consultancy Services`,
+    },
+    {
+      title: "Task Review & Feedback Notice",
+      text: `Hi ${recipientName || "Candidate"},\n\nYour recent task deliverable has been reviewed by your mentor on the Project VyNexa portal. Please check the feedback and remarks in your Intern Dashboard.\n\nKeep up the great work!\nVyntyra Directorate`,
+    },
+    {
+      title: "Urgent Meeting / Sync Alert",
+      text: `Urgent Alert for ${recipientName || "Candidate"}:\n\nA team sync has been scheduled. Please join our WhatsApp Group (${defaultGroupUrl}) or check your Intern Dashboard for meeting coordinates.\n\nVyntyra Consultancy Services`,
+    },
+  ];
+
+  const handleSend = () => {
+    let url = "";
+    if (targetType === "direct" && customPhone) {
+      const cleanPhone = customPhone.replace(/[^0-9]/g, "");
+      url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`;
+    } else {
+      url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+    }
+    window.open(url, "_blank");
+    toast.success("Opening WhatsApp with custom message!");
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-emerald-700 font-bold">
+            <MessageCircle className="h-5 w-5 text-emerald-600" />
+            Send Custom WhatsApp Message
+          </DialogTitle>
+          <DialogDescription>
+            Send WhatsApp message to official group or directly to candidate with one click.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2 text-xs">
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant={targetType === "group" ? "default" : "outline"}
+              size="sm"
+              className={targetType === "group" ? "bg-emerald-700 text-white hover:bg-emerald-800 font-semibold" : ""}
+              onClick={() => setTargetType("group")}
+            >
+              📢 Official Group Link
+            </Button>
+            <Button
+              type="button"
+              variant={targetType === "direct" ? "default" : "outline"}
+              size="sm"
+              className={targetType === "direct" ? "bg-emerald-700 text-white hover:bg-emerald-800 font-semibold" : ""}
+              onClick={() => setTargetType("direct")}
+            >
+              👤 Direct Message
+            </Button>
+          </div>
+
+          {targetType === "direct" && (
+            <div className="space-y-1">
+              <label className="font-semibold text-slate-700">Candidate WhatsApp Number (with country code):</label>
+              <Input
+                value={customPhone}
+                onChange={(e) => setCustomPhone(e.target.value)}
+                placeholder="+91 9390515106"
+                className="text-xs h-8"
+              />
+            </div>
+          )}
+
+          <div className="space-y-1">
+            <label className="font-semibold text-slate-700">Quick Template Presets:</label>
+            <div className="flex flex-wrap gap-1.5">
+              {presets.map((p, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setMessage(p.text)}
+                  className="px-2.5 py-1 text-[11px] rounded-md bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 transition-colors font-medium text-slate-700"
+                >
+                  {p.title}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="font-semibold text-slate-700">Message Content:</label>
+            <Textarea
+              rows={5}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="text-xs font-mono"
+            />
+          </div>
+
+          <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-[11px] text-emerald-900 flex items-center justify-between gap-2">
+            <span className="truncate">Official Group: <strong className="font-mono">https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5</strong></span>
+            <a
+              href={defaultGroupUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="underline font-bold text-emerald-700 hover:text-emerald-900 shrink-0"
+            >
+              Open Link
+            </a>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5 shadow-sm"
+              onClick={handleSend}
+            >
+              <Send className="h-3.5 w-3.5" /> Open & Send via WhatsApp
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) {
   const qc = useQueryClient();
   const changeStatus = useServerFn(changeApplicationStatus);
@@ -1395,6 +1553,10 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
   const listEvents = useServerFn(listStatusEvents);
   const signed = useServerFn(getResumeSignedUrl);
   const regenAi = useServerFn(regenerateInterviewQuestions);
+  const doRegenOfferLetter = useServerFn(deleteStoredOfferLetterAndRegenerate);
+  const doRegenNoc = useServerFn(deleteStoredNocAndRegenerate);
+  const doDeleteOfferLetter = useServerFn(deleteStoredOfferLetter);
+  const doDeleteNocDoc = useServerFn(deleteStoredNoc);
 
   const [status, setStatus] = useState<AppStatus>((app?.status as AppStatus) ?? "new");
   const [note, setNote] = useState("");
@@ -1413,6 +1575,9 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
 
   const [editOpen, setEditOpen] = useState(false);
   const [payslipOpen, setPayslipOpen] = useState(false);
+  const [whatsAppOpen, setWhatsAppOpen] = useState(false);
+  const [isRegeneratingOffer, setIsRegeneratingOffer] = useState(false);
+  const [isRegeneratingNoc, setIsRegeneratingNoc] = useState(false);
 
   const [profileExists, setProfileExists] = useState(false);
   const [scheduledEmail, setScheduledEmail] = useState<any>(null);
@@ -1619,10 +1784,10 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
   const notesMut = useMutation({
     mutationFn: () => saveNotes({ data: { id: app.id, admin_notes: notes } }),
     onSuccess: () => {
-      toast.success("Internal notes saved");
+      toast.success("Notes saved");
       qc.invalidateQueries({ queryKey: ["applications"] });
     },
-    onError: (e) => toast.error((e as Error).message),
+    onError: (e: any) => toast.error(e.message ?? "Failed to save notes"),
   });
 
   const deleteApp = useServerFn(deleteApplication);
@@ -1633,7 +1798,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
       qc.invalidateQueries({ queryKey: ["applications"] });
       onClose();
     },
-    onError: (e) => toast.error((e as Error).message),
+    onError: (e: any) => toast.error(e.message ?? "Failed to delete application"),
   });
 
   async function regenerate() {
@@ -1656,12 +1821,21 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
 
   return (
     <Dialog open={!!app} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-start justify-between sm:items-center">
-          <div>
-            <DialogTitle className="text-2xl text-primary tracking-tight">{app.full_name}</DialogTitle>
-            <div className="text-sm text-muted-foreground flex items-center gap-2 mt-0.5 flex-wrap">
-              <span>{app.role_applied}</span>
+      <DialogContent className="sm:max-w-4xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-border pb-4">
+          <div className="space-y-1">
+            <DialogTitle className="text-xl font-bold tracking-tight text-primary">
+              {app.full_name}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground flex items-center gap-2">
+              <span>Applied for <strong className="text-foreground">{app.role_applied || "Position"}</strong></span>
+              <span>•</span>
+              <span>{new Date(app.created_at).toLocaleDateString()}</span>
+            </DialogDescription>
+            <div className="flex items-center gap-2 flex-wrap pt-1">
+              <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${app.status === 'hired' ? 'bg-emerald-100 text-emerald-800' : 'bg-secondary/15 text-secondary'}`}>
+                Status: {app.status}
+              </span>
               {app.sub_domain && (
                 <span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold px-2 py-0.5 rounded-md">
                   Sub-Domain: {app.sub_domain}
@@ -1682,29 +1856,43 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
             <Button
               variant="outline"
               size="sm"
+              onClick={handleRegenerateOfferLetter}
+              disabled={isRegeneratingOffer}
+              className="bg-amber-50 text-amber-800 hover:bg-amber-100 border-amber-300 font-semibold"
+              title="Delete stored Offer Letter & Regenerate in 1-Click"
+            >
+              <RefreshCw className={`h-4 w-4 mr-1.5 ${isRegeneratingOffer ? "animate-spin" : ""}`} />
+              Delete & Gen Offer
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRegenerateNoc}
+              disabled={isRegeneratingNoc}
+              className="bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border-emerald-300 font-semibold"
+              title="Delete stored NOC & Regenerate in 1-Click"
+            >
+              <RefreshCw className={`h-4 w-4 mr-1.5 ${isRegeneratingNoc ? "animate-spin" : ""}`} />
+              Delete & Gen NOC
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setWhatsAppOpen(true)}
+              className="bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600 font-bold shadow-sm"
+              title="Send custom message or official group invite via WhatsApp"
+            >
+              <MessageCircle className="h-4 w-4 mr-1.5" />
+              WhatsApp
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setPayslipOpen(true)}
               className="bg-slate-900 text-white hover:bg-slate-800 border-slate-900"
             >
               <FileSpreadsheet className="h-4 w-4 mr-1.5 text-emerald-400" />
               Payslip PDF
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadNoc}
-              className="bg-emerald-700 text-white hover:bg-emerald-800 border-emerald-700"
-            >
-              <Award className="h-4 w-4 mr-1.5" />
-              NOC Document
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadInternshipCertificate}
-              className="bg-indigo-700 text-white hover:bg-indigo-800 border-indigo-700"
-            >
-              <GraduationCap className="h-4 w-4 mr-1.5" />
-              Certificate PDF
             </Button>
             <Button
               variant="ghost"
@@ -2201,6 +2389,14 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
 
         <EditApplicantDialog app={app} open={editOpen} onClose={() => setEditOpen(false)} />
         <PayslipModalDialog app={app} open={payslipOpen} onClose={() => setPayslipOpen(false)} />
+        <CustomWhatsAppModal
+          open={whatsAppOpen}
+          onClose={() => setWhatsAppOpen(false)}
+          recipientName={app.full_name}
+          recipientPhone={app.phone}
+          recipientEmail={app.email}
+          applicationId={app.id}
+        />
       </DialogContent>
     </Dialog>
   );

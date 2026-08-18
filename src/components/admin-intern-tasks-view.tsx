@@ -585,52 +585,117 @@ export function AdminInternTasksView() {
       {/* Review Modal */}
       {selectedTaskForReview && (
         <Dialog open={!!selectedTaskForReview} onOpenChange={(v) => !v && setSelectedTaskForReview(null)}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle className="text-lg font-bold text-slate-900">
-                Review Task: {selectedTaskForReview.title}
+              <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                Verify & Review Task: {selectedTaskForReview.title}
               </DialogTitle>
               <DialogDescription>
-                Assigned to {selectedTaskForReview.assigned_profile?.full_name || "Intern"}. Update status or leave feedback remarks.
+                Assigned to <strong>{selectedTaskForReview.assigned_profile?.full_name || selectedTaskForReview.assigned_profile?.email || "Intern"}</strong> ({selectedTaskForReview.assigned_profile?.intern_id || "Intern"}). Review work and leave official feedback.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-2">
-              <div>
-                <label className="text-xs font-bold text-slate-700">Update Status</label>
-                <Select
-                  defaultValue={selectedTaskForReview.status}
-                  onValueChange={(val) => handleUpdateStatus(selectedTaskForReview.id, val, adminRemarks)}
-                >
-                  <SelectTrigger className="mt-1 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="in_progress">In Progress (Request Revision)</SelectItem>
-                    <SelectItem value="submitted">Submitted (Under Review)</SelectItem>
-                    <SelectItem value="completed">Completed (Approved)</SelectItem>
-                  </SelectContent>
-                </Select>
+              {selectedTaskForReview.deliverable_url && (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
+                  <span className="text-[11px] font-bold text-slate-700 block">Submitted Deliverable URL:</span>
+                  <a
+                    href={selectedTaskForReview.deliverable_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 hover:underline flex items-center gap-1 font-mono break-all"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                    {selectedTaskForReview.deliverable_url}
+                  </a>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700">Verification Status</label>
+                  <Select
+                    defaultValue={selectedTaskForReview.status}
+                    onValueChange={(val) => {
+                      setSelectedTaskForReview((prev: any) => ({ ...prev, status: val }));
+                    }}
+                  >
+                    <SelectTrigger className="mt-1 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="completed">✓ Approved & Completed</SelectItem>
+                      <SelectItem value="submitted">⏳ Submitted (Under Review)</SelectItem>
+                      <SelectItem value="blocked">⚠️ Needs Revision / Changes</SelectItem>
+                      <SelectItem value="in_progress">⚡ In Progress</SelectItem>
+                      <SelectItem value="pending">⏸️ Pending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700">Credits / Score</label>
+                  <Input
+                    type="number"
+                    defaultValue={selectedTaskForReview.credits || 10}
+                    onChange={(e) => {
+                      setSelectedTaskForReview((prev: any) => ({ ...prev, credits: parseInt(e.target.value) || 10 }));
+                    }}
+                    className="mt-1 text-xs h-9"
+                    placeholder="Credits e.g. 10"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700">Admin Remarks / Feedback Notes</label>
+                <label className="text-xs font-bold text-slate-700">Mentor Review & Feedback (Displayed in Intern Portal)</label>
                 <Textarea
-                  placeholder="Provide feedback for the intern..."
-                  rows={3}
+                  placeholder="e.g. Excellent implementation of the authentication endpoints. Clean architecture and unit tests verified. Approved!"
+                  rows={4}
                   value={adminRemarks}
                   onChange={(e) => setAdminRemarks(e.target.value)}
                   className="text-xs mt-1"
                 />
               </div>
 
-              <Button
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs"
-                onClick={() => handleUpdateStatus(selectedTaskForReview.id, selectedTaskForReview.status, adminRemarks)}
-              >
-                Save Feedback & Remarks
-              </Button>
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-1/3 text-xs"
+                  onClick={() => setSelectedTaskForReview(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-sm"
+                  disabled={isUpdating}
+                  onClick={async () => {
+                    setIsUpdating(true);
+                    try {
+                      await doReview({
+                        data: {
+                          taskId: selectedTaskForReview.id,
+                          status: selectedTaskForReview.status || "completed",
+                          admin_remarks: adminRemarks,
+                          credits: selectedTaskForReview.credits,
+                        },
+                      });
+                      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+                      toast.success(`Task verified and review feedback saved!`);
+                      setSelectedTaskForReview(null);
+                    } catch (err: any) {
+                      toast.error("Failed to update task: " + err.message);
+                    } finally {
+                      setIsUpdating(false);
+                    }
+                  }}
+                >
+                  <Check className="h-4 w-4" /> Save & Publish Review
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

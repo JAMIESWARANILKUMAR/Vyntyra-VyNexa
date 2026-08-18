@@ -5,7 +5,7 @@ import {
   CheckCircle2, Circle, AlertTriangle, ChevronDown, ArrowLeft,
   Shield, GraduationCap, Briefcase, CalendarDays, RefreshCw,
   Video, FileText, UploadCloud, MessageSquare, CreditCard, LifeBuoy, Award,
-  Play, Pause, Square, Search, ExternalLink, ShieldCheck, Download, Send
+  Play, Pause, Square, Search, ExternalLink, ShieldCheck, Download, Send, MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +29,8 @@ import {
   listBugs, createBug, updateBugStatus,
   sendPromotionalInternshipEmail, listAutomatedEmailLogs, deleteAutomatedEmailLog, getEmailQuotaStats, getPromotionalEmailConversionStats,
   sendSmsNotification, getSmsQuotaStats, listSmsLogs, deleteSmsLog,
-  listAllSupportQueries, assignSupportQueryEmployee, approveSupportMeeting
+  listAllSupportQueries, assignSupportQueryEmployee, approveSupportMeeting,
+  deleteStoredOfferLetterAndRegenerate, deleteStoredNocAndRegenerate, deleteStoredOfferLetter, deleteStoredNoc
 } from "@/lib/operations.functions";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
@@ -2418,14 +2419,41 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
         <form onSubmit={handleUpdate} className="space-y-4 py-2">
           <div className="grid grid-cols-2 gap-4">
              <div className="space-y-1.5"><Label>Full Name</Label><Input value={form.full_name || ""} onChange={e => setForm({...form, full_name: e.target.value})} /></div>
-             <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone || ""} onChange={e => setForm({...form, phone: e.target.value})} /></div>
+             <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone || form.phone_number || ""} onChange={e => setForm({...form, phone: e.target.value, phone_number: e.target.value})} /></div>
              <div className="col-span-2 space-y-1.5"><Label>Address</Label><Input value={form.address || ""} onChange={e => setForm({...form, address: e.target.value})} /></div>
              <div className="space-y-1.5"><Label>{user.role === "employee" ? "Employee ID" : "Intern ID"}</Label><Input value={form.intern_id || ""} onChange={e => setForm({...form, intern_id: e.target.value})} /></div>
+             <div className="space-y-1.5"><Label>Position / Specialization Track</Label><Input value={form.position || ""} onChange={e => setForm({...form, position: e.target.value})} placeholder="e.g. Full Stack Web Development" /></div>
+             
+             {user.role === "intern" && (
+               <div className="col-span-2 space-y-1.5">
+                 <Label className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-bold">
+                   <Users className="h-4 w-4" /> Assigned Mentor / Supervisor
+                 </Label>
+                 <Select
+                   value={form.mentor_id || "none"}
+                   onValueChange={(val) => setForm({ ...form, mentor_id: val === "none" ? null : val })}
+                 >
+                   <SelectTrigger className="h-9">
+                     <SelectValue placeholder="Select official mentor..." />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="none">Lead Mentor (Jami Eswar Anil Kumar - Default)</SelectItem>
+                     {team?.filter((m: any) => m.id !== user.id && m.role !== "intern").map((mentor: any) => (
+                       <SelectItem key={mentor.id} value={mentor.id}>
+                         {mentor.full_name} ({mentor.position || mentor.department || mentor.email})
+                       </SelectItem>
+                     ))}
+                   </SelectContent>
+                 </Select>
+               </div>
+             )}
+
+             <div className="space-y-1.5"><Label>Department</Label><Input value={form.department || ""} onChange={e => setForm({...form, department: e.target.value})} placeholder="e.g. Engineering & IT" /></div>
+             <div className="space-y-1.5"><Label>Stipend / Compensation</Label><Input value={form.stipend || ""} onChange={e => setForm({...form, stipend: e.target.value})} placeholder="e.g. Performance-based / INR 15,000" /></div>
              <div className="space-y-1.5"><Label>Blood Group</Label><Input value={form.blood_group || ""} onChange={e => setForm({...form, blood_group: e.target.value})} placeholder="e.g. O+ Positive" /></div>
              <div className="space-y-1.5"><Label>Security Clearance</Label><Input value={form.security_level || ""} onChange={e => setForm({...form, security_level: e.target.value})} placeholder="e.g. L3 - Enterprise Access" /></div>
              <div className="space-y-1.5"><Label>Emergency Contact</Label><Input value={form.emergency_contact || ""} onChange={e => setForm({...form, emergency_contact: e.target.value})} placeholder="e.g. +91 98765 00000" /></div>
-             <div className="space-y-1.5"><Label>Department</Label><Input value={form.department || ""} onChange={e => setForm({...form, department: e.target.value})} placeholder="e.g. Engineering & IT" /></div>
-             <div className="col-span-2 space-y-1.5"><Label>Bank & Financial Details</Label><Input value={form.bank_details || ""} onChange={e => setForm({...form, bank_details: e.target.value})} placeholder="e.g. Kotak Mahindra Bank Â· A/C 882101923 Â· IFSC: KKBK0001823" /></div>
+             <div className="col-span-2 space-y-1.5"><Label>Bank & Financial Details</Label><Input value={form.bank_details || ""} onChange={e => setForm({...form, bank_details: e.target.value})} placeholder="e.g. Kotak Mahindra Bank · A/C 882101923 · IFSC: KKBK0001823" /></div>
              <div className="space-y-1.5"><Label>Start Date</Label><Input type="date" value={form.start_date || ""} onChange={e => setForm({...form, start_date: e.target.value})} /></div>
              <div className="space-y-1.5"><Label>End Date</Label><Input type="date" value={form.end_date || ""} onChange={e => setForm({...form, end_date: e.target.value})} /></div>
           </div>
@@ -2443,22 +2471,92 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Offer Letter</Label>
-            <div className="flex gap-2">
-              <Input value={form.offer_letter_url || ""} onChange={e => setForm({...form, offer_letter_url: e.target.value})} placeholder="https://example.com/letter.pdf" />
-              <div className="relative shrink-0">
-                <Button type="button" variant="outline" disabled={uploadingLetter} className="w-[100px]">
-                  {uploadingLetter ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload"}
+          {/* Offer Letter & NOC Management with 1-Click Delete & Regenerate */}
+          <div className="p-3.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+            <div className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+              <span className="flex items-center gap-1.5"><FileText className="h-4 w-4 text-amber-600" /> Offer Letter & NOC Documents</span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 text-[11px] gap-1 bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600"
+                onClick={() => {
+                  const defaultGroup = "https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5";
+                  const msg = `Hello ${form.full_name || "Intern"}!\n\nOfficial notice from Project VyNexa at Vyntyra Consultancy Services. Please join our official community group: ${defaultGroup}\n\nBest regards,\nVyntyra Directorate`;
+                  const phone = (form.phone || form.phone_number || "").replace(/[^0-9]/g, "");
+                  const url = phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+                  window.open(url, "_blank");
+                }}
+              >
+                <MessageCircle className="h-3.5 w-3.5" /> WhatsApp Message / Group
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="p-2.5 bg-white dark:bg-slate-800 border rounded-lg space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Offer Letter PDF</span>
+                  {form.offer_letter_url && (
+                    <a href={form.offer_letter_url} target="_blank" rel="noreferrer" className="text-[11px] text-blue-600 hover:underline flex items-center gap-0.5">
+                      View <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-xs font-semibold h-7 bg-amber-50 text-amber-800 hover:bg-amber-100 border-amber-300 gap-1"
+                  onClick={async () => {
+                    const lToast = toast.loading("Regenerating Offer Letter with 1-click...");
+                    try {
+                      const res = await deleteStoredOfferLetterAndRegenerate({ data: { profileId: user.id, email: user.email } });
+                      toast.dismiss(lToast);
+                      toast.success("Offer Letter regenerated!");
+                      setForm((prev: any) => ({ ...prev, offer_letter_url: res.offer_letter_url }));
+                      qc.invalidateQueries({ queryKey: ["team-members"] });
+                    } catch (e: any) {
+                      toast.dismiss(lToast);
+                      toast.error("Failed: " + e.message);
+                    }
+                  }}
+                >
+                  <RefreshCw className="h-3 w-3" /> Delete & Regenerate Offer Letter
                 </Button>
-                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="application/pdf,image/*" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "letter"); }} />
+              </div>
+
+              <div className="p-2.5 bg-white dark:bg-slate-800 border rounded-lg space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">NOC Verification PDF</span>
+                  {form.noc_url && (
+                    <a href={form.noc_url} target="_blank" rel="noreferrer" className="text-[11px] text-blue-600 hover:underline flex items-center gap-0.5">
+                      View <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-xs font-semibold h-7 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border-emerald-300 gap-1"
+                  onClick={async () => {
+                    const lToast = toast.loading("Regenerating NOC with 1-click...");
+                    try {
+                      const res = await deleteStoredNocAndRegenerate({ data: { profileId: user.id, email: user.email } });
+                      toast.dismiss(lToast);
+                      toast.success("NOC Certificate regenerated!");
+                      setForm((prev: any) => ({ ...prev, noc_url: res.noc_url }));
+                      qc.invalidateQueries({ queryKey: ["team-members"] });
+                    } catch (e: any) {
+                      toast.dismiss(lToast);
+                      toast.error("Failed: " + e.message);
+                    }
+                  }}
+                >
+                  <RefreshCw className="h-3 w-3" /> Delete & Regenerate NOC
+                </Button>
               </div>
             </div>
-            {form.offer_letter_url && (
-              <a href={form.offer_letter_url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
-                <FileText className="h-3 w-3" /> View Offer Letter
-              </a>
-            )}
           </div>
 
           <div className="space-y-1.5">

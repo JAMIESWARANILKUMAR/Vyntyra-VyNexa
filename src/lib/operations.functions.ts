@@ -379,7 +379,7 @@ export const updateTaskExecution = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     id: z.string().uuid(),
-    status: z.enum(["pending", "in_progress", "completed", "blocked"]),
+    status: z.enum(["pending", "in_progress", "submitted", "under_review", "completed", "blocked", "rejected"]),
     progress_percentage: z.number().min(0).max(100).optional(),
     progress_notes: z.string().optional(),
     project_requirements: z.string().optional(),
@@ -387,6 +387,7 @@ export const updateTaskExecution = createServerFn({ method: "POST" })
     time_spent_hours: z.number().optional(),
   }).parse(d))
   .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
     const updatePayload: any = {
       status: data.status,
       updated_at: new Date().toISOString(),
@@ -394,16 +395,22 @@ export const updateTaskExecution = createServerFn({ method: "POST" })
     if (data.progress_percentage !== undefined) updatePayload.progress_percentage = data.progress_percentage;
     if (data.progress_notes !== undefined) updatePayload.progress_notes = data.progress_notes;
     if (data.project_requirements !== undefined) updatePayload.project_requirements = data.project_requirements;
-    if (data.deliverable_url !== undefined) updatePayload.deliverable_url = data.deliverable_url;
+    if (data.deliverable_url !== undefined) {
+      let url = data.deliverable_url.trim();
+      if (url && !/^https?:\/\//i.test(url) && !url.startsWith("data:")) {
+        url = `https://${url}`;
+      }
+      updatePayload.deliverable_url = url;
+    }
     if (data.time_spent_hours !== undefined) updatePayload.time_spent_hours = data.time_spent_hours;
 
-    const { error } = await supabase
+    const { error } = await adminClient
       .from("tasks")
       .update(updatePayload)
       .eq("id", data.id);
     if (error) {
       // Graceful fallback if extra columns not migrated
-      const { error: errFallback } = await supabase
+      const { error: errFallback } = await adminClient
         .from("tasks")
         .update({ status: data.status, updated_at: new Date().toISOString() })
         .eq("id", data.id);
@@ -674,24 +681,41 @@ export const reviewInternTaskByAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     taskId: z.string().uuid(),
-    status: z.enum(["pending", "in_progress", "submitted", "completed", "blocked"]),
-    admin_remarks: z.string().optional(),
+    status: z.enum(["pending", "in_progress", "submitted", "under_review", "completed", "blocked", "rejected"]),
+    admin_remarks: z.string().optional().nullable(),
+    credits: z.number().optional().nullable(),
   }).parse(d))
   .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
     const updatePayload: any = {
       status: data.status,
       updated_at: new Date().toISOString(),
     };
     if (data.admin_remarks !== undefined) {
-      updatePayload.progress_notes = data.admin_remarks;
+      updatePayload.admin_remarks = data.admin_remarks || null;
+      updatePayload.progress_notes = data.admin_remarks || null; // fallback compatibility
+    }
+    if (data.credits !== undefined && data.credits !== null) {
+      updatePayload.credits = data.credits;
     }
 
-    const { error } = await supabase
+    const { error } = await adminClient
       .from("tasks")
       .update(updatePayload)
       .eq("id", data.taskId);
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      // Graceful fallback in case admin_remarks column is not migrated
+      const { error: fallbackErr } = await adminClient
+        .from("tasks")
+        .update({
+          status: data.status,
+          progress_notes: data.admin_remarks,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", data.taskId);
+      if (fallbackErr) throw new Error(fallbackErr.message);
+    }
     return { success: true };
   });
 
@@ -1088,89 +1112,145 @@ const profileUpdateSchema = z.object({
   id: z.string().uuid(),
   full_name: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
+  phone_number: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
   intern_id: z.string().optional().nullable(),
   start_date: z.string().optional().nullable(),
   end_date: z.string().optional().nullable(),
   offer_letter_url: z.string().optional().nullable(),
+  noc_url: z.string().optional().nullable(),
   avatar_url: z.string().optional().nullable(),
   blood_group: z.string().optional().nullable(),
   security_level: z.string().optional().nullable(),
   emergency_contact: z.string().optional().nullable(),
   bank_details: z.string().optional().nullable(),
   department: z.string().optional().nullable(),
+  position: z.string().optional().nullable(),
+  mentor_id: z.string().optional().nullable(),
+  stipend: z.string().optional().nullable(),
+  domain: z.string().optional().nullable(),
+  sub_domain: z.string().optional().nullable(),
   certificate_url: z.string().optional().nullable(),
 });
 
-export const regenerateMyDocuments = createServerFn({ method: "POST" })
+export const deleteStoredOfferLetterAndRegenerate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) => z.object({
+    applicationId: z.string().optional().nullable(),
+    profileId: z.string().optional().nullable(),
+    email: z.string().optional().nullable(),
+  }).parse(d))
+  .handler(async ({ data }) => {
     const adminClient = getAdminClient();
-    
-    // 1. Get profile
-    const { data: profile } = await adminClient
-      .from("profiles")
-      .select("*")
-      .eq("id", context.userId)
-      .single();
-    if (!profile) throw new Error("Profile not found");
 
-    // 2. Get application
-    const { data: app } = await adminClient
-      .from("applications")
-      .select("*")
-      .eq("email", profile.email)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-    
-    if (!app) throw new Error("Application not found");
-
-    // 3. fetch signature
-    const { urlToBase64 } = await import("./nocGenerator");
-    const signatureBase64 = await urlToBase64("/signature.png");
-
-    // 4. fetch photo
-    let photoBase64 = null;
-    const url = profile.avatar_url || app.profile_photo_url;
-    if (url) {
-      if (url.startsWith("data:image")) {
-        photoBase64 = url;
-      } else {
-        const { resolveGooglePhotosUrl } = await import("./google-photos");
-        const resolvedUrl = await resolveGooglePhotosUrl(url);
-        if (resolvedUrl) {
-          try {
-            const photoRes = await fetch(resolvedUrl, {
-              headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/120.0.0.0"
-              }
-            });
-            if (photoRes.ok) {
-              const buffer = await photoRes.arrayBuffer();
-              const contentType = photoRes.headers.get("content-type") || "image/jpeg";
-              photoBase64 = `data:${contentType};base64,${Buffer.from(buffer).toString('base64')}`;
-            }
-          } catch (err) {
-            console.warn("Photo fetch failed:", err);
-          }
-        }
+    // 1. Resolve Application & Profile
+    let app: any = null;
+    if (data.applicationId) {
+      const { data: foundApp } = await adminClient.from("applications").select("*").eq("id", data.applicationId).maybeSingle();
+      app = foundApp;
+    }
+    if (!app && data.profileId) {
+      const { data: prof } = await adminClient.from("profiles").select("email").eq("id", data.profileId).maybeSingle();
+      if (prof?.email) {
+        const { data: foundApp } = await adminClient.from("applications").select("*").eq("email", prof.email).order("created_at", { ascending: false }).limit(1).maybeSingle();
+        app = foundApp;
       }
     }
-
-    const startDate = profile.start_date ? new Date(profile.start_date) : (app.internship_start_date ? new Date(app.internship_start_date) : new Date());
-
-    const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
-    let generatedQrBase64 = null;
-    try {
-      generatedQrBase64 = await QRCode.toDataURL(verificationUrl, { margin: 1, color: { dark: '#0f172a', light: '#ffffff' } });
-    } catch (qrErr) {
-      console.warn("Failed to generate QR Code for fallback NOC:", qrErr);
+    if (!app && data.email) {
+      const { data: foundApp } = await adminClient.from("applications").select("*").eq("email", data.email).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      app = foundApp;
     }
 
-    const logoBase64 = await urlToBase64("/icon-512.png");
+    if (!app) throw new Error("Application record not found for generating Offer Letter");
 
-    const { generateNocPdf } = await import("./nocGenerator");
+    // 2. Delete existing file from storage
+    const fileName = `offer_letters/${app.id}_OfferLetter.pdf`;
+    try {
+      await adminClient.storage.from("default").remove([fileName]);
+    } catch (e) {
+      console.warn("Storage deletion error (non-fatal):", e);
+    }
+
+    // 3. Generate brand new Offer Letter PDF
+    const { generateOfferLetterPDF } = await import("./pdf.server");
+    const startDateVal = app.joining_date || app.internship_start_date || new Date().toISOString();
+    const duration = app.duration_months || 3;
+    const endDateVal = app.internship_end_date || new Date(new Date(startDateVal).setMonth(new Date(startDateVal).getMonth() + duration)).toISOString();
+
+    const freshOfferLetterUrl = await generateOfferLetterPDF({
+      fullName: app.full_name,
+      roleApplied: app.role_applied || app.sub_domain || "Software Engineering Intern",
+      applicationId: app.id,
+      salary: app.salary || "Performance Based Stipend",
+      joiningDate: startDateVal,
+      endDate: endDateVal,
+      jobLocation: app.job_location || "Remote Work-from-Home",
+    });
+
+    // 4. Update both applications and profiles
+    await adminClient.from("applications").update({ offer_letter_url: freshOfferLetterUrl }).eq("id", app.id);
+    if (app.email) {
+      await adminClient.from("profiles").update({ offer_letter_url: freshOfferLetterUrl }).eq("email", app.email);
+    }
+
+    return { success: true, offer_letter_url: freshOfferLetterUrl };
+  });
+
+export const deleteStoredNocAndRegenerate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    applicationId: z.string().optional().nullable(),
+    profileId: z.string().optional().nullable(),
+    email: z.string().optional().nullable(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
+
+    // 1. Resolve Application & Profile
+    let app: any = null;
+    if (data.applicationId) {
+      const { data: foundApp } = await adminClient.from("applications").select("*").eq("id", data.applicationId).maybeSingle();
+      app = foundApp;
+    }
+    if (!app && data.profileId) {
+      const { data: prof } = await adminClient.from("profiles").select("email").eq("id", data.profileId).maybeSingle();
+      if (prof?.email) {
+        const { data: foundApp } = await adminClient.from("applications").select("*").eq("email", prof.email).order("created_at", { ascending: false }).limit(1).maybeSingle();
+        app = foundApp;
+      }
+    }
+    if (!app && data.email) {
+      const { data: foundApp } = await adminClient.from("applications").select("*").eq("email", data.email).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      app = foundApp;
+    }
+
+    if (!app) throw new Error("Application record not found for generating NOC");
+
+    // 2. Delete existing NOC file from storage
+    const fileName = `nocs/${app.id}_NOC.pdf`;
+    try {
+      await adminClient.storage.from("default").remove([fileName]);
+    } catch (e) {
+      console.warn("Storage deletion error (non-fatal):", e);
+    }
+
+    // 3. Generate brand new NOC PDF
+    const { urlToBase64, generateNocPdf } = await import("./nocGenerator");
+    const logoBase64 = await urlToBase64("/icon-512.png");
+    const signatureBase64 = await urlToBase64("/signature.png");
+
+    let photoBase64: string | null = null;
+    if (app.profile_photo_url) {
+      photoBase64 = await urlToBase64(app.profile_photo_url);
+    }
+
+    const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
+    const QRCode = (await import("qrcode")).default;
+    const qrBase64 = await QRCode.toDataURL(verificationUrl, { margin: 1, color: { dark: '#0f172a', light: '#ffffff' } });
+
+    const startDateVal = app.internship_start_date || app.joining_date || new Date().toISOString();
+    const formattedStartDate = new Date(startDateVal).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
+
     const doc = generateNocPdf({
       fullName: app.full_name,
       email: app.email,
@@ -1178,97 +1258,188 @@ export const regenerateMyDocuments = createServerFn({ method: "POST" })
       applicationId: app.id,
       college: app.college || "Academic Institution",
       domain: app.domain || "Technology & Software",
-      subDomain: app.sub_domain || "Full Stack Web Development",
-      internshipStartDate: startDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }),
+      subDomain: app.sub_domain || app.role_applied || "Full Stack Web Development",
+      internshipStartDate: formattedStartDate,
       profilePhotoUrl: photoBase64,
-      qrCodeBase64: generatedQrBase64,
+      qrCodeBase64: qrBase64,
       logoBase64: logoBase64,
       signatureBase64: signatureBase64,
       hodName: app.hod_name,
     });
 
-    const pdfOutput = doc.output("arraybuffer");
-    const pdfBuffer = Buffer.from(pdfOutput);
-    const filepath = `nocs/${app.id}_NOC.pdf`;
-
-    await adminClient.storage
+    const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
+    const { error: uploadError } = await adminClient.storage
       .from("default")
-      .upload(filepath, pdfBuffer, {
+      .upload(fileName, pdfBuffer, {
         contentType: "application/pdf",
-        upsert: true
+        upsert: true,
       });
 
+    if (uploadError) throw new Error("Failed to upload regenerated NOC: " + uploadError.message);
+
+    const { data: { publicUrl } } = adminClient.storage
+      .from("default")
+      .getPublicUrl(fileName);
+
+    // 4. Update applications and profiles
+    await adminClient.from("applications").update({ noc_url: publicUrl }).eq("id", app.id);
+    if (app.email) {
+      await adminClient.from("profiles").update({ noc_url: publicUrl }).eq("email", app.email);
+    }
+
+    return { success: true, noc_url: publicUrl };
+  });
+
+export const deleteStoredOfferLetter = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    applicationId: z.string().optional().nullable(),
+    email: z.string().optional().nullable(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
+    if (data.applicationId) {
+      await adminClient.storage.from("default").remove([`offer_letters/${data.applicationId}_OfferLetter.pdf`]);
+      await adminClient.from("applications").update({ offer_letter_url: null }).eq("id", data.applicationId);
+    }
+    if (data.email) {
+      await adminClient.from("profiles").update({ offer_letter_url: null }).eq("email", data.email);
+    }
     return { success: true };
   });
 
-// ── Admin: Purge all NOCs to force regeneration with QR + Logo ────────────
-export const purgeAllNocs = createServerFn({ method: "POST" })
+export const deleteStoredNoc = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    applicationId: z.string().optional().nullable(),
+    email: z.string().optional().nullable(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
+    if (data.applicationId) {
+      await adminClient.storage.from("default").remove([`nocs/${data.applicationId}_NOC.pdf`]);
+      await adminClient.from("applications").update({ noc_url: null }).eq("id", data.applicationId);
+    }
+    if (data.email) {
+      await adminClient.from("profiles").update({ noc_url: null }).eq("email", data.email);
+    }
+    return { success: true };
+  });
+
+export const getInternMentorDetails = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const adminClient = getAdminClient();
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("id, mentor_id, full_name, email, department, position, start_date, end_date")
+      .eq("id", context.userId)
+      .maybeSingle();
 
-    // Verify the caller is admin
-    const { data: role } = await adminClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .single();
-    if (role?.role !== "admin") throw new Error("Unauthorized: Admin only");
+    let mentor: any = null;
 
-    // 1. Delete all NOC PDFs from storage bucket
-    let deletedCount = 0;
-    const { data: files } = await adminClient.storage
-      .from("default")
-      .list("nocs", { limit: 1000 });
-
-    if (files && files.length > 0) {
-      const paths = files.map((f: any) => "nocs/" + f.name);
-      await adminClient.storage.from("default").remove(paths);
-      deletedCount = paths.length;
+    if (profile?.mentor_id) {
+      const { data: mentorProfile } = await adminClient
+        .from("profiles")
+        .select("id, full_name, email, department, position, phone_number, avatar_url")
+        .eq("id", profile.mentor_id)
+        .maybeSingle();
+      if (mentorProfile) {
+        mentor = { ...mentorProfile, is_official: true };
+      }
     }
 
-    // 2. Clear noc_url from all applications
-    const { data: updated } = await adminClient
-      .from("applications")
-      .update({ noc_url: null })
-      .not("noc_url", "is", null)
-      .select("id");
+    // If no mentor explicitly assigned via profile.mentor_id, look up recent assigned tasks or support queries
+    if (!mentor) {
+      const { data: recentTask } = await adminClient
+        .from("tasks")
+        .select("created_by, profiles:created_by(id, full_name, email, department, position, phone_number, avatar_url)")
+        .eq("assigned_to", context.userId)
+        .not("created_by", "is", null)
+        .limit(1)
+        .maybeSingle();
+      if ((recentTask as any)?.profiles) {
+        mentor = { ...(recentTask as any).profiles, is_official: true };
+      }
+    }
 
-    return {
-      success: true,
-      filesDeleted: deletedCount,
-      applicationsCleared: updated?.length || 0,
-    };
+    // Default official lead mentor fallback so mentor details are ALWAYS populated
+    if (!mentor) {
+      mentor = {
+        id: "official-lead-mentor",
+        full_name: "Jami Eswar Anil Kumar",
+        email: "jamieswaranilkumar@vyntyraconsultancyservices.in",
+        department: "Executive Directorate & Lead Mentorship",
+        position: "Founder & Lead Director",
+        phone_number: "+91 93905 15106",
+        secondary_phone: "+91 63015 88867",
+        avatar_url: "/vyntyra-logo.png",
+        whatsapp_group_url: "https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5",
+        is_official: true,
+        is_lead: true,
+      };
+    }
+
+    return mentor;
   });
 
 export const updateUserProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => profileUpdateSchema.parse(d))
   .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
     const { id, ...updates } = data;
-    
-    // Attempt full update
-    const { error } = await supabase.from("profiles").upsert({ id, ...updates });
+
+    // 1. Update Profile in Supabase
+    const { data: updatedProfile, error } = await adminClient
+      .from("profiles")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .maybeSingle();
+
     if (error) {
-      if (error.message.includes("schema cache") || error.message.includes("column") || error.code === "PGRST204") {
-        // Fallback to core columns if database schema hasn't been migrated yet
-        const coreUpdates: Record<string, any> = { id };
-        if (updates.full_name !== undefined) coreUpdates.full_name = updates.full_name;
-        if (updates.phone !== undefined) coreUpdates.phone = updates.phone;
-        if (updates.address !== undefined) coreUpdates.address = updates.address;
-        if (updates.intern_id !== undefined) coreUpdates.intern_id = updates.intern_id;
-        if (updates.start_date !== undefined) coreUpdates.start_date = updates.start_date;
-        if (updates.end_date !== undefined) coreUpdates.end_date = updates.end_date;
-        if (updates.avatar_url !== undefined) coreUpdates.avatar_url = updates.avatar_url;
-        if (updates.offer_letter_url !== undefined) coreUpdates.offer_letter_url = updates.offer_letter_url;
-        if (updates.certificate_url !== undefined) coreUpdates.certificate_url = updates.certificate_url;
-        
-        const { error: fallbackError } = await supabase.from("profiles").upsert(coreUpdates);
-        if (fallbackError) throw new Error(fallbackError.message);
-        return { success: true };
-      }
-      throw new Error(error.message);
+      // Fallback in case some dynamic columns are not in schema
+      const coreUpdates: Record<string, any> = {};
+      if (updates.full_name !== undefined) coreUpdates.full_name = updates.full_name;
+      if (updates.phone !== undefined) coreUpdates.phone = updates.phone;
+      if (updates.phone_number !== undefined) coreUpdates.phone_number = updates.phone_number;
+      if (updates.address !== undefined) coreUpdates.address = updates.address;
+      if (updates.intern_id !== undefined) coreUpdates.intern_id = updates.intern_id;
+      if (updates.start_date !== undefined) coreUpdates.start_date = updates.start_date;
+      if (updates.end_date !== undefined) coreUpdates.end_date = updates.end_date;
+      if (updates.avatar_url !== undefined) coreUpdates.avatar_url = updates.avatar_url;
+      if (updates.offer_letter_url !== undefined) coreUpdates.offer_letter_url = updates.offer_letter_url;
+      if (updates.certificate_url !== undefined) coreUpdates.certificate_url = updates.certificate_url;
+      if (updates.department !== undefined) coreUpdates.department = updates.department;
+      if (updates.position !== undefined) coreUpdates.position = updates.position;
+      if (updates.mentor_id !== undefined) coreUpdates.mentor_id = updates.mentor_id;
+
+      const { error: fallbackError } = await adminClient.from("profiles").update(coreUpdates).eq("id", id);
+      if (fallbackError) throw new Error(fallbackError.message);
     }
+
+    // 2. Two-way sync to applications table by email
+    const { data: currentProfile } = await adminClient.from("profiles").select("email").eq("id", id).maybeSingle();
+    if (currentProfile?.email) {
+      const appUpdates: Record<string, any> = {};
+      if (updates.full_name !== undefined && updates.full_name !== null) appUpdates.full_name = updates.full_name;
+      if (updates.phone !== undefined && updates.phone !== null) appUpdates.phone = updates.phone;
+      if (updates.phone_number !== undefined && updates.phone_number !== null) appUpdates.phone = updates.phone_number;
+      if (updates.offer_letter_url !== undefined) appUpdates.offer_letter_url = updates.offer_letter_url;
+      if (updates.noc_url !== undefined) appUpdates.noc_url = updates.noc_url;
+      if (updates.certificate_url !== undefined) appUpdates.certificate_url = updates.certificate_url;
+      if (updates.avatar_url !== undefined) appUpdates.profile_photo_url = updates.avatar_url;
+      if (updates.start_date !== undefined) appUpdates.internship_start_date = updates.start_date;
+      if (updates.end_date !== undefined) appUpdates.internship_end_date = updates.end_date;
+      if (updates.domain !== undefined) appUpdates.domain = updates.domain;
+      if (updates.sub_domain !== undefined) appUpdates.sub_domain = updates.sub_domain;
+
+      if (Object.keys(appUpdates).length > 0) {
+        await adminClient.from("applications").update(appUpdates).eq("email", currentProfile.email);
+      }
+    }
+
     return { success: true };
   });
 
@@ -3483,18 +3654,32 @@ export const submitTaskUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     taskId: z.string().uuid(),
-    submissionUrl: z.string().url(),
+    submissionUrl: z.string().min(1),
+    submissionNotes: z.string().optional().nullable(),
   }).parse(d))
   .handler(async ({ data }) => {
-    const { error } = await supabase
+    const adminClient = getAdminClient();
+    let url = data.submissionUrl.trim();
+    if (!/^https?:\/\//i.test(url) && !url.startsWith("data:")) {
+      url = `https://${url}`;
+    }
+
+    const updatePayload: any = {
+      deliverable_url: url,
+      status: "submitted",
+      updated_at: new Date().toISOString(),
+    };
+    if (data.submissionNotes) {
+      updatePayload.progress_notes = data.submissionNotes;
+    }
+
+    const { error } = await adminClient
       .from("tasks")
-      .update({
-        deliverable_url: data.submissionUrl,
-        status: "submitted",
-      })
+      .update(updatePayload)
       .eq("id", data.taskId);
+
     if (error) throw new Error(error.message);
-    return { success: true };
+    return { success: true, url };
   });
 
 export const getOrCreateReferralCode = createServerFn({ method: "POST" })
@@ -3677,3 +3862,31 @@ export const bulkDeleteTasks = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { success: true };
   });
+
+export const purgeAllNocs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const admin = getAdminClient();
+    await admin.from("profiles").update({ noc_url: null, updated_at: new Date().toISOString() }).neq("id", "00000000-0000-0000-0000-000000000000");
+    await admin.from("applications").update({ noc_url: null, updated_at: new Date().toISOString() }).neq("id", "00000000-0000-0000-0000-000000000000");
+    return { success: true, message: "All stored NOC links successfully purged." };
+  });
+
+export const regenerateMyDocuments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const userId = (context as any)?.auth?.user?.id;
+    const userEmail = (context as any)?.auth?.user?.email;
+    if (!userId) throw new Error("Unauthorized");
+
+    const admin = getAdminClient();
+    const offerRes = await deleteStoredOfferLetterAndRegenerate({ data: { profileId: userId, email: userEmail } });
+    const nocRes = await deleteStoredNocAndRegenerate({ data: { profileId: userId, email: userEmail } });
+
+    return {
+      success: true,
+      offer_letter_url: offerRes.offer_letter_url,
+      noc_url: nocRes.noc_url,
+    };
+  });
+
