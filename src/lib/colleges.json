@@ -1,40 +1,4 @@
-// Comprehensive directory of Indian colleges by State (AICTE Autonomous, Approved, NBA Accredited & Premier Institutions).
-// Exclusively covering all 28 States of India. Users can also select "Other" if their college is not listed.
-
-export const STATES = [
-  "Andhra Pradesh",
-  "Arunachal Pradesh",
-  "Assam",
-  "Bihar",
-  "Chhattisgarh",
-  "Goa",
-  "Gujarat",
-  "Haryana",
-  "Himachal Pradesh",
-  "Jharkhand",
-  "Karnataka",
-  "Kerala",
-  "Madhya Pradesh",
-  "Maharashtra",
-  "Manipur",
-  "Meghalaya",
-  "Mizoram",
-  "Nagaland",
-  "Odisha",
-  "Punjab",
-  "Rajasthan",
-  "Sikkim",
-  "Tamil Nadu",
-  "Telangana",
-  "Tripura",
-  "Uttar Pradesh",
-  "Uttarakhand",
-  "West Bengal"
-] as const;
-
-export type StateName = (typeof STATES)[number];
-
-export const COLLEGES: Record<StateName, string[]> = {
+{
   "Andhra Pradesh": [
     "A M Reddy Memorial College of Engineering Technology",
     "A M Reddy Memorial College of Engineering Technology, Guntur",
@@ -14773,10 +14737,4 @@ export const COLLEGES: Record<StateName, string[]> = {
     "Women's Polytechnic, Kolkata",
     "Other"
   ]
-};
-
-export function graduationYears(): number[] {
-  const years: number[] = [];
-  for (let y = 2022; y <= 2030; y++) years.push(y);
-  return years;
 }
