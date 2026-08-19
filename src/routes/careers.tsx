@@ -43,6 +43,7 @@ import { WorldClocks } from "@/components/world-clocks";
 import { InstallPwaButton } from "@/components/install-pwa-button";
 import { CloudflareTurnstile } from "@/components/cloudflare-turnstile";
 import { Header } from "@/components/Header";
+import { lookupReferralCodePricing } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/careers")({
   head: () => ({
@@ -253,6 +254,39 @@ function ApplicationPage() {
     job_posting_id: "",
     referral_code_used: "",
   });
+
+  const doLookupReferral = useServerFn(lookupReferralCodePricing);
+  const [referralInfo, setReferralInfo] = useState<{
+    valid: boolean;
+    custom_exam_fee?: number;
+    discount_amount?: number;
+    referrer_name?: string;
+    message?: string;
+  } | null>(null);
+  const [isValidatingReferral, setIsValidatingReferral] = useState(false);
+
+  useEffect(() => {
+    const code = (form.referral_code_used || "").trim().toUpperCase();
+    if (!code || code.length < 3) {
+      setReferralInfo(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsValidatingReferral(true);
+      try {
+        const res = await doLookupReferral({ data: { code } });
+        setReferralInfo(res);
+      } catch (e) {
+        setReferralInfo(null);
+      } finally {
+        setIsValidatingReferral(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [form.referral_code_used]);
+
   const [projects, setProjects] = useState<ProjectEntry[]>([]);
   const update = (k: keyof ApplicationForm) => (v: string) => setForm((s: ApplicationForm) => ({ ...s, [k]: v }));
 
@@ -851,28 +885,80 @@ function ApplicationPage() {
                       checked={hasReferral}
                       onCheckedChange={(checked: any) => {
                         setHasReferral(checked === true);
-                        if (checked !== true) update("referral_code_used")("");
+                        if (checked !== true) {
+                          update("referral_code_used")("");
+                          setReferralInfo(null);
+                        }
                       }}
                     />
-                    <label htmlFor="hasReferral" className="text-sm font-medium text-foreground cursor-pointer select-none">
-                      Do you have a referral code?
+                    <label htmlFor="hasReferral" className="text-sm font-medium text-foreground cursor-pointer select-none flex items-center gap-2">
+                      <span>Do you have a referral code or campus promo code?</span>
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        Fee Benefits
+                      </span>
                     </label>
                   </div>
                   {hasReferral && (
-                    <div className="pl-6 pt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="pl-6 pt-1 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                       <Field label="Enter Referral Code" required>
                         <Input 
                           value={form.referral_code_used || ""}
                           onChange={(e) => update("referral_code_used")(e.target.value.toUpperCase())}
-                          placeholder="e.g. JAVYE4"
-                          maxLength={6}
-                          className="max-w-[200px] uppercase font-mono tracking-wider font-bold"
+                          placeholder="e.g. JAVYE4, CAMPUS99"
+                          maxLength={15}
+                          className="max-w-[240px] uppercase font-mono tracking-wider font-bold text-sm"
                         />
                       </Field>
+
+                      {form.referral_code_used && (
+                        <div className="max-w-md pt-1">
+                          {isValidatingReferral ? (
+                            <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-2.5 rounded-lg border">
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" /> Validating referral code pricing...
+                            </div>
+                          ) : referralInfo ? (
+                            <div className={`p-3 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs ${
+                              referralInfo.valid 
+                                ? "bg-emerald-50/90 border-emerald-300 text-emerald-950" 
+                                : "bg-slate-50 border-slate-200 text-slate-600"
+                            }`}>
+                              <div className="flex items-start gap-2">
+                                {referralInfo.valid ? (
+                                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                                ) : (
+                                  <Shield className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+                                )}
+                                <div>
+                                  <span className="font-bold block">{referralInfo.message}</span>
+                                  {referralInfo.referrer_name && (
+                                    <span className="text-[11px] text-slate-500">Provided by: {referralInfo.referrer_name}</span>
+                                  )}
+                                </div>
+                              </div>
+                              {referralInfo.valid && (
+                                <div className="shrink-0 font-mono font-extrabold text-xs px-2.5 py-1 bg-emerald-600 text-white rounded-lg shadow-xs text-center">
+                                  {referralInfo.custom_exam_fee === 0 ? "FREE (₹0)" : `₹${referralInfo.custom_exam_fee} Fee`}
+                                </div>
+                              )}
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               </Section>
+
+              {/* Exam Fee & Performance Stipend Notice Banner */}
+              <div className="rounded-xl border border-amber-300 bg-amber-50/90 p-4.5 space-y-2 text-xs shadow-2xs">
+                <div className="flex items-center gap-2 font-bold text-amber-950 text-sm">
+                  <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+                  Important Notice: Certification Exam Fee &amp; Performance Stipend Policy
+                </div>
+                <p className="text-amber-900 leading-relaxed font-medium text-xs">
+                  <strong>Note / Information:</strong> Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
+                </p>
+              </div>
 
               <div className={`rounded-sm border p-5 ${agreed ? "border-secondary/40 bg-secondary/5" : "border-border bg-surface"}`}>
                 <div className="flex items-start gap-3">

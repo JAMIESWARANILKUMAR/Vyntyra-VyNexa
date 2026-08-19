@@ -42,7 +42,8 @@ import {
   listMySupportTickets, createSupportTicket, listKudos, createKudos, updateUserProfile,
   assignManualTaskToInterns, getMenteeAttendance,
   listAssignedSupportQueries, updateSupportProgressNotes, requestSupportMeeting,
-  reviewDeadlineExtension, getDashboardSettings
+  reviewDeadlineExtension, getDashboardSettings,
+  listInternTasksForMentor, updateTaskExecution
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/employee")({
@@ -709,18 +710,27 @@ function EmployeeDashboard() {
     qc.invalidateQueries({ queryKey: ["my-tasks"] });
   }
 
+  const fetchInternTasksForMentor = useServerFn(listInternTasksForMentor);
+  const doUpdateTaskExecution = useServerFn(updateTaskExecution);
+
   async function loadInternTasks(internId: string) {
     setIsLoadingInternTasks(true);
     try {
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("intern_id", internId)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
+      const data = await fetchInternTasksForMentor({ data: { internId } });
       setInternTasksList(data || []);
     } catch (e) {
-      toast.error("Failed to load tasks for intern");
+      console.warn("Server function fetch failed, trying fallback:", e);
+      try {
+        const { data: fallback, error: fbErr } = await supabase
+          .from("tasks")
+          .select("*")
+          .or(`assigned_to.eq.${internId},target_user_id.eq.${internId}`)
+          .order("created_at", { ascending: false });
+        if (fbErr) throw fbErr;
+        setInternTasksList(fallback || []);
+      } catch (err2) {
+        toast.error("Failed to load tasks for intern");
+      }
     } finally {
       setIsLoadingInternTasks(false);
     }
@@ -2574,16 +2584,84 @@ function EmployeeDashboard() {
                         <span className="text-[10px] text-slate-400 font-mono">{task.due_date ? new Date(task.due_date).toLocaleDateString() : ""}</span>
                       </div>
 
-                      {/* Deliverable link block */}
+                      {/* Deliverable link & Mentor Review block */}
                       {task.deliverable_url && (
-                        <div className="bg-white border p-2.5 rounded-lg text-xs flex items-center justify-between">
-                          <div className="truncate pr-4 text-slate-600">
-                            <strong className="text-slate-800">Submitted Deliverable URL:</strong>{" "}
-                            <a href={task.deliverable_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
-                              {task.deliverable_url}
-                            </a>
+                        <div className="bg-white border p-3 rounded-xl text-xs space-y-2.5 shadow-2xs">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="truncate text-slate-700">
+                              <strong className="text-slate-900">Submitted Deliverable:</strong>{" "}
+                              <a href={task.deliverable_url} target="_blank" rel="noreferrer" className="text-blue-600 font-mono underline ml-1 hover:text-blue-800">
+                                {task.deliverable_url}
+                              </a>
+                            </div>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${task.status === "completed" ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800"}`}>
+                              {task.status === "completed" ? "✓ Verified & Approved" : "Ready to Review"}
+                            </span>
                           </div>
-                          <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">✓ Ready to Review</span>
+
+                          {task.progress_notes && (
+                            <div className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border">
+                              <span className="font-semibold text-slate-700">Intern Notes:</span> {task.progress_notes}
+                            </div>
+                          )}
+
+                          {task.admin_remarks && (
+                            <div className="text-[11px] text-emerald-800 bg-emerald-50/80 p-2 rounded-lg border border-emerald-200">
+                              <span className="font-semibold">Mentor Feedback:</span> {task.admin_remarks}
+                            </div>
+                          )}
+
+                          {task.status !== "completed" && (
+                            <div className="flex items-center gap-2 pt-1 border-t">
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1"
+                                onClick={async () => {
+                                  try {
+                                    await doUpdateTaskExecution({
+                                      data: {
+                                        id: task.id,
+                                        status: "completed",
+                                        progress_percentage: 100,
+                                        admin_remarks: "Verified & approved by mentor.",
+                                      }
+                                    });
+                                    toast.success("Deliverable verified & task marked completed!");
+                                    loadInternTasks(selectedInternForTasks.id);
+                                  } catch (e: any) {
+                                    toast.error("Failed to approve task: " + e.message);
+                                  }
+                                }}
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" /> Verify & Approve Task
+                              </Button>
+
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs text-amber-700 border-amber-300 hover:bg-amber-50 font-semibold"
+                                onClick={async () => {
+                                  const feedback = prompt("Enter feedback / revision requirements for the intern:", task.admin_remarks || "");
+                                  if (feedback === null) return;
+                                  try {
+                                    await doUpdateTaskExecution({
+                                      data: {
+                                        id: task.id,
+                                        status: "in_progress",
+                                        admin_remarks: feedback,
+                                      }
+                                    });
+                                    toast.success("Feedback sent to intern!");
+                                    loadInternTasks(selectedInternForTasks.id);
+                                  } catch (e: any) {
+                                    toast.error("Failed to send feedback: " + e.message);
+                                  }
+                                }}
+                              >
+                                Request Revision
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
 

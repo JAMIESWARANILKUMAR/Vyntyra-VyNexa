@@ -36,7 +36,8 @@ import {
   clockIn, clockOut, getMyAttendance, getMyDocuments, regenerateMyDocuments,
   requestLeave, listMyLeaves, getMyLmsProgress, updateLmsProgress,
   raiseSupportQuery, listMySupportQueries, requestDeadlineExtension, submitTaskUrl,
-  getOrCreateReferralCode, getMyReferralConversions, getDashboardSettings, getInternMentorDetails
+  getOrCreateReferralCode, getMyReferralConversions, getDashboardSettings, getInternMentorDetails,
+  dismissUrgentPopup
 } from "@/lib/operations.functions";
 import { listMyNotifications, markUserNotificationRead } from "@/lib/notifications.functions";
 import { generatePayuCheckout } from "@/lib/payu.functions";
@@ -63,6 +64,73 @@ const RESOURCE_ICONS: Record<string, { icon: React.ReactNode; color: string }> =
   template: { icon: <FolderOpen className="h-5 w-5" />, color: "bg-amber-50 text-amber-600 border-amber-100" },
   guide:    { icon: <BookOpen className="h-5 w-5" />,   color: "bg-emerald-50 text-emerald-600 border-emerald-100" },
 };
+
+function FeeCountdownTimer({ deadline }: { deadline?: string | null }) {
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number; isExpired: boolean }>({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    isExpired: false,
+  });
+
+  useEffect(() => {
+    const targetDate = deadline ? new Date(deadline).getTime() : new Date().getTime() + (3 * 24 * 60 * 60 * 1000);
+
+    const calculate = () => {
+      const now = new Date().getTime();
+      const diff = targetDate - now;
+
+      if (diff <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true });
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setTimeLeft({ days, hours, minutes, seconds, isExpired: false });
+    };
+
+    calculate();
+    const interval = setInterval(calculate, 1000);
+    return () => clearInterval(interval);
+  }, [deadline]);
+
+  if (timeLeft.isExpired) {
+    return (
+      <div className="inline-flex items-center gap-2 text-xs font-bold text-red-700 bg-red-100/90 px-3 py-1.5 rounded-xl border border-red-300 animate-pulse">
+        <span>⚠️ Payment Deadline Expired — Pay immediately to activate dashboard</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 sm:gap-2">
+      <div className="flex flex-col items-center justify-center bg-slate-900 text-white rounded-xl px-2.5 py-1.5 min-w-[44px] shadow-sm border border-slate-700">
+        <span className="text-base sm:text-lg font-black font-mono leading-none">{String(timeLeft.days).padStart(2, "0")}</span>
+        <span className="text-[9px] uppercase font-bold text-slate-400 mt-0.5">Days</span>
+      </div>
+      <span className="text-slate-800 font-bold text-base">:</span>
+      <div className="flex flex-col items-center justify-center bg-slate-900 text-white rounded-xl px-2.5 py-1.5 min-w-[44px] shadow-sm border border-slate-700">
+        <span className="text-base sm:text-lg font-black font-mono leading-none">{String(timeLeft.hours).padStart(2, "0")}</span>
+        <span className="text-[9px] uppercase font-bold text-slate-400 mt-0.5">Hours</span>
+      </div>
+      <span className="text-slate-800 font-bold text-base">:</span>
+      <div className="flex flex-col items-center justify-center bg-slate-900 text-white rounded-xl px-2.5 py-1.5 min-w-[44px] shadow-sm border border-slate-700">
+        <span className="text-base sm:text-lg font-black font-mono leading-none">{String(timeLeft.minutes).padStart(2, "0")}</span>
+        <span className="text-[9px] uppercase font-bold text-slate-400 mt-0.5">Mins</span>
+      </div>
+      <span className="text-slate-800 font-bold text-base">:</span>
+      <div className="flex flex-col items-center justify-center bg-red-600 text-white rounded-xl px-2.5 py-1.5 min-w-[44px] shadow-sm border border-red-500 animate-pulse">
+        <span className="text-base sm:text-lg font-black font-mono leading-none">{String(timeLeft.seconds).padStart(2, "0")}</span>
+        <span className="text-[9px] uppercase font-bold text-red-200 mt-0.5">Secs</span>
+      </div>
+    </div>
+  );
+}
 
 function InternDashboard() {
   const qc = useQueryClient();
@@ -338,6 +406,9 @@ function InternDashboard() {
   
   const profile = profileQ.data;
   const displayName = profile?.full_name || email.split("@")[0] || "Intern";
+  const isFeePaymentPending = Boolean(profile?.fee_payment_scheduled && !profile?.exam_fee_paid && !profile?.is_fee_exempted);
+  const doDismissUrgentPopup = useServerFn(dismissUrgentPopup);
+  const [isDismissingPopup, setIsDismissingPopup] = useState(false);
   
   const todayStr_ = new Date().toISOString().split('T')[0];
   const isBeforeStart = profile?.start_date && todayStr_ < profile.start_date.split('T')[0];
@@ -1857,20 +1928,55 @@ function InternDashboard() {
                         </div>
                       </div>
 
-                      {profile?.fee_payment_scheduled && !profile?.exam_fee_paid && !profile?.is_fee_exempted && (
-                        <div className="mt-4 p-4 rounded-xl border border-red-200 bg-red-50 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-red-100 rounded-full text-red-600">
-                              <DollarSign className="h-5 w-5" />
+                      {isFeePaymentPending && (
+                        <div className="mt-5 p-5 rounded-2xl border-2 border-red-300 bg-gradient-to-br from-red-50 via-white to-amber-50 shadow-sm space-y-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-start gap-3">
+                              <div className="p-2.5 bg-red-100 rounded-xl text-red-600 shrink-0 shadow-xs">
+                                <DollarSign className="h-6 w-6" />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="text-base font-bold text-red-950">Mandatory Exam Fee Payment Pending</h4>
+                                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-600 text-white shadow-xs">
+                                    Action Required
+                                  </span>
+                                </div>
+                                <p className="text-xs text-red-800 mt-1 font-medium leading-relaxed">
+                                  Please pay the mandatory exam fee of <strong>₹{profile?.exam_fee_amount || 199}</strong> on or before{" "}
+                                  <strong>
+                                    {profile?.fee_payment_deadline 
+                                      ? new Date(profile.fee_payment_deadline).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })
+                                      : "the scheduled deadline"}
+                                  </strong>{" "}
+                                  to unlock your final certification exam, task deliverables, and verified credentials.
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <h4 className="text-sm font-bold text-red-900">Exam Fee Payment Pending</h4>
-                              <p className="text-xs text-red-700">Please pay the mandatory exam fee of ₹{profile?.exam_fee_amount} to unlock your final certification exam and refer-and-earn privileges.</p>
-                            </div>
+
+                            <Button size="lg" className="bg-red-600 hover:bg-red-700 text-white font-black px-6 shadow-md h-12 shrink-0" onClick={() => setShowPaymentModal(true)}>
+                              Pay ₹{profile?.exam_fee_amount || 199} Now
+                            </Button>
                           </div>
-                          <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white font-semibold" onClick={() => setShowPaymentModal(true)}>
-                            Pay Now
-                          </Button>
+
+                          {/* Live Animated Countdown Timer */}
+                          <div className="p-4 bg-slate-900 text-white rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-800 shadow-inner">
+                            <div className="flex items-center gap-2.5">
+                              <Clock className="h-5 w-5 text-amber-400 shrink-0 animate-spin duration-1000" />
+                              <div>
+                                <span className="text-xs font-bold text-white block">Time Remaining to Complete Payment:</span>
+                                <span className="text-[10px] text-slate-400">
+                                  Pay on or before {profile?.fee_payment_deadline ? new Date(profile.fee_payment_deadline).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "the scheduled date"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <FeeCountdownTimer deadline={profile?.fee_payment_deadline} />
+                          </div>
+
+                          <div className="p-3 bg-amber-100/70 border border-amber-300 rounded-xl text-xs text-amber-950 font-medium leading-relaxed">
+                            <strong>Note / Information:</strong> Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
+                          </div>
                         </div>
                       )}
                     </div>
@@ -2133,69 +2239,91 @@ function InternDashboard() {
                         </div>
 
                         {/* Submission Link & Deadline Extension request section */}
-                        <div className="mt-2 pt-4 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-200">
-                          {/* Submission Field */}
-                          <div className="flex-1 space-y-1">
-                            <label className="text-[11px] font-bold text-slate-700 block">Submit Public Task Deliverable URL (GitHub / Google Drive / Figma / Vercel)</label>
-                            {submissionTaskId === task.id ? (
-                              <div className="flex items-center gap-2 mt-1">
-                                <input 
-                                  type="text"
-                                  placeholder="https://github.com/... or google drive link"
-                                  value={submissionUrl}
-                                  onChange={(e) => setSubmissionUrl(e.target.value)}
-                                  className="w-full max-w-md rounded-lg border p-1.5 text-xs bg-white text-slate-800 focus:ring-1 focus:ring-emerald-500"
-                                />
-                                <Button 
-                                  size="sm"
-                                  disabled={isSubmittingTaskUrl}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 font-bold"
-                                  onClick={async () => {
-                                    if (!submissionUrl.trim()) return;
-                                    setIsSubmittingTaskUrl(true);
-                                    try {
-                                      await doSubmitTaskUrl({ data: { taskId: task.id, submissionUrl } });
-                                      toast.success("Task deliverable submitted for mentor review!");
-                                      setSubmissionTaskId(null);
-                                      setSubmissionUrl("");
-                                      qc.invalidateQueries({ queryKey: ["my-tasks"] });
-                                    } catch (e: any) {
-                                      toast.error("Failed to submit task URL: " + e.message);
-                                    } finally {
-                                      setIsSubmittingTaskUrl(false);
-                                    }
-                                  }}
-                                >
-                                  Submit URL
-                                </Button>
-                                <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setSubmissionTaskId(null)}>Cancel</Button>
+                        {isFeePaymentPending ? (
+                          <div className="mt-2 pt-4 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-amber-50/90 p-4 rounded-xl border border-amber-300 shadow-2xs">
+                            <div className="flex-1 space-y-1">
+                              <div className="flex items-center gap-1.5 font-bold text-amber-950 text-xs">
+                                <Lock className="h-4 w-4 text-amber-700 shrink-0" /> Task Submission Locked — Exam Fee Payment Required
                               </div>
-                            ) : (
-                              <div className="flex items-center gap-2 flex-wrap">
-                                {task.deliverable_url ? (
-                                  <div className="text-xs text-slate-600 flex items-center gap-2">
-                                    <span className="font-bold text-emerald-600 flex items-center gap-0.5">✓ Submitted Link:</span>
-                                    <a href={task.deliverable_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline max-w-[200px] sm:max-w-md truncate text-ellipsis overflow-hidden font-mono">
-                                      {task.deliverable_url}
-                                    </a>
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-slate-400 italic">No deliverable submitted yet.</span>
-                                )}
-                                <Button 
-                                  size="sm" 
-                                  variant="link" 
-                                  className="text-emerald-600 hover:text-emerald-700 font-bold text-xs h-auto p-0"
-                                  onClick={() => {
-                                    setSubmissionTaskId(task.id);
-                                    setSubmissionUrl(task.deliverable_url || "");
-                                  }}
-                                >
-                                  {task.deliverable_url ? "Update Submission Link" : "Submit Work Link"}
-                                </Button>
-                              </div>
-                            )}
+                              <p className="text-[11px] text-amber-900 leading-relaxed font-medium">
+                                Please pay the mandatory exam fee of <strong>₹{profile?.exam_fee_amount || 199}</strong> to enable task deliverable submissions and activate your verified certificate upon completion.
+                              </p>
+                              <p className="text-[10px] text-amber-800 italic">
+                                Note: Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
+                              </p>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-4 shrink-0 shadow-xs"
+                              onClick={() => setShowPaymentModal(true)}
+                            >
+                              Pay ₹{profile?.exam_fee_amount || 199} to Unlock
+                            </Button>
                           </div>
+                        ) : (
+                          <div className="mt-2 pt-4 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-200">
+                            {/* Submission Field */}
+                            <div className="flex-1 space-y-1">
+                              <label className="text-[11px] font-bold text-slate-700 block">Submit Public Task Deliverable URL (GitHub / Google Drive / Figma / Vercel)</label>
+                              {submissionTaskId === task.id ? (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <input 
+                                    type="text"
+                                    placeholder="https://github.com/... or google drive link"
+                                    value={submissionUrl}
+                                    onChange={(e) => setSubmissionUrl(e.target.value)}
+                                    className="w-full max-w-md rounded-lg border p-1.5 text-xs bg-white text-slate-800 focus:ring-1 focus:ring-emerald-500"
+                                  />
+                                  <Button 
+                                    size="sm"
+                                    disabled={isSubmittingTaskUrl}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 font-bold"
+                                    onClick={async () => {
+                                      if (!submissionUrl.trim()) return;
+                                      setIsSubmittingTaskUrl(true);
+                                      try {
+                                        await doSubmitTaskUrl({ data: { taskId: task.id, submissionUrl } });
+                                        toast.success("Task deliverable submitted for mentor review!");
+                                        setSubmissionTaskId(null);
+                                        setSubmissionUrl("");
+                                        qc.invalidateQueries({ queryKey: ["my-tasks"] });
+                                      } catch (e: any) {
+                                        toast.error("Failed to submit task URL: " + e.message);
+                                      } finally {
+                                        setIsSubmittingTaskUrl(false);
+                                      }
+                                    }}
+                                  >
+                                    Submit URL
+                                  </Button>
+                                  <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setSubmissionTaskId(null)}>Cancel</Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {task.deliverable_url ? (
+                                    <div className="text-xs text-slate-600 flex items-center gap-2">
+                                      <span className="font-bold text-emerald-600 flex items-center gap-0.5">✓ Submitted Link:</span>
+                                      <a href={task.deliverable_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline max-w-[200px] sm:max-w-md truncate text-ellipsis overflow-hidden font-mono">
+                                        {task.deliverable_url}
+                                      </a>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-slate-400 italic">No deliverable submitted yet.</span>
+                                  )}
+                                  <Button 
+                                    size="sm" 
+                                    variant="link" 
+                                    className="text-emerald-600 hover:text-emerald-700 font-bold text-xs h-auto p-0"
+                                    onClick={() => {
+                                      setSubmissionTaskId(task.id);
+                                      setSubmissionUrl(task.deliverable_url || "");
+                                    }}
+                                  >
+                                    {task.deliverable_url ? "Update Submission Link" : "Submit Work Link"}
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
 
                           {/* Deadline Extension requested state */}
                           <div className="shrink-0 flex items-center gap-2">
@@ -2227,9 +2355,10 @@ function InternDashboard() {
                             )}
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -3040,21 +3169,45 @@ function InternDashboard() {
           <textarea className="w-full rounded-md border p-2.5 text-xs" rows={3} value={selectedTaskWorkspace.progress_notes || ""} onChange={e => setSelectedTaskWorkspace({...selectedTaskWorkspace, progress_notes: e.target.value})} placeholder="Describe progress update, completed milestones, or blockers..." />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="font-semibold text-slate-800 mb-1 block">Deliverable URL (GitHub / Figma / Drive / Vercel)</label>
-            <input 
-              className="w-full rounded-md border p-2 text-xs font-mono" 
-              value={selectedTaskWorkspace.deliverable_url || ""} 
-              onChange={e => setSelectedTaskWorkspace({...selectedTaskWorkspace, deliverable_url: e.target.value})} 
-              placeholder="https://github.com/..." 
-            />
+        {isFeePaymentPending ? (
+          <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl space-y-2 text-xs">
+            <div className="flex items-center gap-2 font-bold text-amber-950">
+              <Lock className="h-4 w-4 text-amber-700 shrink-0" /> Deliverable Submission Locked — Exam Fee Payment Required
+            </div>
+            <p className="text-amber-900 leading-relaxed font-medium">
+              Please pay the exam fee of <strong>₹{profile?.exam_fee_amount || 199}</strong> to enable task deliverable submissions and receive your certificate.
+            </p>
+            <p className="text-[10px] text-amber-800 italic">
+              Note: Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
+            </p>
+            <Button 
+              size="sm" 
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold h-8 text-xs px-3 shadow-xs" 
+              onClick={() => {
+                setSelectedTaskWorkspace(null);
+                setShowPaymentModal(true);
+              }}
+            >
+              Pay Exam Fee Now
+            </Button>
           </div>
-          <div>
-            <label className="font-semibold text-slate-800 mb-1 block">Time Spent (Hours)</label>
-            <input type="number" step="0.5" className="w-full rounded-md border p-2 text-xs" value={selectedTaskWorkspace.time_spent_hours ?? 0} onChange={e => setSelectedTaskWorkspace({...selectedTaskWorkspace, time_spent_hours: parseFloat(e.target.value) || 0})} placeholder="e.g. 4.5" />
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="font-semibold text-slate-800 mb-1 block">Deliverable URL (GitHub / Figma / Drive / Vercel)</label>
+              <input 
+                className="w-full rounded-md border p-2 text-xs font-mono" 
+                value={selectedTaskWorkspace.deliverable_url || ""} 
+                onChange={e => setSelectedTaskWorkspace({...selectedTaskWorkspace, deliverable_url: e.target.value})} 
+                placeholder="https://github.com/..." 
+              />
+            </div>
+            <div>
+              <label className="font-semibold text-slate-800 mb-1 block">Time Spent (Hours)</label>
+              <input type="number" step="0.5" className="w-full rounded-md border p-2 text-xs" value={selectedTaskWorkspace.time_spent_hours ?? 0} onChange={e => setSelectedTaskWorkspace({...selectedTaskWorkspace, time_spent_hours: parseFloat(e.target.value) || 0})} placeholder="e.g. 4.5" />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="flex justify-end gap-2 pt-4 border-t">
@@ -3525,6 +3678,80 @@ function InternDashboard() {
             >
               ✕
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── URGENT ONSCREEN POPUP NOTIFICATION MODAL ─── */}
+      {profile?.urgent_popup_active && isFeePaymentPending && (
+        <div className="fixed inset-0 z-[150] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl border-2 border-red-400 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-red-100 rounded-2xl text-red-600 shadow-xs animate-bounce duration-1000">
+                  <AlertCircle className="h-6 w-6" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-600 text-white shadow-xs">
+                    High Priority Notice
+                  </span>
+                  <h3 className="font-extrabold text-slate-900 text-lg mt-1 leading-tight">
+                    {profile?.urgent_popup_title || "Urgent: Exam Fee Payment Required"}
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-red-50/80 border border-red-200 rounded-2xl text-xs text-red-950 leading-relaxed font-medium">
+              {profile?.urgent_popup_message || "Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional."}
+            </div>
+
+            {/* Countdown timer in modal */}
+            <div className="p-4 bg-slate-900 text-white rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-inner border border-slate-800">
+              <div>
+                <span className="text-xs font-bold text-white block">Payment Due Deadline:</span>
+                <span className="text-[10px] text-slate-400">
+                  {profile?.fee_payment_deadline ? new Date(profile.fee_payment_deadline).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "Immediate Action Required"}
+                </span>
+              </div>
+              <FeeCountdownTimer deadline={profile?.fee_payment_deadline} />
+            </div>
+
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 leading-relaxed font-medium">
+              <strong>Dashboard Restriction:</strong> Deliverable submissions and final verified certification remain locked until payment is verified.
+            </div>
+
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t">
+              <button 
+                type="button" 
+                disabled={isDismissingPopup}
+                onClick={async () => {
+                  setIsDismissingPopup(true);
+                  try {
+                    await doDismissUrgentPopup();
+                    qc.invalidateQueries({ queryKey: ["profile"] });
+                    toast.info("Urgent popup alert acknowledged.");
+                  } catch (e) {
+                    toast.error("Failed to dismiss alert.");
+                  } finally {
+                    setIsDismissingPopup(false);
+                  }
+                }}
+                className="text-xs font-semibold text-slate-400 hover:text-slate-700 underline underline-offset-4 order-2 sm:order-1"
+              >
+                {isDismissingPopup ? "Acknowledging..." : "Acknowledge & Remind Me Later"}
+              </button>
+
+              <Button 
+                size="lg" 
+                className="bg-red-600 hover:bg-red-700 text-white font-extrabold px-6 h-11 rounded-xl shadow-md w-full sm:w-auto order-1 sm:order-2 gap-2"
+                onClick={() => {
+                  setShowPaymentModal(true);
+                }}
+              >
+                <DollarSign className="h-4 w-4" /> Pay ₹{profile?.exam_fee_amount || 199} Now
+              </Button>
+            </div>
           </div>
         </div>
       )}

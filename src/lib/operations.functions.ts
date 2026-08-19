@@ -3756,7 +3756,225 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
     return applications || [];
   });
 
-// ─── Fee Management ──────────────────────────────────────────────────
+// ─── Referral Codes & Custom Pricing Management ──────────────────────
+export const listAllReferralPricingRules = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const admin = getAdminClient();
+
+    // 1. Fetch custom pricing rules
+    let rules: any[] = [];
+    try {
+      const { data, error } = await admin
+        .from("referral_pricing_rules")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!error && data) rules = data;
+    } catch (e) {
+      console.warn("referral_pricing_rules table not yet ready:", e);
+    }
+
+    // 2. Fetch profiles with referral codes to merge employee/intern codes
+    const { data: profileCodes } = await admin
+      .from("profiles")
+      .select("id, full_name, email, role, department, referral_code")
+      .not("referral_code", "is", null);
+
+    // 3. Fetch application conversion counts per referral code
+    const { data: appConversions } = await admin
+      .from("applications")
+      .select("id, referral_code_used, status")
+      .not("referral_code_used", "is", null);
+
+    const countsMap = new Map<string, { total: number; selected: number }>();
+    (appConversions || []).forEach((a: any) => {
+      const c = (a.referral_code_used || "").trim().toUpperCase();
+      if (!c) return;
+      const current = countsMap.get(c) || { total: 0, selected: 0 };
+      current.total += 1;
+      if (a.status === "selected" || a.status === "hired") current.selected += 1;
+      countsMap.set(c, current);
+    });
+
+    const ruleMap = new Map<string, any>();
+    rules.forEach((r: any) => {
+      const code = (r.code || "").trim().toUpperCase();
+      ruleMap.set(code, {
+        id: r.id,
+        code,
+        referrer_name: r.referrer_name || "Custom Campaign / Promo",
+        custom_exam_fee: Number(r.custom_exam_fee ?? 199),
+        discount_amount: Number(r.discount_amount ?? 0),
+        commission_reward: Number(r.commission_reward ?? 50),
+        is_active: r.is_active !== false,
+        notes: r.notes || "",
+        created_at: r.created_at,
+        is_custom_rule: true,
+        usage_count: countsMap.get(code)?.total || 0,
+        selected_count: countsMap.get(code)?.selected || 0,
+      });
+    });
+
+    // Merge employee/intern generated referral codes
+    (profileCodes || []).forEach((p: any) => {
+      const code = (p.referral_code || "").trim().toUpperCase();
+      if (!code) return;
+      if (!ruleMap.has(code)) {
+        ruleMap.set(code, {
+          id: p.id,
+          code,
+          referrer_name: `${p.full_name || "Intern/Employee"} (${p.role || "Member"})`,
+          referrer_email: p.email,
+          custom_exam_fee: 199,
+          discount_amount: 0,
+          commission_reward: 50,
+          is_active: true,
+          notes: `Auto-generated for ${p.full_name || p.email}`,
+          created_at: new Date().toISOString(),
+          is_custom_rule: false,
+          usage_count: countsMap.get(code)?.total || 0,
+          selected_count: countsMap.get(code)?.selected || 0,
+        });
+      } else {
+        const existing = ruleMap.get(code);
+        if (existing && existing.referrer_name === "Custom Campaign / Promo") {
+          existing.referrer_name = `${p.full_name || "Intern/Employee"} (${p.role || "Member"})`;
+          existing.referrer_email = p.email;
+        }
+      }
+    });
+
+    return Array.from(ruleMap.values()).sort((a, b) => b.usage_count - a.usage_count);
+  });
+
+export const upsertReferralPricingRule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    id: z.string().uuid().optional(),
+    code: z.string().min(2).max(25),
+    referrer_name: z.string().optional(),
+    custom_exam_fee: z.number().min(0),
+    discount_amount: z.number().min(0).default(0),
+    commission_reward: z.number().min(0).default(50),
+    is_active: z.boolean().default(true),
+    notes: z.string().optional(),
+    sync_to_existing_interns: z.boolean().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    const cleanCode = data.code.trim().toUpperCase();
+
+    // Upsert into referral_pricing_rules table
+    const { error: upsertErr } = await admin
+      .from("referral_pricing_rules")
+      .upsert({
+        code: cleanCode,
+        referrer_name: data.referrer_name || null,
+        custom_exam_fee: data.custom_exam_fee,
+        discount_amount: data.discount_amount,
+        commission_reward: data.commission_reward,
+        is_active: data.is_active,
+        notes: data.notes || null,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "code" });
+
+    if (upsertErr) {
+      console.warn("referral_pricing_rules upsert error:", upsertErr.message);
+    }
+
+    // If sync requested or custom pricing specified, update all matching interns who applied with this referral code
+    if (data.sync_to_existing_interns) {
+      const { data: matchedApps } = await admin
+        .from("applications")
+        .select("email")
+        .ilike("referral_code_used", cleanCode);
+
+      const emails = (matchedApps || []).map((a: any) => (a.email || "").toLowerCase().trim()).filter(Boolean);
+      if (emails.length > 0) {
+        await admin
+          .from("profiles")
+          .update({
+            exam_fee_amount: data.custom_exam_fee,
+            updated_at: new Date().toISOString(),
+          })
+          .in("email", emails);
+      }
+    }
+
+    return { success: true, code: cleanCode, custom_exam_fee: data.custom_exam_fee };
+  });
+
+export const deleteReferralPricingRule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    code: z.string().min(1),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    const cleanCode = data.code.trim().toUpperCase();
+
+    await admin.from("referral_pricing_rules").delete().ilike("code", cleanCode);
+    return { success: true, message: `Referral pricing rule for ${cleanCode} removed.` };
+  });
+
+export const lookupReferralCodePricing = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => z.object({
+    code: z.string().min(1),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    const cleanCode = data.code.trim().toUpperCase();
+
+    // 1. Check custom pricing rules
+    try {
+      const { data: rule } = await admin
+        .from("referral_pricing_rules")
+        .select("*")
+        .ilike("code", cleanCode)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (rule) {
+        return {
+          valid: true,
+          code: cleanCode,
+          custom_exam_fee: Number(rule.custom_exam_fee ?? 199),
+          discount_amount: Number(rule.discount_amount ?? 0),
+          referrer_name: rule.referrer_name || "Official Referral",
+          message: `Referral code applied! Exam fee: ₹${rule.custom_exam_fee}${rule.discount_amount > 0 ? ` (₹${rule.discount_amount} Discount)` : ''}`,
+        };
+      }
+    } catch (e) {}
+
+    // 2. Check profile referral codes
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("full_name, referral_code")
+      .ilike("referral_code", cleanCode)
+      .maybeSingle();
+
+    if (profile) {
+      return {
+        valid: true,
+        code: cleanCode,
+        custom_exam_fee: 199,
+        discount_amount: 0,
+        referrer_name: profile.full_name || "Verified Intern",
+        message: `Verified referral from ${profile.full_name || "Intern"}! Standard Exam Fee: ₹199`,
+      };
+    }
+
+    return {
+      valid: false,
+      code: cleanCode,
+      custom_exam_fee: 199,
+      discount_amount: 0,
+      referrer_name: "",
+      message: "Referral code not found. Standard fee ₹199 applies.",
+    };
+  });
+
+// ─── Fee Management & Deadline Controls ─────────────────────────────
 export const updateInternFeeSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
@@ -3766,25 +3984,26 @@ export const updateInternFeeSettings = createServerFn({ method: "POST" })
     is_fee_exempted: z.boolean().optional(),
     exam_fee_paid: z.boolean().optional(),
     fee_payment_scheduled: z.boolean().optional(),
+    fee_payment_deadline: z.string().optional().nullable(),
     is_payment_enabled: z.boolean().optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
+    const admin = getAdminClient();
     const updateData: any = {};
     if (data.exam_fee_amount !== undefined) updateData.exam_fee_amount = data.exam_fee_amount;
     if (data.is_fee_exempted !== undefined) updateData.is_fee_exempted = data.is_fee_exempted;
     if (data.exam_fee_paid !== undefined) updateData.exam_fee_paid = data.exam_fee_paid;
     if (data.fee_payment_scheduled !== undefined) updateData.fee_payment_scheduled = data.fee_payment_scheduled;
-    // Removed is_payment_enabled as it does not exist in the database schema yet
-    // if (data.is_payment_enabled !== undefined) updateData.is_payment_enabled = data.is_payment_enabled;
+    if (data.fee_payment_deadline !== undefined) updateData.fee_payment_deadline = data.fee_payment_deadline;
 
     if (data.internIds && data.internIds.length > 0) {
-      const { error } = await supabase
+      const { error } = await admin
         .from("profiles")
         .update(updateData)
         .in("id", data.internIds);
       if (error) throw new Error(error.message);
     } else if (data.internId) {
-      const { error } = await supabase
+      const { error } = await admin
         .from("profiles")
         .update(updateData)
         .eq("id", data.internId);
@@ -3795,6 +4014,114 @@ export const updateInternFeeSettings = createServerFn({ method: "POST" })
 
     return { success: true };
   });
+
+export const sendUrgentPaymentPopupNotification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    targetType: z.enum(["all_unpaid", "selected", "single"]),
+    internId: z.string().uuid().optional(),
+    internIds: z.array(z.string().uuid()).optional(),
+    title: z.string().default("Urgent: Exam Fee Payment Required"),
+    message: z.string().default("Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional."),
+    deadline: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+
+    let targetIds: string[] = [];
+    if (data.targetType === "single" && data.internId) {
+      targetIds = [data.internId];
+    } else if (data.targetType === "selected" && data.internIds?.length) {
+      targetIds = data.internIds;
+    } else {
+      // Find all unpaid and non-exempted interns
+      const { data: unpaidProfiles } = await admin
+        .from("profiles")
+        .select("id")
+        .eq("is_fee_exempted", false)
+        .eq("exam_fee_paid", false);
+      targetIds = (unpaidProfiles || []).map((p: any) => p.id);
+    }
+
+    if (targetIds.length === 0) {
+      return { success: true, count: 0, message: "No matching interns found for urgent payment alert." };
+    }
+
+    // 1. Update profiles with onscreen popup alert
+    const profileUpdatePayload: any = {
+      urgent_popup_title: data.title,
+      urgent_popup_message: data.message,
+      urgent_popup_active: true,
+      fee_payment_scheduled: true,
+      updated_at: new Date().toISOString(),
+    };
+    if (data.deadline) {
+      profileUpdatePayload.fee_payment_deadline = data.deadline;
+    }
+
+    await admin
+      .from("profiles")
+      .update(profileUpdatePayload)
+      .in("id", targetIds);
+
+    // 2. Insert into user_notifications for in-app alert history
+    const notificationInserts = targetIds.map(uid => ({
+      user_id: uid,
+      title: data.title,
+      message: data.message,
+      type: "urgent_fee_payment",
+      is_read: false,
+      created_at: new Date().toISOString(),
+    }));
+
+    try {
+      await admin.from("user_notifications").insert(notificationInserts);
+    } catch (e) {
+      console.warn("user_notifications batch insert warning:", e);
+    }
+
+    return { success: true, count: targetIds.length, message: `Sent urgent popup alert to ${targetIds.length} intern(s).` };
+  });
+
+export const dismissUrgentPopup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const admin = getAdminClient();
+    await admin
+      .from("profiles")
+      .update({ urgent_popup_active: false })
+      .eq("id", context.userId);
+    return { success: true };
+  });
+
+export const listInternTasksForMentor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    internId: z.string().uuid(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    
+    // Find all tasks assigned to this intern using service role
+    const { data: tasks, error } = await admin
+      .from("tasks")
+      .select("*")
+      .or(`assigned_to.eq.${data.internId},target_user_id.eq.${data.internId}`)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.warn("[listInternTasksForMentor] Primary query error:", error.message);
+      const { data: fallback } = await admin
+        .from("tasks")
+        .select("*")
+        .eq("assigned_to", data.internId)
+        .order("created_at", { ascending: false });
+      return fallback || [];
+    }
+
+    return tasks || [];
+  });
+
 
 // ─── Dashboard Settings ──────────────────────────────────────────────
 export const getDashboardSettings = createServerFn({ method: "GET" })
