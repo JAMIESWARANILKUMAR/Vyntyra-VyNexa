@@ -7,7 +7,7 @@ import {
   CheckCircle2, Video, CalendarDays, User, BookOpen, Link2, FileText,
   Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
-  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, X, Trophy, Flame
+  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, X, Trophy, Flame, AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -65,6 +65,17 @@ const RESOURCE_ICONS: Record<string, { icon: React.ReactNode; color: string }> =
   guide:    { icon: <BookOpen className="h-5 w-5" />,   color: "bg-emerald-50 text-emerald-600 border-emerald-100" },
 };
 
+function formatDeadlineDisplay(deadline?: string | null, fallbackText = "the scheduled deadline") {
+  if (!deadline) return fallbackText;
+  try {
+    const d = new Date(deadline);
+    if (isNaN(d.getTime())) return fallbackText;
+    return d.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+  } catch {
+    return fallbackText;
+  }
+}
+
 function FeeCountdownTimer({ deadline }: { deadline?: string | null }) {
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number; isExpired: boolean }>({
     days: 0,
@@ -75,11 +86,17 @@ function FeeCountdownTimer({ deadline }: { deadline?: string | null }) {
   });
 
   useEffect(() => {
-    const targetDate = deadline ? new Date(deadline).getTime() : new Date().getTime() + (3 * 24 * 60 * 60 * 1000);
+    let targetTime: number;
+    if (deadline) {
+      const parsed = new Date(deadline).getTime();
+      targetTime = isNaN(parsed) ? Date.now() + (3 * 24 * 60 * 60 * 1000) : parsed;
+    } else {
+      targetTime = Date.now() + (3 * 24 * 60 * 60 * 1000);
+    }
 
     const calculate = () => {
-      const now = new Date().getTime();
-      const diff = targetDate - now;
+      const now = Date.now();
+      const diff = targetTime - now;
 
       if (diff <= 0) {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true });
@@ -1945,9 +1962,7 @@ function InternDashboard() {
                                 <p className="text-xs text-red-800 mt-1 font-medium leading-relaxed">
                                   Please pay the mandatory exam fee of <strong>₹{profile?.exam_fee_amount || 199}</strong> on or before{" "}
                                   <strong>
-                                    {profile?.fee_payment_deadline 
-                                      ? new Date(profile.fee_payment_deadline).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })
-                                      : "the scheduled deadline"}
+                                    {formatDeadlineDisplay(profile?.fee_payment_deadline)}
                                   </strong>{" "}
                                   to unlock your final certification exam, task deliverables, and verified credentials.
                                 </p>
@@ -1966,7 +1981,7 @@ function InternDashboard() {
                               <div>
                                 <span className="text-xs font-bold text-white block">Time Remaining to Complete Payment:</span>
                                 <span className="text-[10px] text-slate-400">
-                                  Pay on or before {profile?.fee_payment_deadline ? new Date(profile.fee_payment_deadline).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "the scheduled date"}
+                                  Pay on or before {formatDeadlineDisplay(profile?.fee_payment_deadline, "the scheduled date")}
                                 </span>
                               </div>
                             </div>
@@ -3711,7 +3726,7 @@ function InternDashboard() {
               <div>
                 <span className="text-xs font-bold text-white block">Payment Due Deadline:</span>
                 <span className="text-[10px] text-slate-400">
-                  {profile?.fee_payment_deadline ? new Date(profile.fee_payment_deadline).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "Immediate Action Required"}
+                  {formatDeadlineDisplay(profile?.fee_payment_deadline, "Immediate Action Required")}
                 </span>
               </div>
               <FeeCountdownTimer deadline={profile?.fee_payment_deadline} />
