@@ -1,5 +1,4 @@
-import { QRCodeSVG } from "qrcode.react";
-import { createFileRoute, Link, useNavigate, useBlocker } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -104,20 +103,6 @@ const NOTIF_ICONS: Record<string, string> = {
 
 function AdminDashboard() {
   const navigate = useNavigate();
-
-  const blocker = useBlocker({
-    shouldBlockFn: ({ next }) => {
-      // Don't block navigation to internal admin paths
-      if (
-        next.fullPath === "/cms" ||
-        next.fullPath === "/templates" ||
-        next.fullPath === "/admin/operations" ||
-        next.fullPath?.startsWith("/admin")
-      ) return false;
-      return true;
-    },
-    withResolver: true,
-  });
   const qc = useQueryClient();
   const list = useServerFn(listApplications);
   const fetchOpen = useServerFn(getApplicationsOpen);
@@ -1112,32 +1097,6 @@ function AdminDashboard() {
           </div>
         </div>
       </main>
-
-      <AlertDialog
-        open={blocker.status === 'blocked'}
-        onOpenChange={(isOpen) => {
-          if (!isOpen && blocker.status === 'blocked') {
-            blocker.reset();
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Would you like to end the session?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Navigating away will close the Super Admin Dashboard and redirect you to the home page. Do you wish to proceed?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              if (blocker.status === 'blocked') blocker.reset();
-            }}>Stay in Dashboard</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              if (blocker.status === 'blocked') blocker.proceed();
-            }}>End Session</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <ApplicationDialog app={selected} onClose={() => setSelected(null)} />
       <JobPostingDialog

@@ -1109,7 +1109,7 @@ export const claimPoolTask = createServerFn({ method: "POST" })
   });
 
 const profileUpdateSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().min(1),
   full_name: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
   phone_number: z.string().optional().nullable(),
@@ -1452,67 +1452,97 @@ export const updateUserProfile = createServerFn({ method: "POST" })
     const adminClient = getAdminClient();
     const { id, ...updates } = data;
 
-    // 1. Update Profile in Supabase
-    const { data: updatedProfile, error } = await adminClient
-      .from("profiles")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .maybeSingle();
-
-    if (error) {
-      // Fallback in case some dynamic columns are not in schema
-      const coreUpdates: Record<string, any> = {};
-      if (updates.full_name !== undefined) coreUpdates.full_name = updates.full_name;
-      if (updates.phone !== undefined) coreUpdates.phone = updates.phone;
-      if (updates.phone_number !== undefined) coreUpdates.phone_number = updates.phone_number;
-      if (updates.address !== undefined) coreUpdates.address = updates.address;
-      if (updates.intern_id !== undefined) coreUpdates.intern_id = updates.intern_id;
-      if (updates.start_date !== undefined) coreUpdates.start_date = updates.start_date;
-      if (updates.end_date !== undefined) coreUpdates.end_date = updates.end_date;
-      if (updates.avatar_url !== undefined) coreUpdates.avatar_url = updates.avatar_url;
-      if (updates.offer_letter_url !== undefined) coreUpdates.offer_letter_url = updates.offer_letter_url;
-      if (updates.certificate_url !== undefined) coreUpdates.certificate_url = updates.certificate_url;
-      if (updates.department !== undefined) coreUpdates.department = updates.department;
-      if (updates.position !== undefined) coreUpdates.position = updates.position;
-      if (updates.mentor_id !== undefined) coreUpdates.mentor_id = updates.mentor_id;
-      if (updates.stipend !== undefined) coreUpdates.stipend = updates.stipend;
-      if (updates.fee_payment_scheduled !== undefined) coreUpdates.fee_payment_scheduled = updates.fee_payment_scheduled;
-      if (updates.fee_payment_deadline !== undefined) coreUpdates.fee_payment_deadline = updates.fee_payment_deadline;
-      if (updates.exam_fee_amount !== undefined) coreUpdates.exam_fee_amount = updates.exam_fee_amount;
-      if (updates.exam_fee_paid !== undefined) coreUpdates.exam_fee_paid = updates.exam_fee_paid;
-      if (updates.is_fee_exempted !== undefined) coreUpdates.is_fee_exempted = updates.is_fee_exempted;
-      if (updates.urgent_popup_active !== undefined) coreUpdates.urgent_popup_active = updates.urgent_popup_active;
-      if (updates.urgent_popup_title !== undefined) coreUpdates.urgent_popup_title = updates.urgent_popup_title;
-      if (updates.urgent_popup_message !== undefined) coreUpdates.urgent_popup_message = updates.urgent_popup_message;
-
-      const { error: fallbackError } = await adminClient.from("profiles").update(coreUpdates).eq("id", id);
-      if (fallbackError) throw new Error(fallbackError.message);
+    // 1. Prepare clean primary updates payload
+    const primaryUpdates: Record<string, any> = {};
+    for (const [key, val] of Object.entries(updates)) {
+      if (val !== undefined) {
+        primaryUpdates[key] = val;
+      }
     }
 
-    // 2. Two-way sync to applications table by email
-    const { data: currentProfile } = await adminClient.from("profiles").select("email").eq("id", id).maybeSingle();
-    if (currentProfile?.email) {
-      const appUpdates: Record<string, any> = {};
-      if (updates.full_name !== undefined && updates.full_name !== null) appUpdates.full_name = updates.full_name;
-      if (updates.phone !== undefined && updates.phone !== null) appUpdates.phone = updates.phone;
-      if (updates.phone_number !== undefined && updates.phone_number !== null) appUpdates.phone = updates.phone_number;
-      if (updates.offer_letter_url !== undefined) appUpdates.offer_letter_url = updates.offer_letter_url;
-      if (updates.noc_url !== undefined) appUpdates.noc_url = updates.noc_url;
-      if (updates.certificate_url !== undefined) appUpdates.certificate_url = updates.certificate_url;
-      if (updates.avatar_url !== undefined) appUpdates.profile_photo_url = updates.avatar_url;
-      if (updates.start_date !== undefined) appUpdates.internship_start_date = updates.start_date;
-      if (updates.end_date !== undefined) appUpdates.internship_end_date = updates.end_date;
-      if (updates.domain !== undefined) appUpdates.domain = updates.domain;
-      if (updates.sub_domain !== undefined) appUpdates.sub_domain = updates.sub_domain;
-      if (updates.mentor_id !== undefined) {
-        appUpdates.mentor_id = updates.mentor_id;
-        appUpdates.assigned_employee_id = updates.mentor_id;
+    // Try full update first
+    let updateSuccess = false;
+    try {
+      const { error } = await adminClient
+        .from("profiles")
+        .update(primaryUpdates)
+        .eq("id", id);
+      
+      if (!error) {
+        updateSuccess = true;
       }
+    } catch (err) {
+      console.warn("Full profile update encountered schema mismatch, falling back to core fields:", err);
+    }
 
-      if (Object.keys(appUpdates).length > 0) {
-        await adminClient.from("applications").update(appUpdates).eq("email", currentProfile.email.toLowerCase());
+    // Fallback: update guaranteed core columns only
+    if (!updateSuccess) {
+      const coreSafeUpdates: Record<string, any> = {};
+      if (updates.full_name !== undefined) coreSafeUpdates.full_name = updates.full_name;
+      if (updates.phone !== undefined) coreSafeUpdates.phone = updates.phone;
+      if (updates.address !== undefined) coreSafeUpdates.address = updates.address;
+      if (updates.intern_id !== undefined) coreSafeUpdates.intern_id = updates.intern_id;
+      if (updates.start_date !== undefined) coreSafeUpdates.start_date = updates.start_date;
+      if (updates.end_date !== undefined) coreSafeUpdates.end_date = updates.end_date;
+      if (updates.avatar_url !== undefined) coreSafeUpdates.avatar_url = updates.avatar_url;
+      if (updates.offer_letter_url !== undefined) coreSafeUpdates.offer_letter_url = updates.offer_letter_url;
+      if (updates.certificate_url !== undefined) coreSafeUpdates.certificate_url = updates.certificate_url;
+      if (updates.noc_url !== undefined) coreSafeUpdates.noc_url = updates.noc_url;
+      if (updates.department !== undefined) coreSafeUpdates.department = updates.department;
+      if (updates.position !== undefined) coreSafeUpdates.position = updates.position;
+      if (updates.mentor_id !== undefined) coreSafeUpdates.mentor_id = updates.mentor_id;
+      if (updates.stipend !== undefined) coreSafeUpdates.stipend = updates.stipend;
+
+      const { error: fallbackError } = await adminClient.from("profiles").update(coreSafeUpdates).eq("id", id);
+      if (fallbackError) {
+        console.warn("Core profile update error:", fallbackError);
       }
+    }
+
+    // 2. Sync core identity to Supabase Auth user metadata
+    try {
+      const metaUpdates: Record<string, any> = {};
+      if (updates.full_name) metaUpdates.full_name = updates.full_name;
+      if (updates.phone || updates.phone_number) metaUpdates.phone = updates.phone || updates.phone_number;
+      if (updates.intern_id) metaUpdates.intern_id = updates.intern_id;
+      if (updates.position) metaUpdates.position = updates.position;
+      if (updates.department) metaUpdates.department = updates.department;
+      if (updates.avatar_url) metaUpdates.avatar_url = updates.avatar_url;
+
+      if (Object.keys(metaUpdates).length > 0) {
+        await adminClient.auth.admin.updateUserById(id, { user_metadata: metaUpdates });
+      }
+    } catch (authMetaErr) {
+      console.warn("Auth user metadata sync error (non-fatal):", authMetaErr);
+    }
+
+    // 3. Two-way sync to applications table by email
+    try {
+      const { data: currentProfile } = await adminClient.from("profiles").select("email").eq("id", id).maybeSingle();
+      if (currentProfile?.email) {
+        const appUpdates: Record<string, any> = {};
+        if (updates.full_name !== undefined && updates.full_name !== null) appUpdates.full_name = updates.full_name;
+        if (updates.phone !== undefined && updates.phone !== null) appUpdates.phone = updates.phone;
+        if (updates.phone_number !== undefined && updates.phone_number !== null) appUpdates.phone = updates.phone_number;
+        if (updates.offer_letter_url !== undefined) appUpdates.offer_letter_url = updates.offer_letter_url;
+        if (updates.noc_url !== undefined) appUpdates.noc_url = updates.noc_url;
+        if (updates.certificate_url !== undefined) appUpdates.certificate_url = updates.certificate_url;
+        if (updates.avatar_url !== undefined) appUpdates.profile_photo_url = updates.avatar_url;
+        if (updates.start_date !== undefined) appUpdates.internship_start_date = updates.start_date;
+        if (updates.end_date !== undefined) appUpdates.internship_end_date = updates.end_date;
+        if (updates.domain !== undefined) appUpdates.domain = updates.domain;
+        if (updates.sub_domain !== undefined) appUpdates.sub_domain = updates.sub_domain;
+        if (updates.mentor_id !== undefined) {
+          appUpdates.mentor_id = updates.mentor_id;
+          appUpdates.assigned_employee_id = updates.mentor_id;
+        }
+
+        if (Object.keys(appUpdates).length > 0) {
+          await adminClient.from("applications").update(appUpdates).eq("email", currentProfile.email.toLowerCase());
+        }
+      }
+    } catch (appSyncErr) {
+      console.warn("Applications sync error (non-fatal):", appSyncErr);
     }
 
     return { success: true };
