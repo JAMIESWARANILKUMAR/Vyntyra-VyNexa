@@ -624,6 +624,234 @@ function AdminSettingsPage() {
           </div>
         </div>
 
+        {/* ─── INTERN FEE SCHEDULES & VERIFICATION OVERVIEW TABLE ─── */}
+        <div className="bg-card border rounded-2xl shadow-sm overflow-hidden space-y-0">
+          <div className="p-5 border-b bg-gradient-to-r from-slate-900 to-slate-800 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-amber-400" />
+                <h2 className="text-lg font-bold">Scheduled Intern Fee &amp; Mentor Overview</h2>
+              </div>
+              <p className="text-xs text-slate-300 mt-1">Live visibility of all assigned mentors, scheduled fee amounts, deadlines, and payment statuses.</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => membersQ.refetch()} 
+                className="h-8 text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border-white/20 gap-1.5"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${membersQ.isFetching ? "animate-spin" : ""}`} /> Refresh
+              </Button>
+            </div>
+          </div>
+
+          <div className="p-5 space-y-4">
+            {/* Search and Filters */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input 
+                  placeholder="Search by intern name, email or ID..." 
+                  value={internFeeSearch} 
+                  onChange={e => setInternFeeSearch(e.target.value)} 
+                  className="pl-9 h-9 text-xs"
+                />
+              </div>
+
+              <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none text-xs font-medium">
+                {[
+                  { id: "all", label: `All Interns (${allInterns.length})` },
+                  { id: "scheduled", label: `Scheduled (${allInterns.filter((i: any) => i.fee_payment_scheduled && !i.exam_fee_paid && !i.is_fee_exempted).length})` },
+                  { id: "unpaid", label: `Unpaid (${allInterns.filter((i: any) => !i.exam_fee_paid && !i.is_fee_exempted).length})` },
+                  { id: "paid", label: `Paid (${allInterns.filter((i: any) => i.exam_fee_paid).length})` },
+                  { id: "exempted", label: `Exempted (${allInterns.filter((i: any) => i.is_fee_exempted).length})` },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setInternFeeFilter(tab.id as any)}
+                    className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
+                      internFeeFilter === tab.id
+                        ? "bg-slate-900 text-white font-bold"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="border rounded-xl overflow-x-auto bg-white shadow-2xs">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-slate-50 border-b text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="py-3 px-4">Intern</th>
+                    <th className="py-3 px-4">Assigned Mentor</th>
+                    <th className="py-3 px-4">Exam Fee (₹)</th>
+                    <th className="py-3 px-4">Fee Scheduled</th>
+                    <th className="py-3 px-4">Payment Deadline</th>
+                    <th className="py-3 px-4">Payment Status</th>
+                    <th className="py-3 px-4">Urgent Popup</th>
+                    <th className="py-3 px-4 text-right">Quick Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {membersQ.isLoading ? (
+                    <tr>
+                      <td colSpan={8} className="py-10 text-center text-slate-400">
+                        <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2 text-slate-500" />
+                        Loading intern fee schedules...
+                      </td>
+                    </tr>
+                  ) : (
+                    allInterns
+                      .filter((intern: any) => {
+                        const matchQuery = 
+                          (intern.full_name || "").toLowerCase().includes(internFeeSearch.toLowerCase()) ||
+                          (intern.email || "").toLowerCase().includes(internFeeSearch.toLowerCase()) ||
+                          (intern.intern_id || "").toLowerCase().includes(internFeeSearch.toLowerCase());
+                        if (!matchQuery) return false;
+
+                        if (internFeeFilter === "scheduled") return intern.fee_payment_scheduled && !intern.exam_fee_paid && !intern.is_fee_exempted;
+                        if (internFeeFilter === "unpaid") return !intern.exam_fee_paid && !intern.is_fee_exempted;
+                        if (internFeeFilter === "paid") return intern.exam_fee_paid;
+                        if (internFeeFilter === "exempted") return intern.is_fee_exempted;
+                        return true;
+                      })
+                      .map((intern: any) => {
+                        const assignedMentor = intern.mentor_id ? (membersQ.data || []).find((m: any) => m.id === intern.mentor_id) : null;
+                        const isExpired = intern.fee_payment_deadline ? new Date(intern.fee_payment_deadline).getTime() < Date.now() : false;
+
+                        return (
+                          <tr key={intern.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="py-3 px-4">
+                              <div className="font-bold text-slate-800">{intern.full_name || "—"}</div>
+                              <div className="text-[11px] text-slate-400">{intern.email} {intern.intern_id && `· ID: ${intern.intern_id}`}</div>
+                            </td>
+
+                            <td className="py-3 px-4">
+                              {assignedMentor ? (
+                                <div>
+                                  <span className="font-bold text-indigo-700 block">{assignedMentor.full_name}</span>
+                                  <span className="text-[10px] text-slate-400">{assignedMentor.email}</span>
+                                </div>
+                              ) : intern.mentor_id ? (
+                                <span className="font-semibold text-indigo-600">Assigned Mentor</span>
+                              ) : (
+                                <span className="text-slate-500 font-medium text-[11px]">Lead Mentor (Jami Eswar Anil Kumar)</span>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-4 font-mono font-bold text-slate-800">
+                              ₹{intern.exam_fee_amount !== undefined ? intern.exam_fee_amount : 199}
+                            </td>
+
+                            <td className="py-3 px-4">
+                              {intern.fee_payment_scheduled ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                  Scheduled
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500">
+                                  Unscheduled
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-4">
+                              {intern.fee_payment_deadline ? (
+                                <div>
+                                  <span className={`font-semibold block ${isExpired ? "text-red-600" : "text-slate-700"}`}>
+                                    {new Date(intern.fee_payment_deadline).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                                  </span>
+                                  {isExpired && (
+                                    <span className="text-[9px] font-bold uppercase text-red-600 bg-red-50 px-1.5 py-0.2 rounded border border-red-200">Expired</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-slate-400 italic">No deadline set</span>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-4">
+                              {intern.exam_fee_paid ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                  ✓ Paid
+                                </span>
+                              ) : intern.is_fee_exempted ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-300">
+                                  Exempted
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                  Unpaid
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-4">
+                              {intern.urgent_popup_active ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 border border-red-300 animate-pulse">
+                                  Active Alert
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 text-[11px]">—</span>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-[10px] font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-300"
+                                  onClick={() => {
+                                    setTargetType("single");
+                                    setInternId(intern.id);
+                                    setExamFeeAmount(intern.exam_fee_amount !== undefined ? intern.exam_fee_amount : 199);
+                                    setFeePaymentScheduled(Boolean(intern.fee_payment_scheduled));
+                                    setExamFeePaid(Boolean(intern.exam_fee_paid));
+                                    setIsFeeExempted(Boolean(intern.is_fee_exempted));
+                                    setFeePaymentDeadline(intern.fee_payment_deadline ? intern.fee_payment_deadline.slice(0, 16) : "");
+                                    window.scrollTo({ top: 400, behavior: "smooth" });
+                                    toast.info(`Loaded settings for ${intern.full_name || intern.email}`);
+                                  }}
+                                >
+                                  Edit Fee
+                                </Button>
+
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-[10px] font-bold text-red-700 bg-red-50 hover:bg-red-100 border-red-200"
+                                  onClick={() => {
+                                    setPopupForm({
+                                      targetType: "single",
+                                      title: "Urgent: Exam Fee Payment Required",
+                                      message: "Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.",
+                                      deadline: intern.fee_payment_deadline || "",
+                                    });
+                                    setInternId(intern.id);
+                                    setIsPopupModalOpen(true);
+                                  }}
+                                >
+                                  Alert
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         {/* ─── NOC REGENERATION ─── */}
         <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
           <div className="p-5 border-b bg-slate-50 flex items-center gap-2">

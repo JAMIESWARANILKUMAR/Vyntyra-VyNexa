@@ -774,6 +774,7 @@ function OperationsDashboard() {
                     <MemberRow
                       key={m.id}
                       member={m}
+                      team={team}
                       onRevoke={handleRevoke}
                       onResetPassword={(user) => {
                         setResetUserTarget(user);
@@ -808,6 +809,7 @@ function OperationsDashboard() {
                     <MemberRow
                       key={m.id}
                       member={m}
+                      team={team}
                       onRevoke={handleRevoke}
                       onResetPassword={(user) => {
                         setResetUserTarget(user);
@@ -2281,28 +2283,64 @@ function OperationsDashboard() {
   );
 }
 
-function MemberRow({ member, onRevoke, onResetPassword, onClick }: { member: any; onRevoke: (id: string, name: string) => void; onResetPassword?: (member: any) => void; onClick: () => void }) {
+function MemberRow({ member, team, onRevoke, onResetPassword, onClick }: { member: any; team?: any[]; onRevoke: (id: string, name: string) => void; onResetPassword?: (member: any) => void; onClick: () => void }) {
   const roleStyles = member.role === "employee"
     ? "bg-blue-100 text-blue-800"
     : "bg-emerald-100 text-emerald-800";
 
+  const assignedMentor = member.mentor_id && team ? team.find((t: any) => t.id === member.mentor_id) : null;
+  const mentorDisplayName = assignedMentor ? assignedMentor.full_name : member.mentor_id ? "Assigned Mentor" : "Lead Mentor (Jami Eswar Anil Kumar)";
+
   return (
-    <div className="px-5 py-3.5 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors cursor-pointer group" onClick={onClick}>
+    <div className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors cursor-pointer group" onClick={onClick}>
       <div className="flex items-center gap-3 min-w-0">
         <SmartAvatar
           src={member.avatar_url}
           alt={member.full_name}
           fallbackInitials={(member.full_name || member.email || "?")[0]}
-          className="h-9 w-9 rounded-full"
+          className="h-9 w-9 rounded-full shrink-0"
         />
-        <div className="min-w-0">
-          <div className="font-medium text-sm truncate group-hover:text-primary transition-colors">{member.full_name || "â€”"}</div>
-          <div className="text-xs text-muted-foreground truncate">{member.email}</div>
+        <div className="min-w-0 space-y-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-medium text-sm text-slate-900 group-hover:text-primary transition-colors">{member.full_name || "—"}</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide ${roleStyles}`}>{member.role}</span>
+            {member.role === "intern" && (
+              <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                Mentor: {mentorDisplayName}
+              </span>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground truncate">{member.email} {member.intern_id && `· ID: ${member.intern_id}`}</div>
+          
+          {member.role === "intern" && (
+            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+              {member.exam_fee_paid ? (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  ✓ Fee Paid (₹{member.exam_fee_amount || 199})
+                </span>
+              ) : member.is_fee_exempted ? (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200">
+                  Fee Exempted
+                </span>
+              ) : member.fee_payment_scheduled ? (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                  Fee Scheduled: ₹{member.exam_fee_amount || 199} {member.fee_payment_deadline ? `· Due: ${new Date(member.fee_payment_deadline).toLocaleDateString("en-IN")}` : ""}
+                </span>
+              ) : (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                  Fee Unscheduled
+                </span>
+              )}
+              {member.urgent_popup_active && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200 animate-pulse">
+                  🚨 Urgent Popup Alert Active
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide ${roleStyles}`}>{member.role}</span>
-        
+      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
         <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1">
           {onResetPassword && (
             <Button
@@ -2364,22 +2402,37 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
       await doUpdateProfile({ data: { 
         id: user.id, 
         full_name: cleanValue(form.full_name),
-        phone: cleanValue(form.phone),
+        phone: cleanValue(form.phone || form.phone_number),
+        phone_number: cleanValue(form.phone_number || form.phone),
         address: cleanValue(form.address),
         intern_id: cleanValue(form.intern_id),
+        position: cleanValue(form.position),
+        department: cleanValue(form.department),
+        mentor_id: form.mentor_id === "none" ? null : (form.mentor_id || null),
+        stipend: cleanValue(form.stipend),
         start_date: cleanValue(form.start_date),
         end_date: cleanValue(form.end_date),
         avatar_url: cleanValue(form.avatar_url),
         offer_letter_url: cleanValue(form.offer_letter_url),
+        noc_url: cleanValue(form.noc_url),
         blood_group: cleanValue(form.blood_group),
         security_level: cleanValue(form.security_level),
         emergency_contact: cleanValue(form.emergency_contact),
         bank_details: cleanValue(form.bank_details),
-        department: cleanValue(form.department),
-        certificate_url: cleanValue(form.certificate_url)
+        certificate_url: cleanValue(form.certificate_url),
+        fee_payment_scheduled: Boolean(form.fee_payment_scheduled),
+        fee_payment_deadline: cleanValue(form.fee_payment_deadline),
+        exam_fee_amount: form.exam_fee_amount !== undefined ? Number(form.exam_fee_amount) : 199,
+        exam_fee_paid: Boolean(form.exam_fee_paid),
+        is_fee_exempted: Boolean(form.is_fee_exempted),
+        urgent_popup_active: Boolean(form.urgent_popup_active),
+        urgent_popup_title: cleanValue(form.urgent_popup_title),
+        urgent_popup_message: cleanValue(form.urgent_popup_message),
       } });
-      toast.success("Profile updated successfully");
+      toast.success("Profile & assignments updated successfully");
       qc.invalidateQueries({ queryKey: ["team-members"] });
+      qc.invalidateQueries({ queryKey: ["intern-mentor"] });
+      qc.invalidateQueries({ queryKey: ["all-interns-fee-status"] });
       onOpenChange(false);
     } catch (err: any) {
       toast.error(err.message || "Failed to update profile");
@@ -2433,7 +2486,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
                    value={form.mentor_id || "none"}
                    onValueChange={(val) => setForm({ ...form, mentor_id: val === "none" ? null : val })}
                  >
-                   <SelectTrigger className="h-9">
+                   <SelectTrigger className="h-9 bg-emerald-50/50 border-emerald-200">
                      <SelectValue placeholder="Select official mentor..." />
                    </SelectTrigger>
                    <SelectContent>
@@ -2445,6 +2498,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
                      ))}
                    </SelectContent>
                  </Select>
+                 <p className="text-[11px] text-muted-foreground">This employee will appear as the dedicated mentor on the intern's dashboard and task submissions.</p>
                </div>
              )}
 
@@ -2457,6 +2511,79 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
              <div className="space-y-1.5"><Label>Start Date</Label><Input type="date" value={form.start_date || ""} onChange={e => setForm({...form, start_date: e.target.value})} /></div>
              <div className="space-y-1.5"><Label>End Date</Label><Input type="date" value={form.end_date || ""} onChange={e => setForm({...form, end_date: e.target.value})} /></div>
           </div>
+
+          {/* Intern Fee Schedule & Exam Policy Controls */}
+          {user.role === "intern" && (
+            <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl space-y-3">
+              <div className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                <CreditCard className="h-4 w-4 text-amber-700" /> Exam Fee &amp; Payment Schedule Settings
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-bold text-slate-700">Exam Fee Amount (₹)</Label>
+                  <Input 
+                    type="number" 
+                    value={form.exam_fee_amount !== undefined ? form.exam_fee_amount : 199} 
+                    onChange={e => setForm({ ...form, exam_fee_amount: Number(e.target.value) })}
+                    className="bg-white h-8 text-xs" 
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-bold text-slate-700">Payment Due Deadline</Label>
+                  <Input 
+                    type="datetime-local" 
+                    value={form.fee_payment_deadline ? form.fee_payment_deadline.slice(0, 16) : ""} 
+                    onChange={e => setForm({ ...form, fee_payment_deadline: e.target.value })}
+                    className="bg-white h-8 text-xs" 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-xs">
+                <label className="flex items-center gap-2 p-2 bg-white rounded-lg border cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={Boolean(form.fee_payment_scheduled)} 
+                    onChange={e => setForm({ ...form, fee_payment_scheduled: e.target.checked })} 
+                    className="accent-amber-600 rounded" 
+                  />
+                  <span className="font-semibold text-slate-800">Fee Scheduled</span>
+                </label>
+
+                <label className="flex items-center gap-2 p-2 bg-white rounded-lg border cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={Boolean(form.exam_fee_paid)} 
+                    onChange={e => setForm({ ...form, exam_fee_paid: e.target.checked })} 
+                    className="accent-emerald-600 rounded" 
+                  />
+                  <span className="font-semibold text-slate-800">Exam Fee Paid</span>
+                </label>
+
+                <label className="flex items-center gap-2 p-2 bg-white rounded-lg border cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={Boolean(form.is_fee_exempted)} 
+                    onChange={e => setForm({ ...form, is_fee_exempted: e.target.checked })} 
+                    className="accent-purple-600 rounded" 
+                  />
+                  <span className="font-semibold text-slate-800">Fee Exempted</span>
+                </label>
+              </div>
+
+              <label className="flex items-center gap-2 p-2 bg-red-50 rounded-lg border border-red-200 cursor-pointer text-xs">
+                <input 
+                  type="checkbox" 
+                  checked={Boolean(form.urgent_popup_active)} 
+                  onChange={e => setForm({ ...form, urgent_popup_active: e.target.checked })} 
+                  className="accent-red-600 rounded" 
+                />
+                <span className="font-bold text-red-900">Show Urgent Onscreen Popup Alert on Intern Portal</span>
+              </label>
+            </div>
+          )}
           
           <div className="space-y-1.5">
             <Label>Avatar</Label>

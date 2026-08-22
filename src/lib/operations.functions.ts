@@ -1131,6 +1131,14 @@ const profileUpdateSchema = z.object({
   domain: z.string().optional().nullable(),
   sub_domain: z.string().optional().nullable(),
   certificate_url: z.string().optional().nullable(),
+  fee_payment_scheduled: z.boolean().optional().nullable(),
+  fee_payment_deadline: z.string().optional().nullable(),
+  exam_fee_amount: z.number().optional().nullable(),
+  exam_fee_paid: z.boolean().optional().nullable(),
+  is_fee_exempted: z.boolean().optional().nullable(),
+  urgent_popup_active: z.boolean().optional().nullable(),
+  urgent_popup_title: z.string().optional().nullable(),
+  urgent_popup_message: z.string().optional().nullable(),
 });
 
 export const deleteStoredOfferLetterAndRegenerate = createServerFn({ method: "POST" })
@@ -1414,6 +1422,15 @@ export const updateUserProfile = createServerFn({ method: "POST" })
       if (updates.department !== undefined) coreUpdates.department = updates.department;
       if (updates.position !== undefined) coreUpdates.position = updates.position;
       if (updates.mentor_id !== undefined) coreUpdates.mentor_id = updates.mentor_id;
+      if (updates.stipend !== undefined) coreUpdates.stipend = updates.stipend;
+      if (updates.fee_payment_scheduled !== undefined) coreUpdates.fee_payment_scheduled = updates.fee_payment_scheduled;
+      if (updates.fee_payment_deadline !== undefined) coreUpdates.fee_payment_deadline = updates.fee_payment_deadline;
+      if (updates.exam_fee_amount !== undefined) coreUpdates.exam_fee_amount = updates.exam_fee_amount;
+      if (updates.exam_fee_paid !== undefined) coreUpdates.exam_fee_paid = updates.exam_fee_paid;
+      if (updates.is_fee_exempted !== undefined) coreUpdates.is_fee_exempted = updates.is_fee_exempted;
+      if (updates.urgent_popup_active !== undefined) coreUpdates.urgent_popup_active = updates.urgent_popup_active;
+      if (updates.urgent_popup_title !== undefined) coreUpdates.urgent_popup_title = updates.urgent_popup_title;
+      if (updates.urgent_popup_message !== undefined) coreUpdates.urgent_popup_message = updates.urgent_popup_message;
 
       const { error: fallbackError } = await adminClient.from("profiles").update(coreUpdates).eq("id", id);
       if (fallbackError) throw new Error(fallbackError.message);

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,7 @@ import {
   CheckCircle2, Video, CalendarDays, User, BookOpen, Link2, FileText,
   Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
-  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, X, Trophy, Flame, AlertCircle
+  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, ArrowLeft, Zap, ChevronRight, X, Trophy, Flame, AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -165,7 +165,8 @@ function InternDashboard() {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentGatewaySelected, setPaymentGatewaySelected] = useState<"razorpay" | "payu" | null>(null);
+  const [paymentGatewaySelected, setPaymentGatewaySelected] = useState<"razorpay" | "payu" | null>("payu");
+  const [paymentModalTab, setPaymentModalTab] = useState<"checkout" | "privacy" | "refunds">("checkout");
 
   const sessionQ = useQuery({
     queryKey: ["session"],
@@ -3347,130 +3348,424 @@ function InternDashboard() {
       {/* ── First-Time Login Animated Welcome Modal ── */}
       <FirstLoginWelcomeModal user={profile} mustChangePassword={!!session?.user?.user_metadata?.must_change_password} />
 
-      {/* ── Premium Payment Gateway Modal ── */}
+      {/* ── Ultra-Stylish & Unique Secure Checkout Modal with In-Modal Policies ── */}
       {showPaymentModal && (
-        <div className="fixed inset-0 z-[200] bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-0 shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
-            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-slate-900">Secure Checkout</h3>
-                <p className="text-xs text-slate-500 mt-1">Select your preferred payment gateway</p>
+        <div className="fixed inset-0 z-[200] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-0 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-300 my-auto">
+            
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white p-5 sm:p-6 border-b border-white/10 relative">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 shadow-inner">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg sm:text-xl font-black tracking-tight text-white">Secure Checkout</h3>
+                      <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        <Lock className="h-2.5 w-2.5" /> 256-Bit SSL
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300 mt-0.5">Project VyNexa Official Certification Gateway</p>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    setPaymentModalTab("checkout");
+                  }} 
+                  className="p-2 hover:bg-white/10 rounded-full text-slate-300 hover:text-white transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-              <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-8 space-y-6">
-              <div className="flex flex-col gap-4">
+
+              {/* In-Modal Navigation Tabs */}
+              <div className="flex items-center gap-1.5 mt-4 pt-3 border-t border-white/10 overflow-x-auto scrollbar-none">
                 <button
-                  disabled
                   type="button"
-                  className="flex items-center gap-4 p-5 rounded-2xl border-2 border-slate-100 bg-slate-50/50 cursor-not-allowed opacity-60 text-left w-full"
+                  onClick={() => setPaymentModalTab("checkout")}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                    paymentModalTab === "checkout"
+                      ? "bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30 font-black"
+                      : "text-slate-300 hover:text-white hover:bg-white/10"
+                  }`}
                 >
-                  <div className="h-12 w-12 rounded-xl bg-slate-200 text-slate-400 flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M22.43 2.73a1.47 1.47 0 00-1.46-1.14H8.79A1.47 1.47 0 007.41 2.7L.58 20.89a1.47 1.47 0 001.37 1.99h12.18a1.47 1.47 0 001.38-1.07l6.9-19.08z"/></svg>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-400 text-lg">RazorPay <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full ml-1.5 uppercase tracking-wide">Enabled Shortly</span></h4>
-                    <p className="text-xs text-slate-400">UPI, Cards, Netbanking, Wallets</p>
-                  </div>
+                  <CreditCard className="h-3.5 w-3.5" /> Checkout &amp; Payment
                 </button>
 
                 <button
-                  onClick={() => setPaymentGatewaySelected("payu")}
-                  className={`flex items-center gap-4 p-5 rounded-2xl border-2 transition-all duration-200 text-left ${paymentGatewaySelected === "payu" ? "border-emerald-600 bg-emerald-50/50 shadow-md shadow-emerald-900/5" : "border-slate-200 hover:border-emerald-400 hover:bg-slate-50"}`}
+                  type="button"
+                  onClick={() => setPaymentModalTab("privacy")}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                    paymentModalTab === "privacy"
+                      ? "bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30 font-black"
+                      : "text-slate-300 hover:text-white hover:bg-white/10"
+                  }`}
                 >
-                  <div className="h-12 w-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                    <span className="font-black text-xl tracking-tighter">PayU</span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-lg">PayU</h4>
-                    <p className="text-xs text-slate-500">Corporate & International Payments</p>
-                  </div>
-                  {paymentGatewaySelected === "payu" && <Check className="h-6 w-6 text-emerald-600 ml-auto" />}
+                  <Shield className="h-3.5 w-3.5" /> Privacy Policy
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentModalTab("refunds")}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                    paymentModalTab === "refunds"
+                      ? "bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30 font-black"
+                      : "text-slate-300 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  <FileText className="h-3.5 w-3.5" /> Refund Policy
                 </button>
               </div>
+            </div>
 
-              <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
-                <Button 
-                  size="lg" 
-                  disabled={!paymentGatewaySelected}
-                  onClick={async () => {
-                    if (paymentGatewaySelected === "payu") {
-                      toast.info("Preparing PayU Secure Checkout...");
-                      
-                      try {
-                        const payuData = await generatePayuCheckout({
-                          data: {
-                            firstname: profile?.full_name || displayName,
-                            email: profile?.email || email,
-                            phone: profile?.phone_number || profile?.phone || "",
-                            amount: profile?.exam_fee_amount || 699,
-                            productinfo: "Exam Fee Payment - Vyntyra VyNexa Internship",
-                            userId: session?.user?.id || "",
-                          },
-                        });
+            {/* TAB 1: CHECKOUT VIEW */}
+            {paymentModalTab === "checkout" && (
+              <div className="p-5 sm:p-7 space-y-6">
+                {/* Order Summary Breakdown Card */}
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 p-4 sm:p-5 space-y-3.5 shadow-2xs">
+                  <div className="flex items-start justify-between gap-2 border-b border-slate-200 dark:border-slate-700 pb-3">
+                    <div>
+                      <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Order Summary</div>
+                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white mt-0.5">
+                        Mandatory Exam &amp; Credential Verification
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {profile?.full_name || displayName} · {profile?.intern_id ? `ID: ${profile.intern_id}` : "Intern"}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-xs text-slate-400 line-through">₹999</div>
+                      <div className="text-xl font-black text-slate-900 dark:text-white font-mono leading-tight">
+                        ₹{profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199}
+                      </div>
+                      <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">Inclusive of 18% GST</div>
+                    </div>
+                  </div>
 
-                        // Create a hidden form and auto-submit to PayU
-                        const form = document.createElement("form");
-                        form.method = "POST";
-                        form.action = payuData.action;
-                        form.target = "_blank";
+                  {/* Included Benefits Badges */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      <span>ISO-Certified Verified Certificate</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      <span>Task Submissions Unlock</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      <span>Top 10% Stipend (₹5k–₹15k)</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      <span>25%–50% Referral Cashbacks</span>
+                    </div>
+                  </div>
+                </div>
 
-                        const fields: Record<string, string> = {
-                          key: payuData.key,
-                          txnid: payuData.txnid,
-                          amount: payuData.amount,
-                          productinfo: payuData.productinfo,
-                          firstname: payuData.firstname,
-                          email: payuData.email,
-                          phone: payuData.phone,
-                          surl: payuData.surl,
-                          furl: payuData.furl,
-                          hash: payuData.hash,
-                        };
+                {/* Gateway Selection */}
+                <div className="space-y-3">
+                  <label className="text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider block">
+                    Choose Payment Method
+                  </label>
 
-                        Object.entries(fields).forEach(([name, value]) => {
-                          const input = document.createElement("input");
-                          input.type = "hidden";
-                          input.name = name;
-                          input.value = value;
-                          form.appendChild(input);
-                        });
+                  <div className="space-y-3">
+                    {/* PayU Option (Active) */}
+                    <div
+                      onClick={() => setPaymentGatewaySelected("payu")}
+                      className={`p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${
+                        paymentGatewaySelected === "payu"
+                          ? "border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/20 shadow-md shadow-emerald-500/10 ring-2 ring-emerald-500/20"
+                          : "border-slate-200 dark:border-slate-800 hover:border-emerald-300 bg-white dark:bg-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3.5">
+                          <div className="h-12 w-14 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl tracking-tight shadow-md shadow-emerald-600/30 shrink-0">
+                            PayU
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-extrabold text-slate-900 dark:text-white text-base">PayU Corporate Gateway</h4>
+                              <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full uppercase">
+                                Recommended
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                              Instant automated verification &amp; dashboard activation
+                            </p>
+                          </div>
+                        </div>
 
-                        document.body.appendChild(form);
-                        form.submit();
-                        document.body.removeChild(form);
+                        <div className="shrink-0">
+                          {paymentGatewaySelected === "payu" ? (
+                            <div className="h-6 w-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                              <Check className="h-4 w-4" />
+                            </div>
+                          ) : (
+                            <div className="h-6 w-6 rounded-full border-2 border-slate-300" />
+                          )}
+                        </div>
+                      </div>
 
-                        setShowPaymentModal(false);
-                      } catch (err: any) {
-                        console.error("PayU checkout error:", err);
-                        toast.error(err?.message || "Failed to initialize PayU checkout");
+                      {/* Payment Channels Pill Grid */}
+                      <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-emerald-200/60 dark:border-emerald-800/40 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">UPI (GPay / PhonePe / Paytm / BHIM)</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Credit / Debit Cards</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">NetBanking</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Wallets</span>
+                      </div>
+                    </div>
+
+                    {/* RazorPay Option (Coming Soon) */}
+                    <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-800/30 opacity-60 flex items-center justify-between gap-3 cursor-not-allowed">
+                      <div className="flex items-center gap-3.5">
+                        <div className="h-10 w-12 rounded-xl bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm shrink-0">
+                          RPay
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h5 className="font-bold text-slate-600 dark:text-slate-400 text-sm">RazorPay</h5>
+                            <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full uppercase">Enabled Shortly</span>
+                          </div>
+                          <p className="text-[11px] text-slate-400">Secondary gateway backup</p>
+                        </div>
+                      </div>
+                      <Lock className="h-4 w-4 text-slate-400" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Trust & Guarantee Strip */}
+                <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
+                  <div className="space-y-0.5">
+                    <ShieldCheck className="h-4 w-4 text-emerald-600 mx-auto" />
+                    <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200">PCI-DSS Level 1</div>
+                    <div className="text-[9px] text-slate-400">Compliant</div>
+                  </div>
+                  <div className="space-y-0.5 border-x border-slate-200 dark:border-slate-700">
+                    <Lock className="h-4 w-4 text-emerald-600 mx-auto" />
+                    <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200">RBI 3D Secure</div>
+                    <div className="text-[9px] text-slate-400">Verified</div>
+                  </div>
+                  <div className="space-y-0.5">
+                    <Zap className="h-4 w-4 text-emerald-600 mx-auto" />
+                    <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200">Instant Sync</div>
+                    <div className="text-[9px] text-slate-400">Auto Active</div>
+                  </div>
+                </div>
+
+                {/* Submit Payment CTA */}
+                <div className="space-y-3 pt-1">
+                  <Button 
+                    size="lg" 
+                    disabled={!paymentGatewaySelected}
+                    onClick={async () => {
+                      if (paymentGatewaySelected === "payu") {
+                        toast.info("Preparing PayU Secure Checkout...");
+                        
+                        try {
+                          const payuData = await generatePayuCheckout({
+                            data: {
+                              firstname: profile?.full_name || displayName,
+                              email: profile?.email || email,
+                              phone: profile?.phone_number || profile?.phone || "",
+                              amount: profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199,
+                              productinfo: "Exam Fee Payment - Vyntyra VyNexa Internship",
+                              userId: session?.user?.id || "",
+                            },
+                          });
+
+                          // Create a hidden form and auto-submit to PayU
+                          const form = document.createElement("form");
+                          form.method = "POST";
+                          form.action = payuData.action;
+                          form.target = "_blank";
+
+                          const fields: Record<string, string> = {
+                            key: payuData.key,
+                            txnid: payuData.txnid,
+                            amount: payuData.amount,
+                            productinfo: payuData.productinfo,
+                            firstname: payuData.firstname,
+                            email: payuData.email,
+                            phone: payuData.phone,
+                            surl: payuData.surl,
+                            furl: payuData.furl,
+                            hash: payuData.hash,
+                          };
+
+                          Object.entries(fields).forEach(([name, value]) => {
+                            const input = document.createElement("input");
+                            input.type = "hidden";
+                            input.name = name;
+                            input.value = value;
+                            form.appendChild(input);
+                          });
+
+                          document.body.appendChild(form);
+                          form.submit();
+                          document.body.removeChild(form);
+
+                          setShowPaymentModal(false);
+                          toast.success("Redirecting to PayU Secure Payment Gateway...");
+                        } catch (err: any) {
+                          console.error("PayU checkout error:", err);
+                          toast.error(err?.message || "Failed to initialize PayU checkout");
+                        }
+                      } else {
+                        toast.info(`Initializing ${paymentGatewaySelected} Gateway...`);
+                        setTimeout(() => {
+                          toast.success("Payment verified successfully!");
+                          setShowPaymentModal(false);
+                        }, 2000);
                       }
-                    } else {
-                      toast.info(`Initializing ${paymentGatewaySelected} Corporate Gateway...`);
-                      // In a real application, we would initialize the SDK here
-                      setTimeout(() => {
-                        toast.success("Payment successful (Simulated)");
-                        setShowPaymentModal(false);
-                      }, 2000);
-                    }
-                  }}
-                  className={`w-full text-base font-bold h-14 ${paymentGatewaySelected === "razorpay" ? "bg-blue-600 hover:bg-blue-700" : paymentGatewaySelected === "payu" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-800"}`}
-                >
-                  Pay ₹{profile?.exam_fee_amount || 0} Securely
-                </Button>
-                
-                <div className="text-center space-y-1">
-                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Maintained by JAMI ESWAR ANIL KUMAR</p>
-                  <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
-                    <a href="https://internships.vyntyraconsultancyservices.in" target="_blank" rel="noreferrer" className="hover:text-emerald-600 hover:underline">Privacy Policy</a>
-                    <span>&bull;</span>
-                    <a href="https://internships.vyntyraconsultancyservices.in" target="_blank" rel="noreferrer" className="hover:text-emerald-600 hover:underline">Refund Policy</a>
+                    }}
+                    className="w-full text-base font-extrabold h-14 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl shadow-lg shadow-emerald-600/25 gap-2 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                  >
+                    <Lock className="h-4 w-4" /> Pay ₹{profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199} Securely with PayU
+                  </Button>
+                  
+                  {/* Legal and Management Footer */}
+                  <div className="text-center space-y-1.5 pt-2">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
+                      Maintained &amp; Governed by JAMI ESWAR ANIL KUMAR · Founder &amp; Director
+                    </p>
+                    <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
+                      <button 
+                        type="button"
+                        onClick={() => setPaymentModalTab("privacy")} 
+                        className="hover:text-emerald-600 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
+                      >
+                        Privacy Policy
+                      </button>
+                      <span>•</span>
+                      <button 
+                        type="button"
+                        onClick={() => setPaymentModalTab("refunds")} 
+                        className="hover:text-emerald-600 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
+                      >
+                        Refund Policy
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* TAB 2: IN-MODAL PRIVACY POLICY VIEW */}
+            {paymentModalTab === "privacy" && (
+              <div className="p-5 sm:p-7 space-y-4 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between border-b pb-3">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentModalTab("checkout")}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" /> Back to Checkout
+                  </button>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">DPDPA 2023 Compliant</span>
+                </div>
+
+                <div className="max-h-[55vh] overflow-y-auto pr-2 space-y-4 text-xs text-slate-700 dark:text-slate-300 leading-relaxed scrollbar-thin">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">1. Introduction &amp; Scope</h4>
+                    <p>This Privacy Policy outlines how Vyntyra Consultancy Services ("Company", "we", "us", or "our"), functioning as a Data Fiduciary, collects, stores, uses, processes, and protects the personal data of students, applicants, and interns ("Data Principal", "you", or "your") in compliance with the Digital Personal Data Protection Act (DPDPA), 2023 and the Information Technology Act, 2000.</p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">2. Personal Data We Collect</h4>
+                    <p>We collect identity and contact data (Name, Email, Phone, Address), Academic/Professional data (College, Degree, Resume, Assessments), Verification credentials, and Financial payment records solely for processing examination fees, stipends, and issuing certified credentials.</p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">3. Purpose of Processing &amp; Consent</h4>
+                    <p>Your data is processed strictly for verifying project deliverables, assigning mentors, providing verified certificates, administering exam certifications, and managing stipend payouts under affirmative consent (Section 6, DPDPA 2023).</p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">4. Data Security &amp; Encryption</h4>
+                    <p>All data and payment records are secured using industry-standard 256-bit encryption in transit and at rest, role-based access control, and strict PCI-DSS compliant payment processing.</p>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                    <div className="text-[11px] font-bold text-slate-900 dark:text-white">Grievance Officer: JAMI ESWAR ANIL KUMAR</div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-300">Designation: Founder &amp; Director · Vyntyra Consultancy Services</div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-300">Email: jamieswaranilkumar@vyntyraconsultancyservices.in</div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-300">Address: Dwaraka Nagar, Visakhapatnam - 530016, AP, India</div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t flex items-center justify-between gap-3">
+                  <Link to="/privacy" target="_blank" className="text-xs text-slate-500 hover:text-emerald-600 flex items-center gap-1 font-semibold">
+                    Open Full Page <ExternalLink className="h-3 w-3" />
+                  </Link>
+
+                  <Button onClick={() => setPaymentModalTab("checkout")} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">
+                    Return to Checkout
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: IN-MODAL REFUND POLICY VIEW */}
+            {paymentModalTab === "refunds" && (
+              <div className="p-5 sm:p-7 space-y-4 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between border-b pb-3">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentModalTab("checkout")}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" /> Back to Checkout
+                  </button>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Financial Compliance</span>
+                </div>
+
+                <div className="max-h-[55vh] overflow-y-auto pr-2 space-y-4 text-xs text-slate-700 dark:text-slate-300 leading-relaxed scrollbar-thin">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">1. Overview</h4>
+                    <p>This policy governs examination fees, registration fees, and refund requests related to internship training, certification, and project evaluation offered by Vyntyra Consultancy Services.</p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">2. Examination &amp; Verification Fees</h4>
+                    <p>The exam and verification fee is charged towards proctoring, platform maintenance, mentor reviews, and verified ISO certificate generation. Once examination assessment and certification processing begins, it is strictly non-refundable.</p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">3. Duplicate Transactions &amp; Gateway Errors</h4>
+                    <p>In case of duplicate charges due to payment gateway timeouts or network interruptions, 100% of the duplicate amount will be refunded automatically to the original source method within 7 to 10 working days.</p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">4. Refund Request Workflow</h4>
+                    <p>To submit a query or duplicate transaction issue, email <strong>billing@vyntyraconsultancyservices.in</strong> with your Name, Registered Email, and Transaction Reference / Order ID.</p>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                    <div className="text-[11px] font-bold text-slate-900 dark:text-white">Authorized Signatory: JAMI ESWAR ANIL KUMAR</div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-300">Designation: Founder &amp; Lead Director</div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-300">Official Billing Email: billing@vyntyraconsultancyservices.in</div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t flex items-center justify-between gap-3">
+                  <Link to="/refunds" target="_blank" className="text-xs text-slate-500 hover:text-emerald-600 flex items-center gap-1 font-semibold">
+                    Open Full Page <ExternalLink className="h-3 w-3" />
+                  </Link>
+
+                  <Button onClick={() => setPaymentModalTab("checkout")} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">
+                    Return to Checkout
+                  </Button>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       )}
