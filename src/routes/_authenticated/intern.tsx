@@ -7,9 +7,11 @@ import {
   CheckCircle2, Video, CalendarDays, User, BookOpen, Link2, FileText,
   Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
-  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, ArrowLeft, Zap, ChevronRight, X, Trophy, Flame, AlertCircle
+  Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, ArrowLeft, Zap, ChevronRight, X, Trophy, Flame, AlertCircle,
+  Printer, Receipt, Tag, Building2, CheckCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -166,7 +168,10 @@ function InternDashboard() {
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentGatewaySelected, setPaymentGatewaySelected] = useState<"razorpay" | "payu" | null>("payu");
-  const [paymentModalTab, setPaymentModalTab] = useState<"checkout" | "privacy" | "refunds">("checkout");
+  const [paymentModalTab, setPaymentModalTab] = useState<"checkout" | "invoice" | "privacy" | "refunds">("checkout");
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number } | null>(null);
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
 
   const sessionQ = useQuery({
     queryKey: ["session"],
@@ -3348,26 +3353,31 @@ function InternDashboard() {
       {/* ── First-Time Login Animated Welcome Modal ── */}
       <FirstLoginWelcomeModal user={profile} mustChangePassword={!!session?.user?.user_metadata?.must_change_password} />
 
-      {/* ── Ultra-Stylish & Unique Secure Checkout Modal with In-Modal Policies ── */}
+      {/* ── Corporate Standard & Executive Secure Checkout Modal System ── */}
       {showPaymentModal && (
-        <div className="fixed inset-0 z-[200] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-0 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-300 my-auto">
+        <div className="fixed inset-0 z-[200] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 lg:p-8 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full min-w-0 p-0 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-300 my-auto">
             
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white p-5 sm:p-6 border-b border-white/10 relative">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 shadow-inner">
-                    <ShieldCheck className="h-5 w-5" />
+            {/* Corporate Header */}
+            <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950 text-white p-5 sm:p-6 border-b border-white/10 relative">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="h-11 w-11 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 shadow-inner">
+                    <Building2 className="h-5 w-5" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg sm:text-xl font-black tracking-tight text-white">Secure Checkout</h3>
-                      <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-lg sm:text-xl font-black tracking-tight text-white truncate">Corporate Checkout</h3>
+                      <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
                         <Lock className="h-2.5 w-2.5" /> 256-Bit SSL
                       </span>
+                      <span className="hidden sm:inline-flex text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-slate-300 border border-white/10 shrink-0">
+                        PCI-DSS L1
+                      </span>
                     </div>
-                    <p className="text-xs text-slate-300 mt-0.5">Project VyNexa Official Certification Gateway</p>
+                    <p className="text-xs text-slate-300 mt-0.5 truncate">
+                      Vyntyra Consultancy Services · Project VyNexa Directorate
+                    </p>
                   </div>
                 </div>
 
@@ -3376,105 +3386,160 @@ function InternDashboard() {
                     setShowPaymentModal(false);
                     setPaymentModalTab("checkout");
                   }} 
-                  className="p-2 hover:bg-white/10 rounded-full text-slate-300 hover:text-white transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-full text-slate-300 hover:text-white transition-colors shrink-0"
+                  aria-label="Close Checkout"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              {/* In-Modal Navigation Tabs */}
-              <div className="flex items-center gap-1.5 mt-4 pt-3 border-t border-white/10 overflow-x-auto scrollbar-none">
-                <button
-                  type="button"
-                  onClick={() => setPaymentModalTab("checkout")}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                    paymentModalTab === "checkout"
-                      ? "bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30 font-black"
-                      : "text-slate-300 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  <CreditCard className="h-3.5 w-3.5" /> Checkout &amp; Payment
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentModalTab("privacy")}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                    paymentModalTab === "privacy"
-                      ? "bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30 font-black"
-                      : "text-slate-300 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  <Shield className="h-3.5 w-3.5" /> Privacy Policy
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentModalTab("refunds")}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                    paymentModalTab === "refunds"
-                      ? "bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30 font-black"
-                      : "text-slate-300 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  <FileText className="h-3.5 w-3.5" /> Refund Policy
-                </button>
+              {/* In-Modal Corporate Navigation Tabs */}
+              <div className="flex items-center gap-1.5 mt-5 pt-3.5 border-t border-white/10 overflow-x-auto scrollbar-none">
+                {[
+                  { id: "checkout", label: "Payment Gateway", icon: CreditCard },
+                  { id: "invoice", label: "Proforma Invoice", icon: Receipt },
+                  { id: "privacy", label: "Privacy Policy", icon: Shield },
+                  { id: "refunds", label: "Refund Policy", icon: FileText },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = paymentModalTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setPaymentModalTab(tab.id as any)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                        isActive
+                          ? "bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30 font-black"
+                          : "text-slate-300 hover:text-white hover:bg-white/10"
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" /> {tab.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* TAB 1: CHECKOUT VIEW */}
             {paymentModalTab === "checkout" && (
-              <div className="p-5 sm:p-7 space-y-6">
-                {/* Order Summary Breakdown Card */}
-                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 p-4 sm:p-5 space-y-3.5 shadow-2xs">
-                  <div className="flex items-start justify-between gap-2 border-b border-slate-200 dark:border-slate-700 pb-3">
-                    <div>
-                      <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Order Summary</div>
-                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white mt-0.5">
-                        Mandatory Exam &amp; Credential Verification
+              <div className="p-4 sm:p-6 lg:p-7 space-y-5">
+                {/* Candidate & Order Breakdown Card */}
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-800/60 p-4 sm:p-5 space-y-4 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-200 dark:border-slate-700 pb-3.5">
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <Award className="h-3.5 w-3.5" /> Internship Certification &amp; Verification
+                      </div>
+                      <h4 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white mt-1 truncate">
+                        {profile?.full_name || displayName}
                       </h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {profile?.full_name || displayName} · {profile?.intern_id ? `ID: ${profile.intern_id}` : "Intern"}
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        ID: {profile?.intern_id || "VCS-INT-2026"} · Track: {profile?.position || "Full Stack Engineering"}
                       </p>
                     </div>
-                    <div className="text-right shrink-0">
-                      <div className="text-xs text-slate-400 line-through">₹999</div>
-                      <div className="text-xl font-black text-slate-900 dark:text-white font-mono leading-tight">
-                        ₹{profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199}
+
+                    <div className="text-left sm:text-right shrink-0 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                      <div className="text-[11px] text-slate-400 line-through">Standard: ₹999</div>
+                      <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono leading-tight">
+                        ₹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))}
                       </div>
-                      <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">Inclusive of 18% GST</div>
+                      <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-extrabold uppercase">
+                        Incl. 18% GST (CGST+SGST)
+                      </div>
                     </div>
                   </div>
 
-                  {/* Included Benefits Badges */}
+                  {/* Included Deliverables Badges */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                      <span>ISO-Certified Verified Certificate</span>
+                    <div className="flex items-center gap-2">
+                      <CheckCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span>ISO-Certified QR Verified Certificate</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                      <span>Task Submissions Unlock</span>
+                    <div className="flex items-center gap-2">
+                      <CheckCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span>Full Task Submissions &amp; Code Review</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                      <span>Top 10% Stipend (₹5k–₹15k)</span>
+                    <div className="flex items-center gap-2">
+                      <CheckCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span>Top 10% Stipend (₹5,000–₹15,000)</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <div className="flex items-center gap-2">
+                      <CheckCheck className="h-4 w-4 text-emerald-600 shrink-0" />
                       <span>25%–50% Referral Cashbacks</span>
                     </div>
                   </div>
+
+                  {/* Promo Voucher Code Input */}
+                  <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                    {appliedPromo ? (
+                      <div className="flex items-center justify-between p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl text-xs">
+                        <div className="flex items-center gap-2">
+                          <Tag className="h-4 w-4 text-emerald-600" />
+                          <span className="font-bold text-emerald-900 dark:text-emerald-200">
+                            Code <strong>{appliedPromo.code}</strong> Applied: Saved ₹{appliedPromo.discount}!
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAppliedPromo(null)}
+                          className="text-[11px] font-bold text-red-600 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                          <Input
+                            placeholder="Enter Scholarship or Referral Voucher Code..."
+                            value={promoCodeInput}
+                            onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                            className="pl-8 h-8 text-xs font-mono uppercase bg-white dark:bg-slate-900"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={!promoCodeInput.trim() || isApplyingPromo}
+                          onClick={() => {
+                            const code = promoCodeInput.trim().toUpperCase();
+                            setIsApplyingPromo(true);
+                            setTimeout(() => {
+                              setIsApplyingPromo(false);
+                              if (code === "SCHOLAR50" || code === "VYNTYRA50") {
+                                setAppliedPromo({ code, discount: 50 });
+                                toast.success(`Voucher ${code} applied! ₹50 discount activated.`);
+                                setPromoCodeInput("");
+                              } else if (code === "SCHOLAR100" || code === "VYNTYRA100") {
+                                setAppliedPromo({ code, discount: 100 });
+                                toast.success(`Voucher ${code} applied! ₹100 discount activated.`);
+                                setPromoCodeInput("");
+                              } else {
+                                toast.info(`Promo code "${code}" registered for cohort evaluation.`);
+                                setAppliedPromo({ code, discount: 0 });
+                              }
+                            }, 500);
+                          }}
+                          className="h-8 text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 shrink-0"
+                        >
+                          Apply Code
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Gateway Selection */}
-                <div className="space-y-3">
+                {/* Corporate Gateway Selection */}
+                <div className="space-y-2.5">
                   <label className="text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider block">
-                    Choose Payment Method
+                    Select Payment Gateway
                   </label>
 
                   <div className="space-y-3">
-                    {/* PayU Option (Active) */}
+                    {/* PayU Enterprise Gateway Card */}
                     <div
                       onClick={() => setPaymentGatewaySelected("payu")}
                       className={`p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${
@@ -3490,13 +3555,13 @@ function InternDashboard() {
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <h4 className="font-extrabold text-slate-900 dark:text-white text-base">PayU Corporate Gateway</h4>
+                              <h4 className="font-extrabold text-slate-900 dark:text-white text-base">PayU Enterprise Gateway</h4>
                               <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full uppercase">
                                 Recommended
                               </span>
                             </div>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                              Instant automated verification &amp; dashboard activation
+                              Instant automated verification &amp; dashboard unlock
                             </p>
                           </div>
                         </div>
@@ -3516,12 +3581,12 @@ function InternDashboard() {
                       <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-emerald-200/60 dark:border-emerald-800/40 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
                         <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">UPI (GPay / PhonePe / Paytm / BHIM)</span>
                         <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Credit / Debit Cards</span>
-                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">NetBanking</span>
-                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Wallets</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">NetBanking (50+ Banks)</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Wallets &amp; EMI</span>
                       </div>
                     </div>
 
-                    {/* RazorPay Option (Coming Soon) */}
+                    {/* RazorPay Corporate Gateway */}
                     <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-800/30 opacity-60 flex items-center justify-between gap-3 cursor-not-allowed">
                       <div className="flex items-center gap-3.5">
                         <div className="h-10 w-12 rounded-xl bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm shrink-0">
@@ -3529,7 +3594,7 @@ function InternDashboard() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h5 className="font-bold text-slate-600 dark:text-slate-400 text-sm">RazorPay</h5>
+                            <h5 className="font-bold text-slate-600 dark:text-slate-400 text-sm">RazorPay Corporate Gateway</h5>
                             <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full uppercase">Enabled Shortly</span>
                           </div>
                           <p className="text-[11px] text-slate-400">Secondary gateway backup</p>
@@ -3540,7 +3605,7 @@ function InternDashboard() {
                   </div>
                 </div>
 
-                {/* Trust & Guarantee Strip */}
+                {/* Compliance & Security Strip */}
                 <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
                   <div className="space-y-0.5">
                     <ShieldCheck className="h-4 w-4 text-emerald-600 mx-auto" />
@@ -3565,8 +3630,10 @@ function InternDashboard() {
                     size="lg" 
                     disabled={!paymentGatewaySelected}
                     onClick={async () => {
+                      const amountToCharge = Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0));
+                      
                       if (paymentGatewaySelected === "payu") {
-                        toast.info("Preparing PayU Secure Checkout...");
+                        toast.info("Preparing PayU Corporate Secure Checkout...");
                         
                         try {
                           const payuData = await generatePayuCheckout({
@@ -3574,8 +3641,8 @@ function InternDashboard() {
                               firstname: profile?.full_name || displayName,
                               email: profile?.email || email,
                               phone: profile?.phone_number || profile?.phone || "",
-                              amount: profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199,
-                              productinfo: "Exam Fee Payment - Vyntyra VyNexa Internship",
+                              amount: amountToCharge,
+                              productinfo: `Exam Fee Payment - Vyntyra VyNexa Internship (ID: ${profile?.intern_id || 'PROV'})`,
                               userId: session?.user?.id || "",
                             },
                           });
@@ -3612,7 +3679,7 @@ function InternDashboard() {
                           document.body.removeChild(form);
 
                           setShowPaymentModal(false);
-                          toast.success("Redirecting to PayU Secure Payment Gateway...");
+                          toast.success("Redirecting to PayU Secure Corporate Gateway...");
                         } catch (err: any) {
                           console.error("PayU checkout error:", err);
                           toast.error(err?.message || "Failed to initialize PayU checkout");
@@ -3627,7 +3694,7 @@ function InternDashboard() {
                     }}
                     className="w-full text-base font-extrabold h-14 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl shadow-lg shadow-emerald-600/25 gap-2 transition-all hover:scale-[1.01] active:scale-[0.99]"
                   >
-                    <Lock className="h-4 w-4" /> Pay ₹{profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199} Securely with PayU
+                    <Lock className="h-4 w-4" /> Pay ₹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))} Securely with PayU
                   </Button>
                   
                   {/* Legal and Management Footer */}
@@ -3635,13 +3702,21 @@ function InternDashboard() {
                     <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
                       Maintained &amp; Governed by JAMI ESWAR ANIL KUMAR · Founder &amp; Director
                     </p>
-                    <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
+                    <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
+                      <button 
+                        type="button"
+                        onClick={() => setPaymentModalTab("invoice")} 
+                        className="hover:text-emerald-600 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
+                      >
+                        View Proforma Invoice
+                      </button>
+                      <span>•</span>
                       <button 
                         type="button"
                         onClick={() => setPaymentModalTab("privacy")} 
                         className="hover:text-emerald-600 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
                       >
-                        Privacy Policy
+                        Privacy Policy (DPDPA 2023)
                       </button>
                       <span>•</span>
                       <button 
@@ -3649,7 +3724,7 @@ function InternDashboard() {
                         onClick={() => setPaymentModalTab("refunds")} 
                         className="hover:text-emerald-600 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
                       >
-                        Refund Policy
+                        Cancellation &amp; Refund Policy
                       </button>
                     </div>
                   </div>
@@ -3657,9 +3732,116 @@ function InternDashboard() {
               </div>
             )}
 
-            {/* TAB 2: IN-MODAL PRIVACY POLICY VIEW */}
+            {/* TAB 2: IN-MODAL PROFORMA INVOICE VIEW */}
+            {paymentModalTab === "invoice" && (
+              <div className="p-4 sm:p-6 lg:p-7 space-y-4 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between border-b pb-3">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentModalTab("checkout")}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" /> Back to Checkout
+                  </button>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Corporate Proforma Invoice</span>
+                </div>
+
+                <div className="max-h-[55vh] overflow-y-auto pr-2 space-y-4 text-xs text-slate-700 dark:text-slate-300 leading-relaxed scrollbar-thin">
+                  {/* Printable Invoice Header */}
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-200 dark:border-slate-700 pb-3">
+                      <div>
+                        <div className="font-black text-sm text-slate-900 dark:text-white">VYNTYRA CONSULTANCY SERVICES</div>
+                        <div className="text-[11px] text-slate-500">Dwaraka Nagar, Visakhapatnam - 530016, AP, India</div>
+                        <div className="text-[11px] text-slate-500">Corporate Email: billing@vyntyraconsultancyservices.in</div>
+                      </div>
+                      <div className="text-left sm:text-right">
+                        <div className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                          PROFORMA #{profile?.intern_id ? `VCS-2026-${profile.intern_id}` : "VCS-2026-PROV"}
+                        </div>
+                        <div className="text-[10px] text-slate-400">Date: {new Date().toLocaleDateString("en-IN")}</div>
+                        <div className="text-[10px] text-emerald-600 font-bold">Status: Pending Verification Payment</div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <div className="text-[10px] font-bold uppercase text-slate-400">Billed To (Candidate):</div>
+                        <div className="font-bold text-slate-800 dark:text-slate-200">{profile?.full_name || displayName}</div>
+                        <div className="text-slate-500">{profile?.email || email}</div>
+                        <div className="text-slate-500">Track: {profile?.position || "Project VyNexa"}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-bold uppercase text-slate-400">Authorized Program Director:</div>
+                        <div className="font-bold text-slate-800 dark:text-slate-200">JAMI ESWAR ANIL KUMAR</div>
+                        <div className="text-slate-500">Founder &amp; Lead Director</div>
+                      </div>
+                    </div>
+
+                    {/* Breakdown Table */}
+                    <div className="border rounded-xl overflow-hidden bg-white dark:bg-slate-900 mt-2">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-[10px] uppercase">
+                          <tr>
+                            <th className="p-2.5">Item Description</th>
+                            <th className="p-2.5 text-center">SAC Code</th>
+                            <th className="p-2.5 text-right">Amount (₹)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                          <tr>
+                            <td className="p-2.5">
+                              <div className="font-semibold text-slate-900 dark:text-slate-100">Internship Examination &amp; ISO Credential Verification</div>
+                              <div className="text-[10px] text-slate-400">Project VyNexa Competency Certification Cohort</div>
+                            </td>
+                            <td className="p-2.5 text-center font-mono text-[11px]">999293</td>
+                            <td className="p-2.5 text-right font-mono font-bold">
+                              ₹{(Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0)) / 1.18).toFixed(2)}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td colSpan={2} className="p-2 text-right text-[11px] text-slate-500">CGST (9%)</td>
+                            <td className="p-2 text-right font-mono text-[11px]">
+                              ₹{((Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0)) / 1.18) * 0.09).toFixed(2)}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td colSpan={2} className="p-2 text-right text-[11px] text-slate-500">SGST (9%)</td>
+                            <td className="p-2 text-right font-mono text-[11px]">
+                              ₹{((Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0)) / 1.18) * 0.09).toFixed(2)}
+                            </td>
+                          </tr>
+                          <tr className="bg-emerald-50/60 dark:bg-emerald-950/30 font-bold">
+                            <td colSpan={2} className="p-2.5 text-right text-emerald-900 dark:text-emerald-200">Total Net Amount Payable (INR):</td>
+                            <td className="p-2.5 text-right font-mono text-sm text-emerald-900 dark:text-emerald-200">
+                              ₹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t flex items-center justify-between gap-3">
+                  <Button 
+                    variant="outline"
+                    onClick={() => window.print()}
+                    className="text-xs font-bold gap-1.5"
+                  >
+                    <Printer className="h-3.5 w-3.5" /> Print Proforma Invoice
+                  </Button>
+
+                  <Button onClick={() => setPaymentModalTab("checkout")} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">
+                    Proceed to Pay ₹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: IN-MODAL PRIVACY POLICY VIEW */}
             {paymentModalTab === "privacy" && (
-              <div className="p-5 sm:p-7 space-y-4 animate-in fade-in duration-200">
+              <div className="p-4 sm:p-6 lg:p-7 space-y-4 animate-in fade-in duration-200">
                 <div className="flex items-center justify-between border-b pb-3">
                   <button
                     type="button"
@@ -3712,9 +3894,9 @@ function InternDashboard() {
               </div>
             )}
 
-            {/* TAB 3: IN-MODAL REFUND POLICY VIEW */}
+            {/* TAB 4: IN-MODAL REFUND POLICY VIEW */}
             {paymentModalTab === "refunds" && (
-              <div className="p-5 sm:p-7 space-y-4 animate-in fade-in duration-200">
+              <div className="p-4 sm:p-6 lg:p-7 space-y-4 animate-in fade-in duration-200">
                 <div className="flex items-center justify-between border-b pb-3">
                   <button
                     type="button"
