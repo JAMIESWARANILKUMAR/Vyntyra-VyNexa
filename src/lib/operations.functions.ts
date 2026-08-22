@@ -687,8 +687,16 @@ export const reviewInternTaskByAdmin = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
+    
+    // Normalise status for Postgres check constraint if needed
+    // standard check constraint allows: 'pending', 'in_progress', 'completed', 'blocked', 'rejected'
+    let targetStatus = data.status;
+    if (targetStatus === "submitted" || targetStatus === "under_review") {
+      targetStatus = "in_progress";
+    }
+
     const updatePayload: any = {
-      status: data.status,
+      status: targetStatus,
       updated_at: new Date().toISOString(),
     };
     if (data.admin_remarks !== undefined) {
@@ -699,20 +707,21 @@ export const reviewInternTaskByAdmin = createServerFn({ method: "POST" })
       updatePayload.credits = data.credits;
     }
 
-    const { error } = await adminClient
+    let { error } = await adminClient
       .from("tasks")
       .update(updatePayload)
       .eq("id", data.taskId);
 
     if (error) {
-      // Graceful fallback in case admin_remarks column is not migrated
+      // Fallback without dynamic columns
+      const fallbackPayload: any = {
+        status: targetStatus,
+        progress_notes: data.admin_remarks || null,
+        updated_at: new Date().toISOString(),
+      };
       const { error: fallbackErr } = await adminClient
         .from("tasks")
-        .update({
-          status: data.status,
-          progress_notes: data.admin_remarks,
-          updated_at: new Date().toISOString(),
-        })
+        .update(fallbackPayload)
         .eq("id", data.taskId);
       if (fallbackErr) throw new Error(fallbackErr.message);
     }
@@ -3791,7 +3800,7 @@ export const submitTaskUrl = createServerFn({ method: "POST" })
 
     const updatePayload: any = {
       deliverable_url: url,
-      status: "submitted",
+      status: "in_progress",
       updated_at: new Date().toISOString(),
     };
     if (data.submissionNotes) {
