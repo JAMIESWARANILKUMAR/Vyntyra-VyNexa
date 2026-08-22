@@ -56,12 +56,18 @@ export function AdminInternTasksView() {
 
   const tasks: any[] = tasksQ.data || [];
 
-  // Filter tasks
+  // Filter tasks with full null-safety
   const filteredTasks = tasks.filter((t) => {
+    if (!t) return false;
     const internName = t.assigned_profile?.full_name || t.assigned_profile?.email || "";
-    const titleMatches = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         internName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (t.description || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const title = t.title || "";
+    const description = t.description || "";
+    const searchLower = (searchQuery || "").toLowerCase();
+    
+    const titleMatches = !searchLower || 
+                         title.toLowerCase().includes(searchLower) ||
+                         internName.toLowerCase().includes(searchLower) ||
+                         description.toLowerCase().includes(searchLower);
 
     const statusMatches = statusFilter === "all" || t.status === statusFilter;
     const priorityMatches = priorityFilter === "all" || t.priority === priorityFilter;
@@ -69,20 +75,26 @@ export function AdminInternTasksView() {
     return titleMatches && statusMatches && priorityMatches;
   });
 
-  // Group tasks by batch
+  // Group tasks by batch safely
   const groupedTasks = filteredTasks.reduce((acc, t) => {
-    const key = `${t.title}-${t.created_at}`;
+    if (!t) return acc;
+    const key = `${t.title || 'Untitled'}-${t.created_at || 'date'}`;
     if (!acc[key]) acc[key] = [];
     acc[key].push(t);
     return acc;
   }, {} as Record<string, any[]>);
-  const groupedTaskEntries = (Object.values(groupedTasks) as any[][]).sort((a, b) => new Date(b[0].created_at).getTime() - new Date(a[0].created_at).getTime());
+  
+  const groupedTaskEntries = (Object.values(groupedTasks) as any[][]).sort((a, b) => {
+    const timeB = b?.[0]?.created_at ? new Date(b[0].created_at).getTime() : 0;
+    const timeA = a?.[0]?.created_at ? new Date(a[0].created_at).getTime() : 0;
+    return timeB - timeA;
+  });
 
-  // Calculate statistics
+  // Calculate statistics safely
   const totalCount = tasks.length;
-  const inProgressCount = tasks.filter((t) => t.status === "in_progress").length;
-  const submittedCount = tasks.filter((t) => t.status === "submitted" || t.deliverable_url).length;
-  const completedCount = tasks.filter((t) => t.status === "completed").length;
+  const inProgressCount = tasks.filter((t) => t?.status === "in_progress").length;
+  const submittedCount = tasks.filter((t) => t?.status === "submitted" || t?.deliverable_url).length;
+  const completedCount = tasks.filter((t) => t?.status === "completed").length;
 
   const handleUpdateStatus = async (taskId: string, newStatus: any, remarks?: string) => {
     try {

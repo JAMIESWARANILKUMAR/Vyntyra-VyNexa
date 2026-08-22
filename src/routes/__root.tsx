@@ -39,38 +39,39 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
+  console.error("Root ErrorComponent caught:", error);
   const router = useRouter();
-
-  useEffect(() => {
-    import("@/integrations/supabase/client").then(({ supabase }) => {
-      supabase.auth.getUser().then(({ data: { user }, error: authError }) => {
-        if (authError || !user) {
-          supabase.auth.signOut().then(() => {
-            window.location.href = "/auth/employee";
-          });
-        }
-      });
-    });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
+      <div className="max-w-md text-center space-y-4">
         <h1 className="text-xl font-semibold text-foreground">This page didn't load</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong. Try refreshing or head back home.
+        <p className="text-sm text-muted-foreground">
+          {error?.message || "Something went wrong. Try refreshing or head back home."}
         </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+        <div className="flex flex-wrap justify-center gap-2">
           <button
-            onClick={() => { router.invalidate(); reset(); }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-secondary"
+            onClick={() => {
+              try {
+                router.invalidate();
+                reset();
+              } catch {
+                window.location.reload();
+              }
+            }}
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-secondary transition-colors"
           >
             Try again
           </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+          >
+            Reload Page
+          </button>
           <a
             href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
           >
             Go home
           </a>
