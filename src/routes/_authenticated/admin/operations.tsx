@@ -2288,7 +2288,7 @@ function MemberRow({ member, team, onRevoke, onResetPassword, onClick }: { membe
     ? "bg-blue-100 text-blue-800"
     : "bg-emerald-100 text-emerald-800";
 
-  const assignedMentor = member.mentor_id && team ? team.find((t: any) => t.id === member.mentor_id) : null;
+  const assignedMentor = member.mentor_id && team ? team.find((t: any) => (t.id === member.mentor_id || t.user_id === member.mentor_id)) : null;
   const mentorDisplayName = assignedMentor ? assignedMentor.full_name : member.mentor_id ? "Assigned Mentor" : "Lead Mentor (Jami Eswar Anil Kumar)";
 
   return (
@@ -2319,16 +2319,16 @@ function MemberRow({ member, team, onRevoke, onResetPassword, onClick }: { membe
                   ✓ Fee Paid (₹{member.exam_fee_amount || 199})
                 </span>
               ) : member.is_fee_exempted ? (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200">
-                  Fee Exempted
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200">
+                  Exempted
                 </span>
               ) : member.fee_payment_scheduled ? (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
-                  Fee Scheduled: ₹{member.exam_fee_amount || 199} {member.fee_payment_deadline ? `· Due: ${new Date(member.fee_payment_deadline).toLocaleDateString("en-IN")}` : ""}
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                  ⏳ Fee Scheduled (₹{member.exam_fee_amount || 199})
                 </span>
               ) : (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                  Fee Unscheduled
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                  Unscheduled
                 </span>
               )}
               {member.urgent_popup_active && (
@@ -2340,42 +2340,41 @@ function MemberRow({ member, team, onRevoke, onResetPassword, onClick }: { membe
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-        <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1">
-          {onResetPassword && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
-              title="Reset Password for this account"
-              onClick={() => onResetPassword(member)}
-            >
-              <ShieldCheck className="h-3.5 w-3.5" />
-            </Button>
-          )}
+      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center" onClick={(e) => e.stopPropagation()}>
+        {onResetPassword && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onResetPassword(member)}
+            title="Reset User Password"
+            className="h-8 px-2.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg gap-1.5"
+          >
+            <Key className="h-3.5 w-3.5 text-amber-600" />
+            <span className="hidden sm:inline">Reset Pass</span>
+          </Button>
+        )}
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/40 hover:text-destructive hover:bg-destructive/10" title="Revoke Access">
-                <UserX className="h-3.5 w-3.5" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-destructive" /> Revoke Access?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete <strong>{member.full_name}</strong>'s account (<em>{member.email}</em>). They will lose all access immediately. This cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => onRevoke(member.id, member.full_name)} className="bg-destructive hover:bg-destructive/90">
-                  Revoke Access
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/40 hover:text-destructive hover:bg-destructive/10" title="Revoke Access">
+              <UserX className="h-3.5 w-3.5" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-destructive" /> Revoke Access?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete <strong>{member.full_name}</strong>'s account (<em>{member.email}</em>). They will lose all access immediately. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => onRevoke(member.id, member.full_name)} className="bg-destructive hover:bg-destructive/90">
+                Revoke Access
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
@@ -2433,6 +2432,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
       qc.invalidateQueries({ queryKey: ["team-members"] });
       qc.invalidateQueries({ queryKey: ["intern-mentor"] });
       qc.invalidateQueries({ queryKey: ["all-interns-fee-status"] });
+      qc.invalidateQueries({ queryKey: ["profile"] });
       onOpenChange(false);
     } catch (err: any) {
       toast.error(err.message || "Failed to update profile");
@@ -2491,11 +2491,14 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
                    </SelectTrigger>
                    <SelectContent>
                      <SelectItem value="none">Lead Mentor (Jami Eswar Anil Kumar - Default)</SelectItem>
-                     {team?.filter((m: any) => m.id !== user.id && m.role !== "intern").map((mentor: any) => (
-                       <SelectItem key={mentor.id} value={mentor.id}>
-                         {mentor.full_name} ({mentor.position || mentor.department || mentor.email})
-                       </SelectItem>
-                     ))}
+                     {team?.filter((m: any) => (m.id !== user.id && m.user_id !== user.id) && m.role !== "intern").map((mentor: any) => {
+                       const mentorId = mentor.id || mentor.user_id;
+                       return (
+                         <SelectItem key={mentorId} value={mentorId}>
+                           {mentor.full_name || mentor.email} ({mentor.position || mentor.department || "Employee"})
+                         </SelectItem>
+                       );
+                     })}
                    </SelectContent>
                  </Select>
                  <p className="text-[11px] text-muted-foreground">This employee will appear as the dedicated mentor on the intern's dashboard and task submissions.</p>

@@ -722,7 +722,7 @@ function AdminSettingsPage() {
                         return true;
                       })
                       .map((intern: any) => {
-                        const assignedMentor = intern.mentor_id ? (membersQ.data || []).find((m: any) => m.id === intern.mentor_id) : null;
+                        const assignedMentor = intern.mentor_id ? (membersQ.data || []).find((m: any) => (m.id === intern.mentor_id || m.user_id === intern.mentor_id)) : null;
                         const isExpired = intern.fee_payment_deadline ? new Date(intern.fee_payment_deadline).getTime() < Date.now() : false;
 
                         return (

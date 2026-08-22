@@ -1338,40 +1338,94 @@ export const getInternMentorDetails = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const adminClient = getAdminClient();
+
+    // 1. Fetch the intern's own profile
     const { data: profile } = await adminClient
       .from("profiles")
-      .select("id, mentor_id, full_name, email, department, position, start_date, end_date")
+      .select("*")
       .eq("id", context.userId)
       .maybeSingle();
 
-    let mentor: any = null;
+    let targetMentorId = profile?.mentor_id;
 
-    if (profile?.mentor_id) {
-      const { data: mentorProfile } = await adminClient
-        .from("profiles")
-        .select("id, full_name, email, department, position, phone_number, avatar_url")
-        .eq("id", profile.mentor_id)
+    // 2. If mentor_id not found on profiles, check applications table by email
+    if (!targetMentorId && profile?.email) {
+      const { data: appData } = await adminClient
+        .from("applications")
+        .select("mentor_id, assigned_employee_id")
+        .eq("email", profile.email.toLowerCase())
         .maybeSingle();
-      if (mentorProfile) {
-        mentor = { ...mentorProfile, is_official: true };
+      
+      const appMentorId = (appData as any)?.mentor_id || (appData as any)?.assigned_employee_id;
+      if (appMentorId) {
+        targetMentorId = appMentorId;
+        // Backfill to profiles table for fast subsequent queries
+        await adminClient.from("profiles").update({ mentor_id: targetMentorId }).eq("id", context.userId);
       }
     }
 
-    // If no mentor explicitly assigned via profile.mentor_id, look up recent assigned tasks or support queries
-    if (!mentor) {
-      const { data: recentTask } = await adminClient
+    // 3. If still not found, check support_queries
+    if (!targetMentorId) {
+      const { data: queryData } = await adminClient
+        .from("support_queries")
+        .select("assigned_employee_id, mentor_id")
+        .eq("intern_id", context.userId)
+        .or("assigned_employee_id.not.is.null,mentor_id.not.is.null")
+        .limit(1)
+        .maybeSingle();
+      if (queryData?.assigned_employee_id || queryData?.mentor_id) {
+        targetMentorId = queryData.assigned_employee_id || queryData.mentor_id;
+      }
+    }
+
+    // 4. If still not found, check tasks assigned to this intern
+    if (!targetMentorId) {
+      const { data: taskData } = await adminClient
         .from("tasks")
-        .select("created_by, profiles:created_by(id, full_name, email, department, position, phone_number, avatar_url)")
+        .select("created_by")
         .eq("assigned_to", context.userId)
         .not("created_by", "is", null)
         .limit(1)
         .maybeSingle();
-      if ((recentTask as any)?.profiles) {
-        mentor = { ...(recentTask as any).profiles, is_official: true };
+      if (taskData?.created_by) {
+        targetMentorId = taskData.created_by;
       }
     }
 
-    // Default official lead mentor fallback so mentor details are ALWAYS populated
+    let mentor: any = null;
+
+    // 5. If we have a targetMentorId, fetch their details from profiles + auth users
+    if (targetMentorId) {
+      const { data: mentorProfile } = await adminClient
+        .from("profiles")
+        .select("*")
+        .eq("id", targetMentorId)
+        .maybeSingle();
+
+      let authUser: any = null;
+      try {
+        const { data: authData } = await adminClient.auth.admin.getUserById(targetMentorId);
+        authUser = authData?.user;
+      } catch (authErr) {
+        console.warn("Could not fetch auth user for mentor:", authErr);
+      }
+
+      if (mentorProfile || authUser) {
+        mentor = {
+          id: targetMentorId,
+          full_name: mentorProfile?.full_name || authUser?.user_metadata?.full_name || mentorProfile?.email?.split("@")[0] || authUser?.email?.split("@")[0] || "Assigned Mentor",
+          email: mentorProfile?.email || authUser?.email || "",
+          department: mentorProfile?.department || "Department of Engineering & Mentorship",
+          position: mentorProfile?.position || "Mentor & Technical Supervisor",
+          phone_number: mentorProfile?.phone_number || mentorProfile?.phone || authUser?.phone || authUser?.user_metadata?.phone || authUser?.user_metadata?.phone_number || "",
+          avatar_url: mentorProfile?.avatar_url || authUser?.user_metadata?.avatar_url || null,
+          is_official: true,
+          is_lead: false,
+        };
+      }
+    }
+
+    // 6. Default official lead mentor fallback only if absolutely no mentor is assigned
     if (!mentor) {
       mentor = {
         id: "official-lead-mentor",
@@ -1451,9 +1505,13 @@ export const updateUserProfile = createServerFn({ method: "POST" })
       if (updates.end_date !== undefined) appUpdates.internship_end_date = updates.end_date;
       if (updates.domain !== undefined) appUpdates.domain = updates.domain;
       if (updates.sub_domain !== undefined) appUpdates.sub_domain = updates.sub_domain;
+      if (updates.mentor_id !== undefined) {
+        appUpdates.mentor_id = updates.mentor_id;
+        appUpdates.assigned_employee_id = updates.mentor_id;
+      }
 
       if (Object.keys(appUpdates).length > 0) {
-        await adminClient.from("applications").update(appUpdates).eq("email", currentProfile.email);
+        await adminClient.from("applications").update(appUpdates).eq("email", currentProfile.email.toLowerCase());
       }
     }
 
@@ -1986,6 +2044,16 @@ export const assignIntern = createServerFn({ method: "POST" })
 
     const { error } = await adminClient.from("profiles").update({ mentor_id: data.employeeId }).eq("id", data.internId);
     if (error) throw new Error(error.message);
+
+    // Sync to applications table by intern's email
+    const { data: prof } = await adminClient.from("profiles").select("email, full_name").eq("id", data.internId).maybeSingle();
+    if (prof?.email) {
+      await adminClient.from("applications").update({ 
+        mentor_id: data.employeeId, 
+        assigned_employee_id: data.employeeId 
+      }).eq("email", prof.email.toLowerCase());
+    }
+
     return { success: true };
   });
 
@@ -1998,6 +2066,16 @@ export const removeIntern = createServerFn({ method: "POST" })
 
     const { error } = await adminClient.from("profiles").update({ mentor_id: null }).eq("id", data.internId);
     if (error) throw new Error(error.message);
+
+    // Sync to applications table by intern's email
+    const { data: prof } = await adminClient.from("profiles").select("email").eq("id", data.internId).maybeSingle();
+    if (prof?.email) {
+      await adminClient.from("applications").update({ 
+        mentor_id: null, 
+        assigned_employee_id: null 
+      }).eq("email", prof.email.toLowerCase());
+    }
+
     return { success: true };
   });
 
