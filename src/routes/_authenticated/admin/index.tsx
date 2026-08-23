@@ -64,7 +64,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
 import {
@@ -1568,6 +1568,40 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         });
     }
   }, [app?.id, app?.status]);
+
+  async function handleRegenerateOfferLetter() {
+    if (!app) return;
+    setIsRegeneratingOffer(true);
+    const lToast = toast.loading("Regenerating Offer Letter in 1-Click...");
+    try {
+      await doRegenOfferLetter({ data: { profileId: app.id, email: app.email } });
+      toast.dismiss(lToast);
+      toast.success("Offer Letter regenerated successfully!");
+      qc.invalidateQueries({ queryKey: ["applications"] });
+    } catch (e: any) {
+      toast.dismiss(lToast);
+      toast.error("Failed to regenerate offer letter: " + e.message);
+    } finally {
+      setIsRegeneratingOffer(false);
+    }
+  }
+
+  async function handleRegenerateNoc() {
+    if (!app) return;
+    setIsRegeneratingNoc(true);
+    const lToast = toast.loading("Regenerating NOC Certificate in 1-Click...");
+    try {
+      await doRegenNoc({ data: { profileId: app.id, email: app.email } });
+      toast.dismiss(lToast);
+      toast.success("NOC Certificate regenerated successfully!");
+      qc.invalidateQueries({ queryKey: ["applications"] });
+    } catch (e: any) {
+      toast.dismiss(lToast);
+      toast.error("Failed to regenerate NOC: " + e.message);
+    } finally {
+      setIsRegeneratingNoc(false);
+    }
+  }
 
   async function handleDownloadNoc() {
     const loadingToast = toast.loading("Generating premium NOC Certificate...");

@@ -59,6 +59,8 @@ function AdminSettingsPage() {
 
   // Referral code management state
   const [referralSearch, setReferralSearch] = useState("");
+  const [internFeeSearch, setInternFeeSearch] = useState("");
+  const [internFeeFilter, setInternFeeFilter] = useState<"all" | "scheduled" | "unpaid" | "paid" | "exempted">("all");
   const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
   const [isSavingReferral, setIsSavingReferral] = useState(false);
   const [referralForm, setReferralForm] = useState({
@@ -868,7 +870,7 @@ function AdminSettingsPage() {
                 try {
                   toast.info("Purging NOCs...");
                   const result = await doPurgeAllNocs();
-                  toast.success(`Done! Deleted ${result.filesDeleted} NOC file(s), cleared ${result.applicationsCleared} application URL(s). NOCs will regenerate on next access.`);
+                  toast.success(result.message || "All stored NOC links successfully purged. NOCs will regenerate on next access.");
                 } catch (err: any) {
                   toast.error(err.message || "Failed to purge NOCs");
                 }
