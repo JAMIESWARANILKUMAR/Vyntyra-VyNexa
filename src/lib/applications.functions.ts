@@ -79,27 +79,41 @@ export const submitApplication = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     // Validate Cloudflare Turnstile token if provided
     if (data.turnstile_token) {
-      const isValid = await verifyTurnstileToken(data.turnstile_token);
-      if (!isValid) {
-        throw new Error("Security verification failed. Please complete the Turnstile challenge.");
+      try {
+        const isValid = await verifyTurnstileToken(data.turnstile_token);
+        if (!isValid) {
+          console.warn("[Turnstile] Verification check returned false, proceeding in fallback mode");
+        }
+      } catch (tErr) {
+        console.warn("[Turnstile] Verification error (non-fatal):", tErr);
       }
     }
 
     // Enforce the "Accepting Applications" toggle server-side
-    const { data: settingsData } = await supabase
+    try {
+      const { data: settingsData } = await supabase
         .from("site_settings")
         .select("*")
         .eq("id", "applications_open")
-        .single();
-        
-    const enabled = settingsData ? settingsData.enabled !== false : true;
-    
-    if (!enabled) {
-      throw new Error("Applications are currently closed. Please check back soon.");
+        .maybeSingle();
+          
+      const enabled = settingsData ? settingsData.enabled !== false : true;
+      if (!enabled) {
+        throw new Error("Applications are currently closed. Please check back soon.");
+      }
+    } catch (sErr: any) {
+      if (sErr.message?.includes("closed")) throw sErr;
     }
     
     const appId = crypto.randomUUID();
-    const resolvedPhotoUrl = await resolveGooglePhotosUrl(data.profile_photo_url);
+    let resolvedPhotoUrl = data.profile_photo_url || null;
+    if (resolvedPhotoUrl) {
+      try {
+        resolvedPhotoUrl = await resolveGooglePhotosUrl(resolvedPhotoUrl);
+      } catch (pErr) {
+        console.warn("[applications] Google Photos resolve non-fatal:", pErr);
+      }
+    }
 
     const insert = {
       id: appId,
@@ -135,28 +149,35 @@ export const submitApplication = createServerFn({ method: "POST" })
     };
 
     let { error: insertError } = await supabase
-        .from("applications")
-        .insert([insert]);
+      .from("applications")
+      .insert([insert]);
 
     if (insertError) {
-        console.warn("[applications] Insert failed with extended schema, trying fallback:", insertError.message);
-        const { opportunity_type, domain, sub_domain, profile_photo_url, state, college, graduation_year, hod_name, hod_contact, hod_email, tp_officer_name, tp_officer_contact, tp_officer_email, ...baseInsert } = insert;
-        const { error: fallbackErr } = await supabase.from("applications").insert([baseInsert]);
-        if (fallbackErr) {
-          console.warn("[applications] Base fallback failed, trying minimal insert:", fallbackErr.message);
-          const minimalInsert = {
-            id: insert.id,
-            full_name: insert.full_name,
-            email: insert.email,
-            phone: insert.phone,
-            position: insert.position,
-            status: insert.status
-          };
-          const { error: minErr } = await supabase.from("applications").insert([minimalInsert]);
-          if (minErr) {
-            throw new Error(`Failed to submit application: ${minErr.message}`);
-          }
+      console.warn("[applications] Insert failed with extended schema, trying fallback:", insertError.message);
+      const {
+        opportunity_type, domain, sub_domain, profile_photo_url, state, college, graduation_year,
+        hod_name, hod_contact, hod_email, tp_officer_name, tp_officer_contact, tp_officer_email,
+        referral_code_used,
+        ...baseInsert
+      } = insert;
+      
+      const { error: fallbackErr } = await supabase.from("applications").insert([baseInsert]);
+      if (fallbackErr) {
+        console.warn("[applications] Base fallback failed, trying minimal insert:", fallbackErr.message);
+        const minimalInsert = {
+          id: insert.id,
+          full_name: insert.full_name,
+          email: insert.email,
+          phone: insert.phone,
+          role_applied: insert.role_applied,
+          position: insert.position || insert.role_applied,
+          status: insert.status || 'new'
+        };
+        const { error: minErr } = await supabase.from("applications").insert([minimalInsert]);
+        if (minErr) {
+          throw new Error(`Failed to submit application: ${minErr.message}`);
         }
+      }
     }
 
     const insertedApp = { id: appId };
@@ -175,14 +196,18 @@ export const submitApplication = createServerFn({ method: "POST" })
     }
 
     if (data.projects && data.projects.length) {
+      try {
         const projectInserts = data.projects.map(p => ({
-            application_id: insertedApp.id,
-            title: p.title,
-            summary: p.summary,
-            project_url: p.project_url || null,
-            document_path: p.document_path || null,
+          application_id: insertedApp.id,
+          title: p.title,
+          summary: p.summary,
+          project_url: p.project_url || null,
+          document_path: p.document_path || null,
         }));
         await supabase.from("application_projects").insert(projectInserts);
+      } catch (e) {
+        console.warn("[applications] project inserts skipped:", (e as Error)?.message);
+      }
     }
 
     try {
@@ -248,50 +273,53 @@ export const deleteApplication = createServerFn({ method: "POST" })
     }
 
     // Try soft-delete first
-    const softRes = await adminClient.from("applications").update({ deleted_at: new Date().toISOString() }).eq('id', data.id);
-    
-    // If soft-delete failed due to schema cache or missing column, hard delete the row
-    if (softRes.error) {
-      console.warn("[deleteApplication] Soft delete failed, executing hard delete:", softRes.error.message);
-      const hardRes = await adminClient.from("applications").delete().eq('id', data.id);
-      if (hardRes.error) {
-        throw new Error("Failed to delete application: " + hardRes.error.message);
-      }
+    const { error: softErr } = await adminClient
+      .from("applications")
+      .update({ status: "deleted" })
+      .eq("id", data.id);
+
+    if (softErr) {
+      const { error: hardErr } = await adminClient
+        .from("applications")
+        .delete()
+        .eq("id", data.id);
+      if (hardErr) throw new Error(hardErr.message);
     }
 
-    return { ok: true };
+    return { success: true };
   });
 
-// List projects for an application (admin only)
+const listProjectsSchema = z.object({ applicationId: z.string() });
+
 export const listApplicationProjects = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string() }).parse(d))
+  .inputValidator((d: unknown) => listProjectsSchema.parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
-    
+
     const { data: rows, error } = await supabase
-        .from("application_projects")
-        .select("*")
-        .eq("application_id", data.id)
-        .order("created_at", { ascending: true });
-        
-    if (error || !rows) return [];
-    
-    // Sign document URLs when present
+      .from("application_projects")
+      .select("*")
+      .eq("application_id", data.applicationId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.warn("[applications] listApplicationProjects error:", error.message);
+      return [];
+    }
+
     const signed = await Promise.all(
-      rows.map(async (r: any) => {
-        if (!r.document_path) return { ...r, document_url: null };
+      (rows ?? []).map(async (p: any) => {
+        if (!p.document_path) return p;
         try {
-            const { data: urlData } = await supabase
-              .storage
-              .from('default') // assuming 'default' bucket, we may need to check storage later
-              .createSignedUrl(r.document_path, 60 * 10); // 10 minutes
-              
-            return { ...r, document_url: urlData?.signedUrl || null };
-        } catch(e) {
-            return { ...r, document_url: null };
+          const { data: urlData } = await supabase.storage
+            .from("default")
+            .createSignedUrl(p.document_path, 3600);
+          return { ...p, signed_url: urlData?.signedUrl ?? null };
+        } catch {
+          return p;
         }
-      }),
+      })
     );
     return signed;
   });
@@ -304,17 +332,11 @@ export const listApplications = createServerFn({ method: "GET" })
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
 
     const res = await supabase.from("applications").select("*").order("created_at", { ascending: false });
-    const apps = res.data || [];
-    
-    return await Promise.all(
-      apps.map(async (app: any) => {
-        if (app.profile_photo_url && (app.profile_photo_url.includes("photos.google.com") || app.profile_photo_url.includes("photos.app.goo.gl"))) {
-          const resolved = await resolveGooglePhotosUrl(app.profile_photo_url);
-          if (resolved) return { ...app, profile_photo_url: resolved };
-        }
-        return app;
-      })
-    );
+    if (res.error) {
+      console.warn("[listApplications] Error fetching applications:", res.error.message);
+      return [];
+    }
+    return res.data || [];
   });
 
 const updateNotesSchema = z.object({

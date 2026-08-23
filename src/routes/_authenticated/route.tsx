@@ -9,7 +9,6 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [checking, setChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -23,7 +22,8 @@ function AuthenticatedLayout() {
           if (!session) {
             setIsAuthenticated(false);
             setChecking(false);
-            const isAdminRoute = location.pathname.startsWith("/admin");
+            const p = window.location.pathname;
+            const isAdminRoute = p.startsWith("/admin") || p === "/cms" || p === "/templates";
             navigate({ to: isAdminRoute ? "/auth/admin" : "/auth/employee" });
           } else {
             setIsAuthenticated(true);
@@ -43,10 +43,12 @@ function AuthenticatedLayout() {
       if (!mounted) return;
       if (event === "SIGNED_OUT" || !session) {
         setIsAuthenticated(false);
-        const isAdminRoute = location.pathname.startsWith("/admin");
+        const p = window.location.pathname;
+        const isAdminRoute = p.startsWith("/admin") || p === "/cms" || p === "/templates";
         navigate({ to: isAdminRoute ? "/auth/admin" : "/auth/employee" });
       } else if (session) {
         setIsAuthenticated(true);
+        setChecking(false);
       }
     });
 
@@ -54,7 +56,7 @@ function AuthenticatedLayout() {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [location.pathname, navigate]);
+  }, [navigate]);
 
   if (checking) {
     return (

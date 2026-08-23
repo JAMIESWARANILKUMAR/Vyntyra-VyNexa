@@ -410,8 +410,13 @@ function ApplicationPage() {
       } });
       setSuccess(res.id);
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err) {
-      toast.error((err as Error).message || "Submission failed");
+    } catch (err: any) {
+      const msg = (err?.message || String(err || "")).trim();
+      if (msg.includes("<html") || msg.includes("<!DOCTYPE") || msg.includes("<body") || msg.length > 250) {
+        toast.error("Application submission encountered a server error. Please try again or contact support.");
+      } else {
+        toast.error(msg || "Submission failed. Please try again.");
+      }
     } finally { setSubmitting(false); }
   }
 
