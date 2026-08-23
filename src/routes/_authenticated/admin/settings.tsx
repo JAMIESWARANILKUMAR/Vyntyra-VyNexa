@@ -18,6 +18,7 @@ import {
   listAllReferralPricingRules, upsertReferralPricingRule, deleteReferralPricingRule,
   sendUrgentPaymentPopupNotification
 } from "@/lib/operations.functions";
+import { localDateTimeToIso, isoToLocalDateTimeInput, formatDateTimeDisplay } from "@/lib/date-utils";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: AdminSettingsPage,
@@ -139,7 +140,7 @@ function AdminSettingsPage() {
           is_fee_exempted: isFeeExempted,
           exam_fee_paid: examFeePaid,
           fee_payment_scheduled: feePaymentScheduled,
-          fee_payment_deadline: feePaymentDeadline || null,
+          fee_payment_deadline: feePaymentDeadline ? localDateTimeToIso(feePaymentDeadline) : null,
           is_payment_enabled: isPaymentEnabled
         }
       });
@@ -166,7 +167,7 @@ function AdminSettingsPage() {
           internIds: finalInternIds,
           title: popupForm.title.trim(),
           message: popupForm.message.trim(),
-          deadline: popupForm.deadline || feePaymentDeadline || undefined,
+          deadline: popupForm.deadline ? localDateTimeToIso(popupForm.deadline) || undefined : (feePaymentDeadline ? localDateTimeToIso(feePaymentDeadline) || undefined : undefined),
         }
       });
       toast.success(res.message || "Urgent onscreen popup notification dispatched!");
@@ -767,7 +768,7 @@ function AdminSettingsPage() {
                               {intern.fee_payment_deadline ? (
                                 <div>
                                   <span className={`font-semibold block ${isExpired ? "text-red-600" : "text-slate-700"}`}>
-                                    {new Date(intern.fee_payment_deadline).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                                    {formatDateTimeDisplay(intern.fee_payment_deadline)}
                                   </span>
                                   {isExpired && (
                                     <span className="text-[9px] font-bold uppercase text-red-600 bg-red-50 px-1.5 py-0.2 rounded border border-red-200">Expired</span>
@@ -817,7 +818,7 @@ function AdminSettingsPage() {
                                     setFeePaymentScheduled(Boolean(intern.fee_payment_scheduled));
                                     setExamFeePaid(Boolean(intern.exam_fee_paid));
                                     setIsFeeExempted(Boolean(intern.is_fee_exempted));
-                                    setFeePaymentDeadline(intern.fee_payment_deadline ? intern.fee_payment_deadline.slice(0, 16) : "");
+                                    setFeePaymentDeadline(isoToLocalDateTimeInput(intern.fee_payment_deadline));
                                     window.scrollTo({ top: 400, behavior: "smooth" });
                                     toast.info(`Loaded settings for ${intern.full_name || intern.email}`);
                                   }}
@@ -834,7 +835,7 @@ function AdminSettingsPage() {
                                       targetType: "single",
                                       title: "Urgent: Exam Fee Payment Required",
                                       message: "Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.",
-                                      deadline: intern.fee_payment_deadline || "",
+                                      deadline: isoToLocalDateTimeInput(intern.fee_payment_deadline),
                                     });
                                     setInternId(intern.id);
                                     setIsPopupModalOpen(true);

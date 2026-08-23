@@ -32,6 +32,7 @@ import {
   listAllSupportQueries, assignSupportQueryEmployee, approveSupportMeeting,
   deleteStoredOfferLetterAndRegenerate, deleteStoredNocAndRegenerate, deleteStoredOfferLetter, deleteStoredNoc
 } from "@/lib/operations.functions";
+import { localDateTimeToIso, isoToLocalDateTimeInput, formatDateTimeDisplay } from "@/lib/date-utils";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import EmailAutomationHub from "@/components/email-automation-hub";
@@ -2420,7 +2421,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
         bank_details: cleanValue(form.bank_details),
         certificate_url: cleanValue(form.certificate_url),
         fee_payment_scheduled: Boolean(form.fee_payment_scheduled),
-        fee_payment_deadline: cleanValue(form.fee_payment_deadline),
+        fee_payment_deadline: form.fee_payment_deadline ? localDateTimeToIso(form.fee_payment_deadline) : null,
         exam_fee_amount: form.exam_fee_amount !== undefined ? Number(form.exam_fee_amount) : 199,
         exam_fee_paid: Boolean(form.exam_fee_paid),
         is_fee_exempted: Boolean(form.is_fee_exempted),
@@ -2537,7 +2538,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
                   <Label className="text-[11px] font-bold text-slate-700">Payment Due Deadline</Label>
                   <Input 
                     type="datetime-local" 
-                    value={form.fee_payment_deadline ? form.fee_payment_deadline.slice(0, 16) : ""} 
+                    value={form.fee_payment_deadline ? isoToLocalDateTimeInput(form.fee_payment_deadline) : ""} 
                     onChange={e => setForm({ ...form, fee_payment_deadline: e.target.value })}
                     className="bg-white h-8 text-xs" 
                   />

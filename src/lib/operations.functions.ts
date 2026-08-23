@@ -5,6 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getAdminClient } from "@/integrations/supabase/admin";
 import { generateUploadUrl } from "./r2";
 import { supabase as anonClient } from "@/integrations/supabase/client";
+import { localDateTimeToIso } from "./date-utils";
 
 const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
@@ -4128,7 +4129,9 @@ export const updateInternFeeSettings = createServerFn({ method: "POST" })
     if (data.is_fee_exempted !== undefined) updateData.is_fee_exempted = data.is_fee_exempted;
     if (data.exam_fee_paid !== undefined) updateData.exam_fee_paid = data.exam_fee_paid;
     if (data.fee_payment_scheduled !== undefined) updateData.fee_payment_scheduled = data.fee_payment_scheduled;
-    if (data.fee_payment_deadline !== undefined) updateData.fee_payment_deadline = data.fee_payment_deadline;
+    if (data.fee_payment_deadline !== undefined) {
+      updateData.fee_payment_deadline = localDateTimeToIso(data.fee_payment_deadline);
+    }
 
     if (data.internIds && data.internIds.length > 0) {
       const { error } = await admin
@@ -4190,7 +4193,7 @@ export const sendUrgentPaymentPopupNotification = createServerFn({ method: "POST
       updated_at: new Date().toISOString(),
     };
     if (data.deadline) {
-      profileUpdatePayload.fee_payment_deadline = data.deadline;
+      profileUpdatePayload.fee_payment_deadline = localDateTimeToIso(data.deadline);
     }
 
     await admin
