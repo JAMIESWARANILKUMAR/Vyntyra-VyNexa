@@ -10,10 +10,10 @@ export async function resolveGooglePhotosUrl(url: string | null | undefined): Pr
   if (trimmed.startsWith("data:image")) return trimmed;
 
   // 1. Resolve Google Drive Sharing links
-  // Match formats: /file/d/ID/view or ?id=ID or open?id=ID
-  const driveIdMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  // Match formats: /file/d/ID/view or ?id=ID or open?id=ID or uc?id=ID
+  const driveIdMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/) || trimmed.match(/drive\.google\.com\/.*[?&]id=([a-zA-Z0-9_-]+)/);
   if (trimmed.includes("drive.google.com") && driveIdMatch && driveIdMatch[1]) {
-    return `https://drive.google.com/uc?export=download&id=${driveIdMatch[1]}`;
+    return `https://drive.google.com/thumbnail?id=${driveIdMatch[1]}&sz=w1000`;
   }
 
   // 2. Resolve Dropbox Sharing links

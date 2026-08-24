@@ -187,14 +187,34 @@ export const proxyImageFetch = createServerFn({ method: "POST" })
 
       const { resolveGooglePhotosUrl } = await import("./google-photos");
       const url = (await resolveGooglePhotosUrl(rawUrl)) || rawUrl;
-      const res = await fetch(url, {
+      
+      let res = await fetch(url, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
+        },
+        redirect: "follow"
       });
+
+      // If initial fetch failed and it was a Google Drive link, try alternative direct CDN
+      if ((!res.ok || (res.headers.get("content-type") || "").includes("text/html")) && rawUrl.includes("drive.google.com")) {
+        const driveMatch = rawUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || rawUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (driveMatch && driveMatch[1]) {
+          const fallbackUrl = `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+          const fallbackRes = await fetch(fallbackUrl, { redirect: "follow" });
+          if (fallbackRes.ok && !(fallbackRes.headers.get("content-type") || "").includes("text/html")) {
+            res = fallbackRes;
+          }
+        }
+      }
+
       if (!res.ok) return null;
-      const buffer = await res.arrayBuffer();
       const contentType = res.headers.get("content-type") || "image/png";
+      if (contentType.includes("text/html") || contentType.includes("application/json")) {
+        console.warn("[proxyImageFetch] Non-image content type returned:", contentType);
+        return null;
+      }
+
+      const buffer = await res.arrayBuffer();
       const b64 = Buffer.from(buffer).toString("base64");
       return `data:${contentType};base64,${b64}`;
     } catch (err) {

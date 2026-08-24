@@ -361,13 +361,24 @@ function AdminSettingsPage() {
       if (!photoUrl) {
         try {
           const { supabase } = await import("@/integrations/supabase/client");
+          const internEmail = (intern.email || "").toLowerCase();
           const { data: appRec } = await supabase
             .from("applications")
-            .select("profile_photo_url")
-            .or(`id.eq.${intern.id},email.eq.${intern.email}`)
+            .select("profile_photo_url, avatar_url, photo_url")
+            .or(`id.eq.${intern.id},email.ilike.%${internEmail}%`)
             .maybeSingle();
-          if (appRec?.profile_photo_url) {
-            photoUrl = appRec.profile_photo_url;
+          
+          if (appRec?.profile_photo_url || appRec?.avatar_url || appRec?.photo_url) {
+            photoUrl = appRec.profile_photo_url || appRec.avatar_url || appRec.photo_url;
+          } else {
+            const { data: profRec } = await supabase
+              .from("profiles")
+              .select("avatar_url, profile_photo_url, photo_url")
+              .or(`id.eq.${intern.id},email.ilike.%${internEmail}%`)
+              .maybeSingle();
+            if (profRec?.avatar_url || profRec?.profile_photo_url || profRec?.photo_url) {
+              photoUrl = profRec.avatar_url || profRec.profile_photo_url || profRec.photo_url;
+            }
           }
         } catch (e) {
           console.warn("Photo fallback lookup error:", e);
