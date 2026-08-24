@@ -32,19 +32,27 @@ function getImageFormat(dataUri: string): "PNG" | "JPEG" | "WEBP" {
 }
 
 export async function urlToBase64(
-  url: string,
+  rawUrl: string,
   maxW: number = 240,
   maxH: number = 240,
   isTransparent: boolean = false
 ): Promise<string | null> {
   try {
-    if (!url) return null;
-    if (url.startsWith("data:image")) return url;
+    if (!rawUrl) return null;
+    const trimmed = rawUrl.trim();
+    if (trimmed.startsWith("data:image")) return trimmed;
+
+    let targetUrl = trimmed;
+    if (targetUrl.startsWith("/") && typeof window !== "undefined") {
+      targetUrl = window.location.origin + targetUrl;
+    }
+
+    const resolvedUrl = (await resolveGooglePhotosUrl(targetUrl)) || targetUrl;
+    if (resolvedUrl.startsWith("data:image")) return resolvedUrl;
 
     // 1. Browser-side: Load in Image, downscale on Canvas, export compressed data URI
     if (typeof window !== "undefined") {
       try {
-        const fullUrl = url.startsWith("/") ? window.location.origin + url : url;
         const dataUri = await new Promise<string>((resolve, reject) => {
           const img = new Image();
           img.crossOrigin = "anonymous";
@@ -69,7 +77,7 @@ export async function urlToBase64(
                 ctx.imageSmoothingQuality = "high";
                 ctx.drawImage(img, 0, 0, w, h);
                 
-                const mimeType = isTransparent || url.endsWith(".png") ? "image/png" : "image/jpeg";
+                const mimeType = isTransparent || resolvedUrl.endsWith(".png") ? "image/png" : "image/jpeg";
                 const quality = mimeType === "image/jpeg" ? 0.85 : undefined;
                 resolve(canvas.toDataURL(mimeType, quality));
               } else {
@@ -80,7 +88,7 @@ export async function urlToBase64(
             }
           };
           img.onerror = (e) => reject(e);
-          img.src = fullUrl;
+          img.src = resolvedUrl;
         });
 
         if (dataUri && dataUri.startsWith("data:image")) return dataUri;
@@ -90,7 +98,7 @@ export async function urlToBase64(
 
       // Step B: Fetch fallback
       try {
-        const resp = await fetch(url);
+        const resp = await fetch(resolvedUrl);
         if (resp.ok) {
           const blob = await resp.blob();
           const base64 = await new Promise<string>((resolve, reject) => {
@@ -113,32 +121,23 @@ export async function urlToBase64(
     }
 
     // 2. Server-side local file direct read
-    if (typeof window === "undefined" && url.startsWith("/")) {
+    if (typeof window === "undefined" && rawUrl.startsWith("/")) {
       try {
         const fs = await import("fs");
         const path = await import("path");
-        const filePath = path.join(process.cwd(), "public", url.replace(/^\//, ""));
+        const filePath = path.join(process.cwd(), "public", rawUrl.replace(/^\//, ""));
         if (fs.existsSync(filePath)) {
           const buffer = fs.readFileSync(filePath);
-          const ext = url.split(".").pop()?.toLowerCase() || "png";
+          const ext = rawUrl.split(".").pop()?.toLowerCase() || "png";
           const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : "image/png";
           return `data:${mime};base64,${buffer.toString("base64")}`;
         }
       } catch (e) {
-        console.warn("[nocGenerator] Local read failed for:", url, e);
+        console.warn("[nocGenerator] Local read failed for:", rawUrl, e);
       }
     }
 
-    let targetUrl = url;
-    if (targetUrl.startsWith("/") && typeof window !== "undefined") {
-      targetUrl = window.location.origin + targetUrl;
-    }
-
-    const resolvedUrl = await resolveGooglePhotosUrl(targetUrl);
-    if (!resolvedUrl) return null;
-    if (resolvedUrl.startsWith("data:image")) return resolvedUrl;
-    
-    // Proxy the fetch through the backend to avoid CORS issues
+    // 3. Fallback server proxy
     const base64 = await proxyImageFetch({ data: resolvedUrl });
     return base64 || null;
   } catch (err) {
@@ -245,11 +244,12 @@ export function generateNocPdf(data: NocData): jsPDF {
   doc.setLineWidth(0.4);
   doc.roundedRect(photoX, photoY, photoW, photoH, 1, 1, "FD");
 
-  if (data.profilePhotoUrl && data.profilePhotoUrl.startsWith("data:image")) {
+  if (data.profilePhotoUrl && (data.profilePhotoUrl.startsWith("data:image") || data.profilePhotoUrl.startsWith("blob:"))) {
     try {
-      const format = data.profilePhotoUrl.toLowerCase().includes("png") ? "PNG" : "JPEG";
+      const format = getImageFormat(data.profilePhotoUrl);
       doc.addImage(data.profilePhotoUrl, format, photoX, photoY, photoW, photoH);
-    } catch {
+    } catch (err) {
+      console.warn("Failed to add profile photo to NOC:", err);
       _photoPlaceholder(doc, photoX, photoY, photoW, photoH);
     }
   } else {

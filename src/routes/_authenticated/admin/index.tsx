@@ -1608,8 +1608,9 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
     const loadingToast = toast.loading("Generating customized NOC Certificate...");
     try {
       let photoBase64: string | null = null;
-      if (app.profile_photo_url) {
-        photoBase64 = await urlToBase64(app.profile_photo_url);
+      const photoUrl = app.profile_photo_url || app.avatar_url || app.photo_url || null;
+      if (photoUrl) {
+        photoBase64 = await urlToBase64(photoUrl, 180, 220, false);
       }
 
       let sigUrl = "/signature.png";

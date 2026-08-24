@@ -109,6 +109,18 @@ export const listTeamMembers = createServerFn({ method: "GET" })
       .from("profiles")
       .select("*");
 
+    // Bulk fetch applications to attach profile photos, domains, colleges, etc.
+    const { data: applications } = await adminClient
+      .from("applications")
+      .select("id, email, phone, full_name, profile_photo_url, college, domain, sub_domain, internship_start_date, joining_date, hod_name");
+
+    const appByEmail = new Map<string, any>();
+    const appById = new Map<string, any>();
+    (applications || []).forEach((a: any) => {
+      if (a.email) appByEmail.set(a.email.toLowerCase(), a);
+      if (a.id) appById.set(a.id, a);
+    });
+
     // Fetch auth users
     const { data: authData } = await adminClient.auth.admin.listUsers();
     const authUsers = authData?.users || [];
@@ -121,30 +133,48 @@ export const listTeamMembers = createServerFn({ method: "GET" })
     (profiles || []).forEach((p: any) => {
       const authUser = authUsers.find((u: any) => u.id === p.id);
       const assignedRole = roleMap.get(p.id) || (p.intern_id ? "intern" : "employee");
-      const email = p.email || authUser?.email || "";
+      const email = (p.email || authUser?.email || "").toLowerCase();
       const full_name = p.full_name || authUser?.user_metadata?.full_name || email.split("@")[0];
+      const matchedApp = appByEmail.get(email) || appById.get(p.id) || {};
+
+      const profilePhoto = p.avatar_url || p.photo_url || p.profile_photo_url || matchedApp.profile_photo_url || null;
 
       membersMap.set(p.id, {
+        ...matchedApp,
         ...p,
         id: p.id,
+        application_id: matchedApp.id || p.id,
         user_id: p.id,
         role: assignedRole,
         email,
         full_name,
+        avatar_url: profilePhoto,
+        profile_photo_url: profilePhoto,
+        college: p.college || matchedApp.college || "Academic Institution",
+        department: p.department || matchedApp.domain || "Technology & Software",
+        position: p.position || matchedApp.sub_domain || "Full Stack Web Development",
+        start_date: p.start_date || matchedApp.internship_start_date || matchedApp.joining_date || null,
+        hod_name: p.hod_name || matchedApp.hod_name || null,
       });
     });
 
     (roles || []).forEach((r: any) => {
       if (!membersMap.has(r.user_id)) {
         const authUser = authUsers.find((u: any) => u.id === r.user_id);
-        const email = authUser?.email || "";
+        const email = (authUser?.email || "").toLowerCase();
         const full_name = authUser?.user_metadata?.full_name || email.split("@")[0];
+        const matchedApp = appByEmail.get(email) || {};
+        const profilePhoto = matchedApp.profile_photo_url || null;
+
         membersMap.set(r.user_id, {
+          ...matchedApp,
           id: r.user_id,
           user_id: r.user_id,
           role: r.role,
           email,
           full_name,
+          avatar_url: profilePhoto,
+          profile_photo_url: profilePhoto,
         });
       }
     });

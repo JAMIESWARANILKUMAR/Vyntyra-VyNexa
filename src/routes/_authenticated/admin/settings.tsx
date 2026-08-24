@@ -357,7 +357,24 @@ function AdminSettingsPage() {
       const logoUrl = brandingForm.vyntyra_logo_url || "/icon-512.png";
       const signatureBase64 = await urlToBase64(sigUrl, 260, 80, true);
       const logoBase64 = await urlToBase64(logoUrl, 160, 160, false);
-      const photoBase64 = intern.avatar_url ? await urlToBase64(intern.avatar_url, 180, 220, false) : null;
+      let photoUrl = intern.profile_photo_url || intern.avatar_url || intern.photo_url || null;
+      if (!photoUrl) {
+        try {
+          const { supabase } = await import("@/integrations/supabase/client");
+          const { data: appRec } = await supabase
+            .from("applications")
+            .select("profile_photo_url")
+            .or(`id.eq.${intern.id},email.eq.${intern.email}`)
+            .maybeSingle();
+          if (appRec?.profile_photo_url) {
+            photoUrl = appRec.profile_photo_url;
+          }
+        } catch (e) {
+          console.warn("Photo fallback lookup error:", e);
+        }
+      }
+
+      const photoBase64 = photoUrl ? await urlToBase64(photoUrl, 180, 220, false) : null;
 
       const selectionDate = intern.created_at ? new Date(intern.created_at) : new Date();
       const calcStartDate = intern.start_date ? new Date(intern.start_date) : new Date(selectionDate.getTime() + 4 * 24 * 60 * 60 * 1000);
