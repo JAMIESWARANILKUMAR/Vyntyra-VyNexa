@@ -40,7 +40,7 @@ import { listApplications, updateAdminNotes, getResumeSignedUrl, regenerateInter
 import { generatePayslipPdf } from "@/lib/payslip";
 import { generateNocPdf, urlToBase64 } from "@/lib/nocGenerator";
 import { saveNocPdf, saveInternshipCertificatePdf } from "@/lib/noc.functions";
-import { getApplicationsOpen, setApplicationsOpen } from "@/lib/settings.functions";
+import { getApplicationsOpen, setApplicationsOpen, getBrandingSettings } from "@/lib/settings.functions";
 import { listJobPostings, createJobPosting, updateJobPosting, toggleJobPosting, deleteJobPosting } from "@/lib/job-postings.functions";
 import { listAdminNotifications, markAllNotificationsRead } from "@/lib/notifications.functions";
 import { getVisitorCount } from "@/lib/visitor.functions";
@@ -1604,15 +1604,25 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
   }
 
   async function handleDownloadNoc() {
-    const loadingToast = toast.loading("Generating premium NOC Certificate...");
+    const loadingToast = toast.loading("Generating customized NOC Certificate...");
     try {
       let photoBase64: string | null = null;
       if (app.profile_photo_url) {
         photoBase64 = await urlToBase64(app.profile_photo_url);
       }
 
-      const logoBase64 = await urlToBase64("/icon-512.png");
-      const signatureBase64 = await urlToBase64("/signature.png");
+      let sigUrl = "/signature.png";
+      let logoUrl = "/icon-512.png";
+      try {
+        const branding = await getBrandingSettings();
+        if (branding.founder_signature_url) sigUrl = branding.founder_signature_url;
+        if (branding.vyntyra_logo_url) logoUrl = branding.vyntyra_logo_url;
+      } catch (e) {
+        console.warn("Using default signature & logo:", e);
+      }
+
+      const logoBase64 = await urlToBase64(logoUrl);
+      const signatureBase64 = await urlToBase64(sigUrl);
 
       const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
       const QRCode = (await import("qrcode")).default;

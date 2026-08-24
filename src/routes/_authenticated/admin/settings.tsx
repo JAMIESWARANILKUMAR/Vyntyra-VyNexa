@@ -6,7 +6,9 @@ import { toast } from "sonner";
 import { 
   Loader2, Settings2, ShieldCheck, CreditCard, Lock, ArrowLeft, Save, 
   RefreshCw, FileText, Tag, Percent, Plus, Search, Users, CheckCircle2, 
-  Trash2, Edit3, TrendingUp, Sparkles, AlertCircle, DollarSign, Check
+  Trash2, Edit3, TrendingUp, Sparkles, AlertCircle, DollarSign, Check,
+  Mail, MessageSquare, Send, Award, Image, Upload, ExternalLink, Globe2,
+  CheckCheck, Layers
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -18,6 +20,17 @@ import {
   listAllReferralPricingRules, upsertReferralPricingRule, deleteReferralPricingRule,
   sendUrgentPaymentPopupNotification
 } from "@/lib/operations.functions";
+import { getBrandingSettings, updateBrandingSettings } from "@/lib/settings.functions";
+import { 
+  listCareerDomains, addOrUpdateCareerDomain, removeCareerDomainOrSubdomain, 
+  saveCareerDomains, type DomainItem, DEFAULT_CAREER_DOMAINS 
+} from "@/lib/domains.functions";
+import { 
+  sendPaymentReminderEmail, sendBulkPaymentReminderEmails, 
+  generatePaymentReminderWhatsApp 
+} from "@/lib/notifications-omni.functions";
+import { generateNocPdf, urlToBase64 } from "@/lib/nocGenerator";
+import { saveNocPdf } from "@/lib/noc.functions";
 import { localDateTimeToIso, isoToLocalDateTimeInput, formatDateTimeDisplay } from "@/lib/date-utils";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
@@ -37,6 +50,16 @@ function AdminSettingsPage() {
   const doUpsertReferralPricingRule = useServerFn(upsertReferralPricingRule);
   const doDeleteReferralPricingRule = useServerFn(deleteReferralPricingRule);
   const doSendUrgentPopup = useServerFn(sendUrgentPaymentPopupNotification);
+
+  const fetchBranding = useServerFn(getBrandingSettings);
+  const doUpdateBranding = useServerFn(updateBrandingSettings);
+  const fetchDomains = useServerFn(listCareerDomains);
+  const doAddOrUpdateDomain = useServerFn(addOrUpdateCareerDomain);
+  const doRemoveDomain = useServerFn(removeCareerDomainOrSubdomain);
+  const doSaveNocPdf = useServerFn(saveNocPdf);
+  const doSendPaymentEmail = useServerFn(sendPaymentReminderEmail);
+  const doSendBulkPaymentEmails = useServerFn(sendBulkPaymentReminderEmails);
+  const doGenWhatsApp = useServerFn(generatePaymentReminderWhatsApp);
   
   const [targetType, setTargetType] = useState<"single" | "selected" | "all">("single");
   const [internId, setInternId] = useState("");
@@ -91,6 +114,212 @@ function AdminSettingsPage() {
     queryFn: () => fetchReferralPricingRules(),
     refetchInterval: 15000,
   });
+
+  const brandingQ = useQuery({
+    queryKey: ["admin-branding-settings"],
+    queryFn: () => fetchBranding(),
+  });
+
+  const domainsQ = useQuery({
+    queryKey: ["admin-career-domains"],
+    queryFn: () => fetchDomains(),
+  });
+
+  const [brandingForm, setBrandingForm] = useState({
+    founder_signature_url: "/signature.png",
+    vyntyra_logo_url: "/icon-512.png",
+    founder_name: "Jami Eswar Anil Kumar",
+    founder_title: "Founder & Managing Director",
+  });
+
+  useEffect(() => {
+    if (brandingQ.data) {
+      setBrandingForm({
+        founder_signature_url: brandingQ.data.founder_signature_url || "/signature.png",
+        vyntyra_logo_url: brandingQ.data.vyntyra_logo_url || "/icon-512.png",
+        founder_name: brandingQ.data.founder_name || "Jami Eswar Anil Kumar",
+        founder_title: brandingQ.data.founder_title || "Founder & Managing Director",
+      });
+    }
+  }, [brandingQ.data]);
+
+  const [isSavingBranding, setIsSavingBranding] = useState(false);
+  const [isBulkSendingEmail, setIsBulkSendingEmail] = useState(false);
+
+  // Dynamic Domain management form state
+  const [domainNameInput, setDomainNameInput] = useState("");
+  const [domainCategoryInput, setDomainCategoryInput] = useState<"Internship" | "Full Time Role" | "Both">("Both");
+  const [domainIsNewInput, setDomainIsNewInput] = useState(true);
+  const [selectedParentDomain, setSelectedParentDomain] = useState("");
+  const [subdomainNameInput, setSubdomainNameInput] = useState("");
+  const [subdomainIsNewInput, setSubdomainIsNewInput] = useState(true);
+  const [isSavingDomain, setIsSavingDomain] = useState(false);
+
+  async function handleSaveBranding(e: React.FormEvent) {
+    e.preventDefault();
+    setIsSavingBranding(true);
+    try {
+      await doUpdateBranding({ data: brandingForm });
+      toast.success("Founder Signature and Vyntyra Logo settings updated successfully!");
+      qc.invalidateQueries({ queryKey: ["admin-branding-settings"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update branding settings");
+    } finally {
+      setIsSavingBranding(false);
+    }
+  }
+
+  async function handleAddDomain() {
+    if (!domainNameInput.trim()) return toast.error("Please enter a domain name.");
+    setIsSavingDomain(true);
+    try {
+      await doAddOrUpdateDomain({
+        data: {
+          domainName: domainNameInput.trim(),
+          category: domainCategoryInput,
+          isNew: domainIsNewInput,
+        },
+      });
+      toast.success(`Domain "${domainNameInput}" added successfully!`);
+      setDomainNameInput("");
+      qc.invalidateQueries({ queryKey: ["admin-career-domains"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add domain");
+    } finally {
+      setIsSavingDomain(false);
+    }
+  }
+
+  async function handleAddSubdomain() {
+    if (!selectedParentDomain) return toast.error("Please choose a primary domain.");
+    if (!subdomainNameInput.trim()) return toast.error("Please enter a sub-domain track name.");
+    setIsSavingDomain(true);
+    try {
+      await doAddOrUpdateDomain({
+        data: {
+          domainName: selectedParentDomain,
+          subdomainName: subdomainNameInput.trim(),
+          isNew: subdomainIsNewInput,
+        },
+      });
+      toast.success(`Sub-domain "${subdomainNameInput}" added under ${selectedParentDomain}!`);
+      setSubdomainNameInput("");
+      qc.invalidateQueries({ queryKey: ["admin-career-domains"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add sub-domain");
+    } finally {
+      setIsSavingDomain(false);
+    }
+  }
+
+  async function handleDeleteDomainOrSubdomain(domainId: string, subdomainId?: string) {
+    if (!confirm(`Are you sure you want to delete this ${subdomainId ? "sub-domain" : "domain"}?`)) return;
+    try {
+      await doRemoveDomain({ data: { domainId, subdomainId } });
+      toast.success(`${subdomainId ? "Sub-domain" : "Domain"} removed successfully.`);
+      qc.invalidateQueries({ queryKey: ["admin-career-domains"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove domain");
+    }
+  }
+
+  async function handleBulkPaymentReminders() {
+    if (!confirm("Send personalized Payment Reminder emails with 'Pay Exam Fee Online' buttons to all unpaid interns?")) return;
+    setIsBulkSendingEmail(true);
+    try {
+      const res = await doSendBulkPaymentEmails({ data: { targetType: "all_unpaid" } });
+      toast.success(res.message);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send bulk reminders");
+    } finally {
+      setIsBulkSendingEmail(false);
+    }
+  }
+
+  async function handleSendIndividualPaymentEmail(intern: any) {
+    const loadingToast = toast.loading(`Sending payment reminder email to ${intern.email}...`);
+    try {
+      await doSendPaymentEmail({
+        data: {
+          recipient_email: intern.email,
+          recipient_name: intern.full_name,
+          recipient_phone: intern.phone || intern.phone_number,
+          intern_id: intern.intern_id,
+          exam_fee_amount: intern.exam_fee_amount !== undefined ? intern.exam_fee_amount : 199,
+          payment_deadline: intern.fee_payment_deadline,
+        },
+      });
+      toast.dismiss(loadingToast);
+      toast.success(`Payment reminder email sent to ${intern.email}!`);
+    } catch (err: any) {
+      toast.dismiss(loadingToast);
+      toast.error("Failed to send email: " + err.message);
+    }
+  }
+
+  async function handleSendIndividualWhatsApp(intern: any) {
+    const phone = intern.phone || intern.phone_number;
+    if (!phone) return toast.error("No phone number found for this intern.");
+    try {
+      const res = await doGenWhatsApp({
+        data: {
+          recipientPhone: phone,
+          recipientName: intern.full_name,
+          examFeeAmount: intern.exam_fee_amount !== undefined ? intern.exam_fee_amount : 199,
+          paymentDeadline: intern.fee_payment_deadline,
+        },
+      });
+      window.open(res.whatsappUrl, "_blank");
+    } catch (err: any) {
+      toast.error("Failed to prepare WhatsApp reminder: " + err.message);
+    }
+  }
+
+  async function handleGenerateIndividualNoc(intern: any) {
+    const loadingToast = toast.loading(`Generating customized NOC for ${intern.full_name || intern.email}...`);
+    try {
+      const QRCode = (await import("qrcode")).default;
+      const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${intern.id}`;
+      const qrBase64 = await QRCode.toDataURL(verificationUrl, { margin: 1, color: { dark: "#0f172a", light: "#ffffff" } });
+
+      const sigUrl = brandingForm.founder_signature_url || "/signature.png";
+      const logoUrl = brandingForm.vyntyra_logo_url || "/icon-512.png";
+      const signatureBase64 = await urlToBase64(sigUrl);
+      const logoBase64 = await urlToBase64(logoUrl);
+      const photoBase64 = intern.avatar_url ? await urlToBase64(intern.avatar_url) : null;
+
+      const selectionDate = intern.created_at ? new Date(intern.created_at) : new Date();
+      const calcStartDate = intern.start_date ? new Date(intern.start_date) : new Date(selectionDate.getTime() + 4 * 24 * 60 * 60 * 1000);
+      const formattedStartDate = calcStartDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
+
+      const doc = generateNocPdf({
+        fullName: intern.full_name || "Intern Candidate",
+        email: intern.email || "",
+        phone: intern.phone || intern.phone_number || "",
+        applicationId: intern.id,
+        college: intern.college || "Academic Institution",
+        domain: intern.department || "Technology & Software",
+        subDomain: intern.position || "Full Stack Web Development",
+        internshipStartDate: formattedStartDate,
+        profilePhotoUrl: photoBase64,
+        qrCodeBase64: qrBase64,
+        logoBase64: logoBase64,
+        signatureBase64: signatureBase64,
+        hodName: intern.hod_name || null,
+      });
+
+      const pdfDataUri = doc.output("datauristring");
+      await doSaveNocPdf({ data: { applicationId: intern.id, pdfBase64: pdfDataUri } });
+
+      toast.dismiss(loadingToast);
+      toast.success(`NOC successfully generated and assigned to ${intern.full_name}!`);
+      membersQ.refetch();
+      doc.save(`NOC_${(intern.full_name || "Intern").replace(/\s+/g, "_")}_Vyntyra.pdf`);
+    } catch (err: any) {
+      toast.dismiss(loadingToast);
+      toast.error("Failed to generate NOC: " + err.message);
+    }
+  }
 
   const allInterns = (membersQ.data || []).filter((m: any) => 
     m.role === "intern" || 
@@ -641,6 +870,15 @@ function AdminSettingsPage() {
             <div className="flex items-center gap-2">
               <Button 
                 size="sm" 
+                onClick={handleBulkPaymentReminders}
+                disabled={isBulkSendingEmail}
+                className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs gap-1.5"
+              >
+                {isBulkSendingEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                Send Bulk Payment Reminders (Email)
+              </Button>
+              <Button 
+                size="sm" 
                 variant="outline" 
                 onClick={() => membersQ.refetch()} 
                 className="h-8 text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border-white/20 gap-1.5"
@@ -696,9 +934,9 @@ function AdminSettingsPage() {
                     <th className="py-3 px-4">Exam Fee (₹)</th>
                     <th className="py-3 px-4">Fee Scheduled</th>
                     <th className="py-3 px-4">Payment Deadline</th>
-                    <th className="py-3 px-4">Payment Status</th>
+                    <th className="py-3 px-4">Payment Status &amp; Ref</th>
                     <th className="py-3 px-4">Urgent Popup</th>
-                    <th className="py-3 px-4 text-right">Quick Action</th>
+                    <th className="py-3 px-4 text-right">Omnichannel &amp; Quick Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -781,9 +1019,17 @@ function AdminSettingsPage() {
 
                             <td className="py-3 px-4">
                               {intern.exam_fee_paid ? (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                  ✓ Paid
-                                </span>
+                                <div>
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                    ✓ Paid
+                                  </span>
+                                  <div className="text-[10px] text-slate-600 font-mono mt-0.5">
+                                    Ref: {intern.payment_reference_no || `TXN-${(intern.id || "").slice(0, 6).toUpperCase()}`}
+                                  </div>
+                                  <div className="text-[9px] text-slate-400">
+                                    {intern.payment_mode || "PayU PG / Online"}
+                                  </div>
+                                </div>
                               ) : intern.is_fee_exempted ? (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-300">
                                   Exempted
@@ -806,11 +1052,47 @@ function AdminSettingsPage() {
                             </td>
 
                             <td className="py-3 px-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
+                              <div className="flex items-center justify-end flex-wrap gap-1">
+                                {/* Individual Customized NOC generation */}
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="h-7 text-[10px] font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-300"
+                                  title="Generate customized NOC with Founder Signature & Logo"
+                                  className="h-7 px-2 text-[10px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border-emerald-300 gap-1"
+                                  onClick={() => handleGenerateIndividualNoc(intern)}
+                                >
+                                  <Award className="h-3 w-3" /> NOC
+                                </Button>
+
+                                {/* Omnichannel Payment Reminders (Email & WhatsApp) */}
+                                {!intern.exam_fee_paid && !intern.is_fee_exempted && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      title="Send individual Payment Reminder email with Pay Online button"
+                                      className="h-7 px-2 text-[10px] font-bold text-blue-800 bg-blue-50 hover:bg-blue-100 border-blue-300 gap-1"
+                                      onClick={() => handleSendIndividualPaymentEmail(intern)}
+                                    >
+                                      <Mail className="h-3 w-3" /> Email
+                                    </Button>
+
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      title="Open formatted WhatsApp payment reminder"
+                                      className="h-7 px-2 text-[10px] font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border-teal-300 gap-1"
+                                      onClick={() => handleSendIndividualWhatsApp(intern)}
+                                    >
+                                      <MessageSquare className="h-3 w-3" /> WhatsApp
+                                    </Button>
+                                  </>
+                                )}
+
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-[10px] font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-300"
                                   onClick={() => {
                                     setTargetType("single");
                                     setInternId(intern.id);
@@ -829,7 +1111,7 @@ function AdminSettingsPage() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="h-7 text-[10px] font-bold text-red-700 bg-red-50 hover:bg-red-100 border-red-200"
+                                  className="h-7 px-2 text-[10px] font-bold text-red-700 bg-red-50 hover:bg-red-100 border-red-200"
                                   onClick={() => {
                                     setPopupForm({
                                       targetType: "single",
@@ -851,6 +1133,291 @@ function AdminSettingsPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── BRANDING & FOUNDER SIGNATURE / LOGO CUSTOMIZER ─── */}
+        <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-emerald-100">
+          <div className="p-5 border-b bg-gradient-to-r from-emerald-50/80 via-white to-emerald-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-xs">
+                <Award className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Certificate Branding, Signature &amp; Logo Settings</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Configure the official Founder Signature URL, Vyntyra Logo URL, and signatory credentials applied during NOC &amp; certificate issuance.
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={handleSaveBranding}
+              disabled={isSavingBranding}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 gap-1.5 shadow-xs"
+            >
+              {isSavingBranding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Save Branding Settings
+            </Button>
+          </div>
+
+          <form onSubmit={handleSaveBranding} className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Founder Signature URL & Live Preview */}
+              <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <FileText className="h-4 w-4 text-emerald-600" /> Founder Signature Image URL
+                  </label>
+                  <span className="text-[10px] text-slate-400">PNG / WebP / JPG</span>
+                </div>
+                <Input
+                  placeholder="https://.../signature.png or /signature.png"
+                  value={brandingForm.founder_signature_url}
+                  onChange={(e) => setBrandingForm({ ...brandingForm, founder_signature_url: e.target.value })}
+                  className="bg-white text-xs"
+                />
+                <div className="p-3 bg-white rounded-lg border border-slate-200 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Signature Preview</span>
+                    <span className="text-xs text-slate-600 font-semibold">{brandingForm.founder_name}</span>
+                  </div>
+                  <div className="h-12 w-28 bg-slate-50 border border-dashed rounded flex items-center justify-center overflow-hidden p-1">
+                    {brandingForm.founder_signature_url ? (
+                      <img
+                        src={brandingForm.founder_signature_url}
+                        alt="Signature Preview"
+                        className="max-h-full max-w-full object-contain"
+                        onError={(e: any) => { (e.target as HTMLElement).style.display = "none"; }}
+                      />
+                    ) : (
+                      <span className="text-[9px] text-slate-400 italic">No image</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Vyntyra Logo URL & Live Preview */}
+              <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Image className="h-4 w-4 text-emerald-600" /> Vyntyra Official Logo URL
+                  </label>
+                  <span className="text-[10px] text-slate-400">PNG / WebP / SVG</span>
+                </div>
+                <Input
+                  placeholder="https://.../logo.png or /icon-512.png"
+                  value={brandingForm.vyntyra_logo_url}
+                  onChange={(e) => setBrandingForm({ ...brandingForm, vyntyra_logo_url: e.target.value })}
+                  className="bg-white text-xs"
+                />
+                <div className="p-3 bg-white rounded-lg border border-slate-200 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Logo Preview</span>
+                    <span className="text-xs text-slate-600 font-semibold">Project VyNexa</span>
+                  </div>
+                  <div className="h-12 w-16 bg-slate-900 rounded flex items-center justify-center overflow-hidden p-1">
+                    {brandingForm.vyntyra_logo_url ? (
+                      <img
+                        src={brandingForm.vyntyra_logo_url}
+                        alt="Logo Preview"
+                        className="max-h-full max-w-full object-contain"
+                        onError={(e: any) => { (e.target as HTMLElement).style.display = "none"; }}
+                      />
+                    ) : (
+                      <span className="text-[9px] text-slate-400 italic">No image</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Signatory Name & Title */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Signatory / Founder Name</label>
+                <Input
+                  value={brandingForm.founder_name}
+                  onChange={(e) => setBrandingForm({ ...brandingForm, founder_name: e.target.value })}
+                  className="text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Signatory Title / Designation</label>
+                <Input
+                  value={brandingForm.founder_title}
+                  onChange={(e) => setBrandingForm({ ...brandingForm, founder_title: e.target.value })}
+                  className="text-xs"
+                />
+              </div>
+            </div>
+          </form>
+        </div>
+
+        {/* ─── DYNAMIC APPLICATION DOMAINS & SUB-DOMAINS MANAGER ─── */}
+        <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-blue-100">
+          <div className="p-5 border-b bg-gradient-to-r from-blue-50/80 via-white to-blue-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-blue-600 text-white rounded-xl shadow-xs">
+                <Layers className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Application Domains &amp; Sub-Domains Manager</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Add or remove primary domains and specialization tracks in the Careers application form. Newly added tracks show a vibrant "NEW" badge.
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => domainsQ.refetch()}
+              className="h-8 text-xs font-semibold gap-1.5"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${domainsQ.isFetching ? "animate-spin" : ""}`} /> Refresh Tracks
+            </Button>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Add Forms Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
+              {/* Add Primary Domain */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Plus className="h-4 w-4 text-blue-600" />
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Add Primary Domain / Department</h3>
+                </div>
+                <div className="space-y-2">
+                  <Input
+                    placeholder="e.g. Artificial Intelligence & Robotics"
+                    value={domainNameInput}
+                    onChange={(e) => setDomainNameInput(e.target.value)}
+                    className="bg-white text-xs h-9"
+                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={domainIsNewInput}
+                        onChange={(e) => setDomainIsNewInput(e.target.checked)}
+                        className="rounded text-blue-600"
+                      />
+                      <span>Mark with <strong>"NEW"</strong> Badge</span>
+                    </label>
+                    <Button
+                      size="sm"
+                      onClick={handleAddDomain}
+                      disabled={isSavingDomain || !domainNameInput.trim()}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 font-bold"
+                    >
+                      {isSavingDomain ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                      Add Domain
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Add Sub-domain / Track */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Plus className="h-4 w-4 text-blue-600" />
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Add Sub-Domain / Track under Domain</h3>
+                </div>
+                <div className="space-y-2">
+                  <select
+                    value={selectedParentDomain}
+                    onChange={(e) => setSelectedParentDomain(e.target.value)}
+                    className="w-full h-9 rounded-md border border-input bg-white px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="">-- Choose Primary Domain --</option>
+                    {(domainsQ.data || DEFAULT_CAREER_DOMAINS).map((d: DomainItem) => (
+                      <option key={d.id} value={d.name}>{d.name}</option>
+                    ))}
+                  </select>
+                  <Input
+                    placeholder="e.g. LLM Fine-Tuning & Prompt Engineering"
+                    value={subdomainNameInput}
+                    onChange={(e) => setSubdomainNameInput(e.target.value)}
+                    className="bg-white text-xs h-9"
+                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={subdomainIsNewInput}
+                        onChange={(e) => setSubdomainIsNewInput(e.target.checked)}
+                        className="rounded text-blue-600"
+                      />
+                      <span>Mark with <strong>"NEW"</strong> Badge</span>
+                    </label>
+                    <Button
+                      size="sm"
+                      onClick={handleAddSubdomain}
+                      disabled={isSavingDomain || !selectedParentDomain || !subdomainNameInput.trim()}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-8 font-bold"
+                    >
+                      {isSavingDomain ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                      Add Sub-Domain Track
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* List of Configured Domains & Sub-domains */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                Configured Application Tracks ({(domainsQ.data || DEFAULT_CAREER_DOMAINS).length} Domains)
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(domainsQ.data || DEFAULT_CAREER_DOMAINS).map((dom: DomainItem) => (
+                  <div key={dom.id} className="p-4 bg-white border rounded-xl shadow-xs space-y-3 hover:border-slate-300 transition-colors">
+                    <div className="flex items-start justify-between gap-2 border-b pb-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-slate-900 text-sm">{dom.name}</span>
+                          {dom.is_new && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-emerald-600 text-white shadow-xs">
+                              <Sparkles className="h-2.5 w-2.5" /> NEW
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono">{dom.subdomains?.length || 0} tracks</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDeleteDomainOrSubdomain(dom.id)}
+                        className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        title="Delete this domain"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+
+                    {/* Subdomains list */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {(dom.subdomains || []).map((sub) => (
+                        <span
+                          key={sub.id}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] bg-slate-100 text-slate-700 border border-slate-200"
+                        >
+                          {sub.name}
+                          {sub.is_new && (
+                            <span className="text-[8px] font-black text-emerald-700 bg-emerald-100 px-1 rounded uppercase">NEW</span>
+                          )}
+                          <button
+                            onClick={() => handleDeleteDomainOrSubdomain(dom.id, sub.id)}
+                            className="ml-1 text-slate-400 hover:text-red-600"
+                            title="Remove track"
+                          >
+                            &times;
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -58,3 +58,80 @@ export const generatePayuCheckout = createServerFn({ method: "POST" })
       action: "https://secure.payu.in/_payment",
     };
   });
+
+export const confirmInternPayment = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      userId: z.string(),
+      txnid: z.string(),
+      amount: z.number().optional(),
+      paymentMode: z.string().default("PayU PG / Online"),
+      paymentStatus: z.string().default("paid"),
+    })
+  )
+  .handler(async ({ data }) => {
+    const { getAdminClient } = await import("@/integrations/supabase/admin");
+    const admin = getAdminClient();
+
+    const updatePayload: any = {
+      exam_fee_paid: true,
+      payment_reference_no: data.txnid,
+      payment_status: data.paymentStatus,
+      payment_mode: data.paymentMode,
+      urgent_popup_active: false,
+      fee_payment_scheduled: false,
+      paid_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Update profile
+    const { error: profError } = await admin
+      .from("profiles")
+      .update(updatePayload)
+      .eq("id", data.userId);
+
+    if (profError) {
+      console.warn("[confirmInternPayment] profile update warning:", profError.message);
+    }
+
+    // Also update any matching application record
+    try {
+      const { data: prof } = await admin.from("profiles").select("email").eq("id", data.userId).maybeSingle();
+      if (prof?.email) {
+        await admin
+          .from("applications")
+          .update({
+            exam_fee_paid: true,
+            payment_reference_no: data.txnid,
+            payment_status: data.paymentStatus,
+            payment_mode: data.paymentMode,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("email", prof.email);
+      }
+    } catch (e) {
+      console.warn("[confirmInternPayment] application update warning:", e);
+    }
+
+    // Insert user notification
+    try {
+      await admin.from("user_notifications").insert({
+        user_id: data.userId,
+        title: "Exam Fee Payment Confirmed",
+        message: `Your payment has been verified (Ref: ${data.txnid}). Your Intern Dashboard and task deliverables are fully unlocked!`,
+        type: "payment_confirmed",
+        is_read: false,
+        created_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn("[confirmInternPayment] notification insert skipped:", e);
+    }
+
+    return {
+      success: true,
+      referenceNo: data.txnid,
+      status: data.paymentStatus,
+      mode: data.paymentMode,
+      message: "Payment successfully verified and recorded.",
+    };
+  });

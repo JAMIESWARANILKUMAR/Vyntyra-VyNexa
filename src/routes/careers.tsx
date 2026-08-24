@@ -44,6 +44,7 @@ import { InstallPwaButton } from "@/components/install-pwa-button";
 import { CloudflareTurnstile } from "@/components/cloudflare-turnstile";
 import { Header } from "@/components/Header";
 import { lookupReferralCodePricing } from "@/lib/operations.functions";
+import { listCareerDomains, type DomainItem, DEFAULT_CAREER_DOMAINS } from "@/lib/domains.functions";
 
 export const Route = createFileRoute("/careers")({
   head: () => ({
@@ -208,6 +209,8 @@ function ApplicationPage() {
   const fetchOpen = useServerFn(getApplicationsOpen);
   const fetchJobs = useServerFn(listActiveJobPostings);
   const incrementVisit = useServerFn(incrementVisitorCount);
+  const fetchDomains = useServerFn(listCareerDomains);
+  const [careerDomains, setCareerDomains] = useState<DomainItem[]>(DEFAULT_CAREER_DOMAINS);
   const [submitting, setSubmitting] = useState(false);
   const [agreementOpen, setAgreementOpen] = useState(false);
   const [agreed, setAgreed] = useState(false);
@@ -234,8 +237,9 @@ function ApplicationPage() {
   useEffect(() => {
     fetchOpen().then((r: { enabled: boolean }) => setApplicationsOpen(r.enabled)).catch(() => {});
     fetchJobs().then((r: any[]) => setJobPostings(r ?? [])).catch(() => {});
+    fetchDomains().then((res: DomainItem[]) => { if (res && res.length) setCareerDomains(res); }).catch(() => {});
     incrementVisit().catch(() => {});
-  }, [fetchOpen, fetchJobs, incrementVisit]);
+  }, [fetchOpen, fetchJobs, fetchDomains, incrementVisit]);
 
   const [form, setForm] = useState<ApplicationForm>({
     full_name: "", email: "", phone: "",
@@ -628,8 +632,17 @@ function ApplicationPage() {
                     >
                       <SelectTrigger><SelectValue placeholder="Select Primary Domain" /></SelectTrigger>
                       <SelectContent>
-                        {Object.keys(DOMAIN_SUBDOMAINS_MAP).map((d) => (
-                          <SelectItem key={d} value={d}>{d}</SelectItem>
+                        {careerDomains.map((d) => (
+                          <SelectItem key={d.id || d.name} value={d.name}>
+                            <div className="flex items-center justify-between gap-2 w-full">
+                              <span>{d.name}</span>
+                              {d.is_new && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-xs animate-pulse">
+                                  <Sparkles className="h-2.5 w-2.5" /> NEW
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -648,19 +661,23 @@ function ApplicationPage() {
                         <SelectValue placeholder={form.domain ? "Select Sub-Domain Track" : "First choose a Primary Domain"} />
                       </SelectTrigger>
                       <SelectContent className="max-h-80">
-                        {(DOMAIN_SUBDOMAINS_MAP[form.domain] || [
-                          "Full-Stack Development (React/Next.js + Node)",
-                          "MERN Stack (MongoDB, Express, React, Node.js)",
-                          "MEAN Stack (MongoDB, Express, Angular, Node.js)",
-                          "Frontend Engineering",
-                          "Backend Engineering",
-                          "DevOps & Cloud Infrastructure",
-                          "Marketing & Growth",
-                          "Customer Support & Operations",
-                          "R&D & Artificial Intelligence"
-                        ]).map((sub) => (
-                          <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                        ))}
+                        {(() => {
+                          const matchedDomain = careerDomains.find((d) => d.name === form.domain);
+                          const subList = matchedDomain?.subdomains || (DOMAIN_SUBDOMAINS_MAP[form.domain] || []).map((s) => ({ id: s, name: s, is_new: false }));
+
+                          return subList.map((sub) => (
+                            <SelectItem key={sub.id || sub.name} value={sub.name}>
+                              <div className="flex items-center justify-between gap-2 w-full">
+                                <span>{sub.name}</span>
+                                {sub.is_new && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-xs animate-pulse">
+                                    <Sparkles className="h-2.5 w-2.5" /> NEW
+                                  </span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ));
+                        })()}
                       </SelectContent>
                     </Select>
                   </Field>

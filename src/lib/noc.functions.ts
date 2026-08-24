@@ -204,7 +204,17 @@ export const saveNocPdf = createServerFn({ method: "POST" })
       .from("default")
       .getPublicUrl(filepath);
 
-    await adminClient.from("applications").update({ noc_url: publicUrl }).eq("id", data.applicationId);
+    await adminClient.from("applications").update({ noc_url: publicUrl, updated_at: new Date().toISOString() }).eq("id", data.applicationId);
+
+    try {
+      const { data: appData } = await adminClient.from("applications").select("email").eq("id", data.applicationId).maybeSingle();
+      if (appData?.email) {
+        await adminClient.from("profiles").update({ noc_url: publicUrl, updated_at: new Date().toISOString() }).eq("email", appData.email);
+      }
+      await adminClient.from("profiles").update({ noc_url: publicUrl, updated_at: new Date().toISOString() }).eq("id", data.applicationId);
+    } catch (e) {
+      console.warn("[saveNocPdf] profile noc_url update non-fatal:", e);
+    }
 
     return { success: true, url: publicUrl };
   });

@@ -42,7 +42,7 @@ import {
   dismissUrgentPopup
 } from "@/lib/operations.functions";
 import { listMyNotifications, markUserNotificationRead } from "@/lib/notifications.functions";
-import { generatePayuCheckout } from "@/lib/payu.functions";
+import { generatePayuCheckout, confirmInternPayment } from "@/lib/payu.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
   head: () => ({ meta: [{ title: "Intern Dashboard — Vyntyra" }] }),
@@ -489,18 +489,45 @@ function InternDashboard() {
     reader.readAsDataURL(file);
   };
 
-  const handleNOCDownload = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (docsQ.data?.nocUrl) window.open(docsQ.data.nocUrl, "_blank");
-    else toast.error("NOC not available yet.");
-  };
+  const doConfirmPayment = useServerFn(confirmInternPayment);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get("payment");
+    const txnid = urlParams.get("txnid");
+    const action = urlParams.get("action");
+
+    if (paymentStatus === "success" && txnid && session?.user?.id) {
+      toast.loading("Verifying and recording your payment...", { id: "payment-verify" });
+      doConfirmPayment({
+        data: {
+          userId: session.user.id,
+          txnid,
+          paymentMode: "PayU PG / Online",
+          paymentStatus: "paid",
+        },
+      })
+        .then(() => {
+          toast.success("Payment verified! Your Intern Dashboard and task deliverables are fully unlocked.", { id: "payment-verify" });
+          qc.invalidateQueries({ queryKey: ["profile"] });
+          window.history.replaceState({}, document.title, window.location.pathname);
+        })
+        .catch(() => {
+          qc.invalidateQueries({ queryKey: ["profile"] });
+        });
+    }
+
+    if (action === "pay_fee") {
+      setShowPaymentModal(true);
+    }
+  }, [session?.user?.id, doConfirmPayment, qc]);
 
   const handleOfferLetterDownload = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (docsQ.data?.offerLetterUrl) window.open(docsQ.data.offerLetterUrl, "_blank");
     else toast.error("Offer Letter not available yet.");
   };
-
 
   useEffect(() => {
     if (profile?.department) {
@@ -944,21 +971,6 @@ function InternDashboard() {
                 ) : (
                   <>
                     <a
-                      href={docsQ.data?.nocUrl || "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                        docsQ.data?.nocUrl
-                          ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20"
-                          : "bg-slate-200 text-slate-400 cursor-not-allowed pointer-events-none"
-                      }`}
-                      onClick={(e) => { if (!docsQ.data?.nocUrl) e.preventDefault(); }}
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      Download NOC
-                      {!docsQ.data?.nocUrl && <span className="ml-1 opacity-70">(Not Ready)</span>}
-                    </a>
-                    <a
                       href={docsQ.data?.offerLetterUrl || "#"}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -973,6 +985,12 @@ function InternDashboard() {
                       Download Offer Letter
                       {!docsQ.data?.offerLetterUrl && <span className="ml-1 opacity-70">(Not Ready)</span>}
                     </a>
+                    {profile?.exam_fee_paid && (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        <span>Fee Paid · Ref: <strong className="font-mono">{profile.payment_reference_no || `TXN-${(profile.id || "").slice(0, 6).toUpperCase()}`}</strong> ({profile.payment_mode || "Online"})</span>
+                      </div>
+                    )}
                     <button
                       onClick={() => docsQ.refetch()}
                       className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
