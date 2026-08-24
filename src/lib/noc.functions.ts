@@ -257,29 +257,53 @@ export const updateNocUrl = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
     const isDownloadEnabled = data.enableDownload ?? true;
-    await adminClient.from("applications").update({ 
-      noc_url: data.publicUrl, 
-      noc_download_enabled: isDownloadEnabled,
-      updated_at: new Date().toISOString() 
-    }).eq("id", data.applicationId);
+
+    // Persist to site_settings (works immediately and reliably)
+    try {
+      await adminClient.from("site_settings").upsert({
+        id: `noc_enabled_${data.applicationId}`,
+        enabled: isDownloadEnabled,
+        value: { url: data.publicUrl, enabled: isDownloadEnabled },
+        updated_at: new Date().toISOString()
+      });
+    } catch (e) {
+      console.warn("[updateNocUrl] site_settings upsert error:", e);
+    }
 
     try {
       const { data: appData } = await adminClient.from("applications").select("email").eq("id", data.applicationId).maybeSingle();
       if (appData?.email) {
+        const emailKey = appData.email.toLowerCase().trim();
+        await adminClient.from("site_settings").upsert({
+          id: `noc_enabled_${emailKey}`,
+          enabled: isDownloadEnabled,
+          value: { url: data.publicUrl, enabled: isDownloadEnabled },
+          updated_at: new Date().toISOString()
+        });
+
         await adminClient.from("profiles").update({ 
           noc_url: data.publicUrl, 
-          noc_download_enabled: isDownloadEnabled,
           updated_at: new Date().toISOString() 
-        }).ilike("email", appData.email);
+        }).ilike("email", emailKey);
       }
+    } catch (e) {
+      console.warn("[updateNocUrl] email profile update non-fatal:", e);
+    }
+
+    try {
+      await adminClient.from("applications").update({ 
+        noc_url: data.publicUrl, 
+        updated_at: new Date().toISOString() 
+      }).eq("id", data.applicationId);
+
       await adminClient.from("profiles").update({ 
         noc_url: data.publicUrl, 
-        noc_download_enabled: isDownloadEnabled,
         updated_at: new Date().toISOString() 
       }).eq("id", data.applicationId);
     } catch (e) {
-      console.warn("[updateNocUrl] profile noc_url update non-fatal:", e);
+      console.warn("[updateNocUrl] table noc_url update non-fatal:", e);
     }
+
     return { success: true, url: data.publicUrl, enabled: isDownloadEnabled };
   });
 
@@ -308,28 +332,50 @@ export const saveNocPdf = createServerFn({ method: "POST" })
 
     const publicUrl = publicUrlData.publicUrl;
 
-    await adminClient.from("applications").update({ 
-      noc_url: publicUrl, 
-      noc_download_enabled: true,
-      updated_at: new Date().toISOString() 
-    }).eq("id", data.applicationId);
+    // Persist to site_settings
+    try {
+      await adminClient.from("site_settings").upsert({
+        id: `noc_enabled_${data.applicationId}`,
+        enabled: true,
+        value: { url: publicUrl, enabled: true },
+        updated_at: new Date().toISOString()
+      });
+    } catch (e) {
+      console.warn("[saveNocPdf] site_settings upsert error:", e);
+    }
 
     try {
       const { data: appData } = await adminClient.from("applications").select("email").eq("id", data.applicationId).maybeSingle();
       if (appData?.email) {
+        const emailKey = appData.email.toLowerCase().trim();
+        await adminClient.from("site_settings").upsert({
+          id: `noc_enabled_${emailKey}`,
+          enabled: true,
+          value: { url: publicUrl, enabled: true },
+          updated_at: new Date().toISOString()
+        });
+
         await adminClient.from("profiles").update({ 
           noc_url: publicUrl, 
-          noc_download_enabled: true,
           updated_at: new Date().toISOString() 
-        }).ilike("email", appData.email);
+        }).ilike("email", emailKey);
       }
+    } catch (e) {
+      console.warn("[saveNocPdf] email profile update non-fatal:", e);
+    }
+
+    try {
+      await adminClient.from("applications").update({ 
+        noc_url: publicUrl, 
+        updated_at: new Date().toISOString() 
+      }).eq("id", data.applicationId);
+
       await adminClient.from("profiles").update({ 
         noc_url: publicUrl, 
-        noc_download_enabled: true,
         updated_at: new Date().toISOString() 
       }).eq("id", data.applicationId);
     } catch (e) {
-      console.warn("[saveNocPdf] profile noc_url update non-fatal:", e);
+      console.warn("[saveNocPdf] table noc_url update non-fatal:", e);
     }
 
     return { success: true, url: publicUrl, filepath };

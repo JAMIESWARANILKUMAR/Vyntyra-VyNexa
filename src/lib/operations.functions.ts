@@ -112,7 +112,16 @@ export const listTeamMembers = createServerFn({ method: "GET" })
     // Bulk fetch applications to attach profile photos, domains, colleges, noc_url, etc.
     const { data: applications } = await adminClient
       .from("applications")
-      .select("id, email, phone, full_name, profile_photo_url, college, domain, sub_domain, internship_start_date, joining_date, hod_name, noc_url, noc_download_enabled");
+      .select("id, email, phone, full_name, profile_photo_url, college, domain, sub_domain, internship_start_date, joining_date, hod_name, noc_url");
+
+    // Fetch site_settings to check NOC download flags
+    const { data: nocSettingsList } = await adminClient
+      .from("site_settings")
+      .select("id, enabled");
+
+    const nocSettingsMap = new Map<string, boolean>();
+    (nocSettingsList || []).forEach((s: any) => nocSettingsMap.set(s.id, !!s.enabled));
+    const globalNocEnabled = nocSettingsMap.get("noc_download_settings") ?? false;
 
     const appByEmail = new Map<string, any>();
     const appById = new Map<string, any>();
@@ -139,6 +148,10 @@ export const listTeamMembers = createServerFn({ method: "GET" })
 
       const profilePhoto = p.avatar_url || p.photo_url || p.profile_photo_url || matchedApp.profile_photo_url || null;
 
+      // Determine NOC download enabled state
+      const internNocSetting = nocSettingsMap.get(`noc_enabled_${email}`) ?? nocSettingsMap.get(`noc_enabled_${p.id}`) ?? nocSettingsMap.get(`noc_enabled_${matchedApp.id}`);
+      const isNocEnabled = internNocSetting !== undefined ? internNocSetting : (p.noc_download_enabled ?? matchedApp.noc_download_enabled ?? globalNocEnabled);
+
       membersMap.set(p.id, {
         ...matchedApp,
         ...p,
@@ -156,7 +169,7 @@ export const listTeamMembers = createServerFn({ method: "GET" })
         start_date: p.start_date || matchedApp.internship_start_date || matchedApp.joining_date || null,
         hod_name: p.hod_name || matchedApp.hod_name || null,
         noc_url: p.noc_url || matchedApp.noc_url || null,
-        noc_download_enabled: p.noc_download_enabled ?? matchedApp.noc_download_enabled ?? false,
+        noc_download_enabled: isNocEnabled,
       });
     });
 
@@ -1040,23 +1053,35 @@ export const getMyDocuments = createServerFn({ method: "GET" })
     }
 
     // 2. Resolve NOC Download Permission
+    const emailKey = (profile.email || "").toLowerCase().trim();
     let isNocDownloadEnabled = false;
-    if (profile.noc_download_enabled !== undefined && profile.noc_download_enabled !== null) {
-      isNocDownloadEnabled = !!profile.noc_download_enabled;
-    } else if (app.noc_download_enabled !== undefined && app.noc_download_enabled !== null) {
-      isNocDownloadEnabled = !!app.noc_download_enabled;
-    } else {
-      // Check global site setting
-      try {
-        const { data: nocSetting } = await adminClient
-          .from("site_settings")
-          .select("enabled")
-          .eq("id", "noc_download_settings")
-          .maybeSingle();
-        isNocDownloadEnabled = !!nocSetting?.enabled;
-      } catch (e) {
-        isNocDownloadEnabled = false;
+
+    try {
+      const { data: nocSettingRows } = await adminClient
+        .from("site_settings")
+        .select("id, enabled");
+
+      const sMap = new Map<string, boolean>();
+      (nocSettingRows || []).forEach((r: any) => sMap.set(r.id, !!r.enabled));
+
+      if (emailKey && sMap.has(`noc_enabled_${emailKey}`)) {
+        isNocDownloadEnabled = sMap.get(`noc_enabled_${emailKey}`)!;
+      } else if (sMap.has(`noc_enabled_${profile.id}`)) {
+        isNocDownloadEnabled = sMap.get(`noc_enabled_${profile.id}`)!;
+      } else if (sMap.has(`noc_enabled_${app.id}`)) {
+        isNocDownloadEnabled = sMap.get(`noc_enabled_${app.id}`)!;
+      } else if (sMap.has("noc_download_settings")) {
+        isNocDownloadEnabled = sMap.get("noc_download_settings")!;
+      } else if (profile.noc_download_enabled !== undefined && profile.noc_download_enabled !== null) {
+        isNocDownloadEnabled = !!profile.noc_download_enabled;
+      } else if (app.noc_download_enabled !== undefined && app.noc_download_enabled !== null) {
+        isNocDownloadEnabled = !!app.noc_download_enabled;
+      } else {
+        // Fallback: If NOC has been generated in database, enable download
+        isNocDownloadEnabled = !!(profile.noc_url || app.noc_url);
       }
+    } catch (e) {
+      isNocDownloadEnabled = !!(profile.noc_url || app.noc_url);
     }
 
     let nocUrl: string | null = null;
@@ -4433,16 +4458,55 @@ export const toggleInternNocDownload = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data }) => {
     const admin = getAdminClient();
-    if (data.internId) {
-      await admin.from("profiles").update({ noc_download_enabled: data.enabled, updated_at: new Date().toISOString() }).eq("id", data.internId);
+    const emailKey = data.email ? data.email.toLowerCase().trim() : "";
+    const promises: Promise<any>[] = [];
+
+    // Always persist to site_settings so it works without requiring schema migrations
+    try {
+      if (emailKey) {
+        await admin.from("site_settings").upsert({
+          id: `noc_enabled_${emailKey}`,
+          enabled: data.enabled,
+          value: { enabled: data.enabled },
+          updated_at: new Date().toISOString(),
+        });
+      }
+      if (data.internId) {
+        await admin.from("site_settings").upsert({
+          id: `noc_enabled_${data.internId}`,
+          enabled: data.enabled,
+          value: { enabled: data.enabled },
+          updated_at: new Date().toISOString(),
+        });
+      }
+      if (data.applicationId) {
+        await admin.from("site_settings").upsert({
+          id: `noc_enabled_${data.applicationId}`,
+          enabled: data.enabled,
+          value: { enabled: data.enabled },
+          updated_at: new Date().toISOString(),
+        });
+      }
+    } catch (sErr) {
+      console.warn("[toggleInternNocDownload] site_settings error:", sErr);
     }
-    if (data.applicationId) {
-      await admin.from("applications").update({ noc_download_enabled: data.enabled, updated_at: new Date().toISOString() }).eq("id", data.applicationId);
+
+    // Also attempt updates to database columns if they exist
+    try {
+      if (data.internId) {
+        await admin.from("profiles").update({ noc_download_enabled: data.enabled, updated_at: new Date().toISOString() }).eq("id", data.internId);
+      }
+      if (data.applicationId) {
+        await admin.from("applications").update({ noc_download_enabled: data.enabled, updated_at: new Date().toISOString() }).eq("id", data.applicationId);
+      }
+      if (emailKey) {
+        await admin.from("profiles").update({ noc_download_enabled: data.enabled, updated_at: new Date().toISOString() }).ilike("email", emailKey);
+        await admin.from("applications").update({ noc_download_enabled: data.enabled, updated_at: new Date().toISOString() }).ilike("email", emailKey);
+      }
+    } catch (dbErr) {
+      console.warn("[toggleInternNocDownload] database column update non-fatal:", dbErr);
     }
-    if (data.email) {
-      await admin.from("profiles").update({ noc_download_enabled: data.enabled, updated_at: new Date().toISOString() }).ilike("email", data.email);
-      await admin.from("applications").update({ noc_download_enabled: data.enabled, updated_at: new Date().toISOString() }).ilike("email", data.email);
-    }
+
     return { success: true, enabled: data.enabled };
   });
 
@@ -4451,17 +4515,24 @@ export const toggleAllInternsNocDownload = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ enabled: z.boolean() }).parse(d))
   .handler(async ({ data }) => {
     const admin = getAdminClient();
-    await admin.from("profiles").update({ noc_download_enabled: data.enabled, updated_at: new Date().toISOString() }).neq("id", "00000000-0000-0000-0000-000000000000");
-    await admin.from("applications").update({ noc_download_enabled: data.enabled, updated_at: new Date().toISOString() }).neq("id", "00000000-0000-0000-0000-000000000000");
     
+    // Always persist to site_settings
     try {
       await admin.from("site_settings").upsert({
         id: "noc_download_settings",
         enabled: data.enabled,
+        value: { enabled: data.enabled },
         updated_at: new Date().toISOString()
       });
     } catch (e) {
       console.warn("[toggleAllInternsNocDownload] site_settings upsert error:", e);
+    }
+
+    try {
+      await admin.from("profiles").update({ noc_download_enabled: data.enabled, updated_at: new Date().toISOString() }).neq("id", "00000000-0000-0000-0000-000000000000");
+      await admin.from("applications").update({ noc_download_enabled: data.enabled, updated_at: new Date().toISOString() }).neq("id", "00000000-0000-0000-0000-000000000000");
+    } catch (dbErr) {
+      console.warn("[toggleAllInternsNocDownload] database column update non-fatal:", dbErr);
     }
 
     return { success: true, enabled: data.enabled };

@@ -435,7 +435,7 @@ function AdminSettingsPage() {
 
         if (!storageError) {
           const { data: { publicUrl } } = supabase.storage.from("default").getPublicUrl(filepath);
-          await doUpdateNocUrl({ data: { applicationId: intern.id, publicUrl } });
+          await doUpdateNocUrl({ data: { applicationId: intern.id, publicUrl, enableDownload: true } });
           uploadSuccess = true;
         }
       } catch (clientUploadErr) {
@@ -447,9 +447,19 @@ function AdminSettingsPage() {
         await doSaveNocPdf({ data: { applicationId: intern.id, pdfBase64: pdfDataUri } });
       }
 
+      await doToggleInternNocDownload({
+        data: {
+          internId: intern.id,
+          applicationId: intern.application_id || intern.id,
+          email: intern.email,
+          enabled: true,
+        },
+      });
+
       toast.dismiss(loadingToast);
-      toast.success(`NOC successfully generated and enabled in ${intern.full_name}'s Dashboard!`);
+      toast.success(`NOC successfully generated & enabled in ${intern.full_name}'s Dashboard!`);
       membersQ.refetch();
+      nocSettingsQ.refetch();
       doc.save(`NOC_${(intern.full_name || "Intern").replace(/\s+/g, "_")}_Vyntyra.pdf`);
     } catch (err: any) {
       toast.dismiss(loadingToast);
