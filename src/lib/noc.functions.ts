@@ -165,8 +165,28 @@ export const proxyImageFetch = createServerFn({ method: "POST" })
   .validator((d: any) => z.object({ data: z.string() }).parse(d))
   .handler(async ({ data }) => {
     try {
+      const rawUrl = data.data;
+      if (!rawUrl) return null;
+
+      // Handle relative paths directly on server filesystem
+      if (rawUrl.startsWith("/")) {
+        try {
+          const fs = await import("fs");
+          const path = await import("path");
+          const filePath = path.join(process.cwd(), "public", rawUrl.replace(/^\//, ""));
+          if (fs.existsSync(filePath)) {
+            const buffer = fs.readFileSync(filePath);
+            const ext = rawUrl.split(".").pop()?.toLowerCase() || "png";
+            const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : ext === "svg" ? "image/svg+xml" : "image/png";
+            return `data:${mime};base64,${buffer.toString("base64")}`;
+          }
+        } catch (localErr) {
+          console.warn("[proxyImageFetch] Local file read failed:", localErr);
+        }
+      }
+
       const { resolveGooglePhotosUrl } = await import("./google-photos");
-      const url = await resolveGooglePhotosUrl(data.data) || data.data;
+      const url = (await resolveGooglePhotosUrl(rawUrl)) || rawUrl;
       const res = await fetch(url, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -174,7 +194,7 @@ export const proxyImageFetch = createServerFn({ method: "POST" })
       });
       if (!res.ok) return null;
       const buffer = await res.arrayBuffer();
-      const contentType = res.headers.get("content-type") || "image/jpeg";
+      const contentType = res.headers.get("content-type") || "image/png";
       const b64 = Buffer.from(buffer).toString("base64");
       return `data:${contentType};base64,${b64}`;
     } catch (err) {

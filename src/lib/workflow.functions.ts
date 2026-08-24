@@ -537,8 +537,10 @@ export async function dispatchSelectionEmail(applicationId: string) {
   }
 
   const { urlToBase64 } = await import("./nocGenerator");
-  const logoBase64 = await urlToBase64("/icon-512.png");
-  const signatureBase64 = await urlToBase64("/signature.png");
+  const { getBrandingSettings } = await import("./settings.functions");
+  const branding = await getBrandingSettings();
+  const logoBase64 = await urlToBase64(branding.vyntyra_logo_url || "/icon-512.png");
+  const signatureBase64 = await urlToBase64(branding.founder_signature_url || "/signature.png");
 
   let photoBase64 = null;
   if (app.profile_photo_url) {

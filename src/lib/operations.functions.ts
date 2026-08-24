@@ -1021,8 +1021,11 @@ export const getMyDocuments = createServerFn({ method: "GET" })
       try {
         const { generateNocPdf, urlToBase64 } = await import("./nocGenerator");
         const { resolveGooglePhotosUrl } = await import("./google-photos");
+        const { getBrandingSettings } = await import("./settings.functions");
+        const branding = await getBrandingSettings();
 
-        const signatureBase64 = await urlToBase64("/signature.png");
+        const signatureBase64 = await urlToBase64(branding.founder_signature_url || "/signature.png");
+        const logoBase64 = await urlToBase64(branding.vyntyra_logo_url || "/icon-512.png");
 
         let photoBase64 = null;
         const url = profile.avatar_url || app.profile_photo_url;
@@ -1059,8 +1062,6 @@ export const getMyDocuments = createServerFn({ method: "GET" })
         } catch (qrErr) {
           console.warn("Failed to generate QR Code for NOC:", qrErr);
         }
-
-        const logoBase64 = await urlToBase64("/icon-512.png");
 
         const doc = generateNocPdf({
           fullName: app.full_name,
@@ -1254,8 +1255,11 @@ export const deleteStoredNocAndRegenerate = createServerFn({ method: "POST" })
 
     // 3. Generate brand new NOC PDF
     const { urlToBase64, generateNocPdf } = await import("./nocGenerator");
-    const logoBase64 = await urlToBase64("/icon-512.png");
-    const signatureBase64 = await urlToBase64("/signature.png");
+    const { getBrandingSettings } = await import("./settings.functions");
+    const branding = await getBrandingSettings();
+
+    const logoBase64 = await urlToBase64(branding.vyntyra_logo_url || "/icon-512.png");
+    const signatureBase64 = await urlToBase64(branding.founder_signature_url || "/signature.png");
 
     let photoBase64: string | null = null;
     if (app.profile_photo_url) {

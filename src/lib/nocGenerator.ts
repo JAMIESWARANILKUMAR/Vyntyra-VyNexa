@@ -23,23 +23,86 @@ export interface NocData {
 // Muted:  (100,116,139)  │  Bg:    (245, 247, 250)
 
 import { resolveGooglePhotosUrl } from "./google-photos";
-
 import { proxyImageFetch } from "./noc.functions";
+
+function getImageFormat(dataUri: string): "PNG" | "JPEG" | "WEBP" {
+  if (dataUri.includes("image/jpeg") || dataUri.includes("image/jpg")) return "JPEG";
+  if (dataUri.includes("image/webp")) return "WEBP";
+  return "PNG";
+}
 
 export async function urlToBase64(url: string): Promise<string | null> {
   try {
     if (!url) return null;
+    if (url.startsWith("data:image")) return url;
 
-    // Server-side local file direct read fallback
-    if (url.startsWith("/") && typeof window === "undefined") {
+    // 1. Browser-side: direct fetch or canvas (ultra fast & reliable)
+    if (typeof window !== "undefined") {
+      // Step A: Direct fetch (works 100% for same-origin & public assets like /signature.png)
+      try {
+        const resp = await fetch(url);
+        if (resp.ok) {
+          const blob = await resp.blob();
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              if (typeof reader.result === "string" && reader.result.startsWith("data:image")) {
+                resolve(reader.result);
+              } else {
+                reject(new Error("FileReader did not return data URI"));
+              }
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          if (base64) return base64;
+        }
+      } catch (e) {
+        console.warn("[urlToBase64] Direct browser fetch error, trying Canvas fallback:", e);
+      }
+
+      // Step B: HTML Image + Canvas (bypasses subtle blob parsing issues)
+      try {
+        const fullUrl = url.startsWith("/") ? window.location.origin + url : url;
+        const dataUri = await new Promise<string>((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            try {
+              const canvas = document.createElement("canvas");
+              canvas.width = img.naturalWidth || img.width || 300;
+              canvas.height = img.naturalHeight || img.height || 100;
+              const ctx = canvas.getContext("2d");
+              if (ctx) {
+                ctx.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL("image/png"));
+              } else {
+                reject(new Error("Canvas 2D context null"));
+              }
+            } catch (err) {
+              reject(err);
+            }
+          };
+          img.onerror = (err) => reject(err);
+          img.src = fullUrl;
+        });
+        if (dataUri && dataUri.startsWith("data:image")) return dataUri;
+      } catch (canvasErr) {
+        console.warn("[urlToBase64] Canvas conversion error, falling back to server proxy:", canvasErr);
+      }
+    }
+
+    // 2. Server-side local file direct read
+    if (typeof window === "undefined" && url.startsWith("/")) {
       try {
         const fs = await import("fs");
         const path = await import("path");
-        const filePath = path.join(process.cwd(), "public", url);
+        const filePath = path.join(process.cwd(), "public", url.replace(/^\//, ""));
         if (fs.existsSync(filePath)) {
           const buffer = fs.readFileSync(filePath);
-          const ext = url.split(".").pop() || "png";
-          return `data:image/${ext};base64,${buffer.toString("base64")}`;
+          const ext = url.split(".").pop()?.toLowerCase() || "png";
+          const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : "image/png";
+          return `data:${mime};base64,${buffer.toString("base64")}`;
         }
       } catch (e) {
         console.warn("[nocGenerator] Local read failed for:", url, e);
@@ -81,17 +144,22 @@ export function generateNocPdf(data: NocData): jsPDF {
   doc.rect(margin, 6, cW, 30, "F");
 
   // Logo / crest (left zone: margin+4 to margin+22)
-  if (data.logoBase64 && data.logoBase64.startsWith("data:image")) {
+  let logoDrawn = false;
+  if (data.logoBase64 && (data.logoBase64.startsWith("data:image") || data.logoBase64.startsWith("blob:"))) {
     try {
-      doc.addImage(data.logoBase64, "PNG", margin + 4, 11, 14, 14);
-    } catch {
-      _drawVCrest(doc, margin + 4, 11);
+      const fmt = getImageFormat(data.logoBase64);
+      doc.addImage(data.logoBase64, fmt, margin + 3, 9, 16, 16);
+      logoDrawn = true;
+    } catch (err) {
+      console.warn("doc.addImage logo failed, falling back to crest:", err);
     }
-  } else {
+  }
+  
+  if (!logoDrawn) {
     _drawVCrest(doc, margin + 4, 11);
   }
 
-  // Company name & subtitle (logo width 14 + 4 gap = margin+22)
+  // Company name & subtitle (logo width 16 + 4 gap = margin+22)
   const brandX = margin + 22;
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
@@ -279,14 +347,19 @@ export function generateNocPdf(data: NocData): jsPDF {
     doc.setLineWidth(0.4);
     doc.line(lx1, sigY + 10, lx2, sigY + 10);
 
-    if (customSignatureImage && customSignatureImage.startsWith("data:image")) {
+    let sigDrawn = false;
+    if (customSignatureImage && (customSignatureImage.startsWith("data:image") || customSignatureImage.startsWith("blob:"))) {
       try {
-        // Draw the image instead of text script, centered above the line (20mm x 7mm fits perfectly)
-        doc.addImage(customSignatureImage, "PNG", cx - 10, sigY + 1.5, 20, 7.5);
+        const fmt = getImageFormat(customSignatureImage);
+        // Draw the image nicely centered above the signature line (28mm width x 9.5mm height)
+        doc.addImage(customSignatureImage, fmt, cx - 14, sigY - 0.5, 28, 9.5);
+        sigDrawn = true;
       } catch (err) {
         console.warn("Failed to add custom signature image inside NOC:", err);
       }
-    } else if (isScript && line1) {
+    }
+
+    if (!sigDrawn && isScript && line1) {
       doc.setFont("courier", "oblique");
       doc.setFontSize(9.5);
       doc.setTextColor(30, 58, 95);
