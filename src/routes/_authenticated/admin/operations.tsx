@@ -33,6 +33,7 @@ import {
   deleteStoredOfferLetterAndRegenerate, deleteStoredNocAndRegenerate, deleteStoredOfferLetter, deleteStoredNoc
 } from "@/lib/operations.functions";
 import { localDateTimeToIso, isoToLocalDateTimeInput, formatDateTimeDisplay } from "@/lib/date-utils";
+import { sendPaymentReminderEmail, generatePaymentReminderWhatsApp } from "@/lib/notifications-omni.functions";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import EmailAutomationHub from "@/components/email-automation-hub";
@@ -2342,6 +2343,38 @@ function MemberRow({ member, team, onRevoke, onResetPassword, onClick }: { membe
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0 self-end sm:self-center" onClick={(e) => e.stopPropagation()}>
+        {member.role === "intern" && !member.exam_fee_paid && !member.is_fee_exempted && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={async () => {
+              const loadingToast = toast.loading(`Sending payment reminder email to ${member.email}...`);
+              try {
+                await sendPaymentReminderEmail({
+                  data: {
+                    recipient_email: member.email,
+                    recipient_name: member.full_name,
+                    recipient_phone: member.phone || member.phone_number,
+                    intern_id: member.intern_id,
+                    exam_fee_amount: member.exam_fee_amount !== undefined ? member.exam_fee_amount : 199,
+                    payment_deadline: member.fee_payment_deadline,
+                  },
+                });
+                toast.dismiss(loadingToast);
+                toast.success(`Payment reminder email sent to ${member.email}!`);
+              } catch (err: any) {
+                toast.dismiss(loadingToast);
+                toast.error("Failed to send reminder: " + err.message);
+              }
+            }}
+            title="Send Individual Payment Reminder"
+            className="h-8 px-2.5 text-xs font-bold text-blue-700 hover:text-blue-900 hover:bg-blue-50 rounded-lg gap-1.5"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Pay Reminder</span>
+          </Button>
+        )}
+
         {onResetPassword && (
           <Button
             variant="ghost"

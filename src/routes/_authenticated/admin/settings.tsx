@@ -146,6 +146,76 @@ function AdminSettingsPage() {
   const [isSavingBranding, setIsSavingBranding] = useState(false);
   const [isBulkSendingEmail, setIsBulkSendingEmail] = useState(false);
 
+  // Individual Payment Reminder Modal State
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
+  const [isSendingReminderEmail, setIsSendingReminderEmail] = useState(false);
+  const [reminderForm, setReminderForm] = useState({
+    internId: "",
+    name: "",
+    email: "",
+    phone: "",
+    amount: 199,
+    deadline: "",
+    customSubject: "",
+    customNote: "",
+  });
+
+  function openPaymentReminderModal(intern: any) {
+    setReminderForm({
+      internId: intern.id,
+      name: intern.full_name || "",
+      email: intern.email || "",
+      phone: intern.phone || intern.phone_number || "",
+      amount: intern.exam_fee_amount !== undefined ? intern.exam_fee_amount : 199,
+      deadline: isoToLocalDateTimeInput(intern.fee_payment_deadline),
+      customSubject: `Urgent: Exam Fee Payment Reminder (₹${intern.exam_fee_amount !== undefined ? intern.exam_fee_amount : 199}) — Project VyNexa`,
+      customNote: "",
+    });
+    setIsReminderModalOpen(true);
+  }
+
+  async function handleSendReminderEmailFromModal() {
+    if (!reminderForm.email) return toast.error("Intern email is missing.");
+    setIsSendingReminderEmail(true);
+    try {
+      await doSendPaymentEmail({
+        data: {
+          recipient_email: reminderForm.email,
+          recipient_name: reminderForm.name,
+          recipient_phone: reminderForm.phone,
+          intern_id: reminderForm.internId,
+          exam_fee_amount: reminderForm.amount,
+          payment_deadline: reminderForm.deadline ? localDateTimeToIso(reminderForm.deadline) : null,
+          custom_subject: reminderForm.customSubject,
+          custom_note: reminderForm.customNote,
+        },
+      });
+      toast.success(`Payment reminder email sent successfully to ${reminderForm.email}!`);
+      setIsReminderModalOpen(false);
+    } catch (err: any) {
+      toast.error("Failed to send email: " + err.message);
+    } finally {
+      setIsSendingReminderEmail(false);
+    }
+  }
+
+  async function handleSendReminderWhatsAppFromModal() {
+    if (!reminderForm.phone) return toast.error("Please enter a phone number for WhatsApp.");
+    try {
+      const res = await doGenWhatsApp({
+        data: {
+          recipientPhone: reminderForm.phone,
+          recipientName: reminderForm.name,
+          examFeeAmount: reminderForm.amount,
+          paymentDeadline: reminderForm.deadline ? localDateTimeToIso(reminderForm.deadline) : null,
+        },
+      });
+      window.open(res.whatsappUrl, "_blank");
+    } catch (err: any) {
+      toast.error("Failed to prepare WhatsApp message: " + err.message);
+    }
+  }
+
   // Dynamic Domain management form state
   const [domainNameInput, setDomainNameInput] = useState("");
   const [domainCategoryInput, setDomainCategoryInput] = useState<"Internship" | "Full Time Role" | "Both">("Both");
@@ -1064,29 +1134,29 @@ function AdminSettingsPage() {
                                   <Award className="h-3 w-3" /> NOC
                                 </Button>
 
-                                {/* Omnichannel Payment Reminders (Email & WhatsApp) */}
+                                {/* Dedicated Individual Payment Reminder Button */}
                                 {!intern.exam_fee_paid && !intern.is_fee_exempted && (
-                                  <>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      title="Send individual Payment Reminder email with Pay Online button"
-                                      className="h-7 px-2 text-[10px] font-bold text-blue-800 bg-blue-50 hover:bg-blue-100 border-blue-300 gap-1"
-                                      onClick={() => handleSendIndividualPaymentEmail(intern)}
-                                    >
-                                      <Mail className="h-3 w-3" /> Email
-                                    </Button>
+                                  <Button
+                                    size="sm"
+                                    title="Open Individual Payment Reminder Console (Email & WhatsApp)"
+                                    className="h-7 px-2.5 text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-2xs gap-1"
+                                    onClick={() => openPaymentReminderModal(intern)}
+                                  >
+                                    <Mail className="h-3 w-3" /> Payment Reminder
+                                  </Button>
+                                )}
 
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      title="Open formatted WhatsApp payment reminder"
-                                      className="h-7 px-2 text-[10px] font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border-teal-300 gap-1"
-                                      onClick={() => handleSendIndividualWhatsApp(intern)}
-                                    >
-                                      <MessageSquare className="h-3 w-3" /> WhatsApp
-                                    </Button>
-                                  </>
+                                {/* Quick WhatsApp Reminder */}
+                                {!intern.exam_fee_paid && !intern.is_fee_exempted && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    title="Quick WhatsApp payment reminder"
+                                    className="h-7 px-2 text-[10px] font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border-teal-300 gap-1"
+                                    onClick={() => handleSendIndividualWhatsApp(intern)}
+                                  >
+                                    <MessageSquare className="h-3 w-3" /> WhatsApp
+                                  </Button>
                                 )}
 
                                 <Button
@@ -1661,6 +1731,98 @@ function AdminSettingsPage() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── INDIVIDUAL PAYMENT REMINDER MODAL ─── */}
+      {isReminderModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200 space-y-4">
+            <div className="flex items-center justify-between border-b pb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-blue-600 text-white rounded-xl shadow-xs">
+                  <Mail className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Send Individual Payment Reminder</h3>
+                  <p className="text-xs text-slate-500">Corporate Email &amp; WhatsApp Reminder for {reminderForm.name || reminderForm.email}</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setIsReminderModalOpen(false)}>✕</Button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Candidate Name</label>
+                  <Input value={reminderForm.name} onChange={(e) => setReminderForm({ ...reminderForm, name: e.target.value })} />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Recipient Email *</label>
+                  <Input value={reminderForm.email} onChange={(e) => setReminderForm({ ...reminderForm, email: e.target.value })} required />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Recipient Phone (for WhatsApp)</label>
+                  <Input placeholder="e.g. 9876543210" value={reminderForm.phone} onChange={(e) => setReminderForm({ ...reminderForm, phone: e.target.value })} />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Exam Fee Amount (₹) *</label>
+                  <Input type="number" min="0" value={reminderForm.amount} onChange={(e) => setReminderForm({ ...reminderForm, amount: Number(e.target.value) })} required />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Payment Due Deadline</label>
+                <Input type="datetime-local" value={reminderForm.deadline} onChange={(e) => setReminderForm({ ...reminderForm, deadline: e.target.value })} />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Email Subject</label>
+                <Input value={reminderForm.customSubject} onChange={(e) => setReminderForm({ ...reminderForm, customSubject: e.target.value })} />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Custom Note / Remarks (Optional)</label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Please clear the pending fee today to avoid onboarding delays..."
+                  value={reminderForm.customNote}
+                  onChange={(e) => setReminderForm({ ...reminderForm, customNote: e.target.value })}
+                  className="w-full rounded-md border p-2 text-xs bg-slate-50"
+                />
+              </div>
+
+              <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl text-blue-900 text-xs">
+                <strong>Email Template:</strong> Includes corporate Vyntyra branding, deadline box, and a direct <strong>"Pay Exam Fee Online"</strong> CTA button.
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-3 border-t">
+                <Button variant="outline" size="sm" onClick={() => setIsReminderModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSendReminderWhatsAppFromModal}
+                  className="text-teal-700 border-teal-300 hover:bg-teal-50 font-bold gap-1 text-xs"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" /> Send via WhatsApp
+                </Button>
+                <Button
+                  type="button"
+                  disabled={isSendingReminderEmail}
+                  onClick={handleSendReminderEmailFromModal}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-1 text-xs"
+                >
+                  {isSendingReminderEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                  Dispatch Email Reminder
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
