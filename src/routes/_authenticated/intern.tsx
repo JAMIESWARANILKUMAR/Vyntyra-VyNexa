@@ -985,6 +985,25 @@ function InternDashboard() {
                       Download Offer Letter
                       {!docsQ.data?.offerLetterUrl && <span className="ml-1 opacity-70">(Not Ready)</span>}
                     </a>
+
+                    {docsQ.data?.nocDownloadEnabled && (
+                      <a
+                        href={docsQ.data?.nocUrl || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                          docsQ.data?.nocUrl
+                            ? "bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm"
+                            : "bg-slate-200 text-slate-400 cursor-not-allowed pointer-events-none"
+                        }`}
+                        onClick={(e) => { if (!docsQ.data?.nocUrl) e.preventDefault(); }}
+                      >
+                        <Award className="h-3.5 w-3.5" />
+                        Download NOC Certificate
+                        {!docsQ.data?.nocUrl && <span className="ml-1 opacity-70">(Not Ready)</span>}
+                      </a>
+                    )}
+
                     {profile?.exam_fee_paid && (
                       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />

@@ -249,20 +249,38 @@ export const proxyImageFetch = createServerFn({ method: "POST" })
   });
 
 export const updateNocUrl = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ applicationId: z.string(), publicUrl: z.string() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ 
+    applicationId: z.string(), 
+    publicUrl: z.string(),
+    enableDownload: z.boolean().optional().default(true)
+  }).parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
-    await adminClient.from("applications").update({ noc_url: data.publicUrl, updated_at: new Date().toISOString() }).eq("id", data.applicationId);
+    const isDownloadEnabled = data.enableDownload ?? true;
+    await adminClient.from("applications").update({ 
+      noc_url: data.publicUrl, 
+      noc_download_enabled: isDownloadEnabled,
+      updated_at: new Date().toISOString() 
+    }).eq("id", data.applicationId);
+
     try {
       const { data: appData } = await adminClient.from("applications").select("email").eq("id", data.applicationId).maybeSingle();
       if (appData?.email) {
-        await adminClient.from("profiles").update({ noc_url: data.publicUrl, updated_at: new Date().toISOString() }).eq("email", appData.email);
+        await adminClient.from("profiles").update({ 
+          noc_url: data.publicUrl, 
+          noc_download_enabled: isDownloadEnabled,
+          updated_at: new Date().toISOString() 
+        }).ilike("email", appData.email);
       }
-      await adminClient.from("profiles").update({ noc_url: data.publicUrl, updated_at: new Date().toISOString() }).eq("id", data.applicationId);
+      await adminClient.from("profiles").update({ 
+        noc_url: data.publicUrl, 
+        noc_download_enabled: isDownloadEnabled,
+        updated_at: new Date().toISOString() 
+      }).eq("id", data.applicationId);
     } catch (e) {
       console.warn("[updateNocUrl] profile noc_url update non-fatal:", e);
     }
-    return { success: true, url: data.publicUrl };
+    return { success: true, url: data.publicUrl, enabled: isDownloadEnabled };
   });
 
 export const saveNocPdf = createServerFn({ method: "POST" })
@@ -280,25 +298,41 @@ export const saveNocPdf = createServerFn({ method: "POST" })
         upsert: true,
       });
 
-    if (uploadError) throw new Error(uploadError.message);
+    if (uploadError) {
+      throw new Error(`Failed to upload NOC PDF: ${uploadError.message}`);
+    }
 
-    const { data: { publicUrl } } = adminClient.storage
+    const { data: publicUrlData } = adminClient.storage
       .from("default")
       .getPublicUrl(filepath);
 
-    await adminClient.from("applications").update({ noc_url: publicUrl, updated_at: new Date().toISOString() }).eq("id", data.applicationId);
+    const publicUrl = publicUrlData.publicUrl;
+
+    await adminClient.from("applications").update({ 
+      noc_url: publicUrl, 
+      noc_download_enabled: true,
+      updated_at: new Date().toISOString() 
+    }).eq("id", data.applicationId);
 
     try {
       const { data: appData } = await adminClient.from("applications").select("email").eq("id", data.applicationId).maybeSingle();
       if (appData?.email) {
-        await adminClient.from("profiles").update({ noc_url: publicUrl, updated_at: new Date().toISOString() }).eq("email", appData.email);
+        await adminClient.from("profiles").update({ 
+          noc_url: publicUrl, 
+          noc_download_enabled: true,
+          updated_at: new Date().toISOString() 
+        }).ilike("email", appData.email);
       }
-      await adminClient.from("profiles").update({ noc_url: publicUrl, updated_at: new Date().toISOString() }).eq("id", data.applicationId);
+      await adminClient.from("profiles").update({ 
+        noc_url: publicUrl, 
+        noc_download_enabled: true,
+        updated_at: new Date().toISOString() 
+      }).eq("id", data.applicationId);
     } catch (e) {
       console.warn("[saveNocPdf] profile noc_url update non-fatal:", e);
     }
 
-    return { success: true, url: publicUrl };
+    return { success: true, url: publicUrl, filepath };
   });
 
 export const saveInternshipCertificatePdf = createServerFn({ method: "POST" })

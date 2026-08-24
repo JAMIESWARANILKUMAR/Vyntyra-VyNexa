@@ -8,7 +8,7 @@ import {
   RefreshCw, FileText, Tag, Percent, Plus, Search, Users, CheckCircle2, 
   Trash2, Edit3, TrendingUp, Sparkles, AlertCircle, DollarSign, Check,
   Mail, MessageSquare, Send, Award, Image, Upload, ExternalLink, Globe2,
-  CheckCheck, Layers
+  CheckCheck, Layers, Download, Eye, EyeOff, FileCheck
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,12 @@ import {
   getDashboardSettings, updateDashboardSetting, updateInternFeeSettings, 
   initializeDashboardSettings, listTeamMembers, purgeAllNocs,
   listAllReferralPricingRules, upsertReferralPricingRule, deleteReferralPricingRule,
-  sendUrgentPaymentPopupNotification
+  sendUrgentPaymentPopupNotification, toggleInternNocDownload, toggleAllInternsNocDownload
 } from "@/lib/operations.functions";
-import { getBrandingSettings, updateBrandingSettings } from "@/lib/settings.functions";
+import { 
+  getBrandingSettings, updateBrandingSettings, 
+  getNocSettings, setNocSettings 
+} from "@/lib/settings.functions";
 import { 
   listCareerDomains, addOrUpdateCareerDomain, removeCareerDomainOrSubdomain, 
   saveCareerDomains, type DomainItem, DEFAULT_CAREER_DOMAINS 
@@ -61,7 +64,17 @@ function AdminSettingsPage() {
   const doSendPaymentEmail = useServerFn(sendPaymentReminderEmail);
   const doSendBulkPaymentEmails = useServerFn(sendBulkPaymentReminderEmails);
   const doGenWhatsApp = useServerFn(generatePaymentReminderWhatsApp);
+  const fetchNocSettings = useServerFn(getNocSettings);
+  const doSetNocSettings = useServerFn(setNocSettings);
+  const doToggleInternNocDownload = useServerFn(toggleInternNocDownload);
+  const doToggleAllInternsNocDownload = useServerFn(toggleAllInternsNocDownload);
+
+  const nocSettingsQ = useQuery({
+    queryKey: ["noc-settings"],
+    queryFn: () => fetchNocSettings(),
+  });
   
+  const [isBulkGeneratingNoc, setIsBulkGeneratingNoc] = useState(false);
   const [targetType, setTargetType] = useState<"single" | "selected" | "all">("single");
   const [internId, setInternId] = useState("");
   const [selectedInternIds, setSelectedInternIds] = useState<string[]>([]);
@@ -435,12 +448,131 @@ function AdminSettingsPage() {
       }
 
       toast.dismiss(loadingToast);
-      toast.success(`NOC successfully generated and assigned to ${intern.full_name}!`);
+      toast.success(`NOC successfully generated and enabled in ${intern.full_name}'s Dashboard!`);
       membersQ.refetch();
       doc.save(`NOC_${(intern.full_name || "Intern").replace(/\s+/g, "_")}_Vyntyra.pdf`);
     } catch (err: any) {
       toast.dismiss(loadingToast);
       toast.error("Failed to generate NOC: " + err.message);
+    }
+  }
+
+  async function handleToggleIndividualNoc(intern: any, enabled: boolean) {
+    try {
+      await doToggleInternNocDownload({
+        data: {
+          internId: intern.id,
+          applicationId: intern.application_id || intern.id,
+          email: intern.email,
+          enabled,
+        },
+      });
+      toast.success(`NOC download ${enabled ? "enabled" : "disabled"} for ${intern.full_name || intern.email}!`);
+      membersQ.refetch();
+    } catch (err: any) {
+      toast.error("Failed to update NOC download permission: " + err.message);
+    }
+  }
+
+  async function handleGlobalNocToggle(enabled: boolean) {
+    try {
+      await doSetNocSettings({ data: { global_noc_download_enabled: enabled } });
+      await doToggleAllInternsNocDownload({ data: { enabled } });
+      toast.success(`Global NOC download ${enabled ? "enabled" : "disabled"} for all intern dashboards!`);
+      nocSettingsQ.refetch();
+      membersQ.refetch();
+    } catch (err: any) {
+      toast.error("Failed to toggle global NOC download: " + err.message);
+    }
+  }
+
+  async function handleBulkGenerateAndPublishNoc() {
+    if (!allInterns.length) {
+      toast.error("No interns found to generate NOCs.");
+      return;
+    }
+
+    if (!confirm(`Generate customized NOC certificates and enable download for ALL ${allInterns.length} interns?`)) {
+      return;
+    }
+
+    setIsBulkGeneratingNoc(true);
+    const bulkToast = toast.loading(`Generating & publishing NOCs for ${allInterns.length} interns...`);
+    let successCount = 0;
+
+    try {
+      const QRCode = (await import("qrcode")).default;
+      const sigUrl = brandingForm.founder_signature_url || "/signature.png";
+      const logoUrl = brandingForm.vyntyra_logo_url || "/icon-512.png";
+      const signatureBase64 = await urlToBase64(sigUrl, 260, 80, true);
+      const logoBase64 = await urlToBase64(logoUrl, 160, 160, false);
+      const { supabase } = await import("@/integrations/supabase/client");
+
+      for (const intern of allInterns) {
+        try {
+          const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${intern.id}`;
+          const qrBase64 = await QRCode.toDataURL(verificationUrl, { margin: 1, color: { dark: "#0f172a", light: "#ffffff" } });
+          const photoUrl = intern.profile_photo_url || intern.avatar_url || intern.photo_url || null;
+          const photoBase64 = photoUrl ? await urlToBase64(photoUrl, 180, 220, false) : null;
+
+          const selectionDate = intern.created_at ? new Date(intern.created_at) : new Date();
+          const calcStartDate = intern.start_date ? new Date(intern.start_date) : new Date(selectionDate.getTime() + 4 * 24 * 60 * 60 * 1000);
+          const formattedStartDate = calcStartDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
+
+          const doc = generateNocPdf({
+            fullName: intern.full_name || "Intern Candidate",
+            email: intern.email || "",
+            phone: intern.phone || intern.phone_number || "",
+            applicationId: intern.id,
+            college: intern.college || "Academic Institution",
+            domain: intern.department || "Technology & Software",
+            subDomain: intern.position || "Full Stack Web Development",
+            internshipStartDate: formattedStartDate,
+            profilePhotoUrl: photoBase64,
+            qrCodeBase64: qrBase64,
+            logoBase64: logoBase64,
+            signatureBase64: signatureBase64,
+            hodName: intern.hod_name || null,
+          });
+
+          const pdfBlob = doc.output("blob");
+          const filepath = `nocs/${intern.id}_NOC.pdf`;
+
+          const { error: storageError } = await supabase.storage
+            .from("default")
+            .upload(filepath, pdfBlob, {
+              contentType: "application/pdf",
+              upsert: true,
+            });
+
+          if (!storageError) {
+            const { data: { publicUrl } } = supabase.storage.from("default").getPublicUrl(filepath);
+            await doUpdateNocUrl({ data: { applicationId: intern.id, publicUrl, enableDownload: true } });
+          }
+          await doToggleInternNocDownload({
+            data: {
+              internId: intern.id,
+              applicationId: intern.application_id || intern.id,
+              email: intern.email,
+              enabled: true,
+            },
+          });
+          successCount++;
+        } catch (singleErr) {
+          console.warn(`Failed NOC for ${intern.email}:`, singleErr);
+        }
+      }
+
+      await doSetNocSettings({ data: { global_noc_download_enabled: true } });
+      toast.dismiss(bulkToast);
+      toast.success(`Generated & enabled NOC downloads for ${successCount}/${allInterns.length} interns!`);
+      nocSettingsQ.refetch();
+      membersQ.refetch();
+    } catch (err: any) {
+      toast.dismiss(bulkToast);
+      toast.error("Bulk NOC generation failed: " + err.message);
+    } finally {
+      setIsBulkGeneratingNoc(false);
     }
   }
 
@@ -1047,6 +1179,56 @@ function AdminSettingsPage() {
               </div>
             </div>
 
+            {/* Global NOC Download & Automation Controls */}
+            <div className="p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <Award className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                    <span>Intern Dashboard NOC Download Controls</span>
+                    {nocSettingsQ.data?.global_noc_download_enabled ? (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        ✓ Download Active Globally
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                        Individual / Restricted
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-600">
+                    Enable or disable the "Download NOC Certificate" button inside all intern dashboards in real-time.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-emerald-200 shadow-2xs">
+                  <span className="text-xs font-semibold text-slate-700">Global Download:</span>
+                  <Switch
+                    checked={!!nocSettingsQ.data?.global_noc_download_enabled}
+                    onCheckedChange={(checked) => handleGlobalNocToggle(checked)}
+                  />
+                </div>
+
+                <Button
+                  size="sm"
+                  disabled={isBulkGeneratingNoc}
+                  onClick={handleBulkGenerateAndPublishNoc}
+                  className="h-8 px-3 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-2xs gap-1.5"
+                >
+                  {isBulkGeneratingNoc ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5" />
+                  )}
+                  Generate &amp; Enable for All Interns
+                </Button>
+              </div>
+            </div>
+
             {/* Table */}
             <div className="border rounded-xl overflow-x-auto bg-white shadow-2xs">
               <table className="w-full text-xs text-left">
@@ -1058,6 +1240,7 @@ function AdminSettingsPage() {
                     <th className="py-3 px-4">Fee Scheduled</th>
                     <th className="py-3 px-4">Payment Deadline</th>
                     <th className="py-3 px-4">Payment Status &amp; Ref</th>
+                    <th className="py-3 px-4">NOC Download</th>
                     <th className="py-3 px-4">Urgent Popup</th>
                     <th className="py-3 px-4 text-right">Omnichannel &amp; Quick Actions</th>
                   </tr>
@@ -1065,7 +1248,7 @@ function AdminSettingsPage() {
                 <tbody className="divide-y divide-slate-100">
                   {membersQ.isLoading ? (
                     <tr>
-                      <td colSpan={8} className="py-10 text-center text-slate-400">
+                      <td colSpan={9} className="py-10 text-center text-slate-400">
                         <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2 text-slate-500" />
                         Loading intern fee schedules...
                       </td>
@@ -1162,6 +1345,29 @@ function AdminSettingsPage() {
                                   Unpaid
                                 </span>
                               )}
+                             </td>
+
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={!!intern.noc_download_enabled}
+                                  onCheckedChange={(checked) => handleToggleIndividualNoc(intern, checked)}
+                                  title={intern.noc_download_enabled ? "Disable NOC Download for this intern" : "Enable NOC Download for this intern"}
+                                />
+                                <span className={`text-[10px] font-bold ${intern.noc_download_enabled ? "text-emerald-700" : "text-slate-400"}`}>
+                                  {intern.noc_download_enabled ? "Active" : "Off"}
+                                </span>
+                              </div>
+                              {intern.noc_url && (
+                                <a
+                                  href={intern.noc_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[9px] text-blue-600 hover:underline flex items-center gap-0.5 mt-0.5"
+                                >
+                                  <ExternalLink className="h-2.5 w-2.5" /> View PDF
+                                </a>
+                              )}
                             </td>
 
                             <td className="py-3 px-4">
@@ -1176,15 +1382,14 @@ function AdminSettingsPage() {
 
                             <td className="py-3 px-4 text-right">
                               <div className="flex items-center justify-end flex-wrap gap-1">
-                                {/* Individual Customized NOC generation */}
+                                {/* 1-Click Generate and Enable NOC Download for this intern */}
                                 <Button
                                   size="sm"
-                                  variant="outline"
-                                  title="Generate customized NOC with Founder Signature & Logo"
-                                  className="h-7 px-2 text-[10px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border-emerald-300 gap-1"
+                                  title="Generate customized NOC & enable instant download in this intern's dashboard"
+                                  className="h-7 px-2 text-[10px] font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-2xs gap-1"
                                   onClick={() => handleGenerateIndividualNoc(intern)}
                                 >
-                                  <Award className="h-3 w-3" /> NOC
+                                  <Sparkles className="h-3 w-3" /> Gen &amp; Enable NOC
                                 </Button>
 
                                 {/* Dedicated Individual Payment Reminder Button */}

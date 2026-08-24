@@ -43,6 +43,40 @@ export const setApplicationsOpen = createServerFn({ method: "POST" })
     return { enabled: data.enabled };
   });
 
+export const getNocSettings = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const { data } = await supabase
+      .from("site_settings")
+      .select("*")
+      .eq("id", "noc_download_settings")
+      .maybeSingle();
+
+    return {
+      global_noc_download_enabled: data?.enabled !== undefined ? !!data.enabled : false,
+    };
+  } catch (e) {
+    return { global_noc_download_enabled: false };
+  }
+});
+
+export const setNocSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ global_noc_download_enabled: z.boolean() }).parse(d))
+  .handler(async ({ data, context }) => {
+    if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
+
+    await supabase
+      .from("site_settings")
+      .upsert({
+        id: "noc_download_settings",
+        enabled: data.global_noc_download_enabled,
+        updated_at: new Date().toISOString(),
+        updated_by: context.userId
+      });
+
+    return { success: true, global_noc_download_enabled: data.global_noc_download_enabled };
+  });
+
 export interface BrandingSettings {
   founder_signature_url: string;
   vyntyra_logo_url: string;
