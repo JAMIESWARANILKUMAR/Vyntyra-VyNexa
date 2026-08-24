@@ -10,9 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { InternTaskAssignmentModal } from "@/components/intern-task-assignment-modal";
 import {
   ClipboardList, Search, Plus, CheckCircle2, Clock, AlertTriangle, ExternalLink,
-  Trash2, Sparkles, Filter, FileText, Check, RotateCcw, User, Eye, Download, Bell
+  Trash2, Sparkles, Filter, FileText, Check, RotateCcw, User, Eye, Download, Bell,
+  Mail, MessageSquare, Loader2, Send
 } from "lucide-react";
 import { sendTaskNotification } from "@/lib/notifications.functions";
+import { sendTaskNotificationEmail, generateTaskWhatsApp } from "@/lib/notifications-omni.functions";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,6 +30,8 @@ export function AdminInternTasksView() {
   const doDeleteBatch = useServerFn(deleteTaskBatch);
   const doClearAllTasks = useServerFn(deleteAllInternTasks);
   const doSendNotification = useServerFn(sendTaskNotification);
+  const doSendTaskEmail = useServerFn(sendTaskNotificationEmail);
+  const doGenTaskWhatsApp = useServerFn(generateTaskWhatsApp);
 
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
@@ -47,6 +51,89 @@ export function AdminInternTasksView() {
   const [selectedTaskForReview, setSelectedTaskForReview] = useState<any>(null);
   const [adminRemarks, setAdminRemarks] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Individual Task Status Email Modal State
+  const [taskEmailModalOpen, setTaskEmailModalOpen] = useState(false);
+  const [isSendingTaskEmail, setIsSendingTaskEmail] = useState(false);
+  const [taskEmailForm, setTaskEmailForm] = useState({
+    recipient_email: "",
+    recipient_name: "",
+    recipient_phone: "",
+    task_title: "",
+    task_status: "assigned", // 'assigned' | 'completed' | 'changes_requested' | 'submitted' | 'deadline_reminder'
+    mentor_remarks: "",
+    custom_subject: "",
+    due_date: "",
+    credits: 10,
+  });
+
+  function openTaskEmailModal(t: any, defaultStatus?: string) {
+    const profile = t.assigned_profile || {};
+    const email = profile.email || "";
+    const name = profile.full_name || profile.name || "";
+    const phone = profile.phone || profile.phone_number || "";
+    const status = defaultStatus || t.status || "assigned";
+
+    setTaskEmailForm({
+      recipient_email: email,
+      recipient_name: name,
+      recipient_phone: phone,
+      task_title: t.title || "Internship Project Milestone",
+      task_status: status,
+      mentor_remarks: t.progress_notes || "",
+      custom_subject: "",
+      due_date: t.due_date || "",
+      credits: t.credits || 10,
+    });
+    setTaskEmailModalOpen(true);
+  }
+
+  async function handleSendTaskEmailSubmit() {
+    if (!taskEmailForm.recipient_email) {
+      return toast.error("Recipient email is missing.");
+    }
+    setIsSendingTaskEmail(true);
+    try {
+      await doSendTaskEmail({
+        data: {
+          recipient_email: taskEmailForm.recipient_email,
+          recipient_name: taskEmailForm.recipient_name,
+          task_title: taskEmailForm.task_title,
+          task_status: taskEmailForm.task_status,
+          mentor_remarks: taskEmailForm.mentor_remarks,
+          custom_subject: taskEmailForm.custom_subject || undefined,
+          due_date: taskEmailForm.due_date || undefined,
+          credits: taskEmailForm.credits,
+        },
+      });
+      toast.success(`Task status email dispatched to ${taskEmailForm.recipient_email}!`);
+      setTaskEmailModalOpen(false);
+    } catch (err: any) {
+      toast.error("Failed to send task email: " + err.message);
+    } finally {
+      setIsSendingTaskEmail(false);
+    }
+  }
+
+  async function handleSendTaskWhatsAppSubmit() {
+    if (!taskEmailForm.recipient_phone) {
+      return toast.error("Intern phone number is missing for WhatsApp.");
+    }
+    try {
+      const res = await doGenTaskWhatsApp({
+        data: {
+          recipientPhone: taskEmailForm.recipient_phone,
+          recipientName: taskEmailForm.recipient_name,
+          taskTitle: taskEmailForm.task_title,
+          taskStatus: taskEmailForm.task_status,
+          remarks: taskEmailForm.mentor_remarks,
+        },
+      });
+      window.open(res.whatsappUrl, "_blank");
+    } catch (err: any) {
+      toast.error("Failed to generate WhatsApp: " + err.message);
+    }
+  }
 
   const tasksQ = useQuery({
     queryKey: ["admin-intern-tasks"],
@@ -519,26 +606,25 @@ export function AdminInternTasksView() {
                       <RotateCcw className="h-3.5 w-3.5 mr-1" /> Review / Feedback
                     </Button>
 
-                    {t.assigned_to && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs text-blue-700 border-blue-200 hover:bg-blue-50"
-                        onClick={async () => {
-                          const loadingToast = toast.loading("Sending notification to intern...");
-                          try {
-                            await doSendNotification({ data: { taskId: t.id } });
-                            toast.dismiss(loadingToast);
-                            toast.success("Notification sent successfully!");
-                          } catch (err: any) {
-                            toast.dismiss(loadingToast);
-                            toast.error("Failed to send notification: " + err.message);
-                          }
-                        }}
-                      >
-                        <Bell className="h-3.5 w-3.5 mr-1" /> Send Notification
-                      </Button>
-                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs font-bold text-blue-700 bg-blue-50/70 border-blue-200 hover:bg-blue-100 gap-1.5 shadow-2xs"
+                      onClick={() => openTaskEmailModal(t)}
+                      title="Send tailored Task Status email to this intern"
+                    >
+                      <Mail className="h-3.5 w-3.5" /> Email Status
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs font-bold text-teal-700 bg-teal-50/70 border-teal-200 hover:bg-teal-100 gap-1.5 shadow-2xs"
+                      onClick={() => openTaskEmailModal(t)}
+                      title="Open formatted WhatsApp task status"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
+                    </Button>
 
                     <Button
                       size="sm"
@@ -671,17 +757,17 @@ export function AdminInternTasksView() {
                 />
               </div>
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-1/3 text-xs"
+                  className="sm:w-1/4 text-xs"
                   onClick={() => setSelectedTaskForReview(null)}
                 >
                   Cancel
                 </Button>
                 <Button
-                  className="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-sm"
+                  className="sm:w-3/8 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs gap-1.5 shadow-sm"
                   disabled={isUpdating}
                   onClick={async () => {
                     setIsUpdating(true);
@@ -705,7 +791,154 @@ export function AdminInternTasksView() {
                     }
                   }}
                 >
-                  <Check className="h-4 w-4" /> Save & Publish Review
+                  <Check className="h-4 w-4" /> Save Review
+                </Button>
+                <Button
+                  className="sm:w-3/8 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5 shadow-sm"
+                  disabled={isUpdating}
+                  onClick={async () => {
+                    setIsUpdating(true);
+                    try {
+                      await doReview({
+                        data: {
+                          taskId: selectedTaskForReview.id,
+                          status: selectedTaskForReview.status || "completed",
+                          admin_remarks: adminRemarks,
+                          credits: selectedTaskForReview.credits,
+                        },
+                      });
+                      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+                      
+                      const email = selectedTaskForReview.assigned_profile?.email;
+                      if (email) {
+                        await doSendTaskEmail({
+                          data: {
+                            recipient_email: email,
+                            recipient_name: selectedTaskForReview.assigned_profile?.full_name,
+                            task_title: selectedTaskForReview.title,
+                            task_status: selectedTaskForReview.status || "completed",
+                            mentor_remarks: adminRemarks,
+                            credits: selectedTaskForReview.credits,
+                          },
+                        });
+                        toast.success(`Review saved & status email dispatched to ${email}!`);
+                      } else {
+                        toast.success(`Review saved!`);
+                      }
+                      setSelectedTaskForReview(null);
+                    } catch (err: any) {
+                      toast.error("Failed to update task / send email: " + err.message);
+                    } finally {
+                      setIsUpdating(false);
+                    }
+                  }}
+                >
+                  <Mail className="h-4 w-4" /> Save &amp; Email Intern
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* ─── DEDICATED TASK STATUS EMAIL & NOTIFICATION MODAL ─── */}
+      {taskEmailModalOpen && (
+        <Dialog open={taskEmailModalOpen} onOpenChange={setTaskEmailModalOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Mail className="h-5 w-5 text-blue-600" />
+                Send Task Status Email to Intern
+              </DialogTitle>
+              <DialogDescription>
+                Dispatch a tailored corporate email notification regarding milestone status, mentor remarks, or deadline reminders.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-2 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Intern Name</label>
+                  <Input value={taskEmailForm.recipient_name} onChange={(e) => setTaskEmailForm({ ...taskEmailForm, recipient_name: e.target.value })} />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Recipient Email *</label>
+                  <Input value={taskEmailForm.recipient_email} onChange={(e) => setTaskEmailForm({ ...taskEmailForm, recipient_email: e.target.value })} required />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Task Title *</label>
+                  <Input value={taskEmailForm.task_title} onChange={(e) => setTaskEmailForm({ ...taskEmailForm, task_title: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Task Status Notification Type *</label>
+                  <Select
+                    value={taskEmailForm.task_status}
+                    onValueChange={(val) => setTaskEmailForm({ ...taskEmailForm, task_status: val })}
+                  >
+                    <SelectTrigger className="text-xs h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="completed">✓ Task Approved &amp; Completed</SelectItem>
+                      <SelectItem value="changes_requested">⚠️ Revisions Requested / Feedback</SelectItem>
+                      <SelectItem value="deadline_reminder">⏰ Urgent Deadline Reminder</SelectItem>
+                      <SelectItem value="submitted">⏳ Submission Acknowledged</SelectItem>
+                      <SelectItem value="assigned">📋 New Task Assigned</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Mentor Remarks &amp; Official Feedback</label>
+                <Textarea
+                  rows={3}
+                  placeholder="e.g. Excellent work! Code submitted fulfills all acceptance criteria. Approved."
+                  value={taskEmailForm.mentor_remarks}
+                  onChange={(e) => setTaskEmailForm({ ...taskEmailForm, mentor_remarks: e.target.value })}
+                  className="text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Due Deadline (Optional)</label>
+                  <Input value={taskEmailForm.due_date} onChange={(e) => setTaskEmailForm({ ...taskEmailForm, due_date: e.target.value })} placeholder="e.g. 26 August 2026" />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Custom Subject (Optional)</label>
+                  <Input value={taskEmailForm.custom_subject} onChange={(e) => setTaskEmailForm({ ...taskEmailForm, custom_subject: e.target.value })} placeholder="Leave blank for auto-generated subject" />
+                </div>
+              </div>
+
+              <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl text-blue-900 text-xs">
+                <strong>Corporate Template:</strong> Includes Vyntyra header, task milestone badge, mentor remarks box, and direct button linking to the Intern Dashboard.
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-3 border-t">
+                <Button variant="outline" size="sm" onClick={() => setTaskEmailModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSendTaskWhatsAppSubmit}
+                  className="text-teal-700 border-teal-300 hover:bg-teal-50 font-bold gap-1 text-xs"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" /> Send via WhatsApp
+                </Button>
+                <Button
+                  type="button"
+                  disabled={isSendingTaskEmail}
+                  onClick={handleSendTaskEmailSubmit}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-1 text-xs"
+                >
+                  {isSendingTaskEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                  Dispatch Status Email
                 </Button>
               </div>
             </div>

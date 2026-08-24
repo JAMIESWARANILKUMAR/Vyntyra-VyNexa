@@ -12,7 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { bulkAssignTasksFromCsv, assignManualTaskToInterns, listTaskTemplates, listTeamMembers } from "@/lib/operations.functions";
 import { parseDocumentAndAssignTasks } from "@/lib/ai-tasks.functions";
-import { Upload, FileSpreadsheet, Plus, CheckCircle2, Loader2, Sparkles, Link2, Users, FileText, BookTemplate } from "lucide-react";
+import { sendTaskNotificationEmail } from "@/lib/notifications-omni.functions";
+import { Upload, FileSpreadsheet, Plus, CheckCircle2, Loader2, Sparkles, Link2, Users, FileText, BookTemplate, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 interface ParsedTask {
@@ -36,6 +37,8 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   const doAiAssign = useServerFn(parseDocumentAndAssignTasks);
   const fetchTaskTemplates = useServerFn(listTaskTemplates);
   const fetchTeamMembers = useServerFn(listTeamMembers);
+  const doSendTaskEmail = useServerFn(sendTaskNotificationEmail);
+  const [notifyViaEmail, setNotifyViaEmail] = useState(true);
 
   // Fetch active interns list for manual selection
   const internsQ = useQuery({
@@ -244,7 +247,31 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
       qc.invalidateQueries({ queryKey: ["my-tasks"] });
       qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
       if (saveTemplate) qc.invalidateQueries({ queryKey: ["task-templates"] });
-      toast.success(`Task assigned successfully to ${targetIds.length} intern(s)!`);
+      
+      if (notifyViaEmail) {
+        const assignedInterns = interns.filter((i: any) => targetIds.includes(i.id));
+        for (const intern of assignedInterns) {
+          if (intern.email) {
+            try {
+              await doSendTaskEmail({
+                data: {
+                  recipient_email: intern.email,
+                  recipient_name: intern.full_name,
+                  task_title: manualTitle,
+                  task_status: "assigned",
+                  mentor_remarks: manualDescription,
+                  due_date: manualDueDate || undefined,
+                  priority: manualPriority,
+                },
+              });
+            } catch (e) {
+              console.warn("Task assignment email skipped:", e);
+            }
+          }
+        }
+      }
+
+      toast.success(`Task assigned successfully to ${targetIds.length} intern(s)!` + (notifyViaEmail ? " Email notifications sent." : ""));
       onClose();
     } catch (err: any) {
       toast.error(err.message || "Failed to assign task");
@@ -681,11 +708,20 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
                 )}
               </div>
 
-              <div className="flex items-center space-x-2 bg-slate-50 border border-slate-100 p-3 rounded-lg">
-                <Checkbox id="save-template" checked={saveTemplate} onCheckedChange={(c) => setSaveTemplate(!!c)} />
-                <Label htmlFor="save-template" className="text-sm font-medium text-slate-700 cursor-pointer flex items-center gap-2">
-                  <BookTemplate className="h-4 w-4 text-indigo-500" /> Save as Task Template for future use
-                </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-center space-x-2 bg-slate-50 border border-slate-200 p-3 rounded-lg">
+                  <Checkbox id="save-template" checked={saveTemplate} onCheckedChange={(c) => setSaveTemplate(!!c)} />
+                  <Label htmlFor="save-template" className="text-xs font-medium text-slate-700 cursor-pointer flex items-center gap-1.5">
+                    <BookTemplate className="h-4 w-4 text-indigo-500" /> Save as Template
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2 bg-blue-50/60 border border-blue-200 p-3 rounded-lg">
+                  <Checkbox id="notify-email" checked={notifyViaEmail} onCheckedChange={(c) => setNotifyViaEmail(!!c)} />
+                  <Label htmlFor="notify-email" className="text-xs font-bold text-blue-900 cursor-pointer flex items-center gap-1.5">
+                    <Mail className="h-4 w-4 text-blue-600" /> Email Assigned Interns
+                  </Label>
+                </div>
               </div>
 
               <Button
