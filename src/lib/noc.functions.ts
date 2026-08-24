@@ -203,6 +203,23 @@ export const proxyImageFetch = createServerFn({ method: "POST" })
     }
   });
 
+export const updateNocUrl = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ applicationId: z.string(), publicUrl: z.string() }).parse(d))
+  .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
+    await adminClient.from("applications").update({ noc_url: data.publicUrl, updated_at: new Date().toISOString() }).eq("id", data.applicationId);
+    try {
+      const { data: appData } = await adminClient.from("applications").select("email").eq("id", data.applicationId).maybeSingle();
+      if (appData?.email) {
+        await adminClient.from("profiles").update({ noc_url: data.publicUrl, updated_at: new Date().toISOString() }).eq("email", appData.email);
+      }
+      await adminClient.from("profiles").update({ noc_url: data.publicUrl, updated_at: new Date().toISOString() }).eq("id", data.applicationId);
+    } catch (e) {
+      console.warn("[updateNocUrl] profile noc_url update non-fatal:", e);
+    }
+    return { success: true, url: data.publicUrl };
+  });
+
 export const saveNocPdf = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => savePdfSchema.parse(d))
   .handler(async ({ data }) => {

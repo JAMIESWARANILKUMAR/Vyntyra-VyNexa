@@ -31,14 +31,64 @@ function getImageFormat(dataUri: string): "PNG" | "JPEG" | "WEBP" {
   return "PNG";
 }
 
-export async function urlToBase64(url: string): Promise<string | null> {
+export async function urlToBase64(
+  url: string,
+  maxW: number = 240,
+  maxH: number = 240,
+  isTransparent: boolean = false
+): Promise<string | null> {
   try {
     if (!url) return null;
     if (url.startsWith("data:image")) return url;
 
-    // 1. Browser-side: direct fetch or canvas (ultra fast & reliable)
+    // 1. Browser-side: Load in Image, downscale on Canvas, export compressed data URI
     if (typeof window !== "undefined") {
-      // Step A: Direct fetch (works 100% for same-origin & public assets like /signature.png)
+      try {
+        const fullUrl = url.startsWith("/") ? window.location.origin + url : url;
+        const dataUri = await new Promise<string>((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            try {
+              let w = img.naturalWidth || img.width || 200;
+              let h = img.naturalHeight || img.height || 200;
+
+              // Calculate proportional scale to fit within maxW x maxH
+              if (w > maxW || h > maxH) {
+                const ratio = Math.min(maxW / w, maxH / h);
+                w = Math.max(1, Math.round(w * ratio));
+                h = Math.max(1, Math.round(h * ratio));
+              }
+
+              const canvas = document.createElement("canvas");
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext("2d");
+              if (ctx) {
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = "high";
+                ctx.drawImage(img, 0, 0, w, h);
+                
+                const mimeType = isTransparent || url.endsWith(".png") ? "image/png" : "image/jpeg";
+                const quality = mimeType === "image/jpeg" ? 0.85 : undefined;
+                resolve(canvas.toDataURL(mimeType, quality));
+              } else {
+                reject(new Error("Canvas context null"));
+              }
+            } catch (err) {
+              reject(err);
+            }
+          };
+          img.onerror = (e) => reject(e);
+          img.src = fullUrl;
+        });
+
+        if (dataUri && dataUri.startsWith("data:image")) return dataUri;
+      } catch (canvasErr) {
+        console.warn("[urlToBase64] Canvas compression failed, trying fetch:", canvasErr);
+      }
+
+      // Step B: Fetch fallback
       try {
         const resp = await fetch(url);
         if (resp.ok) {
@@ -49,7 +99,7 @@ export async function urlToBase64(url: string): Promise<string | null> {
               if (typeof reader.result === "string" && reader.result.startsWith("data:image")) {
                 resolve(reader.result);
               } else {
-                reject(new Error("FileReader did not return data URI"));
+                reject(new Error("FileReader result not a valid data URI"));
               }
             };
             reader.onerror = reject;
@@ -58,37 +108,7 @@ export async function urlToBase64(url: string): Promise<string | null> {
           if (base64) return base64;
         }
       } catch (e) {
-        console.warn("[urlToBase64] Direct browser fetch error, trying Canvas fallback:", e);
-      }
-
-      // Step B: HTML Image + Canvas (bypasses subtle blob parsing issues)
-      try {
-        const fullUrl = url.startsWith("/") ? window.location.origin + url : url;
-        const dataUri = await new Promise<string>((resolve, reject) => {
-          const img = new Image();
-          img.crossOrigin = "anonymous";
-          img.onload = () => {
-            try {
-              const canvas = document.createElement("canvas");
-              canvas.width = img.naturalWidth || img.width || 300;
-              canvas.height = img.naturalHeight || img.height || 100;
-              const ctx = canvas.getContext("2d");
-              if (ctx) {
-                ctx.drawImage(img, 0, 0);
-                resolve(canvas.toDataURL("image/png"));
-              } else {
-                reject(new Error("Canvas 2D context null"));
-              }
-            } catch (err) {
-              reject(err);
-            }
-          };
-          img.onerror = (err) => reject(err);
-          img.src = fullUrl;
-        });
-        if (dataUri && dataUri.startsWith("data:image")) return dataUri;
-      } catch (canvasErr) {
-        console.warn("[urlToBase64] Canvas conversion error, falling back to server proxy:", canvasErr);
+        console.warn("[urlToBase64] Direct browser fetch error:", e);
       }
     }
 

@@ -39,7 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { listApplications, updateAdminNotes, getResumeSignedUrl, regenerateInterviewQuestions, listApplicationProjects, deleteApplication, listEmployees, updateApplicantByAdmin, createApplicantByAdmin } from "@/lib/applications.functions";
 import { generatePayslipPdf } from "@/lib/payslip";
 import { generateNocPdf, urlToBase64 } from "@/lib/nocGenerator";
-import { saveNocPdf, saveInternshipCertificatePdf } from "@/lib/noc.functions";
+import { saveNocPdf, saveInternshipCertificatePdf, updateNocUrl } from "@/lib/noc.functions";
 import { getApplicationsOpen, setApplicationsOpen, getBrandingSettings } from "@/lib/settings.functions";
 import { listJobPostings, createJobPosting, updateJobPosting, toggleJobPosting, deleteJobPosting } from "@/lib/job-postings.functions";
 import { listAdminNotifications, markAllNotificationsRead } from "@/lib/notifications.functions";
@@ -1544,6 +1544,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
   const [isScheduling, setIsScheduling] = useState(false);
   const triggerSchedule = useServerFn(scheduleSelectionEmail);
   const doSaveNocPdf = useServerFn(saveNocPdf);
+  const doUpdateNocUrl = useServerFn(updateNocUrl);
   const doSaveCertificatePdf = useServerFn(saveInternshipCertificatePdf);
 
   useEffect(() => {
@@ -1621,8 +1622,8 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
         console.warn("Using default signature & logo:", e);
       }
 
-      const logoBase64 = await urlToBase64(logoUrl);
-      const signatureBase64 = await urlToBase64(sigUrl);
+      const logoBase64 = await urlToBase64(logoUrl, 160, 160, false);
+      const signatureBase64 = await urlToBase64(sigUrl, 260, 80, true);
 
       const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
       const QRCode = (await import("qrcode")).default;
@@ -1651,11 +1652,34 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
       doc.save(`NOC_${app.full_name.replace(/\s+/g, "_")}_Vyntyra.pdf`);
 
       // Auto-replace previous NOC file in storage
-      const pdfDataUri = doc.output("datauristring");
+      const pdfBlob = doc.output("blob");
+      const filepath = `nocs/${app.id}_NOC.pdf`;
+
+      let uploadSuccess = false;
       try {
-        await doSaveNocPdf({ data: { applicationId: app.id, pdfBase64: pdfDataUri } });
-      } catch (e) {
-        console.warn("Failed to auto-replace NOC in storage:", e);
+        const { error: storageError } = await supabase.storage
+          .from("default")
+          .upload(filepath, pdfBlob, {
+            contentType: "application/pdf",
+            upsert: true,
+          });
+
+        if (!storageError) {
+          const { data: { publicUrl } } = supabase.storage.from("default").getPublicUrl(filepath);
+          await doUpdateNocUrl({ data: { applicationId: app.id, publicUrl } });
+          uploadSuccess = true;
+        }
+      } catch (clientUploadErr) {
+        console.warn("Client storage upload failed, using server fallback:", clientUploadErr);
+      }
+
+      if (!uploadSuccess) {
+        const pdfDataUri = doc.output("datauristring");
+        try {
+          await doSaveNocPdf({ data: { applicationId: app.id, pdfBase64: pdfDataUri } });
+        } catch (e) {
+          console.warn("Failed to auto-replace NOC in storage:", e);
+        }
       }
 
       toast.dismiss(loadingToast);

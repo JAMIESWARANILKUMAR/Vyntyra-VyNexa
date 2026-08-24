@@ -30,7 +30,7 @@ import {
   generatePaymentReminderWhatsApp 
 } from "@/lib/notifications-omni.functions";
 import { generateNocPdf, urlToBase64 } from "@/lib/nocGenerator";
-import { saveNocPdf } from "@/lib/noc.functions";
+import { saveNocPdf, updateNocUrl } from "@/lib/noc.functions";
 import { localDateTimeToIso, isoToLocalDateTimeInput, formatDateTimeDisplay } from "@/lib/date-utils";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
@@ -57,6 +57,7 @@ function AdminSettingsPage() {
   const doAddOrUpdateDomain = useServerFn(addOrUpdateCareerDomain);
   const doRemoveDomain = useServerFn(removeCareerDomainOrSubdomain);
   const doSaveNocPdf = useServerFn(saveNocPdf);
+  const doUpdateNocUrl = useServerFn(updateNocUrl);
   const doSendPaymentEmail = useServerFn(sendPaymentReminderEmail);
   const doSendBulkPaymentEmails = useServerFn(sendBulkPaymentReminderEmails);
   const doGenWhatsApp = useServerFn(generatePaymentReminderWhatsApp);
@@ -354,9 +355,9 @@ function AdminSettingsPage() {
 
       const sigUrl = brandingForm.founder_signature_url || "/signature.png";
       const logoUrl = brandingForm.vyntyra_logo_url || "/icon-512.png";
-      const signatureBase64 = await urlToBase64(sigUrl);
-      const logoBase64 = await urlToBase64(logoUrl);
-      const photoBase64 = intern.avatar_url ? await urlToBase64(intern.avatar_url) : null;
+      const signatureBase64 = await urlToBase64(sigUrl, 260, 80, true);
+      const logoBase64 = await urlToBase64(logoUrl, 160, 160, false);
+      const photoBase64 = intern.avatar_url ? await urlToBase64(intern.avatar_url, 180, 220, false) : null;
 
       const selectionDate = intern.created_at ? new Date(intern.created_at) : new Date();
       const calcStartDate = intern.start_date ? new Date(intern.start_date) : new Date(selectionDate.getTime() + 4 * 24 * 60 * 60 * 1000);
@@ -378,8 +379,32 @@ function AdminSettingsPage() {
         hodName: intern.hod_name || null,
       });
 
-      const pdfDataUri = doc.output("datauristring");
-      await doSaveNocPdf({ data: { applicationId: intern.id, pdfBase64: pdfDataUri } });
+      const pdfBlob = doc.output("blob");
+      const filepath = `nocs/${intern.id}_NOC.pdf`;
+
+      let uploadSuccess = false;
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { error: storageError } = await supabase.storage
+          .from("default")
+          .upload(filepath, pdfBlob, {
+            contentType: "application/pdf",
+            upsert: true,
+          });
+
+        if (!storageError) {
+          const { data: { publicUrl } } = supabase.storage.from("default").getPublicUrl(filepath);
+          await doUpdateNocUrl({ data: { applicationId: intern.id, publicUrl } });
+          uploadSuccess = true;
+        }
+      } catch (clientUploadErr) {
+        console.warn("Client storage upload failed, using server fallback:", clientUploadErr);
+      }
+
+      if (!uploadSuccess) {
+        const pdfDataUri = doc.output("datauristring");
+        await doSaveNocPdf({ data: { applicationId: intern.id, pdfBase64: pdfDataUri } });
+      }
 
       toast.dismiss(loadingToast);
       toast.success(`NOC successfully generated and assigned to ${intern.full_name}!`);
