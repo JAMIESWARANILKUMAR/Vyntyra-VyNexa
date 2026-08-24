@@ -162,21 +162,30 @@ const savePdfSchema = z.object({
 });
 
 export const proxyImageFetch = createServerFn({ method: "POST" })
-  .validator((d: any) => z.object({ data: z.string() }).parse(d))
-  .handler(async ({ data }) => {
+  .validator((d: any) => {
+    if (typeof d === "string") return d;
+    if (typeof d === "object" && d !== null) {
+      if (typeof d.data === "string") return d.data;
+      if (typeof d.url === "string") return d.url;
+      if (typeof d.data?.data === "string") return d.data.data;
+    }
+    return String(d || "");
+  })
+  .handler(async ({ data: rawUrl }) => {
     try {
-      const rawUrl = data.data;
-      if (!rawUrl) return null;
+      if (!rawUrl || typeof rawUrl !== "string" || !rawUrl.trim()) return null;
+      const targetStr = rawUrl.trim();
+      if (targetStr.startsWith("data:image")) return targetStr;
 
       // Handle relative paths directly on server filesystem
-      if (rawUrl.startsWith("/")) {
+      if (targetStr.startsWith("/")) {
         try {
           const fs = await import("fs");
           const path = await import("path");
-          const filePath = path.join(process.cwd(), "public", rawUrl.replace(/^\//, ""));
+          const filePath = path.join(process.cwd(), "public", targetStr.replace(/^\//, ""));
           if (fs.existsSync(filePath)) {
             const buffer = fs.readFileSync(filePath);
-            const ext = rawUrl.split(".").pop()?.toLowerCase() || "png";
+            const ext = targetStr.split(".").pop()?.toLowerCase() || "png";
             const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : ext === "svg" ? "image/svg+xml" : "image/png";
             return `data:${mime};base64,${buffer.toString("base64")}`;
           }
@@ -186,7 +195,7 @@ export const proxyImageFetch = createServerFn({ method: "POST" })
       }
 
       const { resolveGooglePhotosUrl } = await import("./google-photos");
-      const url = (await resolveGooglePhotosUrl(rawUrl)) || rawUrl;
+      const url = (await resolveGooglePhotosUrl(targetStr)) || targetStr;
       
       let res = await fetch(url, {
         headers: {
@@ -195,19 +204,35 @@ export const proxyImageFetch = createServerFn({ method: "POST" })
         redirect: "follow"
       });
 
-      // If initial fetch failed and it was a Google Drive link, try alternative direct CDN
-      if ((!res.ok || (res.headers.get("content-type") || "").includes("text/html")) && rawUrl.includes("drive.google.com")) {
-        const driveMatch = rawUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || rawUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      // If initial fetch failed or returned HTML and it was a Google Drive link, try alternative direct CDN
+      if ((!res.ok || (res.headers.get("content-type") || "").includes("text/html")) && targetStr.includes("drive.google.com")) {
+        const driveMatch = targetStr.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || targetStr.match(/[?&]id=([a-zA-Z0-9_-]+)/);
         if (driveMatch && driveMatch[1]) {
-          const fallbackUrl = `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
-          const fallbackRes = await fetch(fallbackUrl, { redirect: "follow" });
-          if (fallbackRes.ok && !(fallbackRes.headers.get("content-type") || "").includes("text/html")) {
-            res = fallbackRes;
+          const fallbackUrls = [
+            `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1000`,
+            `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1000`,
+            `https://lh3.googleusercontent.com/d/${driveMatch[1]}`,
+            `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`
+          ];
+
+          for (const fbUrl of fallbackUrls) {
+            try {
+              const fallbackRes = await fetch(fbUrl, { redirect: "follow" });
+              if (fallbackRes.ok && !(fallbackRes.headers.get("content-type") || "").includes("text/html")) {
+                res = fallbackRes;
+                break;
+              }
+            } catch (e) {
+              // Try next
+            }
           }
         }
       }
 
-      if (!res.ok) return null;
+      if (!res.ok) {
+        console.warn("[proxyImageFetch] Fetch failed with status:", res.status, "for URL:", url);
+        return null;
+      }
       const contentType = res.headers.get("content-type") || "image/png";
       if (contentType.includes("text/html") || contentType.includes("application/json")) {
         console.warn("[proxyImageFetch] Non-image content type returned:", contentType);
