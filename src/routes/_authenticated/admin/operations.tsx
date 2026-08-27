@@ -7,7 +7,7 @@ import {
   Video, FileText, UploadCloud, MessageSquare, CreditCard, LifeBuoy, Award,
   Play, Pause, Square, Search, ExternalLink, ShieldCheck, Download, Send, MessageCircle, Key,
   PartyPopper, LayoutDashboard, Layers, FolderOpen, Megaphone, DollarSign,
-  CalendarPlus, Share2, Copy, Check, Pencil, Edit
+  CalendarPlus, Share2, Copy, Check, Pencil, Edit, Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +36,7 @@ import {
   listHolidays, createHoliday, deleteHoliday, updateHoliday, type HolidayItem
 } from "@/lib/operations.functions";
 import { localDateTimeToIso, isoToLocalDateTimeInput, formatDateTimeDisplay, generateGoogleCalendarUrl, formatMeetingTimeRange } from "@/lib/date-utils";
-import { sendPaymentReminderEmail, generatePaymentReminderWhatsApp } from "@/lib/notifications-omni.functions";
+import { sendPaymentReminderEmail, generatePaymentReminderWhatsApp, sendMeetingReminderEmail } from "@/lib/notifications-omni.functions";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import EmailAutomationHub from "@/components/email-automation-hub";
@@ -140,6 +140,7 @@ function OperationsDashboard() {
   const doCreateMeeting = useServerFn(createMeeting);
   const doUpdateMeeting = useServerFn(updateMeeting);
   const doDeleteMeeting = useServerFn(deleteMeeting);
+  const doSendMeetingReminder = useServerFn(sendMeetingReminderEmail);
   const fetchResources = useServerFn(listResources);
   const doCreateResource = useServerFn(createResource);
   const doDeleteResource = useServerFn(deleteResource);
@@ -190,6 +191,7 @@ function OperationsDashboard() {
     target_role: "all" as "employee" | "intern" | "all" | "individual",
     target_user_id: "",
     send_email_notification: true,
+    reminder_lead_time_minutes: 15,
   });
   const [editMeetingModalOpen, setEditMeetingModalOpen] = useState(false);
   const [editMeetingForm, setEditMeetingForm] = useState({
@@ -203,8 +205,10 @@ function OperationsDashboard() {
     target_role: "all" as "employee" | "intern" | "all" | "individual",
     target_user_id: "",
     send_email_notification: false,
+    reminder_lead_time_minutes: 15,
   });
   const [isUpdatingMeeting, setIsUpdatingMeeting] = useState(false);
+  const [sendingReminderMeetingId, setSendingReminderMeetingId] = useState<string | null>(null);
   const [resourceForm, setResourceForm] = useState({ title: "", type: "document" as "document" | "video" | "link" | "template" | "guide", description: "", target_role: "all" as "employee" | "intern" | "all" | "individual", target_user_id: "" });
   const [resourceFile, setResourceFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -237,6 +241,31 @@ function OperationsDashboard() {
   const tasksQ = useQuery({ queryKey: ["tasks"], queryFn: () => fetchTasks(), ...queryOpts });
   const schedulesQ = useQuery({ queryKey: ["schedules"], queryFn: () => fetchSchedules(), ...queryOpts });
   const meetingsQ = useQuery({ queryKey: ["meetings"], queryFn: () => fetchMeetings(), ...queryOpts });
+
+  const allCalendarEvents = useMemo(() => {
+    const scheds = (schedulesQ.data || []).map((s: any) => ({
+      id: s.id,
+      title: s.title,
+      event_date: s.event_date,
+      event_time: s.event_time,
+      target_role: s.target_role,
+      description: s.description,
+      meeting_url: s.meeting_url || s.meeting_link,
+      gcal_url: s.gcal_url,
+    }));
+    const meets = (meetingsQ.data || []).map((m: any) => ({
+      id: m.id,
+      title: m.title,
+      event_date: m.scheduled_at || m.start_time || m.created_at,
+      event_time: m.scheduled_at || m.start_time,
+      target_role: m.target_role,
+      description: m.description,
+      meeting_link: m.meeting_link,
+      meeting_url: m.meeting_link,
+      gcal_url: m.gcal_url,
+    }));
+    return [...scheds, ...meets];
+  }, [schedulesQ.data, meetingsQ.data]);
   const resourcesQ = useQuery({ queryKey: ["resources"], queryFn: () => fetchResources(), ...queryOpts });
   const feedbacksQ = useQuery({ queryKey: ["feedbacks"], queryFn: () => fetchFeedbacks(), ...queryOpts });
   const expensesQ = useQuery({ queryKey: ["admin-expenses"], queryFn: () => fetchExpenses(), ...queryOpts });
@@ -617,6 +646,7 @@ function OperationsDashboard() {
         target_role: "all",
         target_user_id: "",
         send_email_notification: true,
+        reminder_lead_time_minutes: 15,
       });
       qc.invalidateQueries({ queryKey: ["meetings"] });
     } catch (err: any) {
@@ -665,8 +695,40 @@ function OperationsDashboard() {
       target_role: meeting.target_role || "all",
       target_user_id: meeting.target_user_id || "",
       send_email_notification: false,
+      reminder_lead_time_minutes: meeting.reminder_lead_time_minutes || 15,
     });
     setEditMeetingModalOpen(true);
+  }
+
+  async function handleSendInstantReminder(m: any) {
+    setSendingReminderMeetingId(m.id);
+    try {
+      const scheduledTime = m.scheduled_at || m.start_time || m.created_at;
+      const durationMins = m.duration_minutes || 30;
+      const leadTimeMins = m.reminder_lead_time_minutes || 15;
+      const leadTimeText = leadTimeMins >= 60 ? `${Math.round(leadTimeMins / 60)} Hours` : `${leadTimeMins} Minutes`;
+
+      const res = await doSendMeetingReminder({
+        data: {
+          meetingId: m.id,
+          title: m.title,
+          description: m.description,
+          meeting_link: m.meeting_link,
+          scheduled_at: scheduledTime,
+          end_at: m.end_at,
+          duration_minutes: durationMins,
+          target_role: m.target_role || "all",
+          target_user_id: m.target_user_id,
+          lead_time_text: leadTimeText,
+        }
+      });
+
+      toast.success(`⏰ Automated meeting reminder email dispatched to ${res.recipientsCount || 0} participants!`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send meeting reminder notification");
+    } finally {
+      setSendingReminderMeetingId(null);
+    }
   }
 
   async function handleUpdateMeetingSubmit(e: React.FormEvent) {
@@ -1164,15 +1226,7 @@ function OperationsDashboard() {
 
               <div className="bg-white rounded-2xl border border-slate-200 p-1 shadow-xs">
                 <MonthlyCalendar 
-                  events={(schedulesQ.data || []).map((s: any) => ({
-                    id: s.id,
-                    title: s.title,
-                    event_date: s.event_date,
-                    event_time: s.event_time,
-                    target_role: s.target_role,
-                    description: s.description,
-                    meeting_url: s.meeting_url
-                  }))}
+                  events={allCalendarEvents}
                   holidays={holidaysQ.data || []}
                 />
               </div>
@@ -1614,15 +1668,7 @@ function OperationsDashboard() {
               <div className="space-y-4">
                 <div className="bg-white rounded-xl border border-slate-200 p-1 shadow-xs">
                   <MonthlyCalendar 
-                    events={(schedulesQ.data || []).map((s: any) => ({
-                      id: s.id,
-                      title: s.title,
-                      event_date: s.event_date,
-                      event_time: s.event_time,
-                      target_role: s.target_role,
-                      description: s.description,
-                      meeting_url: s.meeting_url
-                    }))}
+                    events={allCalendarEvents}
                     holidays={holidaysQ.data || []}
                   />
                 </div>
@@ -1829,6 +1875,26 @@ function OperationsDashboard() {
                       </div>
                     )}
 
+                    <div className="space-y-1.5">
+                      <Label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                        <Bell className="h-3.5 w-3.5 text-amber-600" /> Automated Reminder Email Lead Time
+                      </Label>
+                      <Select 
+                        value={String(meetingForm.reminder_lead_time_minutes || 15)} 
+                        onValueChange={(v) => setMeetingForm({ ...meetingForm, reminder_lead_time_minutes: Number(v) })}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10 Minutes Before Meeting</SelectItem>
+                          <SelectItem value="15">15 Minutes Before Meeting (Recommended)</SelectItem>
+                          <SelectItem value="30">30 Minutes Before Meeting</SelectItem>
+                          <SelectItem value="60">1 Hour Before Meeting</SelectItem>
+                          <SelectItem value="120">2 Hours Before Meeting</SelectItem>
+                          <SelectItem value="1440">24 Hours Before Meeting (1 Day Prior)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <div className="pt-2 border-t flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -1838,7 +1904,7 @@ function OperationsDashboard() {
                         className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                       />
                       <Label htmlFor="send_meeting_email" className="text-xs text-slate-700 font-medium cursor-pointer">
-                        Send automated email notification with Google Calendar link to all participants
+                        Send initial automated email invitation with Google Calendar link to all participants
                       </Label>
                     </div>
 
@@ -1858,7 +1924,7 @@ function OperationsDashboard() {
                       <Pencil className="h-5 w-5 text-indigo-600" /> Update Meeting Timelines & Details
                     </DialogTitle>
                     <DialogDescription>
-                      Modify the scheduled time window, agenda, or platform link for this meeting.
+                      Modify the scheduled time window, agenda, reminder interval, or platform link.
                     </DialogDescription>
                   </DialogHeader>
 
@@ -1957,6 +2023,26 @@ function OperationsDashboard() {
                         </Select>
                       </div>
                     )}
+
+                    <div className="space-y-1.5">
+                      <Label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                        <Bell className="h-3.5 w-3.5 text-amber-600" /> Automated Reminder Email Lead Time
+                      </Label>
+                      <Select 
+                        value={String(editMeetingForm.reminder_lead_time_minutes || 15)} 
+                        onValueChange={(v) => setEditMeetingForm({ ...editMeetingForm, reminder_lead_time_minutes: Number(v) })}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10 Minutes Before Meeting</SelectItem>
+                          <SelectItem value="15">15 Minutes Before Meeting (Recommended)</SelectItem>
+                          <SelectItem value="30">30 Minutes Before Meeting</SelectItem>
+                          <SelectItem value="60">1 Hour Before Meeting</SelectItem>
+                          <SelectItem value="120">2 Hours Before Meeting</SelectItem>
+                          <SelectItem value="1440">24 Hours Before Meeting (1 Day Prior)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
                     <div className="pt-2 border-t flex items-center gap-2">
                       <input
@@ -2062,6 +2148,23 @@ function OperationsDashboard() {
                                 >
                                   <CalendarPlus className="h-3 w-3 text-indigo-600" /> Google Calendar
                                 </a>
+
+                                {/* Instant Reminder Email Button */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={sendingReminderMeetingId === m.id}
+                                  onClick={() => handleSendInstantReminder(m)}
+                                  className="h-6 px-2 text-[10px] font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-300 gap-1 transition-all"
+                                  title="Send instant automated reminder email to all attendees"
+                                >
+                                  {sendingReminderMeetingId === m.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin text-amber-600" />
+                                  ) : (
+                                    <Bell className="h-3 w-3 text-amber-600" />
+                                  )}
+                                  {sendingReminderMeetingId === m.id ? "Sending..." : "Send Reminder Email"}
+                                </Button>
 
                                 {/* WhatsApp Group Notice Button */}
                                 <Button

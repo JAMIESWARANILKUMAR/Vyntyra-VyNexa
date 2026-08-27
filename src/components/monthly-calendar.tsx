@@ -45,8 +45,11 @@ export function MonthlyCalendar({ events = [], holidays = [] }: MonthlyCalendarP
   while (cells.length % 7 !== 0) cells.push({ day: cells.length - daysInMonth - firstDay + 1, cur: false });
 
   const eventsForDay = (day: number) =>
-    events.filter((e) => {
-      const d = new Date(e.event_date);
+    events.filter((e: any) => {
+      const rawDate = e.event_date || e.scheduled_at || e.start_time || e.date;
+      if (!rawDate) return false;
+      const d = new Date(rawDate);
+      if (isNaN(d.getTime())) return false;
       return d.getFullYear() === current.year && d.getMonth() === current.month && d.getDate() === day;
     });
 
@@ -55,6 +58,7 @@ export function MonthlyCalendar({ events = [], holidays = [] }: MonthlyCalendarP
     return holidays.filter((h) => {
       if (h.date === formattedDate) return true;
       const hd = new Date(h.date);
+      if (isNaN(hd.getTime())) return false;
       return hd.getFullYear() === current.year && hd.getMonth() === current.month && hd.getDate() === day;
     });
   };
@@ -171,21 +175,53 @@ export function MonthlyCalendar({ events = [], holidays = [] }: MonthlyCalendarP
             <p className="text-xs text-muted-foreground text-center py-2">No schedules or holidays on this day</p>
           ) : (
             <div className="space-y-2">
-              {selectedEvents.map((e) => (
-                <div key={e.id} className="flex flex-col gap-1 text-xs border-b border-slate-200/50 last:border-0 pb-2 last:pb-0">
-                  <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 shrink-0" />
-                    <span className="font-semibold text-slate-800">{e.title}</span>
-                    {e.event_time && <span className="text-muted-foreground ml-auto shrink-0 font-mono text-[10px]">{new Date(e.event_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>}
+              {selectedEvents.map((e: any) => {
+                const meetingUrl = e.meeting_link || e.meeting_url;
+                const eventTime = e.event_time || (e.scheduled_at ? new Date(e.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null);
+
+                return (
+                  <div key={e.id} className="flex flex-col gap-1 text-xs border-b border-slate-200/50 last:border-0 pb-2.5 last:pb-0 bg-white p-2.5 rounded-lg border border-slate-100 shadow-2xs">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`h-2 w-2 rounded-full shrink-0 ${meetingUrl ? "bg-indigo-600 animate-pulse" : "bg-blue-500"}`} />
+                      <span className="font-bold text-slate-800">{e.title}</span>
+                      {e.target_role && (
+                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 ml-auto">
+                          {e.target_role === "all" ? "Everyone" : e.target_role}
+                        </span>
+                      )}
+                      {eventTime && (
+                        <span className="text-indigo-700 bg-indigo-50 font-bold px-1.5 py-0.5 rounded text-[10px] ml-auto">
+                          ⏰ {eventTime}
+                        </span>
+                      )}
+                    </div>
+                    {e.description && <div className="text-slate-500 text-[11px] leading-relaxed pt-0.5">{e.description}</div>}
+                    
+                    {meetingUrl && (
+                      <div className="flex items-center gap-2 pt-1.5 flex-wrap">
+                        <a 
+                          href={meetingUrl} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded transition-colors"
+                        >
+                          📹 Join Live Meeting
+                        </a>
+                        {e.gcal_url && (
+                          <a 
+                            href={e.gcal_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded"
+                          >
+                            🗓️ Google Calendar
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {e.description && <div className="pl-3.5 text-slate-500 text-[10px] leading-relaxed">{e.description}</div>}
-                  {e.meeting_url && (
-                    <a href={e.meeting_url} target="_blank" rel="noreferrer" className="pl-3.5 text-indigo-600 hover:underline text-[10px] font-medium flex items-center gap-1 mt-0.5">
-                      Join Meeting
-                    </a>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

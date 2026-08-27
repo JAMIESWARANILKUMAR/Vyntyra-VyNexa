@@ -924,4 +924,249 @@ _All attendees are requested to join 5 minutes prior to the scheduled start time
     };
   });
 
+// ─── 5. Send Dedicated Meeting Reminder Email & Notification ───────────────
+export const sendMeetingReminderEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: unknown) =>
+      z.object({
+        meetingId: z.string().optional(),
+        title: z.string().min(1),
+        description: z.string().optional().nullable(),
+        meeting_link: z.string().min(1),
+        scheduled_at: z.string(),
+        end_at: z.string().optional().nullable(),
+        duration_minutes: z.number().optional().default(30),
+        target_role: z.enum(["all", "employee", "intern", "individual"]).default("all"),
+        target_user_id: z.string().optional().nullable(),
+        lead_time_text: z.string().optional().default("15 Minutes"),
+      }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
+
+    // 1. Determine targeted recipients
+    let recipients: { id: string; email: string; full_name?: string }[] = [];
+    if (data.target_role === "individual" && data.target_user_id) {
+      const { data: userProf } = await adminClient
+        .from("profiles")
+        .select("id, email, full_name")
+        .eq("id", data.target_user_id)
+        .maybeSingle();
+      if (userProf?.email) {
+        recipients = [userProf];
+      }
+    } else {
+      const { data: roles } = await adminClient
+        .from("user_roles")
+        .select("user_id, role");
+      const { data: profiles } = await adminClient
+        .from("profiles")
+        .select("id, email, full_name, intern_id");
+
+      const roleMap = new Map<string, string>();
+      (roles || []).forEach((r: any) => roleMap.set(r.user_id, r.role));
+
+      recipients = (profiles || [])
+        .filter((p: any) => {
+          if (!p.email) return false;
+          if (data.target_role === "all") return true;
+          const r = roleMap.get(p.id) || (p.intern_id ? "intern" : "employee");
+          return r === data.target_role;
+        })
+        .map((p: any) => ({
+          id: p.id,
+          email: p.email,
+          full_name: p.full_name || p.email.split("@")[0],
+        }));
+    }
+
+    const startDate = new Date(data.scheduled_at);
+    const durationMins = data.duration_minutes || 30;
+    const endDate = data.end_at ? new Date(data.end_at) : new Date(startDate.getTime() + durationMins * 60 * 1000);
+
+    const formattedDate = startDate.toLocaleDateString("en-IN", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const fromTimeStr = startDate.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+    const toTimeStr = endDate.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+    const timeRangeStr = `${fromTimeStr} – ${toTimeStr} (IST)`;
+
+    const gcalUrl = generateGoogleCalendarUrl({
+      title: data.title,
+      description: data.description,
+      location: data.meeting_link,
+      startTime: startDate,
+      endTime: endDate,
+    });
+
+    // 2. Dispatch in-app notifications
+    const notifPayloads = recipients.map((r) => ({
+      user_id: r.id,
+      title: `⏰ Meeting Reminder: ${data.title}`,
+      message: `Your meeting starts in ${data.lead_time_text} (${timeRangeStr}). Click to join now.`,
+      type: "meeting_reminder",
+      is_read: false,
+      created_at: new Date().toISOString(),
+    }));
+
+    if (notifPayloads.length > 0) {
+      try {
+        await adminClient.from("user_notifications").insert(notifPayloads);
+      } catch (e) {
+        console.warn("[sendMeetingReminderEmail] Notifications insert skipped:", e);
+      }
+    }
+
+    // 3. Dispatch reminder email via Resend
+    let emailsSent = 0;
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (resendApiKey) {
+      const resend = new Resend(resendApiKey);
+
+      for (const recipient of recipients) {
+        const emailHtml = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Reminder: ${data.title}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#060b14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#334155;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#060b14;padding:35px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 20px 40px -10px rgba(0,0,0,0.5);">
+          <!-- Corporate Header -->
+          <tr>
+            <td style="background-color:#0b1728;padding:24px 32px;text-align:left;border-bottom:3px solid #f59e0b;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="width:48px;vertical-align:middle;">
+                    <img src="${DEFAULT_LOGO_URL}" alt="Vyntyra" width="44" height="44" style="display:block;border-radius:8px;border:1px solid #1e293b;">
+                  </td>
+                  <td style="padding-left:14px;vertical-align:middle;">
+                    <div style="color:#ffffff;font-size:18px;font-weight:700;">Vyntyra Consultancy Services</div>
+                    <div style="color:#fbbf24;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-top:2px;">⏰ Meeting Reminder &middot; Starting Soon</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Body -->
+          <tr>
+            <td style="padding:32px 32px 24px 32px;text-align:left;">
+              <div style="display:inline-block;background-color:#fef3c7;color:#b45309;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:5px 14px;border-radius:20px;border:1px solid #fde68a;margin-bottom:14px;">
+                ⚡ Starting in ${data.lead_time_text}
+              </div>
+
+              <h1 style="margin:0 0 16px 0;font-size:22px;font-weight:800;color:#0f172a;line-height:1.35;">
+                Reminder: ${data.title}
+              </h1>
+
+              <p style="margin:0 0 14px 0;font-size:15px;line-height:1.7;color:#334155;">
+                Dear <strong>${recipient.full_name || "Team Member"}</strong>,
+              </p>
+
+              <p style="margin:0 0 16px 0;font-size:14px;line-height:1.65;color:#475569;">
+                This is an automated reminder that your scheduled session on <strong>Project VyNexa</strong> is starting shortly:
+              </p>
+
+              <!-- Meeting Details Box -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;margin:20px 0;overflow:hidden;">
+                <tr>
+                  <td style="padding:14px 20px;border-bottom:1px solid #e2e8f0;">
+                    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Date</div>
+                    <div style="font-size:15px;font-weight:700;color:#0f172a;margin-top:2px;">📅 ${formattedDate}</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px;border-bottom:1px solid #e2e8f0;background-color:#fffbeb;">
+                    <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;">Start Time & Duration</div>
+                    <div style="font-size:16px;font-weight:800;color:#b45309;margin-top:2px;">⏰ ${timeRangeStr} (${durationMins} Minutes)</div>
+                  </td>
+                </tr>
+                ${data.description ? `
+                <tr>
+                  <td style="padding:14px 20px;">
+                    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Agenda & Discussion Topics</div>
+                    <div style="font-size:13px;color:#334155;margin-top:4px;line-height:1.6;">${data.description}</div>
+                  </td>
+                </tr>` : ""}
+              </table>
+
+              <!-- Action Buttons -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin:28px 0 20px 0;">
+                <tr>
+                  <td align="center" style="padding-bottom:12px;">
+                    <a href="${data.meeting_link}" target="_blank" style="display:inline-block;background-color:#059669;color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:15px 36px;border-radius:10px;box-shadow:0 10px 20px -5px rgba(5,150,105,0.4);">
+                      📹 Join Live Meeting Now &rarr;
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <a href="${gcalUrl}" target="_blank" style="display:inline-block;background-color:#ffffff;color:#4338ca;border:1px solid #c7d2fe;font-size:13px;font-weight:700;text-decoration:none;padding:10px 24px;border-radius:8px;">
+                      🗓️ Open Google Calendar
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:24px 0 0 0;font-size:12px;line-height:1.6;color:#64748b;border-top:1px solid #e2e8f0;padding-top:16px;">
+                Please ensure your camera/mic are ready and join immediately.<br>
+                For technical help, reach out to the Directorate Support Desk.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#0b1728;padding:20px 32px;text-align:center;color:#64748b;font-size:11px;">
+              &copy; ${new Date().getFullYear()} Vyntyra Consultancy Services &middot; Project VyNexa Directorate
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+        try {
+          await resend.emails.send({
+            from: `Vyntyra Directorate <directorate@${FROM_DOMAIN}>`,
+            to: recipient.email,
+            subject: `⏰ [REMINDER] Meeting Starting in ${data.lead_time_text}: ${data.title}`,
+            html: emailHtml,
+          });
+          emailsSent++;
+        } catch (mailErr) {
+          console.warn("[sendMeetingReminderEmail] Resend reminder email failed for", recipient.email, mailErr);
+        }
+      }
+    }
+
+    return {
+      success: true,
+      recipientsCount: recipients.length,
+      emailsSent,
+      gcalUrl,
+      timeRangeStr,
+    };
+  });
+
+
 
