@@ -39,7 +39,7 @@ import {
   requestLeave, listMyLeaves, getMyLmsProgress, updateLmsProgress,
   raiseSupportQuery, listMySupportQueries, requestDeadlineExtension, submitTaskUrl,
   getOrCreateReferralCode, getMyReferralConversions, getDashboardSettings, getInternMentorDetails,
-  dismissUrgentPopup
+  dismissUrgentPopup, listHolidays
 } from "@/lib/operations.functions";
 import { listMyNotifications, markUserNotificationRead } from "@/lib/notifications.functions";
 import { generatePayuCheckout, confirmInternPayment } from "@/lib/payu.functions";
@@ -318,6 +318,9 @@ function InternDashboard() {
   const notesQ = useQuery({ queryKey: ["my-notes"], queryFn: () => fetchNotes(), ...queryOpts });
   const attendanceQ = useQuery({ queryKey: ["my-attendance"], queryFn: () => fetchAttendance(), staleTime: 0, refetchInterval: 3000 });
   const docsQ = useQuery({ queryKey: ["my-documents"], queryFn: () => fetchMyDocuments(), staleTime: 1000 * 60 * 30 });
+  const fetchHolidays = useServerFn(listHolidays);
+  const holidaysQ = useQuery({ queryKey: ["company-holidays"], queryFn: () => fetchHolidays(), ...queryOpts });
+  const [taskFilterTab, setTaskFilterTab] = useState<"all" | "in_progress" | "submitted" | "completed">("all");
 
   const attendanceLogs: any[] = attendanceQ.data || [];
 
@@ -653,8 +656,11 @@ function InternDashboard() {
 
   const poolTasks = tasks.filter((t: any) => t.is_pool_task === true && !t.assigned_to);
   const myTasks = tasks.filter((t: any) => !(t.is_pool_task === true && !t.assigned_to));
-  const pendingTasks = myTasks.filter((t) => t.status === "pending" || t.status === "in_progress");
+  const inProgressTasks = myTasks.filter((t: any) => t.status === "pending" || t.status === "in_progress" || t.status === "blocked");
+  const submittedTasks = myTasks.filter((t: any) => t.status === "submitted" || t.status === "under_review");
   const completedTasks = myTasks.filter((t) => t.status === "completed");
+  const verifiedTasks = completedTasks;
+  const pendingTasks = inProgressTasks;
   const earnedCredits = completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
   const totalAssignedCredits = myTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
   const totalPoints = earnedCredits; // for backwards compatibility
@@ -1216,7 +1222,7 @@ function InternDashboard() {
               {/* Calendar */}
               <div className="lg:col-span-1">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2"><CalendarDays className="h-4 w-4" />Calendar</h2>
-                <MonthlyCalendar events={[...schedules, ...meetings]} />
+                <MonthlyCalendar events={[...schedules, ...meetings]} holidays={holidaysQ.data || []} />
               </div>
 
               <div className="lg:col-span-2 space-y-6">
@@ -2151,13 +2157,70 @@ function InternDashboard() {
                 </div>
               )}
 
+              {/* Task Status Filters Bar */}
+              <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setTaskFilterTab("all")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      taskFilterTab === "all" ? "bg-slate-900 text-white shadow-xs" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    All Tasks ({myTasks.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTaskFilterTab("in_progress")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      taskFilterTab === "in_progress" ? "bg-blue-600 text-white shadow-xs" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    In Progress ({inProgressTasks.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTaskFilterTab("submitted")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      taskFilterTab === "submitted" ? "bg-purple-600 text-white shadow-xs" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    Submitted / Under Review ({submittedTasks.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTaskFilterTab("completed")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      taskFilterTab === "completed" ? "bg-emerald-600 text-white shadow-xs" : "bg-white border border-slate-200 text-emerald-700 hover:bg-emerald-50"
+                    }`}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Verified &amp; Stored Repository ({verifiedTasks.length})
+                  </button>
+                </div>
+                {taskFilterTab === "completed" && (
+                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100/70 border border-emerald-200 px-2.5 py-1 rounded-md flex items-center gap-1">
+                    <ShieldCheck className="h-3.5 w-3.5" /> Permanent Deliverables Archive
+                  </span>
+                )}
+              </div>
+
               {tasksQ.isLoading ? (
                 <div className="p-12 flex items-center justify-center gap-2 text-slate-400"><Loader2 className="h-5 w-5 animate-spin" />Loading tasks...</div>
-              ) : myTasks.length === 0 ? (
-                <div className="p-12 text-center text-slate-400"><ClipboardList className="h-10 w-10 mx-auto mb-3 opacity-20" />No tasks assigned yet</div>
+              ) : (taskFilterTab === "all" ? myTasks : taskFilterTab === "in_progress" ? inProgressTasks : taskFilterTab === "submitted" ? submittedTasks : verifiedTasks).length === 0 ? (
+                <div className="p-12 text-center text-slate-400">
+                  <ClipboardList className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                  {taskFilterTab === "completed" 
+                    ? "No verified tasks stored in your repository yet. Once submitted deliverables are reviewed and verified by mentors, they will be archived here permanently."
+                    : taskFilterTab === "submitted"
+                    ? "No tasks currently submitted under review."
+                    : taskFilterTab === "in_progress"
+                    ? "No active in-progress tasks."
+                    : "No tasks assigned yet."}
+                </div>
               ) : (
                 <div className="divide-y">
-                  {myTasks.map((task: any) => {
+                  {(taskFilterTab === "all" ? myTasks : taskFilterTab === "in_progress" ? inProgressTasks : taskFilterTab === "submitted" ? submittedTasks : verifiedTasks).map((task: any) => {
                     const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
                     const reportTemplate = task.report_template_url || "https://docs.google.com/document/d/1vA5W0h8Z7_Sample_Report_Template/edit?usp=sharing";
                     const pptTemplate = task.ppt_template_url || "https://docs.google.com/presentation/d/1tB6X0h8Z7_Sample_PPT_Template/edit?usp=sharing";
@@ -2428,7 +2491,7 @@ function InternDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2"><CalendarDays className="h-4 w-4" />Calendar</h2>
-              <MonthlyCalendar events={[...schedules, ...meetings]} />
+              <MonthlyCalendar events={[...schedules, ...meetings]} holidays={holidaysQ.data || []} />
             </div>
             <div className="lg:col-span-2">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2"><Video className="h-4 w-4" />Meetings</h2>

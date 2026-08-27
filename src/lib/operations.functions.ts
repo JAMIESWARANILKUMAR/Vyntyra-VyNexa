@@ -109,10 +109,10 @@ export const listTeamMembers = createServerFn({ method: "GET" })
       .from("profiles")
       .select("*");
 
-    // Bulk fetch applications to attach profile photos, domains, colleges, noc_url, etc.
+    // Bulk fetch applications to attach profile photos, domains, colleges, noc_url, referral_code_used, etc.
     const { data: applications } = await adminClient
       .from("applications")
-      .select("id, email, phone, full_name, profile_photo_url, college, domain, sub_domain, internship_start_date, joining_date, hod_name, noc_url");
+      .select("id, email, phone, full_name, profile_photo_url, college, domain, sub_domain, internship_start_date, joining_date, hod_name, noc_url, referral_code_used, exam_fee_paid, payment_reference_no, payment_mode, payment_status");
 
     // Fetch site_settings to check NOC download flags
     const { data: nocSettingsList } = await adminClient
@@ -152,6 +152,12 @@ export const listTeamMembers = createServerFn({ method: "GET" })
       const internNocSetting = nocSettingsMap.get(`noc_enabled_${email}`) ?? nocSettingsMap.get(`noc_enabled_${p.id}`) ?? nocSettingsMap.get(`noc_enabled_${matchedApp.id}`);
       const isNocEnabled = internNocSetting !== undefined ? internNocSetting : (p.noc_download_enabled ?? matchedApp.noc_download_enabled ?? globalNocEnabled);
 
+      const isPaid = Boolean(p.exam_fee_paid || matchedApp.exam_fee_paid);
+      const refNo = p.payment_reference_no || matchedApp.payment_reference_no || null;
+      const payMode = p.payment_mode || matchedApp.payment_mode || null;
+      const payStatus = p.payment_status || matchedApp.payment_status || (isPaid ? "paid" : "unpaid");
+      const refCodeUsed = p.referral_code_used || matchedApp.referral_code_used || null;
+
       membersMap.set(p.id, {
         ...matchedApp,
         ...p,
@@ -170,6 +176,11 @@ export const listTeamMembers = createServerFn({ method: "GET" })
         hod_name: p.hod_name || matchedApp.hod_name || null,
         noc_url: p.noc_url || matchedApp.noc_url || null,
         noc_download_enabled: isNocEnabled,
+        exam_fee_paid: isPaid,
+        payment_reference_no: refNo,
+        payment_mode: payMode,
+        payment_status: payStatus,
+        referral_code_used: refCodeUsed,
       });
     });
 
@@ -1229,6 +1240,10 @@ const profileUpdateSchema = z.object({
   exam_fee_amount: z.number().optional().nullable(),
   exam_fee_paid: z.boolean().optional().nullable(),
   is_fee_exempted: z.boolean().optional().nullable(),
+  referral_code_used: z.string().optional().nullable(),
+  payment_reference_no: z.string().optional().nullable(),
+  payment_mode: z.string().optional().nullable(),
+  payment_status: z.string().optional().nullable(),
   urgent_popup_active: z.boolean().optional().nullable(),
   urgent_popup_title: z.string().optional().nullable(),
   urgent_popup_message: z.string().optional().nullable(),
@@ -2163,6 +2178,18 @@ export const createPayout = createServerFn({ method: 'POST' })
       status: data.status,
       date: new Date().toISOString().split('T')[0]
     });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const updatePayoutStatus = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(['paid', 'pending', 'cancelled']) }).parse(d))
+  .handler(async ({ data, context }) => {
+    if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
+    const adminClient = getAdminClient();
+
+    const { error } = await adminClient.from('payouts').update({ status: data.status }).eq('id', data.id);
     if (error) throw new Error(error.message);
     return { success: true };
   });
@@ -4537,4 +4564,290 @@ export const toggleAllInternsNocDownload = createServerFn({ method: "POST" })
 
     return { success: true, enabled: data.enabled };
   });
+
+// ─── HOLIDAYS MANAGEMENT ───
+export interface HolidayItem {
+  id: string;
+  name: string;
+  date: string; // YYYY-MM-DD
+  type: "public" | "company" | "festive" | "optional";
+  description?: string;
+  is_recurring?: boolean;
+  created_at?: string;
+}
+
+const DEFAULT_HOLIDAYS: HolidayItem[] = [
+  { id: "h-new-year", name: "New Year's Day", date: "2026-01-01", type: "public", description: "Official New Year Holiday" },
+  { id: "h-republic-day", name: "Republic Day", date: "2026-01-26", type: "public", description: "National Republic Day of India" },
+  { id: "h-holi", name: "Holi", date: "2026-03-04", type: "festive", description: "Festival of Colours" },
+  { id: "h-independence-day", name: "Independence Day", date: "2026-08-15", type: "public", description: "Indian Independence Day" },
+  { id: "h-gandhi-jayanti", name: "Mahatma Gandhi Jayanti", date: "2026-10-02", type: "public", description: "Birth Anniversary of Mahatma Gandhi" },
+  { id: "h-diwali", name: "Diwali (Deepavali)", date: "2026-11-08", type: "festive", description: "Festival of Lights" },
+  { id: "h-christmas", name: "Christmas Day", date: "2026-12-25", type: "public", description: "Christmas Holiday" },
+];
+
+export const listHolidays = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const admin = getAdminClient();
+    try {
+      const { data } = await admin
+        .from("site_settings")
+        .select("value")
+        .eq("id", "company_holidays_calendar")
+        .maybeSingle();
+
+      if (data?.value && Array.isArray(data.value)) {
+        return (data.value as HolidayItem[]).sort((a, b) => a.date.localeCompare(b.date));
+      }
+    } catch (e) {
+      console.warn("[listHolidays] error reading site_settings:", e);
+    }
+    return DEFAULT_HOLIDAYS.sort((a, b) => a.date.localeCompare(b.date));
+  });
+
+export const createHoliday = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    name: z.string().min(1),
+    date: z.string().min(1),
+    type: z.enum(["public", "company", "festive", "optional"]).default("company"),
+    description: z.string().optional().default(""),
+    is_recurring: z.boolean().optional().default(false),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    const existing = await listHolidays();
+    const newHoliday: HolidayItem = {
+      id: `h-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name: data.name,
+      date: data.date,
+      type: data.type,
+      description: data.description,
+      is_recurring: data.is_recurring,
+      created_at: new Date().toISOString(),
+    };
+
+    const updatedList = [...existing, newHoliday].sort((a, b) => a.date.localeCompare(b.date));
+
+    await admin.from("site_settings").upsert({
+      id: "company_holidays_calendar",
+      enabled: true,
+      value: updatedList,
+      updated_at: new Date().toISOString(),
+    });
+
+    return { success: true, holiday: newHoliday };
+  });
+
+export const updateHoliday = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    id: z.string(),
+    name: z.string().min(1),
+    date: z.string().min(1),
+    type: z.enum(["public", "company", "festive", "optional"]).default("company"),
+    description: z.string().optional().default(""),
+    is_recurring: z.boolean().optional().default(false),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    const existing = await listHolidays();
+    const updatedList = existing.map(h => h.id === data.id ? { ...h, ...data } : h).sort((a, b) => a.date.localeCompare(b.date));
+
+    await admin.from("site_settings").upsert({
+      id: "company_holidays_calendar",
+      enabled: true,
+      value: updatedList,
+      updated_at: new Date().toISOString(),
+    });
+
+    return { success: true };
+  });
+
+export const deleteHoliday = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string() }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    const existing = await listHolidays();
+    const updatedList = existing.filter(h => h.id !== data.id);
+
+    await admin.from("site_settings").upsert({
+      id: "company_holidays_calendar",
+      enabled: true,
+      value: updatedList,
+      updated_at: new Date().toISOString(),
+    });
+
+    return { success: true };
+  });
+
+// ─── Manual Payment & Referral Code Assignment (Admin) ───────────────
+
+export const recordManualInternPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    userId: z.string(),
+    amount: z.number().optional(),
+    paymentMode: z.string().default("Direct UPI Transfer"),
+    referenceNo: z.string().min(1),
+    paymentDate: z.string().optional(),
+    adminNotes: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
+    const admin = getAdminClient();
+
+    const paidTimestamp = data.paymentDate ? localDateTimeToIso(data.paymentDate) || new Date().toISOString() : new Date().toISOString();
+    const cleanRefNo = data.referenceNo.trim().toUpperCase();
+
+    const updatePayload: any = {
+      exam_fee_paid: true,
+      payment_reference_no: cleanRefNo,
+      payment_mode: data.paymentMode,
+      payment_status: "paid",
+      urgent_popup_active: false,
+      fee_payment_scheduled: false,
+      paid_at: paidTimestamp,
+      updated_at: new Date().toISOString(),
+    };
+    if (data.amount !== undefined) {
+      updatePayload.exam_fee_amount = data.amount;
+    }
+
+    // 1. Update Profile
+    const { error: profError } = await admin
+      .from("profiles")
+      .update(updatePayload)
+      .eq("id", data.userId);
+
+    if (profError) {
+      console.warn("[recordManualInternPayment] Profile update warning:", profError.message);
+    }
+
+    // 2. Update Application if matched by ID or email
+    try {
+      const { data: prof } = await admin.from("profiles").select("email").eq("id", data.userId).maybeSingle();
+      if (prof?.email) {
+        await admin
+          .from("applications")
+          .update({
+            exam_fee_paid: true,
+            payment_reference_no: cleanRefNo,
+            payment_mode: data.paymentMode,
+            payment_status: "paid",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("email", prof.email);
+      }
+    } catch (e) {
+      console.warn("[recordManualInternPayment] Application update skipped:", e);
+    }
+
+    // 3. Insert notification for the intern
+    try {
+      await admin.from("user_notifications").insert({
+        user_id: data.userId,
+        title: "Exam Fee Payment Verified Manually",
+        message: `Your payment of ₹${data.amount || "199"} via ${data.paymentMode} has been manually confirmed by Directorate (Ref / UTR: ${cleanRefNo}). Your intern dashboard and task deliverables are fully unlocked.`,
+        type: "payment_confirmed",
+        is_read: false,
+        created_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn("[recordManualInternPayment] Notification insert skipped:", e);
+    }
+
+    return {
+      success: true,
+      referenceNo: cleanRefNo,
+      message: `Manual payment (Ref: ${cleanRefNo}) recorded successfully!`,
+    };
+  });
+
+export const assignReferralCodeToIntern = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    internId: z.string(),
+    referralCode: z.string().min(1),
+    applyPricingRule: z.boolean().default(true),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
+    const admin = getAdminClient();
+    const cleanCode = data.referralCode.trim().toUpperCase();
+
+    // Fetch pricing rule if exists
+    let ruleExamFee: number | null = null;
+    if (data.applyPricingRule) {
+      const { data: rule } = await admin
+        .from("referral_pricing_rules")
+        .select("*")
+        .ilike("code", cleanCode)
+        .maybeSingle();
+
+      if (rule) {
+        ruleExamFee = Number(rule.custom_exam_fee);
+      }
+    }
+
+    // 1. Update Profile
+    const profileUpdate: any = {
+      referral_code_used: cleanCode,
+      updated_at: new Date().toISOString(),
+    };
+    if (ruleExamFee !== null) {
+      profileUpdate.exam_fee_amount = ruleExamFee;
+      if (ruleExamFee === 0) {
+        profileUpdate.is_fee_exempted = true;
+      }
+    }
+
+    const { error: profError } = await admin
+      .from("profiles")
+      .update(profileUpdate)
+      .eq("id", data.internId);
+
+    if (profError) {
+      console.warn("[assignReferralCodeToIntern] Profile update warning:", profError.message);
+    }
+
+    // 2. Update Application
+    try {
+      const { data: prof } = await admin.from("profiles").select("email").eq("id", data.internId).maybeSingle();
+      if (prof?.email) {
+        await admin
+          .from("applications")
+          .update({
+            referral_code_used: cleanCode,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("email", prof.email);
+      }
+    } catch (e) {
+      console.warn("[assignReferralCodeToIntern] Application update skipped:", e);
+    }
+
+    // 3. Notify intern
+    try {
+      await admin.from("user_notifications").insert({
+        user_id: data.internId,
+        title: "Referral ID Linked",
+        message: `Referral code "${cleanCode}" has been successfully assigned to your internship profile${ruleExamFee !== null ? ` (Exam fee adjusted to ₹${ruleExamFee})` : ""}.`,
+        type: "referral_linked",
+        is_read: false,
+        created_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn("[assignReferralCodeToIntern] Notification skipped:", e);
+    }
+
+    return {
+      success: true,
+      referralCode: cleanCode,
+      customFeeApplied: ruleExamFee,
+      message: `Referral code "${cleanCode}" successfully assigned to candidate!`,
+    };
+  });
+
 

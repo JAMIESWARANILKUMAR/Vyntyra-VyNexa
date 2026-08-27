@@ -18,7 +18,8 @@ import {
   getDashboardSettings, updateDashboardSetting, updateInternFeeSettings, 
   initializeDashboardSettings, listTeamMembers, purgeAllNocs,
   listAllReferralPricingRules, upsertReferralPricingRule, deleteReferralPricingRule,
-  sendUrgentPaymentPopupNotification, toggleInternNocDownload, toggleAllInternsNocDownload
+  sendUrgentPaymentPopupNotification, toggleInternNocDownload, toggleAllInternsNocDownload,
+  recordManualInternPayment, assignReferralCodeToIntern
 } from "@/lib/operations.functions";
 import { 
   getBrandingSettings, updateBrandingSettings, 
@@ -36,11 +37,33 @@ import { generateNocPdf, urlToBase64 } from "@/lib/nocGenerator";
 import { saveNocPdf, updateNocUrl } from "@/lib/noc.functions";
 import { localDateTimeToIso, isoToLocalDateTimeInput, formatDateTimeDisplay } from "@/lib/date-utils";
 
+type SettingsTab = "referrals" | "intern_fees" | "system_modules" | "branding" | "career_tracks" | "noc_controls";
+
 export const Route = createFileRoute("/_authenticated/admin/settings")({
+  validateSearch: (search: Record<string, unknown>): { tab?: SettingsTab } => {
+    return {
+      tab: (search.tab as SettingsTab) || "referrals",
+    };
+  },
   component: AdminSettingsPage,
 });
 
 function AdminSettingsPage() {
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [activeTab, setActiveTab] = useState<SettingsTab>(tab || "referrals");
+
+  useEffect(() => {
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [tab]);
+
+  const handleTabChange = (newTab: SettingsTab) => {
+    setActiveTab(newTab);
+    navigate({ search: { tab: newTab } });
+  };
+
   const qc = useQueryClient();
   const fetchDashboardSettings = useServerFn(getDashboardSettings);
   const doUpdateDashboardSetting = useServerFn(updateDashboardSetting);
@@ -112,6 +135,120 @@ function AdminSettingsPage() {
     notes: "",
     sync_to_existing_interns: true,
   });
+
+  // Manual Payment Modal State
+  const [isManualPaymentModalOpen, setIsManualPaymentModalOpen] = useState(false);
+  const [isRecordingPayment, setIsRecordingPayment] = useState(false);
+  const [manualPaymentForm, setManualPaymentForm] = useState({
+    userId: "",
+    internName: "",
+    internEmail: "",
+    amount: 199,
+    paymentMode: "Direct UPI Transfer",
+    referenceNo: "",
+    paymentDate: new Date().toISOString().slice(0, 16),
+    adminNotes: "",
+  });
+
+  const doRecordManualPayment = useServerFn(recordManualInternPayment);
+
+  function openManualPaymentModal(intern: any) {
+    setManualPaymentForm({
+      userId: intern.id,
+      internName: intern.full_name || "Intern Candidate",
+      internEmail: intern.email || "",
+      amount: intern.exam_fee_amount !== undefined ? intern.exam_fee_amount : 199,
+      paymentMode: intern.payment_mode || "Direct UPI Transfer",
+      referenceNo: intern.payment_reference_no || `UPI-${Date.now().toString().slice(-8)}`,
+      paymentDate: new Date().toISOString().slice(0, 16),
+      adminNotes: "Manually verified & recorded by Directorate",
+    });
+    setIsManualPaymentModalOpen(true);
+  }
+
+  async function handleRecordManualPayment(e: React.FormEvent) {
+    e.preventDefault();
+    if (!manualPaymentForm.referenceNo.trim()) {
+      toast.error("Please enter a transaction / reference / UTR number.");
+      return;
+    }
+
+    setIsRecordingPayment(true);
+    try {
+      const res = await doRecordManualPayment({
+        data: {
+          userId: manualPaymentForm.userId,
+          amount: Number(manualPaymentForm.amount),
+          paymentMode: manualPaymentForm.paymentMode,
+          referenceNo: manualPaymentForm.referenceNo.trim(),
+          paymentDate: manualPaymentForm.paymentDate,
+          adminNotes: manualPaymentForm.adminNotes.trim(),
+        }
+      });
+      toast.success(res.message || "Manual payment recorded successfully!");
+      setIsManualPaymentModalOpen(false);
+      membersQ.refetch();
+      qc.invalidateQueries({ queryKey: ["admin-intern-list"] });
+      qc.invalidateQueries({ queryKey: ["profile"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to record manual payment");
+    } finally {
+      setIsRecordingPayment(false);
+    }
+  }
+
+  // Assign Referral Code Modal State
+  const [isAssignReferralModalOpen, setIsAssignReferralModalOpen] = useState(false);
+  const [isAssigningReferral, setIsAssigningReferral] = useState(false);
+  const [assignReferralForm, setAssignReferralForm] = useState({
+    internId: "",
+    internName: "",
+    internEmail: "",
+    currentReferralCode: "",
+    newReferralCode: "",
+    applyPricingRule: true,
+  });
+
+  const doAssignReferralCode = useServerFn(assignReferralCodeToIntern);
+
+  function openAssignReferralModal(intern: any) {
+    setAssignReferralForm({
+      internId: intern.id,
+      internName: intern.full_name || "Intern Candidate",
+      internEmail: intern.email || "",
+      currentReferralCode: intern.referral_code_used || "",
+      newReferralCode: intern.referral_code_used || "",
+      applyPricingRule: true,
+    });
+    setIsAssignReferralModalOpen(true);
+  }
+
+  async function handleAssignReferralCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (!assignReferralForm.newReferralCode.trim()) {
+      toast.error("Please enter or select a referral code.");
+      return;
+    }
+
+    setIsAssigningReferral(true);
+    try {
+      const res = await doAssignReferralCode({
+        data: {
+          internId: assignReferralForm.internId,
+          referralCode: assignReferralForm.newReferralCode.trim().toUpperCase(),
+          applyPricingRule: assignReferralForm.applyPricingRule,
+        }
+      });
+      toast.success(res.message || "Referral code successfully assigned!");
+      setIsAssignReferralModalOpen(false);
+      membersQ.refetch();
+      qc.invalidateQueries({ queryKey: ["admin-intern-list"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to assign referral code");
+    } finally {
+      setIsAssigningReferral(false);
+    }
+  }
   
   const settingsQ = useQuery({
     queryKey: ["admin-dashboard-settings"],
@@ -758,10 +895,53 @@ function AdminSettingsPage() {
         </div>
       </header>
 
+      {/* Subpage Top Navigation Bar */}
+      <div className="bg-white border-b sticky top-14 z-30 shadow-2xs">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+          <nav className="flex items-center gap-1.5 overflow-x-auto py-2.5 no-scrollbar">
+            {[
+              { id: "referrals", label: "Referral & Pricing Hub", icon: Tag, count: referralRules.length },
+              { id: "intern_fees", label: "Intern Fee Schedules", icon: CreditCard, count: allInterns.length },
+              { id: "system_modules", label: "Module Permissions", icon: ShieldCheck, count: null },
+              { id: "branding", label: "Certificates & Branding", icon: Image, count: null },
+              { id: "career_tracks", label: "Career Tracks & Domains", icon: Layers, count: (domainsQ.data || []).length },
+              { id: "noc_controls", label: "NOC Generation & Access", icon: FileCheck, count: null },
+            ].map((tabItem) => {
+              const Icon = tabItem.icon;
+              const isActive = activeTab === tabItem.id;
+              return (
+                <button
+                  key={tabItem.id}
+                  onClick={() => handleTabChange(tabItem.id as SettingsTab)}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                    isActive
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
+                >
+                  <Icon className={`h-3.5 w-3.5 ${isActive ? "text-indigo-400" : "text-slate-400"}`} />
+                  <span>{tabItem.label}</span>
+                  {tabItem.count !== null && (
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                        isActive ? "bg-slate-800 text-slate-200" : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {tabItem.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
+
       <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-8 space-y-8">
         
-        {/* ─── REFERRAL CODES & DYNAMIC PRICING HUB ─── */}
-        <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-indigo-100">
+        {/* ─── TAB: REFERRAL CODES & DYNAMIC PRICING HUB ─── */}
+        {activeTab === "referrals" && (
+          <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-indigo-100">
           <div className="p-5 border-b bg-gradient-to-r from-indigo-50/80 via-white to-indigo-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
@@ -961,42 +1141,47 @@ function AdminSettingsPage() {
             )}
           </div>
         </div>
+        )}
 
-        {/* ─── MODULE CONTROLS ─── */}
-        <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-5 border-b bg-slate-50 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-indigo-600" />
-              <h2 className="text-lg font-bold text-slate-800">Global Dashboard Controls</h2>
-            </div>
-            <Button size="sm" variant="outline" onClick={handleInitialize}>Initialize Defaults</Button>
-          </div>
-          <div className="p-6">
-            <p className="text-sm text-muted-foreground mb-6">Enable or disable specific modules for Interns and Employees across the portal.</p>
-            
-            {settingsQ.isLoading ? (
-              <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-indigo-600" /></div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {(settingsQ.data || []).map((setting: any) => (
-                  <div key={setting.id} className="flex items-center justify-between p-4 border rounded-lg bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                    <div>
-                      <div className="text-sm font-semibold capitalize text-slate-800">{setting.module_name}</div>
-                      <div className="text-xs text-slate-500 uppercase tracking-wider">{setting.portal_type} Portal</div>
-                    </div>
-                    <Switch 
-                      checked={setting.is_enabled} 
-                      onCheckedChange={(v) => updateSettingsMut.mutate({ id: setting.id, is_enabled: v })} 
-                    />
-                  </div>
-                ))}
+        {/* ─── TAB: MODULE CONTROLS ─── */}
+        {activeTab === "system_modules" && (
+          <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-5 border-b bg-slate-50 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-indigo-600" />
+                <h2 className="text-lg font-bold text-slate-800">Global Dashboard Controls</h2>
               </div>
-            )}
+              <Button size="sm" variant="outline" onClick={handleInitialize}>Initialize Defaults</Button>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-muted-foreground mb-6">Enable or disable specific modules for Interns and Employees across the portal.</p>
+              
+              {settingsQ.isLoading ? (
+                <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-indigo-600" /></div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {(settingsQ.data || []).map((setting: any) => (
+                    <div key={setting.id} className="flex items-center justify-between p-4 border rounded-lg bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                      <div>
+                        <div className="text-sm font-semibold capitalize text-slate-800">{setting.module_name}</div>
+                        <div className="text-xs text-slate-500 uppercase tracking-wider">{setting.portal_type} Portal</div>
+                      </div>
+                      <Switch 
+                        checked={setting.is_enabled} 
+                        onCheckedChange={(v) => updateSettingsMut.mutate({ id: setting.id, is_enabled: v })} 
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* ─── DIRECT INTERN FEE OVERRIDE ─── */}
-        <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
+        {/* ─── TAB: INTERN FEE SCHEDULES ─── */}
+        {activeTab === "intern_fees" && (
+          <div className="space-y-8">
+            <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
           <div className="p-5 border-b bg-amber-50 flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-amber-600" />
             <h2 className="text-lg font-bold text-amber-900">Direct Intern Fee Override</h2>
@@ -1245,6 +1430,7 @@ function AdminSettingsPage() {
                 <thead className="bg-slate-50 border-b text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                   <tr>
                     <th className="py-3 px-4">Intern</th>
+                    <th className="py-3 px-4">Referral ID</th>
                     <th className="py-3 px-4">Assigned Mentor</th>
                     <th className="py-3 px-4">Exam Fee (₹)</th>
                     <th className="py-3 px-4">Fee Scheduled</th>
@@ -1258,7 +1444,7 @@ function AdminSettingsPage() {
                 <tbody className="divide-y divide-slate-100">
                   {membersQ.isLoading ? (
                     <tr>
-                      <td colSpan={9} className="py-10 text-center text-slate-400">
+                      <td colSpan={10} className="py-10 text-center text-slate-400">
                         <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2 text-slate-500" />
                         Loading intern fee schedules...
                       </td>
@@ -1269,7 +1455,8 @@ function AdminSettingsPage() {
                         const matchQuery = 
                           (intern.full_name || "").toLowerCase().includes(internFeeSearch.toLowerCase()) ||
                           (intern.email || "").toLowerCase().includes(internFeeSearch.toLowerCase()) ||
-                          (intern.intern_id || "").toLowerCase().includes(internFeeSearch.toLowerCase());
+                          (intern.intern_id || "").toLowerCase().includes(internFeeSearch.toLowerCase()) ||
+                          (intern.referral_code_used || "").toLowerCase().includes(internFeeSearch.toLowerCase());
                         if (!matchQuery) return false;
 
                         if (internFeeFilter === "scheduled") return intern.fee_payment_scheduled && !intern.exam_fee_paid && !intern.is_fee_exempted;
@@ -1287,6 +1474,34 @@ function AdminSettingsPage() {
                             <td className="py-3 px-4">
                               <div className="font-bold text-slate-800">{intern.full_name || "—"}</div>
                               <div className="text-[11px] text-slate-400">{intern.email} {intern.intern_id && `· ID: ${intern.intern_id}`}</div>
+                            </td>
+
+                            <td className="py-3 px-4">
+                              {intern.referral_code_used ? (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono font-bold text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded">
+                                    {intern.referral_code_used}
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0 text-slate-400 hover:text-indigo-600"
+                                    title="Edit / Reassign Referral Code"
+                                    onClick={() => openAssignReferralModal(intern)}
+                                  >
+                                    <Edit3 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 px-2 text-[10px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-200 gap-1"
+                                  onClick={() => openAssignReferralModal(intern)}
+                                >
+                                  <Plus className="h-2.5 w-2.5" /> Add Referral ID
+                                </Button>
+                              )}
                             </td>
 
                             <td className="py-3 px-4">
@@ -1336,8 +1551,8 @@ function AdminSettingsPage() {
                             <td className="py-3 px-4">
                               {intern.exam_fee_paid ? (
                                 <div>
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                    ✓ Paid
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 w-fit">
+                                    <CheckCircle2 className="h-3 w-3" /> Paid
                                   </span>
                                   <div className="text-[10px] text-slate-600 font-mono mt-0.5">
                                     Ref: {intern.payment_reference_no || `TXN-${(intern.id || "").slice(0, 6).toUpperCase()}`}
@@ -1351,9 +1566,18 @@ function AdminSettingsPage() {
                                   Exempted
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                                  Unpaid
-                                </span>
+                                <div className="space-y-1">
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                    Unpaid
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => openManualPaymentModal(intern)}
+                                    className="text-[10px] text-emerald-700 hover:text-emerald-800 font-bold block hover:underline"
+                                  >
+                                    + Record Manual Payment
+                                  </button>
+                                </div>
                               )}
                              </td>
 
@@ -1392,6 +1616,29 @@ function AdminSettingsPage() {
 
                             <td className="py-3 px-4 text-right">
                               <div className="flex items-center justify-end flex-wrap gap-1">
+                                {/* 1-Click Manual Payment Button if Unpaid */}
+                                {!intern.exam_fee_paid && !intern.is_fee_exempted && (
+                                  <Button
+                                    size="sm"
+                                    title="Record offline / manual payment (UPI, Bank Transfer, QR, Cash)"
+                                    className="h-7 px-2 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-2xs gap-1"
+                                    onClick={() => openManualPaymentModal(intern)}
+                                  >
+                                    <CreditCard className="h-3 w-3" /> Record Payment
+                                  </Button>
+                                )}
+
+                                {/* Assign / Edit Referral Button */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  title="Add or update referral code for this intern"
+                                  className="h-7 px-2 text-[10px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-200 gap-1"
+                                  onClick={() => openAssignReferralModal(intern)}
+                                >
+                                  <Tag className="h-3 w-3" /> Referral ID
+                                </Button>
+
                                 {/* 1-Click Generate and Enable NOC Download for this intern */}
                                 <Button
                                   size="sm"
@@ -1474,9 +1721,12 @@ function AdminSettingsPage() {
             </div>
           </div>
         </div>
+        </div>
+        )}
 
-        {/* ─── BRANDING & FOUNDER SIGNATURE / LOGO CUSTOMIZER ─── */}
-        <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-emerald-100">
+        {/* ─── TAB: BRANDING & FOUNDER SIGNATURE / LOGO CUSTOMIZER ─── */}
+        {activeTab === "branding" && (
+          <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-emerald-100">
           <div className="p-5 border-b bg-gradient-to-r from-emerald-50/80 via-white to-emerald-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-xs">
@@ -1590,9 +1840,11 @@ function AdminSettingsPage() {
             </div>
           </form>
         </div>
+        )}
 
-        {/* ─── DYNAMIC APPLICATION DOMAINS & SUB-DOMAINS MANAGER ─── */}
-        <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-blue-100">
+        {/* ─── TAB: DYNAMIC APPLICATION DOMAINS & SUB-DOMAINS MANAGER ─── */}
+        {activeTab === "career_tracks" && (
+          <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-blue-100">
           <div className="p-5 border-b bg-gradient-to-r from-blue-50/80 via-white to-blue-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-blue-600 text-white rounded-xl shadow-xs">
@@ -1759,33 +2011,103 @@ function AdminSettingsPage() {
             </div>
           </div>
         </div>
+        )}
 
-        {/* ─── NOC REGENERATION ─── */}
-        <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-5 border-b bg-slate-50 flex items-center gap-2">
-            <FileText className="h-5 w-5 text-rose-600" />
-            <h2 className="text-lg font-bold text-slate-800">NOC Certificate Management</h2>
+        {/* ─── TAB: NOC CERTIFICATE CONTROLS ─── */}
+        {activeTab === "noc_controls" && (
+          <div className="space-y-6">
+            <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-rose-100">
+              <div className="p-5 border-b bg-gradient-to-r from-rose-50/80 via-white to-rose-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-rose-600 text-white rounded-xl shadow-xs">
+                    <FileCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">NOC Certificate &amp; Verification Controls</h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Generate official No Objection Certificates with intern profile photos, QR verification codes, and founder signature.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handleBulkGenerateAndPublishNoc}
+                    disabled={isBulkGeneratingNoc || allInterns.length === 0}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 gap-1.5 shadow-xs"
+                  >
+                    {isBulkGeneratingNoc ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    Generate &amp; Enable NOCs for All Interns ({allInterns.length})
+                  </Button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Global NOC Download Toggle Card */}
+                <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50/70">
+                  <div className="space-y-0.5">
+                    <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                      <Download className="h-4 w-4 text-indigo-600" />
+                      Global Intern NOC Download Access
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      When enabled, all interns can download their customized NOC certificates directly from their dashboard.
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xs font-bold ${nocSettingsQ.data?.global_noc_download_enabled ? "text-emerald-600" : "text-slate-400"}`}>
+                      {nocSettingsQ.data?.global_noc_download_enabled ? "Enabled for All" : "Disabled"}
+                    </span>
+                    <Switch
+                      checked={!!nocSettingsQ.data?.global_noc_download_enabled}
+                      onCheckedChange={async (checked) => {
+                        try {
+                          await doToggleAllInternsNocDownload({ data: { enabled: checked } });
+                          await doSetNocSettings({ data: { global_noc_download_enabled: checked } });
+                          toast.success(`Global NOC download ${checked ? "enabled" : "disabled"}`);
+                          nocSettingsQ.refetch();
+                          membersQ.refetch();
+                        } catch (err: any) {
+                          toast.error(err.message || "Failed to update global NOC download");
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Force Purge & Regenerate Section */}
+                <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="font-bold text-sm text-rose-950 flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4 text-rose-600" />
+                      Force Purge Cached NOCs &amp; Reset Storage
+                    </div>
+                    <p className="text-xs text-rose-700 max-w-2xl">
+                      Purge all existing cached NOC certificates from storage and force clean regeneration with updated logos, signatures, and intern profile photos on next access.
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="gap-2 font-bold text-xs shrink-0"
+                    onClick={async () => {
+                      if (!confirm("This will delete all cached NOC PDFs and force regeneration. Continue?")) return;
+                      try {
+                        toast.info("Purging NOCs...");
+                        const result = await doPurgeAllNocs();
+                        toast.success(result.message || "All stored NOC links successfully purged. NOCs will regenerate on next access.");
+                      } catch (err: any) {
+                        toast.error(err.message || "Failed to purge NOCs");
+                      }
+                    }}
+                  >
+                    <RefreshCw className="h-4 w-4" /> Purge &amp; Reset All NOCs
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="p-6">
-            <p className="text-sm text-muted-foreground mb-4">Purge all existing cached NOC certificates from storage and force regeneration with the latest template (includes QR verification code and Vyntyra logo). NOCs will be regenerated automatically the next time each intern accesses their dashboard.</p>
-            <Button
-              variant="destructive"
-              className="gap-2 font-bold"
-              onClick={async () => {
-                if (!confirm("This will delete all cached NOC PDFs and force regeneration. Continue?")) return;
-                try {
-                  toast.info("Purging NOCs...");
-                  const result = await doPurgeAllNocs();
-                  toast.success(result.message || "All stored NOC links successfully purged. NOCs will regenerate on next access.");
-                } catch (err: any) {
-                  toast.error(err.message || "Failed to purge NOCs");
-                }
-              }}
-            >
-              <RefreshCw className="h-4 w-4" /> Regenerate All NOCs
-            </Button>
-          </div>
-        </div>
+        )}
       </main>
 
       {/* ─── REFERRAL CODE & PRICING MODAL ─── */}
@@ -2091,6 +2413,214 @@ function AdminSettingsPage() {
                 </Button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MANUAL PAYMENT RECORD MODAL ─── */}
+      {isManualPaymentModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200 space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-xs">
+                  <CreditCard className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Record Offline / Manual Payment</h3>
+                  <p className="text-xs text-slate-500">Confirm payment received outside PayU gateway</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setIsManualPaymentModalOpen(false)}>✕</Button>
+            </div>
+
+            <form onSubmit={handleRecordManualPayment} className="space-y-4 text-xs">
+              <div className="p-3 bg-slate-50 border rounded-xl space-y-1">
+                <div className="font-bold text-slate-800 text-sm">{manualPaymentForm.internName}</div>
+                <div className="text-slate-500">{manualPaymentForm.internEmail}</div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Amount (₹) *</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={manualPaymentForm.amount}
+                    onChange={(e) => setManualPaymentForm({ ...manualPaymentForm, amount: Number(e.target.value) })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Payment Mode *</label>
+                  <select
+                    value={manualPaymentForm.paymentMode}
+                    onChange={(e) => setManualPaymentForm({ ...manualPaymentForm, paymentMode: e.target.value })}
+                    className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs shadow-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    <option value="Direct UPI Transfer">Direct UPI Transfer (GPay / PhonePe / Paytm)</option>
+                    <option value="Bank NEFT / IMPS / RTGS">Bank NEFT / IMPS / RTGS</option>
+                    <option value="QR Code Scan">QR Code Scan</option>
+                    <option value="Offline / Cash">Offline / Direct Cash</option>
+                    <option value="Cheque / DD">Cheque / Demand Draft</option>
+                    <option value="Alternative Gateway / Other">Alternative Gateway / Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-slate-700">Transaction / UTR / Reference ID *</label>
+                  <button
+                    type="button"
+                    onClick={() => setManualPaymentForm({ ...manualPaymentForm, referenceNo: `UTR-${Date.now().toString().slice(-8)}` })}
+                    className="text-[10px] text-indigo-600 hover:underline font-semibold"
+                  >
+                    Generate UTR
+                  </button>
+                </div>
+                <Input
+                  placeholder="e.g. UTR123456789 or UPI-TXN-98765"
+                  value={manualPaymentForm.referenceNo}
+                  onChange={(e) => setManualPaymentForm({ ...manualPaymentForm, referenceNo: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Payment Date &amp; Time</label>
+                <Input
+                  type="datetime-local"
+                  value={manualPaymentForm.paymentDate}
+                  onChange={(e) => setManualPaymentForm({ ...manualPaymentForm, paymentDate: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Admin Verification Notes (Optional)</label>
+                <Input
+                  placeholder="e.g. Verified via Bank Statement UTR receipt..."
+                  value={manualPaymentForm.adminNotes}
+                  onChange={(e) => setManualPaymentForm({ ...manualPaymentForm, adminNotes: e.target.value })}
+                />
+              </div>
+
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs">
+                <strong>Instant Effect:</strong> This will mark the candidate's fee as <strong>Paid</strong>, dismiss payment popups, and immediately unlock their Intern Dashboard.
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <Button type="button" variant="outline" size="sm" onClick={() => setIsManualPaymentModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isRecordingPayment}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                >
+                  {isRecordingPayment ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Recording...</>
+                  ) : (
+                    <><CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Confirm &amp; Mark Paid</>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── ASSIGN REFERRAL ID MODAL ─── */}
+      {isAssignReferralModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200 space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-xs">
+                  <Tag className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Assign / Update Referral ID</h3>
+                  <p className="text-xs text-slate-500">Link referral code for {assignReferralForm.internName}</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setIsAssignReferralModalOpen(false)}>✕</Button>
+            </div>
+
+            <form onSubmit={handleAssignReferralCode} className="space-y-4 text-xs">
+              <div className="p-3 bg-slate-50 border rounded-xl space-y-1">
+                <div className="font-bold text-slate-800 text-sm">{assignReferralForm.internName}</div>
+                <div className="text-slate-500">{assignReferralForm.internEmail}</div>
+                {assignReferralForm.currentReferralCode && (
+                  <div className="text-indigo-600 font-semibold text-[11px] pt-1">
+                    Current Code: <span className="font-mono bg-indigo-100 px-1.5 py-0.5 rounded">{assignReferralForm.currentReferralCode}</span>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Referral Code *</label>
+                <div className="space-y-2">
+                  <Input
+                    placeholder="e.g. VYNTYRA2026, CAMPUS100, REF-USER"
+                    value={assignReferralForm.newReferralCode}
+                    onChange={(e) => setAssignReferralForm({ ...assignReferralForm, newReferralCode: e.target.value.toUpperCase() })}
+                    required
+                  />
+
+                  {/* Quick Select from existing rules */}
+                  {referralRules.length > 0 && (
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-medium mb-1">Or select active code:</div>
+                      <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto p-1 bg-slate-50 rounded-lg border">
+                        {referralRules.map((rule) => (
+                          <button
+                            key={rule.code}
+                            type="button"
+                            onClick={() => setAssignReferralForm({ ...assignReferralForm, newReferralCode: rule.code })}
+                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-colors ${
+                              assignReferralForm.newReferralCode === rule.code
+                                ? "bg-indigo-600 text-white"
+                                : "bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50"
+                            }`}
+                          >
+                            {rule.code} (₹{rule.custom_exam_fee})
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-xl border bg-indigo-50/50">
+                <div className="space-y-0.5">
+                  <div className="font-bold text-slate-800 text-xs">Apply Configured Referral Pricing</div>
+                  <div className="text-[10px] text-slate-500">Automatically adjust intern's exam fee amount to the matched referral rule price.</div>
+                </div>
+                <Switch
+                  checked={assignReferralForm.applyPricingRule}
+                  onCheckedChange={(v) => setAssignReferralForm({ ...assignReferralForm, applyPricingRule: v })}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <Button type="button" variant="outline" size="sm" onClick={() => setIsAssignReferralModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isAssigningReferral}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                >
+                  {isAssigningReferral ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Linking...</>
+                  ) : (
+                    <><Check className="h-3.5 w-3.5 mr-1" /> Save Referral ID</>
+                  )}
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}

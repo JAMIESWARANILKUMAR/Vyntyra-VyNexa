@@ -43,7 +43,8 @@ import {
   assignManualTaskToInterns, getMenteeAttendance,
   listAssignedSupportQueries, updateSupportProgressNotes, requestSupportMeeting,
   reviewDeadlineExtension, getDashboardSettings,
-  listInternTasksForMentor, updateTaskExecution
+  listInternTasksForMentor, updateTaskExecution,
+  listHolidays
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/employee")({
@@ -366,6 +367,9 @@ function EmployeeDashboard() {
   const fetchAssignedSupportQueries = useServerFn(listAssignedSupportQueries);
   const doUpdateSupportProgressNotes = useServerFn(updateSupportProgressNotes);
   const doRequestSupportMeeting = useServerFn(requestSupportMeeting);
+
+  const fetchHolidays = useServerFn(listHolidays);
+  const holidaysQ = useQuery({ queryKey: ["company-holidays"], queryFn: () => fetchHolidays() });
 
   const tasksQ = useQuery({ queryKey: ["my-tasks"], queryFn: () => fetchTasks() });
   const meetingsQ = useQuery({ queryKey: ["my-meetings"], queryFn: () => fetchMeetings() });
@@ -1033,7 +1037,7 @@ function EmployeeDashboard() {
                 <motion.div variants={itemVariants} initial="initial" animate="animate" className="lg:col-span-1">
                   <div className="text-sm font-semibold tracking-wide text-slate-900 mb-3 uppercase">Calendar</div>
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-                    <MonthlyCalendar events={[...schedules, ...meetings]} />
+                    <MonthlyCalendar events={[...schedules, ...meetings]} holidays={holidaysQ.data || []} />
                   </div>
                 </motion.div>
 
