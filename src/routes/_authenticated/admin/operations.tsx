@@ -6,7 +6,8 @@ import {
   Shield, GraduationCap, Briefcase, CalendarDays, RefreshCw,
   Video, FileText, UploadCloud, MessageSquare, CreditCard, LifeBuoy, Award,
   Play, Pause, Square, Search, ExternalLink, ShieldCheck, Download, Send, MessageCircle, Key,
-  PartyPopper, LayoutDashboard, Layers, FolderOpen, Megaphone, DollarSign
+  PartyPopper, LayoutDashboard, Layers, FolderOpen, Megaphone, DollarSign,
+  CalendarPlus, Share2, Copy, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +35,7 @@ import {
   deleteStoredOfferLetterAndRegenerate, deleteStoredNocAndRegenerate, deleteStoredOfferLetter, deleteStoredNoc,
   listHolidays, createHoliday, deleteHoliday, updateHoliday, type HolidayItem
 } from "@/lib/operations.functions";
-import { localDateTimeToIso, isoToLocalDateTimeInput, formatDateTimeDisplay } from "@/lib/date-utils";
+import { localDateTimeToIso, isoToLocalDateTimeInput, formatDateTimeDisplay, generateGoogleCalendarUrl, formatMeetingTimeRange } from "@/lib/date-utils";
 import { sendPaymentReminderEmail, generatePaymentReminderWhatsApp } from "@/lib/notifications-omni.functions";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
@@ -178,7 +179,17 @@ function OperationsDashboard() {
   const [announcementForm, setAnnouncementForm] = useState({ title: "", body: "", target_role: "all" as "employee" | "intern" | "all" });
   const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium" as "low" | "medium" | "high", is_pool_task: false });
   const [scheduleForm, setScheduleForm] = useState({ title: "", description: "", event_date: "", event_time: "", target_role: "all" as "employee" | "intern" | "all" | "individual", target_user_id: "" });
-  const [meetingForm, setMeetingForm] = useState({ title: "", meeting_link: "", start_time: "", target_role: "all" as "employee" | "intern" | "all" | "individual", target_user_id: "" });
+  const [meetingForm, setMeetingForm] = useState({
+    title: "",
+    description: "",
+    meeting_link: "",
+    date: new Date().toISOString().split("T")[0],
+    from_time: "10:00",
+    to_time: "10:45",
+    target_role: "all" as "employee" | "intern" | "all" | "individual",
+    target_user_id: "",
+    send_email_notification: true,
+  });
   const [resourceForm, setResourceForm] = useState({ title: "", type: "document" as "document" | "video" | "link" | "template" | "guide", description: "", target_role: "all" as "employee" | "intern" | "all" | "individual", target_user_id: "" });
   const [resourceFile, setResourceFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -536,17 +547,62 @@ function OperationsDashboard() {
   async function handleCreateMeeting(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const encodedLink = btoa(unescape(encodeURIComponent(meetingForm.meeting_link)));
+      if (!meetingForm.title || !meetingForm.meeting_link || !meetingForm.date || !meetingForm.from_time) {
+        toast.error("Please fill in meeting title, link, date, and from-time.");
+        return;
+      }
+
+      // Build start and end ISO timestamps
+      const startIso = new Date(`${meetingForm.date}T${meetingForm.from_time}:00`).toISOString();
+      let endIso = meetingForm.to_time ? new Date(`${meetingForm.date}T${meetingForm.to_time}:00`).toISOString() : null;
+
+      // Calculate duration
+      let durationMins = 30;
+      if (endIso) {
+        const diffMs = new Date(endIso).getTime() - new Date(startIso).getTime();
+        if (diffMs > 0) {
+          durationMins = Math.round(diffMs / (60 * 1000));
+        } else {
+          endIso = new Date(new Date(startIso).getTime() + 30 * 60 * 1000).toISOString();
+        }
+      }
+
+      let cleanLink = meetingForm.meeting_link.trim();
+      if (!/^https?:\/\//i.test(cleanLink)) {
+        cleanLink = `https://${cleanLink}`;
+      }
+
       await doCreateMeeting({
         data: {
-          ...meetingForm,
-          meeting_link: encodedLink,
-          scheduled_at: meetingForm.start_time ? new Date(meetingForm.start_time).toISOString() : new Date().toISOString(),
+          title: meetingForm.title.trim(),
+          description: meetingForm.description || null,
+          meeting_link: cleanLink,
+          scheduled_at: startIso,
+          end_at: endIso,
+          duration_minutes: durationMins,
+          target_role: meetingForm.target_role,
+          target_user_id: meetingForm.target_role === "individual" && meetingForm.target_user_id ? meetingForm.target_user_id : null,
+          send_email_notification: meetingForm.send_email_notification,
         }
       });
-      toast.success("Meeting scheduled!");
+
+      toast.success(
+        meetingForm.send_email_notification
+          ? "Meeting scheduled & automated email invitations dispatched!"
+          : "Meeting scheduled successfully!"
+      );
       setMeetingOpen(false);
-      setMeetingForm({ title: "", meeting_link: "", start_time: "", target_role: "all", target_user_id: "" });
+      setMeetingForm({
+        title: "",
+        description: "",
+        meeting_link: "",
+        date: new Date().toISOString().split("T")[0],
+        from_time: "10:00",
+        to_time: "10:45",
+        target_role: "all",
+        target_user_id: "",
+        send_email_notification: true,
+      });
       qc.invalidateQueries({ queryKey: ["meetings"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to create meeting");
@@ -1605,33 +1661,52 @@ function OperationsDashboard() {
                 <DialogContent className="sm:max-w-lg">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2"><Video className="h-5 w-5 text-indigo-600" /> Schedule Meeting</DialogTitle>
-                    <DialogDescription>Add a new meeting for your team or an individual person.</DialogDescription>
+                    <DialogDescription>Add a new meeting for your team, specific department, or an individual member.</DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleCreateMeeting} className="space-y-4 py-2">
+                  <form onSubmit={handleCreateMeeting} className="space-y-3.5 py-2">
                     <div className="space-y-1.5">
-                      <Label>Title</Label>
-                      <Input required value={meetingForm.title} onChange={e => setMeetingForm({ ...meetingForm, title: e.target.value })} placeholder="e.g. Daily Standup / 1-on-1 Review" />
+                      <Label>Meeting Title / Topic</Label>
+                      <Input required value={meetingForm.title} onChange={e => setMeetingForm({ ...meetingForm, title: e.target.value })} placeholder="e.g. Sprint Milestone Review & Daily Standup" />
                     </div>
+
                     <div className="space-y-1.5">
-                      <Label>Meeting Link</Label>
-                      <Input required type="url" value={meetingForm.meeting_link} onChange={e => setMeetingForm({ ...meetingForm, meeting_link: e.target.value })} placeholder="https://zoom.us/j/..." />
+                      <Label>Agenda & Discussion Details (Optional)</Label>
+                      <Input value={meetingForm.description} onChange={e => setMeetingForm({ ...meetingForm, description: e.target.value })} placeholder="e.g. Discuss deliverable timelines, code reviews, and Q&A." />
                     </div>
+
                     <div className="space-y-1.5">
-                      <Label>Start Time</Label>
-                      <Input required type="datetime-local" value={meetingForm.start_time} onChange={e => setMeetingForm({ ...meetingForm, start_time: e.target.value })} />
+                      <Label>Meeting Video Link (Google Meet / Zoom / MS Teams)</Label>
+                      <Input required type="url" value={meetingForm.meeting_link} onChange={e => setMeetingForm({ ...meetingForm, meeting_link: e.target.value })} placeholder="https://meet.google.com/xyz-abcd-efg" />
                     </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="space-y-1.5">
+                        <Label>Meeting Date</Label>
+                        <Input required type="date" value={meetingForm.date} onChange={e => setMeetingForm({ ...meetingForm, date: e.target.value })} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>From (Start Time)</Label>
+                        <Input required type="time" value={meetingForm.from_time} onChange={e => setMeetingForm({ ...meetingForm, from_time: e.target.value })} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>To (End Time)</Label>
+                        <Input required type="time" value={meetingForm.to_time} onChange={e => setMeetingForm({ ...meetingForm, to_time: e.target.value })} />
+                      </div>
+                    </div>
+
                     <div className="space-y-1.5">
                       <Label>Target Audience</Label>
                       <Select value={meetingForm.target_role} onValueChange={(v: any) => setMeetingForm({ ...meetingForm, target_role: v })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Everyone</SelectItem>
+                          <SelectItem value="all">Everyone (Employees & Interns)</SelectItem>
                           <SelectItem value="employee">Employees Only</SelectItem>
                           <SelectItem value="intern">Interns Only</SelectItem>
                           <SelectItem value="individual">Specific Person (Individual)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
                     {meetingForm.target_role === "individual" && (
                       <div className="space-y-1.5">
                         <Label>Select Team Member</Label>
@@ -1647,9 +1722,23 @@ function OperationsDashboard() {
                         </Select>
                       </div>
                     )}
-                    <DialogFooter>
+
+                    <div className="pt-2 border-t flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="send_meeting_email"
+                        checked={meetingForm.send_email_notification}
+                        onChange={(e) => setMeetingForm({ ...meetingForm, send_email_notification: e.target.checked })}
+                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <Label htmlFor="send_meeting_email" className="text-xs text-slate-700 font-medium cursor-pointer">
+                        Send automated email notification with Google Calendar link to all participants
+                      </Label>
+                    </div>
+
+                    <DialogFooter className="pt-2">
                       <Button type="button" variant="ghost" onClick={() => setMeetingOpen(false)}>Cancel</Button>
-                      <Button type="submit">Schedule</Button>
+                      <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold">Schedule Meeting</Button>
                     </DialogFooter>
                   </form>
                 </DialogContent>
@@ -1663,7 +1752,7 @@ function OperationsDashboard() {
                   <h2 className="font-semibold text-sm flex items-center gap-2"><Video className="h-4 w-4 text-indigo-500" /> Scheduled Meetings</h2>
                   <span className="text-xs text-slate-400">{(meetingsQ.data || []).length} Meetings</span>
                 </div>
-                <div className="divide-y max-h-[420px] overflow-y-auto">
+                <div className="divide-y max-h-[500px] overflow-y-auto">
                   {meetingsQ.isLoading ? (
                     <div className="p-8 flex items-center justify-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
                   ) : meetingsQ.isError ? (
@@ -1671,39 +1760,110 @@ function OperationsDashboard() {
                   ) : (meetingsQ.data || []).length === 0 ? (
                     <EmptyState icon={<Video className="h-6 w-6" />} message="No meetings scheduled." />
                   ) : (
-                    (meetingsQ.data as any[]).map((m: any) => (
-                      <div key={m.id} className="p-4 hover:bg-slate-50 transition-colors">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm truncate">{m.title}</h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${m.target_role === "all" ? "bg-slate-100 text-slate-600" : m.target_role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
-                                {m.target_role === "all" ? "Everyone" : m.target_role}
-                              </span>
-                              <span className="text-xs text-muted-foreground">{new Date(m.start_time).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span>
+                    (meetingsQ.data as any[]).map((m: any) => {
+                      const scheduledTime = m.scheduled_at || m.start_time || m.created_at;
+                      const durationMins = m.duration_minutes || 30;
+                      const { dateStr, rangeStr } = formatMeetingTimeRange(scheduledTime, m.end_at, durationMins);
+                      const gcalUrl = m.gcal_url || generateGoogleCalendarUrl({
+                        title: m.title,
+                        description: m.description,
+                        location: m.meeting_link,
+                        startTime: scheduledTime,
+                        endTime: m.end_at,
+                      });
+
+                      const handleWhatsAppNotice = () => {
+                        const text = `📢 *OFFICIAL MEETING NOTICE · PROJECT VYNEXA*\n\n📌 *Topic:* ${m.title}\n📅 *Date:* ${dateStr}\n⏰ *Time:* ${rangeStr} (${durationMins} Mins)\n🔗 *Meeting Link:* ${m.meeting_link}\n\n📝 *Agenda:*\n${m.description || "General sync and sprint review."}\n\n🗓️ *Google Calendar:*\n${gcalUrl}\n\n— *Vyntyra Directorate*`;
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+                      };
+
+                      const handleCopyNotice = () => {
+                        const text = `📢 OFFICIAL MEETING NOTICE · PROJECT VYNEXA\nTopic: ${m.title}\nDate: ${dateStr}\nTime: ${rangeStr} (${durationMins} Mins)\nMeeting Link: ${m.meeting_link}\nAgenda: ${m.description || "General sync."}\nCalendar: ${gcalUrl}`;
+                        navigator.clipboard.writeText(text);
+                        toast.success("Meeting details copied!");
+                      };
+
+                      return (
+                        <div key={m.id} className="p-4 hover:bg-slate-50 transition-colors">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0 space-y-1.5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-semibold text-sm text-slate-900 truncate">{m.title}</h4>
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${m.target_role === "all" ? "bg-slate-100 text-slate-700" : m.target_role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+                                  {m.target_role === "all" ? "Everyone" : m.target_role}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-3 text-xs text-slate-600 flex-wrap">
+                                <span className="flex items-center gap-1 font-medium"><Calendar className="h-3 w-3 text-slate-400" /> {dateStr}</span>
+                                <span className="flex items-center gap-1 font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                                  <Clock className="h-3 w-3 text-indigo-600" /> {rangeStr}
+                                </span>
+                                <span className="text-slate-400 text-[11px]">({durationMins} Mins)</span>
+                              </div>
+
+                              {m.description && (
+                                <p className="text-xs text-slate-500 line-clamp-1 pt-0.5">{m.description}</p>
+                              )}
+
+                              <div className="flex items-center gap-2 pt-1 flex-wrap">
+                                <a href={m.meeting_link} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 hover:underline font-mono truncate max-w-[200px]">
+                                  {m.meeting_link}
+                                </a>
+
+                                {/* Dedicated Google Calendar Button */}
+                                <a
+                                  href={gcalUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded transition-colors"
+                                  title="Add to Google Calendar"
+                                >
+                                  <CalendarPlus className="h-3 w-3 text-indigo-600" /> Google Calendar
+                                </a>
+
+                                {/* WhatsApp Group Notice Button */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={handleWhatsAppNotice}
+                                  className="h-6 px-2 text-[10px] font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border-teal-200 gap-1"
+                                >
+                                  <Share2 className="h-3 w-3 text-teal-600" /> WhatsApp
+                                </Button>
+
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={handleCopyNotice}
+                                  className="h-6 w-6 p-0 text-slate-400 hover:text-slate-700"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </div>
-                            <a href={m.meeting_link} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 hover:underline mt-2 block truncate">{m.meeting_link}</a>
+
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/50 hover:text-destructive hover:bg-destructive/10 shrink-0">
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Meeting?</AlertDialogTitle>
+                                  <AlertDialogDescription>This will remove the meeting from all dashboards.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteMeeting(m.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/50 hover:text-destructive hover:bg-destructive/10 shrink-0">
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Meeting?</AlertDialogTitle>
-                                <AlertDialogDescription>This will remove the meeting from all dashboards.</AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteMeeting(m.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </section>

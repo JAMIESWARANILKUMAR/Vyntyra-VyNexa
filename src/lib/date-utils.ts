@@ -47,3 +47,63 @@ export function formatDateTimeDisplay(dateStr?: string | null, fallback = "—")
     return fallback;
   }
 }
+
+export function generateGoogleCalendarUrl({
+  title,
+  description,
+  location,
+  startTime,
+  endTime,
+}: {
+  title: string;
+  description?: string | null;
+  location?: string | null;
+  startTime: string | Date;
+  endTime?: string | Date | null;
+}): string {
+  const start = new Date(startTime);
+  if (isNaN(start.getTime())) return "https://calendar.google.com/calendar/";
+
+  const end = endTime && !isNaN(new Date(endTime).getTime())
+    ? new Date(endTime)
+    : new Date(start.getTime() + 45 * 60 * 1000);
+
+  const formatGCalDate = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, "");
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: title,
+    dates: `${formatGCalDate(start)}/${formatGCalDate(end)}`,
+    details: `${description || "VyNexa Connect Scheduled Meeting"}\n\nJoin Live Link: ${location || "Online"}`,
+    location: location || "",
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+export function formatMeetingTimeRange(
+  startTimeStr: string,
+  endTimeStr?: string | null,
+  durationMinutes = 30
+): {
+  dateStr: string;
+  fromTimeStr: string;
+  toTimeStr: string;
+  rangeStr: string;
+} {
+  const start = new Date(startTimeStr);
+  const end = endTimeStr ? new Date(endTimeStr) : new Date(start.getTime() + durationMinutes * 60 * 1000);
+
+  const dateStr = start.toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const fromTimeStr = start.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const toTimeStr = end.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const rangeStr = `${fromTimeStr} – ${toTimeStr}`;
+
+  return { dateStr, fromTimeStr, toTimeStr, rangeStr };
+}
+

@@ -234,6 +234,7 @@ function InternDashboard() {
   // Submission URL state
   const [submissionTaskId, setSubmissionTaskId] = useState<string | null>(null);
   const [submissionUrl, setSubmissionUrl] = useState("");
+  const [submissionNotes, setSubmissionNotes] = useState("");
   const [isSubmittingTaskUrl, setIsSubmittingTaskUrl] = useState(false);
   const doSubmitTaskUrl = useServerFn(submitTaskUrl);
 
@@ -1780,27 +1781,95 @@ function InternDashboard() {
               <div className="lg:col-span-1 rounded-xl border bg-white p-6 shadow-sm space-y-4">
                 <h2 className="font-semibold text-sm flex items-center gap-2 text-slate-800"><Upload className="h-4 w-4 text-purple-600" /> Submit Assignment / Deliverable</h2>
                 <div className="space-y-3 text-xs">
+                  {tasks && tasks.length > 0 && (
+                    <div>
+                      <label className="font-semibold text-slate-700 mb-1 block">Link to Assigned Task (Optional)</label>
+                      <select 
+                        className="w-full rounded-md border border-slate-300 p-2 text-xs bg-white text-slate-800 focus:ring-1 focus:ring-purple-500"
+                        value={deliverableForm.task_id || ""}
+                        onChange={(e) => {
+                          const selectedTid = e.target.value;
+                          const matchedTask = tasks.find((t: any) => t.id === selectedTid);
+                          setDeliverableForm({
+                            ...deliverableForm,
+                            task_id: selectedTid,
+                            title: matchedTask ? matchedTask.title : deliverableForm.title,
+                          });
+                        }}
+                      >
+                        <option value="">-- Standalone Submission (No Task Link) --</option>
+                        {tasks.map((t: any) => (
+                          <option key={t.id} value={t.id}>
+                            {t.title} ({t.status || "Assigned"})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   <div>
                     <label className="font-semibold text-slate-700 mb-1 block">Deliverable Title</label>
-                    <input className="w-full rounded-md border p-2" value={deliverableForm.title} onChange={e => setDeliverableForm({...deliverableForm, title: e.target.value})} placeholder="e.g. Search Indexer Microservice PR" />
+                    <input 
+                      className="w-full rounded-md border border-slate-300 p-2 text-xs bg-white text-slate-800 focus:ring-1 focus:ring-purple-500" 
+                      value={deliverableForm.title} 
+                      onChange={e => setDeliverableForm({...deliverableForm, title: e.target.value})} 
+                      placeholder="e.g. Microservice Implementation & Test Suite" 
+                    />
                   </div>
+
                   <div>
-                    <label className="font-semibold text-slate-700 mb-1 block">Submission URL (GitHub PR / Figma / Docs)</label>
-                    <input className="w-full rounded-md border p-2" value={deliverableForm.submission_url} onChange={e => setDeliverableForm({...deliverableForm, submission_url: e.target.value})} placeholder="https://github.com/... or https://figma.com/..." />
+                    <label className="font-semibold text-slate-700 mb-1 block">Submission URL (GitHub Repo / PR / Figma / Drive)</label>
+                    <input 
+                      className="w-full rounded-md border border-slate-300 p-2 text-xs bg-white text-slate-800 focus:ring-1 focus:ring-purple-500" 
+                      value={deliverableForm.submission_url} 
+                      onChange={e => setDeliverableForm({...deliverableForm, submission_url: e.target.value})} 
+                      placeholder="https://github.com/... or google drive link" 
+                    />
                   </div>
+
                   <div>
-                    <label className="font-semibold text-slate-700 mb-1 block">Submission Notes</label>
-                    <textarea className="w-full rounded-md border p-2" rows={3} value={deliverableForm.notes} onChange={e => setDeliverableForm({...deliverableForm, notes: e.target.value})} placeholder="Key highlights & test results..." />
+                    <label className="font-semibold text-slate-700 mb-1 block">Submission Notes / Highlights (Optional)</label>
+                    <textarea 
+                      className="w-full rounded-md border border-slate-300 p-2 text-xs bg-white text-slate-800 focus:ring-1 focus:ring-purple-500" 
+                      rows={3} 
+                      value={deliverableForm.notes} 
+                      onChange={e => setDeliverableForm({...deliverableForm, notes: e.target.value})} 
+                      placeholder="Key highlights, deployed endpoints & test instructions..." 
+                    />
                   </div>
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white" onClick={async () => {
-                    if (!deliverableForm.title || !deliverableForm.submission_url) { toast.error("Title and URL required"); return; }
-                    try {
-                      await doCreateDeliverable({ data: deliverableForm });
-                      setDeliverableForm({ title: "", submission_url: "", notes: "", task_id: "" });
-                      toast.success("Deliverable submitted for review!");
-                      qc.invalidateQueries({ queryKey: ["my-deliverables"] });
-                    } catch (err) { toast.error("Failed to submit deliverable"); }
-                  }}>Submit for Review</Button>
+
+                  <Button 
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold h-9 shadow-xs" 
+                    onClick={async () => {
+                      if (!deliverableForm.title.trim() || !deliverableForm.submission_url.trim()) { 
+                        toast.error("Please enter both Deliverable Title and Submission URL."); 
+                        return; 
+                      }
+                      try {
+                        let cleanUrl = deliverableForm.submission_url.trim();
+                        if (!/^https?:\/\//i.test(cleanUrl) && !cleanUrl.startsWith("data:")) {
+                          cleanUrl = `https://${cleanUrl}`;
+                        }
+                        await doCreateDeliverable({ 
+                          data: {
+                            ...deliverableForm,
+                            title: deliverableForm.title.trim(),
+                            submission_url: cleanUrl,
+                            notes: deliverableForm.notes.trim() || null,
+                            task_id: deliverableForm.task_id && deliverableForm.task_id.trim() !== "" ? deliverableForm.task_id.trim() : null,
+                          } 
+                        });
+                        setDeliverableForm({ title: "", submission_url: "", notes: "", task_id: "" });
+                        toast.success("Deliverable recorded and queued for mentor review!");
+                        qc.invalidateQueries({ queryKey: ["my-deliverables"] });
+                        qc.invalidateQueries({ queryKey: ["my-tasks"] });
+                      } catch (err: any) { 
+                        toast.error("Failed to submit deliverable: " + err.message); 
+                      }
+                    }}
+                  >
+                    Submit Deliverable for Review
+                  </Button>
                 </div>
               </div>
 
@@ -2382,49 +2451,95 @@ function InternDashboard() {
                             </Button>
                           </div>
                         ) : (
-                          <div className="mt-2 pt-4 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-200">
+                          <div className="mt-2 pt-4 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-50/60 p-4 rounded-xl border border-slate-200">
                             {/* Submission Field */}
-                            <div className="flex-1 space-y-1">
-                              <label className="text-[11px] font-bold text-slate-700 block">Submit Public Task Deliverable URL (GitHub / Google Drive / Figma / Vercel)</label>
+                            <div className="flex-1 space-y-2">
+                              <label className="text-[11px] font-bold text-slate-700 block">
+                                Public Task Deliverable URL (GitHub Repo / Live PR / Google Drive / Figma / Vercel)
+                              </label>
                               {submissionTaskId === task.id ? (
-                                <div className="flex items-center gap-2 mt-1">
-                                  <input 
-                                    type="text"
-                                    placeholder="https://github.com/... or google drive link"
-                                    value={submissionUrl}
-                                    onChange={(e) => setSubmissionUrl(e.target.value)}
-                                    className="w-full max-w-md rounded-lg border p-1.5 text-xs bg-white text-slate-800 focus:ring-1 focus:ring-emerald-500"
-                                  />
-                                  <Button 
-                                    size="sm"
-                                    disabled={isSubmittingTaskUrl}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 font-bold"
-                                    onClick={async () => {
-                                      if (!submissionUrl.trim()) return;
-                                      setIsSubmittingTaskUrl(true);
-                                      try {
-                                        await doSubmitTaskUrl({ data: { taskId: task.id, submissionUrl } });
-                                        toast.success("Task deliverable submitted for mentor review!");
-                                        setSubmissionTaskId(null);
-                                        setSubmissionUrl("");
-                                        qc.invalidateQueries({ queryKey: ["my-tasks"] });
-                                      } catch (e: any) {
-                                        toast.error("Failed to submit task URL: " + e.message);
-                                      } finally {
-                                        setIsSubmittingTaskUrl(false);
-                                      }
-                                    }}
-                                  >
-                                    Submit URL
-                                  </Button>
-                                  <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setSubmissionTaskId(null)}>Cancel</Button>
+                                <div className="space-y-2 mt-1">
+                                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                    <input 
+                                      type="text"
+                                      placeholder="https://github.com/your-username/project or drive link"
+                                      value={submissionUrl}
+                                      onChange={(e) => setSubmissionUrl(e.target.value)}
+                                      className="flex-1 rounded-lg border border-slate-300 p-2 text-xs bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                    />
+                                    <input 
+                                      type="text"
+                                      placeholder="Optional submission notes / version..."
+                                      value={submissionNotes}
+                                      onChange={(e) => setSubmissionNotes(e.target.value)}
+                                      className="flex-1 sm:max-w-xs rounded-lg border border-slate-300 p-2 text-xs bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                    />
+                                    <div className="flex items-center gap-2">
+                                      <Button 
+                                        size="sm"
+                                        disabled={isSubmittingTaskUrl || !submissionUrl.trim()}
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 font-bold px-4 shrink-0 shadow-xs"
+                                        onClick={async () => {
+                                          if (!submissionUrl.trim()) {
+                                            toast.error("Please enter a valid submission URL");
+                                            return;
+                                          }
+                                          setIsSubmittingTaskUrl(true);
+                                          try {
+                                            let cleanUrl = submissionUrl.trim();
+                                            if (!/^https?:\/\//i.test(cleanUrl) && !cleanUrl.startsWith("data:")) {
+                                              cleanUrl = `https://${cleanUrl}`;
+                                            }
+                                            await doSubmitTaskUrl({
+                                              data: {
+                                                taskId: task.id,
+                                                submissionUrl: cleanUrl,
+                                                submissionNotes: submissionNotes.trim() || null,
+                                              }
+                                            });
+                                            toast.success("Task deliverable submitted successfully for mentor review!");
+                                            setSubmissionTaskId(null);
+                                            setSubmissionUrl("");
+                                            setSubmissionNotes("");
+                                            qc.invalidateQueries({ queryKey: ["my-tasks"] });
+                                            qc.invalidateQueries({ queryKey: ["my-deliverables"] });
+                                          } catch (e: any) {
+                                            toast.error("Failed to submit deliverable: " + e.message);
+                                          } finally {
+                                            setIsSubmittingTaskUrl(false);
+                                          }
+                                        }}
+                                      >
+                                        {isSubmittingTaskUrl ? "Submitting..." : "Submit Deliverable"}
+                                      </Button>
+                                      <Button 
+                                        size="sm" 
+                                        variant="ghost" 
+                                        className="h-8 text-xs text-slate-500" 
+                                        onClick={() => {
+                                          setSubmissionTaskId(null);
+                                          setSubmissionUrl("");
+                                          setSubmissionNotes("");
+                                        }}
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  </div>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-2 flex-wrap">
+                                <div className="flex items-center gap-3 flex-wrap">
                                   {task.deliverable_url ? (
-                                    <div className="text-xs text-slate-600 flex items-center gap-2">
-                                      <span className="font-bold text-emerald-600 flex items-center gap-0.5">✓ Submitted Link:</span>
-                                      <a href={task.deliverable_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline max-w-[200px] sm:max-w-md truncate text-ellipsis overflow-hidden font-mono">
+                                    <div className="text-xs text-slate-600 flex items-center gap-2 flex-wrap">
+                                      <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                                        ✓ Submitted for Review:
+                                      </span>
+                                      <a 
+                                        href={task.deliverable_url} 
+                                        target="_blank" 
+                                        rel="noreferrer" 
+                                        className="text-indigo-600 hover:underline max-w-[220px] sm:max-w-md truncate font-mono text-xs"
+                                      >
                                         {task.deliverable_url}
                                       </a>
                                     </div>
@@ -2433,14 +2548,15 @@ function InternDashboard() {
                                   )}
                                   <Button 
                                     size="sm" 
-                                    variant="link" 
-                                    className="text-emerald-600 hover:text-emerald-700 font-bold text-xs h-auto p-0"
+                                    variant="outline" 
+                                    className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 font-bold text-xs h-7 px-3"
                                     onClick={() => {
                                       setSubmissionTaskId(task.id);
                                       setSubmissionUrl(task.deliverable_url || "");
+                                      setSubmissionNotes(task.progress_notes || "");
                                     }}
                                   >
-                                    {task.deliverable_url ? "Update Submission Link" : "Submit Work Link"}
+                                    {task.deliverable_url ? "Update Submission Link" : "Submit Deliverable Link"}
                                   </Button>
                                 </div>
                               )}

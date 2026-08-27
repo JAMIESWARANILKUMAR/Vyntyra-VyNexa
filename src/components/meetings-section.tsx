@@ -1,29 +1,27 @@
-import { Video, Clock, Calendar, Loader2, AlertCircle } from "lucide-react";
+import { Video, Clock, Calendar, Loader2, AlertCircle, Share2, CalendarPlus, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { generateGoogleCalendarUrl, formatMeetingTimeRange } from "@/lib/date-utils";
+import { toast } from "sonner";
 
 interface Meeting {
   id: string;
   title: string;
-  description?: string;
+  description?: string | null;
   meeting_link: string;
   scheduled_at: string;
+  start_time?: string;
+  end_at?: string | null;
+  end_time?: string | null;
   duration_minutes?: number;
   target_role?: string;
+  gcal_url?: string;
 }
 
 interface MeetingsSectionProps {
   meetings: Meeting[];
   isLoading?: boolean;
   isError?: boolean;
-}
-
-function formatDateTime(iso: string) {
-  const d = new Date(iso);
-  return {
-    date: d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" }),
-    time: d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }),
-  };
 }
 
 function isUpcoming(iso: string) {
@@ -84,8 +82,8 @@ export function MeetingCountdown({ targetDate }: { targetDate: string }) {
 export function getJoinButtonState(scheduledAt: string, meetingId: string) {
   const now = Date.now();
   const scheduledTime = new Date(scheduledAt).getTime();
-  const windowStart = scheduledTime - 10 * 60 * 1000;
-  const windowEnd = scheduledTime + 10 * 60 * 1000;
+  const windowStart = scheduledTime - 15 * 60 * 1000;
+  const windowEnd = scheduledTime + 120 * 60 * 1000;
   
   const countKey = `meeting-join-count-${meetingId}`;
   let joinCount = 0;
@@ -93,12 +91,8 @@ export function getJoinButtonState(scheduledAt: string, meetingId: string) {
     joinCount = parseInt(localStorage.getItem(countKey) || "0", 10);
   } catch (e) {}
   
-  if (joinCount >= 10) {
-    return { enabled: false, reason: "Limit reached (10 joins max)" };
-  }
-  
-  if (joinCount > 0) {
-    return { enabled: true, reason: `Joined ${joinCount}/10 times` };
+  if (joinCount >= 20) {
+    return { enabled: false, reason: "Join limit reached" };
   }
   
   if (now >= windowStart && now <= windowEnd) {
@@ -106,20 +100,19 @@ export function getJoinButtonState(scheduledAt: string, meetingId: string) {
   }
   
   if (now < windowStart) {
-    return { enabled: false, reason: "Too early (Opens 10m before)" };
+    return { enabled: false, reason: "Opens 15m prior" };
   }
   
-  return { enabled: false, reason: "Closed (Joined limit or past window)" };
+  return { enabled: false, reason: "Meeting concluded" };
 }
 
 export function MeetingsSection({ meetings, isLoading, isError }: MeetingsSectionProps) {
-  const upcoming = meetings.filter((m) => isUpcoming(m.scheduled_at));
-  const past = meetings.filter((m) => !isUpcoming(m.scheduled_at));
-  const todayMeetings = meetings.filter((m) => isToday(m.scheduled_at));
+  const upcoming = meetings.filter((m) => isUpcoming(m.scheduled_at || m.start_time || ""));
+  const past = meetings.filter((m) => !isUpcoming(m.scheduled_at || m.start_time || ""));
+  const todayMeetings = meetings.filter((m) => isToday(m.scheduled_at || m.start_time || ""));
 
   function joinMeeting(meetingId: string, link: string) {
-    // Open in current tab only as requested
-    window.location.href = link;
+    window.open(link, "_blank", "noopener,noreferrer");
   }
 
   if (isLoading) {
@@ -156,11 +149,11 @@ export function MeetingsSection({ meetings, isLoading, isError }: MeetingsSectio
       )}
 
       {/* Upcoming */}
-      {upcoming.filter(m => !isToday(m.scheduled_at)).length > 0 && (
+      {upcoming.filter(m => !isToday(m.scheduled_at || m.start_time || "")).length > 0 && (
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Upcoming</div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Upcoming Meetings</div>
           <div className="space-y-2">
-            {upcoming.filter(m => !isToday(m.scheduled_at)).slice(0, 5).map((m) => (
+            {upcoming.filter(m => !isToday(m.scheduled_at || m.start_time || "")).slice(0, 10).map((m) => (
               <MeetingCard key={m.id} meeting={m} onJoin={joinMeeting} />
             ))}
           </div>
@@ -169,9 +162,9 @@ export function MeetingsSection({ meetings, isLoading, isError }: MeetingsSectio
 
       {/* Empty State */}
       {upcoming.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground text-sm">
-          <Video className="h-8 w-8 mx-auto mb-2 opacity-20" />
-          No upcoming meetings
+        <div className="text-center py-10 text-muted-foreground text-xs bg-white rounded-xl border p-6">
+          <Video className="h-8 w-8 mx-auto mb-2 opacity-20 text-indigo-600" />
+          No upcoming meetings scheduled right now.
         </div>
       )}
     </div>
@@ -179,17 +172,56 @@ export function MeetingsSection({ meetings, isLoading, isError }: MeetingsSectio
 }
 
 function MeetingCard({ meeting, highlight, onJoin }: { meeting: Meeting; highlight?: boolean; onJoin: (meetingId: string, l: string) => void }) {
-  const { date, time } = formatDateTime(meeting.scheduled_at);
-  const [state, setState] = useState(() => getJoinButtonState(meeting.scheduled_at, meeting.id));
+  const scheduledTime = meeting.scheduled_at || meeting.start_time || new Date().toISOString();
+  const durationMins = meeting.duration_minutes || 30;
+  const { dateStr, fromTimeStr, toTimeStr, rangeStr } = formatMeetingTimeRange(scheduledTime, meeting.end_at || meeting.end_time, durationMins);
+  
+  const gcalUrl = meeting.gcal_url || generateGoogleCalendarUrl({
+    title: meeting.title,
+    description: meeting.description,
+    location: meeting.meeting_link,
+    startTime: scheduledTime,
+    endTime: meeting.end_at || meeting.end_time,
+  });
+
+  const [state, setState] = useState(() => getJoinButtonState(scheduledTime, meeting.id));
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setState(getJoinButtonState(meeting.scheduled_at, meeting.id));
+      setState(getJoinButtonState(scheduledTime, meeting.id));
     }, 5000);
     return () => clearInterval(timer);
-  }, [meeting.scheduled_at, meeting.id]);
+  }, [scheduledTime, meeting.id]);
+
+  function handleShareWhatsApp() {
+    const text = `📢 *OFFICIAL MEETING NOTICE · PROJECT VYNEXA*
+
+📌 *Topic:* ${meeting.title}
+📅 *Date:* ${dateStr}
+⏰ *Time:* ${rangeStr} (${durationMins} Mins)
+🔗 *Meeting Link:* ${meeting.meeting_link}
+
+📝 *Agenda:*
+${meeting.description || "General sync and milestone review."}
+
+🗓️ *Google Calendar:*
+${gcalUrl}
+
+— *Vyntyra Directorate*`;
+
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank");
+  }
+
+  function handleCopyAnnouncement() {
+    const text = `📢 OFFICIAL MEETING NOTICE · PROJECT VYNEXA\nTopic: ${meeting.title}\nDate: ${dateStr}\nTime: ${rangeStr} (${durationMins} Mins)\nMeeting Link: ${meeting.meeting_link}\nAgenda: ${meeting.description || "General sync and milestone review."}\nCalendar Link: ${gcalUrl}`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    toast.success("Meeting announcement copied to clipboard!");
+    setTimeout(() => setCopied(false), 2000);
+  }
   
-  // Choose animated video icon class and container class based on highlight/urgency
   const iconContainerClass = highlight 
     ? "bg-emerald-50 border-emerald-100 text-emerald-600"
     : "bg-indigo-50 border-indigo-100 text-indigo-600";
@@ -198,50 +230,102 @@ function MeetingCard({ meeting, highlight, onJoin }: { meeting: Meeting; highlig
   const videoIconColorClass = highlight ? "text-emerald-600" : "text-indigo-600";
 
   return (
-    <div className={`rounded-lg border p-3.5 transition-all hover:shadow-sm ${highlight ? "border-emerald-200 bg-emerald-50/50" : "bg-white"}`}>
-      <div className="flex items-start gap-4 justify-between">
+    <div className={`rounded-xl border p-4 transition-all hover:shadow-xs ${highlight ? "border-emerald-200 bg-emerald-50/40" : "bg-white"}`}>
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
         
-        {/* Animated video meeting logo */}
-        <div className={`relative flex h-10 w-10 items-center justify-center rounded-xl border ${iconContainerClass} shrink-0 overflow-hidden`}>
-          <span className={`animate-ping absolute inline-flex h-8 w-8 rounded-full ${pingColorClass} opacity-40`} />
-          <Video className={`relative h-5 w-5 ${videoIconColorClass} animate-pulse`} />
+        <div className="flex items-start gap-3.5 min-w-0 flex-1">
+          {/* Animated video meeting logo */}
+          <div className={`relative flex h-10 w-10 items-center justify-center rounded-xl border ${iconContainerClass} shrink-0 overflow-hidden mt-0.5`}>
+            <span className={`animate-ping absolute inline-flex h-8 w-8 rounded-full ${pingColorClass} opacity-40`} />
+            <Video className={`relative h-5 w-5 ${videoIconColorClass} animate-pulse`} />
+          </div>
+
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h4 className="font-bold text-sm text-slate-900 truncate">{meeting.title}</h4>
+              <MeetingCountdown targetDate={scheduledTime} />
+              {meeting.target_role && (
+                <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                  {meeting.target_role === "all" ? "Everyone" : meeting.target_role}
+                </span>
+              )}
+            </div>
+            
+            {/* Time Schedule Display: From Time to What Time */}
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 font-medium">
+              <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-400" /> {dateStr}</span>
+              <span className="flex items-center gap-1 font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                <Clock className="h-3.5 w-3.5 text-indigo-600" /> {rangeStr}
+              </span>
+              <span className="text-slate-400 text-[11px]">({durationMins} Mins)</span>
+            </div>
+
+            {meeting.description && (
+              <p className="text-xs text-slate-500 pt-0.5 line-clamp-2 leading-relaxed">{meeting.description}</p>
+            )}
+          </div>
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h4 className="font-semibold text-sm truncate max-w-[200px] md:max-w-xs">{meeting.title}</h4>
-            <MeetingCountdown targetDate={meeting.scheduled_at} />
+        {/* Action Buttons: Join, Google Calendar, WhatsApp */}
+        <div className="flex items-center sm:items-end justify-between sm:justify-start w-full sm:w-auto gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Add to Google Calendar Button */}
+            <a
+              href={gcalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2.5 py-1.5 rounded-lg transition-colors shadow-2xs"
+              title="Add meeting schedule to your Google Calendar"
+            >
+              <CalendarPlus className="h-3.5 w-3.5 text-indigo-600" />
+              <span>Google Calendar</span>
+            </a>
+
+            {/* WhatsApp Group Share Button */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleShareWhatsApp}
+              className="h-8 px-2.5 text-[11px] font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border-teal-200 gap-1"
+              title="Share formatted meeting notice on WhatsApp Group"
+            >
+              <Share2 className="h-3.5 w-3.5 text-teal-600" />
+              <span>WhatsApp</span>
+            </Button>
+
+            {/* Copy Announcement Button */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleCopyAnnouncement}
+              className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700"
+              title="Copy meeting details"
+            >
+              {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+            </Button>
           </div>
-          
-          <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{date}</span>
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{time}</span>
-            {meeting.duration_minutes && <span>{meeting.duration_minutes} min</span>}
+
+          <div className="flex flex-col items-end gap-0.5">
+            <Button
+              size="sm"
+              disabled={!state.enabled}
+              onClick={() => {
+                const countKey = `meeting-join-count-${meeting.id}`;
+                const currentCount = parseInt(localStorage.getItem(countKey) || "0", 10);
+                localStorage.setItem(countKey, (currentCount + 1).toString());
+                setState(getJoinButtonState(scheduledTime, meeting.id));
+                onJoin(meeting.id, meeting.meeting_link);
+              }}
+              className={`gap-1.5 text-xs h-8 font-bold ${highlight && state.enabled ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}
+            >
+              <Video className="h-3.5 w-3.5" /> Join Live
+            </Button>
+            <span className="text-[9px] text-muted-foreground font-semibold">{state.reason}</span>
           </div>
-          {meeting.description && (
-            <p className="text-xs text-muted-foreground mt-1.5 line-clamp-1">{meeting.description}</p>
-          )}
         </div>
 
-        <div className="flex flex-col items-end gap-1 shrink-0">
-          <Button
-            size="sm"
-            disabled={!state.enabled}
-            onClick={() => {
-              const countKey = `meeting-join-count-${meeting.id}`;
-              const currentCount = parseInt(localStorage.getItem(countKey) || "0", 10);
-              localStorage.setItem(countKey, (currentCount + 1).toString());
-              setState(getJoinButtonState(meeting.scheduled_at, meeting.id));
-              onJoin(meeting.id, meeting.meeting_link);
-            }}
-            className={`gap-1.5 text-xs h-8 ${highlight && state.enabled ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""}`}
-            variant={highlight && state.enabled ? "default" : "outline"}
-          >
-            <Video className="h-3.5 w-3.5" /> Join
-          </Button>
-          <span className="text-[9px] text-muted-foreground font-semibold">{state.reason}</span>
-        </div>
       </div>
     </div>
   );
 }
+

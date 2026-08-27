@@ -34,6 +34,8 @@ import { EmployeeReferEarn } from "@/components/employee-refer-earn";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { 
   listTasks, listMeetings, listSchedules, listAnnouncements,
@@ -44,7 +46,7 @@ import {
   listAssignedSupportQueries, updateSupportProgressNotes, requestSupportMeeting,
   reviewDeadlineExtension, getDashboardSettings,
   listInternTasksForMentor, updateTaskExecution,
-  listHolidays
+  listHolidays, createMeeting
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/employee")({
@@ -295,6 +297,87 @@ function EmployeeDashboard() {
   const [internTasksList, setInternTasksList] = useState<any[]>([]);
   const [isLoadingInternTasks, setIsLoadingInternTasks] = useState(false);
   const doReviewDeadlineExtension = useServerFn(reviewDeadlineExtension);
+  const doCreateMeeting = useServerFn(createMeeting);
+
+  const [meetingModalOpen, setMeetingModalOpen] = useState(false);
+  const [meetingForm, setMeetingForm] = useState({
+    title: "",
+    description: "",
+    meeting_link: "",
+    date: new Date().toISOString().split("T")[0],
+    from_time: "10:00",
+    to_time: "10:45",
+    target_role: "all" as "employee" | "intern" | "all" | "individual",
+    target_user_id: "",
+    send_email_notification: true,
+  });
+  const [isSavingMeeting, setIsSavingMeeting] = useState(false);
+
+  async function handleScheduleMeetingSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!meetingForm.title || !meetingForm.meeting_link || !meetingForm.date || !meetingForm.from_time) {
+      toast.error("Please fill in meeting title, link, date, and from-time.");
+      return;
+    }
+
+    setIsSavingMeeting(true);
+    try {
+      const startIso = new Date(`${meetingForm.date}T${meetingForm.from_time}:00`).toISOString();
+      let endIso = meetingForm.to_time ? new Date(`${meetingForm.date}T${meetingForm.to_time}:00`).toISOString() : null;
+
+      let durationMins = 30;
+      if (endIso) {
+        const diffMs = new Date(endIso).getTime() - new Date(startIso).getTime();
+        if (diffMs > 0) {
+          durationMins = Math.round(diffMs / (60 * 1000));
+        } else {
+          endIso = new Date(new Date(startIso).getTime() + 30 * 60 * 1000).toISOString();
+        }
+      }
+
+      let cleanLink = meetingForm.meeting_link.trim();
+      if (!/^https?:\/\//i.test(cleanLink)) {
+        cleanLink = `https://${cleanLink}`;
+      }
+
+      await doCreateMeeting({
+        data: {
+          title: meetingForm.title.trim(),
+          description: meetingForm.description || null,
+          meeting_link: cleanLink,
+          scheduled_at: startIso,
+          end_at: endIso,
+          duration_minutes: durationMins,
+          target_role: meetingForm.target_role,
+          target_user_id: meetingForm.target_role === "individual" && meetingForm.target_user_id ? meetingForm.target_user_id : null,
+          send_email_notification: meetingForm.send_email_notification,
+        }
+      });
+
+      toast.success(
+        meetingForm.send_email_notification
+          ? "Meeting scheduled & automated email invitations dispatched!"
+          : "Meeting scheduled successfully!"
+      );
+      setMeetingModalOpen(false);
+      setMeetingForm({
+        title: "",
+        description: "",
+        meeting_link: "",
+        date: new Date().toISOString().split("T")[0],
+        from_time: "10:00",
+        to_time: "10:45",
+        target_role: "all",
+        target_user_id: "",
+        send_email_notification: true,
+      });
+      qc.invalidateQueries({ queryKey: ["my-meetings"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to schedule meeting");
+    } finally {
+      setIsSavingMeeting(false);
+    }
+  }
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -1875,7 +1958,161 @@ function EmployeeDashboard() {
           )}
 
           {activeTab === "meetings" && (
-            <motion.div key="meetings" variants={pageVariants} initial="initial" animate="animate" exit="exit">
+            <motion.div key="meetings" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
+              {/* Meeting Header Banner */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="space-y-1">
+                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <Video className="h-5 w-5 text-indigo-600" /> Meetings & Video Syncs
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Host team syncs, 1-on-1 intern reviews, or sprint milestone discussions.
+                  </p>
+                </div>
+
+                <Dialog open={meetingModalOpen} onOpenChange={setMeetingModalOpen}>
+                  <Button 
+                    size="sm" 
+                    onClick={() => setMeetingModalOpen(true)}
+                    className="gap-1.5 text-xs h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-xs"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Schedule Meeting
+                  </Button>
+
+                  <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Video className="h-5 w-5 text-indigo-600" /> Schedule Meeting
+                      </DialogTitle>
+                      <DialogDescription>
+                        Set up a live meeting with dedicated start/end times and Google Calendar sync.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleScheduleMeetingSubmit} className="space-y-3.5 py-2">
+                      <div className="space-y-1.5">
+                        <Label>Meeting Title / Topic</Label>
+                        <Input 
+                          required 
+                          value={meetingForm.title} 
+                          onChange={e => setMeetingForm({ ...meetingForm, title: e.target.value })} 
+                          placeholder="e.g. Sprint Review & Code Walkthrough" 
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label>Agenda & Discussion Details (Optional)</Label>
+                        <Input 
+                          value={meetingForm.description} 
+                          onChange={e => setMeetingForm({ ...meetingForm, description: e.target.value })} 
+                          placeholder="e.g. Discuss milestone progress, unblock issues, and next deliverables." 
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label>Meeting Video Link (Google Meet / Zoom / Teams)</Label>
+                        <Input 
+                          required 
+                          type="url" 
+                          value={meetingForm.meeting_link} 
+                          onChange={e => setMeetingForm({ ...meetingForm, meeting_link: e.target.value })} 
+                          placeholder="https://meet.google.com/xyz-abcd-efg" 
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="space-y-1.5">
+                          <Label>Meeting Date</Label>
+                          <Input 
+                            required 
+                            type="date" 
+                            value={meetingForm.date} 
+                            onChange={e => setMeetingForm({ ...meetingForm, date: e.target.value })} 
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>From (Start Time)</Label>
+                          <Input 
+                            required 
+                            type="time" 
+                            value={meetingForm.from_time} 
+                            onChange={e => setMeetingForm({ ...meetingForm, from_time: e.target.value })} 
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>To (End Time)</Label>
+                          <Input 
+                            required 
+                            type="time" 
+                            value={meetingForm.to_time} 
+                            onChange={e => setMeetingForm({ ...meetingForm, to_time: e.target.value })} 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label>Target Audience</Label>
+                        <Select 
+                          value={meetingForm.target_role} 
+                          onValueChange={(v: any) => setMeetingForm({ ...meetingForm, target_role: v })}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Everyone (Employees & Interns)</SelectItem>
+                            <SelectItem value="intern">Interns Only</SelectItem>
+                            <SelectItem value="employee">Employees Only</SelectItem>
+                            <SelectItem value="individual">Specific Person (Individual)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {meetingForm.target_role === "individual" && (
+                        <div className="space-y-1.5">
+                          <Label>Select Team Member / Intern</Label>
+                          <Select 
+                            value={meetingForm.target_user_id} 
+                            onValueChange={(v) => setMeetingForm({ ...meetingForm, target_user_id: v })}
+                          >
+                            <SelectTrigger><SelectValue placeholder="Choose Person..." /></SelectTrigger>
+                            <SelectContent>
+                              {(teamQ.data || []).map((m: any) => (
+                                <SelectItem key={m.id} value={m.id}>
+                                  {m.full_name || m.email} ({m.role || "Member"})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      <div className="pt-2 border-t flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="employee_send_meeting_email"
+                          checked={meetingForm.send_email_notification}
+                          onChange={(e) => setMeetingForm({ ...meetingForm, send_email_notification: e.target.checked })}
+                          className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <Label htmlFor="employee_send_meeting_email" className="text-xs text-slate-700 font-medium cursor-pointer">
+                          Send automated email notification with Google Calendar link to participants
+                        </Label>
+                      </div>
+
+                      <DialogFooter className="pt-2">
+                        <Button type="button" variant="ghost" onClick={() => setMeetingModalOpen(false)}>Cancel</Button>
+                        <Button 
+                          type="submit" 
+                          disabled={isSavingMeeting}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                        >
+                          {isSavingMeeting ? "Scheduling..." : "Schedule Meeting"}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
               <MeetingsSection meetings={meetings} isLoading={meetingsQ.isLoading} isError={meetingsQ.isError} />
             </motion.div>
           )}

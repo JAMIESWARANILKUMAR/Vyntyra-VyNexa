@@ -5,7 +5,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getAdminClient } from "@/integrations/supabase/admin";
 import { generateUploadUrl } from "./r2";
 import { supabase as anonClient } from "@/integrations/supabase/client";
-import { localDateTimeToIso } from "./date-utils";
+import { localDateTimeToIso, generateGoogleCalendarUrl } from "./date-utils";
+import { sendMeetingScheduleNotification } from "./notifications-omni.functions";
 
 const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
@@ -866,13 +867,16 @@ export const deleteSchedule = createServerFn({ method: "POST" })
 // ─── Meetings ────────────────────────────────────────────────
 const meetingSchema = z.object({
   title: z.string().min(1),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
   meeting_link: z.string().min(1),
   scheduled_at: z.string().optional(),
   start_time: z.string().optional(),
-  duration_minutes: z.number().optional(),
+  end_at: z.string().optional().nullable(),
+  end_time: z.string().optional().nullable(),
+  duration_minutes: z.number().optional().default(30),
   target_role: z.enum(['employee', 'intern', 'all', 'individual']).optional().default('all'),
   target_user_id: z.string().optional().nullable(),
+  send_email_notification: z.boolean().optional().default(true),
 });
 
 export const listMeetings = createServerFn({ method: 'GET' })
@@ -893,40 +897,102 @@ export const listMeetings = createServerFn({ method: 'GET' })
       return false;
     });
 
-    return filtered.map((m: any) => ({
-      ...m,
-      event_date: m.scheduled_at || m.start_time || m.created_at,
-      event_time: m.scheduled_at || m.start_time || m.created_at,
-      scheduled_at: m.scheduled_at || m.start_time || m.created_at,
-      start_time: m.start_time || m.scheduled_at || m.created_at,
-    }));
+    return filtered.map((m: any) => {
+      const scheduledAt = m.scheduled_at || m.start_time || m.created_at;
+      const durationMins = m.duration_minutes || 30;
+      const endAt = m.end_at || new Date(new Date(scheduledAt).getTime() + durationMins * 60 * 1000).toISOString();
+      const cleanLink = safeDecodeUrl(m.meeting_link) || m.meeting_link || "";
+
+      return {
+        ...m,
+        event_date: scheduledAt,
+        event_time: scheduledAt,
+        scheduled_at: scheduledAt,
+        start_time: scheduledAt,
+        end_at: endAt,
+        meeting_link: cleanLink,
+        gcal_url: generateGoogleCalendarUrl({
+          title: m.title,
+          description: m.description,
+          location: cleanLink,
+          startTime: scheduledAt,
+          endTime: endAt,
+        }),
+      };
+    });
   });
 
 export const createMeeting = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => meetingSchema.parse(d))
   .handler(async ({ data, context }) => {
+    const adminClient = getAdminClient();
     const scheduledAt = data.scheduled_at || data.start_time || new Date().toISOString();
+    const startDate = new Date(scheduledAt);
+    const durationMins = data.duration_minutes || 30;
+    const endDate = data.end_at || data.end_time
+      ? new Date(data.end_at || data.end_time!)
+      : new Date(startDate.getTime() + durationMins * 60 * 1000);
+
+    let cleanLink = safeDecodeUrl(data.meeting_link) || "";
+    if (!/^https?:\/\//i.test(cleanLink)) {
+      cleanLink = `https://${cleanLink}`;
+    }
+
     const payload: any = {
       title: data.title,
       description: data.description || null,
-      meeting_link: safeDecodeUrl(data.meeting_link) || "",
-      scheduled_at: scheduledAt,
-      duration_minutes: data.duration_minutes || 30,
+      meeting_link: cleanLink,
+      scheduled_at: startDate.toISOString(),
+      duration_minutes: durationMins,
       target_role: data.target_role || 'all',
       created_by: context.userId,
     };
     if (data.target_user_id) payload.target_user_id = data.target_user_id;
 
-    const { error } = await supabase.from('meetings').insert(payload);
+    const { data: newMeeting, error } = await adminClient.from('meetings').insert(payload).select().maybeSingle();
     if (error && error.message.includes('target_user_id')) {
       delete payload.target_user_id;
-      const { error: err2 } = await supabase.from('meetings').insert(payload);
+      const { error: err2 } = await adminClient.from('meetings').insert(payload);
       if (err2) throw new Error(err2.message);
     } else if (error) {
       throw new Error(error.message);
     }
-    return { success: true };
+
+    // Google Calendar URL
+    const gcalUrl = generateGoogleCalendarUrl({
+      title: data.title,
+      description: data.description,
+      location: cleanLink,
+      startTime: startDate,
+      endTime: endDate,
+    });
+
+    // Auto-dispatch professional email & in-app notification if enabled
+    if (data.send_email_notification !== false) {
+      try {
+        await sendMeetingScheduleNotification({
+          data: {
+            title: data.title,
+            description: data.description,
+            meeting_link: cleanLink,
+            scheduled_at: startDate.toISOString(),
+            end_at: endDate.toISOString(),
+            duration_minutes: durationMins,
+            target_role: data.target_role || 'all',
+            target_user_id: data.target_user_id,
+          }
+        });
+      } catch (err) {
+        console.warn("[createMeeting] Automated email notification skipped/failed:", err);
+      }
+    }
+
+    return { 
+      success: true, 
+      meetingId: newMeeting?.id, 
+      gcalUrl 
+    };
   });
 
 export const deleteMeeting = createServerFn({ method: 'POST' })
@@ -2495,17 +2561,52 @@ export const listMyDeliverables = createServerFn({ method: "GET" })
 
 export const createDeliverable = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ task_id: z.string().optional(), title: z.string().min(1), submission_url: z.string().min(1), notes: z.string().optional() }).parse(d))
+  .inputValidator((d: unknown) => z.object({
+    task_id: z.string().optional().nullable(),
+    title: z.string().min(1),
+    submission_url: z.string().min(1),
+    notes: z.string().optional().nullable(),
+  }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await supabase.from("intern_deliverables").insert({
+    const adminClient = getAdminClient();
+    let url = data.submission_url.trim();
+    if (!/^https?:\/\//i.test(url) && !url.startsWith("data:")) {
+      url = `https://${url}`;
+    }
+
+    const cleanTaskId = data.task_id && data.task_id.trim() !== "" ? data.task_id.trim() : null;
+
+    const { data: inserted, error } = await adminClient.from("intern_deliverables").insert({
       user_id: context.userId,
-      task_id: data.task_id || null,
-      title: data.title,
-      submission_url: data.submission_url,
+      task_id: cleanTaskId,
+      title: data.title.trim(),
+      submission_url: url,
       notes: data.notes || null,
-    });
-    if (error) throw new Error(error.message);
-    return { success: true };
+      status: "submitted",
+    }).select().maybeSingle();
+
+    if (error) {
+      console.warn("[createDeliverable] insert error:", error);
+      throw new Error(error.message);
+    }
+
+    // If linked to a task in tasks table, also update task status & deliverable_url
+    if (cleanTaskId) {
+      try {
+        await adminClient
+          .from("tasks")
+          .update({
+            deliverable_url: url,
+            status: "submitted",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", cleanTaskId);
+      } catch (err) {
+        console.warn("[createDeliverable] Task sync skipped:", err);
+      }
+    }
+
+    return { success: true, url, deliverable: inserted };
   });
 
 export const listAllDeliverables = createServerFn({ method: "GET" })
@@ -3909,11 +4010,11 @@ export const reviewDeadlineExtension = createServerFn({ method: "POST" })
 export const submitTaskUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
-    taskId: z.string().uuid(),
+    taskId: z.string().min(1),
     submissionUrl: z.string().min(1),
     submissionNotes: z.string().optional().nullable(),
   }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const adminClient = getAdminClient();
     let url = data.submissionUrl.trim();
     if (!/^https?:\/\//i.test(url) && !url.startsWith("data:")) {
@@ -3922,20 +4023,54 @@ export const submitTaskUrl = createServerFn({ method: "POST" })
 
     const updatePayload: any = {
       deliverable_url: url,
-      status: "in_progress",
+      status: "submitted",
       updated_at: new Date().toISOString(),
     };
     if (data.submissionNotes) {
       updatePayload.progress_notes = data.submissionNotes;
     }
 
-    const { error } = await adminClient
+    let updatedTaskTitle = "Assigned Milestone Task";
+    const { data: updatedTask, error } = await adminClient
       .from("tasks")
       .update(updatePayload)
-      .eq("id", data.taskId);
+      .eq("id", data.taskId)
+      .select()
+      .maybeSingle();
 
-    if (error) throw new Error(error.message);
-    return { success: true, url };
+    if (updatedTask?.title) {
+      updatedTaskTitle = updatedTask.title;
+    }
+
+    // Also log to intern_deliverables
+    try {
+      await adminClient.from("intern_deliverables").insert({
+        user_id: context.userId,
+        task_id: data.taskId,
+        title: updatedTaskTitle,
+        submission_url: url,
+        notes: data.submissionNotes || null,
+        status: "submitted",
+      });
+    } catch (delivErr) {
+      console.warn("[submitTaskUrl] intern_deliverables logging skipped:", delivErr);
+    }
+
+    // Insert notification
+    try {
+      await adminClient.from("user_notifications").insert({
+        user_id: context.userId,
+        title: "Task Deliverable Submitted",
+        message: `Your deliverable for "${updatedTaskTitle}" (${url}) has been submitted successfully and is queued for mentor review.`,
+        type: "task_submitted",
+        is_read: false,
+        created_at: new Date().toISOString(),
+      });
+    } catch (notifErr) {
+      console.warn("[submitTaskUrl] notification skipped:", notifErr);
+    }
+
+    return { success: true, url, title: updatedTaskTitle };
   });
 
 export const getOrCreateReferralCode = createServerFn({ method: "POST" })
