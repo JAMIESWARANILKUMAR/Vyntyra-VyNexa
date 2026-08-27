@@ -710,21 +710,28 @@ function InternDashboard() {
 
   const TABS = [
     { id: "overview",       label: "Overview", enabled: true },
-    { id: "attendance",     label: `Attendance (${attendanceLogs.length})`, enabled: isModuleEnabled("attendance") },
-    { id: "onboarding",     label: "Onboarding", enabled: isModuleEnabled("onboarding") },
-    { id: "lms",            label: "LMS & Skills", enabled: isModuleEnabled("lms") },
-    { id: "kanban",         label: "Sprint Board", enabled: isModuleEnabled("kanban") },
-    { id: "standups",       label: `Standups (${standups.length})`, enabled: isModuleEnabled("standups") },
-    { id: "deliverables",   label: `Deliverables (${deliverables.length})`, enabled: isModuleEnabled("deliverables") },
-    { id: "ppo",            label: "PPO & Credentials", enabled: isModuleEnabled("ppo") },
-    { id: "tasks",          label: `Tasks (${pendingTasks.length})`, enabled: isModuleEnabled("tasks") },
-    { id: "meetings",       label: "Meetings", enabled: isModuleEnabled("meetings") },
-    { id: "resources",      label: `Resources (${resources.length})`, enabled: isModuleEnabled("resources") },
-    { id: "leaves",         label: `Leaves (${myLeaves.length})`, enabled: isModuleEnabled("leaves") },
-    { id: "support",        label: `Support (${supportQueries.length})`, enabled: isModuleEnabled("support") },
-    { id: "refer",          label: "Refer & Earn", enabled: isModuleEnabled("refer") },
-    { id: "notes",          label: "Notes", enabled: isModuleEnabled("notes") },
-    { id: "feedback",       label: "Feedback", enabled: isModuleEnabled("feedback") },
+    { 
+      id: "tasks",          
+      label: `Tasks & Assignments (${pendingTasks.length})`, 
+      shortLabel: `Tasks (${pendingTasks.length})`,
+      isPrimary: true,
+      count: pendingTasks.length,
+      enabled: isModuleEnabled("tasks") 
+    },
+    { id: "deliverables",   label: `Deliverables (${deliverables.length})`, shortLabel: "Deliverables", enabled: isModuleEnabled("deliverables") },
+    { id: "standups",       label: `Standups (${standups.length})`, shortLabel: "Standups", enabled: isModuleEnabled("standups") },
+    { id: "attendance",     label: `Attendance (${attendanceLogs.length})`, shortLabel: "Attendance", enabled: isModuleEnabled("attendance") },
+    { id: "kanban",         label: "Sprint Board", shortLabel: "Sprint", enabled: isModuleEnabled("kanban") },
+    { id: "meetings",       label: "Meetings", shortLabel: "Meetings", enabled: isModuleEnabled("meetings") },
+    { id: "resources",      label: `Resources (${resources.length})`, shortLabel: "Resources", enabled: isModuleEnabled("resources") },
+    { id: "onboarding",     label: "Onboarding", shortLabel: "Onboarding", enabled: isModuleEnabled("onboarding") },
+    { id: "lms",            label: "LMS & Skills", shortLabel: "LMS", enabled: isModuleEnabled("lms") },
+    { id: "ppo",            label: "PPO & Credentials", shortLabel: "PPO", enabled: isModuleEnabled("ppo") },
+    { id: "leaves",         label: `Leaves (${myLeaves.length})`, shortLabel: "Leaves", enabled: isModuleEnabled("leaves") },
+    { id: "support",        label: `Support (${supportQueries.length})`, shortLabel: "Support", enabled: isModuleEnabled("support") },
+    { id: "refer",          label: "Refer & Earn", shortLabel: "Refer", enabled: isModuleEnabled("refer") },
+    { id: "notes",          label: "Notes", shortLabel: "Notes", enabled: isModuleEnabled("notes") },
+    { id: "feedback",       label: "Feedback", shortLabel: "Feedback", enabled: isModuleEnabled("feedback") },
   ].filter(t => t.enabled);
 
   return (
@@ -743,24 +750,52 @@ function InternDashboard() {
           </div>
 
           {/* Desktop & Tablet Navigation */}
-          <nav className="hidden lg:flex items-center gap-1 overflow-x-auto py-1 scrollbar-none max-w-[65%]">
-            {TABS.map((t) => (
+          <nav className="hidden lg:flex items-center gap-1 overflow-x-auto py-1 scrollbar-none max-w-[62%]">
+            {TABS.map((t: any) => (
               <button 
                 key={t.id} 
                 onClick={() => setActiveTab(t.id as any)}
-                className={`shrink-0 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+                className={`shrink-0 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5 ${
                   activeTab === t.id 
                     ? "bg-emerald-600 text-white shadow-xs" 
+                    : t.isPrimary
+                    ? "text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 font-bold"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                 }`}
               >
-                {t.label}
+                {t.isPrimary && <ClipboardList className="h-3.5 w-3.5 text-amber-600" />}
+                <span>{t.label}</span>
+                {t.isPrimary && t.count > 0 && activeTab !== t.id && (
+                  <span className="px-1.5 py-0.2 text-[9px] font-extrabold rounded-full bg-amber-500 text-slate-950">
+                    {t.count}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
 
-          {/* User Profile, Attendance Clock & Sign Out */}
+          {/* User Profile, Tasks Quick Button, Attendance Clock & Sign Out */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Direct Quick Link to Tasks */}
+            <Button
+              size="sm"
+              onClick={() => setActiveTab("tasks")}
+              className={`h-8 px-2.5 sm:px-3 text-xs font-bold transition-all shadow-xs gap-1.5 ${
+                activeTab === "tasks"
+                  ? "bg-slate-900 text-white"
+                  : "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold border border-amber-400/80"
+              }`}
+              title="Go directly to My Tasks & Assignments"
+            >
+              <ClipboardList className="h-3.5 w-3.5 text-slate-950" />
+              <span className="hidden sm:inline">Tasks</span>
+              {pendingTasks.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-slate-950 text-amber-400 text-[10px] font-mono font-black">
+                  {pendingTasks.length}
+                </span>
+              )}
+            </Button>
+
             {todayAttendance ? (
               todayAttendance.clock_out ? (
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 border border-slate-200">
@@ -871,17 +906,20 @@ function InternDashboard() {
 
         {/* Mobile / Smartphone Touch-Scrollable Navigation */}
         <div className="lg:hidden flex items-center overflow-x-auto border-t border-slate-100 px-3 gap-1.5 py-2 scrollbar-none bg-slate-50/50">
-          {TABS.map((t) => (
+          {TABS.map((t: any) => (
             <button 
               key={t.id} 
               onClick={() => setActiveTab(t.id as any)}
-              className={`shrink-0 px-3 py-1 text-xs font-semibold rounded-full transition-all whitespace-nowrap ${
+              className={`shrink-0 px-3 py-1 text-xs font-semibold rounded-full transition-all whitespace-nowrap flex items-center gap-1 ${
                 activeTab === t.id 
                   ? "bg-emerald-600 text-white shadow-xs" 
+                  : t.isPrimary
+                  ? "text-amber-900 bg-amber-100 border border-amber-300 font-bold"
                   : "text-slate-600 bg-white border border-slate-200 hover:bg-slate-100"
               }`}
             >
-              {t.label}
+              {t.isPrimary && <ClipboardList className="h-3 w-3 text-amber-700" />}
+              <span>{t.label}</span>
             </button>
           ))}
         </div>
@@ -1027,6 +1065,41 @@ function InternDashboard() {
                     </button>
                   </>
                 )}
+              </div>
+            </div>
+
+            {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
+            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-2xl p-5 text-slate-950 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-amber-400">
+              <div className="flex items-center gap-3.5">
+                <div className="h-12 w-12 rounded-xl bg-slate-950/15 backdrop-blur-md flex items-center justify-center text-slate-950 shrink-0 shadow-inner">
+                  <ClipboardList className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-black tracking-tight text-slate-950">My Tasks &amp; Sprint Deliverables Hub</h3>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-950 text-white text-[10px] font-extrabold uppercase tracking-wide">
+                      {pendingTasks.length} Pending
+                    </span>
+                    {inProgressTasks.length > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-blue-900 text-blue-100 text-[10px] font-extrabold uppercase tracking-wide">
+                        {inProgressTasks.length} In Progress
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-medium text-slate-900/90 mt-0.5">
+                    Find your sprint tasks, claim from open pool tasks, and submit repository/PR links for mentor review.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0">
+                <Button
+                  onClick={() => setActiveTab("tasks")}
+                  className="w-full md:w-auto bg-slate-950 hover:bg-black text-white font-bold text-xs h-10 px-5 rounded-xl shadow-lg gap-2"
+                >
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  Open Tasks Workspace &rarr;
+                </Button>
               </div>
             </div>
 
@@ -1229,29 +1302,69 @@ function InternDashboard() {
               <div className="lg:col-span-2 space-y-6">
                 {/* My Tasks */}
                 <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2"><ClipboardList className="h-4 w-4" />My Assignments</h2>
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                      <ClipboardList className="h-4 w-4 text-amber-600" />
+                      My Assignments ({myTasks.length})
+                    </h2>
+                    <Button 
+                      variant="link" 
+                      onClick={() => setActiveTab("tasks")} 
+                      className="text-xs font-bold text-amber-700 hover:text-amber-800 p-0 h-auto gap-1"
+                    >
+                      View All &amp; Task Pool &rarr;
+                    </Button>
+                  </div>
                   <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
                     {tasksQ.isLoading ? (
                       <div className="p-8 flex items-center justify-center gap-2 text-slate-400 text-sm"><Loader2 className="h-4 w-4 animate-spin" />Loading...</div>
                     ) : tasks.length === 0 ? (
-                      <div className="p-8 text-center text-slate-400 text-sm">No tasks assigned yet</div>
+                      <div className="p-8 text-center text-slate-400 text-sm space-y-2">
+                        <p>No tasks assigned yet.</p>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => setActiveTab("tasks")}
+                          className="text-xs font-bold text-amber-800 bg-amber-50 border-amber-200"
+                        >
+                          Check Open Task Pool
+                        </Button>
+                      </div>
                     ) : (
                       <div className="divide-y">
                         {myTasks.slice(0, 4).map((task: any) => {
                           const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
                           return (
-                            <div key={task.id} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50">
+                            <div 
+                              key={task.id} 
+                              onClick={() => setActiveTab("tasks")}
+                              className="p-4 flex items-center justify-between gap-4 hover:bg-amber-50/50 transition-colors cursor-pointer"
+                              title="Click to view full details and submit deliverable"
+                            >
                               <div className="flex items-center gap-3 min-w-0">
                                 <span className={`h-2 w-2 rounded-full shrink-0 ${s.dot}`} />
                                 <div className="min-w-0">
-                                  <div className="font-medium text-sm truncate">{task.title}</div>
+                                  <div className="font-semibold text-sm truncate text-slate-900">{task.title}</div>
                                   {task.due_date && <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-1"><Clock className="h-3 w-3" />Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</div>}
                                 </div>
                               </div>
-                              <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase ${s.badge}`}>{s.label}</span>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase ${s.badge}`}>{s.label}</span>
+                                <span className="text-xs text-amber-700 font-bold hidden sm:inline">&rarr;</span>
+                              </div>
                             </div>
                           );
                         })}
+                        {myTasks.length > 4 && (
+                          <div className="p-2.5 bg-slate-50 text-center">
+                            <button
+                              onClick={() => setActiveTab("tasks")}
+                              className="text-xs font-bold text-amber-700 hover:text-amber-800 hover:underline"
+                            >
+                              + {myTasks.length - 4} more assigned tasks. Click to view all &rarr;
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
