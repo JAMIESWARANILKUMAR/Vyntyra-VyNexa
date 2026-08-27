@@ -7,7 +7,7 @@ import {
   Video, FileText, UploadCloud, MessageSquare, CreditCard, LifeBuoy, Award,
   Play, Pause, Square, Search, ExternalLink, ShieldCheck, Download, Send, MessageCircle, Key,
   PartyPopper, LayoutDashboard, Layers, FolderOpen, Megaphone, DollarSign,
-  CalendarPlus, Share2, Copy, Check
+  CalendarPlus, Share2, Copy, Check, Pencil, Edit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ import {
   listAnnouncements, createAnnouncement, deleteAnnouncement,
   listTasks, createTask, deleteTask,
   listSchedules, createSchedule, deleteSchedule,
-  listMeetings, createMeeting, deleteMeeting,
+  listMeetings, createMeeting, deleteMeeting, updateMeeting,
   listResources, createResource, deleteResource,
   getPresignedUrl, updateUserProfile, listFeedbacks, markFeedbackRead, listKudos,
   listAllLeaves, updateLeaveStatus, listAllAttendance, listAllPayouts, createPayout, updatePayoutStatus,
@@ -138,6 +138,7 @@ function OperationsDashboard() {
   const doDeleteSchedule = useServerFn(deleteSchedule);
   const fetchMeetings = useServerFn(listMeetings);
   const doCreateMeeting = useServerFn(createMeeting);
+  const doUpdateMeeting = useServerFn(updateMeeting);
   const doDeleteMeeting = useServerFn(deleteMeeting);
   const fetchResources = useServerFn(listResources);
   const doCreateResource = useServerFn(createResource);
@@ -190,6 +191,20 @@ function OperationsDashboard() {
     target_user_id: "",
     send_email_notification: true,
   });
+  const [editMeetingModalOpen, setEditMeetingModalOpen] = useState(false);
+  const [editMeetingForm, setEditMeetingForm] = useState({
+    id: "",
+    title: "",
+    description: "",
+    meeting_link: "",
+    date: "",
+    from_time: "10:00",
+    to_time: "10:45",
+    target_role: "all" as "employee" | "intern" | "all" | "individual",
+    target_user_id: "",
+    send_email_notification: false,
+  });
+  const [isUpdatingMeeting, setIsUpdatingMeeting] = useState(false);
   const [resourceForm, setResourceForm] = useState({ title: "", type: "document" as "document" | "video" | "link" | "template" | "guide", description: "", target_role: "all" as "employee" | "intern" | "all" | "individual", target_user_id: "" });
   const [resourceFile, setResourceFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -616,6 +631,97 @@ function OperationsDashboard() {
       qc.invalidateQueries({ queryKey: ["meetings"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to remove meeting");
+    }
+  }
+
+  function handleOpenEditMeeting(meeting: any) {
+    const schedTime = meeting.scheduled_at || meeting.start_time || meeting.created_at;
+    const d = new Date(schedTime);
+    const dateStr = !isNaN(d.getTime()) ? d.toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const fromTime = !isNaN(d.getTime()) ? `${pad(d.getHours())}:${pad(d.getMinutes())}` : "10:00";
+
+    let toTime = "10:45";
+    if (meeting.end_at) {
+      const endD = new Date(meeting.end_at);
+      if (!isNaN(endD.getTime())) {
+        toTime = `${pad(endD.getHours())}:${pad(endD.getMinutes())}`;
+      }
+    } else if (meeting.duration_minutes) {
+      const endD = new Date(d.getTime() + meeting.duration_minutes * 60 * 1000);
+      if (!isNaN(endD.getTime())) {
+        toTime = `${pad(endD.getHours())}:${pad(endD.getMinutes())}`;
+      }
+    }
+
+    setEditMeetingForm({
+      id: meeting.id,
+      title: meeting.title || "",
+      description: meeting.description || "",
+      meeting_link: meeting.meeting_link || "",
+      date: dateStr,
+      from_time: fromTime,
+      to_time: toTime,
+      target_role: meeting.target_role || "all",
+      target_user_id: meeting.target_user_id || "",
+      send_email_notification: false,
+    });
+    setEditMeetingModalOpen(true);
+  }
+
+  async function handleUpdateMeetingSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editMeetingForm.title || !editMeetingForm.meeting_link || !editMeetingForm.date || !editMeetingForm.from_time) {
+      toast.error("Please fill in meeting title, link, date, and from-time.");
+      return;
+    }
+
+    setIsUpdatingMeeting(true);
+    try {
+      const startIso = new Date(`${editMeetingForm.date}T${editMeetingForm.from_time}:00`).toISOString();
+      let endIso = editMeetingForm.to_time ? new Date(`${editMeetingForm.date}T${editMeetingForm.to_time}:00`).toISOString() : null;
+
+      let durationMins = 30;
+      if (endIso) {
+        const diffMs = new Date(endIso).getTime() - new Date(startIso).getTime();
+        if (diffMs > 0) {
+          durationMins = Math.round(diffMs / (60 * 1000));
+        } else {
+          endIso = new Date(new Date(startIso).getTime() + 30 * 60 * 1000).toISOString();
+        }
+      }
+
+      let cleanLink = editMeetingForm.meeting_link.trim();
+      if (!/^https?:\/\//i.test(cleanLink)) {
+        cleanLink = `https://${cleanLink}`;
+      }
+
+      await doUpdateMeeting({
+        data: {
+          id: editMeetingForm.id,
+          title: editMeetingForm.title.trim(),
+          description: editMeetingForm.description || null,
+          meeting_link: cleanLink,
+          scheduled_at: startIso,
+          end_at: endIso,
+          duration_minutes: durationMins,
+          target_role: editMeetingForm.target_role,
+          target_user_id: editMeetingForm.target_role === "individual" && editMeetingForm.target_user_id ? editMeetingForm.target_user_id : null,
+          send_email_notification: editMeetingForm.send_email_notification,
+        }
+      });
+
+      toast.success(
+        editMeetingForm.send_email_notification
+          ? "Meeting timeline updated and reschedule emails dispatched!"
+          : "Meeting timeline updated successfully!"
+      );
+      setEditMeetingModalOpen(false);
+      qc.invalidateQueries({ queryKey: ["meetings"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update meeting");
+    } finally {
+      setIsUpdatingMeeting(false);
     }
   }
 
@@ -1743,6 +1849,141 @@ function OperationsDashboard() {
                   </form>
                 </DialogContent>
               </Dialog>
+
+              {/* Edit Meeting Dialog */}
+              <Dialog open={editMeetingModalOpen} onOpenChange={setEditMeetingModalOpen}>
+                <DialogContent className="sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Pencil className="h-5 w-5 text-indigo-600" /> Update Meeting Timelines & Details
+                    </DialogTitle>
+                    <DialogDescription>
+                      Modify the scheduled time window, agenda, or platform link for this meeting.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <form onSubmit={handleUpdateMeetingSubmit} className="space-y-3.5 py-2">
+                    <div className="space-y-1.5">
+                      <Label>Meeting Title / Topic</Label>
+                      <Input 
+                        required 
+                        value={editMeetingForm.title} 
+                        onChange={e => setEditMeetingForm({ ...editMeetingForm, title: e.target.value })} 
+                        placeholder="e.g. Sprint Milestone Review & Daily Standup" 
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Agenda & Discussion Details (Optional)</Label>
+                      <Input 
+                        value={editMeetingForm.description} 
+                        onChange={e => setEditMeetingForm({ ...editMeetingForm, description: e.target.value })} 
+                        placeholder="e.g. Discuss deliverable timelines, code reviews, and Q&A." 
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Meeting Video Link (Google Meet / Zoom / MS Teams)</Label>
+                      <Input 
+                        required 
+                        type="url" 
+                        value={editMeetingForm.meeting_link} 
+                        onChange={e => setEditMeetingForm({ ...editMeetingForm, meeting_link: e.target.value })} 
+                        placeholder="https://meet.google.com/xyz-abcd-efg" 
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="space-y-1.5">
+                        <Label>Meeting Date</Label>
+                        <Input 
+                          required 
+                          type="date" 
+                          value={editMeetingForm.date} 
+                          onChange={e => setEditMeetingForm({ ...editMeetingForm, date: e.target.value })} 
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>From (Start Time)</Label>
+                        <Input 
+                          required 
+                          type="time" 
+                          value={editMeetingForm.from_time} 
+                          onChange={e => setEditMeetingForm({ ...editMeetingForm, from_time: e.target.value })} 
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>To (End Time)</Label>
+                        <Input 
+                          required 
+                          type="time" 
+                          value={editMeetingForm.to_time} 
+                          onChange={e => setEditMeetingForm({ ...editMeetingForm, to_time: e.target.value })} 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Target Audience</Label>
+                      <Select 
+                        value={editMeetingForm.target_role} 
+                        onValueChange={(v: any) => setEditMeetingForm({ ...editMeetingForm, target_role: v })}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Everyone (Employees & Interns)</SelectItem>
+                          <SelectItem value="employee">Employees Only</SelectItem>
+                          <SelectItem value="intern">Interns Only</SelectItem>
+                          <SelectItem value="individual">Specific Person (Individual)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {editMeetingForm.target_role === "individual" && (
+                      <div className="space-y-1.5">
+                        <Label>Select Team Member</Label>
+                        <Select 
+                          value={editMeetingForm.target_user_id} 
+                          onValueChange={(v) => setEditMeetingForm({ ...editMeetingForm, target_user_id: v })}
+                        >
+                          <SelectTrigger><SelectValue placeholder="Choose Person..." /></SelectTrigger>
+                          <SelectContent>
+                            {(teamQ.data || []).map((m: any) => (
+                              <SelectItem key={m.id} value={m.id}>
+                                {m.full_name || m.email} ({m.role || "Member"})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    <div className="pt-2 border-t flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="edit_send_meeting_email"
+                        checked={editMeetingForm.send_email_notification}
+                        onChange={(e) => setEditMeetingForm({ ...editMeetingForm, send_email_notification: e.target.checked })}
+                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <Label htmlFor="edit_send_meeting_email" className="text-xs text-slate-700 font-medium cursor-pointer">
+                        Send updated reschedule email notification with Google Calendar link to participants
+                      </Label>
+                    </div>
+
+                    <DialogFooter className="pt-2">
+                      <Button type="button" variant="ghost" onClick={() => setEditMeetingModalOpen(false)}>Cancel</Button>
+                      <Button 
+                        type="submit" 
+                        disabled={isUpdatingMeeting}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                      >
+                        {isUpdatingMeeting ? "Updating..." : "Save Timeline Changes"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1832,6 +2073,17 @@ function OperationsDashboard() {
                                   <Share2 className="h-3 w-3 text-teal-600" /> WhatsApp
                                 </Button>
 
+                                {/* Edit Timeline Button */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleOpenEditMeeting(m)}
+                                  className="h-6 px-2 text-[10px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-200 gap-1"
+                                  title="Edit scheduled time and details"
+                                >
+                                  <Pencil className="h-3 w-3 text-indigo-600" /> Edit Timeline
+                                </Button>
+
                                 <Button
                                   size="sm"
                                   variant="ghost"
@@ -1843,23 +2095,35 @@ function OperationsDashboard() {
                               </div>
                             </div>
 
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/50 hover:text-destructive hover:bg-destructive/10 shrink-0">
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Meeting?</AlertDialogTitle>
-                                  <AlertDialogDescription>This will remove the meeting from all dashboards.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteMeeting(m.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                                onClick={() => handleOpenEditMeeting(m)}
+                                title="Edit Meeting"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/50 hover:text-destructive hover:bg-destructive/10 shrink-0">
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Meeting?</AlertDialogTitle>
+                                    <AlertDialogDescription>This will remove the meeting from all dashboards.</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteMeeting(m.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </div>
                         </div>
                       );

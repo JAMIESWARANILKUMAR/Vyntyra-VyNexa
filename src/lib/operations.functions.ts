@@ -1004,6 +1004,103 @@ export const deleteMeeting = createServerFn({ method: 'POST' })
     return { success: true };
   });
 
+const updateMeetingSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string().min(1).optional(),
+  description: z.string().optional().nullable(),
+  meeting_link: z.string().min(1).optional(),
+  scheduled_at: z.string().optional(),
+  start_time: z.string().optional(),
+  end_at: z.string().optional().nullable(),
+  end_time: z.string().optional().nullable(),
+  duration_minutes: z.number().optional(),
+  target_role: z.enum(['employee', 'intern', 'all', 'individual']).optional(),
+  target_user_id: z.string().optional().nullable(),
+  send_email_notification: z.boolean().optional().default(false),
+});
+
+export const updateMeeting = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => updateMeetingSchema.parse(d))
+  .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
+
+    const updatePayload: any = {};
+    if (data.title !== undefined) updatePayload.title = data.title;
+    if (data.description !== undefined) updatePayload.description = data.description;
+
+    if (data.meeting_link) {
+      let cleanLink = safeDecodeUrl(data.meeting_link) || "";
+      if (!/^https?:\/\//i.test(cleanLink)) {
+        cleanLink = `https://${cleanLink}`;
+      }
+      updatePayload.meeting_link = cleanLink;
+    }
+
+    let startDate: Date | null = null;
+    if (data.scheduled_at || data.start_time) {
+      startDate = new Date(data.scheduled_at || data.start_time!);
+      updatePayload.scheduled_at = startDate.toISOString();
+    }
+
+    let durationMins = data.duration_minutes;
+    if (data.end_at || data.end_time) {
+      const endD = new Date(data.end_at || data.end_time!);
+      if (startDate && !isNaN(endD.getTime())) {
+        const diff = endD.getTime() - startDate.getTime();
+        if (diff > 0) {
+          durationMins = Math.round(diff / (60 * 1000));
+        }
+      }
+    }
+    if (durationMins !== undefined) {
+      updatePayload.duration_minutes = durationMins;
+    }
+
+    if (data.target_role !== undefined) updatePayload.target_role = data.target_role;
+    if (data.target_user_id !== undefined) updatePayload.target_user_id = data.target_user_id;
+
+    const { data: updatedMeeting, error } = await adminClient
+      .from('meetings')
+      .update(updatePayload)
+      .eq('id', data.id)
+      .select()
+      .maybeSingle();
+
+    if (error && error.message.includes('target_user_id')) {
+      delete updatePayload.target_user_id;
+      const { error: err2 } = await adminClient.from('meetings').update(updatePayload).eq('id', data.id);
+      if (err2) throw new Error(err2.message);
+    } else if (error) {
+      throw new Error(error.message);
+    }
+
+    // If requested, send reschedule notification email
+    if (data.send_email_notification && updatedMeeting) {
+      try {
+        const schedTime = updatedMeeting.scheduled_at || new Date().toISOString();
+        const dMins = updatedMeeting.duration_minutes || 30;
+        const eTime = new Date(new Date(schedTime).getTime() + dMins * 60 * 1000).toISOString();
+        await sendMeetingScheduleNotification({
+          data: {
+            title: `[Updated Schedule] ${updatedMeeting.title}`,
+            description: updatedMeeting.description,
+            meeting_link: updatedMeeting.meeting_link,
+            scheduled_at: schedTime,
+            end_at: eTime,
+            duration_minutes: dMins,
+            target_role: updatedMeeting.target_role || 'all',
+            target_user_id: updatedMeeting.target_user_id,
+          }
+        });
+      } catch (err) {
+        console.warn("[updateMeeting] Notification dispatch skipped:", err);
+      }
+    }
+
+    return { success: true, meeting: updatedMeeting };
+  });
+
 // ─── Resources (Intern) ───────────────────────────────────────
 const resourceSchema = z.object({
   title: z.string().min(1),

@@ -46,7 +46,7 @@ import {
   listAssignedSupportQueries, updateSupportProgressNotes, requestSupportMeeting,
   reviewDeadlineExtension, getDashboardSettings,
   listInternTasksForMentor, updateTaskExecution,
-  listHolidays, createMeeting
+  listHolidays, createMeeting, updateMeeting
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/employee")({
