@@ -95,13 +95,24 @@ export function formatMeetingTimeRange(
   const end = endTimeStr ? new Date(endTimeStr) : new Date(start.getTime() + durationMinutes * 60 * 1000);
 
   const dateStr = start.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
     weekday: "short",
     day: "numeric",
     month: "short",
     year: "numeric",
   });
-  const fromTimeStr = start.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
-  const toTimeStr = end.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const fromTimeStr = start.toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+  const toTimeStr = end.toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
   const rangeStr = `${fromTimeStr} – ${toTimeStr}`;
 
   return { dateStr, fromTimeStr, toTimeStr, rangeStr };

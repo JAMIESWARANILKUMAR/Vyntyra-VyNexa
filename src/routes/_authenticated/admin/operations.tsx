@@ -36,7 +36,7 @@ import {
   listHolidays, createHoliday, deleteHoliday, updateHoliday, type HolidayItem
 } from "@/lib/operations.functions";
 import { localDateTimeToIso, isoToLocalDateTimeInput, formatDateTimeDisplay, generateGoogleCalendarUrl, formatMeetingTimeRange } from "@/lib/date-utils";
-import { sendPaymentReminderEmail, generatePaymentReminderWhatsApp, sendMeetingReminderEmail } from "@/lib/notifications-omni.functions";
+import { sendPaymentReminderEmail, generatePaymentReminderWhatsApp, sendMeetingReminderEmail, processAutomatedMeetingReminders } from "@/lib/notifications-omni.functions";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import EmailAutomationHub from "@/components/email-automation-hub";
@@ -220,6 +220,20 @@ function OperationsDashboard() {
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [resetPasswordForm, setResetPasswordForm] = useState({ userId: "", newPassword: "" });
   const [resetUserTarget, setResetUserTarget] = useState<any>(null);
+
+  // Background automated meeting reminder engine
+  useEffect(() => {
+    const runReminderCheck = async () => {
+      try {
+        await processAutomatedMeetingReminders();
+      } catch (e) {
+        // Silently catch background errors
+      }
+    };
+    runReminderCheck();
+    const interval = setInterval(runReminderCheck, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const [assignInternOpen, setAssignInternOpen] = useState(false);
   const [assignInternForm, setAssignInternForm] = useState({ internId: "", employeeId: "" });

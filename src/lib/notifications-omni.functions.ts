@@ -653,17 +653,20 @@ export const sendMeetingScheduleNotification = createServerFn({ method: "POST" }
     const endDate = data.end_at ? new Date(data.end_at) : new Date(startDate.getTime() + durationMins * 60 * 1000);
 
     const formattedDate = startDate.toLocaleDateString("en-IN", {
+      timeZone: "Asia/Kolkata",
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
     });
     const fromTimeStr = startDate.toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
     });
     const toTimeStr = endDate.toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
@@ -873,17 +876,20 @@ export const generateMeetingWhatsApp = createServerFn({ method: "POST" })
     const endDate = data.end_at ? new Date(data.end_at) : new Date(startDate.getTime() + durationMins * 60 * 1000);
 
     const formattedDate = startDate.toLocaleDateString("en-IN", {
+      timeZone: "Asia/Kolkata",
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
     });
     const fromTimeStr = startDate.toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
     });
     const toTimeStr = endDate.toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
@@ -986,17 +992,20 @@ export const sendMeetingReminderEmail = createServerFn({ method: "POST" })
     const endDate = data.end_at ? new Date(data.end_at) : new Date(startDate.getTime() + durationMins * 60 * 1000);
 
     const formattedDate = startDate.toLocaleDateString("en-IN", {
+      timeZone: "Asia/Kolkata",
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
     });
     const fromTimeStr = startDate.toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
     });
     const toTimeStr = endDate.toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
@@ -1165,6 +1174,87 @@ export const sendMeetingReminderEmail = createServerFn({ method: "POST" })
       emailsSent,
       gcalUrl,
       timeRangeStr,
+    };
+  });
+
+// ─── 6. Automated Background Worker to Process Meeting Reminders ──────────
+export const processAutomatedMeetingReminders = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const adminClient = getAdminClient();
+    const nowMs = Date.now();
+
+    // Look for upcoming meetings within the next 26 hours
+    const { data: upcomingMeetings, error } = await adminClient
+      .from("meetings")
+      .select("*")
+      .gte("scheduled_at", new Date(nowMs - 30 * 60 * 1000).toISOString())
+      .lte("scheduled_at", new Date(nowMs + 26 * 60 * 60 * 1000).toISOString());
+
+    if (error || !upcomingMeetings || upcomingMeetings.length === 0) {
+      return { success: true, processedCount: 0, dispatchedCount: 0 };
+    }
+
+    let dispatchedCount = 0;
+
+    for (const m of upcomingMeetings) {
+      const scheduledTime = m.scheduled_at || m.start_time;
+      if (!scheduledTime) continue;
+
+      const schedMs = new Date(scheduledTime).getTime();
+      if (isNaN(schedMs) || schedMs <= nowMs - 15 * 60 * 1000) continue; // Meeting already ended
+
+      const leadTimeMins = m.reminder_lead_time_minutes || 15;
+      const targetTriggerMs = schedMs - (leadTimeMins * 60 * 1000);
+
+      // If current time is past the target trigger time but before the meeting starts
+      if (nowMs >= targetTriggerMs && nowMs < schedMs) {
+        // Check if reminder was already sent
+        if (m.reminder_sent_at) {
+          const sentMs = new Date(m.reminder_sent_at).getTime();
+          if (nowMs - sentMs < Math.max(leadTimeMins * 60 * 1000, 10 * 60 * 1000)) {
+            continue;
+          }
+        }
+
+        const leadTimeText = leadTimeMins >= 60 ? `${Math.round(leadTimeMins / 60)} Hours` : `${leadTimeMins} Minutes`;
+
+        try {
+          await sendMeetingReminderEmail({
+            data: {
+              meetingId: m.id,
+              title: m.title,
+              description: m.description,
+              meeting_link: m.meeting_link,
+              scheduled_at: scheduledTime,
+              end_at: m.end_at,
+              duration_minutes: m.duration_minutes || 30,
+              target_role: m.target_role || "all",
+              target_user_id: m.target_user_id,
+              lead_time_text: leadTimeText,
+            },
+          });
+
+          dispatchedCount++;
+
+          try {
+            await adminClient
+              .from("meetings")
+              .update({ reminder_sent_at: new Date().toISOString() })
+              .eq("id", m.id);
+          } catch (updateErr) {
+            // Ignore column mismatch if schema is immutable
+          }
+        } catch (dispatchErr) {
+          console.warn("[processAutomatedMeetingReminders] Failed for meeting", m.id, dispatchErr);
+        }
+      }
+    }
+
+    return {
+      success: true,
+      processedCount: upcomingMeetings.length,
+      dispatchedCount,
     };
   });
 
