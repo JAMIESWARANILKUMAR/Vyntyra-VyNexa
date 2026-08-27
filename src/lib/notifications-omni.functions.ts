@@ -9,7 +9,7 @@ const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as a
 
 const SITE_NAME = "VyNexa Connect";
 const FROM_DOMAIN = "vyntyraconsultancyservices.in";
-const DEFAULT_LOGO_URL = "https://media.licdn.com/dms/image/v2/D560BAQHqR70ldjUQfw/company-logo_100_100/B56ZcLUrrcHoAY-/0/1748241661218?e=1787788800&v=beta&t=P9WCxG463gvoB0RKqmTrmuk0c7o6jVeFZbDmsg5dX9A";
+const DEFAULT_LOGO_URL = "https://raw.githubusercontent.com/JAMIESWARANILKUMAR/Vyntyra-VyNexa/main/public/icon-512.png";
 const BASE_APP_URL = process.env.VITE_APP_URL || "https://careers.vyntyraconsultancyservices.in";
 
 async function checkIsAdmin(userId: string): Promise<boolean> {
@@ -729,24 +729,24 @@ _All attendees are requested to join 5 minutes prior to the scheduled start time
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meeting Invitation: ${data.title}</title>
+  <title>Official Meeting Invitation: ${data.title}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#060b14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#334155;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#060b14;padding:35px 10px;">
+<body style="margin:0;padding:0;background-color:#0b1120;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#0b1120;padding:36px 12px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 20px 40px -10px rgba(0,0,0,0.5);">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:620px;background-color:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);border:1px solid #1e293b;">
           <!-- Corporate Header -->
           <tr>
-            <td style="background-color:#0b1728;padding:24px 32px;text-align:left;border-bottom:3px solid #6366f1;">
+            <td style="background:linear-gradient(135deg, #090e1a 0%, #1e293b 100%);padding:26px 32px;text-align:left;border-bottom:3px solid #6366f1;">
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td style="width:48px;vertical-align:middle;">
-                    <img src="${DEFAULT_LOGO_URL}" alt="Vyntyra" width="44" height="44" style="display:block;border-radius:8px;border:1px solid #1e293b;">
+                  <td style="width:52px;vertical-align:middle;">
+                    <img src="${DEFAULT_LOGO_URL}" alt="Vyntyra Logo" width="48" height="48" style="display:block;border-radius:10px;background-color:#ffffff;padding:2px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.3);border:1px solid #334155;">
                   </td>
-                  <td style="padding-left:14px;vertical-align:middle;">
-                    <div style="color:#ffffff;font-size:18px;font-weight:700;">Vyntyra Consultancy Services</div>
-                    <div style="color:#818cf8;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;margin-top:2px;">Project VyNexa &middot; Official Meeting Invitation</div>
+                  <td style="padding-left:16px;vertical-align:middle;">
+                    <div style="color:#ffffff;font-size:18px;font-weight:800;letter-spacing:-0.02em;">Vyntyra Consultancy Services</div>
+                    <div style="color:#818cf8;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;margin-top:2px;">Directorate of Operations &middot; Project VyNexa</div>
                   </td>
                 </tr>
               </table>
@@ -755,75 +755,103 @@ _All attendees are requested to join 5 minutes prior to the scheduled start time
 
           <!-- Main Body -->
           <tr>
-            <td style="padding:32px 32px 24px 32px;text-align:left;">
-              <div style="display:inline-block;background-color:#e0e7ff;color:#4338ca;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:4px 12px;border-radius:20px;margin-bottom:14px;">
-                &bull; Scheduled Video Sync
+            <td style="padding:32px 32px 28px 32px;text-align:left;background-color:#ffffff;">
+              <div style="display:inline-block;background-color:#e0e7ff;color:#4338ca;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:5px 14px;border-radius:20px;margin-bottom:18px;border:1px solid #c7d2fe;">
+                ⚡ Official Video Sync &middot; Scheduled Session
               </div>
 
-              <h1 style="margin:0 0 16px 0;font-size:22px;font-weight:800;color:#0f172a;line-height:1.35;">
+              <h1 style="margin:0 0 14px 0;font-size:23px;font-weight:800;color:#0f172a;line-height:1.3;letter-spacing:-0.02em;">
                 ${data.title}
               </h1>
 
-              <p style="margin:0 0 14px 0;font-size:15px;line-height:1.7;color:#334155;">
+              <p style="margin:0 0 14px 0;font-size:15px;line-height:1.65;color:#334155;">
                 Dear <strong>${recipient.full_name || "Team Member"}</strong>,
               </p>
 
-              <p style="margin:0 0 16px 0;font-size:14px;line-height:1.65;color:#475569;">
-                You have been invited to an official meeting on <strong>Project VyNexa</strong>. Please find the time schedule and meeting access links below:
+              <p style="margin:0 0 20px 0;font-size:14px;line-height:1.65;color:#475569;">
+                You have been invited to an official corporate video sync session on <strong>Project VyNexa</strong>. Please find the scheduled timelines, access links, and conference agenda below:
               </p>
 
               <!-- Meeting Details Box -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;margin:20px 0;overflow:hidden;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;margin:20px 0;overflow:hidden;">
                 <tr>
-                  <td style="padding:14px 20px;border-bottom:1px solid #e2e8f0;">
-                    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Meeting Date</div>
-                    <div style="font-size:15px;font-weight:700;color:#0f172a;margin-top:2px;">📅 ${formattedDate}</div>
+                  <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="width:50%;vertical-align:top;padding-right:12px;">
+                          <div style="font-size:10px;font-weight:800;color:#64748b;letter-spacing:0.08em;text-transform:uppercase;">Meeting Date</div>
+                          <div style="font-size:14px;font-weight:700;color:#0f172a;margin-top:3px;">📅 ${formattedDate}</div>
+                        </td>
+                        <td style="width:50%;vertical-align:top;padding-left:12px;border-left:1px solid #e2e8f0;">
+                          <div style="font-size:10px;font-weight:800;color:#64748b;letter-spacing:0.08em;text-transform:uppercase;">Scheduled Duration</div>
+                          <div style="font-size:14px;font-weight:700;color:#0f172a;margin-top:3px;">⏱️ ${durationMins} Minutes</div>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:14px 20px;border-bottom:1px solid #e2e8f0;background-color:#f5f3ff;">
-                    <div style="font-size:11px;font-weight:700;color:#6d28d9;text-transform:uppercase;">Time Schedule (From – To)</div>
-                    <div style="font-size:16px;font-weight:800;color:#4c1d95;margin-top:2px;">⏰ ${timeRangeStr} (${durationMins} Minutes)</div>
+                  <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;background-color:#f5f3ff;">
+                    <div style="font-size:10px;font-weight:800;color:#6d28d9;letter-spacing:0.08em;text-transform:uppercase;">Official Schedule Window (IST)</div>
+                    <div style="font-size:16px;font-weight:800;color:#4c1d95;margin-top:3px;">⏰ ${timeRangeStr}</div>
                   </td>
                 </tr>
                 ${data.description ? `
                 <tr>
-                  <td style="padding:14px 20px;">
-                    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Agenda & Discussion Topics</div>
-                    <div style="font-size:13px;color:#334155;margin-top:4px;line-height:1.6;">${data.description}</div>
+                  <td style="padding:16px 20px;">
+                    <div style="font-size:10px;font-weight:800;color:#64748b;letter-spacing:0.08em;text-transform:uppercase;">Agenda & Discussion Topics</div>
+                    <div style="font-size:13px;color:#334155;margin-top:5px;line-height:1.6;white-space:pre-wrap;background-color:#ffffff;padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;">${data.description}</div>
                   </td>
                 </tr>` : ""}
               </table>
 
               <!-- Action Buttons: Join Meeting & Google Calendar -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin:28px 0 20px 0;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin:28px 0 22px 0;">
                 <tr>
-                  <td align="center" style="padding-bottom:12px;">
-                    <a href="${data.meeting_link}" target="_blank" style="display:inline-block;background-color:#4f46e5;color:#ffffff;font-size:15px;font-weight:800;text-decoration:none;padding:14px 32px;border-radius:10px;box-shadow:0 10px 20px -5px rgba(79,70,229,0.4);">
-                      📹 Join Live Meeting &rarr;
+                  <td align="center" style="padding-bottom:14px;">
+                    <a href="${data.meeting_link}" target="_blank" style="display:inline-block;background-color:#4f46e5;color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:16px 40px;border-radius:12px;box-shadow:0 10px 25px -5px rgba(79,70,229,0.45);letter-spacing:-0.01em;">
+                      📹 Join Live Video Conference Now &rarr;
                     </a>
                   </td>
                 </tr>
                 <tr>
                   <td align="center">
-                    <a href="${gcalUrl}" target="_blank" style="display:inline-block;background-color:#ffffff;color:#4338ca;border:1px solid #c7d2fe;font-size:13px;font-weight:700;text-decoration:none;padding:10px 24px;border-radius:8px;">
+                    <a href="${gcalUrl}" target="_blank" style="display:inline-block;background-color:#f8fafc;color:#3730a3;border:1.5px solid #c7d2fe;font-size:13px;font-weight:700;text-decoration:none;padding:11px 28px;border-radius:10px;">
                       🗓️ Add to Google Calendar
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <p style="margin:24px 0 0 0;font-size:12px;line-height:1.6;color:#64748b;border-top:1px solid #e2e8f0;padding-top:16px;">
-                Please ensure you have a stable network connection and join 5 minutes before the scheduled time.<br>
-                For technical issues, contact the Directorate Support Desk.
+              <!-- Corporate Protocol Checklist -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;border-radius:10px;padding:14px 18px;margin-top:20px;border:1px solid #e2e8f0;">
+                <tr>
+                  <td>
+                    <div style="font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">
+                      🛡️ Meeting Guidelines & Protocols:
+                    </div>
+                    <ul style="margin:0;padding-left:18px;font-size:12px;color:#64748b;line-height:1.7;">
+                      <li>Please ensure your audio/camera are configured and connect <strong>5 minutes prior</strong>.</li>
+                      <li>Keep your session microphone muted when not addressing the conference.</li>
+                      <li>Use your official registered corporate email profile for meeting admission.</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:22px 0 0 0;font-size:12px;line-height:1.6;color:#64748b;border-top:1px solid #e2e8f0;padding-top:16px;">
+                For technical issues or urgent assistance, reach out directly to the <strong>Directorate Support Desk</strong> via your portal dashboard.
               </p>
             </td>
           </tr>
 
-          <!-- Footer -->
+          <!-- Executive Footer -->
           <tr>
-            <td style="background-color:#0b1728;padding:20px 32px;text-align:center;color:#64748b;font-size:11px;">
-              &copy; ${new Date().getFullYear()} Vyntyra Consultancy Services &middot; Project VyNexa Directorate
+            <td style="background-color:#090e1a;padding:24px 32px;text-align:center;color:#64748b;font-size:11px;line-height:1.6;border-top:1px solid #1e293b;">
+              <div style="color:#94a3b8;font-weight:700;font-size:12px;margin-bottom:4px;">
+                &copy; ${new Date().getFullYear()} Vyntyra Consultancy Services &middot; All Rights Reserved.
+              </div>
+              <div>This is an automated operational communication issued by the Project VyNexa Corporate Directorate.</div>
             </td>
           </tr>
         </table>
@@ -1050,101 +1078,152 @@ export const sendMeetingReminderEmail = createServerFn({ method: "POST" })
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meeting Reminder: ${data.title}</title>
+  <title>Executive Meeting Reminder: ${data.title}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#060b14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#334155;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#060b14;padding:35px 10px;">
+<body style="margin:0;padding:0;background-color:#0b1120;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#0b1120;padding:36px 12px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 20px 40px -10px rgba(0,0,0,0.5);">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:620px;background-color:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);border:1px solid #1e293b;">
+          
           <!-- Corporate Header -->
           <tr>
-            <td style="background-color:#0b1728;padding:24px 32px;text-align:left;border-bottom:3px solid #f59e0b;">
+            <td style="background:linear-gradient(135deg, #090e1a 0%, #1e293b 100%);padding:26px 32px;text-align:left;border-bottom:3px solid #f59e0b;">
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td style="width:48px;vertical-align:middle;">
-                    <img src="${DEFAULT_LOGO_URL}" alt="Vyntyra" width="44" height="44" style="display:block;border-radius:8px;border:1px solid #1e293b;">
+                  <td style="width:52px;vertical-align:middle;">
+                    <img src="${DEFAULT_LOGO_URL}" alt="Vyntyra Logo" width="48" height="48" style="display:block;border-radius:10px;background-color:#ffffff;padding:2px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.3);border:1px solid #334155;">
                   </td>
-                  <td style="padding-left:14px;vertical-align:middle;">
-                    <div style="color:#ffffff;font-size:18px;font-weight:700;">Vyntyra Consultancy Services</div>
-                    <div style="color:#fbbf24;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-top:2px;">⏰ Meeting Reminder &middot; Starting Soon</div>
+                  <td style="padding-left:16px;vertical-align:middle;">
+                    <div style="color:#ffffff;font-size:18px;font-weight:800;letter-spacing:-0.02em;">Vyntyra Consultancy Services</div>
+                    <div style="color:#fbbf24;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;margin-top:2px;">Directorate of Operations &middot; Project VyNexa</div>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Main Body -->
+          <!-- Main Content Body -->
           <tr>
-            <td style="padding:32px 32px 24px 32px;text-align:left;">
-              <div style="display:inline-block;background-color:#fef3c7;color:#b45309;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:5px 14px;border-radius:20px;border:1px solid #fde68a;margin-bottom:14px;">
-                ⚡ Starting in ${data.lead_time_text}
-              </div>
+            <td style="padding:32px 32px 28px 32px;text-align:left;background-color:#ffffff;">
+              
+              <!-- Automatic Countdown & Exact Time Callout -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);border:1.5px solid #f59e0b;border-radius:14px;margin-bottom:24px;overflow:hidden;box-shadow:0 4px 6px -1px rgba(245,158,11,0.15);">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="vertical-align:middle;">
+                          <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#b45309;">
+                            ⏳ AUTOMATED TIMELINE REMINDER &middot; ${data.lead_time_text.toUpperCase()} NOTICE
+                          </div>
+                          <div style="font-size:18px;font-weight:900;color:#78350f;margin-top:3px;">
+                            Commencing Exactly at ${fromTimeStr} (IST)
+                          </div>
+                        </td>
+                        <td align="right" style="vertical-align:middle;padding-left:10px;">
+                          <span style="display:inline-block;background-color:#d97706;color:#ffffff;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;padding:6px 14px;border-radius:20px;box-shadow:0 2px 4px rgba(217,119,6,0.3);">
+                            ⚡ Starting Today
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
-              <h1 style="margin:0 0 16px 0;font-size:22px;font-weight:800;color:#0f172a;line-height:1.35;">
-                Reminder: ${data.title}
+              <h1 style="margin:0 0 14px 0;font-size:23px;font-weight:800;color:#0f172a;line-height:1.3;letter-spacing:-0.02em;">
+                ${data.title}
               </h1>
 
-              <p style="margin:0 0 14px 0;font-size:15px;line-height:1.7;color:#334155;">
+              <p style="margin:0 0 14px 0;font-size:15px;line-height:1.65;color:#334155;">
                 Dear <strong>${recipient.full_name || "Team Member"}</strong>,
               </p>
 
-              <p style="margin:0 0 16px 0;font-size:14px;line-height:1.65;color:#475569;">
-                This is an automated reminder that your scheduled session on <strong>Project VyNexa</strong> is starting shortly:
+              <p style="margin:0 0 20px 0;font-size:14px;line-height:1.65;color:#475569;">
+                This is an automated priority reminder that your scheduled corporate meeting on <strong>Project VyNexa</strong> is commencing shortly. Please review the official schedule details below:
               </p>
 
-              <!-- Meeting Details Box -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;margin:20px 0;overflow:hidden;">
+              <!-- Meeting Details Schedule Card -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;margin:20px 0;overflow:hidden;">
                 <tr>
-                  <td style="padding:14px 20px;border-bottom:1px solid #e2e8f0;">
-                    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Date</div>
-                    <div style="font-size:15px;font-weight:700;color:#0f172a;margin-top:2px;">📅 ${formattedDate}</div>
+                  <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="width:50%;vertical-align:top;padding-right:12px;">
+                          <div style="font-size:10px;font-weight:800;color:#64748b;letter-spacing:0.08em;text-transform:uppercase;">Meeting Date</div>
+                          <div style="font-size:14px;font-weight:700;color:#0f172a;margin-top:3px;">📅 ${formattedDate}</div>
+                        </td>
+                        <td style="width:50%;vertical-align:top;padding-left:12px;border-left:1px solid #e2e8f0;">
+                          <div style="font-size:10px;font-weight:800;color:#64748b;letter-spacing:0.08em;text-transform:uppercase;">Scheduled Duration</div>
+                          <div style="font-size:14px;font-weight:700;color:#0f172a;margin-top:3px;">⏱️ ${durationMins} Minutes</div>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:14px 20px;border-bottom:1px solid #e2e8f0;background-color:#fffbeb;">
-                    <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;">Start Time & Duration</div>
-                    <div style="font-size:16px;font-weight:800;color:#b45309;margin-top:2px;">⏰ ${timeRangeStr} (${durationMins} Minutes)</div>
+                  <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;background-color:#fefce8;">
+                    <div style="font-size:10px;font-weight:800;color:#854d0e;letter-spacing:0.08em;text-transform:uppercase;">Official Schedule Window (IST)</div>
+                    <div style="font-size:16px;font-weight:800;color:#a16207;margin-top:3px;">⏰ ${timeRangeStr}</div>
                   </td>
                 </tr>
                 ${data.description ? `
                 <tr>
-                  <td style="padding:14px 20px;">
-                    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Agenda & Discussion Topics</div>
-                    <div style="font-size:13px;color:#334155;margin-top:4px;line-height:1.6;">${data.description}</div>
+                  <td style="padding:16px 20px;">
+                    <div style="font-size:10px;font-weight:800;color:#64748b;letter-spacing:0.08em;text-transform:uppercase;">Agenda & Discussion Topics</div>
+                    <div style="font-size:13px;color:#334155;margin-top:5px;line-height:1.6;white-space:pre-wrap;background-color:#ffffff;padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;">${data.description}</div>
                   </td>
                 </tr>` : ""}
               </table>
 
-              <!-- Action Buttons -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin:28px 0 20px 0;">
+              <!-- Primary Action CTAs -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin:28px 0 22px 0;">
                 <tr>
-                  <td align="center" style="padding-bottom:12px;">
-                    <a href="${data.meeting_link}" target="_blank" style="display:inline-block;background-color:#059669;color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:15px 36px;border-radius:10px;box-shadow:0 10px 20px -5px rgba(5,150,105,0.4);">
-                      📹 Join Live Meeting Now &rarr;
+                  <td align="center" style="padding-bottom:14px;">
+                    <a href="${data.meeting_link}" target="_blank" style="display:inline-block;background-color:#059669;color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:16px 40px;border-radius:12px;box-shadow:0 10px 25px -5px rgba(5,150,105,0.45);letter-spacing:-0.01em;">
+                      📹 Join Live Video Conference Now &rarr;
                     </a>
                   </td>
                 </tr>
                 <tr>
                   <td align="center">
-                    <a href="${gcalUrl}" target="_blank" style="display:inline-block;background-color:#ffffff;color:#4338ca;border:1px solid #c7d2fe;font-size:13px;font-weight:700;text-decoration:none;padding:10px 24px;border-radius:8px;">
-                      🗓️ Open Google Calendar
+                    <a href="${gcalUrl}" target="_blank" style="display:inline-block;background-color:#f8fafc;color:#3730a3;border:1.5px solid #c7d2fe;font-size:13px;font-weight:700;text-decoration:none;padding:11px 28px;border-radius:10px;">
+                      🗓️ Sync with Google Calendar
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <p style="margin:24px 0 0 0;font-size:12px;line-height:1.6;color:#64748b;border-top:1px solid #e2e8f0;padding-top:16px;">
-                Please ensure your camera/mic are ready and join immediately.<br>
-                For technical help, reach out to the Directorate Support Desk.
+              <!-- Corporate Protocol Checklist -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;border-radius:10px;padding:14px 18px;margin-top:20px;border:1px solid #e2e8f0;">
+                <tr>
+                  <td>
+                    <div style="font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">
+                      🛡️ Meeting Guidelines & Protocols:
+                    </div>
+                    <ul style="margin:0;padding-left:18px;font-size:12px;color:#64748b;line-height:1.7;">
+                      <li>Please ensure your audio/camera are configured and connect <strong>5 minutes prior</strong>.</li>
+                      <li>Keep your session microphone muted when not addressing the conference.</li>
+                      <li>Use your official registered corporate email profile for meeting admission.</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:22px 0 0 0;font-size:12px;line-height:1.6;color:#64748b;border-top:1px solid #e2e8f0;padding-top:16px;">
+                For technical issues or urgent assistance, reach out directly to the <strong>Directorate Support Desk</strong> via your portal dashboard.
               </p>
             </td>
           </tr>
 
-          <!-- Footer -->
+          <!-- Executive Footer -->
           <tr>
-            <td style="background-color:#0b1728;padding:20px 32px;text-align:center;color:#64748b;font-size:11px;">
-              &copy; ${new Date().getFullYear()} Vyntyra Consultancy Services &middot; Project VyNexa Directorate
+            <td style="background-color:#090e1a;padding:24px 32px;text-align:center;color:#64748b;font-size:11px;line-height:1.6;border-top:1px solid #1e293b;">
+              <div style="color:#94a3b8;font-weight:700;font-size:12px;margin-bottom:4px;">
+                &copy; ${new Date().getFullYear()} Vyntyra Consultancy Services &middot; All Rights Reserved.
+              </div>
+              <div>This is an automated operational communication issued by the Project VyNexa Corporate Directorate.</div>
             </td>
           </tr>
         </table>
@@ -1158,7 +1237,7 @@ export const sendMeetingReminderEmail = createServerFn({ method: "POST" })
           await resend.emails.send({
             from: `Vyntyra Directorate <directorate@${FROM_DOMAIN}>`,
             to: recipient.email,
-            subject: `⏰ [REMINDER] Meeting Starting in ${data.lead_time_text}: ${data.title}`,
+            subject: `⏰ [REMINDER] Starting at ${fromTimeStr}: ${data.title}`,
             html: emailHtml,
           });
           emailsSent++;
