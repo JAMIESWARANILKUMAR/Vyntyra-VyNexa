@@ -4744,22 +4744,140 @@ export const getOrCreateReferralCode = createServerFn({ method: "POST" })
 export const getMyReferralConversions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: profile } = await supabase
+    const admin = getAdminClient();
+    const { data: profile } = await admin
       .from("profiles")
-      .select("referral_code")
+      .select("id, full_name, referral_code")
       .eq("id", context.userId)
       .single();
 
-    if (!profile || !profile.referral_code) return [];
+    if (!profile || !profile.referral_code) {
+      return {
+        referralCode: "",
+        totalReferred: 0,
+        paidCount: 0,
+        selectedCount: 0,
+        grossRevenue: 0,
+        gatewayCost: 0,
+        govtCertAllocation: 0,
+        commissionRate: 200,
+        candidateExamFee: 499,
+        grossCommission: 0,
+        netCommissionEarnings: 0,
+        netCompanyProfit: 0,
+        candidates: [],
+      };
+    }
 
-    const { data: applications, error } = await supabase
+    const code = profile.referral_code.trim().toUpperCase();
+
+    // Check if there is a custom pricing rule for this referral code
+    let candidateExamFee = 499;
+    let commissionRate = 200;
+    try {
+      const { data: rule } = await admin
+        .from("referral_pricing_rules")
+        .select("custom_exam_fee, commission_reward")
+        .eq("code", code)
+        .maybeSingle();
+      if (rule) {
+        if (rule.custom_exam_fee !== undefined && rule.custom_exam_fee !== null) {
+          candidateExamFee = Number(rule.custom_exam_fee);
+        }
+        if (rule.commission_reward !== undefined && rule.commission_reward !== null) {
+          commissionRate = Number(rule.commission_reward);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not check referral_pricing_rules for user code:", e);
+    }
+
+    const { data: applications } = await admin
       .from("applications")
-      .select("id, full_name, status, created_at")
-      .eq("referral_code_used", profile.referral_code)
+      .select("id, full_name, email, role, status, exam_fee_paid, exam_fee_amount, payment_status, created_at")
+      .ilike("referral_code_used", code)
       .order("created_at", { ascending: false });
 
-    if (error) return [];
-    return applications || [];
+    // Fetch verified paid intern profiles
+    const { data: internProfiles } = await admin
+      .from("profiles")
+      .select("id, email, exam_fee_paid, is_fee_exempted")
+      .ilike("referral_code_used", code);
+
+    const paidEmails = new Set<string>();
+    (internProfiles || []).forEach((ip: any) => {
+      if (ip.exam_fee_paid || ip.is_fee_exempted) {
+        if (ip.email) paidEmails.add(ip.email.toLowerCase().trim());
+      }
+    });
+
+    let paidCount = 0;
+    let selectedCount = 0;
+    let totalGrossRevenue = 0;
+
+    const candidateList = (applications || []).map((a: any) => {
+      const isPaid = a.exam_fee_paid === true || 
+        ["paid", "completed", "success"].includes((a.payment_status || "").toLowerCase()) ||
+        (a.email && paidEmails.has(a.email.toLowerCase().trim()));
+
+      if (isPaid) {
+        paidCount += 1;
+        totalGrossRevenue += Number(a.exam_fee_amount) || candidateExamFee;
+      }
+      if (a.status === "selected" || a.status === "hired") {
+        selectedCount += 1;
+      }
+
+      // Individual candidate financial breakdown
+      const indivGross = isPaid ? (Number(a.exam_fee_amount) || candidateExamFee) : 0;
+      const indivGateway = isPaid ? Math.round(indivGross * (25.78 / 998) * 100) / 100 : 0;
+      const indivGovtCert = isPaid ? 199 : 0;
+      const indivCommission = isPaid ? commissionRate : 0;
+      const indivNetEarnings = isPaid ? Math.max(0, Math.round((indivCommission - indivGateway) * 100) / 100) : 0;
+
+      return {
+        id: a.id,
+        candidate_name: a.full_name,
+        email: a.email,
+        role_applied: a.role,
+        status: a.status,
+        is_paid: isPaid,
+        created_at: a.created_at,
+        gross_amount: indivGross,
+        gateway_fee: indivGateway,
+        govt_cert_fee: indivGovtCert,
+        earned_commission: indivCommission,
+        net_earnings: indivNetEarnings,
+      };
+    });
+
+    const grossRevenue = totalGrossRevenue || (paidCount * candidateExamFee);
+    // Merchant Gateway & Settlement charge ratio: 25.78 on 998 gross (approx ₹12.89 per ₹499 transaction)
+    const gatewayCost = Math.round(grossRevenue * (25.78 / 998) * 100) / 100;
+    // Govt Certification fee: ₹199 per paid candidate
+    const govtCertAllocation = paidCount * 199;
+    // Total Referrer Gross Commission
+    const grossCommission = paidCount * commissionRate;
+    // Equalized Net Referrer Earnings
+    const netCommissionEarnings = Math.max(0, Math.round((grossCommission - gatewayCost) * 100) / 100);
+    // Company Net Retained Profit
+    const netCompanyProfit = Math.round((grossRevenue - gatewayCost - govtCertAllocation - grossCommission) * 100) / 100;
+
+    return {
+      referralCode: code,
+      totalReferred: candidateList.length,
+      paidCount,
+      selectedCount,
+      candidateExamFee,
+      commissionRate,
+      grossRevenue,
+      gatewayCost,
+      govtCertAllocation,
+      grossCommission,
+      netCommissionEarnings,
+      netCompanyProfit,
+      candidates: candidateList,
+    };
   });
 
 // ─── Referral Codes & Custom Pricing Management ──────────────────────
@@ -4835,16 +4953,17 @@ export const listAllReferralPricingRules = createServerFn({ method: "GET" })
       const selected = metricsMap.get(code)?.selected || 0;
       const grossRevenue = paid > 0 ? (metricsMap.get(code)?.collectedAmount || paid * fee) : 0;
       
-      // Payment Gateway Transaction Fee: 2% + 18% GST on Fee (Total ~ 2.36% of gross)
-      const gatewayFee = Math.round(grossRevenue * 0.02 * 100) / 100;
-      const gatewayGst = Math.round(gatewayFee * 0.18 * 100) / 100;
-      const totalGatewayCost = Math.round((gatewayFee + gatewayGst) * 100) / 100;
+      // Payment Gateway & Settlement charge ratio: 25.78 on 998 gross (approx ₹12.89 per ₹499 transaction)
+      const totalGatewayCost = Math.round(grossRevenue * (25.78 / 998) * 100) / 100;
       
+      // Government Certification Fee: ₹199 per paid candidate
+      const govtCertFee = paid * 199;
+
       // Referral Commission: paid count * commission_reward
       const totalCommission = paid * commission;
       
-      // Net Company Retained
-      const netCompanyMargin = Math.round((grossRevenue - totalCommission - totalGatewayCost) * 100) / 100;
+      // Net Company Retained Profit
+      const netCompanyMargin = Math.round((grossRevenue - totalGatewayCost - govtCertFee - totalCommission) * 100) / 100;
 
       ruleMap.set(code, {
         id: r.id,
@@ -4862,9 +4981,8 @@ export const listAllReferralPricingRules = createServerFn({ method: "GET" })
         unpaid_count: Math.max(0, usage - paid),
         selected_count: selected,
         gross_revenue: grossRevenue,
-        gateway_fee: gatewayFee,
-        gateway_gst: gatewayGst,
         total_gateway_cost: totalGatewayCost,
+        govt_cert_fee: govtCertFee,
         total_commission_payable: totalCommission,
         net_company_margin: netCompanyMargin,
       });
@@ -4882,11 +5000,10 @@ export const listAllReferralPricingRules = createServerFn({ method: "GET" })
       const commission = 200;
       const grossRevenue = paid > 0 ? (metricsMap.get(code)?.collectedAmount || paid * fee) : 0;
       
-      const gatewayFee = Math.round(grossRevenue * 0.02 * 100) / 100;
-      const gatewayGst = Math.round(gatewayFee * 0.18 * 100) / 100;
-      const totalGatewayCost = Math.round((gatewayFee + gatewayGst) * 100) / 100;
+      const totalGatewayCost = Math.round(grossRevenue * (25.78 / 998) * 100) / 100;
+      const govtCertFee = paid * 199;
       const totalCommission = paid * commission;
-      const netCompanyMargin = Math.round((grossRevenue - totalCommission - totalGatewayCost) * 100) / 100;
+      const netCompanyMargin = Math.round((grossRevenue - totalGatewayCost - govtCertFee - totalCommission) * 100) / 100;
 
       if (!ruleMap.has(code)) {
         ruleMap.set(code, {
@@ -4906,9 +5023,8 @@ export const listAllReferralPricingRules = createServerFn({ method: "GET" })
           unpaid_count: Math.max(0, usage - paid),
           selected_count: selected,
           gross_revenue: grossRevenue,
-          gateway_fee: gatewayFee,
-          gateway_gst: gatewayGst,
           total_gateway_cost: totalGatewayCost,
+          govt_cert_fee: govtCertFee,
           total_commission_payable: totalCommission,
           net_company_margin: netCompanyMargin,
         });

@@ -878,6 +878,7 @@ function AdminSettingsPage() {
   const totalGrossRevenue = referralRules.reduce((acc, r) => acc + (r.gross_revenue || 0), 0);
   const totalCommissionPayable = referralRules.reduce((acc, r) => acc + (r.total_commission_payable || 0), 0);
   const totalGatewayCosts = referralRules.reduce((acc, r) => acc + (r.total_gateway_cost || 0), 0);
+  const totalGovtCertFees = referralRules.reduce((acc, r) => acc + (r.govt_cert_fee || 0), 0);
   const totalNetCompanyMargin = referralRules.reduce((acc, r) => acc + (r.net_company_margin || 0), 0);
   const totalCustomRules = referralRules.filter(r => r.is_custom_rule).length;
 
@@ -985,8 +986,8 @@ function AdminSettingsPage() {
             </div>
           </div>
 
-          {/* Key Metrics Bar with Commission & Merchant Gateway Breakdown */}
-          <div className="grid grid-cols-2 md:grid-cols-6 divide-y md:divide-y-0 md:divide-x border-b bg-slate-50/60 text-xs">
+          {/* Key Metrics Bar with Commission, Govt Cert & Merchant Gateway Breakdown */}
+          <div className="grid grid-cols-2 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x border-b bg-slate-50/60 text-xs">
             <div className="p-3.5">
               <span className="text-slate-500 font-medium block">Total Referred</span>
               <span className="text-lg font-bold text-slate-900 mt-0.5 block">{totalReferredCount} candidates</span>
@@ -1000,15 +1001,19 @@ function AdminSettingsPage() {
               <span className="text-lg font-bold text-slate-900 mt-0.5 block">₹{totalGrossRevenue.toLocaleString("en-IN")}</span>
             </div>
             <div className="p-3.5">
-              <span className="text-slate-500 font-medium block">Partner Commissions</span>
-              <span className="text-lg font-bold text-purple-700 mt-0.5 block">₹{totalCommissionPayable.toLocaleString("en-IN")}</span>
+              <span className="text-slate-500 font-medium block">PG & Settlement (₹25.78/₹998)</span>
+              <span className="text-lg font-bold text-amber-700 mt-0.5 block">-₹{totalGatewayCosts.toLocaleString("en-IN")}</span>
             </div>
             <div className="p-3.5">
-              <span className="text-slate-500 font-medium block">Gateway Fee + GST (2.36%)</span>
-              <span className="text-lg font-bold text-amber-700 mt-0.5 block">₹{totalGatewayCosts.toLocaleString("en-IN")}</span>
+              <span className="text-slate-500 font-medium block">Govt Certification (₹199/paid)</span>
+              <span className="text-lg font-bold text-blue-700 mt-0.5 block">-₹{totalGovtCertFees.toLocaleString("en-IN")}</span>
+            </div>
+            <div className="p-3.5">
+              <span className="text-slate-500 font-medium block">Partner Commissions</span>
+              <span className="text-lg font-bold text-purple-700 mt-0.5 block">-₹{totalCommissionPayable.toLocaleString("en-IN")}</span>
             </div>
             <div className="p-3.5 bg-emerald-50/50">
-              <span className="text-emerald-800 font-semibold block">Net Company Margin</span>
+              <span className="text-emerald-800 font-semibold block">Net Company Profit</span>
               <span className="text-lg font-extrabold text-emerald-700 mt-0.5 block">₹{totalNetCompanyMargin.toLocaleString("en-IN")}</span>
             </div>
           </div>
@@ -1027,7 +1032,7 @@ function AdminSettingsPage() {
               </div>
               <div className="text-xs text-slate-500 flex items-center gap-1.5 bg-slate-50 border px-3 py-1.5 rounded-lg">
                 <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                <span>Standard Merchant Gateway (2% fee + 18% GST = 2.36%) is automatically calculated alongside partner commissions.</span>
+                <span>Accounting Model: Gross Collected − PG/Settlement (₹25.78/₹998) − Govt Cert (₹199/paid) − Partner Commission = Net Company Revenue</span>
               </div>
             </div>
 
@@ -1050,13 +1055,14 @@ function AdminSettingsPage() {
                       <tr className="bg-slate-100/80 text-slate-700 font-bold border-b text-[11px] uppercase tracking-wider">
                         <th className="p-3.5">Referral Code</th>
                         <th className="p-3.5">Referrer / Partner</th>
-                        <th className="p-3.5">Candidate Fee (₹)</th>
-                        <th className="p-3.5">Assigned Commission</th>
+                        <th className="p-3.5">Fee (₹)</th>
+                        <th className="p-3.5">Commission</th>
                         <th className="p-3.5">Referred / Paid</th>
                         <th className="p-3.5">Gross Revenue</th>
+                        <th className="p-3.5">PG & Settlement</th>
+                        <th className="p-3.5">Govt Cert Fee</th>
                         <th className="p-3.5">Total Commission</th>
-                        <th className="p-3.5">PG Fee + GST (2.36%)</th>
-                        <th className="p-3.5">Net Company Profit</th>
+                        <th className="p-3.5">Net Profit</th>
                         <th className="p-3.5">Status</th>
                         <th className="p-3.5 text-right">Actions</th>
                       </tr>
@@ -1095,12 +1101,16 @@ function AdminSettingsPage() {
                             <td className="p-3.5 font-bold text-slate-900">
                               ₹{(rule.gross_revenue || 0).toLocaleString("en-IN")}
                             </td>
+                            <td className="p-3.5 text-amber-800 font-medium">
+                              -₹{(rule.total_gateway_cost || 0).toLocaleString("en-IN")}
+                              <span className="text-[9px] text-slate-400 block">(25.78/998)</span>
+                            </td>
+                            <td className="p-3.5 text-blue-800 font-medium">
+                              -₹{(rule.govt_cert_fee || 0).toLocaleString("en-IN")}
+                              <span className="text-[9px] text-slate-400 block">(₹199/paid)</span>
+                            </td>
                             <td className="p-3.5 font-extrabold text-purple-700">
                               ₹{(rule.total_commission_payable || 0).toLocaleString("en-IN")}
-                            </td>
-                            <td className="p-3.5 text-amber-800 font-medium">
-                              ₹{(rule.total_gateway_cost || 0).toLocaleString("en-IN")}
-                              <span className="text-[9px] text-slate-400 block">(2% + 18% GST)</span>
                             </td>
                             <td className="p-3.5">
                               <span className="px-2 py-0.5 rounded-lg text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-200">
