@@ -743,12 +743,12 @@ function AdminSettingsPage() {
   );
 
   const updateSettingsMut = useMutation({
-    mutationFn: async ({ id, is_enabled }: { id: string, is_enabled: boolean }) => {
-      await doUpdateDashboardSetting({ data: { id, is_enabled } });
+    mutationFn: async ({ id, portal_type, module_name, is_enabled }: { id?: string | null, portal_type: "intern" | "employee", module_name: string, is_enabled: boolean }) => {
+      await doUpdateDashboardSetting({ data: { id: id || undefined, portal_type, module_name, is_enabled } });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-dashboard-settings"] });
-      toast.success("Dashboard setting updated!");
+      toast.success("Dashboard module setting updated!");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -1544,7 +1544,12 @@ function AdminSettingsPage() {
 
                           <Switch 
                             checked={setting.is_enabled} 
-                            onCheckedChange={(v) => updateSettingsMut.mutate({ id: setting.id, is_enabled: v })} 
+                            onCheckedChange={(v) => updateSettingsMut.mutate({ 
+                              id: setting.id, 
+                              portal_type: setting.portal_type, 
+                              module_name: setting.module_name, 
+                              is_enabled: v 
+                            })} 
                           />
                         </div>
 

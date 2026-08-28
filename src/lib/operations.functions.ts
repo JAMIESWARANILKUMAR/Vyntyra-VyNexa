@@ -5527,41 +5527,105 @@ export const listInternTasksForMentor = createServerFn({ method: "POST" })
 
 
 // ─── Dashboard Settings ──────────────────────────────────────────────
+export const INTERN_MODULE_LIST = [
+  "overview", "tasks", "kanban", "deliverables", "standups", "attendance",
+  "meetings", "resources", "onboarding", "lms", "ppo", "leaves", 
+  "support", "refer", "notes", "feedback"
+] as const;
+
+export const EMPLOYEE_MODULE_LIST = [
+  "tasks", "attendance", "leave", "payouts", "support", "resolver_support",
+  "meetings", "interviews", "my_interns", "announcements", "campaigns", "team", 
+  "resources", "locker", "contact", "security"
+] as const;
+
 export const getDashboardSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const admin = getAdminClient();
-    const { data, error } = await admin
-      .from("dashboard_settings")
-      .select("*")
-      .order("created_at", { ascending: true });
-    if (error) throw new Error(error.message);
-    return data || [];
+    let dbRows: any[] = [];
+    try {
+      const { data, error } = await admin
+        .from("dashboard_settings")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (!error && data) {
+        dbRows = data;
+      }
+    } catch (e) {
+      console.warn("Could not query dashboard_settings table directly:", e);
+    }
+
+    const rowMap = new Map<string, any>();
+    for (const r of dbRows) {
+      if (r?.portal_type && r?.module_name) {
+        rowMap.set(`${r.portal_type}_${r.module_name}`, r);
+      }
+    }
+
+    const missingInserts: any[] = [];
+    const fullSettings: any[] = [];
+
+    // Process Intern modules
+    for (const m of INTERN_MODULE_LIST) {
+      const key = `intern_${m}`;
+      const existing = rowMap.get(key);
+      if (existing) {
+        fullSettings.push(existing);
+      } else {
+        const synthesized = {
+          id: `intern-${m}`,
+          portal_type: "intern",
+          module_name: m,
+          is_enabled: true,
+        };
+        fullSettings.push(synthesized);
+        missingInserts.push({ portal_type: "intern", module_name: m, is_enabled: true });
+      }
+    }
+
+    // Process Employee modules
+    for (const m of EMPLOYEE_MODULE_LIST) {
+      const key = `employee_${m}`;
+      const existing = rowMap.get(key);
+      if (existing) {
+        fullSettings.push(existing);
+      } else {
+        const synthesized = {
+          id: `employee-${m}`,
+          portal_type: "employee",
+          module_name: m,
+          is_enabled: true,
+        };
+        fullSettings.push(synthesized);
+        missingInserts.push({ portal_type: "employee", module_name: m, is_enabled: true });
+      }
+    }
+
+    // Attempt background auto-seeding if table is missing entries
+    if (missingInserts.length > 0) {
+      try {
+        await admin.from("dashboard_settings").insert(missingInserts);
+      } catch (insertErr) {
+        // Table might have custom constraints or RLS, synthesized return will still work
+      }
+    }
+
+    return fullSettings;
   });
 
 export const initializeDashboardSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const admin = getAdminClient();
-    const INTERN_MODULES = [
-      "overview", "tasks", "kanban", "deliverables", "standups", "attendance",
-      "meetings", "resources", "onboarding", "lms", "ppo", "leaves", 
-      "support", "refer", "notes", "feedback"
-    ];
-    const EMPLOYEE_MODULES = [
-      "tasks", "attendance", "leave", "payouts", "support", "resolver_support",
-      "meetings", "interviews", "my_interns", "announcements", "campaigns", "team", 
-      "resources", "locker", "contact", "security"
-    ];
-    
-    const { data: existing } = await admin.from("dashboard_settings").select("portal_type, module_name");
+    const { data: existing } = await admin.from("dashboard_settings").select("id, portal_type, module_name");
     const existingSet = new Set((existing || []).map((x: any) => `${x.portal_type}_${x.module_name}`));
     
     const toInsert = [];
-    for (const m of INTERN_MODULES) {
+    for (const m of INTERN_MODULE_LIST) {
       if (!existingSet.has(`intern_${m}`)) toInsert.push({ portal_type: "intern", module_name: m, is_enabled: true });
     }
-    for (const m of EMPLOYEE_MODULES) {
+    for (const m of EMPLOYEE_MODULE_LIST) {
       if (!existingSet.has(`employee_${m}`)) toInsert.push({ portal_type: "employee", module_name: m, is_enabled: true });
     }
     
@@ -5575,16 +5639,51 @@ export const initializeDashboardSettings = createServerFn({ method: "POST" })
 export const updateDashboardSetting = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
-    id: z.string().uuid(),
+    id: z.string().optional().nullable(),
+    portal_type: z.enum(["intern", "employee"]).optional(),
+    module_name: z.string().optional(),
     is_enabled: z.boolean(),
   }).parse(d))
   .handler(async ({ data }) => {
     const admin = getAdminClient();
-    const { error } = await admin
-      .from("dashboard_settings")
-      .update({ is_enabled: data.is_enabled, updated_at: new Date().toISOString() })
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
+    
+    // If a valid UUID id was passed
+    if (data.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.id)) {
+      const { error } = await admin
+        .from("dashboard_settings")
+        .update({ is_enabled: data.is_enabled, updated_at: new Date().toISOString() })
+        .eq("id", data.id);
+      if (!error) return { success: true };
+    }
+
+    // Otherwise update or insert by portal_type + module_name
+    if (data.portal_type && data.module_name) {
+      const { data: existing } = await admin
+        .from("dashboard_settings")
+        .select("id")
+        .eq("portal_type", data.portal_type)
+        .eq("module_name", data.module_name)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { error } = await admin
+          .from("dashboard_settings")
+          .update({ is_enabled: data.is_enabled, updated_at: new Date().toISOString() })
+          .eq("id", existing.id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await admin
+          .from("dashboard_settings")
+          .insert({
+            portal_type: data.portal_type,
+            module_name: data.module_name,
+            is_enabled: data.is_enabled,
+            updated_at: new Date().toISOString(),
+          });
+        if (error) throw new Error(error.message);
+      }
+    }
+
     return { success: true };
   });
 
@@ -5596,12 +5695,32 @@ export const bulkTogglePortalModules = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data }) => {
     const admin = getAdminClient();
-    const { error } = await admin
+    const modules = data.portal_type === "intern" ? INTERN_MODULE_LIST : EMPLOYEE_MODULE_LIST;
+    
+    // Update all existing rows for this portal_type
+    await admin
       .from("dashboard_settings")
       .update({ is_enabled: data.is_enabled, updated_at: new Date().toISOString() })
       .eq("portal_type", data.portal_type);
 
-    if (error) throw new Error(error.message);
+    // Insert any missing ones
+    const { data: existing } = await admin
+      .from("dashboard_settings")
+      .select("module_name")
+      .eq("portal_type", data.portal_type);
+
+    const existingNames = new Set((existing || []).map((x: any) => x.module_name));
+    const missing = modules.filter(m => !existingNames.has(m)).map(m => ({
+      portal_type: data.portal_type,
+      module_name: m,
+      is_enabled: data.is_enabled,
+      updated_at: new Date().toISOString(),
+    }));
+
+    if (missing.length > 0) {
+      await admin.from("dashboard_settings").insert(missing);
+    }
+
     return { success: true, portal_type: data.portal_type, is_enabled: data.is_enabled };
   });
 
