@@ -772,6 +772,44 @@ function EmployeeDashboard() {
   const [viewingIntern, setViewingIntern] = useState<any>(null);
   const [viewingInternAttendance, setViewingInternAttendance] = useState<any[]>([]);
   const [isLoadingMenteeAttendance, setIsLoadingMenteeAttendance] = useState(false);
+  const [isContactInternModalOpen, setIsContactInternModalOpen] = useState(false);
+  const [contactingIntern, setContactingIntern] = useState<any>(null);
+
+  const getInternContactUrls = (intern: any) => {
+    if (!intern) return { callUrl: null, waUrl: null, emailUrl: null, waText: "", emailBody: "", emailSubject: "", empName: "", empRole: "", empPhone: "", empEmail: "", company: "" };
+    const empName = profile?.full_name || displayName;
+    const empRole = profile?.position || profile?.role || "Mentor / Team Lead";
+    const empPhone = profile?.phone || "Direct Corporate Line";
+    const empEmail = profile?.email || email;
+    const company = "Vyntyra Consultancy Services Pvt. Ltd.";
+
+    const rawPhone = (intern.phone || "").replace(/[^0-9]/g, "");
+    const waPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
+
+    const waText = `Hello ${intern.full_name},\n\nHope you are doing well. I am reaching out regarding your internship tasks and mentorship updates at Vyntyra Consultancy Services.\n\nWith regards,\n${empName}\n${empRole}\nContact: ${empPhone}\nEmail: ${empEmail}\n${company}`;
+
+    const emailSubject = `Internship Mentorship Update · ${company}`;
+    const emailBody = `Hello ${intern.full_name},\n\nI hope this email finds you well.\n\nI am reaching out to check on your current sprint progress, task deliverables, and any guidance or assistance you may need with your project milestones.\n\nPlease feel free to reply to this email or connect directly if you have any questions or require review feedback.\n\nWith regards,\n${empName}\n${empRole}\nContact: ${empPhone}\nEmail: ${empEmail}\n${company}`;
+
+    return {
+      callUrl: intern.phone ? `tel:${intern.phone}` : null,
+      waUrl: waPhone ? `https://wa.me/${waPhone}?text=${encodeURIComponent(waText)}` : null,
+      emailUrl: intern.email ? `mailto:${intern.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}` : null,
+      waText,
+      emailBody,
+      emailSubject,
+      empName,
+      empRole,
+      empPhone,
+      empEmail,
+      company
+    };
+  };
+
+  const handleOpenContactModal = (intern: any) => {
+    setContactingIntern(intern);
+    setIsContactInternModalOpen(true);
+  };
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
   const [mfaQrCode, setMfaQrCode] = useState<string | null>(null);
@@ -1932,7 +1970,7 @@ function EmployeeDashboard() {
                   <table className="w-full text-xs text-left">
                     <thead className="bg-slate-900/90 text-slate-300 font-bold border-b border-slate-800 uppercase text-[11px] tracking-wider">
                       <tr>
-                        <th className="px-6 py-4 w-10">
+                        <th className="px-5 py-4 w-10">
                           <input 
                             type="checkbox" 
                             className="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
@@ -1940,67 +1978,153 @@ function EmployeeDashboard() {
                             onChange={(e) => setSelectedInterns(e.target.checked ? myInterns.map((i:any) => i.id) : [])}
                           />
                         </th>
-                        <th className="px-6 py-4">Intern / Mentee</th>
-                        <th className="px-6 py-4">Department</th>
-                        <th className="px-6 py-4 text-right">Actions &amp; Oversight</th>
+                        <th className="px-5 py-4">Intern / Mentee</th>
+                        <th className="px-5 py-4">Department</th>
+                        <th className="px-5 py-4">Direct Contact</th>
+                        <th className="px-5 py-4 text-right">Actions &amp; Oversight</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/60">
                       {myInterns.length === 0 ? (
-                        <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-400 font-light">No interns allocated to you currently. Contact Admin to assign mentees.</td></tr>
+                        <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-400 font-light">No interns allocated to you currently. Contact Admin to assign mentees.</td></tr>
                       ) : (
-                        myInterns.map((intern: any) => (
-                          <tr key={intern.id} className="hover:bg-slate-800/40 transition-colors">
-                            <td className="px-6 py-4">
-                              <input 
-                                type="checkbox" 
-                                className="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                                checked={selectedInterns.includes(intern.id)}
-                                onChange={(e) => setSelectedInterns(prev => e.target.checked ? [...prev, intern.id] : prev.filter(id => id !== intern.id))}
-                              />
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <ProfileAvatar url={intern.avatar_url} name={intern.full_name} className="h-9 w-9 rounded-xl ring-1 ring-indigo-500/30" />
-                                <div>
-                                  <div className="font-bold text-white text-xs">{intern.full_name}</div>
-                                  <div className="text-[10px] text-slate-400 font-mono">{intern.email}</div>
+                        myInterns.map((intern: any) => {
+                          const urls = getInternContactUrls(intern);
+                          return (
+                            <tr key={intern.id} className="hover:bg-slate-800/40 transition-colors">
+                              <td className="px-5 py-4">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                  checked={selectedInterns.includes(intern.id)}
+                                  onChange={(e) => setSelectedInterns(prev => e.target.checked ? [...prev, intern.id] : prev.filter(id => id !== intern.id))}
+                                />
+                              </td>
+                              <td className="px-5 py-4">
+                                <div className="flex items-center gap-3">
+                                  <ProfileAvatar url={intern.avatar_url} name={intern.full_name} className="h-10 w-10 rounded-xl ring-1 ring-indigo-500/30" />
+                                  <div>
+                                    <div className="font-bold text-white text-xs flex items-center gap-1.5">
+                                      {intern.full_name}
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">{intern.email}</div>
+                                    {intern.phone && (
+                                      <div className="text-[10px] text-indigo-300 font-mono mt-0.5 flex items-center gap-1">
+                                        <Phone className="h-2.5 w-2.5" /> {intern.phone}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-slate-300 font-medium">{intern.department || "General"}</td>
-                            <td className="px-6 py-4 text-right space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedMenteeIds([intern.id]);
-                                  setMenteeMeetingTitle(`Mentorship 1-on-1 Sync: ${intern.full_name}`);
-                                  setMenteeMeetingOpen(true);
-                                }}
-                                className="rounded-xl text-xs font-bold text-indigo-300 bg-indigo-950/60 border-indigo-500/30 hover:bg-indigo-900/60"
-                              >
-                                <Video className="h-3.5 w-3.5 mr-1" /> 1-on-1 Sync
-                              </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleViewAttendance(intern)} className="rounded-xl text-xs font-medium border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800">
-                                <Clock className="h-3.5 w-3.5 mr-1 text-slate-400" /> Attendance
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedInternForTasks(intern);
-                                  loadInternTasks(intern.id);
-                                }}
-                                className="rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white"
-                              >
-                                <FileText className="h-3.5 w-3.5 mr-1 text-amber-300" /> Task Board &amp; Reviews
-                              </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleAssignTask(intern.id)} className="rounded-xl text-xs font-medium border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800">
-                                <Plus className="h-3.5 w-3.5 mr-1 text-slate-400" /> Assign Task
-                              </Button>
-                            </td>
-                          </tr>
-                        ))
+                              </td>
+                              <td className="px-5 py-4">
+                                <span className="text-xs text-slate-300 font-medium bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
+                                  {intern.department || "Engineering & Technology"}
+                                </span>
+                              </td>
+                              <td className="px-5 py-4">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {urls.callUrl ? (
+                                    <a
+                                      href={urls.callUrl}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-blue-300 bg-blue-950/80 border border-blue-500/30 hover:bg-blue-900/80 hover:text-white transition-all shadow-xs"
+                                      title={`Direct Call ${intern.full_name} (${intern.phone})`}
+                                    >
+                                      <Phone className="h-3.5 w-3.5 text-blue-400" />
+                                      <span>Contact Now</span>
+                                    </a>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleOpenContactModal(intern)}
+                                      className="rounded-xl text-[11px] font-bold text-blue-300 bg-blue-950/60 border-blue-500/30 hover:bg-blue-900/60 h-8 px-2.5"
+                                      title="Open Contact Options"
+                                    >
+                                      <Phone className="h-3.5 w-3.5 mr-1 text-blue-400" />
+                                      Contact Now
+                                    </Button>
+                                  )}
+
+                                  {urls.waUrl ? (
+                                    <a
+                                      href={urls.waUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-500/30 hover:bg-emerald-900/80 hover:text-white transition-all shadow-xs"
+                                      title={`Send WhatsApp message with official regards`}
+                                    >
+                                      <MessageSquare className="h-3.5 w-3.5 text-emerald-400" />
+                                      <span>WhatsApp Now</span>
+                                    </a>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleOpenContactModal(intern)}
+                                      className="rounded-xl text-[11px] font-bold text-emerald-300 bg-emerald-950/60 border-emerald-500/30 hover:bg-emerald-900/60 h-8 px-2.5"
+                                      title="Open WhatsApp template"
+                                    >
+                                      <MessageSquare className="h-3.5 w-3.5 mr-1 text-emerald-400" />
+                                      WhatsApp Now
+                                    </Button>
+                                  )}
+
+                                  {urls.emailUrl ? (
+                                    <a
+                                      href={urls.emailUrl}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-indigo-300 bg-indigo-950/80 border border-indigo-500/30 hover:bg-indigo-900/80 hover:text-white transition-all shadow-xs"
+                                      title={`Send Email with official regards`}
+                                    >
+                                      <Mail className="h-3.5 w-3.5 text-indigo-400" />
+                                      <span>Email Now</span>
+                                    </a>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleOpenContactModal(intern)}
+                                      className="rounded-xl text-[11px] font-bold text-indigo-300 bg-indigo-950/60 border-indigo-500/30 hover:bg-indigo-900/60 h-8 px-2.5"
+                                      title="Open Email template"
+                                    >
+                                      <Mail className="h-3.5 w-3.5 mr-1 text-indigo-400" />
+                                      Email Now
+                                    </Button>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-5 py-4 text-right space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedMenteeIds([intern.id]);
+                                    setMenteeMeetingTitle(`Mentorship 1-on-1 Sync: ${intern.full_name}`);
+                                    setMenteeMeetingOpen(true);
+                                  }}
+                                  className="rounded-xl text-xs font-bold text-indigo-300 bg-indigo-950/60 border-indigo-500/30 hover:bg-indigo-900/60 h-8"
+                                >
+                                  <Video className="h-3.5 w-3.5 mr-1" /> 1-on-1 Sync
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => handleViewAttendance(intern)} className="rounded-xl text-xs font-medium border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800 h-8">
+                                  <Clock className="h-3.5 w-3.5 mr-1 text-slate-400" /> Attendance
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedInternForTasks(intern);
+                                    loadInternTasks(intern.id);
+                                  }}
+                                  className="rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white h-8"
+                                >
+                                  <FileText className="h-3.5 w-3.5 mr-1 text-amber-300" /> Task Board
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => handleAssignTask(intern.id)} className="rounded-xl text-xs font-medium border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800 h-8">
+                                  <Plus className="h-3.5 w-3.5 mr-1 text-slate-400" /> Assign Task
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
@@ -3058,6 +3182,170 @@ function EmployeeDashboard() {
             </motion.div>
           </div>
         )}
+      </AnimatePresence>
+
+      {/* ─── MENTEE DIRECT COMMUNICATION & CONTACT MODAL ─── */}
+      <AnimatePresence>
+        {isContactInternModalOpen && contactingIntern && (() => {
+          const urls = getInternContactUrls(contactingIntern);
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }} 
+                className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+                onClick={() => setIsContactInternModalOpen(false)} 
+              />
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 15 }} 
+                animate={{ opacity: 1, scale: 1, y: 0 }} 
+                exit={{ opacity: 0, scale: 0.95, y: 15 }} 
+                className="relative w-full max-w-xl bg-[#0F172A] border border-slate-700 rounded-3xl shadow-2xl p-6 sm:p-8 z-10 overflow-hidden max-h-[90vh] flex flex-col text-white"
+              >
+                {/* Modal Header */}
+                <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
+                  <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-widest text-indigo-400 bg-indigo-950/80 border border-indigo-500/30 px-3 py-1 rounded-full">
+                    <MessageSquare className="h-3.5 w-3.5" /> Mentee Communication Hub
+                  </div>
+                  <button 
+                    onClick={() => setIsContactInternModalOpen(false)} 
+                    className="text-slate-400 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-slate-800 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Intern Profile Summary */}
+                <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center gap-4 mb-5 shadow-inner">
+                  <ProfileAvatar url={contactingIntern.avatar_url} name={contactingIntern.full_name} className="h-12 w-12 rounded-2xl ring-2 ring-indigo-500/40" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-extrabold text-white text-sm truncate">{contactingIntern.full_name}</h3>
+                    <div className="text-xs text-slate-400 font-mono truncate">{contactingIntern.email}</div>
+                    <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
+                      <span>Track: <strong className="text-slate-200">{contactingIntern.department || "Engineering"}</strong></span>
+                      {contactingIntern.phone && (
+                        <span>Phone: <strong className="text-indigo-300 font-mono">{contactingIntern.phone}</strong></span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Action Channels */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+                  {/* Phone Call */}
+                  <div className="p-4 rounded-2xl bg-[#131B2E] border border-slate-700/80 flex flex-col justify-between space-y-3">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-blue-400 text-xs font-bold mb-1">
+                        <Phone className="h-4 w-4" /> Direct Call
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        {contactingIntern.phone ? contactingIntern.phone : "No phone provided"}
+                      </p>
+                    </div>
+                    {urls.callUrl ? (
+                      <a 
+                        href={urls.callUrl} 
+                        className="w-full text-center py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Phone className="h-3.5 w-3.5" /> Contact Now
+                      </a>
+                    ) : (
+                      <Button disabled variant="outline" size="sm" className="w-full text-xs opacity-50 rounded-xl">
+                        Unavailable
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* WhatsApp */}
+                  <div className="p-4 rounded-2xl bg-[#131B2E] border border-slate-700/80 flex flex-col justify-between space-y-3">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold mb-1">
+                        <MessageSquare className="h-4 w-4" /> WhatsApp
+                      </div>
+                      <p className="text-[11px] text-slate-400">With official company signature</p>
+                    </div>
+                    {urls.waUrl ? (
+                      <a 
+                        href={urls.waUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="w-full text-center py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" /> WhatsApp Now
+                      </a>
+                    ) : (
+                      <Button 
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(urls.waText);
+                          toast.success("WhatsApp message copied to clipboard!");
+                        }}
+                        className="w-full text-xs font-bold bg-emerald-700 hover:bg-emerald-600 rounded-xl"
+                      >
+                        Copy Text
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div className="p-4 rounded-2xl bg-[#131B2E] border border-slate-700/80 flex flex-col justify-between space-y-3">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-indigo-400 text-xs font-bold mb-1">
+                        <Mail className="h-4 w-4" /> Email Client
+                      </div>
+                      <p className="text-[11px] text-slate-400">Pre-filled mentorship memo</p>
+                    </div>
+                    {urls.emailUrl ? (
+                      <a 
+                        href={urls.emailUrl} 
+                        className="w-full text-center py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Mail className="h-3.5 w-3.5" /> Email Now
+                      </a>
+                    ) : (
+                      <Button disabled variant="outline" size="sm" className="w-full text-xs opacity-50 rounded-xl">
+                        Unavailable
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Live Message & Official Regards Preview */}
+                <div className="flex-1 overflow-y-auto space-y-2 mb-4">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+                    <span>Message Body &amp; Corporate Signature</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(urls.waText);
+                        toast.success("Message & signature copied to clipboard!");
+                      }}
+                      className="h-7 text-[11px] text-indigo-400 hover:text-indigo-300 p-0 font-bold"
+                    >
+                      Copy Full Message 📋
+                    </Button>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 text-xs text-slate-300 leading-relaxed font-sans select-all whitespace-pre-wrap shadow-inner max-h-[160px] overflow-y-auto">
+                    {urls.waText}
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                  <span className="font-mono text-[10px]">ORGANIZATION: VYNTYRA CONSULTANCY SERVICES</span>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setIsContactInternModalOpen(false)} 
+                    className="rounded-xl text-slate-400 hover:text-white bg-slate-900 px-5 text-xs"
+                  >
+                    Done
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
       </AnimatePresence>
 
       <PayslipModal isOpen={isPayslipOpen} onClose={() => setIsPayslipOpen(false)} payslip={selectedPayslip} />
