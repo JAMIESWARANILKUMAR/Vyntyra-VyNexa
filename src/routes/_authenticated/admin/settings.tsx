@@ -1032,7 +1032,7 @@ function AdminSettingsPage() {
               </div>
               <div className="text-xs text-slate-500 flex items-center gap-1.5 bg-slate-50 border px-3 py-1.5 rounded-lg">
                 <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                <span>50/50 Gateway Policy: Out of ~₹25 PG fee, half (~₹12.50) is deducted from the Referrer's Commission, and half from Company Income. ₹199/paid is allocated for Govt Certification.</span>
+                <span>Financial Allocation Model: ₹499 Candidate Fee = ₹199 Govt Certification + ₹100 Platform & Evaluation Ops + ₹12.50 PG Processing + ₹187.50 Partner Net Commission.</span>
               </div>
             </div>
 

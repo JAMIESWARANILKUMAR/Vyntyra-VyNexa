@@ -97,77 +97,53 @@ export function EmployeeReferEarn() {
         )}
       </div>
 
-      {/* ─── Financial Overview Cards (₹12.50 per referral deduction) ─── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      {/* ─── Partner Earnings & Fee Breakdown Cards ─── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl border bg-white shadow-2xs">
           <div className="flex items-center justify-between text-slate-400 mb-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Referred</span>
             <Users className="h-4 w-4 text-indigo-500" />
           </div>
-          <div className="text-xl font-extrabold text-slate-900">{totalReferred}</div>
-          <span className="text-[10px] text-slate-400">Total Applicants</span>
+          <div className="text-2xl font-extrabold text-slate-900">{totalReferred}</div>
+          <span className="text-[10px] text-slate-400">Total Registered Applicants</span>
         </div>
 
         <div className="p-4 rounded-xl border bg-white shadow-2xs">
           <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">Paid</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">Paid & Verified</span>
             <ShieldCheck className="h-4 w-4 text-emerald-500" />
           </div>
-          <div className="text-xl font-extrabold text-emerald-700">{paidCount}</div>
-          <span className="text-[10px] text-slate-400">Verified Enrolled</span>
+          <div className="text-2xl font-extrabold text-emerald-700">{paidCount}</div>
+          <span className="text-[10px] text-slate-400">Successfully Enrolled</span>
         </div>
 
         <div className="p-4 rounded-xl border bg-white shadow-2xs">
           <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">Gross Received</span>
-            <IndianRupee className="h-4 w-4 text-slate-500" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">Commission Rate</span>
+            <Coins className="h-4 w-4 text-blue-500" />
           </div>
-          <div className="text-xl font-extrabold text-slate-900">₹{grossRevenue.toLocaleString("en-IN")}</div>
-          <span className="text-[10px] text-slate-400">Total Fees Collected</span>
+          <div className="text-2xl font-extrabold text-blue-900">₹{commissionRate - 12.5}</div>
+          <span className="text-[10px] text-slate-400">Net per paid candidate (₹{commissionRate} base − ₹12.50 PG)</span>
         </div>
 
-        <div className="p-4 rounded-xl border bg-white shadow-2xs">
-          <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">Total PG Fee</span>
-            <CreditCard className="h-4 w-4 text-amber-500" />
-          </div>
-          <div className="text-xl font-extrabold text-amber-700">-₹{gatewayCost.toLocaleString("en-IN")}</div>
-          <span className="text-[10px] text-slate-400">₹12.50 Ref Share</span>
-        </div>
-
-        <div className="p-4 rounded-xl border bg-white shadow-2xs">
-          <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">Govt Cert Fee</span>
-            <Award className="h-4 w-4 text-blue-500" />
-          </div>
-          <div className="text-xl font-extrabold text-blue-800">-₹{govtCertAllocation.toLocaleString("en-IN")}</div>
-          <span className="text-[10px] text-slate-400">₹199 / paid candidate</span>
-        </div>
-
-        <div className="p-4 rounded-xl border-2 border-purple-300 bg-purple-50/80 shadow-2xs">
+        <div className="p-4 rounded-xl border-2 border-purple-300 bg-purple-50/90 shadow-xs">
           <div className="flex items-center justify-between text-purple-700 mb-1">
-            <span className="text-[11px] font-black uppercase tracking-wider">Your Earnings</span>
+            <span className="text-[11px] font-black uppercase tracking-wider">Your Net Earnings</span>
             <Sparkles className="h-4 w-4 text-purple-600 animate-pulse" />
           </div>
-          <div className="text-xl font-black text-purple-900">₹{netCommissionEarnings.toLocaleString("en-IN")}</div>
-          <span className="text-[10px] text-purple-700 font-semibold">₹{grossCommission} gross − ₹{gatewayCostReferrerShare} (₹12.50/candidate)</span>
-        </div>
-
-        <div className="p-4 rounded-xl border-2 border-emerald-300 bg-emerald-50/80 shadow-2xs">
-          <div className="flex items-center justify-between text-emerald-700 mb-1">
-            <span className="text-[11px] font-black uppercase tracking-wider">Org Revenue</span>
-            <TrendingUp className="h-4 w-4 text-emerald-600" />
-          </div>
-          <div className="text-xl font-black text-emerald-900">₹{netCompanyProfit.toLocaleString("en-IN")}</div>
-          <span className="text-[10px] text-emerald-700 font-semibold">After Payouts & Cert Fee</span>
+          <div className="text-2xl font-black text-purple-900">₹{netCommissionEarnings.toLocaleString("en-IN")}</div>
+          <span className="text-[10px] text-purple-700 font-semibold">{paidCount} paid × ₹{commissionRate - 12.5} net commission</span>
         </div>
       </div>
 
-      {/* Transparent Financial Settlement Note */}
-      <div className="p-3.5 bg-gradient-to-r from-indigo-50/90 via-purple-50/70 to-emerald-50/80 border border-indigo-200/80 rounded-xl text-xs flex items-start gap-2.5">
+      {/* Transparent Fee & Allocation Note */}
+      <div className="p-4 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-slate-50 border border-indigo-200/80 rounded-xl text-xs flex items-start gap-3">
         <Sparkles className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
-        <div className="space-y-0.5 text-slate-700 leading-relaxed">
-          <span className="font-bold text-slate-900">Commission Settlement Policy:</span> Exactly <strong>₹12.50</strong> is deducted per paid referral from the Referrer's Commission (netting <strong>₹{(commissionRate - 12.5).toLocaleString("en-IN")}</strong> per paid candidate from a ₹{commissionRate} base commission). ₹199 per paid candidate is dedicated to Government Certification reserves.
+        <div className="space-y-1 text-slate-700 leading-relaxed">
+          <div className="font-bold text-slate-900">Official Candidate Fee & Allocation Structure:</div>
+          <div className="text-slate-600">
+            Each candidate skilling fee (₹499) is systematically allocated towards <strong>Government Certification & Verification (₹199)</strong>, <strong>Platform LMS Infrastructure, Assessment & Operational Administration (₹100)</strong>, <strong>Payment Gateway Processing (₹12.50)</strong>, and <strong>Your Direct Partner Commission (₹187.50)</strong>.
+          </div>
         </div>
       </div>
 
