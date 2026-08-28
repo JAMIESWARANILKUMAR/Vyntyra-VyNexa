@@ -1032,7 +1032,7 @@ function AdminSettingsPage() {
               </div>
               <div className="text-xs text-slate-500 flex items-center gap-1.5 bg-slate-50 border px-3 py-1.5 rounded-lg">
                 <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                <span>Accounting Model: Gross Amount − 2.583% PG/Settlement − ₹199 Govt Cert Fee − Partner Commission = Net Company Revenue</span>
+                <span>50/50 Gateway Policy: 50% PG charge is deducted from the Referrer's Commission, and 50% from Company Income. ₹199/paid is allocated for Govt Certification.</span>
               </div>
             </div>
 
