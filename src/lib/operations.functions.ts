@@ -5526,8 +5526,170 @@ export const listInternTasksForMentor = createServerFn({ method: "POST" })
     return tasks || [];
   });
 
+// ─── Cohort Task Rollover & Reassignment ─────────────────────────────
+export const listActiveInternsForCohortAssignment = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const admin = getAdminClient();
+    const { data: interns, error } = await admin
+      .from("profiles")
+      .select("id, full_name, email, role, department, intern_id, avatar_url, phone, college_name, domain, created_at")
+      .or("role.eq.intern,intern_id.not.is.null")
+      .order("full_name", { ascending: true });
 
-// ─── Dashboard Settings ──────────────────────────────────────────────
+    if (error) {
+      console.warn("[listActiveInternsForCohortAssignment] query warning:", error.message);
+      const { data: fallback } = await admin
+        .from("profiles")
+        .select("id, full_name, email, role, department, intern_id, avatar_url")
+        .order("full_name", { ascending: true });
+      return fallback || [];
+    }
+
+    return interns || [];
+  });
+
+export const rolloverVerifiedTasksToCohort = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    sourceTaskIds: z.array(z.string().uuid()).min(1),
+    targetCohort: z.string().min(1),
+    targetInternIds: z.array(z.string().uuid()).optional().default([]),
+    dueDate: z.string().optional().nullable(),
+    priority: z.enum(["low", "medium", "high", "urgent"]).optional().default("medium"),
+    taskDomain: z.string().optional().nullable(),
+    customInstructions: z.string().optional().nullable(),
+    notifyInterns: z.boolean().optional().default(true),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const admin = getAdminClient();
+
+    // 1. Fetch the source tasks
+    const { data: sourceTasks, error: fetchErr } = await admin
+      .from("tasks")
+      .select("*")
+      .in("id", data.sourceTaskIds);
+
+    if (fetchErr || !sourceTasks || sourceTasks.length === 0) {
+      throw new Error("Could not find the selected source tasks to rollover.");
+    }
+
+    const now = new Date().toISOString();
+    const taskPayloads: any[] = [];
+    const targetInterns = data.targetInternIds || [];
+
+    if (targetInterns.length > 0) {
+      // Create duplicate tasks for each selected new intern
+      for (const internId of targetInterns) {
+        for (const st of sourceTasks) {
+          taskPayloads.push({
+            title: st.title,
+            description: data.customInstructions 
+              ? `${st.description || ""}\n\n[Cohort Instructions]: ${data.customInstructions}` 
+              : st.description,
+            task_file_url: st.task_file_url || null,
+            task_doc_url: st.task_doc_url || null,
+            task_meet_link: st.task_meet_link || null,
+            report_template_url: st.report_template_url || null,
+            credits: st.credits || 10,
+            due_date: data.dueDate || st.due_date || null,
+            priority: data.priority || st.priority || "medium",
+            assigned_to: internId,
+            target_user_id: internId,
+            target_role: "intern",
+            status: "pending",
+            progress_percentage: 0,
+            time_spent_hours: 0,
+            deliverable_url: null,
+            submission_url: null,
+            admin_remarks: null,
+            progress_notes: null,
+            is_verified: false,
+            verified_at: null,
+            verified_by: null,
+            created_by: context.userId,
+            created_at: now,
+            task_domain: data.taskDomain || st.task_domain || "all",
+          });
+        }
+      }
+    } else {
+      // Create template tasks for the pool without specific assignee
+      for (const st of sourceTasks) {
+        taskPayloads.push({
+          title: st.title,
+          description: data.customInstructions 
+            ? `${st.description || ""}\n\n[Cohort Instructions]: ${data.customInstructions}` 
+            : st.description,
+          task_file_url: st.task_file_url || null,
+          task_doc_url: st.task_doc_url || null,
+          task_meet_link: st.task_meet_link || null,
+          report_template_url: st.report_template_url || null,
+          credits: st.credits || 10,
+          due_date: data.dueDate || st.due_date || null,
+          priority: data.priority || st.priority || "medium",
+          assigned_to: null,
+          target_user_id: null,
+          target_role: "intern",
+          status: "pending",
+          is_pool_task: true,
+          progress_percentage: 0,
+          time_spent_hours: 0,
+          deliverable_url: null,
+          submission_url: null,
+          created_by: context.userId,
+          created_at: now,
+          task_domain: data.taskDomain || st.task_domain || "all",
+        });
+      }
+    }
+
+    if (taskPayloads.length === 0) {
+      throw new Error("No tasks to create.");
+    }
+
+    // Insert new task records with schema-safe fallbacks
+    const { error: insertErr } = await admin.from("tasks").insert(taskPayloads);
+    if (insertErr) {
+      console.warn("[rolloverVerifiedTasksToCohort] Primary insert error, trying fallback:", insertErr.message);
+      const fallbackPayloads = taskPayloads.map((t: any) => {
+        const copy = { ...t };
+        delete copy.target_user_id;
+        delete copy.is_pool_task;
+        return copy;
+      });
+      const { error: fallbackErr } = await admin.from("tasks").insert(fallbackPayloads);
+      if (fallbackErr) {
+        throw new Error("Failed to insert cohort rollover tasks: " + fallbackErr.message);
+      }
+    }
+
+    // Send notifications to newly assigned interns
+    if (data.notifyInterns && targetInterns.length > 0) {
+      for (const internId of targetInterns) {
+        try {
+          await admin.from("notifications").insert({
+            user_id: internId,
+            title: `New Tasks Assigned (${data.targetCohort})`,
+            message: `${sourceTasks.length} verified project task(s) from ${data.targetCohort} have been assigned to your workspace.`,
+            type: "task_assigned",
+            is_read: false,
+            created_at: now,
+          });
+        } catch (notifErr) {
+          console.warn("[rolloverVerifiedTasksToCohort] notification skipped:", notifErr);
+        }
+      }
+    }
+
+    return {
+      success: true,
+      clonedTaskCount: taskPayloads.length,
+      sourceTaskCount: sourceTasks.length,
+      assignedInternCount: targetInterns.length,
+      targetCohort: data.targetCohort,
+    };
+  });
 export const INTERN_MODULE_LIST = [
   "overview", "tasks", "kanban", "deliverables", "standups", "attendance",
   "meetings", "resources", "onboarding", "lms", "ppo", "leaves", 

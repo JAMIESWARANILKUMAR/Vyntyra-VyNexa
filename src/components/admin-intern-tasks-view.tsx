@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, reviewDeadlineExtension, bulkDeleteTasks, deleteTaskBatch, deleteAllInternTasks, adminFinalizeTaskCompletion } from "@/lib/operations.functions";
+import { 
+  listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, 
+  reviewDeadlineExtension, bulkDeleteTasks, deleteTaskBatch, deleteAllInternTasks, 
+  adminFinalizeTaskCompletion, listActiveInternsForCohortAssignment, rolloverVerifiedTasksToCohort 
+} from "@/lib/operations.functions";
 import { Button } from "@/components/ui/button";
-import { Award, CreditCard } from "lucide-react";
+import { Award, CreditCard, Layers, ArrowRight, CheckCheck, RefreshCw, SendHorizonal, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +20,7 @@ import {
 import { sendTaskNotification } from "@/lib/notifications.functions";
 import { sendTaskNotificationEmail, generateTaskWhatsApp } from "@/lib/notifications-omni.functions";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -33,11 +37,31 @@ export function AdminInternTasksView() {
   const doSendNotification = useServerFn(sendTaskNotification);
   const doSendTaskEmail = useServerFn(sendTaskNotificationEmail);
   const doGenTaskWhatsApp = useServerFn(generateTaskWhatsApp);
+  const fetchActiveInterns = useServerFn(listActiveInternsForCohortAssignment);
+  const doRollover = useServerFn(rolloverVerifiedTasksToCohort);
 
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+
+  // Cohort Rollover State
+  const [rolloverModalOpen, setRolloverModalOpen] = useState(false);
+  const [rolloverStep, setRolloverStep] = useState<1 | 2>(1);
+  const [selectedVerifiedTaskIds, setSelectedVerifiedTaskIds] = useState<string[]>([]);
+  const [targetCohort, setTargetCohort] = useState("Cohort September 2026");
+  const [selectedTargetInternIds, setSelectedTargetInternIds] = useState<string[]>([]);
+  const [targetDueDate, setTargetDueDate] = useState("");
+  const [targetPriority, setTargetPriority] = useState<"low" | "medium" | "high" | "urgent">("medium");
+  const [targetDomain, setTargetDomain] = useState<string>("all");
+  const [customCohortInstructions, setCustomCohortInstructions] = useState("");
+  const [notifyInterns, setNotifyInterns] = useState(true);
+  const [isRolloverLoading, setIsRolloverLoading] = useState(false);
+  const [internSearchQuery, setInternSearchQuery] = useState("");
+  const [internDomainFilter, setInternDomainFilter] = useState("all");
+  const [verifiedTaskSearchQuery, setVerifiedTaskSearchQuery] = useState("");
+  const [verifiedTaskDomainFilter, setVerifiedTaskDomainFilter] = useState("all");
+  const [onlyVerifiedFilter, setOnlyVerifiedFilter] = useState(true);
 
   const toggleExpand = (key: string) => {
     setExpandedGroups(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
@@ -304,20 +328,100 @@ export function AdminInternTasksView() {
     toast.success("Tasks exported to CSV successfully.");
   };
 
+  const internsQ = useQuery({
+    queryKey: ["active-interns-for-cohort"],
+    queryFn: () => fetchActiveInterns(),
+    enabled: rolloverModalOpen,
+  });
+  const allActiveInterns: any[] = internsQ.data || [];
+
+  const handleExecuteRollover = async () => {
+    if (selectedVerifiedTaskIds.length === 0) {
+      return toast.error("Please select at least one task to rollover.");
+    }
+    if (!targetCohort.trim()) {
+      return toast.error("Please enter the target cohort name.");
+    }
+    setIsRolloverLoading(true);
+    try {
+      const res = await doRollover({
+        data: {
+          sourceTaskIds: selectedVerifiedTaskIds,
+          targetCohort: targetCohort.trim(),
+          targetInternIds: selectedTargetInternIds,
+          dueDate: targetDueDate || null,
+          priority: targetPriority,
+          taskDomain: targetDomain === "all" ? null : targetDomain,
+          customInstructions: customCohortInstructions || null,
+          notifyInterns,
+        }
+      });
+      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+      toast.success(`Successfully rolled over ${res.clonedTaskCount} task(s) for ${res.assignedInternCount} intern(s) in ${res.targetCohort}!`);
+      setRolloverModalOpen(false);
+      setSelectedVerifiedTaskIds([]);
+      setSelectedTargetInternIds([]);
+    } catch (err: any) {
+      toast.error("Failed to rollover tasks: " + err.message);
+    } finally {
+      setIsRolloverLoading(false);
+    }
+  };
+
+  const allVerifiedTasks = tasks.filter((t) => {
+    if (!t) return false;
+    if (onlyVerifiedFilter) {
+      return t.status === "completed" || t.is_verified === true || t.status === "submitted";
+    }
+    return true;
+  });
+
+  const filteredVerifiedTasks = allVerifiedTasks.filter((t) => {
+    const titleMatch = !verifiedTaskSearchQuery || 
+      (t.title || "").toLowerCase().includes(verifiedTaskSearchQuery.toLowerCase()) ||
+      (t.description || "").toLowerCase().includes(verifiedTaskSearchQuery.toLowerCase());
+    const domainMatch = verifiedTaskDomainFilter === "all" || (t.task_domain || "").toLowerCase() === verifiedTaskDomainFilter.toLowerCase();
+    return titleMatch && domainMatch;
+  });
+
+  const filteredTargetInterns = allActiveInterns.filter((intern) => {
+    const searchLower = internSearchQuery.toLowerCase();
+    const matchesSearch = !searchLower ||
+      (intern.full_name || "").toLowerCase().includes(searchLower) ||
+      (intern.email || "").toLowerCase().includes(searchLower) ||
+      (intern.intern_id || "").toLowerCase().includes(searchLower) ||
+      (intern.department || "").toLowerCase().includes(searchLower);
+    const matchesDomain = internDomainFilter === "all" ||
+      (intern.department || intern.domain || "").toLowerCase().includes(internDomainFilter.toLowerCase());
+    return matchesSearch && matchesDomain;
+  });
+
   return (
     <div className="space-y-6">
       {/* Header Banner & Stat Cards */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-slate-950 p-6 rounded-2xl border shadow-sm">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white dark:bg-slate-950 p-6 rounded-2xl border shadow-sm">
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <ClipboardList className="h-6 w-6 text-indigo-600" /> Intern Task Assignment & Progress Tracker
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Assign tasks manually or via bulk CSV upload. Track real-time submission progress across all active interns.
+            Assign tasks manually or via bulk CSV upload. Move verified tasks to new cohorts and track real-time progress.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <Button
+            onClick={() => {
+              setRolloverModalOpen(true);
+              setRolloverStep(1);
+              const verifiedIds = tasks.filter(t => t.status === 'completed' || t.is_verified || t.status === 'submitted').map(t => t.id);
+              setSelectedVerifiedTaskIds(verifiedIds.length > 0 ? verifiedIds : tasks.slice(0, 5).map(t => t.id));
+            }}
+            className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-md gap-2"
+          >
+            <RotateCcw className="h-4 w-4" /> Move Verified Tasks for Next Cohort
+          </Button>
           <Button
             onClick={() => setClearAllModalOpen(true)}
             variant="destructive"
@@ -1024,6 +1128,328 @@ export function AdminInternTasksView() {
               Yes, Clear All Tasks
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cohort Task Rollover & Reassignment Modal */}
+      <Dialog open={rolloverModalOpen} onOpenChange={setRolloverModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-50 dark:bg-slate-900">
+          <DialogHeader className="p-6 bg-white dark:bg-slate-950 border-b shrink-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <RotateCcw className="h-5 w-5 text-emerald-600" />
+                  Cohort Task Rollover &amp; Reassignment Hub
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-500 mt-1">
+                  Select verified &amp; completed tasks from current cohorts, clone them for the next cohort, and directly assign to newly enrolled interns.
+                </DialogDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`px-3 py-1 text-xs font-bold rounded-full ${rolloverStep === 1 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                  Step 1: Select Tasks ({selectedVerifiedTaskIds.length})
+                </span>
+                <span className={`px-3 py-1 text-xs font-bold rounded-full ${rolloverStep === 2 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                  Step 2: Destination &amp; Interns ({selectedTargetInternIds.length})
+                </span>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="p-6 flex-1 overflow-y-auto space-y-6">
+            {rolloverStep === 1 ? (
+              <div className="space-y-4">
+                {/* Search & Filter Bar */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-950 p-4 rounded-xl border shadow-xs">
+                  <div className="relative flex-1 w-full">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                    <Input
+                      placeholder="Search verified task titles or descriptions..."
+                      value={verifiedTaskSearchQuery}
+                      onChange={(e) => setVerifiedTaskSearchQuery(e.target.value)}
+                      className="pl-9 text-xs"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Button
+                      variant={onlyVerifiedFilter ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setOnlyVerifiedFilter(!onlyVerifiedFilter)}
+                      className={`text-xs font-bold ${onlyVerifiedFilter ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}
+                    >
+                      <CheckCheck className="h-3.5 w-3.5 mr-1" /> Only Verified / Done
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (selectedVerifiedTaskIds.length === filteredVerifiedTasks.length) {
+                          setSelectedVerifiedTaskIds([]);
+                        } else {
+                          setSelectedVerifiedTaskIds(filteredVerifiedTasks.map(t => t.id));
+                        }
+                      }}
+                      className="text-xs font-bold shrink-0"
+                    >
+                      {selectedVerifiedTaskIds.length === filteredVerifiedTasks.length ? "Deselect All" : "Select All"}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Verified Task Cards List */}
+                <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-1">
+                  {filteredVerifiedTasks.length === 0 ? (
+                    <div className="text-center py-12 bg-white dark:bg-slate-950 rounded-xl border border-dashed text-slate-400 text-xs">
+                      No matching verified tasks found. Uncheck "Only Verified" or adjust search.
+                    </div>
+                  ) : (
+                    filteredVerifiedTasks.map((t) => {
+                      const isSelected = selectedVerifiedTaskIds.includes(t.id);
+                      return (
+                        <div
+                          key={t.id}
+                          onClick={() => {
+                            setSelectedVerifiedTaskIds(prev => 
+                              prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id]
+                            );
+                          }}
+                          className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex items-start gap-3.5 ${
+                            isSelected 
+                              ? "bg-emerald-50/80 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-700 shadow-xs" 
+                              : "bg-white dark:bg-slate-950 border-slate-200/80 hover:border-slate-300"
+                          }`}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => {
+                              setSelectedVerifiedTaskIds(prev => 
+                                prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id]
+                              );
+                            }}
+                            className="mt-1 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                                {t.title}
+                                {t.is_verified && (
+                                  <Badge className="bg-emerald-100 text-emerald-800 text-[10px] font-bold border-0">
+                                    Verified
+                                  </Badge>
+                                )}
+                              </h4>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase">
+                                  {t.priority || "Medium"}
+                                </span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                                  {t.credits || 10} Credits
+                                </span>
+                              </div>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                              {t.description || "No description provided."}
+                            </p>
+                            <div className="flex items-center gap-4 mt-2 text-[11px] text-slate-400">
+                              {t.assigned_profile && (
+                                <span>Previous Assignee: <strong>{t.assigned_profile.full_name || t.assigned_profile.email}</strong></span>
+                              )}
+                              {t.task_domain && <span>Domain: <strong>{t.task_domain}</strong></span>}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Cohort Configuration */}
+                <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border shadow-xs space-y-4">
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-emerald-600" /> Destination Cohort &amp; Timeline
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Target Cohort Name</label>
+                      <Input
+                        value={targetCohort}
+                        onChange={(e) => setTargetCohort(e.target.value)}
+                        placeholder="e.g. Cohort September 2026"
+                        className="text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">New Submission Deadline</label>
+                      <Input
+                        type="date"
+                        value={targetDueDate}
+                        onChange={(e) => setTargetDueDate(e.target.value)}
+                        className="text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Task Priority</label>
+                      <Select value={targetPriority} onValueChange={(val: any) => setTargetPriority(val)}>
+                        <SelectTrigger className="text-xs">
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low Priority</SelectItem>
+                          <SelectItem value="medium">Medium Priority</SelectItem>
+                          <SelectItem value="high">High Priority</SelectItem>
+                          <SelectItem value="urgent">Urgent / Critical</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Custom Cohort Instructions / Addendum (Optional)</label>
+                    <Textarea
+                      rows={2}
+                      placeholder="e.g. Please submit your GitHub repository link and deployed live demo before week 3 review."
+                      value={customCohortInstructions}
+                      onChange={(e) => setCustomCohortInstructions(e.target.value)}
+                      className="text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Target Intern Selection */}
+                <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <div>
+                      <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
+                        <Users className="h-4 w-4 text-emerald-600" /> Assign Directly to Enrolled Interns
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">Select specific interns or assign to the whole cohort.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (selectedTargetInternIds.length === filteredTargetInterns.length) {
+                            setSelectedTargetInternIds([]);
+                          } else {
+                            setSelectedTargetInternIds(filteredTargetInterns.map(i => i.id));
+                          }
+                        }}
+                        className="text-xs font-bold"
+                      >
+                        {selectedTargetInternIds.length === filteredTargetInterns.length ? "Deselect All" : "Select All Interns"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                    <Input
+                      placeholder="Search interns by name, email, roll number, or domain..."
+                      value={internSearchQuery}
+                      onChange={(e) => setInternSearchQuery(e.target.value)}
+                      className="pl-9 text-xs"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[220px] overflow-y-auto pr-1">
+                    {internsQ.isLoading ? (
+                      <div className="col-span-2 text-center py-8 text-slate-400 text-xs flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin text-emerald-600" /> Loading active interns...
+                      </div>
+                    ) : filteredTargetInterns.length === 0 ? (
+                      <div className="col-span-2 text-center py-8 text-slate-400 text-xs">
+                        No interns found matching the criteria.
+                      </div>
+                    ) : (
+                      filteredTargetInterns.map((intern) => {
+                        const isSelected = selectedTargetInternIds.includes(intern.id);
+                        return (
+                          <div
+                            key={intern.id}
+                            onClick={() => {
+                              setSelectedTargetInternIds(prev => 
+                                prev.includes(intern.id) ? prev.filter(id => id !== intern.id) : [...prev, intern.id]
+                              );
+                            }}
+                            className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${
+                              isSelected
+                                ? "bg-emerald-50/80 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-700"
+                                : "bg-slate-50 dark:bg-slate-900 border-slate-200/80 hover:bg-white"
+                            }`}
+                          >
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => {
+                                setSelectedTargetInternIds(prev => 
+                                  prev.includes(intern.id) ? prev.filter(id => id !== intern.id) : [...prev, intern.id]
+                                );
+                              }}
+                              className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
+                                {intern.full_name || "Intern"}
+                              </div>
+                              <div className="text-[10px] text-slate-500 truncate">
+                                {intern.email} {intern.intern_id && `• ${intern.intern_id}`}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Summary Box */}
+                <div className="p-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950/40 dark:via-teal-950/40 dark:to-cyan-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-900 dark:text-emerald-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <span>
+                      Will clone <strong>{selectedVerifiedTaskIds.length} verified task(s)</strong> and assign them to <strong>{selectedTargetInternIds.length} intern(s)</strong> in <strong>{targetCohort}</strong> (Total <strong>{selectedVerifiedTaskIds.length * (selectedTargetInternIds.length || 1)}</strong> fresh assignments).
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="p-4 bg-white dark:bg-slate-950 border-t shrink-0 flex items-center justify-between sm:justify-between w-full">
+            <div>
+              {rolloverStep === 2 && (
+                <Button variant="outline" size="sm" onClick={() => setRolloverStep(1)} className="text-xs font-bold">
+                  ← Back to Task Selection
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setRolloverModalOpen(false)} className="text-xs">
+                Cancel
+              </Button>
+              {rolloverStep === 1 ? (
+                <Button
+                  size="sm"
+                  disabled={selectedVerifiedTaskIds.length === 0}
+                  onClick={() => setRolloverStep(2)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-md"
+                >
+                  Configure Cohort &amp; Assign Interns ({selectedVerifiedTaskIds.length}) →
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  disabled={isRolloverLoading || selectedVerifiedTaskIds.length === 0}
+                  onClick={handleExecuteRollover}
+                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs gap-1.5 shadow-md"
+                >
+                  {isRolloverLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
+                  Execute Cohort Rollover &amp; Direct Assignment
+                </Button>
+              )}
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

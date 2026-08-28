@@ -14,7 +14,8 @@ import {
   IndianRupee, MessageSquare, BookOpen, Fingerprint, FileText, Send, Download,
   Sparkles, Zap, Wallet, ExternalLink, VolumeX, ShieldCheck, Laptop, Receipt,
   LifeBuoy, Award, GraduationCap, FileCheck, HelpCircle, Layers, CreditCard,
-  Building2, Plus, ArrowUpRight, HeartHandshake, CheckSquare, FileUp, Printer, Shield, Radio, Cpu, RotateCcw
+  Building2, Plus, ArrowUpRight, HeartHandshake, CheckSquare, FileUp, Printer, Shield, Radio, Cpu, RotateCcw,
+  Coins, CheckCheck, Target, Flame, Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1019,65 +1020,103 @@ function EmployeeDashboard() {
   ].filter(t => t.enabled);
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-slate-800 font-sans selection:bg-black selection:text-white">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans selection:bg-indigo-600 selection:text-white">
       
-      {/* Dynamic Header */}
-      <header className={`sticky top-0 z-40 transition-all duration-300 ${scrolled ? "bg-white/80 backdrop-blur-xl border-b border-black/5 shadow-sm" : "bg-transparent"}`}>
+      {/* Corporate Executive Top Header */}
+      <header className={`sticky top-0 z-40 transition-all duration-300 ${scrolled ? "bg-[#0B0F19]/95 backdrop-blur-2xl border-b border-slate-800/80 shadow-xl" : "bg-[#0B0F19] border-b border-slate-800"}`}>
         <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="h-9 w-9 bg-black rounded-lg shadow-md shadow-black/20 flex items-center justify-center text-white font-bold tracking-tighter">V</div>
-            <div className="hidden lg:flex flex-col">
-              <span className="text-sm font-semibold text-slate-900 tracking-tight leading-tight">{displayName}</span>
-              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-medium">Employee Portal</span>
+            <div className="h-10 w-10 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-xl shadow-lg shadow-indigo-950/50 border border-indigo-400/30 flex items-center justify-center text-white font-black tracking-wider text-base">
+              V
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-white tracking-tight leading-tight">Vyntyra Operations</span>
+                <span className="bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Corporate
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-400 font-medium">Employee &amp; Mentorship Portal</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="hidden sm:flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-[11px] font-medium text-slate-900">{email}</div>
-                <div className="text-[10px] text-slate-400">Active Session</div>
+          <div className="flex items-center gap-4 sm:gap-6">
+            {/* Quick Shift Status Badge */}
+            <div className="hidden md:flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-xs">
+              <span className="relative flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${todayAttendance?.clock_out_time ? 'bg-amber-400' : todayAttendance ? 'bg-emerald-400' : 'bg-slate-400'}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${todayAttendance?.clock_out_time ? 'bg-amber-500' : todayAttendance ? 'bg-emerald-500' : 'bg-slate-500'}`}></span>
+              </span>
+              <span className="text-[11px] font-semibold text-slate-300">
+                {todayAttendance?.clock_out_time ? "Shift Ended" : todayAttendance ? "Active on Shift" : "Not Clocked In"}
+              </span>
+              {!todayAttendance ? (
+                <button
+                  onClick={handleClockIn}
+                  className="ml-1 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-0.5 rounded-full transition-all shadow-xs cursor-pointer"
+                >
+                  Clock In
+                </button>
+              ) : !todayAttendance.clock_out_time ? (
+                <button
+                  onClick={handleClockOut}
+                  className="ml-1 text-[10px] bg-rose-600/80 hover:bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full transition-all shadow-xs cursor-pointer"
+                >
+                  Clock Out
+                </button>
+              ) : null}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex flex-col text-right">
+                <span className="text-xs font-bold text-white">{displayName}</span>
+                <span className="text-[10px] text-slate-400 font-mono">{email}</span>
               </div>
-              <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 ring-2 ring-white shadow-sm" />
+              <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-9 w-9 ring-2 ring-indigo-500/30 shadow-sm" />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setProfileModalOpen(true)}
-                className="h-8 text-xs font-bold rounded-xl border-slate-200 hover:bg-slate-50 gap-1.5 shadow-2xs"
+                className="h-8 text-xs font-bold rounded-xl border-slate-700 bg-slate-900/80 text-slate-200 hover:bg-slate-800 hover:text-white gap-1.5 shadow-2xs"
               >
-                <User className="h-3.5 w-3.5 text-indigo-600" />
-                Edit Details
+                <User className="h-3.5 w-3.5 text-indigo-400" />
+                <span className="hidden sm:inline">Settings</span>
               </Button>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-slate-500 hover:text-black hover:bg-black/5 rounded-full px-4 transition-colors">
-              <LogOut className="h-4 w-4 mr-2" /> Sign Out
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="text-slate-400 hover:text-rose-400 hover:bg-rose-950/20 rounded-full px-3 transition-colors text-xs"
+            >
+              <LogOut className="h-3.5 w-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">Sign Out</span>
             </Button>
           </div>
         </div>
         
-        {/* Premium Animated Tabs */}
-        <div className="w-full px-4 sm:px-8 overflow-x-auto hide-scrollbar border-t border-black/5">
-          <div className="w-full max-w-[1800px] mx-auto flex items-center gap-2 py-3 relative">
+        {/* Executive Animated Tabs Navigation */}
+        <div className="w-full px-4 sm:px-8 overflow-x-auto hide-scrollbar border-t border-slate-800/80 bg-[#070A12]/80">
+          <div className="w-full max-w-[1800px] mx-auto flex items-center gap-1.5 py-2.5 relative">
             {TABS.map((t) => {
               const isActive = activeTab === t.id;
               return (
                 <button
                   key={t.id}
                   onClick={() => setActiveTab(t.id)}
-                  className={`relative flex items-center shrink-0 px-4 py-2 text-[13px] font-medium rounded-full transition-colors duration-300 ${isActive ? "text-white" : "text-slate-500 hover:text-slate-900 hover:bg-black/5"}`}
+                  className={`relative flex items-center shrink-0 px-3.5 py-1.5 text-[12px] font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                    isActive 
+                      ? "text-white bg-indigo-600 shadow-md shadow-indigo-900/40" 
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                  }`}
                 >
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTabIndicator"
-                      className="absolute inset-0 bg-black rounded-full shadow-md"
-                      initial={false}
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center gap-2">
+                  <span className="relative z-10 flex items-center gap-1.5">
                     {t.label}
                     {('badge' in t && t.badge !== undefined) && (t as any).badge > 0 && (
-                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"}`}>
+                      <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${
+                        isActive ? "bg-white/30 text-white" : "bg-slate-800 text-indigo-300 border border-slate-700"
+                      }`}>
                         {t.badge}
                       </span>
                     )}
@@ -1089,100 +1128,199 @@ function EmployeeDashboard() {
         </div>
       </header>
 
-      {/* Marquee Notifications (Premium style) */}
+      {/* Marquee Notifications (Corporate broadcast ticker) */}
       {announcements.length > 0 && (
-        <div className="bg-black text-white text-[11px] uppercase tracking-widest py-2.5 overflow-hidden flex whitespace-nowrap">
+        <div className="bg-[#05070E] border-b border-slate-800/60 text-slate-300 text-[11px] uppercase tracking-wider py-2 overflow-hidden flex whitespace-nowrap">
           <div className="animate-marquee flex gap-12 shrink-0 min-w-full px-6">
             {announcements.map((a: any) => (
-              <span key={a.id} className="inline-flex items-center gap-3">
-                <Sparkles className="h-3 w-3 text-emerald-400" />
-                <span className="font-semibold text-white/90">{a.type || 'Update'}</span>
-                <span className="text-white/60 font-light">{a.title}</span>
+              <span key={a.id} className="inline-flex items-center gap-2.5">
+                <Sparkles className="h-3 w-3 text-indigo-400" />
+                <span className="font-bold text-indigo-300">{a.type || 'Broadcast'}:</span>
+                <span className="text-slate-300 font-normal">{a.title}</span>
               </span>
             ))}
           </div>
         </div>
       )}
 
-      <main className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 py-4 sm:py-6 relative">
+      <main className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 py-6 relative">
         <AnimatePresence mode="wait">
           
           {/* ─── OVERVIEW ─── */}
           {activeTab === "overview" && (
             <motion.div key="overview" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-6">
               
-              {/* Premium Hero Section */}
-              <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-100 p-6 sm:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
-                <div className="absolute top-0 right-0 p-32 bg-gradient-to-bl from-slate-100 to-transparent rounded-full opacity-50 blur-3xl pointer-events-none" />
+              {/* Executive Hero Banner */}
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0A0E1A] text-white border border-slate-800/80 p-6 sm:p-8 shadow-2xl">
+                <div className="absolute top-0 right-0 p-40 bg-gradient-to-bl from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-1/3 p-32 bg-gradient-to-tr from-emerald-500/10 to-transparent rounded-full blur-2xl pointer-events-none" />
                 
-                <div className="relative flex flex-col md:flex-row md:items-end justify-between gap-10">
-                  <div>
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                      <h1 className="text-4xl md:text-5xl font-light tracking-tight text-slate-900 mb-2">
-                        Welcome back,<br/><span className="font-semibold">{displayName.split(' ')[0]}</span>.
-                      </h1>
-                      <p className="text-slate-500 font-light flex items-center gap-4 mt-4">
-                        <span className="flex items-center gap-2"><CalendarDays className="h-4 w-4 opacity-50"/> {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" })}</span>
-                      </p>
-                    </motion.div>
+                <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                  <div className="space-y-3 max-w-2xl">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                        {profile?.department || "Operations & Engineering"}
+                      </span>
+                      <span className="bg-slate-800/80 border border-slate-700 text-slate-300 text-[10px] font-mono px-3 py-1 rounded-full">
+                        {profile?.intern_id || "EMP-OPERATIONS"}
+                      </span>
+                    </div>
+
+                    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+                      Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-200 to-white">{displayName.split(' ')[0]}</span>.
+                    </h1>
+
+                    <p className="text-slate-300 text-xs sm:text-sm font-normal flex flex-wrap items-center gap-4">
+                      <span className="flex items-center gap-1.5 text-slate-400">
+                        <CalendarDays className="h-4 w-4 text-indigo-400" />
+                        {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                      </span>
+                      <span className="text-slate-600">•</span>
+                      <span className="text-slate-400">Sprint Velocity: <strong className="text-emerald-400">{progress}%</strong></span>
+                    </p>
                   </div>
                   
-                  <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="flex items-center gap-8 md:gap-12 bg-slate-50/50 p-6 rounded-2xl border border-slate-100 backdrop-blur-sm">
-                    <div>
-                      <div className="text-4xl font-light tracking-tighter text-slate-900">{tasks.length}</div>
-                      <div className="text-[11px] text-slate-500 uppercase tracking-widest mt-1 font-medium">Total Tasks</div>
+                  {/* Executive KPI Counter Ring */}
+                  <div className="flex items-center gap-6 bg-slate-900/80 p-5 rounded-2xl border border-slate-800/90 backdrop-blur-md shadow-inner shrink-0">
+                    <div className="text-center px-3">
+                      <div className="text-3xl font-black tracking-tight text-white">{tasks.length}</div>
+                      <div className="text-[10px] text-slate-400 uppercase tracking-wider mt-1 font-bold">Assigned Tasks</div>
                     </div>
-                    <div className="w-px h-12 bg-slate-200" />
-                    <div>
-                      <div className="text-4xl font-light tracking-tighter text-slate-900">{progress}%</div>
-                      <div className="text-[11px] text-slate-500 uppercase tracking-widest mt-1 font-medium">Completed</div>
+                    <div className="w-px h-10 bg-slate-800" />
+                    <div className="text-center px-3">
+                      <div className="text-3xl font-black tracking-tight text-indigo-400">{myInterns.length}</div>
+                      <div className="text-[10px] text-slate-400 uppercase tracking-wider mt-1 font-bold">Mentees</div>
                     </div>
-                  </motion.div>
+                    <div className="w-px h-10 bg-slate-800" />
+                    <div className="text-center px-3">
+                      <div className="text-3xl font-black tracking-tight text-emerald-400">{attendanceLogs.length}</div>
+                      <div className="text-[10px] text-slate-400 uppercase tracking-wider mt-1 font-bold">Workdays</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Corporate Action Buttons */}
+                <div className="mt-8 pt-6 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                  <button
+                    onClick={() => setActiveTab("tasks")}
+                    className="p-3 rounded-xl bg-slate-900/60 hover:bg-indigo-600/30 border border-slate-800 hover:border-indigo-500/50 text-left transition-all group cursor-pointer"
+                  >
+                    <ClipboardList className="h-4 w-4 text-indigo-400 group-hover:text-white mb-1.5 transition-colors" />
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-white">Tasks Hub</div>
+                    <div className="text-[10px] text-slate-400">{pendingTasks.length} pending</div>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab("my_interns")}
+                    className="p-3 rounded-xl bg-slate-900/60 hover:bg-purple-600/30 border border-slate-800 hover:border-purple-500/50 text-left transition-all group cursor-pointer"
+                  >
+                    <GraduationCap className="h-4 w-4 text-purple-400 group-hover:text-white mb-1.5 transition-colors" />
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-white">Mentorship</div>
+                    <div className="text-[10px] text-slate-400">{myInterns.length} interns active</div>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab("attendance")}
+                    className="p-3 rounded-xl bg-slate-900/60 hover:bg-emerald-600/30 border border-slate-800 hover:border-emerald-500/50 text-left transition-all group cursor-pointer"
+                  >
+                    <Fingerprint className="h-4 w-4 text-emerald-400 group-hover:text-white mb-1.5 transition-colors" />
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-white">Time &amp; Shift</div>
+                    <div className="text-[10px] text-slate-400">{todayAttendance ? "Logged today" : "Pending clock-in"}</div>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab("campaigns")}
+                    className="p-3 rounded-xl bg-slate-900/60 hover:bg-cyan-600/30 border border-slate-800 hover:border-cyan-500/50 text-left transition-all group cursor-pointer"
+                  >
+                    <Mail className="h-4 w-4 text-cyan-400 group-hover:text-white mb-1.5 transition-colors" />
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-white">Campaigns</div>
+                    <div className="text-[10px] text-slate-400">Promotions &amp; Outreach</div>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab("payouts")}
+                    className="p-3 rounded-xl bg-slate-900/60 hover:bg-amber-600/30 border border-slate-800 hover:border-amber-500/50 text-left transition-all group cursor-pointer"
+                  >
+                    <CreditCard className="h-4 w-4 text-amber-400 group-hover:text-white mb-1.5 transition-colors" />
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-white">Payouts</div>
+                    <div className="text-[10px] text-slate-400">Claims &amp; Salary Slip</div>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab("refer")}
+                    className="p-3 rounded-xl bg-slate-900/60 hover:bg-rose-600/30 border border-slate-800 hover:border-rose-500/50 text-left transition-all group cursor-pointer"
+                  >
+                    <Coins className="h-4 w-4 text-rose-400 group-hover:text-white mb-1.5 transition-colors" />
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-white">Refer &amp; Earn</div>
+                    <div className="text-[10px] text-slate-400">Live Commission</div>
+                  </button>
                 </div>
               </div>
 
-              {/* Stats Row - Glassmorphism style */}
+              {/* Stats Row - High-Density Glassmorphism Cards */}
               <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { label: "Pending Tasks", value: pendingTasks.length, icon: <ClipboardList className="h-4 w-4" /> },
-                  { label: "Present Days", value: attendanceLogs.length, icon: <Fingerprint className="h-4 w-4" /> },
-                  { label: "Meetings", value: meetings.filter(m => new Date(m.scheduled_at) >= new Date()).length, icon: <Video className="h-4 w-4" /> },
-                  { label: "Leave Requests", value: leaves.length, icon: <CalendarX2 className="h-4 w-4" /> },
+                  { label: "Pending Sprint Tasks", value: pendingTasks.length, icon: <ClipboardList className="h-5 w-5 text-indigo-600" />, change: `${tasks.length} total`, color: "indigo" },
+                  { label: "Present Workdays", value: attendanceLogs.length, icon: <Fingerprint className="h-5 w-5 text-emerald-600" />, change: "100% attendance", color: "emerald" },
+                  { label: "Upcoming Meetings", value: meetings.filter(m => new Date(m.scheduled_at) >= new Date()).length, icon: <Video className="h-5 w-5 text-purple-600" />, change: "Sync scheduled", color: "purple" },
+                  { label: "Leave Requests", value: leaves.length, icon: <CalendarX2 className="h-5 w-5 text-amber-600" />, change: "View status", color: "amber" },
                 ].map((s, i) => (
-                  <motion.div variants={itemVariants} key={i} className="group p-6 rounded-2xl bg-white border border-slate-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 relative overflow-hidden">
-                    <div className="absolute -right-4 -top-4 opacity-[0.03] transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500">
-                      {s.icon}
+                  <motion.div variants={itemVariants} key={i} className="group p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 relative overflow-hidden">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">{s.icon}</div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{s.change}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-slate-400 mb-4">{s.icon}</div>
-                    <div className="text-3xl font-light text-slate-900 mb-1">{s.value}</div>
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">{s.label}</div>
+                    <div className="text-3xl font-black text-slate-900 mb-1">{s.value}</div>
+                    <div className="text-[11px] text-slate-500 font-semibold">{s.label}</div>
                   </motion.div>
                 ))}
               </motion.div>
               
+              {/* Split Corporate Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <motion.div variants={itemVariants} initial="initial" animate="animate" className="lg:col-span-1">
-                  <div className="text-sm font-semibold tracking-wide text-slate-900 mb-3 uppercase">Calendar</div>
-                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+                <motion.div variants={itemVariants} initial="initial" animate="animate" className="lg:col-span-1 space-y-6">
+                  <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-indigo-600" /> Corporate Calendar
+                      </div>
+                      <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                        {holidaysQ.data?.length || 0} Holidays
+                      </span>
+                    </div>
                     <MonthlyCalendar events={[...schedules, ...meetings]} holidays={holidaysQ.data || []} />
                   </div>
                 </motion.div>
 
                 <motion.div variants={itemVariants} initial="initial" animate="animate" className="lg:col-span-2 space-y-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-sm font-semibold tracking-wide text-slate-900 uppercase">Recent Tasks</div>
-                    <Button variant="link" className="text-xs text-slate-500 hover:text-black" onClick={() => setActiveTab("tasks")}>View All ↗</Button>
-                  </div>
-                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-6">
-                    <div className="divide-y divide-slate-50">
+                  <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                          <Target className="h-4 w-4 text-indigo-600" /> Active Priority Tasks
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5">High-priority milestones currently in progress or awaiting completion.</p>
+                      </div>
+                      <Button variant="outline" size="sm" className="text-xs font-bold text-indigo-600 border-indigo-200 hover:bg-indigo-50" onClick={() => setActiveTab("tasks")}>
+                        View All Tasks ↗
+                      </Button>
+                    </div>
+
+                    <div className="divide-y divide-slate-100">
                       {tasks.length === 0 ? (
-                        <div className="p-4 text-center text-xs text-slate-400 font-light">No tasks assigned currently.</div>
+                        <div className="p-8 text-center text-xs text-slate-400 font-light">No tasks assigned currently.</div>
                       ) : (
                         tasks.slice(0, 4).map((task: any) => {
                           const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
                           return (
-                            <div key={task.id} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
-                              <div className="text-sm font-medium text-slate-800">{task.title}</div>
+                            <div key={task.id} className="py-3.5 flex items-center justify-between gap-4 hover:bg-slate-50/80 px-2 rounded-xl transition-colors">
+                              <div className="flex items-center gap-3">
+                                <div className="h-2 w-2 rounded-full bg-indigo-600" />
+                                <div>
+                                  <div className="text-xs font-bold text-slate-900">{task.title}</div>
+                                  <div className="text-[10px] text-slate-400 mt-0.5">Due: {task.due_date ? new Date(task.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Ongoing sprint"}</div>
+                                </div>
+                              </div>
                               <span className={`text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider font-bold ${s.badge}`}>{s.label}</span>
                             </div>
                           );
@@ -1194,51 +1332,55 @@ function EmployeeDashboard() {
                   {/* Assigned Assets & Onboarding Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Assigned Hardware & Credentials */}
-                    <div className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-4">
+                    <div className="p-6 bg-white border border-slate-200/80 rounded-2xl shadow-sm space-y-4">
                       <div className="flex items-center justify-between">
-                        <div className="text-sm font-semibold text-slate-900 uppercase">Assigned Assets</div>
-                        <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold">Active</span>
+                        <div className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                          <Laptop className="h-4 w-4 text-indigo-600" /> Assigned Hardware
+                        </div>
+                        <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">Active</span>
                       </div>
-                      <div className="space-y-3 text-xs">
+                      <div className="space-y-2.5 text-xs">
                         <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Laptop className="h-4 w-4 text-slate-500" />
+                          <div className="flex items-center gap-2.5">
+                            <Laptop className="h-4 w-4 text-slate-600" />
                             <div>
-                              <div className="font-semibold text-slate-800">MacBook Pro M3 Max</div>
+                              <div className="font-bold text-slate-800">MacBook Pro M3 Max</div>
                               <div className="text-[10px] text-slate-400 font-mono">SN: VY-MAC-2026-981</div>
                             </div>
                           </div>
-                          <span className="text-[10px] text-slate-500 font-medium">Assigned</span>
+                          <span className="text-[10px] text-slate-500 font-bold">Assigned</span>
                         </div>
                         <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Shield className="h-4 w-4 text-indigo-500" />
+                          <div className="flex items-center gap-2.5">
+                            <Shield className="h-4 w-4 text-indigo-600" />
                             <div>
-                              <div className="font-semibold text-slate-800">YubiKey 5C NFC 2FA</div>
+                              <div className="font-bold text-slate-800">YubiKey 5C NFC 2FA</div>
                               <div className="text-[10px] text-slate-400 font-mono">SN: VY-KEY-4490</div>
                             </div>
                           </div>
-                          <span className="text-[10px] text-emerald-600 font-medium">Enrolled</span>
+                          <span className="text-[10px] text-emerald-700 font-bold">Enrolled</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Onboarding Checklist */}
-                    <div className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-4">
+                    <div className="p-6 bg-white border border-slate-200/80 rounded-2xl shadow-sm space-y-4">
                       <div className="flex items-center justify-between">
-                        <div className="text-sm font-semibold text-slate-900 uppercase">Onboarding Lifecycle</div>
-                        <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-bold">Completed</span>
+                        <div className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                          <ShieldCheck className="h-4 w-4 text-emerald-600" /> Compliance &amp; Security
+                        </div>
+                        <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-bold">Verified</span>
                       </div>
                       <div className="space-y-2 text-xs">
                         {[
-                          "Company Email & Slack Setup",
-                          "Identity Verification & NDA Upload",
-                          "Bank Account & Salary Setup",
-                          "Security & Compliance Training"
+                          "Corporate Workspace & SSO Access",
+                          "Identity Verification & Signed NDA",
+                          "Payroll & Bank Details Setup",
+                          "Annual Security & Compliance Training"
                         ].map((item, idx) => (
                           <div key={idx} className="flex items-center gap-2 text-slate-700">
                             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                            <span>{item}</span>
+                            <span className="font-medium text-[11px]">{item}</span>
                           </div>
                         ))}
                       </div>
@@ -1252,28 +1394,83 @@ function EmployeeDashboard() {
           {/* ─── TASKS ─── */}
           {activeTab === "tasks" && (
             <motion.div key="tasks" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-light tracking-tight text-slate-900">Task Management</h2>
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                    <ClipboardList className="h-5 w-5 text-indigo-600" /> Sprint Task Management
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">Track sprint deliverables, update milestone execution, and monitor active deliverables.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-bold px-3 py-1.5 rounded-xl">
+                    {pendingTasks.length} Active / {tasks.length} Total
+                  </span>
+                </div>
               </div>
-              <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-4">
+
+              <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-3">
                 {tasks.length === 0 ? (
-                  <div className="p-12 text-center text-slate-400 font-light bg-white rounded-2xl border border-slate-100 shadow-sm">No tasks assigned.</div>
+                  <div className="p-16 text-center text-slate-400 font-light bg-white rounded-3xl border border-dashed border-slate-200 shadow-xs">
+                    <ClipboardList className="h-10 w-10 text-slate-300 mx-auto mb-3 opacity-60" />
+                    <p className="text-sm font-semibold text-slate-600">No sprint tasks assigned.</p>
+                    <p className="text-xs text-slate-400 mt-1">New tasks assigned by administrators or team leads will appear here.</p>
+                  </div>
                 ) : (
                   tasks.map((task: any) => {
                     const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
                     return (
-                      <motion.div variants={itemVariants} key={task.id} className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-start justify-between gap-6 group">
-                        <div>
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-slate-900">{task.title}</h3>
-                            <span className={`text-[9px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold ${s.badge}`}>{s.label}</span>
+                      <motion.div
+                        variants={itemVariants}
+                        key={task.id}
+                        className="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-xs hover:shadow-md hover:border-indigo-200 transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+                      >
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="flex items-center gap-2.5 flex-wrap">
+                            <h3 className="font-bold text-sm text-slate-900">{task.title}</h3>
+                            <span className={`text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider font-extrabold ${s.badge}`}>
+                              {s.label}
+                            </span>
+                            {task.priority && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 uppercase">
+                                {task.priority}
+                              </span>
+                            )}
                           </div>
-                          {task.description && <p className="text-sm text-slate-500 font-light leading-relaxed max-w-2xl">{task.description}</p>}
+                          {task.description && (
+                            <p className="text-xs text-slate-500 font-normal leading-relaxed max-w-3xl line-clamp-2">
+                              {task.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
+                            {task.due_date && <span>Deadline: <strong className="text-slate-600">{new Date(task.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</strong></span>}
+                            {task.credits && <span>Credits: <strong className="text-indigo-600">{task.credits}</strong></span>}
+                          </div>
                         </div>
-                        <div className="shrink-0">
-                          {task.status === "pending" && <Button variant="outline" size="sm" onClick={() => markTaskStatus(task.id, "in_progress")} className="rounded-full shadow-sm hover:bg-black hover:text-white transition-colors">Start Task</Button>}
-                          {task.status === "in_progress" && <Button size="sm" className="bg-black text-white hover:bg-slate-800 rounded-full shadow-md" onClick={() => markTaskStatus(task.id, "completed")}>Mark Complete</Button>}
-                          {task.status === "completed" && <span className="text-xs text-emerald-600 font-medium flex items-center gap-1 bg-emerald-50 px-3 py-1 rounded-full"><CheckCircle2 className="h-3.5 w-3.5" /> Done</span>}
+
+                        <div className="shrink-0 flex items-center gap-2">
+                          {task.status === "pending" && (
+                            <Button
+                              size="sm"
+                              onClick={() => markTaskStatus(task.id, "in_progress")}
+                              className="bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-xl shadow-xs"
+                            >
+                              Start Task
+                            </Button>
+                          )}
+                          {task.status === "in_progress" && (
+                            <Button
+                              size="sm"
+                              onClick={() => markTaskStatus(task.id, "completed")}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs gap-1.5"
+                            >
+                              <CheckCheck className="h-3.5 w-3.5" /> Mark Complete
+                            </Button>
+                          )}
+                          {task.status === "completed" && (
+                            <span className="text-xs text-emerald-700 font-bold flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
+                              <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Completed
+                            </span>
+                          )}
                         </div>
                       </motion.div>
                     );
