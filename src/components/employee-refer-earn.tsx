@@ -166,7 +166,7 @@ export function EmployeeReferEarn() {
       <div className="p-3.5 bg-gradient-to-r from-indigo-50/90 via-purple-50/70 to-emerald-50/80 border border-indigo-200/80 rounded-xl text-xs flex items-start gap-2.5">
         <Sparkles className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
         <div className="space-y-0.5 text-slate-700 leading-relaxed">
-          <span className="font-bold text-slate-900">50/50 Gateway Charge Sharing Model:</span> Payment Gateway & Settlement charges (2.583% / approx ₹25.78 per ₹998) are split equally: <strong>50% is deducted from the Referrer's Commission</strong> (netting ₹{netCommissionEarnings.toLocaleString("en-IN")}) and <strong>50% is deducted from Company Revenue</strong>. ₹199 per paid candidate is dedicated to Government Certification reserves.
+          <span className="font-bold text-slate-900">50/50 Gateway Charge Sharing Model:</span> From the standard payment gateway charge (approx ₹25 / ₹25.78 per ₹998 transaction), <strong>half (approx ₹12.50 / ₹12.89)</strong> is deducted from the Referrer's Commission, and the other half is absorbed by the Organization. ₹199 per paid candidate is dedicated to Government Certification reserves.
         </div>
       </div>
 
