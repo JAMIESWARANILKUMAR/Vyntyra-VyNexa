@@ -40,12 +40,13 @@ export function EmployeeReferEarn() {
   const paidCount = referralData.paidCount ?? candidates.filter((c: any) => c.is_paid).length;
   const grossRevenue = referralData.grossRevenue ?? (paidCount * (referralData.candidateExamFee || 499));
   const gatewayCost = referralData.gatewayCost ?? Math.round(grossRevenue * (25.78 / 998) * 100) / 100;
-  const gatewayCostReferrerShare = referralData.gatewayCostReferrerShare ?? Math.round((gatewayCost / 2) * 100) / 100;
-  const gatewayCostCompanyShare = referralData.gatewayCostCompanyShare ?? Math.round((gatewayCost - gatewayCostReferrerShare) * 100) / 100;
+  const gatewayCostReferrerShare = referralData.gatewayCostReferrerShare ?? (paidCount * 12.5);
+  const gatewayCostCompanyShare = referralData.gatewayCostCompanyShare ?? Math.max(0, Math.round((gatewayCost - gatewayCostReferrerShare) * 100) / 100);
   const govtCertAllocation = referralData.govtCertAllocation ?? (paidCount * 199);
-  const grossCommission = referralData.grossCommission ?? (paidCount * (referralData.commissionRate || 200));
-  const netCommissionEarnings = referralData.netCommissionEarnings ?? Math.max(0, Math.round((grossCommission - gatewayCostReferrerShare) * 100) / 100);
-  const netCompanyProfit = referralData.netCompanyProfit ?? Math.round((grossRevenue - grossCommission - govtCertAllocation - gatewayCostCompanyShare) * 100) / 100;
+  const commissionRate = referralData.commissionRate || 200;
+  const grossCommission = referralData.grossCommission ?? (paidCount * commissionRate);
+  const netCommissionEarnings = referralData.netCommissionEarnings ?? (paidCount * Math.max(0, commissionRate - 12.5));
+  const netCompanyProfit = referralData.netCompanyProfit ?? Math.round((grossRevenue - netCommissionEarnings - govtCertAllocation - gatewayCost) * 100) / 100;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 w-full max-w-7xl mx-auto">
@@ -82,7 +83,7 @@ export function EmployeeReferEarn() {
             <Coins className="h-6 w-6 text-amber-500" /> Referral & Commission Earnings Hub
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Share your unique code, track candidate applications, and view real-time commission earnings with 50/50 gateway charge sharing and certification breakdowns.
+            Share your unique code, track candidate applications, and view real-time commission earnings with ₹12.50/candidate gateway deductions and certification reserves.
           </p>
         </div>
 
@@ -96,7 +97,7 @@ export function EmployeeReferEarn() {
         )}
       </div>
 
-      {/* ─── Financial Overview Cards (50% PG Shared Split Model) ─── */}
+      {/* ─── Financial Overview Cards (₹12.50 per referral deduction) ─── */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         <div className="p-4 rounded-xl border bg-white shadow-2xs">
           <div className="flex items-center justify-between text-slate-400 mb-1">
@@ -131,7 +132,7 @@ export function EmployeeReferEarn() {
             <CreditCard className="h-4 w-4 text-amber-500" />
           </div>
           <div className="text-xl font-extrabold text-amber-700">-₹{gatewayCost.toLocaleString("en-IN")}</div>
-          <span className="text-[10px] text-slate-400">50% Ref / 50% Org</span>
+          <span className="text-[10px] text-slate-400">₹12.50 Ref Share</span>
         </div>
 
         <div className="p-4 rounded-xl border bg-white shadow-2xs">
@@ -149,7 +150,7 @@ export function EmployeeReferEarn() {
             <Sparkles className="h-4 w-4 text-purple-600 animate-pulse" />
           </div>
           <div className="text-xl font-black text-purple-900">₹{netCommissionEarnings.toLocaleString("en-IN")}</div>
-          <span className="text-[10px] text-purple-700 font-semibold">₹{grossCommission} gross − ₹{gatewayCostReferrerShare} (50% PG)</span>
+          <span className="text-[10px] text-purple-700 font-semibold">₹{grossCommission} gross − ₹{gatewayCostReferrerShare} (₹12.50/candidate)</span>
         </div>
 
         <div className="p-4 rounded-xl border-2 border-emerald-300 bg-emerald-50/80 shadow-2xs">
@@ -158,7 +159,7 @@ export function EmployeeReferEarn() {
             <TrendingUp className="h-4 w-4 text-emerald-600" />
           </div>
           <div className="text-xl font-black text-emerald-900">₹{netCompanyProfit.toLocaleString("en-IN")}</div>
-          <span className="text-[10px] text-emerald-700 font-semibold">After 50% PG & Cert Fee</span>
+          <span className="text-[10px] text-emerald-700 font-semibold">After Payouts & Cert Fee</span>
         </div>
       </div>
 
@@ -166,7 +167,7 @@ export function EmployeeReferEarn() {
       <div className="p-3.5 bg-gradient-to-r from-indigo-50/90 via-purple-50/70 to-emerald-50/80 border border-indigo-200/80 rounded-xl text-xs flex items-start gap-2.5">
         <Sparkles className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
         <div className="space-y-0.5 text-slate-700 leading-relaxed">
-          <span className="font-bold text-slate-900">50/50 Gateway Charge Sharing Model:</span> From the standard payment gateway charge (approx ₹25 / ₹25.78 per ₹998 transaction), <strong>half (approx ₹12.50 / ₹12.89)</strong> is deducted from the Referrer's Commission, and the other half is absorbed by the Organization. ₹199 per paid candidate is dedicated to Government Certification reserves.
+          <span className="font-bold text-slate-900">Commission Settlement Policy:</span> Exactly <strong>₹12.50</strong> is deducted per paid referral from the Referrer's Commission (netting <strong>₹{(commissionRate - 12.5).toLocaleString("en-IN")}</strong> per paid candidate from a ₹{commissionRate} base commission). ₹199 per paid candidate is dedicated to Government Certification reserves.
         </div>
       </div>
 
@@ -400,10 +401,10 @@ export function EmployeeReferEarn() {
                           {isPaid ? (
                             <div>
                               <span className="text-purple-700 font-bold bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-lg">
-                                +₹{r.net_earnings ?? Math.max(0, commission - Math.round((r.gateway_fee / 2) * 100) / 100)}
+                                +₹{r.net_earnings ?? Math.max(0, commission - 12.5)}
                               </span>
                               <div className="text-[9px] text-slate-400 font-normal mt-1">
-                                ₹{commission} gross − ₹{r.gateway_fee_share ?? Math.round(((r.gateway_fee || 12.89) / 2) * 100) / 100} PG
+                                ₹{commission} gross − ₹{r.gateway_fee_share ?? 12.5} PG
                               </div>
                             </div>
                           ) : (

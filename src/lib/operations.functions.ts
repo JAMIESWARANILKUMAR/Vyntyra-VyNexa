@@ -4881,10 +4881,10 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
 
       const indivGross = isPaid ? (Number(a.exam_fee_amount) || candidateExamFee) : 0;
       const indivGateway = isPaid ? Math.round(indivGross * (25.78 / 998) * 100) / 100 : 0;
-      const indivGateway50 = isPaid ? Math.round((indivGateway / 2) * 100) / 100 : 0;
+      const indivPGDeduction = isPaid ? 12.5 : 0;
       const indivGovtCert = isPaid ? 199 : 0;
       const indivCommission = isPaid ? commissionRate : 0;
-      const indivNetEarnings = isPaid ? Math.max(0, Math.round((indivCommission - indivGateway50) * 100) / 100) : 0;
+      const indivNetEarnings = isPaid ? Math.max(0, Math.round((commissionRate - 12.5) * 100) / 100) : 0;
 
       candidateList.push({
         id: a.id,
@@ -4896,7 +4896,7 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
         created_at: a.created_at,
         gross_amount: indivGross,
         gateway_fee: indivGateway,
-        gateway_fee_share: indivGateway50,
+        gateway_fee_share: indivPGDeduction,
         govt_cert_fee: indivGovtCert,
         earned_commission: indivCommission,
         net_earnings: indivNetEarnings,
@@ -4918,10 +4918,10 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
 
         const indivGross = isPaid ? (Number(p.exam_fee_amount) || candidateExamFee) : 0;
         const indivGateway = isPaid ? Math.round(indivGross * (25.78 / 998) * 100) / 100 : 0;
-        const indivGateway50 = isPaid ? Math.round((indivGateway / 2) * 100) / 100 : 0;
+        const indivPGDeduction = isPaid ? 12.5 : 0;
         const indivGovtCert = isPaid ? 199 : 0;
         const indivCommission = isPaid ? commissionRate : 0;
-        const indivNetEarnings = isPaid ? Math.max(0, Math.round((indivCommission - indivGateway50) * 100) / 100) : 0;
+        const indivNetEarnings = isPaid ? Math.max(0, Math.round((commissionRate - 12.5) * 100) / 100) : 0;
 
         candidateList.push({
           id: p.id,
@@ -4933,7 +4933,7 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
           created_at: p.created_at || new Date().toISOString(),
           gross_amount: indivGross,
           gateway_fee: indivGateway,
-          gateway_fee_share: indivGateway50,
+          gateway_fee_share: indivPGDeduction,
           govt_cert_fee: indivGovtCert,
           earned_commission: indivCommission,
           net_earnings: indivNetEarnings,
@@ -4943,13 +4943,13 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
 
     const grossRevenue = totalGrossRevenue || (paidCount * candidateExamFee);
     const gatewayCost = Math.round(grossRevenue * (25.78 / 998) * 100) / 100;
-    // 50% of gateway charge deducted from referrer commission, 50% deducted from company income
-    const gatewayCostReferrerShare = Math.round((gatewayCost / 2) * 100) / 100;
-    const gatewayCostCompanyShare = Math.round((gatewayCost - gatewayCostReferrerShare) * 100) / 100;
+    // Exactly ₹12.50 deducted per paid referral from referrer commission
+    const gatewayCostReferrerShare = Math.round(paidCount * 12.5 * 100) / 100;
+    const gatewayCostCompanyShare = Math.max(0, Math.round((gatewayCost - gatewayCostReferrerShare) * 100) / 100);
     const govtCertAllocation = paidCount * 199;
     const grossCommission = paidCount * commissionRate;
-    const netCommissionEarnings = Math.max(0, Math.round((grossCommission - gatewayCostReferrerShare) * 100) / 100);
-    const netCompanyProfit = Math.round((grossRevenue - grossCommission - govtCertAllocation - gatewayCostCompanyShare) * 100) / 100;
+    const netCommissionEarnings = Math.max(0, Math.round(paidCount * (commissionRate - 12.5) * 100) / 100);
+    const netCompanyProfit = Math.round((grossRevenue - netCommissionEarnings - govtCertAllocation - gatewayCost) * 100) / 100;
 
     return {
       referralCode: code,
@@ -5046,18 +5046,18 @@ export const listAllReferralPricingRules = createServerFn({ method: "GET" })
       
       // Payment Gateway & Settlement charge ratio: 25.78 on 998 gross (approx ₹12.89 per ₹499 transaction)
       const totalGatewayCost = Math.round(grossRevenue * (25.78 / 998) * 100) / 100;
-      const gatewayReferrerShare = Math.round((totalGatewayCost / 2) * 100) / 100;
-      const gatewayCompanyShare = Math.round((totalGatewayCost - gatewayReferrerShare) * 100) / 100;
+      const gatewayReferrerShare = Math.round(paid * 12.5 * 100) / 100;
+      const gatewayCompanyShare = Math.max(0, Math.round((totalGatewayCost - gatewayReferrerShare) * 100) / 100);
       
       // Government Certification Fee: ₹199 per paid candidate
       const govtCertFee = paid * 199;
 
-      // Referral Commission: paid count * commission_reward
+      // Referral Commission: paid count * commission_reward with ₹12.50 deduction per candidate
       const totalCommission = paid * commission;
-      const netCommissionPayable = Math.max(0, Math.round((totalCommission - gatewayReferrerShare) * 100) / 100);
+      const netCommissionPayable = Math.max(0, Math.round(paid * (commission - 12.5) * 100) / 100);
       
-      // Net Company Retained Profit (after 50% PG cost & ₹199 Govt Cert)
-      const netCompanyMargin = Math.round((grossRevenue - totalCommission - govtCertFee - gatewayCompanyShare) * 100) / 100;
+      // Net Company Retained Profit
+      const netCompanyMargin = Math.round((grossRevenue - netCommissionPayable - govtCertFee - totalGatewayCost) * 100) / 100;
 
       ruleMap.set(code, {
         id: r.id,
@@ -5098,12 +5098,12 @@ export const listAllReferralPricingRules = createServerFn({ method: "GET" })
       const grossRevenue = paid > 0 ? (metricsMap.get(code)?.collectedAmount || paid * fee) : 0;
       
       const totalGatewayCost = Math.round(grossRevenue * (25.78 / 998) * 100) / 100;
-      const gatewayReferrerShare = Math.round((totalGatewayCost / 2) * 100) / 100;
-      const gatewayCompanyShare = Math.round((totalGatewayCost - gatewayReferrerShare) * 100) / 100;
+      const gatewayReferrerShare = Math.round(paid * 12.5 * 100) / 100;
+      const gatewayCompanyShare = Math.max(0, Math.round((totalGatewayCost - gatewayReferrerShare) * 100) / 100);
       const govtCertFee = paid * 199;
       const totalCommission = paid * commission;
-      const netCommissionPayable = Math.max(0, Math.round((totalCommission - gatewayReferrerShare) * 100) / 100);
-      const netCompanyMargin = Math.round((grossRevenue - totalCommission - govtCertFee - gatewayCompanyShare) * 100) / 100;
+      const netCommissionPayable = Math.max(0, Math.round(paid * (commission - 12.5) * 100) / 100);
+      const netCompanyMargin = Math.round((grossRevenue - netCommissionPayable - govtCertFee - totalGatewayCost) * 100) / 100;
 
       if (!ruleMap.has(code)) {
         ruleMap.set(code, {

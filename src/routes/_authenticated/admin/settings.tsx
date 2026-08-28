@@ -876,7 +876,7 @@ function AdminSettingsPage() {
   const totalReferredCount = referralRules.reduce((acc, r) => acc + (r.usage_count || 0), 0);
   const totalPaidCount = referralRules.reduce((acc, r) => acc + (r.paid_count || 0), 0);
   const totalGrossRevenue = referralRules.reduce((acc, r) => acc + (r.gross_revenue || 0), 0);
-  const totalCommissionPayable = referralRules.reduce((acc, r) => acc + (r.total_commission_payable || 0), 0);
+  const totalCommissionPayable = referralRules.reduce((acc, r) => acc + (r.net_commission_payable ?? r.total_commission_payable ?? 0), 0);
   const totalGatewayCosts = referralRules.reduce((acc, r) => acc + (r.total_gateway_cost || 0), 0);
   const totalGovtCertFees = referralRules.reduce((acc, r) => acc + (r.govt_cert_fee || 0), 0);
   const totalNetCompanyMargin = referralRules.reduce((acc, r) => acc + (r.net_company_margin || 0), 0);
@@ -1110,7 +1110,8 @@ function AdminSettingsPage() {
                               <span className="text-[9px] text-slate-400 block">(₹199/paid)</span>
                             </td>
                             <td className="p-3.5 font-extrabold text-purple-700">
-                              ₹{(rule.total_commission_payable || 0).toLocaleString("en-IN")}
+                              ₹{(rule.net_commission_payable ?? rule.total_commission_payable ?? 0).toLocaleString("en-IN")}
+                              <span className="text-[9px] text-slate-400 block font-normal">(₹{(rule.commission_reward - 12.5)}/paid)</span>
                             </td>
                             <td className="p-3.5">
                               <span className="px-2 py-0.5 rounded-lg text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-200">
