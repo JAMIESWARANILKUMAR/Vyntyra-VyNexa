@@ -1024,31 +1024,31 @@ function EmployeeDashboard() {
       
       {/* Corporate Executive Top Header */}
       <header className={`sticky top-0 z-40 transition-all duration-300 ${scrolled ? "bg-[#0B0F19]/95 backdrop-blur-2xl border-b border-slate-800/80 shadow-xl" : "bg-[#0B0F19] border-b border-slate-800"}`}>
-        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-10 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-xl shadow-lg shadow-indigo-950/50 border border-indigo-400/30 flex items-center justify-center text-white font-black tracking-wider text-base">
+        <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2 overflow-hidden">
+          <div className="flex items-center gap-2.5 sm:gap-4 min-w-0 shrink">
+            <div className="h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-xl shadow-lg shadow-indigo-950/50 border border-indigo-400/30 flex items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
               V
             </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white tracking-tight leading-tight">Vyntyra Operations</span>
-                <span className="bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Corporate
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-xs sm:text-sm font-bold text-white tracking-tight leading-tight truncate">Vyntyra Ops</span>
+                <span className="bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
+                  Corp
                 </span>
               </div>
-              <span className="text-[10px] text-slate-400 font-medium">Employee &amp; Mentorship Portal</span>
+              <span className="hidden md:block text-[10px] text-slate-400 font-medium truncate">Employee &amp; Mentorship Portal</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 sm:gap-6">
-            {/* Quick Shift Status Badge */}
-            <div className="hidden md:flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-xs">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            {/* Quick Shift Status Badge (Desktop) */}
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-xs">
               <span className="relative flex h-2 w-2">
                 <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${todayAttendance?.clock_out_time ? 'bg-amber-400' : todayAttendance ? 'bg-emerald-400' : 'bg-slate-400'}`}></span>
                 <span className={`relative inline-flex rounded-full h-2 w-2 ${todayAttendance?.clock_out_time ? 'bg-amber-500' : todayAttendance ? 'bg-emerald-500' : 'bg-slate-500'}`}></span>
               </span>
               <span className="text-[11px] font-semibold text-slate-300">
-                {todayAttendance?.clock_out_time ? "Shift Ended" : todayAttendance ? "Active on Shift" : "Not Clocked In"}
+                {todayAttendance?.clock_out_time ? "Shift Ended" : todayAttendance ? "On Shift" : "Clocked Out"}
               </span>
               {!todayAttendance ? (
                 <button
@@ -1067,17 +1067,18 @@ function EmployeeDashboard() {
               ) : null}
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <div className="hidden sm:flex flex-col text-right">
-                <span className="text-xs font-bold text-white">{displayName}</span>
-                <span className="text-[10px] text-slate-400 font-mono">{email}</span>
+                <span className="text-xs font-bold text-white max-w-[120px] truncate">{displayName}</span>
+                <span className="text-[10px] text-slate-400 font-mono max-w-[120px] truncate">{email}</span>
               </div>
-              <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-9 w-9 ring-2 ring-indigo-500/30 shadow-sm" />
+              <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 sm:h-9 sm:w-9 ring-2 ring-indigo-500/30 shadow-sm shrink-0" />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setProfileModalOpen(true)}
-                className="h-8 text-xs font-bold rounded-xl border-slate-700 bg-slate-900/80 text-slate-200 hover:bg-slate-800 hover:text-white gap-1.5 shadow-2xs"
+                className="h-8 px-2 sm:px-2.5 text-xs font-bold rounded-xl border-slate-700 bg-slate-900/80 text-slate-200 hover:bg-slate-800 hover:text-white gap-1 shadow-2xs shrink-0"
+                title="Edit Details"
               >
                 <User className="h-3.5 w-3.5 text-indigo-400" />
                 <span className="hidden sm:inline">Settings</span>
@@ -1088,9 +1089,10 @@ function EmployeeDashboard() {
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="text-slate-400 hover:text-rose-400 hover:bg-rose-950/20 rounded-full px-3 transition-colors text-xs"
+              className="h-8 px-2 sm:px-3 text-rose-400 hover:text-rose-300 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-500/20 rounded-xl transition-colors text-xs font-bold shrink-0 flex items-center gap-1 cursor-pointer"
+              title="Sign Out"
             >
-              <LogOut className="h-3.5 w-3.5 sm:mr-1.5" />
+              <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Sign Out</span>
             </Button>
           </div>
@@ -1482,64 +1484,111 @@ function EmployeeDashboard() {
 
           {/* ─── ATTENDANCE ─── */}
           {activeTab === "attendance" && (
-            <motion.div key="attendance" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-1">
-                <div className="p-8 border border-slate-100 rounded-2xl bg-white shadow-sm text-center relative overflow-hidden">
-                  <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-500" />
-                  <Fingerprint className="h-10 w-10 text-slate-300 mx-auto mb-6" />
-                  <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-6 font-bold">Daily Attendance</div>
-                  
-                  {todayAttendance ? (
-                    todayAttendance.clock_out ? (
-                      <div className="bg-slate-50 text-slate-600 border border-slate-100 p-4 rounded-xl text-sm font-medium">Shift Completed</div>
-                    ) : (
-                      <Button 
-                        size="sm" 
-                        className="w-full bg-slate-900 hover:bg-black text-white disabled:opacity-50" 
-                        onClick={handleClockOut} 
-                        disabled={isClocking || isClockingDisabled}
-                        title={clockingDisabledReason}
-                      >
-                        {isClocking ? <Loader2 className="h-4 w-4 animate-spin"/> : "Clock Out"}
-                      </Button>
-                    )
-                  ) : (
-                    <Button 
-                      onClick={handleClockIn} 
-                      disabled={isClocking || isClockingDisabled}
-                      title={clockingDisabledReason}
-                      className="w-full h-12 rounded-xl bg-black hover:bg-slate-800 text-white shadow-lg shadow-black/20 font-semibold uppercase tracking-wider text-xs transition-all hover:-translate-y-0.5 disabled:opacity-50"
-                    >
-                      {isClocking ? <Loader2 className="h-4 w-4 animate-spin"/> : "Clock In"}
-                    </Button>
-                  )}
-                  
-                  {todayAttendance && (
-                    <div className="text-[11px] font-medium text-slate-500 space-y-2 mt-6 bg-slate-50 p-4 rounded-xl">
-                      {todayAttendance.clock_in && <div className="flex justify-between"><span>In</span> <span className="text-slate-900">{new Date(todayAttendance.clock_in).toLocaleTimeString()}</span></div>}
-                      {todayAttendance.clock_out && <div className="flex justify-between border-t border-slate-200 pt-2"><span>Out</span> <span className="text-slate-900">{new Date(todayAttendance.clock_out).toLocaleTimeString()}</span></div>}
-                    </div>
-                  )}
+            <motion.div key="attendance" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                    <Fingerprint className="h-5 w-5 text-indigo-600" /> Biometric Time &amp; Attendance Desk
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">Real-time shift clocking, automated daily work-hour logs, and shift verification records.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" /> {attendanceLogs.length} Shifts Logged
+                  </span>
                 </div>
               </div>
-              <div className="lg:col-span-2">
-                <h2 className="text-xl font-light text-slate-900 mb-6">Attendance Log</h2>
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                  <div className="divide-y divide-slate-50">
-                    {attendanceLogs.length === 0 ? (
-                      <div className="py-12 text-center text-slate-400 font-light">No records found.</div>
-                    ) : (
-                      attendanceLogs.map((log: any) => (
-                        <div key={log.id} className="p-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
-                          <div className="text-sm font-medium text-slate-900">{new Date(log.date).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}</div>
-                          <div className="text-sm text-slate-500 font-light font-mono bg-slate-100 px-3 py-1 rounded-md">
-                            {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'} 
-                            <span className="mx-2 text-slate-300">→</span> 
-                            {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}
-                          </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-1 space-y-6">
+                  {/* Shift Clock Card */}
+                  <div className="p-6 border border-slate-200/80 rounded-3xl bg-gradient-to-b from-white to-slate-50 shadow-sm text-center relative overflow-hidden">
+                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400" />
+                    
+                    <div className="inline-flex p-3 rounded-2xl bg-slate-100 text-indigo-600 mb-4 shadow-inner">
+                      <Clock className="h-7 w-7 animate-pulse" />
+                    </div>
+
+                    <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">Shift Controller</div>
+                    
+                    <div className="text-2xl font-black text-slate-900 tracking-tight mb-4">
+                      {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+                    </div>
+                    
+                    {todayAttendance ? (
+                      todayAttendance.clock_out ? (
+                        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-2xl text-xs font-bold flex items-center justify-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Today's Shift Completed
                         </div>
-                      ))
+                      ) : (
+                        <Button 
+                          size="sm" 
+                          className="w-full h-12 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-900/20 disabled:opacity-50 gap-2 cursor-pointer" 
+                          onClick={handleClockOut} 
+                          disabled={isClocking || isClockingDisabled}
+                          title={clockingDisabledReason}
+                        >
+                          {isClocking ? <Loader2 className="h-4 w-4 animate-spin"/> : <LogOut className="h-4 w-4" />}
+                          End Shift &amp; Clock Out
+                        </Button>
+                      )
+                    ) : (
+                      <Button 
+                        onClick={handleClockIn} 
+                        disabled={isClocking || isClockingDisabled}
+                        title={clockingDisabledReason}
+                        className="w-full h-12 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-900/20 font-bold tracking-wide text-xs transition-all disabled:opacity-50 gap-2 cursor-pointer"
+                      >
+                        {isClocking ? <Loader2 className="h-4 w-4 animate-spin"/> : <Fingerprint className="h-4 w-4" />}
+                        Clock In Now
+                      </Button>
                     )}
+                    
+                    {todayAttendance && (
+                      <div className="text-xs font-medium text-slate-600 space-y-2.5 mt-5 bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs">
+                        <div className="flex justify-between items-center text-slate-500">
+                          <span>Clock In Time:</span>
+                          <span className="font-bold text-slate-900 font-mono">{todayAttendance.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-slate-500 border-t border-slate-100 pt-2">
+                          <span>Clock Out Time:</span>
+                          <span className="font-bold text-slate-900 font-mono">{todayAttendance.clock_out ? new Date(todayAttendance.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "In Progress"}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="lg:col-span-2 space-y-4">
+                  <div className="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6">
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-indigo-600" /> Historical Attendance Registry
+                    </h3>
+
+                    <div className="divide-y divide-slate-100">
+                      {attendanceLogs.length === 0 ? (
+                        <div className="py-12 text-center text-slate-400 font-light">No attendance records logged yet.</div>
+                      ) : (
+                        attendanceLogs.slice(0, 15).map((log: any) => (
+                          <div key={log.id} className="py-3.5 flex items-center justify-between hover:bg-slate-50/80 px-2 rounded-xl transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                              <div>
+                                <div className="text-xs font-bold text-slate-900">
+                                  {new Date(log.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+                                </div>
+                                <div className="text-[10px] text-slate-400">Standard 8h Shift</div>
+                              </div>
+                            </div>
+                            <div className="text-xs font-mono font-bold bg-slate-100 border border-slate-200 text-slate-700 px-3 py-1 rounded-xl">
+                              {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'} 
+                              <span className="mx-2 text-slate-400 font-normal">→</span> 
+                              {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1548,45 +1597,75 @@ function EmployeeDashboard() {
 
           {/* ─── LEAVES ─── */}
           {activeTab === "leave" && (
-            <motion.div key="leave" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-1">
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest mb-6">Request Time Off</h2>
-                  <form onSubmit={handleSubmitLeave} className="space-y-5">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Start Date</label>
-                      <Input type="date" className="bg-slate-50 border-slate-100 focus:ring-black focus:border-black rounded-xl" required value={leaveForm.start_date} onChange={e => setLeaveForm({...leaveForm, start_date: e.target.value})} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">End Date</label>
-                      <Input type="date" className="bg-slate-50 border-slate-100 focus:ring-black focus:border-black rounded-xl" required value={leaveForm.end_date} onChange={e => setLeaveForm({...leaveForm, end_date: e.target.value})} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Reason</label>
-                      <Textarea className="bg-slate-50 border-slate-100 focus:ring-black focus:border-black rounded-xl resize-none font-light" required placeholder="Why do you need time off?" value={leaveForm.reason} onChange={e => setLeaveForm({...leaveForm, reason: e.target.value})} />
-                    </div>
-                    <Button type="submit" className="w-full rounded-xl bg-black text-white hover:bg-slate-800 shadow-md h-11">Submit Request</Button>
-                  </form>
+            <motion.div key="leave" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                    <CalendarX2 className="h-5 w-5 text-indigo-600" /> Leave &amp; Time-Off Management
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">Submit planned vacation, medical leave, or emergency time-off requests with instant administrative routing.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-xl">
+                    {leaves.length} Total Requests
+                  </span>
                 </div>
               </div>
-              <div className="lg:col-span-2">
-                <h2 className="text-xl font-light text-slate-900 mb-6">Leave History</h2>
-                <div className="space-y-4">
-                  {leaves.length === 0 ? (
-                    <div className="py-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">No leave history.</div>
-                  ) : (
-                    leaves.map((leave: any) => (
-                      <motion.div variants={itemVariants} initial="initial" animate="animate" key={leave.id} className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="text-sm font-semibold text-slate-900">
-                            {new Date(leave.start_date).toLocaleDateString()} <span className="mx-2 text-slate-300 font-normal">to</span> {new Date(leave.end_date).toLocaleDateString()}
-                          </div>
-                          <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest ${leave.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : leave.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>{leave.status}</span>
-                        </div>
-                        <p className="text-sm text-slate-500 font-light">{leave.reason}</p>
-                      </motion.div>
-                    ))
-                  )}
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-1">
+                  <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
+                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-5 flex items-center gap-2">
+                      <Plus className="h-4 w-4 text-indigo-600" /> Request Time Off
+                    </h3>
+                    <form onSubmit={handleSubmitLeave} className="space-y-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Start Date</label>
+                        <Input type="date" className="bg-slate-50 border-slate-200 focus:ring-indigo-600 focus:border-indigo-600 rounded-xl text-xs font-medium" required value={leaveForm.start_date} onChange={e => setLeaveForm({...leaveForm, start_date: e.target.value})} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">End Date</label>
+                        <Input type="date" className="bg-slate-50 border-slate-200 focus:ring-indigo-600 focus:border-indigo-600 rounded-xl text-xs font-medium" required value={leaveForm.end_date} onChange={e => setLeaveForm({...leaveForm, end_date: e.target.value})} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Reason / Justification</label>
+                        <Textarea className="bg-slate-50 border-slate-200 focus:ring-indigo-600 focus:border-indigo-600 rounded-xl resize-none text-xs font-normal" rows={3} required placeholder="Specify the reason for time-off..." value={leaveForm.reason} onChange={e => setLeaveForm({...leaveForm, reason: e.target.value})} />
+                      </div>
+                      <Button type="submit" className="w-full rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 font-bold shadow-md h-11 text-xs cursor-pointer">
+                        Submit Leave Application
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-2">
+                  <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 space-y-4">
+                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-indigo-600" /> Leave Application History
+                    </h3>
+                    
+                    <div className="space-y-3">
+                      {leaves.length === 0 ? (
+                        <div className="py-12 bg-slate-50 rounded-2xl border border-slate-200/60 text-center text-slate-400 font-light text-xs">No leave applications submitted yet.</div>
+                      ) : (
+                        leaves.map((leave: any) => (
+                          <motion.div variants={itemVariants} initial="initial" animate="animate" key={leave.id} className="p-4 bg-slate-50/80 border border-slate-200/80 rounded-2xl hover:bg-white hover:shadow-sm transition-all space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="text-xs font-bold text-slate-900">
+                                {new Date(leave.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} <span className="mx-1 text-slate-400 font-normal">to</span> {new Date(leave.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                              </div>
+                              <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                leave.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 
+                                leave.status === 'rejected' ? 'bg-rose-100 text-rose-800 border border-rose-200' : 
+                                'bg-amber-100 text-amber-800 border border-amber-200'
+                              }`}>{leave.status}</span>
+                            </div>
+                            <p className="text-xs text-slate-600 font-normal">{leave.reason}</p>
+                          </motion.div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -1594,58 +1673,66 @@ function EmployeeDashboard() {
 
           {/* ─── PAYOUTS & EXPENSES ─── */}
           {activeTab === "payouts" && (
-            <motion.div key="payouts" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-8">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <motion.div key="payouts" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-light tracking-tight text-slate-900">Payroll, Compensation & Payslips</h2>
-                  <p className="text-sm text-slate-500 font-light mt-1">View your monthly payout history, download official PDF payslips, and submit expense reimbursements.</p>
+                  <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-indigo-600" /> Payroll, Compensation &amp; Payslips
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">Access monthly verified payslips, download official PDF statements, and submit out-of-pocket reimbursement claims.</p>
                 </div>
-                <Button onClick={() => openPayslipModal()} className="bg-slate-900 hover:bg-black text-white rounded-xl h-11 px-5 text-xs font-semibold gap-2 shadow-md shrink-0">
-                  <FileText className="h-4 w-4 text-emerald-400" /> Generate Official Payslip
+                <Button onClick={() => openPayslipModal()} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl h-10 px-4 text-xs font-bold gap-2 shadow-md shrink-0 cursor-pointer">
+                  <FileText className="h-4 w-4" /> Generate Official Payslip
                 </Button>
               </div>
 
               {/* Expense Claim Submission Form */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
-                  <Receipt className="h-5 w-5 text-emerald-600" />
-                  Submit Out-of-Pocket Expense Claim
-                </h3>
+              <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Receipt className="h-4 w-4 text-emerald-600" />
+                    Submit Out-of-Pocket Expense Claim
+                  </h3>
+                  <span className="text-[10px] bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full font-bold">
+                    Reimbursement Desk
+                  </span>
+                </div>
+
                 <form onSubmit={handleSubmitExpense} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
-                    <Label className="text-xs">Expense Title</Label>
-                    <Input placeholder="e.g. Client Travel / Internet" value={expenseForm.title} onChange={e => setExpenseForm({...expenseForm, title: e.target.value})} required className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                    <Label className="text-xs font-bold text-slate-700">Expense Title</Label>
+                    <Input placeholder="e.g. Client Travel / Internet" value={expenseForm.title} onChange={e => setExpenseForm({...expenseForm, title: e.target.value})} required className="bg-slate-50 border-slate-200 rounded-xl text-xs mt-1" />
                   </div>
                   <div>
-                    <Label className="text-xs">Category</Label>
-                    <select value={expenseForm.category} onChange={e => setExpenseForm({...expenseForm, category: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-100 rounded-xl text-sm">
-                      <option value="Travel">Travel</option>
-                      <option value="Food">Food</option>
-                      <option value="Office Supplies">Office Supplies</option>
-                      <option value="Internet">Internet</option>
-                      <option value="Medical">Medical</option>
-                      <option value="Other">Other</option>
+                    <Label className="text-xs font-bold text-slate-700">Category</Label>
+                    <select value={expenseForm.category} onChange={e => setExpenseForm({...expenseForm, category: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
+                      <option value="Travel">Travel &amp; Fuel</option>
+                      <option value="Food">Meals &amp; Subsistence</option>
+                      <option value="Office Supplies">Hardware &amp; Equipment</option>
+                      <option value="Internet">Internet &amp; Connectivity</option>
+                      <option value="Medical">Medical Insurance</option>
+                      <option value="Other">Other Expenses</option>
                     </select>
                   </div>
                   <div>
-                    <Label className="text-xs">Amount (₹)</Label>
-                    <Input type="number" step="0.01" placeholder="Amount" value={expenseForm.amount} onChange={e => setExpenseForm({...expenseForm, amount: e.target.value})} required className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                    <Label className="text-xs font-bold text-slate-700">Amount (₹)</Label>
+                    <Input type="number" step="0.01" placeholder="₹ Amount" value={expenseForm.amount} onChange={e => setExpenseForm({...expenseForm, amount: e.target.value})} required className="bg-slate-50 border-slate-200 rounded-xl text-xs mt-1 font-bold" />
                   </div>
                   <div>
-                    <Label className="text-xs">Expense Date</Label>
-                    <Input type="date" value={expenseForm.date} onChange={e => setExpenseForm({...expenseForm, date: e.target.value})} required className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                    <Label className="text-xs font-bold text-slate-700">Expense Incurred Date</Label>
+                    <Input type="date" value={expenseForm.date} onChange={e => setExpenseForm({...expenseForm, date: e.target.value})} required className="bg-slate-50 border-slate-200 rounded-xl text-xs mt-1" />
                   </div>
                   <div>
-                    <Label className="text-xs">Receipt / Document URL (Optional)</Label>
-                    <Input placeholder="https://..." value={expenseForm.receipt_url} onChange={e => setExpenseForm({...expenseForm, receipt_url: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                    <Label className="text-xs font-bold text-slate-700">Receipt / Bill URL (Optional)</Label>
+                    <Input placeholder="https://..." value={expenseForm.receipt_url} onChange={e => setExpenseForm({...expenseForm, receipt_url: e.target.value})} className="bg-slate-50 border-slate-200 rounded-xl text-xs mt-1 font-mono" />
                   </div>
                   <div>
-                    <Label className="text-xs">Notes</Label>
-                    <Input placeholder="Brief details" value={expenseForm.notes} onChange={e => setExpenseForm({...expenseForm, notes: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                    <Label className="text-xs font-bold text-slate-700">Business Justification</Label>
+                    <Input placeholder="Client meeting / Team sync" value={expenseForm.notes} onChange={e => setExpenseForm({...expenseForm, notes: e.target.value})} className="bg-slate-50 border-slate-200 rounded-xl text-xs mt-1" />
                   </div>
-                  <div className="col-span-full flex justify-end">
-                    <Button type="submit" disabled={isSubmittingExpense} className="bg-black hover:bg-slate-800 text-white rounded-xl h-10 px-6">
-                      {isSubmittingExpense ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                  <div className="col-span-full flex justify-end pt-2">
+                    <Button type="submit" disabled={isSubmittingExpense} className="bg-slate-900 hover:bg-black text-white font-bold rounded-2xl h-10 px-6 text-xs gap-1.5 cursor-pointer">
+                      {isSubmittingExpense ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                       Submit Reimbursement Claim
                     </Button>
                   </div>
@@ -1654,17 +1741,17 @@ function EmployeeDashboard() {
                 {/* Submitted Expenses List */}
                 {expenses.length > 0 && (
                   <div className="pt-4 border-t border-slate-100 space-y-3">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">My Expense Claims</h4>
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Submitted Reimbursements</h4>
                     <div className="space-y-2">
                       {expenses.map((exp: any) => (
-                        <div key={exp.id} className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-sm">
+                        <div key={exp.id} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between text-xs">
                           <div>
-                            <div className="font-semibold text-slate-900">{exp.title} <span className="text-xs text-slate-400">({exp.category})</span></div>
-                            <div className="text-xs text-slate-500 font-light mt-0.5">{new Date(exp.date).toLocaleDateString("en-IN")} • {exp.notes || 'No notes'}</div>
+                            <div className="font-bold text-slate-900">{exp.title} <span className="text-slate-400 font-normal">({exp.category})</span></div>
+                            <div className="text-[11px] text-slate-500 font-light mt-0.5">{new Date(exp.date).toLocaleDateString("en-IN")} • {exp.notes || 'No notes'}</div>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <span className="font-bold text-slate-900">₹{exp.amount}</span>
-                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${exp.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{exp.status}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="font-black text-slate-900 font-mono text-sm">₹{exp.amount}</span>
+                            <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${exp.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{exp.status}</span>
                           </div>
                         </div>
                       ))}
@@ -1673,98 +1760,38 @@ function EmployeeDashboard() {
                 )}
               </div>
 
+              {/* Payouts History */}
               <div className="space-y-4">
-                {/* Premium Bank Account Recommendation Section */}
-                <div className="mb-8">
-                  <div className="flex flex-col mb-6">
-                    <h3 className="text-xl font-semibold text-slate-900">Don't have a Bank Account?</h3>
-                    <p className="text-sm text-slate-500 mt-1">
-                      VyNexa recommends opening a Zero Balance account for seamless and fast salary credits. Choose a premium banking partner below:
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-8 max-w-5xl mx-auto">
-                    <BankAdCard 
-                      bankName="Kotak Mahindra Bank"
-                      logoUrl="https://www.logo.wine/a/logo/Kotak_Mahindra_Bank/Kotak_Mahindra_Bank-Logo.wine.svg"
-                      link="https://www.kotak811.bank.in/open-zero-balance-savings-account/zba-8?utm_source=GoogleSEMiQ&utm_medium=Paid&utm_campaign=iQ-Kotak811-PMax-03-25&gad_source=1&gad_campaignid=23479404668&gbraid=0AAAAACQ2IDljm3gMtRRPTAIrvNheMuWvK&gclid=CjwKCAjwyabTBhBFEiwAM3mNUEXJ3jfac5acjqCf7LlAslQGKKDLr6i4006q7RQWwhH_Uu14yzjtqxoC8bQQAvD_BwE"
-                      themeColor="#e61a22"
-                      borderColor="border-red-100"
-                      bgColor="from-red-50/30"
-                      accountType="Salary / Zero Balance Digital Account"
-                      branches={["Visakhapatnam", "Bengaluru", "Hyderabad", "Gujarat"]}
-                      bankSupport="1860 266 2666 (Local) / 1800 209 0000"
-                      vyntyraManager="Available Soon"
-                      ads={[
-                        { videoId: "/videos/kotak/kotak_ad_2.mp4", title: "Zero Balance Savings Account", slogan: "Open Kotak811 Zero Balance Account from anywhere digitally using Video KYC.", feature: "100% Digital Banking" },
-                        { videoId: "/videos/kotak/kotak_ad_1.mp4", title: "FD Wala Savings with ActivMoney", slogan: "Earn FD-like interest up to 7% p.a. on your standard savings account balance.", feature: "Up to 7% Interest Rate" },
-                        { videoId: "/videos/kotak/kotak_ad_3.mp4", title: "Scan, Pay and Earn Rewards", slogan: "Use the new Kotak811 Mobile Banking app to pay seamlessly and grab rewards.", feature: "Reward Points on Scan & Pay" }
-                      ]}
-                    />
-
-                    <BankAdCard 
-                      bankName="IDFC First Bank"
-                      logoUrl="https://www.logo.wine/a/logo/IDFC_First_Bank/IDFC_First_Bank-Logo.wine.svg"
-                      link="https://www.idfcfirst.bank.in/"
-                      themeColor="#901235"
-                      borderColor="border-rose-100"
-                      bgColor="from-rose-50/30"
-                      accountType="Premium Salary Account / Savings Account"
-                      branches={["Visakhapatnam", "Bengaluru", "Hyderabad", "Gujarat"]}
-                      bankSupport="1800 10 888 (Toll Free)"
-                      vyntyraManager="Available Soon"
-                      ads={[
-                        { videoId: "/videos/idfc/idfc_ad_2.mp4", title: "Open Savings Account in 5 Mins", slogan: "Open your IDFC FIRST Bank Savings Account online in just 5 mins.", feature: "5-Minute Online Setup" },
-                        { videoId: "/videos/idfc/idfc_ad_1.mp4", title: "Lifetime Free Credit Cards", slogan: "Enjoy premium credit cards with zero annual fees and robust rewards.", feature: "No Annual Fee Cards" }
-                      ]}
-                    />
-
-                    <BankAdCard 
-                      bankName="Axis Bank"
-                      logoUrl="https://www.logo.wine/a/logo/Axis_Bank/Axis_Bank-Logo.wine.svg"
-                      link="https://www.axis.bank.in/"
-                      themeColor="#97144D"
-                      borderColor="border-pink-100"
-                      bgColor="from-pink-50/30"
-                      accountType="Salary / ASAP Zero Balance Savings"
-                      branches={["Visakhapatnam", "Bengaluru", "Hyderabad", "Gujarat"]}
-                      bankSupport="1860 419 5555 / 1860 500 5555"
-                      vyntyraManager="Available Soon"
-                      ads={[
-                        { videoId: "/videos/axis/axis_ad_2.mp4", title: "Digital Savings Account", slogan: "Make every moment special with an Axis Bank Digital Savings Account.", feature: "Open in 4 Easy Steps" },
-                        { videoId: "/videos/axis/axis_ad_3.mp4", title: "Open Account in 4 Steps", slogan: "Experience paperless account opening instantly using Video KYC.", feature: "100% Digital Setup" },
-                        { videoId: "/videos/axis/axis_ad_1.mp4", title: "Dil Se Open Celebrations", slogan: "Celebrate every moment with exclusive rewards and lifestyle benefits.", feature: "Dil Se Open Privileges" }
-                      ]}
-                    />
-                  </div>
-                </div>
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <IndianRupee className="h-4 w-4 text-emerald-600" /> Historical Compensation Records
+                </h3>
 
                 {payouts.length === 0 ? (
-                  <div className="py-10 bg-white rounded-2xl border border-slate-100 shadow-sm text-center space-y-4">
-                    <div className="text-slate-400 font-light">No historical payouts recorded yet.</div>
-                    <Button onClick={() => openPayslipModal()} variant="outline" className="rounded-xl text-xs gap-2 border-slate-200">
-                      <FileText className="h-4 w-4 text-emerald-600" /> Generate & View Current Month Payslip
+                  <div className="py-12 bg-white rounded-3xl border border-slate-200/80 shadow-xs text-center space-y-3 p-6">
+                    <div className="text-slate-400 text-xs">No historical payout vouchers recorded yet.</div>
+                    <Button onClick={() => openPayslipModal()} variant="outline" className="rounded-xl text-xs gap-2 border-indigo-200 text-indigo-700 bg-indigo-50/50">
+                      <FileText className="h-4 w-4 text-indigo-600" /> Generate &amp; View Current Month Statement
                     </Button>
                   </div>
                 ) : (
                   payouts.map((payout: any) => (
-                    <motion.div variants={itemVariants} initial="initial" animate="animate" key={payout.id} className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
-                      <div className="flex items-center gap-6">
-                        <div className="h-12 w-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <motion.div variants={itemVariants} initial="initial" animate="animate" key={payout.id} className="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-xs flex items-center justify-between group hover:shadow-md transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="h-11 w-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
                           <IndianRupee className="h-5 w-5" />
                         </div>
                         <div>
-                          <div className="text-2xl font-medium text-slate-900 tracking-tight">₹{payout.amount}</div>
-                          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">{payout.type} • {new Date(payout.date).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</div>
+                          <div className="text-xl font-black text-slate-900 tracking-tight">₹{payout.amount}</div>
+                          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{payout.type} • {new Date(payout.date).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${payout.status === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{payout.status}</span>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full ${payout.status === 'paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600'}`}>{payout.status}</span>
                         <Button 
                           onClick={() => openPayslipModal(payout)} 
-                          className="bg-slate-50 hover:bg-slate-900 hover:text-white text-slate-700 rounded-xl px-4 py-2 text-xs font-semibold gap-1.5 transition-all shadow-sm"
+                          className="bg-slate-900 hover:bg-black text-white rounded-xl px-3.5 py-1.5 text-xs font-bold gap-1.5 transition-all shadow-xs cursor-pointer"
                         >
-                          <FileText className="h-3.5 w-3.5 text-emerald-500" /> Payslip PDF
+                          <FileText className="h-3.5 w-3.5 text-emerald-400" /> View Payslip
                         </Button>
                       </div>
                     </motion.div>
@@ -1774,25 +1801,24 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── MY INTERNS ─── */}
           {/* ─── MY INTERNS & MENTORSHIP ─── */}
           {activeTab === "my_interns" && (
-            <motion.div key="my_interns" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-8 max-w-7xl mx-auto">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-3xl text-white shadow-lg">
+            <motion.div key="my_interns" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-6 max-w-7xl mx-auto">
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="p-2 bg-indigo-500/20 border border-indigo-400/30 rounded-xl text-indigo-300">
+                    <span className="p-1.5 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-600">
                       <GraduationCap className="h-5 w-5" />
                     </span>
-                    <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-500/30 text-indigo-200 px-2.5 py-0.5 rounded-full border border-indigo-400/30">
-                      Mentor Oversight &amp; Verification Hub
+                    <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                      Mentorship Hub
                     </span>
                   </div>
-                  <h2 className="text-xl font-bold tracking-tight text-white">
+                  <h2 className="text-xl font-extrabold tracking-tight text-slate-900">
                     Assigned Mentees &amp; Task Deliverables
                   </h2>
-                  <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                    Track your assigned interns' task progress, inspect submitted deliverables, submit 1st-tier mentor evaluation reports (rating &amp; recommended credits), and schedule Google Meet syncs.
+                  <p className="text-xs text-slate-500 max-w-2xl">
+                    Track your assigned interns' sprint tasks, review submitted links, and host 1-on-1 mentorship sync meetings.
                   </p>
                 </div>
 
@@ -1802,28 +1828,28 @@ function EmployeeDashboard() {
                       setSelectedMenteeIds(myInterns.map((i: any) => i.id));
                       setMenteeMeetingOpen(true);
                     }}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs gap-1.5 h-9"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs gap-1.5 h-9 cursor-pointer"
                     disabled={myInterns.length === 0}
                   >
                     <Video className="h-4 w-4" /> Schedule Mentee Meeting
                   </Button>
                   {selectedInterns.length > 0 && (
-                    <Button onClick={() => handleAssignTask()} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs gap-1.5 h-9">
+                    <Button onClick={() => handleAssignTask()} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs gap-1.5 h-9 cursor-pointer">
                       <Plus className="h-4 w-4" /> Assign Bulk Task ({selectedInterns.length})
                     </Button>
                   )}
                 </div>
               </div>
 
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200/80 uppercase text-[11px] tracking-wider">
                       <tr>
                         <th className="px-6 py-4 w-10">
                           <input 
                             type="checkbox" 
-                            className="rounded border-slate-300 text-black focus:ring-black"
+                            className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                             checked={selectedInterns.length === myInterns.length && myInterns.length > 0}
                             onChange={(e) => setSelectedInterns(e.target.checked ? myInterns.map((i:any) => i.id) : [])}
                           />
@@ -1835,28 +1861,28 @@ function EmployeeDashboard() {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {myInterns.length === 0 ? (
-                        <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400 font-light">No interns allocated to you currently. Contact Admin to assign mentees.</td></tr>
+                        <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-400 font-light">No interns allocated to you currently. Contact Admin to assign mentees.</td></tr>
                       ) : (
                         myInterns.map((intern: any) => (
-                          <tr key={intern.id} className="hover:bg-slate-50/50 transition-colors">
+                          <tr key={intern.id} className="hover:bg-slate-50/80 transition-colors">
                             <td className="px-6 py-4">
                               <input 
                                 type="checkbox" 
-                                className="rounded border-slate-300 text-black focus:ring-black"
+                                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                                 checked={selectedInterns.includes(intern.id)}
                                 onChange={(e) => setSelectedInterns(prev => e.target.checked ? [...prev, intern.id] : prev.filter(id => id !== intern.id))}
                               />
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
-                                <ProfileAvatar url={intern.avatar_url} name={intern.full_name} className="h-10 w-10 rounded-xl" />
+                                <ProfileAvatar url={intern.avatar_url} name={intern.full_name} className="h-9 w-9 rounded-xl" />
                                 <div>
-                                  <div className="font-semibold text-slate-900">{intern.full_name}</div>
-                                  <div className="text-xs text-slate-500">{intern.email}</div>
+                                  <div className="font-bold text-slate-900 text-xs">{intern.full_name}</div>
+                                  <div className="text-[10px] text-slate-500 font-mono">{intern.email}</div>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-slate-600">{intern.department || "—"}</td>
+                            <td className="px-6 py-4 text-slate-700 font-medium">{intern.department || "General"}</td>
                             <td className="px-6 py-4 text-right space-x-2">
                               <Button
                                 variant="outline"
@@ -1870,7 +1896,7 @@ function EmployeeDashboard() {
                               >
                                 <Video className="h-3.5 w-3.5 mr-1" /> 1-on-1 Sync
                               </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleViewAttendance(intern)} className="rounded-xl text-xs">
+                              <Button variant="outline" size="sm" onClick={() => handleViewAttendance(intern)} className="rounded-xl text-xs font-medium">
                                 <Clock className="h-3.5 w-3.5 mr-1 text-slate-500" /> Attendance
                               </Button>
                               <Button
@@ -1883,7 +1909,7 @@ function EmployeeDashboard() {
                               >
                                 <FileText className="h-3.5 w-3.5 mr-1 text-amber-400" /> Task Board &amp; Reviews
                               </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleAssignTask(intern.id)} className="rounded-xl text-xs">
+                              <Button variant="outline" size="sm" onClick={() => handleAssignTask(intern.id)} className="rounded-xl text-xs font-medium">
                                 <Plus className="h-3.5 w-3.5 mr-1 text-slate-500" /> Assign Task
                               </Button>
                             </td>
@@ -1911,24 +1937,37 @@ function EmployeeDashboard() {
 
           {/* ─── TEAM & KUDOS ─── */}
           {activeTab === "team" && (
-            <motion.div key="team" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-10">
-              <div className="flex items-center justify-between">
+            <motion.div key="team" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-6 max-w-7xl mx-auto">
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-light tracking-tight text-slate-900">Team Directory & Peer Kudos</h2>
-                  <p className="text-sm text-slate-500 font-light mt-1">Connect with colleagues and recognize team achievements with peer shoutouts.</p>
+                  <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-indigo-600" /> Team Directory &amp; Peer Recognition
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">Explore the organization chart, connect with functional leads, and award merit badges.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-bold px-3 py-1.5 rounded-xl">
+                    {team.length} Team Members
+                  </span>
                 </div>
               </div>
 
               {/* Give Kudos Section */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
-                  <Award className="h-5 w-5 text-amber-500" />
-                  Recognize a Colleague (Send Kudos)
-                </h3>
+              <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Award className="h-4 w-4 text-amber-500" />
+                    Recognize a Colleague (Send Peer Kudos)
+                  </h3>
+                  <span className="text-[10px] bg-amber-50 text-amber-700 px-2.5 py-0.5 rounded-full font-bold border border-amber-200">
+                    Culture &amp; Merit
+                  </span>
+                </div>
+
                 <form onSubmit={handleSubmitKudos} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <Label className="text-xs">Colleague</Label>
-                    <select value={kudosForm.receiver_id} onChange={e => setKudosForm({...kudosForm, receiver_id: e.target.value})} required className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-100 rounded-xl text-sm">
+                    <Label className="text-xs font-bold text-slate-700">Team Colleague</Label>
+                    <select value={kudosForm.receiver_id} onChange={e => setKudosForm({...kudosForm, receiver_id: e.target.value})} required className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
                       <option value="">Select team member...</option>
                       {team.map((m: any) => (
                         <option key={m.id} value={m.id}>{m.full_name} ({m.role})</option>
@@ -1936,8 +1975,8 @@ function EmployeeDashboard() {
                     </select>
                   </div>
                   <div>
-                    <Label className="text-xs">Badge</Label>
-                    <select value={kudosForm.badge} onChange={e => setKudosForm({...kudosForm, badge: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-100 rounded-xl text-sm">
+                    <Label className="text-xs font-bold text-slate-700">Merit Badge</Label>
+                    <select value={kudosForm.badge} onChange={e => setKudosForm({...kudosForm, badge: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
                       <option value="Star Performer">⭐ Star Performer</option>
                       <option value="Team Player">🤝 Team Player</option>
                       <option value="Problem Solver">💡 Problem Solver</option>
@@ -1946,13 +1985,13 @@ function EmployeeDashboard() {
                     </select>
                   </div>
                   <div className="sm:col-span-3">
-                    <Label className="text-xs">Appreciation Message</Label>
-                    <Input placeholder="Write a brief shoutout for their great work..." value={kudosForm.message} onChange={e => setKudosForm({...kudosForm, message: e.target.value})} required className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                    <Label className="text-xs font-bold text-slate-700">Appreciation Message</Label>
+                    <Input placeholder="Write a brief shoutout for their great work and collaboration..." value={kudosForm.message} onChange={e => setKudosForm({...kudosForm, message: e.target.value})} required className="bg-slate-50 border-slate-200 rounded-xl text-xs mt-1" />
                   </div>
                   <div className="sm:col-span-3 flex justify-end">
-                    <Button type="submit" disabled={isSubmittingKudos} className="bg-black hover:bg-slate-800 text-white rounded-xl h-10 px-6">
+                    <Button type="submit" disabled={isSubmittingKudos} className="bg-slate-900 hover:bg-black text-white font-bold rounded-2xl h-10 px-6 text-xs gap-1.5 cursor-pointer">
                       {isSubmittingKudos ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Award className="h-4 w-4 mr-2 text-amber-400" />}
-                      Send Kudos
+                      Send Kudos Badge
                     </Button>
                   </div>
                 </form>
@@ -1960,17 +1999,17 @@ function EmployeeDashboard() {
 
               {/* Team Directory Grid */}
               <div className="space-y-4">
-                <h3 className="text-base font-semibold text-slate-900">Organization Directory</h3>
-                <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Corporate Directory</h3>
+                <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   {team.length === 0 ? (
-                    <div className="col-span-full py-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">Directory is empty.</div>
+                    <div className="col-span-full py-12 bg-white rounded-3xl border border-slate-200/80 shadow-xs text-center text-slate-400 font-light text-xs">Directory is currently updating.</div>
                   ) : (
                     team.map((m: any) => (
-                      <motion.div variants={itemVariants} key={m.id} className="group p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm flex flex-col items-center text-center hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300">
-                        <ProfileAvatar url={m.avatar_url} name={m.full_name} className="h-24 w-24 text-3xl mb-5 shadow-inner ring-4 ring-slate-50 transition-transform duration-500 group-hover:scale-105" />
-                        <h3 className="font-semibold text-slate-900 text-lg">{m.full_name}</h3>
-                        <div className="text-sm text-slate-500 font-light mt-1">{m.email}</div>
-                        <div className="mt-5 text-[10px] font-bold px-3 py-1 bg-slate-100 text-slate-600 rounded-full uppercase tracking-widest">{m.role}</div>
+                      <motion.div variants={itemVariants} key={m.id} className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-xs flex flex-col items-center text-center hover:shadow-md hover:border-indigo-200 transition-all duration-200">
+                        <ProfileAvatar url={m.avatar_url} name={m.full_name} className="h-16 w-16 text-xl mb-3 ring-2 ring-indigo-500/20 shadow-xs" />
+                        <h4 className="font-bold text-slate-900 text-sm">{m.full_name}</h4>
+                        <div className="text-[11px] text-slate-400 font-mono mt-0.5 truncate max-w-full">{m.email}</div>
+                        <div className="mt-3 text-[10px] font-bold px-2.5 py-0.5 bg-slate-100 text-slate-700 rounded-full uppercase tracking-wider">{m.role || "Team Member"}</div>
                       </motion.div>
                     ))
                   )}
@@ -1979,108 +2018,113 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── MEETINGS ─── */}
+          {/* ─── INTERVIEWS ─── */}
           {activeTab === "interviews" && (
-            <motion.div {...pageVariants} className="space-y-8">
-              <div className="flex items-center justify-between border-b border-black/5 pb-5">
+            <motion.div {...pageVariants} className="space-y-6 max-w-7xl mx-auto">
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="font-serif text-2xl font-bold text-slate-900 tracking-tight">Assigned Interviews</h2>
-                  <p className="text-sm text-slate-500 mt-1">Review candidate details, join calls, and submit interview feedback.</p>
+                  <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                    <Video className="h-5 w-5 text-indigo-600" /> Candidate Interviews &amp; Evaluation Desk
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">Conduct candidate interviews, join video links, and submit official evaluations directly to the Super Admin hiring desk.</p>
                 </div>
+                <span className="bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-bold px-3 py-1.5 rounded-xl">
+                  {assignedInterviews.length} Assigned
+                </span>
               </div>
 
               {assignedInterviews.length === 0 ? (
-                <div className="rounded-2xl border border-black/5 bg-white p-12 text-center text-slate-500 shadow-sm">
+                <div className="rounded-3xl border border-slate-200/80 bg-white p-12 text-center text-slate-400 text-xs shadow-xs">
                   No interviews assigned to you currently. Any scheduled candidate interviews where you are the interviewer will appear here.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 gap-4">
                   {assignedInterviews.map((app: any) => {
                     const hasSubmitted = !!app.interview_summary || !!app.interview_remarks;
                     const feedback = interviewsFeedback[app.id] || { summary: "", remarks: "" };
                     
                     return (
-                      <div key={app.id} className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm space-y-6 hover:shadow-md transition-shadow duration-300">
+                      <div key={app.id} className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4 hover:shadow-md transition-all">
                         <div className="flex flex-wrap items-start justify-between gap-4">
                           <div>
-                            <h3 className="font-serif text-lg font-bold text-slate-900">{app.full_name}</h3>
-                            <div className="text-sm font-medium text-slate-500 mt-0.5">{app.role_applied}</div>
+                            <h3 className="text-base font-bold text-slate-900">{app.full_name}</h3>
+                            <div className="text-xs font-medium text-slate-500 mt-0.5">{app.role_applied}</div>
                           </div>
                           
-                          <div className="flex flex-col items-end gap-1.5">
-                            <span className="text-xs font-mono bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200">
-                              Ref: {app.id.slice(0, 8).toUpperCase()}
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200">
+                              REF: {app.id.slice(0, 8).toUpperCase()}
                             </span>
                             {hasSubmitted && (
-                              <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-2.5 py-0.5 rounded-full font-medium">
+                              <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold">
                                 Feedback Submitted
                               </span>
                             )}
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm border-y border-black/5 py-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs border-y border-slate-100 py-3">
                           <div>
-                            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold block">Meeting Time</span>
-                            <span className="font-medium text-slate-700 mt-1 block">
+                            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Interview Time</span>
+                            <span className="font-bold text-slate-800 mt-0.5 block">
                               {app.meeting_time ? new Date(app.meeting_time).toLocaleString() : "—"}
                             </span>
                           </div>
                           <div>
-                            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold block">Meeting Link</span>
+                            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Video Link</span>
                             {app.meet_link ? (
-                              <a href={app.meet_link} target="_blank" rel="noreferrer" className="text-indigo-600 hover:text-indigo-800 underline font-medium mt-1 block truncate">
+                              <a href={app.meet_link} target="_blank" rel="noreferrer" className="text-indigo-600 hover:text-indigo-800 font-bold mt-0.5 block truncate">
                                 Join Video Call ↗
                               </a>
                             ) : (
-                              <span className="text-slate-500 mt-1 block">—</span>
+                              <span className="text-slate-400 mt-0.5 block">—</span>
                             )}
                           </div>
                           <div>
-                            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold block">Contact Candidate</span>
-                            <span className="text-slate-700 mt-1 block truncate">
-                              {app.email} {app.phone ? `· ${app.phone}` : ""}
+                            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Candidate Email</span>
+                            <span className="text-slate-800 mt-0.5 block truncate font-mono">
+                              {app.email}
                             </span>
                           </div>
                         </div>
 
                         {!hasSubmitted ? (
-                          <div className="space-y-4 pt-2">
-                            <h4 className="text-sm font-semibold text-slate-900">Submit Interview Feedback & Remarks</h4>
+                          <div className="space-y-3 pt-2">
+                            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Submit Assessment &amp; Remarks</h4>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               <div>
-                                <Label htmlFor={`summary-${app.id}`} className="text-xs font-medium text-slate-500">Interview Summary / Topics Covered</Label>
+                                <Label htmlFor={`summary-${app.id}`} className="text-xs font-bold text-slate-700">Interview Summary / Topics Evaluated</Label>
                                 <Textarea 
                                   id={`summary-${app.id}`}
-                                  className="mt-1.5 text-sm"
-                                  rows={4}
+                                  className="mt-1 text-xs bg-slate-50 border-slate-200 rounded-xl"
+                                  rows={3}
                                   value={feedback.summary}
                                   onChange={(e) => setInterviewsFeedback({
                                     ...interviewsFeedback,
                                     [app.id]: { ...feedback, summary: e.target.value }
                                   })}
-                                  placeholder="e.g. Discussed search ranking, TF-IDF, vector search experience. Evaluated coding skills..."
+                                  placeholder="e.g. Evaluated coding skills, system design, communication and domain basics..."
                                 />
                               </div>
                               
                               <div>
-                                <Label htmlFor={`remarks-${app.id}`} className="text-xs font-medium text-slate-500">Detailed Remarks / Recommendation</Label>
+                                <Label htmlFor={`remarks-${app.id}`} className="text-xs font-bold text-slate-700">Detailed Recommendation</Label>
                                 <Textarea 
                                   id={`remarks-${app.id}`}
-                                  className="mt-1.5 text-sm"
-                                  rows={4}
+                                  className="mt-1 text-xs bg-slate-50 border-slate-200 rounded-xl"
+                                  rows={3}
                                   value={feedback.remarks}
                                   onChange={(e) => setInterviewsFeedback({
                                     ...interviewsFeedback,
                                     [app.id]: { ...feedback, remarks: e.target.value }
                                   })}
-                                  placeholder="e.g. Recommended for final super-admin review. Candidate exhibits solid grasp of MLE principles..."
+                                  placeholder="e.g. Strongly recommended for Cohort selection. Good technical aptitude..."
                                 />
                               </div>
                             </div>
 
-                            <div className="flex justify-end">
+                            <div className="flex justify-end pt-1">
                               <Button 
                                 onClick={() => feedbackMut.mutate({ 
                                   applicationId: app.id, 
@@ -2088,30 +2132,25 @@ function EmployeeDashboard() {
                                   remarks: feedback.remarks 
                                 })}
                                 disabled={feedbackMut.isPending || !feedback.summary.trim() || !feedback.remarks.trim()}
-                                className="bg-black hover:bg-slate-800 text-white rounded-full px-6"
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs px-6 h-10 cursor-pointer"
                               >
                                 {feedbackMut.isPending ? "Submitting..." : "Submit Remarks to Super Admin"}
                               </Button>
                             </div>
                           </div>
                         ) : (
-                          <div className="bg-slate-50 rounded-xl p-4 border border-black/5 space-y-3">
-                            <h4 className="text-xs uppercase tracking-wider text-slate-400 font-bold">Your Submitted Remarks</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2 text-xs">
+                            <h4 className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Your Submitted Evaluation</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               <div>
-                                <span className="font-semibold text-slate-600 block">Summary</span>
-                                <p className="text-slate-700 mt-1 whitespace-pre-wrap">{app.interview_summary}</p>
+                                <span className="font-bold text-slate-700 block">Summary</span>
+                                <p className="text-slate-600 mt-0.5 whitespace-pre-wrap">{app.interview_summary}</p>
                               </div>
                               <div>
-                                <span className="font-semibold text-slate-600 block">Remarks & Recommendations</span>
-                                <p className="text-slate-700 mt-1 whitespace-pre-wrap">{app.interview_remarks}</p>
+                                <span className="font-bold text-slate-700 block">Remarks &amp; Recommendation</span>
+                                <p className="text-slate-600 mt-0.5 whitespace-pre-wrap">{app.interview_remarks}</p>
                               </div>
                             </div>
-                            {app.interview_feedback_submitted_at && (
-                              <div className="text-[10px] text-slate-400 italic text-right">
-                                Submitted on {new Date(app.interview_feedback_submitted_at).toLocaleString()}
-                              </div>
-                            )}
                           </div>
                         )}
                       </div>
@@ -2125,67 +2164,73 @@ function EmployeeDashboard() {
           {/* ─── ASSIGNED INTERN SUPPORT QUERIES ─── */}
           {activeTab === "resolver_support" && (
             <motion.div key="resolver_support" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
-              <div>
-                <h2 className="text-2xl font-light tracking-tight text-slate-900">Intern Support Resolver Panel</h2>
-                <p className="text-sm text-slate-500 font-light mt-1">Review, add resolver progress notes, update status, and request sync meetings for intern support queries assigned to you by Super Admin.</p>
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-indigo-600" /> Intern Support Resolver Panel
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">Review ticket descriptions, update resolution notes, and trigger support sync video calls.</p>
+                </div>
+                <span className="bg-purple-50 border border-purple-200 text-purple-800 text-xs font-bold px-3 py-1.5 rounded-xl">
+                  {assignedSupportQueries.length} Assigned
+                </span>
               </div>
 
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden divide-y divide-slate-100">
+              <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden divide-y divide-slate-100">
                 {assignedSupportQueries.length === 0 ? (
-                  <div className="p-12 text-center text-slate-400 font-light">
-                    <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                    No intern support queries assigned to you yet.
+                  <div className="p-16 text-center text-slate-400 text-xs font-light">
+                    <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-30 text-indigo-600" />
+                    No intern support queries assigned to you currently.
                   </div>
                 ) : (
                   assignedSupportQueries.map((q: any) => {
                     const hasMeeting = q.meeting_id && q.meeting_status === "approved";
                     return (
-                      <div key={q.id} className="p-6 hover:bg-slate-50/50 transition-colors flex flex-col gap-4">
+                      <div key={q.id} className="p-5 hover:bg-slate-50/60 transition-colors flex flex-col gap-3">
                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                           <div className="space-y-1.5 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-bold text-base text-slate-950">{q.subject}</span>
-                              <span className="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-bold border border-purple-100">{q.category}</span>
-                              <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${
-                                q.status === 'resolved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
-                                q.status === 'assigned' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
-                                'bg-amber-50 text-amber-700 border border-amber-100'
+                              <span className="font-bold text-sm text-slate-900">{q.subject}</span>
+                              <span className="text-[10px] bg-purple-50 text-purple-700 px-2.5 py-0.5 rounded-full font-bold border border-purple-100">{q.category}</span>
+                              <span className={`text-[9px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full ${
+                                q.status === 'resolved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                                q.status === 'assigned' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                'bg-amber-50 text-amber-700 border border-amber-200'
                               }`}>
                                 {q.status.replace("_", " ")}
                               </span>
                             </div>
                             
-                            {/* Intern details */}
                             <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
                               <span>Intern: <strong className="text-slate-800">{q.intern?.full_name || "Assigned Intern"}</strong> ({q.intern?.email || ""})</span>
                               <span>•</span>
                               <span>Domain: <strong className="text-slate-800 capitalize">{q.intern?.department || "General"}</strong></span>
                             </div>
 
-                            <p className="text-slate-600 text-xs leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100 mt-2">{q.description}</p>
+                            <p className="text-slate-600 text-xs leading-relaxed bg-slate-50 p-3 rounded-2xl border border-slate-100 mt-2">{q.description}</p>
                           </div>
                           
                           <div className="shrink-0 flex flex-col items-end gap-2">
-                            <span className="text-[11px] text-slate-400 font-mono">{new Date(q.created_at).toLocaleString()}</span>
+                            <span className="text-[11px] text-slate-400 font-mono">{new Date(q.created_at).toLocaleDateString()}</span>
                             
                             {q.status !== "resolved" ? (
                               <div className="flex items-center gap-2">
                                 <Button 
                                   size="sm" 
-                                  className="bg-black hover:bg-slate-800 text-white rounded-xl text-xs font-bold"
+                                  className="bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold cursor-pointer"
                                   onClick={() => {
                                     setSelectedQueryToResolve(q);
                                     setProgressNotesInput(q.progress_notes || "");
                                   }}
                                 >
-                                  Resolve & Update Notes
+                                  Resolve &amp; Update Notes
                                 </Button>
 
                                 {q.meeting_status !== "requested" && !q.meeting_id && (
                                   <Button 
                                     size="sm" 
                                     variant="outline" 
-                                    className="rounded-xl text-xs border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold"
+                                    className="rounded-xl text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold cursor-pointer"
                                     onClick={async () => {
                                       try {
                                         await doRequestSupportMeeting({ data: { queryId: q.id } });
@@ -2201,43 +2246,15 @@ function EmployeeDashboard() {
                                 )}
                               </div>
                             ) : (
-                              <div className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100">
-                                ✓ Resolved Successfully
+                              <div className="text-xs text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
+                                ✓ Resolved
                               </div>
-                            )}
-
-                            {q.meeting_status === "requested" && (
-                              <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
-                                Meeting Sync Requested
-                              </span>
                             )}
                           </div>
                         </div>
 
-                        {/* Meeting Room indicator */}
-                        {hasMeeting && (
-                          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
-                            <div className="flex items-center gap-2">
-                              <Video className="h-5 w-5 text-emerald-600 animate-pulse" />
-                              <div>
-                                <div className="font-bold text-slate-800">Assigned Sync Meeting Approved</div>
-                                <div className="text-[11px] text-slate-500 mt-0.5">Official sync scheduled. Participants: Intern, assigned resolver, and official mentor.</div>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => {
-                                const decodedLink = atob(btoa("https://meet.google.com/vy-support-sync"));
-                                window.location.href = decodedLink;
-                              }}
-                              className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs self-start sm:self-center transition-colors shadow-sm"
-                            >
-                              Join Sync Room
-                            </button>
-                          </div>
-                        )}
-
                         {q.progress_notes && (
-                          <div className="text-xs text-slate-500 border-t pt-3 flex flex-col gap-0.5">
+                          <div className="text-xs text-slate-500 border-t pt-2 flex flex-col gap-0.5">
                             <span className="font-bold text-slate-700 text-[10px] uppercase">Active Resolution Notes:</span>
                             <p className="text-slate-600 italic">"{q.progress_notes}"</p>
                           </div>
@@ -2250,13 +2267,13 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
+          {/* ─── MEETINGS ─── */}
           {activeTab === "meetings" && (
             <motion.div key="meetings" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
-              {/* Meeting Header Banner */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
                 <div className="space-y-1">
-                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <Video className="h-5 w-5 text-indigo-600" /> Meetings & Video Syncs
+                  <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                    <Video className="h-5 w-5 text-indigo-600" /> Meetings &amp; Video Syncs
                   </h2>
                   <p className="text-xs text-slate-500">
                     Host team syncs, 1-on-1 intern reviews, or sprint milestone discussions.
@@ -2267,9 +2284,9 @@ function EmployeeDashboard() {
                   <Button 
                     size="sm" 
                     onClick={() => setMeetingModalOpen(true)}
-                    className="gap-1.5 text-xs h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-xs"
+                    className="gap-1.5 text-xs h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-xs cursor-pointer"
                   >
-                    <Plus className="h-3.5 w-3.5" /> Schedule Meeting
+                    <Plus className="h-4 w-4" /> Schedule Meeting
                   </Button>
 
                   <DialogContent className="sm:max-w-lg">
@@ -2284,74 +2301,80 @@ function EmployeeDashboard() {
 
                     <form onSubmit={handleScheduleMeetingSubmit} className="space-y-3.5 py-2">
                       <div className="space-y-1.5">
-                        <Label>Meeting Title / Topic</Label>
+                        <Label className="text-xs font-bold">Meeting Title / Topic</Label>
                         <Input 
                           required 
                           value={meetingForm.title} 
                           onChange={e => setMeetingForm({ ...meetingForm, title: e.target.value })} 
                           placeholder="e.g. Sprint Review & Code Walkthrough" 
+                          className="rounded-xl text-xs"
                         />
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label>Agenda & Discussion Details (Optional)</Label>
+                        <Label className="text-xs font-bold">Agenda &amp; Discussion Details</Label>
                         <Input 
                           value={meetingForm.description} 
                           onChange={e => setMeetingForm({ ...meetingForm, description: e.target.value })} 
-                          placeholder="e.g. Discuss milestone progress, unblock issues, and next deliverables." 
+                          placeholder="e.g. Milestone progress and next deliverables." 
+                          className="rounded-xl text-xs"
                         />
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label>Meeting Video Link (Google Meet / Zoom / Teams)</Label>
+                        <Label className="text-xs font-bold">Meeting Video Link (Google Meet)</Label>
                         <Input 
                           required 
                           type="url" 
                           value={meetingForm.meeting_link} 
                           onChange={e => setMeetingForm({ ...meetingForm, meeting_link: e.target.value })} 
                           placeholder="https://meet.google.com/xyz-abcd-efg" 
+                          className="rounded-xl text-xs font-mono"
                         />
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1.5">
-                          <Label>Meeting Date</Label>
+                          <Label className="text-xs font-bold">Date</Label>
                           <Input 
                             required 
                             type="date" 
                             value={meetingForm.date} 
                             onChange={e => setMeetingForm({ ...meetingForm, date: e.target.value })} 
+                            className="rounded-xl text-xs"
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <Label>From (Start Time)</Label>
+                          <Label className="text-xs font-bold">From Time</Label>
                           <Input 
                             required 
                             type="time" 
                             value={meetingForm.from_time} 
                             onChange={e => setMeetingForm({ ...meetingForm, from_time: e.target.value })} 
+                            className="rounded-xl text-xs"
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <Label>To (End Time)</Label>
+                          <Label className="text-xs font-bold">To Time</Label>
                           <Input 
                             required 
                             type="time" 
                             value={meetingForm.to_time} 
                             onChange={e => setMeetingForm({ ...meetingForm, to_time: e.target.value })} 
+                            className="rounded-xl text-xs"
                           />
                         </div>
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label>Target Audience</Label>
+                        <Label className="text-xs font-bold">Target Audience</Label>
                         <Select 
                           value={meetingForm.target_role} 
                           onValueChange={(v: any) => setMeetingForm({ ...meetingForm, target_role: v })}
                         >
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="rounded-xl text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">Everyone (Employees & Interns)</SelectItem>
+                            <SelectItem value="all">Everyone (Employees &amp; Interns)</SelectItem>
                             <SelectItem value="intern">Interns Only</SelectItem>
                             <SelectItem value="employee">Employees Only</SelectItem>
                             <SelectItem value="individual">Specific Person (Individual)</SelectItem>
@@ -2359,44 +2382,12 @@ function EmployeeDashboard() {
                         </Select>
                       </div>
 
-                      {meetingForm.target_role === "individual" && (
-                        <div className="space-y-1.5">
-                          <Label>Select Team Member / Intern</Label>
-                          <Select 
-                            value={meetingForm.target_user_id} 
-                            onValueChange={(v) => setMeetingForm({ ...meetingForm, target_user_id: v })}
-                          >
-                            <SelectTrigger><SelectValue placeholder="Choose Person..." /></SelectTrigger>
-                            <SelectContent>
-                              {(teamQ.data || []).map((m: any) => (
-                                <SelectItem key={m.id} value={m.id}>
-                                  {m.full_name || m.email} ({m.role || "Member"})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-
-                      <div className="pt-2 border-t flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="employee_send_meeting_email"
-                          checked={meetingForm.send_email_notification}
-                          onChange={(e) => setMeetingForm({ ...meetingForm, send_email_notification: e.target.checked })}
-                          className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                        />
-                        <Label htmlFor="employee_send_meeting_email" className="text-xs text-slate-700 font-medium cursor-pointer">
-                          Send automated email notification with Google Calendar link to participants
-                        </Label>
-                      </div>
-
                       <DialogFooter className="pt-2">
                         <Button type="button" variant="ghost" onClick={() => setMeetingModalOpen(false)}>Cancel</Button>
                         <Button 
                           type="submit" 
                           disabled={isSavingMeeting}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs"
                         >
                           {isSavingMeeting ? "Scheduling..." : "Schedule Meeting"}
                         </Button>
@@ -2413,24 +2404,32 @@ function EmployeeDashboard() {
           {/* ─── ANNOUNCEMENTS ─── */}
           {activeTab === "announcements" && (
             <motion.div key="announcements" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
-              <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Company News & Updates</h2>
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+                <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-indigo-600" /> Company News &amp; Broadcast Updates
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">Official circulars, product releases, and corporate announcements.</p>
+              </div>
+
               {announcements.length === 0 ? (
-                <div className="p-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">
-                  <Bell className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                <div className="p-16 bg-white rounded-3xl border border-slate-200/80 shadow-xs text-center text-slate-400 text-xs font-light">
+                  <Bell className="h-10 w-10 mx-auto mb-3 opacity-30 text-indigo-600" />
                   No news or announcements posted yet.
                 </div>
               ) : (
-                <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-6">
+                <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-4">
                   {announcements.map((a: any) => (
-                    <motion.div variants={itemVariants} key={a.id} className="p-8 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between gap-3 mb-3">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{new Date(a.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
-                        <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold uppercase tracking-wider">
-                          {a.source === "news" ? "News Update" : "Announcement"}
+                    <motion.div variants={itemVariants} key={a.id} className="p-6 bg-white rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{new Date(a.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
+                        <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold uppercase tracking-wider">
+                          {a.source === "news" ? "News Bulletin" : "Announcement"}
                         </span>
                       </div>
-                      <h3 className="text-xl font-medium text-slate-900 mb-4">{a.title}</h3>
-                      <RichContentRenderer content={a.body || ""} />
+                      <h3 className="text-base font-bold text-slate-900">{a.title}</h3>
+                      <div className="text-xs text-slate-600 leading-relaxed">
+                        <RichContentRenderer content={a.body || ""} />
+                      </div>
                     </motion.div>
                   ))}
                 </motion.div>
@@ -2440,37 +2439,38 @@ function EmployeeDashboard() {
 
           {/* ─── RESOURCES & LMS ─── */}
           {activeTab === "resources" && (
-            <motion.div key="resources" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-8">
-              <div>
-                <h2 className="text-2xl font-light tracking-tight text-slate-900">Knowledge Base, Handbooks & LMS</h2>
-                <p className="text-sm text-slate-500 font-light mt-1">Access official company handbooks, travel policies, SOPs, and complete mandatory learning & compliance courses.</p>
+            <motion.div key="resources" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+                <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                  <GraduationCap className="h-5 w-5 text-indigo-600" /> Knowledge Base &amp; LMS Learning Academy
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">Official employee handbooks, security standards, and compliance certifications.</p>
               </div>
 
               {/* LMS Courses Section */}
               <div className="space-y-4">
-                <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5 text-indigo-600" />
-                  Learning & Development (LMS) Courses
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-indigo-600" /> Mandatory Compliance &amp; Certifications
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
                     { title: "Information Security & Data Privacy 2026", cat: "Mandatory Compliance", progress: 100, status: "Certified", badge: "🛡️ Security Champion" },
                     { title: "Workplace Ethics & Code of Conduct", cat: "HR Policy", progress: 100, status: "Certified", badge: "⚖️ Ethics Leader" },
-                    { title: "Enterprise Cloud Security & Architecture", cat: "Technical Certification", progress: 65, status: "In Progress", badge: "☁️ Tech Explorer" },
-                    { title: "Agile Engineering & Development SOPs", cat: "Operations SOP", progress: 40, status: "In Progress", badge: "🚀 Agile Practitioner" },
+                    { title: "Enterprise Cloud Architecture & Governance", cat: "Technical Certification", progress: 75, status: "In Progress", badge: "☁️ Tech Explorer" },
+                    { title: "Agile Engineering & Development SOPs", cat: "Operations SOP", progress: 50, status: "In Progress", badge: "🚀 Agile Practitioner" },
                   ].map((c, i) => (
-                    <div key={i} className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-4">
+                    <div key={i} className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-xs space-y-3">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{c.cat}</span>
-                          <h4 className="font-semibold text-slate-900 text-sm mt-0.5">{c.title}</h4>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{c.cat}</span>
+                          <h4 className="font-bold text-slate-900 text-sm mt-0.5">{c.title}</h4>
                         </div>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${c.status === 'Certified' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'}`}>{c.status}</span>
+                        <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${c.status === 'Certified' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>{c.status}</span>
                       </div>
                       
                       <div className="space-y-1.5">
-                        <div className="flex justify-between text-xs font-medium text-slate-500">
-                          <span>Course Completion</span>
+                        <div className="flex justify-between text-xs font-bold text-slate-500">
+                          <span>Completion</span>
                           <span>{c.progress}%</span>
                         </div>
                         <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -2478,9 +2478,9 @@ function EmployeeDashboard() {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-50 text-xs">
-                        <span className="text-slate-500 font-light">{c.badge}</span>
-                        <Button variant="ghost" size="sm" className="h-7 text-xs text-indigo-600 hover:text-indigo-800 p-0">
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                        <span className="text-slate-500 font-medium">{c.badge}</span>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs text-indigo-600 hover:text-indigo-800 p-0 font-bold">
                           {c.status === 'Certified' ? "View Certificate ↗" : "Continue Course →"}
                         </Button>
                       </div>
@@ -2488,82 +2488,56 @@ function EmployeeDashboard() {
                   ))}
                 </div>
               </div>
-
-              {/* Handbooks & Downloads */}
-              <div className="space-y-4">
-                <h3 className="text-base font-semibold text-slate-900">Company Policies & Handbooks</h3>
-                <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {resources.length === 0 ? (
-                    <div className="col-span-full py-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">No additional resource documents uploaded.</div>
-                  ) : (
-                    resources.map((r: any) => (
-                      <motion.div variants={itemVariants} key={r.id} className="group p-6 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-slate-200 transition-all flex items-start justify-between">
-                        <div className="flex gap-4">
-                          <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                            <FileText className="h-5 w-5 text-slate-400" />
-                          </div>
-                          <div>
-                            <div className="font-semibold text-slate-900">{r.title}</div>
-                            {r.description && <div className="text-xs text-slate-500 font-light mt-1 line-clamp-2">{r.description}</div>}
-                          </div>
-                        </div>
-                        <a href={r.url} target="_blank" rel="noreferrer" className="shrink-0 h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-black hover:text-white transition-colors">
-                          <Download className="h-4 w-4" />
-                        </a>
-                      </motion.div>
-                    ))
-                  )}
-                </motion.div>
-              </div>
             </motion.div>
           )}
 
           {/* ─── HELPDESK TICKETS ─── */}
           {activeTab === "support" && (
-            <motion.div key="support" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-8">
-              <div>
-                <h2 className="text-2xl font-light tracking-tight text-slate-900">Service Desk & IT/HR Tickets</h2>
-                <p className="text-sm text-slate-500 font-light mt-1">Raise support requests for hardware, software access, payroll inquiries, or administrative assistance.</p>
+            <motion.div key="support" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+                <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                  <LifeBuoy className="h-5 w-5 text-indigo-600" /> IT &amp; Administrative Service Desk
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">Submit internal helpdesk tickets for hardware allocation, software licenses, HR queries, or payroll adjustments.</p>
               </div>
 
               {/* Create Ticket Form */}
-              <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm space-y-6">
-                <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
-                  <LifeBuoy className="h-5 w-5 text-indigo-600" />
-                  Raise New Ticket
+              <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <LifeBuoy className="h-4 w-4 text-indigo-600" /> Raise New Ticket
                 </h3>
-                <form onSubmit={handleSubmitTicket} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <form onSubmit={handleSubmitTicket} className="space-y-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs">Category</Label>
-                      <select value={ticketForm.category} onChange={e => setTicketForm({...ticketForm, category: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-100 rounded-xl text-sm">
+                      <Label className="text-xs font-bold">Category</Label>
+                      <select value={ticketForm.category} onChange={e => setTicketForm({...ticketForm, category: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
                         <option value="IT Support">IT Support (Hardware/Software)</option>
                         <option value="HR Inquiry">HR Inquiry (Policies/Verification)</option>
-                        <option value="Payroll & Finance">Payroll & Finance (Salary/Tax)</option>
-                        <option value="Admin & Workplace">Admin & Workplace (Badge/Desk)</option>
+                        <option value="Payroll & Finance">Payroll &amp; Finance (Salary/Tax)</option>
+                        <option value="Admin & Workplace">Admin &amp; Workplace (Access/Badge)</option>
                         <option value="Other">Other Query</option>
                       </select>
                     </div>
                     <div>
-                      <Label className="text-xs">Priority</Label>
-                      <select value={ticketForm.priority} onChange={e => setTicketForm({...ticketForm, priority: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-100 rounded-xl text-sm">
+                      <Label className="text-xs font-bold">Priority</Label>
+                      <select value={ticketForm.priority} onChange={e => setTicketForm({...ticketForm, priority: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
                         <option value="High">High</option>
-                        <option value="Urgent">Urgent (System Blocked)</option>
+                        <option value="Urgent">Urgent (Blocker)</option>
                       </select>
                     </div>
                   </div>
                   <div>
-                    <Label className="text-xs">Subject</Label>
-                    <Input placeholder="Short summary of the issue..." value={ticketForm.subject} onChange={e => setTicketForm({...ticketForm, subject: e.target.value})} required className="bg-slate-50 border-slate-100 rounded-xl mt-1" />
+                    <Label className="text-xs font-bold">Subject</Label>
+                    <Input placeholder="Short summary of the issue..." value={ticketForm.subject} onChange={e => setTicketForm({...ticketForm, subject: e.target.value})} required className="bg-slate-50 border-slate-200 rounded-xl mt-1 text-xs" />
                   </div>
                   <div>
-                    <Label className="text-xs">Detailed Description</Label>
-                    <Textarea rows={4} placeholder="Provide details, error messages, or requested items..." value={ticketForm.description} onChange={e => setTicketForm({...ticketForm, description: e.target.value})} required className="bg-slate-50 border-slate-100 rounded-xl mt-1 resize-none text-sm" />
+                    <Label className="text-xs font-bold">Detailed Description</Label>
+                    <Textarea rows={3} placeholder="Provide details, error messages, or requested items..." value={ticketForm.description} onChange={e => setTicketForm({...ticketForm, description: e.target.value})} required className="bg-slate-50 border-slate-200 rounded-xl mt-1 resize-none text-xs" />
                   </div>
-                  <div className="flex justify-end">
-                    <Button type="submit" disabled={isSubmittingTicket} className="bg-black hover:bg-slate-800 text-white rounded-xl h-11 px-8">
+                  <div className="flex justify-end pt-1">
+                    <Button type="submit" disabled={isSubmittingTicket} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl h-10 px-6 text-xs cursor-pointer">
                       {isSubmittingTicket ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
                       Submit Ticket
                     </Button>
@@ -2572,24 +2546,24 @@ function EmployeeDashboard() {
               </div>
 
               {/* My Support Tickets List */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-slate-900">My Support Tickets</h3>
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">My Active Tickets</h3>
                 {tickets.length === 0 ? (
-                  <div className="py-12 bg-white rounded-2xl border border-slate-100 shadow-sm text-center text-slate-400 font-light">No support tickets raised.</div>
+                  <div className="py-12 bg-white rounded-3xl border border-slate-200/80 shadow-xs text-center text-slate-400 text-xs font-light">No support tickets raised yet.</div>
                 ) : (
                   tickets.map((ticket: any) => (
-                    <div key={ticket.id} className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-3">
+                    <div key={ticket.id} className="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-xs space-y-2">
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600">#{ticket.id.slice(0, 8).toUpperCase()}</span>
-                            <h4 className="font-semibold text-slate-900">{ticket.subject}</h4>
+                            <span className="text-xs font-mono bg-slate-100 px-2 py-0.5 rounded-full text-slate-700">#{ticket.id.slice(0, 8).toUpperCase()}</span>
+                            <h4 className="font-bold text-slate-900 text-xs">{ticket.subject}</h4>
                           </div>
-                          <div className="text-xs text-slate-500 font-light mt-1">{ticket.category} • Priority: <span className="font-semibold">{ticket.priority}</span> • Raised {new Date(ticket.created_at).toLocaleDateString()}</div>
+                          <div className="text-[11px] text-slate-400 mt-1">{ticket.category} • Priority: <span className="font-bold text-slate-700">{ticket.priority}</span> • Raised {new Date(ticket.created_at).toLocaleDateString()}</div>
                         </div>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full ${ticket.status === 'open' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>{ticket.status}</span>
+                        <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${ticket.status === 'open' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>{ticket.status}</span>
                       </div>
-                      <p className="text-sm text-slate-600 font-light leading-relaxed">{ticket.description}</p>
+                      <p className="text-xs text-slate-600 font-normal">{ticket.description}</p>
                     </div>
                   ))
                 )}
@@ -2599,96 +2573,74 @@ function EmployeeDashboard() {
 
           {/* ─── DOCUMENT LOCKER ─── */}
           {activeTab === "locker" && (
-            <motion.div key="locker" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-8">
-              <div>
-                <h2 className="text-2xl font-light tracking-tight text-slate-900">Document Locker & Vault</h2>
-                <p className="text-sm text-slate-500 font-light mt-1">Upload and access your personal verification documents, ID proofs, degree certificates, and signed employment contracts.</p>
+            <motion.div key="locker" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+                <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                  <FileCheck className="h-5 w-5 text-indigo-600" /> Digital Document Vault
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">Verified records, compliance documents, and signed offer credentials.</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
                   { name: "National ID / Aadhaar / PAN Card", category: "Government ID Proof", status: "Verified", date: "2026-01-15" },
-                  { name: "Passport / Birth Certificate", category: "Identity & Residency", status: "Verified", date: "2026-01-15" },
-                  { name: "Degree & Marksheet Certifications", category: "Education Qualification", status: "Verified", date: "2026-01-16" },
-                  { name: "Signed Offer Letter & NDA", category: "Legal & Employment", status: "Verified", date: "2026-01-10" },
-                  { name: "Form 16 / Tax Declaration Proofs", category: "Payroll & Finance", status: "Pending Action", date: "2026-03-01" },
+                  { name: "Passport / Identity & Residency", category: "Identity Proof", status: "Verified", date: "2026-01-15" },
+                  { name: "Degree & Professional Certifications", category: "Academic Credentials", status: "Verified", date: "2026-01-16" },
+                  { name: "Signed Employment Agreement & NDA", category: "Legal & Corporate", status: "Verified", date: "2026-01-10" },
+                  { name: "Form 16 / Tax Declaration Proofs", category: "Payroll & Tax", status: "Verified", date: "2026-03-01" },
                 ].map((doc, idx) => (
-                  <div key={idx} className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm flex items-start justify-between group hover:shadow-md transition-shadow">
-                    <div className="flex items-start gap-4">
-                      <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 text-slate-500">
-                        <FileCheck className="h-5 w-5 text-emerald-600" />
+                  <div key={idx} className="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-xs flex items-center justify-between hover:shadow-md transition-all">
+                    <div className="flex items-center gap-3.5">
+                      <div className="h-10 w-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+                        <FileCheck className="h-5 w-5" />
                       </div>
                       <div>
-                        <div className="font-semibold text-slate-900 text-sm">{doc.name}</div>
-                        <div className="text-xs text-slate-400 font-light mt-0.5">{doc.category}</div>
-                        <div className="text-[10px] text-slate-400 mt-2">Uploaded on {doc.date}</div>
+                        <div className="font-bold text-slate-900 text-xs">{doc.name}</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">{doc.category} • {doc.date}</div>
                       </div>
                     </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${doc.status === 'Verified' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{doc.status}</span>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">{doc.status}</span>
                   </div>
                 ))}
               </div>
             </motion.div>
           )}
 
-          {/* ─── FEEDBACKS ─── */}
-          {activeTab === "feedbacks" && (
-            <motion.div key="feedbacks" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-5xl mx-auto">
-              <div className="text-center mb-10">
-                <h2 className="text-3xl font-light tracking-tight text-slate-900 mb-3">Feedback</h2>
-                <p className="text-slate-500 font-light">Send direct, private feedback to the administration team.</p>
-              </div>
-              <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-black/[0.03]">
-                <form onSubmit={handleSubmitFeedback} className="space-y-6">
-                  <Textarea 
-                    required 
-                    rows={8}
-                    className="bg-slate-50/50 border-slate-100 focus:ring-black focus:border-black rounded-2xl resize-none font-light p-4 text-base"
-                    placeholder="Share your thoughts, report an issue, or suggest an improvement..." 
-                    value={feedbackForm.content} 
-                    onChange={e => setFeedbackForm({ content: e.target.value })} 
-                  />
-                  <Button type="submit" className="w-full h-12 rounded-xl bg-black text-white hover:bg-slate-800 shadow-md font-semibold tracking-wide flex items-center justify-center gap-2">
-                    <Send className="h-4 w-4" /> Send Message
-                  </Button>
-                </form>
-              </div>
-            </motion.div>
-          )}
-
           {/* ─── PROFILE & ESS ─── */}
           {activeTab === "contact" && (
-            <motion.div key="contact" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-8">
-              <div>
-                <h2 className="text-2xl font-light tracking-tight text-slate-900">Profile & Employee Self-Service (ESS)</h2>
-                <p className="text-sm text-slate-500 font-light mt-1">Manage your personal contact details, emergency contacts, bank information, and print your Digital ID badge.</p>
+            <motion.div key="contact" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+                <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                  <User className="h-5 w-5 text-indigo-600" /> Employee Profile &amp; Self-Service (ESS)
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">Manage personal contact info, bank details, and view your official smart NFC identity badge.</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Digital ID Badge */}
-                <div className="md:col-span-1 p-6 bg-gradient-to-b from-slate-900 to-black text-white rounded-[2rem] shadow-xl flex flex-col items-center text-center relative overflow-hidden group">
-                  <div className="absolute top-0 inset-x-0 h-1 bg-emerald-400" />
-                  <div className="flex items-center gap-1.5 text-[9px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-0.5 rounded-full uppercase tracking-wider mb-2">
-                    <Radio className="h-3 w-3 animate-pulse" /> NFC & RFID Active
+                <div className="md:col-span-1 p-6 bg-gradient-to-b from-[#0F172A] to-[#0A0E1A] text-white rounded-3xl shadow-xl flex flex-col items-center text-center relative overflow-hidden border border-slate-800">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 to-emerald-400" />
+                  <div className="flex items-center gap-1.5 text-[9px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-0.5 rounded-full uppercase tracking-wider mb-3">
+                    <Radio className="h-3 w-3 animate-pulse" /> NFC Active
                   </div>
 
-                  <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 text-2xl mb-2 ring-4 ring-white/20" />
-                  <h3 className="font-bold text-lg text-white">{displayName}</h3>
-                  <p className="text-xs text-white/60 uppercase tracking-widest mt-0.5">Employee · VyNexa</p>
+                  <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 text-2xl mb-2 ring-4 ring-indigo-500/30 shadow-lg" />
+                  <h3 className="font-extrabold text-base text-white">{displayName}</h3>
+                  <p className="text-xs text-slate-400 uppercase tracking-wider mt-0.5">{profile?.position || "Operations & Engineering"}</p>
                   <p className="text-[11px] text-emerald-400 font-mono mt-0.5">ID: {session?.user?.id?.slice(0, 8).toUpperCase()}</p>
                   
-                  <div className="p-3 bg-white rounded-xl my-4">
+                  <div className="p-3 bg-white rounded-2xl my-4 shadow-md">
                     <QRCodeSVG value={`VY-EMP-${session?.user?.id}`} size={105} />
                   </div>
                   
-                  <Button onClick={() => setIsIdCardOpen(true)} className="w-full text-xs text-slate-900 bg-emerald-400 hover:bg-emerald-300 rounded-xl gap-1.5 font-bold shadow-md">
-                    <Cpu className="h-3.5 w-3.5" /> View Smart NFC Badge
+                  <Button onClick={() => setIsIdCardOpen(true)} className="w-full text-xs text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl gap-1.5 font-bold shadow-md cursor-pointer">
+                    <Cpu className="h-3.5 w-3.5" /> View Smart Badge
                   </Button>
                 </div>
 
                 {/* ESS Personal Information Form */}
-                <div className="md:col-span-2 p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm space-y-6">
-                  <h3 className="text-lg font-semibold text-slate-900">Personal & Financial Information</h3>
+                <div className="md:col-span-2 p-6 bg-white border border-slate-200/80 rounded-3xl shadow-sm space-y-4">
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Personal &amp; Banking Records</h3>
                   <form onSubmit={async (e) => {
                     e.preventDefault();
                     if (!session?.user?.id) return;
@@ -2705,60 +2657,37 @@ function EmployeeDashboard() {
                     } catch (err: any) {
                       toast.error(err.message || "Failed to update profile");
                     }
-                  }} className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  }} className="space-y-3.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-xs">Full Name</Label>
-                        <Input value={displayName} disabled className="bg-slate-50 rounded-xl mt-1 text-sm font-medium" />
+                        <Label className="text-xs font-bold">Full Name</Label>
+                        <Input value={displayName} disabled className="bg-slate-50 border-slate-200 rounded-xl mt-1 text-xs font-bold" />
                       </div>
                       <div>
-                        <Label className="text-xs">Work Email</Label>
-                        <Input value={email} disabled className="bg-slate-50 rounded-xl mt-1 text-sm font-medium" />
+                        <Label className="text-xs font-bold">Work Email</Label>
+                        <Input value={email} disabled className="bg-slate-50 border-slate-200 rounded-xl mt-1 text-xs font-mono" />
                       </div>
                       <div>
-                        <Label className="text-xs">Phone Number</Label>
-                        <Input placeholder="+91 98765 43210" defaultValue={profile?.phone || ""} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl mt-1 text-sm" />
+                        <Label className="text-xs font-bold">Phone Number</Label>
+                        <Input placeholder="+91 98765 43210" defaultValue={profile?.phone || ""} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="bg-slate-50 border-slate-200 rounded-xl mt-1 text-xs" />
                       </div>
                       <div>
-                        <Label className="text-xs">Emergency Contact</Label>
-                        <Input placeholder="Name & Phone Number" defaultValue={profile?.emergency_contact || "+91 98765 00000"} onChange={e => setProfileForm({...profileForm, emergency_contact: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl mt-1 text-sm" />
+                        <Label className="text-xs font-bold">Emergency Contact</Label>
+                        <Input placeholder="Name & Phone Number" defaultValue={profile?.emergency_contact || "+91 98765 00000"} onChange={e => setProfileForm({...profileForm, emergency_contact: e.target.value})} className="bg-slate-50 border-slate-200 rounded-xl mt-1 text-xs" />
                       </div>
                     </div>
                     <div>
-                      <Label className="text-xs">Residential Address</Label>
-                      <Input placeholder="Current residential address..." defaultValue={profile?.address || ""} onChange={e => setProfileForm({...profileForm, address: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl mt-1 text-sm" />
+                      <Label className="text-xs font-bold">Residential Address</Label>
+                      <Input placeholder="Current residential address..." defaultValue={profile?.address || ""} onChange={e => setProfileForm({...profileForm, address: e.target.value})} className="bg-slate-50 border-slate-200 rounded-xl mt-1 text-xs" />
                     </div>
                     <div>
-                      <Label className="text-xs">Bank Account & IFSC / UPI Details</Label>
-                      <Input placeholder="HDFC Bank · A/C ****8821 · IFSC: HDFC0001234" defaultValue={profile?.bank_details || "Kotak Mahindra Bank · A/C 882101923 · IFSC: KKBK0001823"} onChange={e => setProfileForm({...profileForm, bank_details: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl mt-1 text-sm" />
+                      <Label className="text-xs font-bold">Bank Account &amp; IFSC / UPI Details</Label>
+                      <Input placeholder="HDFC Bank · A/C ****8821 · IFSC: HDFC0001234" defaultValue={profile?.bank_details || "Kotak Mahindra Bank · A/C 882101923 · IFSC: KKBK0001823"} onChange={e => setProfileForm({...profileForm, bank_details: e.target.value})} className="bg-slate-50 border-slate-200 rounded-xl mt-1 text-xs font-mono" />
                     </div>
-                    <div className="flex justify-end pt-2">
-                      <Button type="submit" className="bg-black hover:bg-slate-800 text-white rounded-xl px-6">Save Profile Changes</Button>
+                    <div className="flex justify-end pt-1">
+                      <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl px-6 text-xs h-10 cursor-pointer">Save Profile Changes</Button>
                     </div>
                   </form>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm flex items-start gap-4">
-                  <div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center shrink-0">
-                    <User className="h-6 w-6 text-slate-700" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-slate-900 mb-1">Human Resources Helpdesk</h3>
-                    <p className="text-sm text-slate-500 font-light mb-3">For leave, payroll, and policy inquiries.</p>
-                    <a href="mailto:hr@vyntyraconsultancyservices.in" className="text-sm font-semibold text-slate-900 underline">hr@vyntyraconsultancyservices.in</a>
-                  </div>
-                </div>
-                <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm flex items-start gap-4">
-                  <div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center shrink-0">
-                    <AlertCircle className="h-6 w-6 text-slate-700" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-slate-900 mb-1">IT & System Support</h3>
-                    <p className="text-sm text-slate-500 font-light mb-3">For technical issues or dashboard access.</p>
-                    <a href="mailto:support@vyntyraconsultancyservices.in" className="text-sm font-semibold text-slate-900 underline">support@vyntyraconsultancyservices.in</a>
-                  </div>
                 </div>
               </div>
             </motion.div>
@@ -2766,92 +2695,56 @@ function EmployeeDashboard() {
 
           {/* ─── SECURITY & OFFBOARDING ─── */}
           {activeTab === "security" && (
-            <motion.div key="security" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-8">
-              <h2 className="text-2xl font-light tracking-tight text-slate-900 mb-8">Security & Offboarding Lifecycle</h2>
+            <motion.div key="security" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+                <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-indigo-600" /> Security, Credentials &amp; 2FA
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">Manage portal credentials, configure Two-Factor Authentication, and check clearance status.</p>
+              </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Change Password Card */}
-                <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl transition-all">
-                  <h3 className="text-xl font-medium text-slate-900 mb-2">Change Password</h3>
-                  <p className="text-slate-500 font-light mb-6">Update your portal login password.</p>
+                <div className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-sm space-y-4">
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Change Portal Password</h3>
                   
-                  <form onSubmit={handleChangePassword} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>New Password</Label>
-                      <Input type="password" required minLength={6} value={passwordForm.newPassword} onChange={e => setPasswordForm({...passwordForm, newPassword: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl" />
+                  <form onSubmit={handleChangePassword} className="space-y-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs font-bold">New Password</Label>
+                      <Input type="password" required minLength={6} value={passwordForm.newPassword} onChange={e => setPasswordForm({...passwordForm, newPassword: e.target.value})} className="bg-slate-50 border-slate-200 rounded-xl text-xs" />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Confirm New Password</Label>
-                      <Input type="password" required minLength={6} value={passwordForm.confirmPassword} onChange={e => setPasswordForm({...passwordForm, confirmPassword: e.target.value})} className="bg-slate-50 border-slate-100 rounded-xl" />
+                    <div className="space-y-1">
+                      <Label className="text-xs font-bold">Confirm New Password</Label>
+                      <Input type="password" required minLength={6} value={passwordForm.confirmPassword} onChange={e => setPasswordForm({...passwordForm, confirmPassword: e.target.value})} className="bg-slate-50 border-slate-200 rounded-xl text-xs" />
                     </div>
-                    <Button type="submit" disabled={isChangingPassword} className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl">
+                    <Button type="submit" disabled={isChangingPassword} className="w-full bg-slate-900 hover:bg-black text-white font-bold rounded-2xl h-10 text-xs cursor-pointer">
                       {isChangingPassword ? "Updating..." : "Update Password"}
                     </Button>
                   </form>
                 </div>
 
                 {/* MFA / 2FA Card */}
-                <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl transition-all">
-                  <h3 className="text-xl font-medium text-slate-900 mb-2">Two-Factor Authentication</h3>
-                  <p className="text-slate-500 font-light mb-6">Enhance your account security using Microsoft or Google Authenticator.</p>
+                <div className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-sm space-y-4">
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Two-Factor Authentication (2FA)</h3>
                   
                   {mfaStatus === "checking" ? (
-                    <div className="text-sm text-slate-500 flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Checking security status...</div>
+                    <div className="text-xs text-slate-500 flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Checking security status...</div>
                   ) : mfaStatus === "enrolled" ? (
                     <div className="space-y-4">
-                      <div className="bg-emerald-50 text-emerald-700 p-6 rounded-2xl border border-emerald-100 flex flex-col gap-2">
-                        <div className="font-medium flex items-center gap-2">
-                          <CheckCircle2 className="h-5 w-5" /> 2FA is Enabled
+                      <div className="bg-emerald-50 text-emerald-800 p-4 rounded-2xl border border-emerald-200 flex flex-col gap-1 text-xs">
+                        <div className="font-bold flex items-center gap-1.5">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" /> 2FA Protection Active
                         </div>
-                        <p className="text-sm font-light">Your account is secured with a TOTP Authenticator app.</p>
+                        <p className="text-slate-600 font-normal">Your account is secured with a TOTP Authenticator app.</p>
                       </div>
-                      <Button onClick={handleDisableMfa} variant="outline" className="w-full rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">Disable 2FA</Button>
-                    </div>
-                  ) : mfaStatus === "enrolling" && mfaQrCode ? (
-                    <div className="space-y-6">
-                      <div className="text-center space-y-2">
-                        <p className="text-sm font-medium text-slate-900">Scan this QR Code</p>
-                        <p className="text-xs text-slate-500">Open Google or Microsoft Authenticator and scan.</p>
-                      </div>
-                      <div className="flex justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                        <QRCodeSVG value={mfaQrCode} size={160} />
-                      </div>
-                      <form onSubmit={handleVerifyMfa} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>Verification Code</Label>
-                          <Input required type="text" placeholder="e.g. 123456" value={mfaCode} onChange={e => setMfaCode(e.target.value)} className="bg-slate-50 border-slate-100 rounded-xl text-center tracking-widest text-lg font-mono" />
-                        </div>
-                        <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl">Verify and Enable</Button>
-                      </form>
+                      <Button onClick={handleDisableMfa} variant="outline" className="w-full rounded-2xl border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold">Disable 2FA</Button>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      <p className="text-sm text-slate-500 font-light">Your account is currently using standard password authentication. Enable 2FA for an extra layer of security.</p>
-                      <Button onClick={handleEnrollMfa} variant="outline" className="w-full rounded-xl border-slate-200">Set up Authenticator App</Button>
+                    <div className="space-y-3">
+                      <p className="text-xs text-slate-500 font-normal">Enable Two-Factor Authentication with Google Authenticator or Microsoft Authenticator for enterprise security.</p>
+                      <Button onClick={handleEnrollMfa} className="w-full rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-10 cursor-pointer">Set up Authenticator App</Button>
                     </div>
                   )}
-                </div>
-              </div>
-
-              {/* Offboarding & NOC Clearance Tracker */}
-              <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-900">Offboarding & No-Objection Certificate (NOC) Tracker</h3>
-                  <p className="text-sm text-slate-500 font-light mt-0.5">Track exit clearances across departments upon notice period submission.</p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {[
-                    { dept: "HR Clearance", status: "Active / No Pending Dues" },
-                    { dept: "IT Hardware NOC", status: "Active / Laptop Assigned" },
-                    { dept: "Finance Clearance", status: "Active / Salary Credit Clear" }
-                  ].map((noc, i) => (
-                    <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm">
-                      <div className="font-semibold text-slate-900">{noc.dept}</div>
-                      <div className="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
-                        <CheckCircle2 className="h-3.5 w-3.5" /> {noc.status}
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             </motion.div>
