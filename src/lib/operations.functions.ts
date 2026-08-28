@@ -4748,12 +4748,13 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
     const admin = getAdminClient();
     
     // Resilient profile fetch (by ID first, then by email if needed)
-    let profile: any = null;
     const { data: pById } = await admin
       .from("profiles")
       .select("id, full_name, email, intern_id, referral_code, role")
       .eq("id", context.userId)
       .maybeSingle();
+
+    let profile: any = pById || null;
 
     const userEmail = context.user?.email;
     if (!profile && userEmail) {
@@ -4880,7 +4881,7 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
     // 1. Fetch all applications
     const { data: applications } = await admin
       .from("applications")
-      .select("id, full_name, email, role, status, exam_fee_paid, exam_fee_amount, payment_status, referral_code_used, created_at")
+      .select("id, full_name, email, role_applied, status, exam_fee_paid, exam_fee_amount, payment_status, referral_code_used, created_at")
       .order("created_at", { ascending: false });
 
     // 2. Fetch all profiles (interns)
@@ -4933,7 +4934,7 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
         id: a.id,
         candidate_name: a.full_name || "Applicant",
         email: a.email,
-        role_applied: a.role || "Intern",
+        role_applied: a.role_applied || a.role || "Intern",
         status: a.status || "applied",
         is_paid: isPaid,
         created_at: a.created_at,
