@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { 
   Loader2, Award, Check, Link2, Target, Send, FileText, Users, 
-  Coins, IndianRupee, ShieldCheck, CreditCard, Sparkles, TrendingUp 
+  Coins, IndianRupee, ShieldCheck, CreditCard, Sparkles, TrendingUp, Copy
 } from "lucide-react";
 
 export function EmployeeReferEarn() {
@@ -47,16 +47,16 @@ export function EmployeeReferEarn() {
   const netCompanyProfit = referralData.netCompanyProfit ?? Math.round((grossRevenue - grossCommission - govtCertAllocation - gatewayCostCompanyShare) * 100) / 100;
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 w-full max-w-7xl mx-auto">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 w-full max-w-7xl mx-auto text-slate-100">
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes shine {
+        @keyframes darkShine {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
         }
-        .animate-shine {
-          background: linear-gradient(120deg, #f5f3ff 30%, #e0e7ff 50%, #f5f3ff 70%);
+        .animate-dark-shine {
+          background: linear-gradient(120deg, #131B2E 30%, #1e293b 50%, #131B2E 70%);
           background-size: 200% 100%;
-          animation: shine 3.5s infinite linear;
+          animation: darkShine 3.5s infinite linear;
         }
         @keyframes float {
           0%, 100% { transform: translateY(0); }
@@ -75,20 +75,21 @@ export function EmployeeReferEarn() {
         }
       `}} />
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header Banner */}
+      <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-            <Coins className="h-6 w-6 text-amber-500" /> Referral & Commission Earnings Hub
+          <h2 className="text-xl font-black tracking-tight text-white flex items-center gap-2.5">
+            <Coins className="h-6 w-6 text-amber-400" /> Referral &amp; Commission Earnings Hub
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Share your unique code, track candidate applications, and view real-time commission earnings with 50/50 equal payment gateway & tax charge sharing.
+          <p className="text-xs text-slate-400 mt-1">
+            Share your unique invite code, track candidate enrollments, and withdraw real-time commission earnings.
           </p>
         </div>
 
         {referralCode && (
-          <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 px-3.5 py-1.5 rounded-xl">
-            <span className="text-xs font-semibold text-indigo-700">Your Code:</span>
-            <span className="font-mono font-extrabold text-sm text-indigo-900 bg-white px-2 py-0.5 rounded shadow-2xs">
+          <div className="flex items-center gap-2 bg-indigo-950/80 border border-indigo-500/30 px-4 py-2 rounded-2xl shadow-lg">
+            <span className="text-xs font-bold text-indigo-300">Your Code:</span>
+            <span className="font-mono font-black text-sm text-white bg-indigo-600/50 border border-indigo-400/40 px-2.5 py-0.5 rounded-lg shadow-inner">
               {referralCode}
             </span>
           </div>
@@ -97,52 +98,53 @@ export function EmployeeReferEarn() {
 
       {/* ─── Partner Earnings & Fee Breakdown Cards ─── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border bg-white shadow-2xs">
+        <div className="p-5 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl space-y-1">
           <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Referred</span>
-            <Users className="h-4 w-4 text-indigo-500" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Referred</span>
+            <Users className="h-4 w-4 text-indigo-400" />
           </div>
-          <div className="text-2xl font-extrabold text-slate-900">{totalReferred}</div>
-          <span className="text-[10px] text-slate-400">Total Registered Applicants</span>
+          <div className="text-2xl font-black text-white">{totalReferred}</div>
+          <span className="text-[10px] text-slate-500 font-medium">Total Registered Applicants</span>
         </div>
 
-        <div className="p-4 rounded-xl border bg-white shadow-2xs">
+        <div className="p-5 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl space-y-1">
           <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">Paid & Verified</span>
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Paid &amp; Verified</span>
+            <ShieldCheck className="h-4 w-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-extrabold text-emerald-700">{paidCount}</div>
-          <span className="text-[10px] text-slate-400">Successfully Enrolled</span>
+          <div className="text-2xl font-black text-emerald-400">{paidCount}</div>
+          <span className="text-[10px] text-slate-500 font-medium">Successfully Enrolled</span>
         </div>
 
-        <div className="p-4 rounded-xl border bg-white shadow-2xs">
+        <div className="p-5 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl space-y-1">
           <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">Commission Rate</span>
-            <Coins className="h-4 w-4 text-blue-500" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400">Net Rate</span>
+            <Coins className="h-4 w-4 text-blue-400" />
           </div>
-          <div className="text-2xl font-extrabold text-blue-900">
+          <div className="text-2xl font-black text-blue-300">
             ₹{paidCount > 0 ? (Math.round((netCommissionEarnings / paidCount) * 100) / 100).toFixed(2) : (Math.max(0, commissionRate - Math.round((499 * (25.78 / 998) / 2) * 100) / 100)).toFixed(2)}
           </div>
-          <span className="text-[10px] text-slate-400">Net/candidate (after 50% equal PG & tax sharing)</span>
+          <span className="text-[10px] text-slate-500 font-medium">Net/candidate (after 50% PG sharing)</span>
         </div>
 
-        <div className="p-4 rounded-xl border-2 border-purple-300 bg-purple-50/90 shadow-xs">
-          <div className="flex items-center justify-between text-purple-700 mb-1">
+        <div className="p-5 rounded-3xl border border-purple-500/40 bg-purple-950/30 shadow-xl backdrop-blur-xl space-y-1 relative overflow-hidden">
+          <div className="absolute top-0 right-0 h-12 w-12 bg-purple-500/10 rounded-bl-full" />
+          <div className="flex items-center justify-between text-purple-300 mb-1">
             <span className="text-[11px] font-black uppercase tracking-wider">Your Net Earnings</span>
-            <Sparkles className="h-4 w-4 text-purple-600 animate-pulse" />
+            <Sparkles className="h-4 w-4 text-purple-400 animate-pulse" />
           </div>
-          <div className="text-2xl font-black text-purple-900">₹{Number(netCommissionEarnings).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-          <span className="text-[10px] text-purple-700 font-semibold">₹{grossCommission} gross − ₹{gatewayCostReferrerShare} (50% PG & tax share)</span>
+          <div className="text-2xl font-black text-purple-200">₹{Number(netCommissionEarnings).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          <span className="text-[10px] text-purple-400/80 font-semibold">₹{grossCommission} gross − ₹{gatewayCostReferrerShare} (50% PG share)</span>
         </div>
       </div>
 
       {/* Transparent Fee & Allocation Note */}
-      <div className="p-4 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-slate-50 border border-indigo-200/80 rounded-xl text-xs flex items-start gap-3">
-        <Sparkles className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
-        <div className="space-y-1 text-slate-700 leading-relaxed">
-          <div className="font-bold text-slate-900">50/50 Equal Gateway & Tax Sharing Policy:</div>
-          <div className="text-slate-600">
-            Payment gateway processing charges, settlement fees, and applicable taxes are <strong>divided equally (50% / 50%)</strong> between the Referrer's Commission and Company Income across all current and future transactions. ₹199 per paid candidate is dedicated to Government Certification reserves.
+      <div className="p-5 bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-900/60 border border-indigo-500/30 rounded-3xl text-xs flex items-start gap-3.5 shadow-xl backdrop-blur-xl">
+        <Sparkles className="h-5 w-5 text-indigo-400 shrink-0 mt-0.5" />
+        <div className="space-y-1 text-slate-300 leading-relaxed">
+          <div className="font-extrabold text-white">50/50 Equal Gateway &amp; Tax Sharing Policy:</div>
+          <div className="text-slate-400 text-xs">
+            Payment gateway processing charges, settlement fees, and applicable taxes are <strong className="text-indigo-300">divided equally (50% / 50%)</strong> between the Referrer's Commission and Company Income across all transactions. ₹199 per paid candidate is dedicated to Government Certification reserves.
           </div>
         </div>
       </div>
@@ -150,20 +152,23 @@ export function EmployeeReferEarn() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
           
-          <div className="rounded-xl border bg-white p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
+          {/* Referral Code Card */}
+          <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 shadow-xl backdrop-blur-xl flex flex-col items-center text-center relative overflow-hidden transition-all duration-300 hover:border-slate-700">
             <div className="absolute top-0 right-0 h-16 w-16 bg-emerald-500/10 rounded-bl-full flex items-center justify-center">
-              <Award className="h-5 w-5 text-emerald-600 translate-x-2 -translate-y-2 animate-float" />
+              <Award className="h-5 w-5 text-emerald-400 translate-x-2 -translate-y-2 animate-float" />
             </div>
             
-            <h2 className="font-bold text-slate-800 text-base flex items-center gap-2 mb-1">
+            <h2 className="font-extrabold text-white text-base flex items-center gap-2 mb-1">
               Your Referral Code
             </h2>
-            <p className="text-xs text-slate-500 mb-6 px-4">
+            <p className="text-xs text-slate-400 mb-6 px-4">
               Share your code with friends and colleagues to earn ₹200 per paid enrollment.
             </p>
             
             {referralCodeQ.isLoading ? (
-              <div className="py-6 flex items-center gap-2 text-slate-400 text-xs justify-center"><Loader2 className="h-4 w-4 animate-spin text-indigo-600" /> Generating unique code...</div>
+              <div className="py-6 flex items-center gap-2 text-slate-400 text-xs justify-center">
+                <Loader2 className="h-4 w-4 animate-spin text-indigo-400" /> Generating unique code...
+              </div>
             ) : (
               <div className="w-full space-y-4">
                 <div 
@@ -173,7 +178,7 @@ export function EmployeeReferEarn() {
                     toast.success("Referral Code copied to clipboard!");
                     setTimeout(() => setCopiedCode(false), 2000);
                   }}
-                  className="relative animate-shine border-2 border-dashed border-indigo-200/80 p-5 rounded-xl font-mono text-3xl font-extrabold tracking-widest text-indigo-700 overflow-hidden flex items-center justify-center gap-2 select-all shadow-inner group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer"
+                  className="relative animate-dark-shine border-2 border-dashed border-indigo-500/40 p-5 rounded-2xl font-mono text-3xl font-black tracking-widest text-indigo-300 overflow-hidden flex items-center justify-center gap-2 select-all shadow-inner group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer"
                 >
                   {referralCode}
                   <span className="absolute bottom-1 right-2 text-[9px] font-sans font-medium text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200">Click to copy</span>
@@ -186,7 +191,7 @@ export function EmployeeReferEarn() {
                     toast.success("Referral Code copied!");
                     setTimeout(() => setCopiedCode(false), 2000);
                   }}
-                  className={`w-full font-bold text-xs h-10 transition-all duration-300 flex items-center justify-center gap-2 shadow-xs ${
+                  className={`w-full font-bold text-xs h-10 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-md cursor-pointer ${
                     copiedCode 
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white" 
                       : "bg-indigo-600 hover:bg-indigo-700 text-white"
@@ -206,9 +211,10 @@ export function EmployeeReferEarn() {
             )}
           </div>
 
-          <div className="rounded-xl border bg-white p-6 shadow-sm space-y-5 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
-            <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5 border-b pb-2.5">
-              <Target className="h-4.5 w-4.5 text-indigo-600" /> Milestone Tracking
+          {/* Milestone Tracking */}
+          <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 shadow-xl backdrop-blur-xl space-y-5 transition-all duration-300 hover:border-slate-700">
+            <h3 className="font-extrabold text-white text-sm flex items-center gap-2 border-b border-slate-800 pb-3">
+              <Target className="h-4 w-4 text-indigo-400" /> Milestone Tracking
             </h3>
             
             {(() => {
@@ -218,41 +224,41 @@ export function EmployeeReferEarn() {
               
               return (
                 <div className="space-y-4">
-                  <div className="flex justify-between text-xs text-slate-600">
-                    <span className="font-medium">Progress to next tier:</span>
-                    <span className="font-bold text-indigo-600">{completedCount} / {nextMilestone} Paid Referrals</span>
+                  <div className="flex justify-between text-xs text-slate-300">
+                    <span className="font-medium text-slate-400">Progress to next tier:</span>
+                    <span className="font-bold text-indigo-400">{completedCount} / {nextMilestone} Paid Referrals</span>
                   </div>
                   
-                  <div className="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden relative shadow-inner">
+                  <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden relative border border-slate-800">
                     <div 
-                      className="bg-indigo-600 h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
+                      className="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_#6366f1]"
                       style={{ width: `${progressPercent}%` }}
-                    ></div>
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 pt-1">
-                    <div className={`p-3.5 rounded-xl border text-center transition-all duration-300 transform hover:scale-[1.03] ${
+                    <div className={`p-3.5 rounded-2xl border text-center transition-all duration-300 ${
                       completedCount >= 5 
-                        ? "bg-emerald-50/70 border-emerald-200 text-emerald-950 shadow-xs" 
-                        : "bg-slate-50 border-slate-200/80 text-slate-500"
+                        ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300 shadow-md" 
+                        : "bg-slate-900/60 border-slate-800 text-slate-400"
                     }`}>
-                      <div className="text-xs font-bold">Tier 1: 5 Paid</div>
-                      <div className="text-[10px] mt-1 font-semibold">Earn ₹1,000</div>
-                      {completedCount >= 5 && <div className="text-[9px] font-bold text-emerald-600 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> ✓ Achieved!</div>}
+                      <div className="text-xs font-bold text-white">Tier 1: 5 Paid</div>
+                      <div className="text-[10px] mt-1 font-semibold text-emerald-400">Earn ₹1,000</div>
+                      {completedCount >= 5 && <div className="text-[9px] font-bold text-emerald-400 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> Achieved!</div>}
                     </div>
                     
-                    <div className={`p-3.5 rounded-xl border text-center transition-all duration-300 transform hover:scale-[1.03] ${
+                    <div className={`p-3.5 rounded-2xl border text-center transition-all duration-300 ${
                       completedCount >= 10 
-                        ? "bg-emerald-50/70 border-emerald-200 text-emerald-950 shadow-xs" 
-                        : "bg-slate-50 border-slate-200/80 text-slate-500"
+                        ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300 shadow-md" 
+                        : "bg-slate-900/60 border-slate-800 text-slate-400"
                     }`}>
-                      <div className="text-xs font-bold">Tier 2: 10 Paid</div>
-                      <div className="text-[10px] mt-1 font-semibold">Earn ₹2,000</div>
-                      {completedCount >= 10 && <div className="text-[9px] font-bold text-emerald-600 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> ✓ Achieved!</div>}
+                      <div className="text-xs font-bold text-white">Tier 2: 10 Paid</div>
+                      <div className="text-[10px] mt-1 font-semibold text-emerald-400">Earn ₹2,000</div>
+                      {completedCount >= 10 && <div className="text-[9px] font-bold text-emerald-400 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> Achieved!</div>}
                     </div>
                   </div>
 
-                  <p className="text-[10px] text-slate-400 leading-normal text-center pt-1">
+                  <p className="text-[10px] text-slate-500 leading-normal text-center pt-1">
                     *Commissions are credited upon candidate exam fee payment and verification.
                   </p>
                 </div>
@@ -260,13 +266,14 @@ export function EmployeeReferEarn() {
             })()}
           </div>
 
-          <div className="rounded-xl border bg-white p-6 shadow-sm space-y-3.5 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
-            <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-              <Send className="h-4 w-4 text-indigo-600" /> Share Invitation Message
+          {/* Invitation Message Card */}
+          <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 shadow-xl backdrop-blur-xl space-y-3.5 transition-all duration-300 hover:border-slate-700">
+            <h3 className="font-extrabold text-white text-sm flex items-center gap-2">
+              <Send className="h-4 w-4 text-indigo-400" /> Share Invitation Message
             </h3>
-            <p className="text-xs text-slate-500 leading-relaxed">Send this invite directly to candidates wishing to apply.</p>
+            <p className="text-xs text-slate-400 leading-relaxed">Send this invite directly to candidates wishing to apply.</p>
             
-            <div className="bg-slate-50 border p-3.5 rounded-xl text-xs font-light text-slate-600 font-mono select-all leading-normal whitespace-pre-wrap max-h-[140px] overflow-y-auto shadow-inner relative group border-slate-200/80">
+            <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-2xl text-xs font-light text-slate-300 font-mono select-all leading-relaxed whitespace-pre-wrap max-h-[140px] overflow-y-auto shadow-inner">
               {`Hey! Apply for the industrial internship at Vyntyra Consultancy Services using my referral code "${referralCode}" to get scholarship benefits: https://careers.vyntyraconsultancyservices.in/careers`}
             </div>
 
@@ -279,10 +286,10 @@ export function EmployeeReferEarn() {
                 setTimeout(() => setCopiedInvite(false), 2000);
               }}
               variant="outline"
-              className={`w-full text-xs font-semibold h-10 transition-all duration-300 flex items-center justify-center gap-2 border-slate-300 ${
+              className={`w-full text-xs font-bold h-10 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 border-slate-700 cursor-pointer ${
                 copiedInvite 
-                  ? "bg-emerald-50 border-emerald-300 text-emerald-800" 
-                  : "bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-emerald-950/80 border-emerald-500/40 text-emerald-300" 
+                  : "bg-[#131B2E] text-slate-200 hover:text-white hover:bg-slate-800"
               }`}
             >
               {copiedInvite ? (
@@ -299,16 +306,17 @@ export function EmployeeReferEarn() {
 
         </div>
 
-        <div className="lg:col-span-2 rounded-xl border bg-white p-6 shadow-sm flex flex-col h-full min-h-[450px] transition-all duration-300 hover:shadow-md">
-          <div className="border-b pb-4 mb-4 flex items-center justify-between flex-wrap gap-3">
+        {/* Referred Candidates Table */}
+        <div className="lg:col-span-2 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 shadow-xl backdrop-blur-xl flex flex-col h-full min-h-[450px]">
+          <div className="border-b border-slate-800 pb-4 mb-4 flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
-                <Users className="h-5 w-5 text-indigo-600" /> Referred Candidates & Financial Breakdown
+              <h3 className="font-extrabold text-white text-base flex items-center gap-2">
+                <Users className="h-5 w-5 text-indigo-400" /> Referred Candidates &amp; Financial Breakdown
               </h3>
-              <p className="text-xs text-slate-500 mt-1">Real-time status, payments, and individual commission calculation per referral.</p>
+              <p className="text-xs text-slate-400 mt-1">Real-time status, payments, and individual commission calculation per referral.</p>
             </div>
             {candidates.length > 0 && (
-              <span className="bg-purple-50 border border-purple-200 text-purple-800 text-xs font-bold px-3 py-1 rounded-full">
+              <span className="bg-purple-950/80 border border-purple-500/30 text-purple-300 text-xs font-bold px-3 py-1 rounded-full">
                 {paidCount} Paid / {candidates.length} Total
               </span>
             )}
@@ -317,58 +325,58 @@ export function EmployeeReferEarn() {
           <div className="flex-1 overflow-x-auto">
             {referralCodeQ.isLoading || referralConversionsQ.isLoading ? (
               <div className="p-8 flex flex-col items-center justify-center gap-3 text-slate-400 text-sm h-full min-h-[250px]">
-                <Loader2 className="h-8 w-8 animate-spin text-indigo-600" /> 
+                <Loader2 className="h-8 w-8 animate-spin text-indigo-400" /> 
                 <span>Loading referral conversions...</span>
               </div>
             ) : candidates.length === 0 ? (
               <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-8 text-slate-400 gap-4">
                 <div className="relative flex items-center justify-center">
                   <div className="absolute h-16 w-16 bg-indigo-500/10 rounded-full animate-pulse-ring" />
-                  <div className="relative h-12 w-12 bg-indigo-50 border border-indigo-100 rounded-full flex items-center justify-center shadow-xs">
-                    <Users className="h-6 w-6 text-indigo-600 animate-float" />
+                  <div className="relative h-12 w-12 bg-indigo-950/80 border border-indigo-500/30 rounded-full flex items-center justify-center shadow-lg">
+                    <Users className="h-6 w-6 text-indigo-400 animate-float" />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <p className="font-medium text-slate-600">No referrals yet</p>
-                  <p className="text-xs max-w-[200px] mx-auto text-slate-400">Share your code with friends. When they apply, they'll appear here.</p>
+                  <p className="font-bold text-slate-200">No referrals yet</p>
+                  <p className="text-xs max-w-[220px] mx-auto text-slate-400">Share your code with friends. When they apply, they'll appear here automatically.</p>
                 </div>
               </div>
             ) : (
               <table className="w-full text-xs text-left whitespace-nowrap min-w-[600px]">
-                <thead className="text-[11px] text-slate-500 bg-slate-50/80 uppercase sticky top-0 z-10 border-b">
+                <thead className="text-[11px] text-slate-400 bg-slate-950/80 uppercase sticky top-0 z-10 border-b border-slate-800 font-bold tracking-wider">
                   <tr>
-                    <th className="px-4 py-3 rounded-tl-lg">Candidate</th>
+                    <th className="px-4 py-3 rounded-tl-xl">Candidate</th>
                     <th className="px-4 py-3">Applied Role</th>
                     <th className="px-4 py-3">Date Applied</th>
                     <th className="px-4 py-3">Payment Status</th>
-                    <th className="px-4 py-3 text-right rounded-tr-lg">Your Commission</th>
+                    <th className="px-4 py-3 text-right rounded-tr-xl">Your Commission</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-800/60">
                   {candidates.map((r: any, idx: number) => {
                     const dateObj = new Date(r.created_at);
                     const isPaid = r.is_paid;
                     const commission = r.earned_commission || (isPaid ? 200 : 0);
                     return (
-                      <tr key={r.id || idx} className="hover:bg-indigo-50/30 transition-colors">
-                        <td className="px-4 py-3 font-medium text-slate-800 flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold shrink-0">
+                      <tr key={r.id || idx} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="px-4 py-3 font-medium text-white flex items-center gap-2.5">
+                          <div className="h-7 w-7 rounded-full bg-indigo-950/80 border border-indigo-500/30 text-indigo-300 flex items-center justify-center text-xs font-bold shrink-0">
                             {r.candidate_name ? r.candidate_name[0].toUpperCase() : "?"}
                           </div>
                           <div>
-                            <div className="font-bold">{r.candidate_name || "Unknown Candidate"}</div>
+                            <div className="font-bold text-white">{r.candidate_name || "Unknown Candidate"}</div>
                             {r.email && <div className="text-[10px] text-slate-400">{r.email}</div>}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-slate-600">{r.role_applied || "N/A"}</td>
-                        <td className="px-4 py-3 text-slate-500 text-xs">
+                        <td className="px-4 py-3 text-slate-300">{r.role_applied || "N/A"}</td>
+                        <td className="px-4 py-3 text-slate-400 text-xs">
                           {dateObj.toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider ${
+                          <span className={`px-2.5 py-1 text-[10px] font-extrabold rounded-full uppercase tracking-wider ${
                             isPaid
-                              ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                              : "bg-amber-50 text-amber-700 border border-amber-200"
+                              ? "bg-emerald-950/80 text-emerald-300 border border-emerald-500/30"
+                              : "bg-amber-950/80 text-amber-300 border border-amber-500/30"
                           }`}>
                             {isPaid ? "Paid & Verified" : "Pending Payment"}
                           </span>
@@ -376,15 +384,15 @@ export function EmployeeReferEarn() {
                         <td className="px-4 py-3 text-right font-extrabold">
                           {isPaid ? (
                             <div>
-                              <span className="text-purple-700 font-bold bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-lg">
+                              <span className="text-purple-300 font-bold bg-purple-950/80 border border-purple-500/30 px-2.5 py-1 rounded-xl shadow-xs">
                                 +₹{Number(r.net_earnings !== undefined ? r.net_earnings : Math.max(0, commission - Math.round(((r.gateway_fee || 12.89) / 2) * 100) / 100)).toFixed(2)}
                               </span>
-                              <div className="text-[9px] text-slate-400 font-normal mt-1">
+                              <div className="text-[9px] text-slate-500 font-normal mt-1">
                                 ₹{commission} gross − ₹{Number(r.gateway_fee_share ?? Math.round(((r.gateway_fee || 12.89) / 2) * 100) / 100).toFixed(2)} (50% PG &amp; Tax)
                               </div>
                             </div>
                           ) : (
-                            <span className="text-slate-400 font-normal">₹0 (Pending)</span>
+                            <span className="text-slate-500 font-normal">₹0 (Pending)</span>
                           )}
                         </td>
                       </tr>
