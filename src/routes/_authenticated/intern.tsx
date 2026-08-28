@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -38,6 +39,7 @@ import {
   clockIn, clockOut, getMyAttendance, getMyDocuments, regenerateMyDocuments,
   requestLeave, listMyLeaves, getMyLmsProgress, updateLmsProgress,
   raiseSupportQuery, listMySupportQueries, requestDeadlineExtension, submitTaskUrl,
+  requestDoubtSolvingSession, requestTaskResources, getLmsCourses, type LmsCourseItem,
   getOrCreateReferralCode, getMyReferralConversions, getDashboardSettings, getInternMentorDetails,
   dismissUrgentPopup, listHolidays
 } from "@/lib/operations.functions";
@@ -241,6 +243,30 @@ function InternDashboard() {
   // LMS functions
   const fetchLmsProgress = useServerFn(getMyLmsProgress);
   const doUpdateLmsProgress = useServerFn(updateLmsProgress);
+  const fetchLmsCourses = useServerFn(getLmsCourses);
+
+  // Doubt Solving Session & Resource Requests
+  const doRequestDoubt = useServerFn(requestDoubtSolvingSession);
+  const doRequestResource = useServerFn(requestTaskResources);
+
+  const [doubtModalOpen, setDoubtModalOpen] = useState(false);
+  const [doubtTaskId, setDoubtTaskId] = useState("");
+  const [doubtTaskTitle, setDoubtTaskTitle] = useState("");
+  const [doubtTopic, setDoubtTopic] = useState("");
+  const [doubtBlockers, setDoubtBlockers] = useState("");
+  const [doubtSlot, setDoubtSlot] = useState("");
+  const [doubtType, setDoubtType] = useState<"one_on_one" | "group_sync">("one_on_one");
+  const [isSubmittingDoubt, setIsSubmittingDoubt] = useState(false);
+
+  const [resourceModalOpen, setResourceModalOpen] = useState(false);
+  const [resourceTaskId, setResourceTaskId] = useState("");
+  const [resourceTaskTitle, setResourceTaskTitle] = useState("");
+  const [resourceType, setResourceType] = useState("API Credentials & Access Keys");
+  const [resourceDetails, setResourceDetails] = useState("");
+  const [resourceUrgency, setResourceUrgency] = useState<"normal" | "urgent" | "critical">("normal");
+  const [isSubmittingResource, setIsSubmittingResource] = useState(false);
+
+  const [lmsVideoModalId, setLmsVideoModalId] = useState<string | null>(null);
 
   const [selectedTaskWorkspace, setSelectedTaskWorkspace] = useState<any>(null);
   const [selectedDomain, setSelectedDomain] = useState<"tech" | "non_tech" | "management">("tech");
@@ -272,6 +298,11 @@ function InternDashboard() {
     queryKey: ["my-lms-progress", session?.user?.id],
     queryFn: () => fetchLmsProgress(),
     enabled: !!session?.user?.id,
+  });
+
+  const lmsCoursesQ = useQuery({
+    queryKey: ["intern-lms-courses"],
+    queryFn: () => fetchLmsCourses(),
   });
 
   const lmsProgressList = lmsProgressQ.data || [];
@@ -1636,7 +1667,7 @@ function InternDashboard() {
                   <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2 mb-1">
                     <BookMarked className="h-5 w-5 text-emerald-600" /> Structured Curriculum & Skill Badges
                   </h2>
-                  <p className="text-xs text-slate-500">Complete official source training modules customized for your domain: <span className="font-bold text-emerald-600 capitalize">{selectedDomain}</span></p>
+                  <p className="text-xs text-slate-500">Official certified training modules, video masterclasses, and skilling paths for: <span className="font-bold text-emerald-600 capitalize">{selectedDomain}</span></p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-slate-400">Filter Domain:</span>
@@ -1652,116 +1683,145 @@ function InternDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                {[
-                  // Tech Domain
-                  { source: "Google Cloud", title: "Google Cloud Computing Foundations", url: "https://cloud.google.com/learn", domain: "tech", badge: "Cloud Scholar" },
-                  { source: "Microsoft Learn", title: "Azure Fundamentals (AZ-900)", url: "https://learn.microsoft.com/en-us/training/paths/microsoft-azure-fundamentals-describe-cloud-concepts/", domain: "tech", badge: "Azure Specialist" },
-                  { source: "AWS Training", title: "AWS Cloud Practitioner Essentials", url: "https://aws.amazon.com/training/digital/aws-cloud-practitioner-essentials/", domain: "tech", badge: "AWS Architect" },
-                  { source: "GeeksforGeeks", title: "Data Structures & Algorithms (DSA) Essentials", url: "https://www.geeksforgeeks.org/courses/dsa-self-paced", domain: "tech", badge: "DSA Expert" },
-                  
-                  // Management Domain
-                  { source: "Google Careers", title: "Google Project Management Certificate", url: "https://grow.google/project-management/", domain: "management", badge: "Agile PM Scholar" },
-                  { source: "Microsoft Learn", title: "Power BI Data Analyst (PL-300)", url: "https://learn.microsoft.com/en-us/training/paths/get-started-power-bi/", domain: "management", badge: "Data Analyst Pro" },
-                  { source: "AWS Training", title: "AWS Cloud for Business Professionals", url: "https://aws.amazon.com/training/digital/aws-cloud-for-business-professionals/", domain: "management", badge: "AWS Cloud Business" },
-                  { source: "GeeksforGeeks", title: "Business Analytics & SQL Basics", url: "https://www.geeksforgeeks.org/sql-tutorial/", domain: "management", badge: "Operations Analyst" },
-                  
-                  // Non-Tech Domain
-                  { source: "Google Digital Garage", title: "Fundamentals of Digital Marketing", url: "https://learndigital.withgoogle.com/digitalgarage/course/digital-marketing", domain: "non_tech", badge: "Marketing Associate" },
-                  { source: "Microsoft Learn", title: "Dynamics 365 Marketing Fundamentals", url: "https://learn.microsoft.com/en-us/training/paths/dynamics-365-marketing-fundamentals/", domain: "non_tech", badge: "CRM Consultant" },
-                  { source: "AWS Training", title: "Digital Marketing & CRM Integration", url: "https://aws.amazon.com/digital-marketing/", domain: "non_tech", badge: "Digital Marketer" },
-                  { source: "GeeksforGeeks", title: "Search Engine Optimization (SEO) Masterclass", url: "https://www.geeksforgeeks.org/seo-tutorial/", domain: "non_tech", badge: "SEO Expert" }
-                ]
-                .filter(m => m.domain === selectedDomain)
-                .map((m, idx) => {
-                  const dbRecord = lmsProgressList.find((p: any) => p.source === m.source && p.title === m.title);
-                  const progress = dbRecord?.progress ?? 0;
-                  const completed = dbRecord?.completed ?? false;
+              {lmsCoursesQ.isLoading ? (
+                <div className="p-12 flex items-center justify-center gap-2 text-slate-400 text-sm">
+                  <Loader2 className="h-5 w-5 animate-spin" /> Loading curated courses...
+                </div>
+              ) : (() => {
+                const availableCourses: LmsCourseItem[] = (lmsCoursesQ.data || []).filter((c: LmsCourseItem) => {
+                  if (c.is_active === false) return false;
+                  const matchDomain = c.domain === "all" || c.domain === selectedDomain;
+                  const matchAudience =
+                    c.target_audience === "all" ||
+                    c.target_audience === "interns" ||
+                    (c.target_audience === "domain" && matchDomain) ||
+                    (c.target_audience === "specific_users" && c.target_user_ids?.includes(session?.user?.id || ""));
+                  return matchDomain && matchAudience;
+                });
 
+                if (availableCourses.length === 0) {
                   return (
-                    <div key={idx} className="rounded-xl border p-5 bg-white hover:shadow-md transition-all flex flex-col justify-between border-slate-200">
-                      <div>
-                        <div className="flex justify-between items-start">
-                          <span className="text-[9px] uppercase font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold border border-emerald-100">{m.source}</span>
-                          {completed && <span className="text-[9px] uppercase font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold border border-blue-100">Completed</span>}
-                        </div>
-                        <h3 className="font-bold text-xs text-slate-900 mt-3 line-clamp-2 min-h-[32px]">{m.title}</h3>
-                        
-                        <div className="mt-4">
-                          <div className="flex justify-between text-[11px] text-slate-500 mb-1">
-                            <span>Track Progress</span>
-                            <span className="font-bold text-slate-700">{progress}%</span>
-                          </div>
-                          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-emerald-500 rounded-full transition-all duration-350" style={{ width: `${progress}%` }} />
-                          </div>
-                        </div>
-
-                        {updatingCourseIdx === idx ? (
-                          <div className="mt-4 p-2 bg-slate-50 rounded-lg border flex items-center gap-2">
-                            <input 
-                              type="range" 
-                              min="0" 
-                              max="100" 
-                              value={courseProgressInput}
-                              onChange={(e) => setCourseProgressInput(parseInt(e.target.value))}
-                              className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-                            />
-                            <span className="text-xs font-mono font-bold w-8 text-right">{courseProgressInput}%</span>
-                            <Button 
-                              size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] h-6 px-2"
-                              onClick={async () => {
-                                try {
-                                  await doUpdateLmsProgress({
-                                    data: {
-                                      source: m.source,
-                                      title: m.title,
-                                      progress: courseProgressInput,
-                                      completed: courseProgressInput === 100,
-                                    }
-                                  });
-                                  toast.success("Progress saved!");
-                                  setUpdatingCourseIdx(null);
-                                  lmsProgressQ.refetch();
-                                } catch (e) {
-                                  toast.error("Failed to update progress");
-                                }
-                              }}
-                            >
-                              Save
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="mt-3 text-slate-500 hover:text-emerald-600 text-[10px] h-6 px-1.5 gap-1"
-                            onClick={() => {
-                              setUpdatingCourseIdx(idx);
-                              setCourseProgressInput(progress);
-                            }}
-                          >
-                            <RefreshCw className="h-3 w-3" /> Update Progress
-                          </Button>
-                        )}
-                      </div>
-
-                      <div className="mt-5 pt-3 border-t flex items-center justify-between text-xs">
-                        <span className="text-amber-700 font-semibold flex items-center gap-1"><Award className="h-3.5 w-3.5 text-amber-500" /> {m.badge}</span>
-                        <a 
-                          href={m.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold text-slate-700 flex items-center gap-0.5"
-                        >
-                          Learn Source ↗
-                        </a>
-                      </div>
+                    <div className="p-12 text-center text-slate-400 text-sm space-y-2">
+                      <BookOpen className="h-8 w-8 mx-auto text-slate-300" />
+                      <p>No courses assigned to your profile in this domain currently.</p>
                     </div>
                   );
-                })}
-              </div>
+                }
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                    {availableCourses.map((m, idx) => {
+                      const dbRecord = lmsProgressList.find((p: any) => p.source === m.source && p.title === m.title);
+                      const progress = dbRecord?.progress ?? 0;
+                      const completed = dbRecord?.completed ?? false;
+
+                      return (
+                        <div key={m.id || idx} className="rounded-xl border p-5 bg-white hover:shadow-md transition-all flex flex-col justify-between border-slate-200">
+                          <div>
+                            <div className="flex justify-between items-start">
+                              <span className="text-[9px] uppercase font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold border border-emerald-100">{m.source}</span>
+                              {completed && <span className="text-[9px] uppercase font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold border border-blue-100">Completed</span>}
+                            </div>
+                            <h3 className="font-bold text-xs text-slate-900 mt-3 line-clamp-2 min-h-[32px]">{m.title}</h3>
+                            
+                            {m.description && (
+                              <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-normal">{m.description}</p>
+                            )}
+
+                            <div className="mt-4">
+                              <div className="flex justify-between text-[11px] text-slate-500 mb-1">
+                                <span>Track Progress</span>
+                                <span className="font-bold text-slate-700">{progress}%</span>
+                              </div>
+                              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500 rounded-full transition-all duration-350" style={{ width: `${progress}%` }} />
+                              </div>
+                            </div>
+
+                            {updatingCourseIdx === idx ? (
+                              <div className="mt-4 p-2 bg-slate-50 rounded-lg border flex items-center gap-2">
+                                <input 
+                                  type="range" 
+                                  min="0" 
+                                  max="100" 
+                                  value={courseProgressInput}
+                                  onChange={(e) => setCourseProgressInput(parseInt(e.target.value))}
+                                  className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                                />
+                                <span className="text-xs font-mono font-bold w-8 text-right">{courseProgressInput}%</span>
+                                <Button 
+                                  size="sm"
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] h-6 px-2"
+                                  onClick={async () => {
+                                    try {
+                                      await doUpdateLmsProgress({
+                                        data: {
+                                          source: m.source,
+                                          title: m.title,
+                                          progress: courseProgressInput,
+                                          completed: courseProgressInput === 100,
+                                        }
+                                      });
+                                      toast.success("Progress saved!");
+                                      setUpdatingCourseIdx(null);
+                                      lmsProgressQ.refetch();
+                                    } catch (e) {
+                                      toast.error("Failed to update progress");
+                                    }
+                                  }}
+                                >
+                                  Save
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="mt-3 text-slate-500 hover:text-emerald-600 text-[10px] h-6 px-1.5 gap-1"
+                                onClick={() => {
+                                  setUpdatingCourseIdx(idx);
+                                  setCourseProgressInput(progress);
+                                }}
+                              >
+                                <RefreshCw className="h-3 w-3" /> Update Progress
+                              </Button>
+                            )}
+                          </div>
+
+                          <div className="mt-5 pt-3 border-t space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-amber-700 font-semibold flex items-center gap-1"><Award className="h-3.5 w-3.5 text-amber-500" /> {m.badge || "Skilling Badge"}</span>
+                              {m.estimated_hours && (
+                                <span className="text-[10px] text-slate-400 font-mono">{m.estimated_hours}h</span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 pt-1">
+                              {m.youtube_video_id ? (
+                                <Button
+                                  size="sm"
+                                  onClick={() => setLmsVideoModalId(m.youtube_video_id || null)}
+                                  className="flex-1 bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold h-7 gap-1"
+                                >
+                                  <Play className="h-3 w-3 fill-white" /> Watch Video
+                                </Button>
+                              ) : null}
+                              <a 
+                                href={m.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex-1 text-center px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold text-slate-700 inline-flex items-center justify-center gap-0.5"
+                              >
+                                Open Course ↗
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -2436,6 +2496,13 @@ function InternDashboard() {
                               <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-0.5">
                                 <CreditCard className="h-3 w-3 text-amber-600" /> {task.credits || 10} Credits
                               </span>
+
+                              {/* Collaborative Team Badge */}
+                              {(task.team_name || task.team_id || task.assignment_mode === "team") && (
+                                <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
+                                  <Users className="h-3 w-3 text-purple-600" /> {task.team_name || `Collaborative Team (${task.team_size || 2})`}
+                                </span>
+                              )}
                             </div>
 
                             {task.description && (
@@ -2444,6 +2511,16 @@ function InternDashboard() {
 
                             {/* Action links row & Resources */}
                             <div className="mt-4 flex flex-wrap gap-2">
+                              {task.task_meet_link && (
+                                <a 
+                                  href={task.task_meet_link} 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5"
+                                >
+                                  <Video className="h-3.5 w-3.5" /> 📹 Join Task Meet
+                                </a>
+                              )}
                               {(task.task_file_url || task.project_requirements) && (
                                 <a href={task.task_file_url || task.project_requirements} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
                                   <FolderOpen className="h-3.5 w-3.5" /> Project Files
@@ -2513,7 +2590,42 @@ function InternDashboard() {
                               </Button>
                             )}
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap justify-end">
+                              {/* Request Doubt Solving Session */}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-xs gap-1 border-amber-300 bg-amber-50/60 hover:bg-amber-100 text-amber-900 font-bold"
+                                onClick={() => {
+                                  setDoubtTaskId(task.id);
+                                  setDoubtTaskTitle(task.title);
+                                  setDoubtTopic("");
+                                  setDoubtBlockers("");
+                                  setDoubtSlot("");
+                                  setDoubtType("one_on_one");
+                                  setDoubtModalOpen(true);
+                                }}
+                              >
+                                <HelpCircle className="h-3.5 w-3.5 text-amber-600" /> Request Doubt Session
+                              </Button>
+
+                              {/* Request Resources */}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-xs gap-1 border-indigo-300 bg-indigo-50/60 hover:bg-indigo-100 text-indigo-900 font-bold"
+                                onClick={() => {
+                                  setResourceTaskId(task.id);
+                                  setResourceTaskTitle(task.title);
+                                  setResourceDetails("");
+                                  setResourceType("API Credentials & Access Keys");
+                                  setResourceUrgency("normal");
+                                  setResourceModalOpen(true);
+                                }}
+                              >
+                                <FolderOpen className="h-3.5 w-3.5 text-indigo-600" /> Request Resources
+                              </Button>
+
                               {/* Contact Mentor */}
                               <Button 
                                 size="sm" 
@@ -4576,6 +4688,226 @@ function InternDashboard() {
           </div>
         </div>
       )}
+
+      {/* ─── REQUEST DOUBT SOLVING SESSION DIALOG ─── */}
+      <Dialog open={doubtModalOpen} onOpenChange={setDoubtModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+              <HelpCircle className="h-5 w-5 text-amber-600" />
+              Request Doubt Solving Session
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Schedule an expedited 1-on-1 or group live sync with your mentor for: <strong>"{doubtTaskTitle}"</strong>
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!doubtTopic.trim()) {
+                toast.error("Please enter the specific topic or question you need help with.");
+                return;
+              }
+              setIsSubmittingDoubt(true);
+              try {
+                await doRequestDoubt({
+                  data: {
+                    taskId: doubtTaskId,
+                    taskTitle: doubtTaskTitle,
+                    doubtTopic: doubtTopic.trim(),
+                    blockers: doubtBlockers.trim() || null,
+                    preferredSlot: doubtSlot.trim() || null,
+                    sessionType: doubtType,
+                  },
+                });
+                toast.success("Doubt solving session request dispatched to mentor & directorate!");
+                setDoubtModalOpen(false);
+                qc.invalidateQueries({ queryKey: ["my-support-queries"] });
+                qc.invalidateQueries({ queryKey: ["my-user-notifications"] });
+              } catch (err: any) {
+                toast.error("Failed to request doubt session: " + err.message);
+              } finally {
+                setIsSubmittingDoubt(false);
+              }
+            }}
+            className="space-y-3.5 py-2 text-xs"
+          >
+            <div className="space-y-1">
+              <label className="font-bold text-slate-700 block">Doubt / Technical Topic *</label>
+              <Input
+                required
+                placeholder="e.g. Supabase RLS policy syntax error on deliverables query"
+                value={doubtTopic}
+                onChange={(e) => setDoubtTopic(e.target.value)}
+                className="text-xs"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-bold text-slate-700 block">Current Blockers &amp; Attempts</label>
+              <textarea
+                rows={2}
+                placeholder="What error are you seeing? What steps have you tried so far?"
+                value={doubtBlockers}
+                onChange={(e) => setDoubtBlockers(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700 block">Session Format</label>
+                <select
+                  value={doubtType}
+                  onChange={(e) => setDoubtType(e.target.value as any)}
+                  className="w-full rounded-lg border border-slate-300 p-2 text-xs font-semibold bg-white"
+                >
+                  <option value="one_on_one">1-on-1 Mentorship Sync</option>
+                  <option value="group_sync">Group Team Sync</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700 block">Preferred Time Slot</label>
+                <Input
+                  placeholder="e.g. Today 5:00 PM or Tomorrow Morning"
+                  value={doubtSlot}
+                  onChange={(e) => setDoubtSlot(e.target.value)}
+                  className="text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end gap-2 border-t">
+              <Button type="button" variant="ghost" size="sm" onClick={() => setDoubtModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmittingDoubt} size="sm" className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-1.5">
+                {isSubmittingDoubt ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                Dispatch Doubt Request
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── REQUEST RESOURCES DIALOG ─── */}
+      <Dialog open={resourceModalOpen} onOpenChange={setResourceModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+              <FolderOpen className="h-5 w-5 text-indigo-600" />
+              Request Project Resources
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Request software credentials, API keys, Figma files, datasets, or documentation for <strong>"{resourceTaskTitle}"</strong>
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!resourceDetails.trim()) {
+                toast.error("Please explain what resources you need.");
+                return;
+              }
+              setIsSubmittingResource(true);
+              try {
+                await doRequestResource({
+                  data: {
+                    taskId: resourceTaskId,
+                    taskTitle: resourceTaskTitle,
+                    resourceType: resourceType,
+                    resourceDetails: resourceDetails.trim(),
+                    urgency: resourceUrgency,
+                  },
+                });
+                toast.success("Resource request submitted to operations team!");
+                setResourceModalOpen(false);
+                qc.invalidateQueries({ queryKey: ["my-access-requests"] });
+                qc.invalidateQueries({ queryKey: ["my-user-notifications"] });
+              } catch (err: any) {
+                toast.error("Failed to submit resource request: " + err.message);
+              } finally {
+                setIsSubmittingResource(false);
+              }
+            }}
+            className="space-y-3.5 py-2 text-xs"
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700 block">Resource Type *</label>
+                <select
+                  value={resourceType}
+                  onChange={(e) => setResourceType(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 p-2 text-xs font-semibold bg-white"
+                >
+                  <option value="API Credentials & Access Keys">API Keys / Secrets</option>
+                  <option value="Cloud Sandbox Access (AWS/GCP/Azure)">Cloud Sandbox Access</option>
+                  <option value="Figma / UI Design Assets">Figma / UI Design Assets</option>
+                  <option value="Project Dataset / SQL Dump">Dataset / SQL Dump</option>
+                  <option value="Software License / Tool Access">Software License (GitHub/Vercel)</option>
+                  <option value="Technical Documentation / Guidelines">Specs & Guidelines</option>
+                  <option value="Other Project Resource">Other Custom Resource</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700 block">Urgency Level</label>
+                <select
+                  value={resourceUrgency}
+                  onChange={(e) => setResourceUrgency(e.target.value as any)}
+                  className="w-full rounded-lg border border-slate-300 p-2 text-xs font-semibold bg-white"
+                >
+                  <option value="normal">Normal (Within 24h)</option>
+                  <option value="urgent">Urgent (Blocked Milestone)</option>
+                  <option value="critical">Critical (Immediate Blocker)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-bold text-slate-700 block">Detailed Requirements &amp; Justification *</label>
+              <textarea
+                required
+                rows={3}
+                placeholder="Specify exact repo name, API scope, service account email, or dataset file needed..."
+                value={resourceDetails}
+                onChange={(e) => setResourceDetails(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="pt-2 flex justify-end gap-2 border-t">
+              <Button type="button" variant="ghost" size="sm" onClick={() => setResourceModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmittingResource} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold gap-1.5">
+                {isSubmittingResource ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                Submit Resource Request
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── LMS VIDEO PLAYER MODAL ─── */}
+      <Dialog open={!!lmsVideoModalId} onOpenChange={(open) => !open && setLmsVideoModalId(null)}>
+        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-black border-slate-800">
+          <div className="relative aspect-video w-full">
+            {lmsVideoModalId && (
+              <iframe
+                src={`https://www.youtube.com/embed/${lmsVideoModalId}?autoplay=1`}
+                title="LMS Course Video"
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

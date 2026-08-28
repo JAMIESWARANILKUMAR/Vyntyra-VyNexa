@@ -42,6 +42,7 @@ import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import EmailAutomationHub from "@/components/email-automation-hub";
 import { SmartAvatar } from "@/components/SmartAvatar";
 import { AdminInternTasksView } from "@/components/admin-intern-tasks-view";
+import { AdminLmsManager } from "@/components/admin-lms-manager";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { toast } from "sonner";
 import {
@@ -1496,6 +1497,11 @@ function OperationsDashboard() {
                   ))
                 )}
               </div>
+            </section>
+
+            {/* LMS & Dynamic Course Directorate */}
+            <section id="admin-lms-section">
+              <AdminLmsManager />
             </section>
           </div>
         )}

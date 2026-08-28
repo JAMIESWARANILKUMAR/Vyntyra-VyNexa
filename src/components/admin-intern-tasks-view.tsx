@@ -11,7 +11,7 @@ import { InternTaskAssignmentModal } from "@/components/intern-task-assignment-m
 import {
   ClipboardList, Search, Plus, CheckCircle2, Clock, AlertTriangle, ExternalLink,
   Trash2, Sparkles, Filter, FileText, Check, RotateCcw, User, Eye, Download, Bell,
-  Mail, MessageSquare, Loader2, Send
+  Mail, MessageSquare, Loader2, Send, Users, Video
 } from "lucide-react";
 import { sendTaskNotification } from "@/lib/notifications.functions";
 import { sendTaskNotificationEmail, generateTaskWhatsApp } from "@/lib/notifications-omni.functions";
@@ -487,6 +487,12 @@ export function AdminInternTasksView() {
                       <Badge variant="outline" className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 border-amber-200 flex items-center gap-0.5">
                         <CreditCard className="h-3 w-3 text-amber-600" /> {t.credits || 10} Credits
                       </Badge>
+
+                      {(t.team_name || t.team_id || t.assignment_mode === "team") && (
+                        <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[10px] flex items-center gap-1">
+                          <Users className="h-3 w-3 text-purple-700" /> {t.team_name || `Collaborative Team (${t.team_size || 2})`}
+                        </Badge>
+                      )}
                     </div>
 
                     <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">{t.description}</p>
@@ -508,6 +514,17 @@ export function AdminInternTasksView() {
                           className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium"
                         >
                           <FileText className="h-3.5 w-3.5" /> View Task File
+                        </a>
+                      )}
+
+                      {t.task_meet_link && (
+                        <a
+                          href={t.task_meet_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-700 hover:underline inline-flex items-center gap-1 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200"
+                        >
+                          <Video className="h-3.5 w-3.5 text-blue-600" /> Task Meet Link
                         </a>
                       )}
                     </div>

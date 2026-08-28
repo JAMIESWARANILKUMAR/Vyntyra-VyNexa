@@ -650,13 +650,22 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
     title: z.string().min(1),
     description: z.string().optional(),
     task_file_url: z.string().optional(),
+    task_doc_url: z.string().optional(),
+    task_meet_link: z.string().optional(),
+    assignment_mode: z.enum(["individual", "team", "pool"]).optional().default("individual"),
+    team_name: z.string().optional(),
+    team_size: z.number().optional(),
+    team_member_names: z.array(z.string()).optional(),
     due_date: z.string().optional(),
     priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
+    level: z.string().optional().default("Beginner"),
+    credits: z.number().optional().default(10),
     target_intern_ids: z.array(z.string()).min(1),
     save_template: z.boolean().optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const now = new Date().toISOString();
+    const teamId = data.assignment_mode === "team" ? `team-${Date.now()}` : null;
 
     // Fetch existing tasks to prevent duplicates
     const { data: existingTasks } = await supabase
@@ -671,6 +680,15 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
         title: data.title,
         description: data.description || "Manual Internship Task",
         project_requirements: data.task_file_url || null,
+        task_doc_url: data.task_doc_url || null,
+        task_meet_link: data.task_meet_link || null,
+        assignment_mode: data.assignment_mode || "individual",
+        team_id: teamId,
+        team_name: data.team_name || (data.assignment_mode === "team" ? `Collaborative Team (${data.target_intern_ids.length})` : null),
+        team_size: data.assignment_mode === "team" ? data.target_intern_ids.length : 1,
+        team_member_names: data.team_member_names || null,
+        level: data.level || "Beginner",
+        credits: data.credits || 10,
         due_date: data.due_date || null,
         priority: data.priority || "medium",
         assigned_to: internId,
@@ -688,9 +706,22 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
 
     const { error } = await supabase.from("tasks").insert(taskPayloads);
     if (error) {
+      // Fallback omitting custom columns if strict schema is in place
       const fallbackPayloads = taskPayloads.map(t => {
         const copy: any = { ...t };
         delete copy.target_user_id;
+        delete copy.team_id;
+        delete copy.team_name;
+        delete copy.team_size;
+        delete copy.team_member_names;
+        delete copy.task_meet_link;
+        delete copy.assignment_mode;
+        // Embed team info into description if fallback
+        if (data.assignment_mode === "team" && data.team_member_names?.length) {
+          copy.description = `[👥 Team: ${data.team_member_names.join(", ")}]${data.task_meet_link ? ` [Meet: ${data.task_meet_link}]` : ""}\n\n${copy.description}`;
+        } else if (data.task_meet_link) {
+          copy.description = `[Meet: ${data.task_meet_link}]\n\n${copy.description}`;
+        }
         return copy;
       });
       const { error: err2 } = await supabase.from("tasks").insert(fallbackPayloads);
@@ -708,6 +739,425 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
     }
 
     return { success: true, count: taskPayloads.length };
+  });
+
+export interface LmsCourseItem {
+  id: string;
+  title: string;
+  description: string;
+  source: string;
+  url: string;
+  youtube_video_id?: string | null;
+  domain: "tech" | "management" | "non_tech" | "all";
+  target_audience: "all" | "interns" | "employees" | "domain" | "specific_users";
+  target_user_ids?: string[];
+  badge: string;
+  level: "Beginner" | "Intermediate" | "Advanced";
+  estimated_hours?: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export const getLmsCourses = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const adminClient = getAdminClient();
+    
+    let courses: LmsCourseItem[] = [];
+    try {
+      const { data } = await adminClient
+        .from("site_settings")
+        .select("*")
+        .eq("id", "custom_lms_courses")
+        .maybeSingle();
+
+      if (data?.value?.courses && Array.isArray(data.value.courses)) {
+        courses = data.value.courses;
+      }
+    } catch (err) {
+      console.warn("[getLmsCourses] fetch error:", err);
+    }
+
+    if (courses.length === 0) {
+      courses = [
+        {
+          id: "tech-gcp-foundations",
+          title: "Google Cloud Computing & Architecture Foundations",
+          description: "Master modern cloud architecture, compute engines, storage buckets, and serverless scaling on Google Cloud Platform.",
+          source: "Google Cloud",
+          url: "https://cloud.google.com/learn",
+          youtube_video_id: "EN4fEbcFZ_E",
+          domain: "tech",
+          target_audience: "all",
+          badge: "Cloud Scholar",
+          level: "Beginner",
+          estimated_hours: 12,
+          is_active: true,
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "tech-azure-fundamentals",
+          title: "Microsoft Azure Cloud Fundamentals (AZ-900)",
+          description: "Core Azure architecture, security management, identity governance, and enterprise cloud compliance.",
+          source: "Microsoft Learn",
+          url: "https://learn.microsoft.com/en-us/training/paths/microsoft-azure-fundamentals-describe-cloud-concepts/",
+          youtube_video_id: "NKEFW2WJbcE",
+          domain: "tech",
+          target_audience: "all",
+          badge: "Azure Specialist",
+          level: "Beginner",
+          estimated_hours: 8,
+          is_active: true,
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "tech-dsa-masterclass",
+          title: "Data Structures & Algorithms (DSA) Full Course",
+          description: "Comprehensive algorithmic problem solving, trees, graphs, dynamic programming, and complexity optimization.",
+          source: "YouTube",
+          url: "https://www.youtube.com/watch?v=8hly31xKli0",
+          youtube_video_id: "8hly31xKli0",
+          domain: "tech",
+          target_audience: "all",
+          badge: "DSA Expert",
+          level: "Intermediate",
+          estimated_hours: 24,
+          is_active: true,
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "tech-fullstack-react-node",
+          title: "Full Stack Web Development (React, TypeScript & Node.js)",
+          description: "Build robust, scalable enterprise web applications with TypeScript, modern React hooks, and PostgreSQL.",
+          source: "YouTube",
+          url: "https://www.youtube.com/watch?v=nu_pCVPKzTk",
+          youtube_video_id: "nu_pCVPKzTk",
+          domain: "tech",
+          target_audience: "all",
+          badge: "Full Stack Engineer",
+          level: "Intermediate",
+          estimated_hours: 18,
+          is_active: true,
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "mgmt-google-pm",
+          title: "Google Project Management & Agile Sprint Delivery",
+          description: "Learn Agile project frameworks, risk mitigation, stakeholder management, and milestone tracking.",
+          source: "Google Careers",
+          url: "https://grow.google/project-management/",
+          youtube_video_id: "uWPIhoY54e8",
+          domain: "management",
+          target_audience: "all",
+          badge: "Agile PM Scholar",
+          level: "Beginner",
+          estimated_hours: 14,
+          is_active: true,
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "mgmt-powerbi-analytics",
+          title: "Power BI & Business Intelligence Dashboarding",
+          description: "Transform business data into actionable visual KPI reports, DAX modeling, and real-time dashboards.",
+          source: "Microsoft Learn",
+          url: "https://learn.microsoft.com/en-us/training/paths/get-started-power-bi/",
+          youtube_video_id: "3u7MQz1EyPY",
+          domain: "management",
+          target_audience: "all",
+          badge: "Data Analyst Pro",
+          level: "Intermediate",
+          estimated_hours: 10,
+          is_active: true,
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "nontech-digital-marketing",
+          title: "Fundamentals of Digital Marketing & Performance Growth",
+          description: "SEO optimization, social ads campaigns, conversion funnels, and CRM audience lifecycle management.",
+          source: "Google Digital Garage",
+          url: "https://learndigital.withgoogle.com/digitalgarage/course/digital-marketing",
+          youtube_video_id: "bixR-KIJKYM",
+          domain: "non_tech",
+          target_audience: "all",
+          badge: "Marketing Associate",
+          level: "Beginner",
+          estimated_hours: 10,
+          is_active: true,
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "nontech-crm-sales",
+          title: "Enterprise CRM Systems & Lead Conversion Strategies",
+          description: "End-to-end B2B sales pipeline management, customer relationship scoring, and automated outreach.",
+          source: "Microsoft Learn",
+          url: "https://learn.microsoft.com/en-us/training/paths/dynamics-365-marketing-fundamentals/",
+          youtube_video_id: "H2LpZqF_0Gk",
+          domain: "non_tech",
+          target_audience: "all",
+          badge: "CRM Consultant",
+          level: "Intermediate",
+          estimated_hours: 8,
+          is_active: true,
+          created_at: new Date().toISOString(),
+        }
+      ];
+    }
+
+    return courses;
+  });
+
+export const saveLmsCourse = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    id: z.string().optional(),
+    title: z.string().min(1),
+    description: z.string().optional().default(""),
+    source: z.string().min(1),
+    url: z.string().min(1),
+    youtube_video_id: z.string().optional().nullable(),
+    domain: z.enum(["tech", "management", "non_tech", "all"]).default("all"),
+    target_audience: z.enum(["all", "interns", "employees", "domain", "specific_users"]).default("all"),
+    target_user_ids: z.array(z.string()).optional().default([]),
+    badge: z.string().optional().default("Skilling Badge"),
+    level: z.enum(["Beginner", "Intermediate", "Advanced"]).default("Beginner"),
+    estimated_hours: z.number().optional().default(5),
+    is_active: z.boolean().optional().default(true),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const adminClient = getAdminClient();
+    const courseId = data.id || `course-${Date.now()}`;
+
+    let ytId = data.youtube_video_id || null;
+    if (!ytId && data.url.includes("youtu")) {
+      const match = data.url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+      if (match && match[1]) ytId = match[1];
+    }
+
+    const newCourseItem: LmsCourseItem = {
+      id: courseId,
+      title: data.title,
+      description: data.description,
+      source: data.source,
+      url: data.url,
+      youtube_video_id: ytId,
+      domain: data.domain,
+      target_audience: data.target_audience,
+      target_user_ids: data.target_user_ids,
+      badge: data.badge,
+      level: data.level,
+      estimated_hours: data.estimated_hours,
+      is_active: data.is_active,
+      created_at: new Date().toISOString(),
+    };
+
+    let courses: LmsCourseItem[] = [];
+    try {
+      const { data: row } = await adminClient
+        .from("site_settings")
+        .select("*")
+        .eq("id", "custom_lms_courses")
+        .maybeSingle();
+      if (row?.value?.courses && Array.isArray(row.value.courses)) {
+        courses = row.value.courses;
+      }
+    } catch (e) {}
+
+    const existingIdx = courses.findIndex(c => c.id === courseId);
+    if (existingIdx !== -1) {
+      courses[existingIdx] = newCourseItem;
+    } else {
+      courses.unshift(newCourseItem);
+    }
+
+    await adminClient.from("site_settings").upsert({
+      id: "custom_lms_courses",
+      value: { courses },
+      updated_at: new Date().toISOString(),
+      updated_by: context.userId,
+    });
+
+    return { success: true, course: newCourseItem };
+  });
+
+export const deleteLmsCourse = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    courseId: z.string().min(1),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const adminClient = getAdminClient();
+    
+    let courses: LmsCourseItem[] = [];
+    try {
+      const { data: row } = await adminClient
+        .from("site_settings")
+        .select("*")
+        .eq("id", "custom_lms_courses")
+        .maybeSingle();
+      if (row?.value?.courses && Array.isArray(row.value.courses)) {
+        courses = row.value.courses;
+      }
+    } catch (e) {}
+
+    const filtered = courses.filter(c => c.id !== data.courseId);
+
+    await adminClient.from("site_settings").upsert({
+      id: "custom_lms_courses",
+      value: { courses: filtered },
+      updated_at: new Date().toISOString(),
+      updated_by: context.userId,
+    });
+
+    return { success: true };
+  });
+
+export const requestDoubtSolvingSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    taskId: z.string().min(1),
+    taskTitle: z.string().min(1),
+    doubtTopic: z.string().min(1),
+    blockers: z.string().optional().nullable(),
+    preferredSlot: z.string().optional().nullable(),
+    sessionType: z.enum(["one_on_one", "group_sync"]).default("one_on_one"),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const adminClient = getAdminClient();
+    const now = new Date().toISOString();
+
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("id, full_name, email, intern_id, mentor_id, department")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const requesterName = profile?.full_name || "Intern";
+    const internId = profile?.intern_id || "";
+
+    const notifMessage = `Intern ${requesterName} (${internId}) requested a ${data.sessionType === "one_on_one" ? "1-on-1" : "Group"} Doubt Solving Session for task "${data.taskTitle}". Topic: "${data.doubtTopic}". Preferred Time: ${data.preferredSlot || "Earliest Available"}.`;
+
+    const { data: adminRoles } = await adminClient
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin");
+
+    const recipientUserIds = new Set<string>();
+    (adminRoles || []).forEach((r: any) => recipientUserIds.add(r.user_id));
+    if (profile?.mentor_id) recipientUserIds.add(profile.mentor_id);
+
+    const notifPayloads = Array.from(recipientUserIds).map(uid => ({
+      user_id: uid,
+      title: `🙋 Doubt Solving Request: ${data.taskTitle}`,
+      message: notifMessage,
+      type: "doubt_session_request",
+      is_read: false,
+      created_at: now,
+    }));
+
+    notifPayloads.push({
+      user_id: context.userId,
+      title: `Doubt Solving Request Dispatched`,
+      message: `Your request for a doubt solving session on "${data.taskTitle}" has been dispatched to your mentor and the operations directorate.`,
+      type: "doubt_session_request",
+      is_read: false,
+      created_at: now,
+    });
+
+    if (notifPayloads.length > 0) {
+      try {
+        await adminClient.from("user_notifications").insert(notifPayloads);
+      } catch (e) {}
+    }
+
+    try {
+      await adminClient.from("support_queries").insert({
+        user_id: context.userId,
+        category: "technical",
+        subject: `Doubt Session Request: ${data.taskTitle}`,
+        message: `Task: ${data.taskTitle}\nTopic: ${data.doubtTopic}\nBlockers: ${data.blockers || "None"}\nPreferred Time: ${data.preferredSlot || "Immediate"}\nSession Type: ${data.sessionType}`,
+        status: "open",
+        priority: "high",
+        created_at: now,
+      });
+    } catch (err) {
+      console.warn("[requestDoubtSolvingSession] support_queries log skipped:", err);
+    }
+
+    return { success: true };
+  });
+
+export const requestTaskResources = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    taskId: z.string().min(1),
+    taskTitle: z.string().min(1),
+    resourceType: z.string().min(1),
+    resourceDetails: z.string().min(1),
+    urgency: z.enum(["normal", "urgent", "critical"]).default("normal"),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const adminClient = getAdminClient();
+    const now = new Date().toISOString();
+
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("id, full_name, intern_id, mentor_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const requesterName = profile?.full_name || "Intern";
+    const internId = profile?.intern_id || "";
+
+    const notifMessage = `Intern ${requesterName} (${internId}) requested ${data.resourceType} for task "${data.taskTitle}". Details: "${data.resourceDetails}". Urgency: ${data.urgency.toUpperCase()}.`;
+
+    const { data: adminRoles } = await adminClient
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin");
+
+    const recipientUserIds = new Set<string>();
+    (adminRoles || []).forEach((r: any) => recipientUserIds.add(r.user_id));
+    if (profile?.mentor_id) recipientUserIds.add(profile.mentor_id);
+
+    const notifPayloads = Array.from(recipientUserIds).map(uid => ({
+      user_id: uid,
+      title: `📦 Resource Request [${data.urgency.toUpperCase()}]: ${data.resourceType}`,
+      message: notifMessage,
+      type: "resource_request",
+      is_read: false,
+      created_at: now,
+    }));
+
+    notifPayloads.push({
+      user_id: context.userId,
+      title: `Resource Request Submitted`,
+      message: `Your request for ${data.resourceType} for "${data.taskTitle}" has been submitted to the operations team.`,
+      type: "resource_request",
+      is_read: false,
+      created_at: now,
+    });
+
+    if (notifPayloads.length > 0) {
+      try {
+        await adminClient.from("user_notifications").insert(notifPayloads);
+      } catch (e) {}
+    }
+
+    try {
+      await adminClient.from("support_queries").insert({
+        user_id: context.userId,
+        category: "resource",
+        subject: `Resource Request: ${data.resourceType} for ${data.taskTitle}`,
+        message: `Task: ${data.taskTitle}\nResource Type: ${data.resourceType}\nDetails: ${data.resourceDetails}\nUrgency: ${data.urgency}`,
+        status: "open",
+        priority: data.urgency === "critical" ? "urgent" : "medium",
+        created_at: now,
+      });
+    } catch (err) {
+      console.warn("[requestTaskResources] support_queries log skipped:", err);
+    }
+
+    return { success: true };
   });
 
 export const listAllInternTasksWithProgress = createServerFn({ method: "GET" })

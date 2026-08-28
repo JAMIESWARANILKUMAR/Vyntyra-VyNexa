@@ -90,8 +90,14 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   const [manualFileUrl, setManualFileUrl] = useState("");
   const [manualDocUrl, setManualDocUrl] = useState("");
   const [manualReportUrl, setManualReportUrl] = useState("");
+  const [manualMeetLink, setManualMeetLink] = useState("");
+  const [assignmentMode, setAssignmentMode] = useState<"individual" | "team" | "all">("individual");
+  const [teamSize, setTeamSize] = useState<2 | 3 | 4>(2);
+  const [teamName, setTeamName] = useState("");
   const [manualDueDate, setManualDueDate] = useState("");
   const [manualPriority, setManualPriority] = useState<"low" | "medium" | "high">("medium");
+  const [manualLevel, setManualLevel] = useState<"Beginner" | "Intermediate" | "Advanced">("Beginner");
+  const [manualCredits, setManualCredits] = useState<number>(10);
   const [saveTemplate, setSaveTemplate] = useState(false);
   const [isSubmittingManual, setIsSubmittingManual] = useState(false);
 
@@ -172,7 +178,6 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
       const tasks: ParsedTask[] = [];
 
       for (let i = 1; i < lines.length; i++) {
-        // Handle quote-escaped values
         const row = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((val) => val.trim().replace(/^["']|["']$/g, ""));
         const title = titleIdx !== -1 && row[titleIdx] ? row[titleIdx] : row[0] || `Internship Task ${i}`;
         const description = descIdx !== -1 && row[descIdx] ? row[descIdx] : "Complete designated internship project requirements.";
@@ -210,9 +215,20 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
 
   const handleToggleIntern = (id: string) => {
     setSelectAll(false);
-    setSelectedInternIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    setSelectedInternIds((prev) => {
+      if (assignmentMode === "individual") {
+        return prev.includes(id) ? [] : [id];
+      }
+      if (assignmentMode === "team") {
+        if (prev.includes(id)) return prev.filter((i) => i !== id);
+        if (prev.length >= teamSize) {
+          toast.info(`Team size limit is ${teamSize} members. Deselect one or increase team size.`);
+          return prev;
+        }
+        return [...prev, id];
+      }
+      return prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id];
+    });
   };
 
   // Submit Manual Task
@@ -223,22 +239,49 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
       return;
     }
 
-    const targetIds = selectAll ? interns.map((i) => i.id) : selectedInternIds;
+    let targetIds: string[] = [];
+    if (assignmentMode === "all" && selectAll) {
+      targetIds = interns.map((i) => i.id);
+    } else if (assignmentMode === "team") {
+      if (selectedInternIds.length < 2) {
+        toast.error(`Please select at least 2 team members for collaborative team assignment (Target: ${teamSize} members).`);
+        return;
+      }
+      targetIds = selectedInternIds.slice(0, teamSize);
+    } else if (assignmentMode === "individual") {
+      if (selectedInternIds.length === 0) {
+        toast.error("Please select an intern to assign this task to.");
+        return;
+      }
+      targetIds = [selectedInternIds[0]];
+    } else {
+      targetIds = selectedInternIds;
+    }
+
     if (targetIds.length === 0) {
       toast.error("Please select at least one intern to assign this task to.");
       return;
     }
 
+    const assignedInterns = interns.filter((i: any) => targetIds.includes(i.id));
+    const teamMemberNames = assignedInterns.map((i: any) => i.full_name || i.email);
+
     setIsSubmittingManual(true);
     try {
       await doManualAssign({
         data: {
-          title: manualTitle,
-          description: manualDescription,
-          task_file_url: manualFileUrl,
-          task_doc_url: manualDocUrl,
-          report_template_url: manualReportUrl,
-          due_date: manualDueDate,
+          title: manualTitle.trim(),
+          description: manualDescription.trim(),
+          task_file_url: manualFileUrl.trim() || undefined,
+          task_doc_url: manualDocUrl.trim() || undefined,
+          task_meet_link: manualMeetLink.trim() || undefined,
+          assignment_mode: assignmentMode === "team" ? "team" : "individual",
+          team_name: assignmentMode === "team" ? (teamName.trim() || `Collaborative Team (${targetIds.length})`) : undefined,
+          team_size: assignmentMode === "team" ? targetIds.length : 1,
+          team_member_names: teamMemberNames,
+          level: manualLevel,
+          credits: manualCredits,
+          due_date: manualDueDate || undefined,
           priority: manualPriority,
           target_intern_ids: targetIds,
           save_template: saveTemplate,
@@ -249,7 +292,6 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
       if (saveTemplate) qc.invalidateQueries({ queryKey: ["task-templates"] });
       
       if (notifyViaEmail) {
-        const assignedInterns = interns.filter((i: any) => targetIds.includes(i.id));
         for (const intern of assignedInterns) {
           if (intern.email) {
             try {
@@ -271,8 +313,11 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
         }
       }
 
-      toast.success(`Task assigned successfully to ${targetIds.length} intern(s)!` + (notifyViaEmail ? " Email notifications sent." : ""));
-      onClose();
+      toast.success(
+        assignmentMode === "team"
+          ? `Collaborative team task created for ${targetIds.length} members!`
+          : `Task assigned successfully to ${targetIds.length} intern(s)!` + (notifyViaEmail ? " Email notifications sent." : "")
+      );
     } catch (err: any) {
       toast.error(err.message || "Failed to assign task");
     } finally {
@@ -582,6 +627,84 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
             </div>
 
             <form onSubmit={handleManualSubmit} className="space-y-4">
+              {/* Assignment Mode Selector */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Users className="h-4 w-4 text-indigo-600" /> Assignment Mode & Target
+                  </Label>
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    {assignmentMode === "team" ? `Team of ${teamSize} Members` : assignmentMode === "individual" ? "Single Intern" : "Bulk All"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  {[
+                    { id: "individual", label: "👤 Individual Intern", desc: "Assign task to 1 specific intern" },
+                    { id: "team", label: "👥 Collaborative Team", desc: "Group 2, 3, or 4 interns together" },
+                    { id: "all", label: "🌐 All Active Interns", desc: "Assign to everyone / domain" },
+                  ].map((mode) => (
+                    <button
+                      key={mode.id}
+                      type="button"
+                      onClick={() => {
+                        setAssignmentMode(mode.id as any);
+                        setSelectedInternIds([]);
+                        setSelectAll(mode.id === "all");
+                      }}
+                      className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                        assignmentMode === mode.id
+                          ? "bg-white border-indigo-600 shadow-xs ring-2 ring-indigo-500/20 text-indigo-950"
+                          : "bg-white/60 border-slate-200 text-slate-600 hover:bg-white"
+                      }`}
+                    >
+                      <span className="font-bold text-xs">{mode.label}</span>
+                      <span className="text-[10px] text-slate-400 mt-1">{mode.desc}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Team Configuration Sub-panel */}
+                {assignmentMode === "team" && (
+                  <div className="pt-2 border-t border-slate-200 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <Label className="text-xs font-bold text-slate-700">Team Size (Select 2, 3, or 4 Interns):</Label>
+                      <div className="flex items-center gap-2">
+                        {[2, 3, 4].map((size) => (
+                          <button
+                            key={size}
+                            type="button"
+                            onClick={() => {
+                              setTeamSize(size as any);
+                              if (selectedInternIds.length > size) {
+                                setSelectedInternIds(selectedInternIds.slice(0, size));
+                              }
+                            }}
+                            className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
+                              teamSize === size
+                                ? "bg-indigo-600 text-white border-indigo-600 shadow-2xs"
+                                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                            }`}
+                          >
+                            {size} Members
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs font-semibold text-slate-700">Custom Team Name (Optional)</Label>
+                      <Input
+                        placeholder="e.g. Alpha Squad - Frontend Core"
+                        value={teamName}
+                        onChange={(e) => setTeamName(e.target.value)}
+                        className="mt-1 text-xs bg-white"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <Label className="text-xs font-bold text-slate-700">Task Title *</Label>
                 <Input
@@ -602,6 +725,23 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
                   onChange={(e) => setManualDescription(e.target.value)}
                   className="mt-1"
                 />
+              </div>
+
+              {/* Dedicated Task Communication Meet Link */}
+              <div className="rounded-xl border border-blue-200/80 bg-blue-50/40 p-3.5 space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm">📹</span>
+                  <Label className="text-xs font-bold text-blue-950">Dedicated Task Discussion & Meet Link (Optional)</Label>
+                </div>
+                <Input
+                  placeholder="https://meet.google.com/abc-defg-hij or Zoom / Teams URL"
+                  value={manualMeetLink}
+                  onChange={(e) => setManualMeetLink(e.target.value)}
+                  className="text-xs font-mono bg-white border-blue-200"
+                />
+                <p className="text-[10px] text-blue-800">
+                  Interns will see a 1-click <strong>"📹 Join Task Meet"</strong> button directly in their task workspace for daily syncs and queries.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -637,20 +777,20 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <Label className="text-xs font-bold text-slate-700">Deadline Date</Label>
                   <Input
                     type="date"
                     value={manualDueDate}
                     onChange={(e) => setManualDueDate(e.target.value)}
-                    className="mt-1"
+                    className="mt-1 text-xs"
                   />
                 </div>
                 <div>
                   <Label className="text-xs font-bold text-slate-700">Priority Level</Label>
                   <Select value={manualPriority} onValueChange={(v) => setManualPriority(v as any)}>
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger className="mt-1 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -660,23 +800,42 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label className="text-xs font-bold text-slate-700">Skill Level</Label>
+                  <Select value={manualLevel} onValueChange={(v) => setManualLevel(v as any)}>
+                    <SelectTrigger className="mt-1 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Beginner">Beginner</SelectItem>
+                      <SelectItem value="Intermediate">Intermediate</SelectItem>
+                      <SelectItem value="Advanced">Advanced</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Target Intern Selection */}
               <div className="border rounded-xl p-4 bg-white dark:bg-slate-950 space-y-3">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    Assign To Interns ({selectAll ? `All ${interns.length}` : selectedInternIds.length} Selected)
+                    {assignmentMode === "team"
+                      ? `Select Team Members (${selectedInternIds.length} of ${teamSize} selected)`
+                      : assignmentMode === "individual"
+                      ? `Select Intern (${selectedInternIds.length === 1 ? "1 Selected" : "None Selected"})`
+                      : `Assign To Interns (${selectAll ? `All ${interns.length}` : selectedInternIds.length} Selected)`}
                   </Label>
-                  <div className="flex items-center gap-2">
-                    <Checkbox id="selectAllManual" checked={selectAll} onCheckedChange={(v) => handleToggleSelectAll(!!v)} />
-                    <label htmlFor="selectAllManual" className="text-xs font-medium text-slate-700 cursor-pointer">
-                      All Active Interns ({interns.length})
-                    </label>
-                  </div>
+                  {assignmentMode === "all" && (
+                    <div className="flex items-center gap-2">
+                      <Checkbox id="selectAllManual" checked={selectAll} onCheckedChange={(v) => handleToggleSelectAll(!!v)} />
+                      <label htmlFor="selectAllManual" className="text-xs font-medium text-slate-700 cursor-pointer">
+                        All Active Interns ({interns.length})
+                      </label>
+                    </div>
+                  )}
                 </div>
 
-                {!selectAll && (
+                {(!selectAll || assignmentMode !== "all") && (
                   <div className="max-h-64 overflow-y-auto divide-y border rounded bg-slate-50/50 text-xs">
                     {uniqueDomains.map((domain: any) => {
                       const domainInterns = interns.filter((i: any) => (i.department || "General") === domain);
@@ -689,20 +848,31 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
                             <span className="text-[10px] text-slate-500 font-normal">{domainInterns.length} Interns</span>
                           </h4>
                           <div className="space-y-1">
-                            {domainInterns.map((i: any) => (
-                              <div key={i.id} className="flex items-center justify-between py-1.5 px-2 bg-white hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded-lg ml-2 transition-colors">
-                                <div>
-                                  <div className="font-semibold text-slate-800">{i.full_name || i.email}</div>
-                                  <div className="text-[10px] text-slate-500">
-                                    <span className="font-medium text-emerald-600">{i.position || "General"}</span> &middot; {i.intern_id || i.email}
+                            {domainInterns.map((i: any) => {
+                              const isSelected = selectedInternIds.includes(i.id);
+                              return (
+                                <div
+                                  key={i.id}
+                                  onClick={() => handleToggleIntern(i.id)}
+                                  className={`flex items-center justify-between py-1.5 px-2 rounded-lg ml-2 cursor-pointer transition-all ${
+                                    isSelected
+                                      ? "bg-indigo-50 border border-indigo-300 font-semibold"
+                                      : "bg-white hover:bg-slate-50 border border-transparent hover:border-slate-200"
+                                  }`}
+                                >
+                                  <div>
+                                    <div className="font-semibold text-slate-800">{i.full_name || i.email}</div>
+                                    <div className="text-[10px] text-slate-500">
+                                      <span className="font-medium text-emerald-600">{i.position || "General"}</span> &middot; {i.intern_id || i.email}
+                                    </div>
                                   </div>
+                                  <Checkbox checked={isSelected} onCheckedChange={() => handleToggleIntern(i.id)} />
                                 </div>
-                                <Checkbox checked={selectedInternIds.includes(i.id)} onCheckedChange={() => handleToggleIntern(i.id)} />
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
-                      )
+                      );
                     })}
                   </div>
                 )}
