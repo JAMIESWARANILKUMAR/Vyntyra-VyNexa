@@ -5530,9 +5530,11 @@ export const listInternTasksForMentor = createServerFn({ method: "POST" })
 export const getDashboardSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    const { data, error } = await supabase
+    const admin = getAdminClient();
+    const { data, error } = await admin
       .from("dashboard_settings")
-      .select("*");
+      .select("*")
+      .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
     return data || [];
   });
@@ -5540,17 +5542,19 @@ export const getDashboardSettings = createServerFn({ method: "GET" })
 export const initializeDashboardSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
+    const admin = getAdminClient();
     const INTERN_MODULES = [
-      "attendance", "onboarding", "lms", "kanban", "standups", "deliverables", 
-      "ppo", "tasks", "meetings", "resources", "leaves", "support", "refer", "notes", "feedback"
+      "overview", "tasks", "kanban", "deliverables", "standups", "attendance",
+      "meetings", "resources", "onboarding", "lms", "ppo", "leaves", 
+      "support", "refer", "notes", "feedback"
     ];
     const EMPLOYEE_MODULES = [
       "tasks", "attendance", "leave", "payouts", "support", "resolver_support",
-      "meetings", "interviews", "my_interns", "announcements", "team", "resources",
-      "locker", "contact", "security"
+      "meetings", "interviews", "my_interns", "announcements", "campaigns", "team", 
+      "resources", "locker", "contact", "security"
     ];
     
-    const { data: existing } = await supabase.from("dashboard_settings").select("portal_type, module_name");
+    const { data: existing } = await admin.from("dashboard_settings").select("portal_type, module_name");
     const existingSet = new Set((existing || []).map((x: any) => `${x.portal_type}_${x.module_name}`));
     
     const toInsert = [];
@@ -5562,7 +5566,7 @@ export const initializeDashboardSettings = createServerFn({ method: "POST" })
     }
     
     if (toInsert.length > 0) {
-      const { error } = await supabase.from("dashboard_settings").insert(toInsert);
+      const { error } = await admin.from("dashboard_settings").insert(toInsert);
       if (error) throw new Error(error.message);
     }
     return { success: true, count: toInsert.length };
@@ -5575,12 +5579,30 @@ export const updateDashboardSetting = createServerFn({ method: "POST" })
     is_enabled: z.boolean(),
   }).parse(d))
   .handler(async ({ data }) => {
-    const { error } = await supabase
+    const admin = getAdminClient();
+    const { error } = await admin
       .from("dashboard_settings")
       .update({ is_enabled: data.is_enabled, updated_at: new Date().toISOString() })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { success: true };
+  });
+
+export const bulkTogglePortalModules = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    portal_type: z.enum(["intern", "employee"]),
+    is_enabled: z.boolean(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    const { error } = await admin
+      .from("dashboard_settings")
+      .update({ is_enabled: data.is_enabled, updated_at: new Date().toISOString() })
+      .eq("portal_type", data.portal_type);
+
+    if (error) throw new Error(error.message);
+    return { success: true, portal_type: data.portal_type, is_enabled: data.is_enabled };
   });
 
 export const bulkDeleteTasks = createServerFn({ method: "POST" })

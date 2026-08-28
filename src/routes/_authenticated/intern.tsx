@@ -744,7 +744,7 @@ function InternDashboard() {
   };
 
   const TABS = [
-    { id: "overview",       label: "Overview", enabled: true },
+    { id: "overview",       label: "Overview", shortLabel: "Overview", enabled: isModuleEnabled("overview") },
     { 
       id: "tasks",          
       label: `Tasks & Assignments (${pendingTasks.length})`, 
@@ -768,6 +768,13 @@ function InternDashboard() {
     { id: "notes",          label: "Notes", shortLabel: "Notes", enabled: isModuleEnabled("notes") },
     { id: "feedback",       label: "Feedback", shortLabel: "Feedback", enabled: isModuleEnabled("feedback") },
   ].filter(t => t.enabled);
+
+  // Auto-switch tab if current active tab is disabled by admin
+  useEffect(() => {
+    if (TABS.length > 0 && !TABS.some(t => t.id === activeTab)) {
+      setActiveTab(TABS[0].id as any);
+    }
+  }, [TABS, activeTab]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -994,6 +1001,19 @@ function InternDashboard() {
       )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        {/* When all modules are disabled by admin */}
+        {TABS.length === 0 && (
+          <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center max-w-xl mx-auto space-y-4 shadow-xl mt-8">
+            <div className="mx-auto w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center shadow-inner">
+              <Lock className="h-8 w-8" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800">Intern Dashboard Temporarily Restricted</h3>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              Administrative controls are currently undergoing scheduled maintenance or system updates. Please check back shortly or reach out to your coordinator.
+            </p>
+          </div>
+        )}
 
         {/* ─── OVERVIEW ─── */}
         {activeTab === "overview" && (

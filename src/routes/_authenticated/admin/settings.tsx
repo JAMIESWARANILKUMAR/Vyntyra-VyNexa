@@ -18,7 +18,7 @@ import {
   getDashboardSettings, updateDashboardSetting, updateInternFeeSettings, 
   initializeDashboardSettings, listTeamMembers, purgeAllNocs,
   listAllReferralPricingRules, upsertReferralPricingRule, deleteReferralPricingRule,
-  bulkUpdateReferralPricingRules,
+  bulkUpdateReferralPricingRules, bulkTogglePortalModules,
   sendUrgentPaymentPopupNotification, toggleInternNocDownload, toggleAllInternsNocDownload,
   recordManualInternPayment, assignReferralCodeToIntern
 } from "@/lib/operations.functions";
@@ -68,6 +68,7 @@ function AdminSettingsPage() {
   const qc = useQueryClient();
   const fetchDashboardSettings = useServerFn(getDashboardSettings);
   const doUpdateDashboardSetting = useServerFn(updateDashboardSetting);
+  const doBulkTogglePortalModules = useServerFn(bulkTogglePortalModules);
   const doUpdateInternFeeSettings = useServerFn(updateInternFeeSettings);
   const doInitializeDashboardSettings = useServerFn(initializeDashboardSettings);
   const fetchTeamMembers = useServerFn(listTeamMembers);
@@ -131,6 +132,7 @@ function AdminSettingsPage() {
     is_active: true,
     sync_to_existing_interns: true,
   });
+  const [modulePortalTab, setModulePortalTab] = useState<"intern" | "employee">("intern");
   const [internFeeSearch, setInternFeeSearch] = useState("");
   const [internFeeFilter, setInternFeeFilter] = useState<"all" | "scheduled" | "unpaid" | "paid" | "exempted">("all");
   const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
@@ -765,6 +767,16 @@ function AdminSettingsPage() {
     }
   }
 
+  async function handleBulkTogglePortal(portalType: "intern" | "employee", isEnabled: boolean) {
+    try {
+      await doBulkTogglePortalModules({ data: { portal_type: portalType, is_enabled: isEnabled } });
+      toast.success(`${isEnabled ? "Enabled" : "Disabled"} all ${portalType === "intern" ? "Intern" : "Employee"} modules!`);
+      qc.invalidateQueries({ queryKey: ["admin-dashboard-settings"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to toggle portal modules.");
+    }
+  }
+
   async function handleUpdateFee() {
     if (targetType === "single" && !internId) return toast.error("Please provide an Intern ID.");
     if (targetType === "selected" && selectedInternIds.length === 0) return toast.error("Please select at least one intern.");
@@ -1349,36 +1361,209 @@ function AdminSettingsPage() {
 
         {/* ─── TAB: MODULE CONTROLS ─── */}
         {activeTab === "system_modules" && (
-          <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
-            <div className="p-5 border-b bg-slate-50 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-indigo-600" />
-                <h2 className="text-lg font-bold text-slate-800">Global Dashboard Controls</h2>
-              </div>
-              <Button size="sm" variant="outline" onClick={handleInitialize}>Initialize Defaults</Button>
-            </div>
-            <div className="p-6">
-              <p className="text-sm text-muted-foreground mb-6">Enable or disable specific modules for Interns and Employees across the portal.</p>
-              
-              {settingsQ.isLoading ? (
-                <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-indigo-600" /></div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {(settingsQ.data || []).map((setting: any) => (
-                    <div key={setting.id} className="flex items-center justify-between p-4 border rounded-lg bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                      <div>
-                        <div className="text-sm font-semibold capitalize text-slate-800">{setting.module_name}</div>
-                        <div className="text-xs text-slate-500 uppercase tracking-wider">{setting.portal_type} Portal</div>
-                      </div>
-                      <Switch 
-                        checked={setting.is_enabled} 
-                        onCheckedChange={(v) => updateSettingsMut.mutate({ id: setting.id, is_enabled: v })} 
-                      />
-                    </div>
-                  ))}
+          <div className="space-y-6">
+            {/* Top Overview & Master Controls Banner */}
+            <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-indigo-500/30 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="relative z-10 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="p-2 bg-indigo-500/20 border border-indigo-400/30 rounded-xl text-indigo-300">
+                    <ShieldCheck className="h-5 w-5" />
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-500/30 text-indigo-200 px-3 py-1 rounded-full border border-indigo-400/30">
+                    Portal Governance &amp; Live Control Hub
+                  </span>
                 </div>
-              )}
+                <h2 className="text-2xl font-black text-white tracking-tight">Full Dashboard &amp; Module Permissions Controller</h2>
+                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                  Total administrative authority over every tab, tool, and feature across both the <strong>Intern Portal</strong> and <strong>Employee Portal</strong>. Instantly toggle individual modules or apply 1-click master controls.
+                </p>
+              </div>
+
+              <div className="relative z-10 flex flex-wrap items-center gap-2.5">
+                <Button 
+                  size="sm"
+                  onClick={handleInitialize} 
+                  variant="outline" 
+                  className="bg-slate-900/80 hover:bg-slate-800 text-slate-200 border-slate-700 text-xs font-semibold h-9 rounded-xl gap-1.5"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" /> Initialize / Repair Missing Defaults
+                </Button>
+              </div>
             </div>
+
+            {/* Portal Switcher & Action Bar */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setModulePortalTab("intern")}
+                  className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
+                    modulePortalTab === "intern"
+                      ? "bg-indigo-600 text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <Tag className="h-3.5 w-3.5" />
+                  Intern Portal Controls
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    modulePortalTab === "intern" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                  }`}>
+                    {(settingsQ.data || []).filter((s: any) => s.portal_type === "intern" && s.is_enabled).length} / {(settingsQ.data || []).filter((s: any) => s.portal_type === "intern").length || 16} Active
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setModulePortalTab("employee")}
+                  className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
+                    modulePortalTab === "employee"
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <Users className="h-3.5 w-3.5" />
+                  Employee Portal Controls
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    modulePortalTab === "employee" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                  }`}>
+                    {(settingsQ.data || []).filter((s: any) => s.portal_type === "employee" && s.is_enabled).length} / {(settingsQ.data || []).filter((s: any) => s.portal_type === "employee").length || 16} Active
+                  </span>
+                </button>
+              </div>
+
+              {/* Quick Master Actions */}
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <Button
+                  size="sm"
+                  onClick={() => handleBulkTogglePortal(modulePortalTab, true)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3 rounded-xl font-bold gap-1 shadow-xs"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Enable All {modulePortalTab === "intern" ? "Intern" : "Employee"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBulkTogglePortal(modulePortalTab, false)}
+                  className="border-rose-300 text-rose-700 hover:bg-rose-50 text-xs h-8 px-3 rounded-xl font-bold gap-1"
+                >
+                  <Lock className="h-3.5 w-3.5" /> Disable All
+                </Button>
+              </div>
+            </div>
+
+            {/* Modules Grid */}
+            {settingsQ.isLoading ? (
+              <div className="flex items-center justify-center p-16 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                <Loader2 className="h-6 w-6 animate-spin text-indigo-600 mr-2" />
+                <span className="text-xs font-semibold text-slate-500">Loading module configuration matrix...</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {(() => {
+                  const allSettings = settingsQ.data || [];
+                  const portalSettings = allSettings.filter((s: any) => s.portal_type === modulePortalTab);
+                  
+                  // Metadata catalogue
+                  const DESCS: Record<string, { title: string; desc: string; tag: string }> = {
+                    // Intern
+                    "overview": { title: "Overview & Summary Hub", desc: "Main landing dashboard, performance metrics, progress bars, and announcement cards.", tag: "Core" },
+                    "tasks": { title: "Tasks & Assignments", desc: "Assigned tasks, deliverables submission, priority levels, and mentor reviews.", tag: "Workflow" },
+                    "kanban": { title: "Sprint Kanban Board", desc: "Interactive Agile board with backlog, in-progress, review, and completed columns.", tag: "Productivity" },
+                    "deliverables": { title: "Project Deliverables & Repository", desc: "Final capstone project repository, document uploads, and evaluation marks.", tag: "Milestones" },
+                    "standups": { title: "Daily Standups & Reports", desc: "Daily work log submissions, blockers reporting, and mentor check-ins.", tag: "Reporting" },
+                    "attendance": { title: "Attendance & Clock-In Timesheets", desc: "Daily clock-in/clock-out punch records, timesheets, and work hour logs.", tag: "Compliance" },
+                    "meetings": { title: "Meetings & Video Calls", desc: "Scheduled sprint standups, mentor reviews, and live team conference calls.", tag: "Collaboration" },
+                    "resources": { title: "Knowledge Assets & SOPs", desc: "Standard operating procedures, guides, API documentation, and brand kits.", tag: "Docs" },
+                    "onboarding": { title: "Onboarding & Skilling Verification", desc: "Document KYC, skilling & credential fee processing, and welcome guides.", tag: "Onboarding" },
+                    "lms": { title: "LMS & Skill Courses", desc: "Domain skill training, video lectures, coding exercises, and knowledge tests.", tag: "Learning" },
+                    "ppo": { title: "PPO & Verified Credentials", desc: "Pre-Placement Offer evaluation, stipend eligibility tracking, and verified badges.", tag: "Career" },
+                    "leaves": { title: "Leave Applications", desc: "Leave requests, medical off submissions, and absence approvals.", tag: "Compliance" },
+                    "support": { title: "Support & Helpdesk", desc: "Direct resolution tickets, query escalations, and admin support desk.", tag: "Support" },
+                    "refer": { title: "Refer & Earn Program", desc: "Personal referral codes, candidate tracking, commission payouts, and transparency matrix.", tag: "Earnings" },
+                    "notes": { title: "Workspace Scratchpad", desc: "Personal workspace scratchpad, meeting notes, and knowledge bookmarks.", tag: "Tools" },
+                    "feedback": { title: "Performance Reviews & Appraisal", desc: "Quarterly appraisal scores, mentor remarks, and leadership recommendations.", tag: "Evaluation" },
+
+                    // Employee
+                    "payouts": { title: "Salaries, Slips & Payouts", desc: "Monthly payroll slips, bonuses, and banking information.", tag: "Finance" },
+                    "resolver_support": { title: "Query Resolver Operations", desc: "Review, assign, and resolve escalated intern queries.", tag: "Support" },
+                    "interviews": { title: "Candidate Interviews & Scoring", desc: "Join assigned video interview calls and submit candidate evaluations.", tag: "Hiring" },
+                    "my_interns": { title: "Assigned Interns Supervision", desc: "Supervise assigned cohort interns, review task submissions, and approve NOCs.", tag: "Mentorship" },
+                    "announcements": { title: "Company Broadcast Notices", desc: "Publish and read organization-wide announcements.", tag: "Comms" },
+                    "campaigns": { title: "Promotions & Bulk Outreach Hub", desc: "Dispatch bulk promotional email campaigns and internship invitations.", tag: "Outreach" },
+                    "team": { title: "Team Directory & Peer Kudos", desc: "Organization directory, colleague contact info, and peer shoutout badges.", tag: "Culture" },
+                    "locker": { title: "Encrypted Credential Vault", desc: "Secure document locker and organizational asset storage.", tag: "Security" },
+                    "contact": { title: "Emergency Hotline & Contacts", desc: "Directory of key emergency contacts and leadership.", tag: "Directory" },
+                    "security": { title: "Security & Audit Logs", desc: "Session security, 2FA credentials, and system audit history.", tag: "Security" },
+                    "leave": { title: "Leave Management & Approvals", desc: "Apply for leaves and review subordinate leave applications.", tag: "HR" },
+                  };
+
+                  if (portalSettings.length === 0) {
+                    return (
+                      <div className="col-span-full py-12 bg-white rounded-2xl border border-slate-200 text-center space-y-3">
+                        <Tag className="h-10 w-10 text-slate-300 mx-auto" />
+                        <h4 className="font-bold text-slate-700">No {modulePortalTab} modules registered yet</h4>
+                        <p className="text-xs text-slate-400">Click "Initialize / Repair Missing Defaults" above to seed all {modulePortalTab} portal controls.</p>
+                        <Button size="sm" onClick={handleInitialize} className="bg-indigo-600 text-white text-xs">Initialize Defaults</Button>
+                      </div>
+                    );
+                  }
+
+                  return portalSettings.map((setting: any) => {
+                    const meta = DESCS[setting.module_name] || {
+                      title: setting.module_name.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+                      desc: `Controls visibility and access to the ${setting.module_name} feature.`,
+                      tag: "Module",
+                    };
+
+                    return (
+                      <div 
+                        key={setting.id} 
+                        className={`p-5 rounded-2xl border transition-all duration-200 space-y-3 ${
+                          setting.is_enabled 
+                            ? "bg-white border-slate-200 shadow-xs hover:shadow-md hover:border-indigo-300" 
+                            : "bg-slate-50/80 border-slate-200/60 opacity-75"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
+                                setting.is_enabled ? "bg-indigo-50 text-indigo-700 border border-indigo-200" : "bg-slate-200 text-slate-600"
+                              }`}>
+                                {meta.tag}
+                              </span>
+                              <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                                setting.is_enabled ? "text-emerald-600" : "text-slate-400"
+                              }`}>
+                                {setting.is_enabled ? "● Active" : "○ Disabled"}
+                              </span>
+                            </div>
+                            <h4 className="font-bold text-slate-900 text-sm">{meta.title}</h4>
+                          </div>
+
+                          <Switch 
+                            checked={setting.is_enabled} 
+                            onCheckedChange={(v) => updateSettingsMut.mutate({ id: setting.id, is_enabled: v })} 
+                          />
+                        </div>
+
+                        <p className="text-xs text-slate-500 leading-relaxed min-h-[32px]">
+                          {meta.desc}
+                        </p>
+
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                          <span className="font-mono">{setting.portal_type}_{setting.module_name}</span>
+                          <span className="text-slate-500 font-medium">
+                            {setting.is_enabled ? "Visible on Portal" : "Hidden & Locked"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            )}
           </div>
         )}
 
