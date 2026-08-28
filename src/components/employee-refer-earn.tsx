@@ -6,8 +6,8 @@ import { getOrCreateReferralCode, getMyReferralConversions } from "@/lib/operati
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { 
-  Loader2, Award, Check, Link2, Target, Send, FileText, Users, 
-  Coins, IndianRupee, ShieldCheck, CreditCard, Sparkles, TrendingUp, Copy
+  Loader2, Award, Check, Link2, Send, FileText, Users, 
+  Coins, ShieldCheck, Sparkles
 } from "lucide-react";
 
 export function EmployeeReferEarn() {
@@ -209,61 +209,6 @@ export function EmployeeReferEarn() {
                 </Button>
               </div>
             )}
-          </div>
-
-          {/* Milestone Tracking */}
-          <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 shadow-xl backdrop-blur-xl space-y-5 transition-all duration-300 hover:border-slate-700">
-            <h3 className="font-extrabold text-white text-sm flex items-center gap-2 border-b border-slate-800 pb-3">
-              <Target className="h-4 w-4 text-indigo-400" /> Milestone Tracking
-            </h3>
-            
-            {(() => {
-              const completedCount = paidCount;
-              const nextMilestone = completedCount >= 10 ? 20 : completedCount >= 5 ? 10 : 5;
-              const progressPercent = Math.min((completedCount / nextMilestone) * 100, 100);
-              
-              return (
-                <div className="space-y-4">
-                  <div className="flex justify-between text-xs text-slate-300">
-                    <span className="font-medium text-slate-400">Progress to next tier:</span>
-                    <span className="font-bold text-indigo-400">{completedCount} / {nextMilestone} Paid Referrals</span>
-                  </div>
-                  
-                  <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden relative border border-slate-800">
-                    <div 
-                      className="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_#6366f1]"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 pt-1">
-                    <div className={`p-3.5 rounded-2xl border text-center transition-all duration-300 ${
-                      completedCount >= 5 
-                        ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300 shadow-md" 
-                        : "bg-slate-900/60 border-slate-800 text-slate-400"
-                    }`}>
-                      <div className="text-xs font-bold text-white">Tier 1: 5 Paid</div>
-                      <div className="text-[10px] mt-1 font-semibold text-emerald-400">Earn ₹1,000</div>
-                      {completedCount >= 5 && <div className="text-[9px] font-bold text-emerald-400 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> Achieved!</div>}
-                    </div>
-                    
-                    <div className={`p-3.5 rounded-2xl border text-center transition-all duration-300 ${
-                      completedCount >= 10 
-                        ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300 shadow-md" 
-                        : "bg-slate-900/60 border-slate-800 text-slate-400"
-                    }`}>
-                      <div className="text-xs font-bold text-white">Tier 2: 10 Paid</div>
-                      <div className="text-[10px] mt-1 font-semibold text-emerald-400">Earn ₹2,000</div>
-                      {completedCount >= 10 && <div className="text-[9px] font-bold text-emerald-400 mt-1 flex items-center justify-center gap-0.5"><Check className="h-3 w-3" /> Achieved!</div>}
-                    </div>
-                  </div>
-
-                  <p className="text-[10px] text-slate-500 leading-normal text-center pt-1">
-                    *Commissions are credited upon candidate exam fee payment and verification.
-                  </p>
-                </div>
-              );
-            })()}
           </div>
 
           {/* Invitation Message Card */}
