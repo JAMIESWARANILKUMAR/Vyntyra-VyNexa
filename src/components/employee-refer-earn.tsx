@@ -94,8 +94,8 @@ export function EmployeeReferEarn() {
         )}
       </div>
 
-      {/* ─── Financial Overview Cards ─── */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* ─── Financial Overview Cards (Dynamic Calculation on Any Volume) ─── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         <div className="p-4 rounded-xl border bg-white shadow-2xs">
           <div className="flex items-center justify-between text-slate-400 mb-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Referred</span>
@@ -116,20 +116,20 @@ export function EmployeeReferEarn() {
 
         <div className="p-4 rounded-xl border bg-white shadow-2xs">
           <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">Gross Fees</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">Gross Received</span>
             <IndianRupee className="h-4 w-4 text-slate-500" />
           </div>
           <div className="text-xl font-extrabold text-slate-900">₹{grossRevenue.toLocaleString("en-IN")}</div>
-          <span className="text-[10px] text-slate-400">Total Fee Generated</span>
+          <span className="text-[10px] text-slate-400">Total Fees Collected</span>
         </div>
 
         <div className="p-4 rounded-xl border bg-white shadow-2xs">
           <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">PG Settlement</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">PG Charge (2.58%)</span>
             <CreditCard className="h-4 w-4 text-amber-500" />
           </div>
           <div className="text-xl font-extrabold text-amber-700">-₹{gatewayCost.toLocaleString("en-IN")}</div>
-          <span className="text-[10px] text-slate-400">₹25.78 per ₹998</span>
+          <span className="text-[10px] text-slate-400">Gateway & Settlement</span>
         </div>
 
         <div className="p-4 rounded-xl border bg-white shadow-2xs">
@@ -141,13 +141,22 @@ export function EmployeeReferEarn() {
           <span className="text-[10px] text-slate-400">₹199 / paid candidate</span>
         </div>
 
-        <div className="p-4 rounded-xl border-2 border-purple-300 bg-purple-50/70 shadow-2xs">
+        <div className="p-4 rounded-xl border-2 border-purple-300 bg-purple-50/80 shadow-2xs">
           <div className="flex items-center justify-between text-purple-700 mb-1">
             <span className="text-[11px] font-black uppercase tracking-wider">Your Earnings</span>
             <Sparkles className="h-4 w-4 text-purple-600 animate-pulse" />
           </div>
           <div className="text-xl font-black text-purple-900">₹{grossCommission.toLocaleString("en-IN")}</div>
-          <span className="text-[10px] text-purple-700 font-semibold">Net: ₹{netCommissionEarnings.toLocaleString("en-IN")}</span>
+          <span className="text-[10px] text-purple-700 font-semibold">₹{referralData.commissionRate || 200}/candidate</span>
+        </div>
+
+        <div className="p-4 rounded-xl border-2 border-emerald-300 bg-emerald-50/80 shadow-2xs">
+          <div className="flex items-center justify-between text-emerald-700 mb-1">
+            <span className="text-[11px] font-black uppercase tracking-wider">Org Revenue</span>
+            <TrendingUp className="h-4 w-4 text-emerald-600" />
+          </div>
+          <div className="text-xl font-black text-emerald-900">₹{netCompanyProfit.toLocaleString("en-IN")}</div>
+          <span className="text-[10px] text-emerald-700 font-semibold">Net Company Profit</span>
         </div>
       </div>
 
@@ -155,7 +164,7 @@ export function EmployeeReferEarn() {
       <div className="p-3.5 bg-gradient-to-r from-indigo-50/90 via-purple-50/70 to-emerald-50/80 border border-indigo-200/80 rounded-xl text-xs flex items-start gap-2.5">
         <Sparkles className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
         <div className="space-y-0.5 text-slate-700 leading-relaxed">
-          <span className="font-bold text-slate-900">Equalized Referral Settlement Formula:</span> Each candidate fee (e.g. ₹499) accounts for ₹199 Government Certification Fee and ₹12.89 Merchant Gateway & Settlement charge (₹25.78 per ₹998). The remaining amount covers partner commissions (₹200/paid candidate) and company operating reserves.
+          <span className="font-bold text-slate-900">Complete Financial & Earnings Breakdown:</span> On any amount received from referrals, <strong>2.583%</strong> (approx ₹25.78 per ₹998) covers the Payment Gateway & Settlement charge, <strong>₹199 per candidate</strong> is dedicated to the Government Certification fee, <strong>₹{referralData.commissionRate || 200} per candidate</strong> is credited to the Referrer as commission earnings, and the remainder is retained as Organization Net Profit.
         </div>
       </div>
 

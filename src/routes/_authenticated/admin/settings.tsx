@@ -1001,7 +1001,7 @@ function AdminSettingsPage() {
               <span className="text-lg font-bold text-slate-900 mt-0.5 block">₹{totalGrossRevenue.toLocaleString("en-IN")}</span>
             </div>
             <div className="p-3.5">
-              <span className="text-slate-500 font-medium block">PG & Settlement (₹25.78/₹998)</span>
+              <span className="text-slate-500 font-medium block">PG Charge (2.58%)</span>
               <span className="text-lg font-bold text-amber-700 mt-0.5 block">-₹{totalGatewayCosts.toLocaleString("en-IN")}</span>
             </div>
             <div className="p-3.5">
@@ -1032,7 +1032,7 @@ function AdminSettingsPage() {
               </div>
               <div className="text-xs text-slate-500 flex items-center gap-1.5 bg-slate-50 border px-3 py-1.5 rounded-lg">
                 <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                <span>Accounting Model: Gross Collected − PG/Settlement (₹25.78/₹998) − Govt Cert (₹199/paid) − Partner Commission = Net Company Revenue</span>
+                <span>Accounting Model: Gross Amount − 2.583% PG/Settlement − ₹199 Govt Cert Fee − Partner Commission = Net Company Revenue</span>
               </div>
             </div>
 
