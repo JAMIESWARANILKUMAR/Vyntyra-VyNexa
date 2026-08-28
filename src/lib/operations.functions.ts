@@ -4746,20 +4746,36 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const admin = getAdminClient();
-    const { data: profile } = await admin
+    
+    // Resilient profile fetch (by ID first, then by email if needed)
+    let profile: any = null;
+    const { data: pById } = await admin
       .from("profiles")
       .select("id, full_name, email, intern_id, referral_code, role")
       .eq("id", context.userId)
-      .single();
+      .maybeSingle();
+
+    const userEmail = context.user?.email;
+    if (!profile && userEmail) {
+      const { data: pByEmail } = await admin
+        .from("profiles")
+        .select("id, full_name, email, intern_id, referral_code, role")
+        .ilike("email", userEmail)
+        .maybeSingle();
+      profile = pByEmail;
+    }
 
     if (!profile) {
       return {
         referralCode: "",
+        allReferralCodes: [],
         totalReferred: 0,
         paidCount: 0,
         selectedCount: 0,
         grossRevenue: 0,
         gatewayCost: 0,
+        gatewayCostReferrerShare: 0,
+        gatewayCostCompanyShare: 0,
         govtCertAllocation: 0,
         commissionRate: 200,
         candidateExamFee: 499,
@@ -4783,18 +4799,37 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
       const brandingPart = "VY";
       const idPart = (profile.intern_id && profile.intern_id.length >= 2)
         ? profile.intern_id.slice(-2).toUpperCase()
-        : profile.id.slice(-2).toUpperCase();
+        : (profile.id || "").slice(-2).toUpperCase();
       code = `${namePart}${brandingPart}${idPart}`.slice(0, 6);
 
       await admin
         .from("profiles")
         .update({ referral_code: code })
-        .eq("id", context.userId);
+        .eq("id", profile.id);
     }
 
-    // Collect all codes associated with this user (standard code + custom partner rules)
+    // Helper for alphanumeric code normalization
+    const normalizeCode = (val: string) => (val || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+    // Collect all codes & identifiers associated with this user
     const allUserCodes = new Set<string>();
-    if (code) allUserCodes.add(code);
+    const normalizedCodes = new Set<string>();
+
+    const addCandidateCode = (c: string) => {
+      if (!c) return;
+      const upper = c.trim().toUpperCase();
+      const norm = normalizeCode(c);
+      if (upper) allUserCodes.add(upper);
+      if (norm) {
+        allUserCodes.add(norm);
+        normalizedCodes.add(norm);
+      }
+    };
+
+    addCandidateCode(code);
+    if (profile.referral_code) addCandidateCode(profile.referral_code);
+    if (profile.intern_id) addCandidateCode(profile.intern_id);
+    if (profile.email) addCandidateCode(profile.email);
 
     let candidateExamFee = 499;
     let commissionRate = 200;
@@ -4802,17 +4837,18 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
     try {
       const { data: rules } = await admin
         .from("referral_pricing_rules")
-        .select("code, custom_exam_fee, commission_reward, referrer_name, referrer_email, created_by");
+        .select("code, custom_exam_fee, commission_reward, referrer_name, referrer_email, referrer_id, created_by");
       
       (rules || []).forEach((r: any) => {
         const rCode = (r.code || "").trim().toUpperCase();
         const isMyRule = (rCode === code) ||
+          (r.referrer_id && r.referrer_id === profile.id) ||
           (r.created_by && r.created_by === context.userId) ||
           (r.referrer_email && profile.email && r.referrer_email.toLowerCase().trim() === profile.email.toLowerCase().trim()) ||
           (r.referrer_name && profile.full_name && r.referrer_name.toLowerCase().trim() === profile.full_name.toLowerCase().trim());
 
         if (isMyRule && rCode) {
-          allUserCodes.add(rCode);
+          addCandidateCode(rCode);
           if (r.custom_exam_fee !== undefined && r.custom_exam_fee !== null) {
             candidateExamFee = Number(r.custom_exam_fee);
           }
@@ -4827,26 +4863,33 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
 
     const codeList = Array.from(allUserCodes);
 
-    // 1. Fetch all applications matching any of the user's referral codes
+    // Matching helper for any applicant referral code string
+    const matchesUserCode = (usedCode: string) => {
+      if (!usedCode) return false;
+      const upper = usedCode.trim().toUpperCase();
+      const norm = normalizeCode(usedCode);
+      if (allUserCodes.has(upper) || allUserCodes.has(norm)) return true;
+      for (const targetNorm of normalizedCodes) {
+        if (targetNorm && norm && (norm === targetNorm || norm.includes(targetNorm) || targetNorm.includes(norm))) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // 1. Fetch all applications
     const { data: applications } = await admin
       .from("applications")
       .select("id, full_name, email, role, status, exam_fee_paid, exam_fee_amount, payment_status, referral_code_used, created_at")
       .order("created_at", { ascending: false });
 
-    // 2. Fetch all profiles (interns) matching any of the user's referral codes
+    // 2. Fetch all profiles (interns)
     const { data: internProfiles } = await admin
       .from("profiles")
       .select("id, full_name, email, role, referral_code_used, exam_fee_paid, exam_fee_amount, is_fee_exempted, created_at");
 
-    const matchedApps = (applications || []).filter((a: any) => {
-      const used = (a.referral_code_used || "").trim().toUpperCase();
-      return used && allUserCodes.has(used);
-    });
-
-    const matchedProfiles = (internProfiles || []).filter((p: any) => {
-      const used = (p.referral_code_used || "").trim().toUpperCase();
-      return used && allUserCodes.has(used);
-    });
+    const matchedApps = (applications || []).filter((a: any) => matchesUserCode(a.referral_code_used));
+    const matchedProfiles = (internProfiles || []).filter((p: any) => matchesUserCode(p.referral_code_used));
 
     // Map of verified paid emails
     const paidEmails = new Set<string>();

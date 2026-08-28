@@ -3306,24 +3306,7 @@ function InternDashboard() {
               }
             `}} />
 
-            {!profile?.exam_fee_paid && !profile?.is_fee_exempted ? (
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-10 text-center space-y-4 shadow-inner mt-4">
-                <div className="mx-auto w-16 h-16 bg-slate-200/50 rounded-full flex items-center justify-center text-slate-400 mb-2">
-                  <Lock className="h-8 w-8" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-800">Refer & Earn is Locked</h3>
-                <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-                  You must complete your mandatory skilling & credential verification fee payment to unlock the Refer & Earn program.
-                </p>
-                {profile?.fee_payment_scheduled && (
-                  <Button className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm" onClick={() => setActiveTab("onboarding")}>
-                    Go to Onboarding to Pay
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <EmployeeReferEarn />
-            )}
+            <EmployeeReferEarn />
           </div>
         )}
       </main>

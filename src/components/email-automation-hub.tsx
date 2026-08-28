@@ -16,7 +16,7 @@ import { getEmailQuotaStats, getPromotionalEmailConversionStats } from "@/lib/op
 
 function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutomatedEmailLog, qc }: any) {
   const [inputText, setInputText] = useState("");
-  const [subjectText, setSubjectText] = useState("Invitation: 2026 Official Internship Program â€” Vyntyra Consultancy Services");
+  const [subjectText, setSubjectText] = useState("Invitation: 2026 Official Internship Program — Vyntyra Consultancy Services");
   const [recipients, setRecipients] = useState<{ email: string; name: string; university: string; domain: string; subDomain: string }[]>([]);
 
   // Email Quota & Service Health Query
@@ -251,25 +251,30 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
   ];
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden mt-8">
-      {/* Banner */}
-      <div className="bg-slate-900 text-white px-6 py-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800">
-        <div>
-          <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
-            <ShieldCheck className="h-4 w-4" /> Resend High-Deliverability Inbox Engine
+    <section className="rounded-3xl border border-slate-200/80 bg-white shadow-xl overflow-hidden mt-4 transition-all">
+      {/* Premium Header Banner */}
+      <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white px-8 py-7 flex flex-wrap items-center justify-between gap-6 border-b border-indigo-900/40 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 space-y-1.5">
+          <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+            <ShieldCheck className="h-4 w-4 text-emerald-400" /> High-Deliverability Resend & Brevo Enterprise Mesh
           </div>
-          <h2 className="text-xl font-bold mt-1 text-white flex items-center gap-2">
-            <Mail className="h-5 w-5 text-emerald-400" /> Automated Email Campaign Hub
+          <h2 className="text-2xl font-black mt-1 text-white flex items-center gap-2.5 tracking-tight">
+            <Mail className="h-6 w-6 text-indigo-400" /> Automated Email Outreach & Promotion Engine
           </h2>
-          <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-            Automate bulk promotional internship invitations to up to <strong>1,000 email addresses</strong> with a mandatory <strong>2-second delay per email</strong> to ensure inbox delivery, prevent spam folder flagging, and align with SPF/DKIM verification standards.
+          <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+            Dispatch high-converting internship promotions, admission offers, and candidate newsletters with automatic <strong>2-second deliverability pacing</strong>, zero spam inbox routing, and full SPF/DKIM verification.
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-slate-800/80 px-3.5 py-2 rounded-xl border border-slate-700/60 text-xs">
-          <Clock className="h-4 w-4 text-emerald-400 shrink-0" />
-          <div>
-            <div className="text-slate-300 font-medium">Auto Rate Limit</div>
-            <div className="text-emerald-400 font-bold">2s Interval Delay</div>
+        
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-indigo-500/30 text-xs shadow-inner">
+            <Clock className="h-5 w-5 text-emerald-400 shrink-0" />
+            <div>
+              <div className="text-slate-300 font-semibold text-[11px] uppercase tracking-wider">Deliverability Pacing</div>
+              <div className="text-emerald-400 font-black text-xs">2.0s Smart Rate Limit</div>
+            </div>
           </div>
         </div>
       </div>
@@ -412,7 +417,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
             <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
               <span>Today: <strong>{quota.resendSentToday || 0} / 100 max</strong></span>
               <span className="text-emerald-700 font-semibold font-mono">
-                {(quota.resendSentToday || 0) >= 100 ? "âš ï¸ Auto-Brevo" : quota.hasResendKey ? "âœ“ API Active" : "âš ï¸ Key Missing"}
+                {(quota.resendSentToday || 0) >= 100 ? "⚠️ Auto-Brevo" : quota.hasResendKey ? "✓ API Active" : "⚠️ Key Missing"}
               </span>
             </div>
           </div>
@@ -437,7 +442,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
               <span>Sent: <strong>{quota.brevoSentThisMonth.toLocaleString()}</strong></span>
-              <span className="text-sky-700 font-semibold">{quota.hasBrevoKey ? "âœ“ API Active" : "âš ï¸ BREVO_API_KEY Optional"}</span>
+              <span className="text-sky-700 font-semibold">{quota.hasBrevoKey ? "✓ API Active" : "⚠️ BREVO_API_KEY Optional"}</span>
             </div>
           </div>
 

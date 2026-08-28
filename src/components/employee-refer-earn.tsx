@@ -20,15 +20,13 @@ export function EmployeeReferEarn() {
   const sessionQ = useQuery({ queryKey: ["session"], queryFn: async () => (await supabase.auth.getSession()).data.session });
   
   const referralCodeQ = useQuery({
-    queryKey: ["my-referral-code", sessionQ.data?.user?.id],
+    queryKey: ["my-referral-code", sessionQ.data?.user?.id || "current"],
     queryFn: () => fetchReferralCode(),
-    enabled: !!sessionQ.data?.user?.id,
   });
 
   const referralConversionsQ = useQuery({
-    queryKey: ["my-referrals", sessionQ.data?.user?.id],
+    queryKey: ["my-referrals", sessionQ.data?.user?.id || "current"],
     queryFn: () => fetchReferralConversions(),
-    enabled: !!sessionQ.data?.user?.id,
     refetchInterval: 5000,
   });
 

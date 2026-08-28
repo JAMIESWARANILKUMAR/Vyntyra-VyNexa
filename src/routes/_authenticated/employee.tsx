@@ -1703,31 +1703,12 @@ function EmployeeDashboard() {
           {/* ─── EMAIL & PROMOTIONAL CAMPAIGNS ─── */}
           {activeTab === "campaigns" && (
             <motion.div key="campaigns" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-3xl text-white shadow-lg">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="p-2 bg-indigo-500/20 border border-indigo-400/30 rounded-xl text-indigo-300">
-                      <Mail className="h-5 w-5" />
-                    </span>
-                    <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-500/30 text-indigo-200 px-2.5 py-0.5 rounded-full border border-indigo-400/30">
-                      Employee Outreach &amp; Campaign Hub
-                    </span>
-                  </div>
-                  <h2 className="text-xl font-bold text-white tracking-tight">Bulk Promotional &amp; Intern Communication Engine</h2>
-                  <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                    Broadcast promotional newsletters, internship announcements, batch notices, or tailored emails directly to your assigned interns or custom recipient lists.
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs">
-                <EmailAutomationHub 
-                  emailLogsQ={emailLogsQ} 
-                  doSendPromotionalEmail={doSendPromotionalEmail} 
-                  doDeleteAutomatedEmailLog={doDeleteAutomatedEmailLog} 
-                  qc={qc} 
-                />
-              </div>
+              <EmailAutomationHub 
+                emailLogsQ={emailLogsQ} 
+                doSendPromotionalEmail={doSendPromotionalEmail} 
+                doDeleteAutomatedEmailLog={doDeleteAutomatedEmailLog} 
+                qc={qc} 
+              />
             </motion.div>
           )}
 
