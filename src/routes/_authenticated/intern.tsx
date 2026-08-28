@@ -22,6 +22,7 @@ import { MeetingsSection, MeetingCountdown, getJoinButtonState } from "@/compone
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
 import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { ProfileChangeRequestModal } from "@/components/profile-change-request-modal";
 import { FirstLoginWelcomeModal } from "@/components/first-login-welcome-modal";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import { TechDomainWorkspace } from "@/components/tech-domain-workspace";
@@ -266,6 +267,7 @@ function InternDashboard() {
   const [resourceUrgency, setResourceUrgency] = useState<"normal" | "urgent" | "critical">("normal");
   const [isSubmittingResource, setIsSubmittingResource] = useState(false);
 
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [lmsVideoModalId, setLmsVideoModalId] = useState<string | null>(null);
 
   const [selectedTaskWorkspace, setSelectedTaskWorkspace] = useState<any>(null);
@@ -922,6 +924,15 @@ function InternDashboard() {
             <div className="flex items-center gap-2">
               <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 sm:h-9 sm:w-9" />
               <div className="text-xs text-slate-500 hidden xl:block truncate max-w-[160px]">{email}</div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setProfileModalOpen(true)}
+                className="h-8 text-xs font-bold rounded-xl border-slate-200 hover:bg-slate-50 gap-1.5 shadow-2xs"
+              >
+                <User className="h-3.5 w-3.5 text-indigo-600" />
+                <span className="hidden sm:inline">Edit Details</span>
+              </Button>
             </div>
             
             <Button variant="ghost" size="sm" onClick={() => setShowForcePasswordModal(true)} className="gap-1.5 text-slate-600 hover:text-emerald-600 px-2 sm:px-3 text-xs">
@@ -4908,6 +4919,21 @@ function InternDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ─── PROFILE DETAIL CHANGE REQUEST MODAL ─── */}
+      <ProfileChangeRequestModal
+        open={profileModalOpen}
+        onOpenChange={setProfileModalOpen}
+        currentProfile={{
+          full_name: profile?.full_name,
+          email: profile?.email,
+          phone_number: profile?.phone_number,
+          avatar_url: profile?.avatar_url,
+          address: profile?.address,
+          role: profile?.role,
+          department: profile?.department,
+        }}
+      />
     </div>
   );
 }

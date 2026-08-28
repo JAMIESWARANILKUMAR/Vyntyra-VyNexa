@@ -43,6 +43,7 @@ import EmailAutomationHub from "@/components/email-automation-hub";
 import { SmartAvatar } from "@/components/SmartAvatar";
 import { AdminInternTasksView } from "@/components/admin-intern-tasks-view";
 import { AdminLmsManager } from "@/components/admin-lms-manager";
+import { AdminProfileChangeApprovals } from "@/components/admin-profile-change-approvals";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { toast } from "sonner";
 import {
@@ -1132,6 +1133,7 @@ function OperationsDashboard() {
             { id: "announcements", label: "Communication & Promos", icon: Megaphone, count: null },
             { id: "finances", label: "Finances & Payouts", icon: DollarSign, count: null },
             { id: "support", label: "Support & Feedback", icon: LifeBuoy, count: (supportQueries || []).filter((q: any) => q.status === "open").length || null },
+            { id: "profile_approvals", label: "Profile Approvals", icon: UserCheck, count: null },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1184,6 +1186,7 @@ function OperationsDashboard() {
                   { id: "announcements", title: "Communication, Email & SMS Hub", desc: "Broadcast company notices, kudos recognition, and promotional email & SMS campaigns.", icon: Megaphone, color: "text-purple-600 bg-purple-50 border-purple-200", badge: "Omni-Hub" },
                   { id: "finances", title: "Finances & Payouts Engine", desc: "Approve stipend payouts, review expense claims, and track compensation records.", icon: DollarSign, color: "text-emerald-700 bg-emerald-50 border-emerald-200", badge: `${(payoutsQ.data || []).length} Payouts` },
                   { id: "support", title: "Helpdesk & Resolution Hub", desc: "Assign customer and intern support tickets to employee resolvers and approve syncs.", icon: LifeBuoy, color: "text-cyan-600 bg-cyan-50 border-cyan-200", badge: `${(supportQueries || []).filter((q: any) => q.status === "open").length} Open` },
+                  { id: "profile_approvals", title: "Profile Change Approvals", desc: "Review and approve/reject sensitive profile updates (Email, Phone, Photo, Address) requested by interns and employees.", icon: UserCheck, color: "text-indigo-600 bg-indigo-50 border-indigo-200", badge: "Identity Approval" },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
@@ -3225,6 +3228,13 @@ function OperationsDashboard() {
               </div>
             </section>
           </div>
+        )}
+
+        {/* ─── TAB: PROFILE CHANGE APPROVALS ─── */}
+        {activeTab === "profile_approvals" && (
+          <section id="profile-approvals-section">
+            <AdminProfileChangeApprovals />
+          </section>
         )}
       </main>
       

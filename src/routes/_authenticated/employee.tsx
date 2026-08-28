@@ -14,9 +14,10 @@ import {
   IndianRupee, MessageSquare, BookOpen, Fingerprint, FileText, Send, Download,
   Sparkles, Zap, Wallet, ExternalLink, VolumeX, ShieldCheck, Laptop, Receipt,
   LifeBuoy, Award, GraduationCap, FileCheck, HelpCircle, Layers, CreditCard,
-  Building2, Plus, ArrowUpRight, HeartHandshake, CheckSquare, FileUp, Printer, Shield, Radio, Cpu
+  Building2, Plus, ArrowUpRight, HeartHandshake, CheckSquare, FileUp, Printer, Shield, Radio, Cpu, RotateCcw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -31,6 +32,8 @@ import { PayslipModal } from "@/components/payslip-modal";
 import { IdCardModal } from "@/components/id-card-modal";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { EmployeeReferEarn } from "@/components/employee-refer-earn";
+import { ProfileChangeRequestModal } from "@/components/profile-change-request-modal";
+import EmailAutomationHub from "@/components/email-automation-hub";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,7 +49,9 @@ import {
   listAssignedSupportQueries, updateSupportProgressNotes, requestSupportMeeting,
   reviewDeadlineExtension, getDashboardSettings,
   listInternTasksForMentor, updateTaskExecution,
-  listHolidays, createMeeting, updateMeeting
+  listHolidays, createMeeting, updateMeeting,
+  submitMentorTaskVerificationReport, scheduleMentorMeeting,
+  listAutomatedEmailLogs, deleteAutomatedEmailLog, sendPromotionalInternshipEmail
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/employee")({
@@ -298,6 +303,35 @@ function EmployeeDashboard() {
   const [isLoadingInternTasks, setIsLoadingInternTasks] = useState(false);
   const doReviewDeadlineExtension = useServerFn(reviewDeadlineExtension);
   const doCreateMeeting = useServerFn(createMeeting);
+
+  // Profile Change Request Modal State
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+
+  // Mentor Task Verification Modal State
+  const [mentorVerifyTask, setMentorVerifyTask] = useState<any>(null);
+  const [mentorReportText, setMentorReportText] = useState("");
+  const [mentorRating, setMentorRating] = useState<number>(5);
+  const [mentorRecommendedCredits, setMentorRecommendedCredits] = useState<number>(10);
+  const [mentorStatus, setMentorStatus] = useState<"verified" | "needs_revision">("verified");
+  const [isSubmittingMentorReport, setIsSubmittingMentorReport] = useState(false);
+  const doSubmitMentorReport = useServerFn(submitMentorTaskVerificationReport);
+
+  // Mentee Meeting Scheduling State
+  const [menteeMeetingOpen, setMenteeMeetingOpen] = useState(false);
+  const [menteeMeetingTitle, setMenteeMeetingTitle] = useState("Weekly Mentorship Review Sync");
+  const [menteeMeetingDesc, setMenteeMeetingDesc] = useState("Progress evaluation, task blockers review, and roadmap alignment.");
+  const [menteeMeetingDate, setMenteeMeetingDate] = useState(new Date().toISOString().split("T")[0]);
+  const [menteeMeetingTime, setMenteeMeetingTime] = useState("11:00");
+  const [menteeMeetingLink, setMenteeMeetingLink] = useState("");
+  const [selectedMenteeIds, setSelectedMenteeIds] = useState<string[]>([]);
+  const [isSchedulingMenteeMeeting, setIsSchedulingMenteeMeeting] = useState(false);
+  const doScheduleMentorMeeting = useServerFn(scheduleMentorMeeting);
+
+  // Promotional Email Campaigns Functions
+  const fetchEmailLogs = useServerFn(listAutomatedEmailLogs);
+  const doSendPromotionalEmail = useServerFn(sendPromotionalInternshipEmail);
+  const doDeleteAutomatedEmailLog = useServerFn(deleteAutomatedEmailLog);
+  const emailLogsQ = useQuery({ queryKey: ["admin-automated-email-logs"], queryFn: () => fetchEmailLogs(), enabled: activeTab === "campaigns" });
 
   const [meetingModalOpen, setMeetingModalOpen] = useState(false);
   const [meetingForm, setMeetingForm] = useState({
@@ -973,7 +1007,8 @@ function EmployeeDashboard() {
     { id: "resolver_support", label: "Intern Queries", badge: assignedSupportQueries.filter((q: any) => q.status !== "resolved").length, enabled: isModuleEnabled("resolver_support") },
     { id: "meetings", label: "Meetings", enabled: isModuleEnabled("meetings") },
     { id: "interviews", label: "Interviews", badge: assignedInterviews.length, enabled: isModuleEnabled("interviews") },
-    { id: "my_interns", label: "My Interns", badge: myInterns.length, enabled: isModuleEnabled("my_interns") },
+    { id: "my_interns", label: "My Interns & Mentorship", badge: myInterns.length, enabled: isModuleEnabled("my_interns") },
+    { id: "campaigns", label: "Email Campaigns", enabled: true },
     { id: "announcements", label: `News`, badge: announcements.length, enabled: isModuleEnabled("announcements") },
     { id: "team", label: "Team & Kudos", enabled: isModuleEnabled("team") },
     { id: "resources", label: "Resources & LMS", enabled: isModuleEnabled("resources") },
@@ -1004,6 +1039,15 @@ function EmployeeDashboard() {
                 <div className="text-[10px] text-slate-400">Active Session</div>
               </div>
               <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 ring-2 ring-white shadow-sm" />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setProfileModalOpen(true)}
+                className="h-8 text-xs font-bold rounded-xl border-slate-200 hover:bg-slate-50 gap-1.5 shadow-2xs"
+              >
+                <User className="h-3.5 w-3.5 text-indigo-600" />
+                Edit Details
+              </Button>
             </div>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-slate-500 hover:text-black hover:bg-black/5 rounded-full px-4 transition-colors">
               <LogOut className="h-4 w-4 mr-2" /> Sign Out
@@ -1534,22 +1578,46 @@ function EmployeeDashboard() {
           )}
 
           {/* ─── MY INTERNS ─── */}
+          {/* ─── MY INTERNS & MENTORSHIP ─── */}
           {activeTab === "my_interns" && (
             <motion.div key="my_interns" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-8 max-w-7xl mx-auto">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-light tracking-tight text-slate-900">My Interns</h2>
-                  <p className="text-sm text-slate-500 font-light mt-1">Manage tasks and view attendance for interns assigned to you.</p>
-                </div>
-                {selectedInterns.length > 0 && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-slate-500 font-medium">{selectedInterns.length} selected</span>
-                    <Button onClick={() => handleAssignTask()} className="bg-slate-900 hover:bg-black text-white rounded-xl shadow-sm">
-                      <Plus className="h-4 w-4 mr-2" /> Assign Bulk Task
-                    </Button>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-3xl text-white shadow-lg">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="p-2 bg-indigo-500/20 border border-indigo-400/30 rounded-xl text-indigo-300">
+                      <GraduationCap className="h-5 w-5" />
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-500/30 text-indigo-200 px-2.5 py-0.5 rounded-full border border-indigo-400/30">
+                      Mentor Oversight &amp; Verification Hub
+                    </span>
                   </div>
-                )}
+                  <h2 className="text-xl font-bold tracking-tight text-white">
+                    Assigned Mentees &amp; Task Deliverables
+                  </h2>
+                  <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                    Track your assigned interns' task progress, inspect submitted deliverables, submit 1st-tier mentor evaluation reports (rating &amp; recommended credits), and schedule Google Meet syncs.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    onClick={() => {
+                      setSelectedMenteeIds(myInterns.map((i: any) => i.id));
+                      setMenteeMeetingOpen(true);
+                    }}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs gap-1.5 h-9"
+                    disabled={myInterns.length === 0}
+                  >
+                    <Video className="h-4 w-4" /> Schedule Mentee Meeting
+                  </Button>
+                  {selectedInterns.length > 0 && (
+                    <Button onClick={() => handleAssignTask()} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs gap-1.5 h-9">
+                      <Plus className="h-4 w-4" /> Assign Bulk Task ({selectedInterns.length})
+                    </Button>
+                  )}
+                </div>
               </div>
+
               <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
@@ -1563,14 +1631,14 @@ function EmployeeDashboard() {
                             onChange={(e) => setSelectedInterns(e.target.checked ? myInterns.map((i:any) => i.id) : [])}
                           />
                         </th>
-                        <th className="px-6 py-4">Intern</th>
+                        <th className="px-6 py-4">Intern / Mentee</th>
                         <th className="px-6 py-4">Department</th>
-                        <th className="px-6 py-4 text-right">Actions</th>
+                        <th className="px-6 py-4 text-right">Actions &amp; Oversight</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {myInterns.length === 0 ? (
-                        <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400 font-light">No interns assigned.</td></tr>
+                        <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400 font-light">No interns allocated to you currently. Contact Admin to assign mentees.</td></tr>
                       ) : (
                         myInterns.map((intern: any) => (
                           <tr key={intern.id} className="hover:bg-slate-50/50 transition-colors">
@@ -1593,17 +1661,33 @@ function EmployeeDashboard() {
                             </td>
                             <td className="px-6 py-4 text-slate-600">{intern.department || "—"}</td>
                             <td className="px-6 py-4 text-right space-x-2">
-                              <Button variant="outline" size="sm" onClick={() => handleViewAttendance(intern)} className="rounded-xl">
-                                <Clock className="h-4 w-4 mr-2 text-slate-500" /> Attendance
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedMenteeIds([intern.id]);
+                                  setMenteeMeetingTitle(`Mentorship 1-on-1 Sync: ${intern.full_name}`);
+                                  setMenteeMeetingOpen(true);
+                                }}
+                                className="rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50/70 border-indigo-200 hover:bg-indigo-100"
+                              >
+                                <Video className="h-3.5 w-3.5 mr-1" /> 1-on-1 Sync
                               </Button>
-                              <Button variant="outline" size="sm" onClick={() => {
-                                setSelectedInternForTasks(intern);
-                                loadInternTasks(intern.id);
-                              }} className="rounded-xl">
-                                <FileText className="h-4 w-4 mr-2 text-slate-500" /> View Tasks
+                              <Button variant="outline" size="sm" onClick={() => handleViewAttendance(intern)} className="rounded-xl text-xs">
+                                <Clock className="h-3.5 w-3.5 mr-1 text-slate-500" /> Attendance
                               </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleAssignTask(intern.id)} className="rounded-xl">
-                                <Plus className="h-4 w-4 mr-2 text-slate-500" /> Assign Task
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedInternForTasks(intern);
+                                  loadInternTasks(intern.id);
+                                }}
+                                className="rounded-xl text-xs font-bold bg-slate-900 hover:bg-black text-white"
+                              >
+                                <FileText className="h-3.5 w-3.5 mr-1 text-amber-400" /> Task Board &amp; Reviews
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={() => handleAssignTask(intern.id)} className="rounded-xl text-xs">
+                                <Plus className="h-3.5 w-3.5 mr-1 text-slate-500" /> Assign Task
                               </Button>
                             </td>
                           </tr>
@@ -1612,6 +1696,37 @@ function EmployeeDashboard() {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ─── EMAIL & PROMOTIONAL CAMPAIGNS ─── */}
+          {activeTab === "campaigns" && (
+            <motion.div key="campaigns" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-3xl text-white shadow-lg">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="p-2 bg-indigo-500/20 border border-indigo-400/30 rounded-xl text-indigo-300">
+                      <Mail className="h-5 w-5" />
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-500/30 text-indigo-200 px-2.5 py-0.5 rounded-full border border-indigo-400/30">
+                      Employee Outreach &amp; Campaign Hub
+                    </span>
+                  </div>
+                  <h2 className="text-xl font-bold text-white tracking-tight">Bulk Promotional &amp; Intern Communication Engine</h2>
+                  <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                    Broadcast promotional newsletters, internship announcements, batch notices, or tailored emails directly to your assigned interns or custom recipient lists.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs">
+                <EmailAutomationHub 
+                  emailLogsQ={emailLogsQ} 
+                  doSendPromotionalEmail={doSendPromotionalEmail} 
+                  doDeleteAutomatedEmailLog={doDeleteAutomatedEmailLog} 
+                  qc={qc} 
+                />
               </div>
             </motion.div>
           )}
@@ -2827,7 +2942,7 @@ function EmployeeDashboard() {
 
                       {/* Deliverable link & Mentor Review block */}
                       {task.deliverable_url && (
-                        <div className="bg-white border p-3 rounded-xl text-xs space-y-2.5 shadow-2xs">
+                        <div className="bg-white border p-3.5 rounded-xl text-xs space-y-3 shadow-2xs">
                           <div className="flex items-center justify-between gap-2 flex-wrap">
                             <div className="truncate text-slate-700">
                               <strong className="text-slate-900">Submitted Deliverable:</strong>{" "}
@@ -2835,68 +2950,70 @@ function EmployeeDashboard() {
                                 {task.deliverable_url}
                               </a>
                             </div>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${task.status === "completed" ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800"}`}>
-                              {task.status === "completed" ? "✓ Verified & Approved" : "Ready to Review"}
-                            </span>
+                            <Badge className={`text-[10px] font-bold ${
+                              task.status === "completed" 
+                                ? "bg-emerald-100 text-emerald-800 border-emerald-200" 
+                                : task.mentor_verification_status === "mentor_verified"
+                                ? "bg-purple-100 text-purple-800 border-purple-200"
+                                : "bg-blue-100 text-blue-800 border-blue-200"
+                            }`}>
+                              {task.status === "completed" 
+                                ? "✓ Completed & Finalized by Admin" 
+                                : task.mentor_verification_status === "mentor_verified"
+                                ? "⭐ Mentor Verified (Awaiting Admin Points)"
+                                : "Deliverable Ready for Mentor Review"}
+                            </Badge>
                           </div>
 
                           {task.progress_notes && (
                             <div className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border">
-                              <span className="font-semibold text-slate-700">Intern Notes:</span> {task.progress_notes}
+                              <span className="font-semibold text-slate-700">Intern Submission Note:</span> {task.progress_notes}
+                            </div>
+                          )}
+
+                          {task.mentor_report && (
+                            <div className="text-[11px] text-purple-900 bg-purple-50/80 p-2.5 rounded-lg border border-purple-200 space-y-1">
+                              <div className="font-bold flex items-center justify-between">
+                                <span>⭐ Mentor Verification Report ({task.mentor_rating || 5}/5):</span>
+                                <span className="text-[10px] text-purple-700 font-bold">Rec: +{task.mentor_recommended_credits || task.credits || 10} Credits</span>
+                              </div>
+                              <p className="italic">"{task.mentor_report}"</p>
                             </div>
                           )}
 
                           {task.admin_remarks && (
                             <div className="text-[11px] text-emerald-800 bg-emerald-50/80 p-2 rounded-lg border border-emerald-200">
-                              <span className="font-semibold">Mentor Feedback:</span> {task.admin_remarks}
+                              <span className="font-semibold">Admin Final Remarks:</span> {task.admin_remarks}
                             </div>
                           )}
 
                           {task.status !== "completed" && (
-                            <div className="flex items-center gap-2 pt-1 border-t">
+                            <div className="flex items-center gap-2 pt-1 border-t flex-wrap">
                               <Button
                                 size="sm"
-                                className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1"
-                                onClick={async () => {
-                                  try {
-                                    await doUpdateTaskExecution({
-                                      data: {
-                                        id: task.id,
-                                        status: "completed",
-                                        progress_percentage: 100,
-                                        admin_remarks: "Verified & approved by mentor.",
-                                      }
-                                    });
-                                    toast.success("Deliverable verified & task marked completed!");
-                                    loadInternTasks(selectedInternForTasks.id);
-                                  } catch (e: any) {
-                                    toast.error("Failed to approve task: " + e.message);
-                                  }
+                                className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold gap-1.5 shadow-2xs rounded-lg"
+                                onClick={() => {
+                                  setMentorVerifyTask(task);
+                                  setMentorReportText(task.mentor_report || "");
+                                  setMentorRating(task.mentor_rating || 5);
+                                  setMentorRecommendedCredits(task.mentor_recommended_credits || task.credits || 10);
+                                  setMentorStatus("verified");
                                 }}
                               >
-                                <CheckCircle2 className="h-3.5 w-3.5" /> Verify & Approve Task
+                                <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                                🔍 Verify &amp; Submit Mentor Report
                               </Button>
 
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 text-xs text-amber-700 border-amber-300 hover:bg-amber-50 font-semibold"
-                                onClick={async () => {
-                                  const feedback = prompt("Enter feedback / revision requirements for the intern:", task.admin_remarks || "");
-                                  if (feedback === null) return;
-                                  try {
-                                    await doUpdateTaskExecution({
-                                      data: {
-                                        id: task.id,
-                                        status: "in_progress",
-                                        admin_remarks: feedback,
-                                      }
-                                    });
-                                    toast.success("Feedback sent to intern!");
-                                    loadInternTasks(selectedInternForTasks.id);
-                                  } catch (e: any) {
-                                    toast.error("Failed to send feedback: " + e.message);
-                                  }
+                                className="h-8 text-xs text-amber-700 border-amber-300 hover:bg-amber-50 font-semibold rounded-lg"
+                                onClick={() => {
+                                  setMentorVerifyTask(task);
+                                  setMentorReportText(task.mentor_report || "");
+                                  setMentorRating(task.mentor_rating || 3);
+                                  setMentorRecommendedCredits(task.credits || 5);
+                                  setMentorStatus("needs_revision");
                                 }}
                               >
                                 Request Revision
@@ -2965,6 +3082,334 @@ function EmployeeDashboard() {
           </div>
         </div>
       )}
+
+      {/* ── Mentor Verification Report Dialog ── */}
+      {mentorVerifyTask && (
+        <Dialog open={!!mentorVerifyTask} onOpenChange={(open) => !open && setMentorVerifyTask(null)}>
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+                <Sparkles className="h-5 w-5 text-indigo-600" />
+                Mentor Task Verification Report
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Evaluate deliverables submitted by your allocated intern. Your assessment report and recommended credits will be routed to Admin for final authorization.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setIsSubmittingMentorReport(true);
+                try {
+                  await doSubmitMentorReport({
+                    data: {
+                      taskId: mentorVerifyTask.id,
+                      mentor_report: mentorReportText.trim(),
+                      mentor_rating: Number(mentorRating),
+                      mentor_recommended_credits: Number(mentorRecommendedCredits),
+                      status: mentorStatus,
+                    },
+                  });
+                  toast.success("Mentor evaluation report submitted to Directorate Admin!");
+                  setMentorVerifyTask(null);
+                  if (selectedInternForTasks) {
+                    loadInternTasks(selectedInternForTasks.id);
+                  }
+                  qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                } catch (err: any) {
+                  toast.error(err.message || "Failed to submit mentor verification report");
+                } finally {
+                  setIsSubmittingMentorReport(false);
+                }
+              }}
+              className="space-y-4 pt-2 text-xs"
+            >
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                <span className="font-bold text-slate-800 text-xs">{mentorVerifyTask.title}</span>
+                {mentorVerifyTask.deliverable_url && (
+                  <div className="text-[11px] truncate">
+                    <span className="text-slate-500">Deliverable Link: </span>
+                    <a href={mentorVerifyTask.deliverable_url} target="_blank" rel="noreferrer" className="text-indigo-600 font-mono underline">
+                      {mentorVerifyTask.deliverable_url}
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Status Recommendation */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-700">Verification Outcome</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMentorStatus("verified")}
+                    className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                      mentorStatus === "verified"
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-800 shadow-2xs"
+                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    Verified (Recommend Approval)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMentorStatus("needs_revision")}
+                    className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                      mentorStatus === "needs_revision"
+                        ? "bg-amber-50 border-amber-400 text-amber-800 shadow-2xs"
+                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    <RotateCcw className="h-4 w-4 text-amber-600" />
+                    Needs Revision
+                  </button>
+                </div>
+              </div>
+
+              {/* Rating and Credits */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-slate-700">Mentor Rating (1 - 5 Stars)</Label>
+                  <select
+                    value={mentorRating}
+                    onChange={(e) => setMentorRating(Number(e.target.value))}
+                    className="w-full rounded-xl border border-slate-200 bg-white p-2 text-xs font-bold text-slate-800"
+                  >
+                    <option value={5}>⭐⭐⭐⭐⭐ (5/5 - Outstanding)</option>
+                    <option value={4}>⭐⭐⭐⭐ (4/5 - Exceeds Expectations)</option>
+                    <option value={3}>⭐⭐⭐ (3/5 - Meets Requirements)</option>
+                    <option value={2}>⭐⭐ (2/5 - Partial Completion)</option>
+                    <option value={1}>⭐ (1/5 - Unsatisfactory)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-slate-700">Recommended Credits / Points</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={mentorRecommendedCredits}
+                    onChange={(e) => setMentorRecommendedCredits(Number(e.target.value))}
+                    className="text-xs font-bold"
+                  />
+                </div>
+              </div>
+
+              {/* Mentor Detailed Report Text */}
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-slate-700">
+                  Mentor Evaluation Report &amp; Observations *
+                </Label>
+                <Textarea
+                  required
+                  rows={4}
+                  value={mentorReportText}
+                  onChange={(e) => setMentorReportText(e.target.value)}
+                  placeholder="Detail the quality of the submission, architecture decisions, code readability, test coverage, and feedback for the intern..."
+                  className="text-xs"
+                />
+              </div>
+
+              <DialogFooter className="gap-2 pt-2">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setMentorVerifyTask(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isSubmittingMentorReport || !mentorReportText.trim()}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
+                >
+                  {isSubmittingMentorReport ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-3.5 w-3.5 mr-1" />}
+                  Submit Verification to Admin
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* ── Schedule Mentee Meeting Modal ── */}
+      {menteeMeetingOpen && (
+        <Dialog open={menteeMeetingOpen} onOpenChange={setMenteeMeetingOpen}>
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+                <Video className="h-5 w-5 text-indigo-600" />
+                Schedule Mentorship Meeting &amp; Dispatch Invites
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Creates a sync on the company calendar and immediately sends official email invitations with direct Google Meet links to your allocated interns.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (selectedMenteeIds.length === 0) {
+                  toast.error("Please select at least one assigned mentee.");
+                  return;
+                }
+                setIsSchedulingMenteeMeeting(true);
+                try {
+                  const scheduledIso = new Date(`${menteeMeetingDate}T${menteeMeetingTime}:00`).toISOString();
+                  const res = await doScheduleMentorMeeting({
+                    data: {
+                      title: menteeMeetingTitle.trim(),
+                      description: menteeMeetingDesc.trim() || undefined,
+                      scheduled_at: scheduledIso,
+                      meeting_link: menteeMeetingLink.trim(),
+                      intern_ids: selectedMenteeIds,
+                    },
+                  });
+                  toast.success(res.message);
+                  setMenteeMeetingOpen(false);
+                  qc.invalidateQueries({ queryKey: ["meetings"] });
+                } catch (err: any) {
+                  toast.error(err.message || "Failed to schedule mentee meeting");
+                } finally {
+                  setIsSchedulingMenteeMeeting(false);
+                }
+              }}
+              className="space-y-4 pt-2 text-xs"
+            >
+              {/* Meeting Title */}
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-slate-700">Meeting Title *</Label>
+                <Input
+                  required
+                  value={menteeMeetingTitle}
+                  onChange={(e) => setMenteeMeetingTitle(e.target.value)}
+                  placeholder="e.g. Weekly Mentorship Review & Task Unblockers"
+                  className="text-xs"
+                />
+              </div>
+
+              {/* Date & Time */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-slate-700">Meeting Date *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={menteeMeetingDate}
+                    onChange={(e) => setMenteeMeetingDate(e.target.value)}
+                    className="text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-slate-700">Start Time *</Label>
+                  <Input
+                    type="time"
+                    required
+                    value={menteeMeetingTime}
+                    onChange={(e) => setMenteeMeetingTime(e.target.value)}
+                    className="text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Meeting Link */}
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-slate-700">Google Meet / Zoom URL *</Label>
+                <Input
+                  type="url"
+                  required
+                  value={menteeMeetingLink}
+                  onChange={(e) => setMenteeMeetingLink(e.target.value)}
+                  placeholder="https://meet.google.com/xyz-abcd-efg"
+                  className="text-xs"
+                />
+              </div>
+
+              {/* Target Mentees Selector */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-slate-700">Invited Mentees ({selectedMenteeIds.length} Selected)</Label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (selectedMenteeIds.length === myInterns.length) {
+                        setSelectedMenteeIds([]);
+                      } else {
+                        setSelectedMenteeIds(myInterns.map((i: any) => i.id));
+                      }
+                    }}
+                    className="text-[11px] text-indigo-600 hover:underline font-bold"
+                  >
+                    {selectedMenteeIds.length === myInterns.length ? "Deselect All" : "Select All"}
+                  </button>
+                </div>
+                <div className="max-h-36 overflow-y-auto space-y-1.5 p-2 rounded-xl border border-slate-200 bg-slate-50">
+                  {myInterns.map((intern: any) => (
+                    <label key={intern.id} className="flex items-center gap-2 cursor-pointer p-1.5 rounded-lg hover:bg-white transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={selectedMenteeIds.includes(intern.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedMenteeIds([...selectedMenteeIds, intern.id]);
+                          } else {
+                            setSelectedMenteeIds(selectedMenteeIds.filter((id) => id !== intern.id));
+                          }
+                        }}
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5"
+                      />
+                      <span className="text-xs font-medium text-slate-800">{intern.full_name}</span>
+                      <span className="text-[10px] text-slate-400">({intern.email})</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-slate-700">Agenda / Discussion Points</Label>
+                <Textarea
+                  rows={2}
+                  value={menteeMeetingDesc}
+                  onChange={(e) => setMenteeMeetingDesc(e.target.value)}
+                  placeholder="Items to discuss..."
+                  className="text-xs"
+                />
+              </div>
+
+              <DialogFooter className="gap-2 pt-2">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setMenteeMeetingOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isSchedulingMenteeMeeting || !menteeMeetingTitle || !menteeMeetingLink || selectedMenteeIds.length === 0}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
+                >
+                  {isSchedulingMenteeMeeting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-3.5 w-3.5 mr-1" />}
+                  Schedule &amp; Dispatch Invites
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* ── Reusable Profile Change Request Modal ── */}
+      <ProfileChangeRequestModal
+        open={profileModalOpen}
+        onOpenChange={setProfileModalOpen}
+        currentProfile={{
+          full_name: profile?.full_name,
+          email: profile?.email,
+          phone_number: profile?.phone_number,
+          avatar_url: profile?.avatar_url,
+          address: profile?.address,
+          role: profile?.role,
+          department: profile?.department,
+        }}
+      />
 
       <FirstLoginWelcomeModal user={profile} />
       <PwaInstallBanner 

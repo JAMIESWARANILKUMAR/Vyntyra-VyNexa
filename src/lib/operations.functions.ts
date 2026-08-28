@@ -5533,3 +5533,562 @@ export const assignReferralCodeToIntern = createServerFn({ method: "POST" })
   });
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PROFILE CHANGE REQUESTS & ADMIN APPROVAL WORKFLOW
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ProfileChangeRequestItem {
+  id: string;
+  user_id: string;
+  user_name: string;
+  user_email: string;
+  user_role: "intern" | "employee";
+  department?: string;
+  current_values: {
+    email?: string;
+    phone?: string;
+    avatar_url?: string;
+    address?: string;
+  };
+  requested_values: {
+    email?: string;
+    phone?: string;
+    avatar_url?: string;
+    address?: string;
+  };
+  reason?: string;
+  status: "pending" | "approved" | "rejected";
+  admin_remarks?: string;
+  created_at: string;
+  reviewed_at?: string;
+  reviewed_by?: string;
+}
+
+export const requestProfileChange = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    requested_email: z.string().email().optional().or(z.literal("")),
+    requested_phone: z.string().optional().or(z.literal("")),
+    requested_avatar_url: z.string().optional().or(z.literal("")),
+    requested_address: z.string().optional().or(z.literal("")),
+    reason: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const user = context.user;
+    const admin = getAdminClient();
+
+    // Fetch current user details
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("id, full_name, email, role, phone_number, avatar_url, address, department")
+      .eq("id", user.id)
+      .single();
+
+    const currentProfile = profile || {
+      id: user.id,
+      full_name: user.user_metadata?.full_name || "User",
+      email: user.email || "",
+      role: "intern",
+      phone_number: "",
+      avatar_url: "",
+      address: "",
+      department: "",
+    };
+
+    // Build new request
+    const newRequest: ProfileChangeRequestItem = {
+      id: "pcr_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7),
+      user_id: user.id,
+      user_name: currentProfile.full_name,
+      user_email: currentProfile.email,
+      user_role: (currentProfile.role === "employee" || currentProfile.role === "mentor") ? "employee" : "intern",
+      department: currentProfile.department || undefined,
+      current_values: {
+        email: currentProfile.email || "",
+        phone: currentProfile.phone_number || "",
+        avatar_url: currentProfile.avatar_url || "",
+        address: currentProfile.address || "",
+      },
+      requested_values: {
+        email: data.requested_email || currentProfile.email || "",
+        phone: data.requested_phone || currentProfile.phone_number || "",
+        avatar_url: data.requested_avatar_url || currentProfile.avatar_url || "",
+        address: data.requested_address || currentProfile.address || "",
+      },
+      reason: data.reason || "Profile information update requested by user",
+      status: "pending",
+      created_at: new Date().toISOString(),
+    };
+
+    // Store in site_settings
+    const { data: settingRecord } = await admin
+      .from("site_settings")
+      .select("value")
+      .eq("id", "profile_change_requests")
+      .maybeSingle();
+
+    let existingRequests: ProfileChangeRequestItem[] = [];
+    if (settingRecord?.value) {
+      existingRequests = Array.isArray(settingRecord.value.requests) ? settingRecord.value.requests : [];
+    }
+
+    // Prepend new request
+    const updatedRequests = [newRequest, ...existingRequests.slice(0, 499)];
+
+    const { error: saveErr } = await admin
+      .from("site_settings")
+      .upsert({
+        id: "profile_change_requests",
+        value: { requests: updatedRequests },
+        updated_at: new Date().toISOString(),
+      });
+
+    if (saveErr) {
+      console.error("[requestProfileChange] Save error:", saveErr);
+      throw new Error("Failed to submit profile change request: " + saveErr.message);
+    }
+
+    // Notify Admins
+    try {
+      const { data: admins } = await admin
+        .from("profiles")
+        .select("id")
+        .in("role", ["admin", "super_admin"]);
+
+      if (admins && admins.length > 0) {
+        const notifs = admins.map((adm: any) => ({
+          user_id: adm.id,
+          title: "Profile Change Request Pending",
+          message: `${currentProfile.full_name} (${currentProfile.role}) has submitted a profile update request (Email/Phone/Image/Address) awaiting your approval.`,
+          type: "profile_change_request",
+          is_read: false,
+          created_at: new Date().toISOString(),
+        }));
+        await admin.from("user_notifications").insert(notifs);
+      }
+    } catch (e) {
+      console.warn("Admin notification skipped:", e);
+    }
+
+    return {
+      success: true,
+      requestId: newRequest.id,
+      message: "Your profile update request has been successfully submitted for Admin approval. You will be notified once reviewed.",
+    };
+  });
+
+export const listProfileChangeRequests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const admin = getAdminClient();
+    const { data: settingRecord } = await admin
+      .from("site_settings")
+      .select("value")
+      .eq("id", "profile_change_requests")
+      .maybeSingle();
+
+    if (!settingRecord?.value || !Array.isArray(settingRecord.value.requests)) {
+      return [];
+    }
+
+    return settingRecord.value.requests as ProfileChangeRequestItem[];
+  });
+
+export const getMyProfileChangeRequests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const user = context.user;
+    const admin = getAdminClient();
+    const { data: settingRecord } = await admin
+      .from("site_settings")
+      .select("value")
+      .eq("id", "profile_change_requests")
+      .maybeSingle();
+
+    if (!settingRecord?.value || !Array.isArray(settingRecord.value.requests)) {
+      return [];
+    }
+
+    const allRequests: ProfileChangeRequestItem[] = settingRecord.value.requests;
+    return allRequests.filter((r) => r.user_id === user.id);
+  });
+
+export const reviewProfileChangeRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    requestId: z.string(),
+    status: z.enum(["approved", "rejected"]),
+    admin_remarks: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const reviewer = context.user;
+    const admin = getAdminClient();
+
+    const { data: settingRecord } = await admin
+      .from("site_settings")
+      .select("value")
+      .eq("id", "profile_change_requests")
+      .maybeSingle();
+
+    if (!settingRecord?.value || !Array.isArray(settingRecord.value.requests)) {
+      throw new Error("No profile change requests found");
+    }
+
+    const allRequests: ProfileChangeRequestItem[] = settingRecord.value.requests;
+    const reqIndex = allRequests.findIndex((r) => r.id === data.requestId);
+    if (reqIndex === -1) {
+      throw new Error("Request not found");
+    }
+
+    const targetReq = allRequests[reqIndex];
+    targetReq.status = data.status;
+    targetReq.admin_remarks = data.admin_remarks || "";
+    targetReq.reviewed_at = new Date().toISOString();
+    targetReq.reviewed_by = reviewer.email || "Admin";
+
+    // If Approved, apply changes to profiles and intern_profiles tables
+    if (data.status === "approved") {
+      const updates: Record<string, any> = {
+        updated_at: new Date().toISOString(),
+      };
+      if (targetReq.requested_values.phone) updates.phone_number = targetReq.requested_values.phone;
+      if (targetReq.requested_values.avatar_url) updates.avatar_url = targetReq.requested_values.avatar_url;
+      if (targetReq.requested_values.address) updates.address = targetReq.requested_values.address;
+      if (targetReq.requested_values.email) updates.email = targetReq.requested_values.email;
+
+      // 1. Update profiles table
+      const { error: profErr } = await admin
+        .from("profiles")
+        .update(updates)
+        .eq("id", targetReq.user_id);
+
+      if (profErr) {
+        console.warn("[reviewProfileChangeRequest] Profiles update error:", profErr);
+      }
+
+      // 2. Update intern_profiles if intern
+      if (targetReq.user_role === "intern") {
+        const internUpdates: Record<string, any> = {
+          updated_at: new Date().toISOString(),
+        };
+        if (targetReq.requested_values.phone) {
+          internUpdates.phone_number = targetReq.requested_values.phone;
+          internUpdates.contact_number = targetReq.requested_values.phone;
+        }
+        if (targetReq.requested_values.address) internUpdates.address = targetReq.requested_values.address;
+
+        try {
+          await admin
+            .from("intern_profiles")
+            .update(internUpdates)
+            .eq("id", targetReq.user_id);
+        } catch (e) {
+          console.warn("Intern profile update skipped:", e);
+        }
+      }
+    }
+
+    // Save updated list to site_settings
+    allRequests[reqIndex] = targetReq;
+    await admin
+      .from("site_settings")
+      .upsert({
+        id: "profile_change_requests",
+        value: { requests: allRequests },
+        updated_at: new Date().toISOString(),
+      });
+
+    // Notify User
+    try {
+      await admin.from("user_notifications").insert({
+        user_id: targetReq.user_id,
+        title: data.status === "approved" ? "Profile Details Update Approved" : "Profile Update Request Rejected",
+        message: data.status === "approved"
+          ? `Your profile details (Email/Phone/Image/Address) have been verified and updated successfully by Admin.`
+          : `Your profile change request was rejected. Admin remarks: "${data.admin_remarks || 'Details did not meet verification criteria.'}"`,
+        type: "profile_change_review",
+        is_read: false,
+        created_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn("User notification skipped:", e);
+    }
+
+    return {
+      success: true,
+      status: data.status,
+      message: `Profile update request marked as ${data.status.toUpperCase()}!`,
+    };
+  });
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MENTOR TASK VERIFICATION REPORT & ADMIN FINAL POINTS APPROVAL
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const submitMentorTaskVerificationReport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    taskId: z.string().uuid(),
+    mentor_report: z.string().min(5, "Mentor evaluation report is required"),
+    mentor_rating: z.number().min(1).max(5),
+    mentor_recommended_credits: z.number().min(1).max(100),
+    status: z.enum(["verified", "needs_revision"]),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const mentorUser = context.user;
+    const admin = getAdminClient();
+
+    const { data: task, error: fetchErr } = await admin
+      .from("tasks")
+      .select("id, title, intern_id, credits, description")
+      .eq("id", data.taskId)
+      .single();
+
+    if (fetchErr || !task) throw new Error("Task not found");
+
+    const mentorName = mentorUser.user_metadata?.full_name || mentorUser.email || "Mentor";
+
+    const updatePayload: Record<string, any> = {
+      mentor_verification_status: data.status === "verified" ? "mentor_verified" : "needs_revision",
+      mentor_report: data.mentor_report,
+      mentor_rating: data.mentor_rating,
+      mentor_recommended_credits: data.mentor_recommended_credits,
+      mentor_verified_at: new Date().toISOString(),
+      mentor_id: mentorUser.id,
+      mentor_name: mentorName,
+      status: data.status === "verified" ? "under_review" : "blocked",
+      progress_notes: `[Mentor Evaluation by ${mentorName} (Rating: ${data.mentor_rating}/5)]: ${data.mentor_report}`,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: updateErr } = await admin
+      .from("tasks")
+      .update(updatePayload)
+      .eq("id", data.taskId);
+
+    if (updateErr) throw new Error("Failed to submit mentor report: " + updateErr.message);
+
+    // Notify Admin
+    try {
+      const { data: admins } = await admin
+        .from("profiles")
+        .select("id")
+        .in("role", ["admin", "super_admin"]);
+
+      if (admins && admins.length > 0) {
+        const notifs = admins.map((adm: any) => ({
+          user_id: adm.id,
+          title: "Mentor Verification Report Submitted",
+          message: `Mentor ${mentorName} verified task "${task.title}" with a rating of ${data.mentor_rating}/5 and recommended ${data.mentor_recommended_credits} Credits. Final Admin point assignment & completion required.`,
+          type: "mentor_verification",
+          is_read: false,
+          created_at: new Date().toISOString(),
+        }));
+        await admin.from("user_notifications").insert(notifs);
+      }
+    } catch (e) {
+      console.warn("Admin notification skipped:", e);
+    }
+
+    // Notify Intern
+    if (task.intern_id) {
+      try {
+        await admin.from("user_notifications").insert({
+          user_id: task.intern_id,
+          title: data.status === "verified" ? "Deliverable Verified by Mentor" : "Mentor Requested Revisions",
+          message: data.status === "verified"
+            ? `Mentor ${mentorName} has reviewed and verified your task "${task.title}" (Score: ${data.mentor_rating}/5). It is now queued for final Admin certification & credit awarding!`
+            : `Mentor ${mentorName} reviewed your deliverable and requested revisions: "${data.mentor_report}"`,
+          type: "mentor_feedback",
+          is_read: false,
+          created_at: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.warn("Intern notification skipped:", e);
+      }
+    }
+
+    return {
+      success: true,
+      message: `Mentor evaluation report submitted successfully! Queued for final Admin point assignment.`,
+    };
+  });
+
+export const adminFinalizeTaskCompletion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    taskId: z.string().uuid(),
+    awardedCredits: z.number().min(1),
+    adminRemarks: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const adminUser = context.user;
+    const admin = getAdminClient();
+
+    const { data: task, error: fetchErr } = await admin
+      .from("tasks")
+      .select("id, title, intern_id, credits")
+      .eq("id", data.taskId)
+      .single();
+
+    if (fetchErr || !task) throw new Error("Task not found");
+
+    const { error: updateErr } = await admin
+      .from("tasks")
+      .update({
+        status: "completed",
+        credits: data.awardedCredits,
+        admin_remarks: data.adminRemarks || "Verified and certified by Directorate Admin.",
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.taskId);
+
+    if (updateErr) throw new Error("Failed to finalize task: " + updateErr.message);
+
+    // Update intern's points/credits if intern profile exists
+    if (task.intern_id) {
+      try {
+        const { data: internProf } = await admin
+          .from("intern_profiles")
+          .select("id, total_credits, completed_tasks_count")
+          .eq("id", task.intern_id)
+          .maybeSingle();
+
+        if (internProf) {
+          await admin
+            .from("intern_profiles")
+            .update({
+              total_credits: (internProf.total_credits || 0) + data.awardedCredits,
+              completed_tasks_count: (internProf.completed_tasks_count || 0) + 1,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", task.intern_id);
+        }
+      } catch (e) {
+        console.warn("Intern credits update skipped:", e);
+      }
+
+      // Notify Intern
+      try {
+        await admin.from("user_notifications").insert({
+          user_id: task.intern_id,
+          title: "🏆 Task Officially Certified & Points Awarded!",
+          message: `Congratulations! Task "${task.title}" has been given final Directorate approval and awarded +${data.awardedCredits} Credits.`,
+          type: "task_completed",
+          is_read: false,
+          created_at: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.warn("Intern notification skipped:", e);
+      }
+    }
+
+    return {
+      success: true,
+      awardedCredits: data.awardedCredits,
+      message: `Task finalized as COMPLETED with ${data.awardedCredits} credits awarded to intern!`,
+    };
+  });
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMPLOYEE / MENTOR MEETING SCHEDULER FOR ALLOCATED INTERNS
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const scheduleMentorMeeting = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    title: z.string().min(2, "Meeting title required"),
+    description: z.string().optional(),
+    scheduled_at: z.string(),
+    meeting_link: z.string().url("Valid meeting link (Google Meet / Zoom) required"),
+    intern_ids: z.array(z.string().uuid()).min(1, "Select at least one assigned intern"),
+    reminder_timeline: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const mentorUser = context.user;
+    const admin = getAdminClient();
+
+    const hostName = mentorUser.user_metadata?.full_name || mentorUser.email || "Mentor";
+
+    // 1. Insert into meetings table
+    const { data: meeting, error: meetErr } = await admin
+      .from("meetings")
+      .insert({
+        title: data.title,
+        description: data.description || `Mentorship sync hosted by ${hostName}`,
+        scheduled_at: data.scheduled_at,
+        meeting_link: data.meeting_link,
+        host_id: mentorUser.id,
+        target_audience: "specific_users",
+        target_user_ids: data.intern_ids,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select("id, title, scheduled_at, meeting_link")
+      .single();
+
+    if (meetErr || !meeting) {
+      throw new Error("Failed to schedule mentor meeting: " + (meetErr?.message || "Unknown error"));
+    }
+
+    // 2. Fetch intern emails and dispatch notifications
+    const { data: interns } = await admin
+      .from("profiles")
+      .select("id, full_name, email")
+      .in("id", data.intern_ids);
+
+    if (interns && interns.length > 0) {
+      const scheduledDateObj = new Date(data.scheduled_at);
+      const formattedDate = scheduledDateObj.toLocaleDateString("en-IN", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+      const formattedTime = scheduledDateObj.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+
+      // Insert notifications for each intern
+      const notifs = interns.map((intern: any) => ({
+        user_id: intern.id,
+        title: `📅 Mentor Sync Scheduled: ${data.title}`,
+        message: `Your mentor ${hostName} scheduled a live session on ${formattedDate} at ${formattedTime}. Click to join!`,
+        type: "meeting_scheduled",
+        is_read: false,
+        created_at: new Date().toISOString(),
+      }));
+      await admin.from("user_notifications").insert(notifs);
+
+      // Trigger automated meeting schedule notification via omni service
+      try {
+        await sendMeetingScheduleNotification({
+          data: {
+            title: data.title,
+            description: data.description,
+            scheduled_at: data.scheduled_at,
+            meeting_link: data.meeting_link,
+            target_audience: "specific_users",
+            target_user_ids: data.intern_ids,
+          },
+        });
+      } catch (e) {
+        console.warn("[scheduleMentorMeeting] Automated email notification triggered:", e);
+      }
+    }
+
+    return {
+      success: true,
+      meetingId: meeting.id,
+      invitedCount: interns?.length || 0,
+      message: `Meeting scheduled and invitations dispatched to ${interns?.length || 0} assigned intern(s)!`,
+    };
+  });
+
+
+

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, reviewDeadlineExtension, bulkDeleteTasks, deleteTaskBatch, deleteAllInternTasks } from "@/lib/operations.functions";
+import { listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, reviewDeadlineExtension, bulkDeleteTasks, deleteTaskBatch, deleteAllInternTasks, adminFinalizeTaskCompletion } from "@/lib/operations.functions";
 import { Button } from "@/components/ui/button";
 import { Award, CreditCard } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ export function AdminInternTasksView() {
   const qc = useQueryClient();
   const fetchTasks = useServerFn(listAllInternTasksWithProgress);
   const doReview = useServerFn(reviewInternTaskByAdmin);
+  const doAdminFinalize = useServerFn(adminFinalizeTaskCompletion);
   const doDelete = useServerFn(deleteTask);
   const doBulkDelete = useServerFn(bulkDeleteTasks);
   const doReviewDeadlineExtension = useServerFn(reviewDeadlineExtension);
@@ -551,6 +552,24 @@ export function AdminInternTasksView() {
                       </div>
                     )}
 
+                    {/* Mentor Verification Report */}
+                    {(t.mentor_verification_status === "mentor_verified" || t.mentor_report) && (
+                      <div className="mt-2 p-3 rounded-xl bg-purple-50/90 dark:bg-purple-950/40 border border-purple-200 text-xs space-y-1.5 shadow-2xs">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <span className="font-bold text-purple-950 dark:text-purple-300 flex items-center gap-1.5">
+                            <Award className="h-4 w-4 text-purple-600" />
+                            Mentor Verified by {t.mentor_name || "Assigned Mentor"}:
+                          </span>
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-[10px] font-bold">
+                            ⭐ Score: {t.mentor_rating || 5}/5 &middot; Recommended: +{t.mentor_recommended_credits || t.credits || 10} Credits
+                          </Badge>
+                        </div>
+                        <p className="text-slate-700 dark:text-slate-300 text-[11px] leading-relaxed italic">
+                          "{t.mentor_report || t.progress_notes}"
+                        </p>
+                      </div>
+                    )}
+
                     {/* Deadline Extension Review block */}
                     {t.extension_status === "requested" && (
                       <div className="mt-2 p-3 rounded-lg bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200 text-xs space-y-1.5">
@@ -601,15 +620,34 @@ export function AdminInternTasksView() {
                   </div>
 
                   {/* Admin Quick Actions */}
-                  <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                      onClick={() => handleUpdateStatus(t.id, "completed")}
-                    >
-                      <Check className="h-3.5 w-3.5 mr-1" /> Approve / Complete
-                    </Button>
+                  <div className="flex items-center gap-2 shrink-0 self-end md:self-center flex-wrap">
+                    {t.mentor_verification_status === "mentor_verified" && t.status !== "completed" ? (
+                      <Button
+                        size="sm"
+                        className="h-8 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white gap-1 shadow-xs"
+                        onClick={async () => {
+                          try {
+                            const pts = t.mentor_recommended_credits || t.credits || 10;
+                            await doAdminFinalize({ data: { taskId: t.id, awardedCredits: pts } });
+                            toast.success(`Task finalized as Completed! Awarded +${pts} Credits to intern.`);
+                            qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                          } catch (err: any) {
+                            toast.error("Failed to finalize task: " + err.message);
+                          }
+                        }}
+                      >
+                        <Award className="h-3.5 w-3.5 text-amber-300" /> Approve &amp; Award +{t.mentor_recommended_credits || t.credits || 10} Credits
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                        onClick={() => handleUpdateStatus(t.id, "completed")}
+                      >
+                        <Check className="h-3.5 w-3.5 mr-1" /> Approve / Complete
+                      </Button>
+                    )}
 
                     <Button
                       size="sm"
