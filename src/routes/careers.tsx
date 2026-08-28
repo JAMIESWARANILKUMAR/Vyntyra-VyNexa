@@ -941,25 +941,31 @@ function ApplicationPage() {
                           ) : referralInfo ? (
                             <div className={`p-3 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs ${
                               referralInfo.valid 
-                                ? "bg-emerald-50/90 border-emerald-300 text-emerald-950" 
+                                ? "bg-emerald-50 border-emerald-300 text-emerald-950" 
                                 : "bg-slate-50 border-slate-200 text-slate-600"
                             }`}>
-                              <div className="flex items-start gap-2">
+                              <div className="flex items-start gap-2.5">
                                 {referralInfo.valid ? (
-                                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                                  <div className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200">
+                                    <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                                  </div>
                                 ) : (
                                   <Shield className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
                                 )}
                                 <div>
-                                  <span className="font-bold block">{referralInfo.message}</span>
-                                  {referralInfo.referrer_name && (
-                                    <span className="text-[11px] text-slate-500">Provided by: {referralInfo.referrer_name}</span>
+                                  <span className="font-bold text-slate-900 block">
+                                    {referralInfo.valid ? "🎉 Hurray! You have a chance to win up to 60–80% off in the fee once selected." : referralInfo.message}
+                                  </span>
+                                  {referralInfo.valid && referralInfo.referrer_name && (
+                                    <span className="text-[11px] text-emerald-700 font-medium block mt-0.5">
+                                      Referral Partner: {referralInfo.referrer_name}
+                                    </span>
                                   )}
                                 </div>
                               </div>
                               {referralInfo.valid && (
-                                <div className="shrink-0 font-mono font-extrabold text-xs px-2.5 py-1 bg-emerald-600 text-white rounded-lg shadow-xs text-center">
-                                  {referralInfo.custom_exam_fee === 0 ? "FREE (₹0)" : `₹${referralInfo.custom_exam_fee} Fee`}
+                                <div className="shrink-0 font-sans font-bold text-[11px] px-2.5 py-1 bg-emerald-600 text-white rounded-lg shadow-xs text-center flex items-center gap-1">
+                                  <CheckCircle2 className="h-3 w-3" /> Benefit Applied
                                 </div>
                               )}
                             </div>

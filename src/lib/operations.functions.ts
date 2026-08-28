@@ -758,12 +758,138 @@ export interface LmsCourseItem {
   created_at: string;
 }
 
+const DEFAULT_LMS_CATALOG: LmsCourseItem[] = [
+  {
+    id: "tech-gcp-foundations",
+    title: "Google Cloud Computing & Architecture Foundations",
+    description: "Master modern cloud architecture, compute engines, storage buckets, and serverless scaling on Google Cloud Platform.",
+    source: "Google Cloud",
+    url: "https://cloud.google.com/learn",
+    youtube_video_id: "EN4fEbcFZ_E",
+    domain: "tech",
+    target_audience: "all",
+    badge: "Cloud Scholar",
+    level: "Beginner",
+    estimated_hours: 12,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "tech-azure-fundamentals",
+    title: "Microsoft Azure Cloud Fundamentals (AZ-900)",
+    description: "Core Azure architecture, security management, identity governance, and enterprise cloud compliance.",
+    source: "Microsoft Learn",
+    url: "https://learn.microsoft.com/en-us/training/paths/microsoft-azure-fundamentals-describe-cloud-concepts/",
+    youtube_video_id: "NKEFW2WJbcE",
+    domain: "tech",
+    target_audience: "all",
+    badge: "Azure Specialist",
+    level: "Beginner",
+    estimated_hours: 8,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "tech-dsa-masterclass",
+    title: "Data Structures & Algorithms (DSA) Full Course",
+    description: "Comprehensive algorithmic problem solving, trees, graphs, dynamic programming, and complexity optimization.",
+    source: "YouTube",
+    url: "https://www.youtube.com/watch?v=8hly31xKli0",
+    youtube_video_id: "8hly31xKli0",
+    domain: "tech",
+    target_audience: "all",
+    badge: "DSA Expert",
+    level: "Intermediate",
+    estimated_hours: 24,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "tech-fullstack-react-node",
+    title: "Full Stack Web Development (React, TypeScript & Node.js)",
+    description: "Build robust, scalable enterprise web applications with TypeScript, modern React hooks, and PostgreSQL.",
+    source: "YouTube",
+    url: "https://www.youtube.com/watch?v=nu_pCVPKzTk",
+    youtube_video_id: "nu_pCVPKzTk",
+    domain: "tech",
+    target_audience: "all",
+    badge: "Full Stack Engineer",
+    level: "Intermediate",
+    estimated_hours: 18,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "mgmt-google-pm",
+    title: "Google Project Management & Agile Sprint Delivery",
+    description: "Learn Agile project frameworks, risk mitigation, stakeholder management, and milestone tracking.",
+    source: "Google Careers",
+    url: "https://grow.google/project-management/",
+    youtube_video_id: "uWPIhoY54e8",
+    domain: "management",
+    target_audience: "all",
+    badge: "Agile PM Scholar",
+    level: "Beginner",
+    estimated_hours: 14,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "mgmt-powerbi-analytics",
+    title: "Power BI & Business Intelligence Dashboarding",
+    description: "Transform business data into actionable visual KPI reports, DAX modeling, and real-time dashboards.",
+    source: "Microsoft Learn",
+    url: "https://learn.microsoft.com/en-us/training/paths/get-started-power-bi/",
+    youtube_video_id: "3u7MQz1EyPY",
+    domain: "management",
+    target_audience: "all",
+    badge: "Data Analyst Pro",
+    level: "Intermediate",
+    estimated_hours: 10,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "nontech-digital-marketing",
+    title: "Fundamentals of Digital Marketing & Performance Growth",
+    description: "SEO optimization, social ads campaigns, conversion funnels, and CRM audience lifecycle management.",
+    source: "Google Digital Garage",
+    url: "https://learndigital.withgoogle.com/digitalgarage/course/digital-marketing",
+    youtube_video_id: "bixR-KIJKYM",
+    domain: "non_tech",
+    target_audience: "all",
+    badge: "Marketing Associate",
+    level: "Beginner",
+    estimated_hours: 10,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "nontech-crm-sales",
+    title: "Enterprise CRM Systems & Lead Conversion Strategies",
+    description: "End-to-end B2B sales pipeline management, customer relationship scoring, and automated outreach.",
+    source: "Microsoft Learn",
+    url: "https://learn.microsoft.com/en-us/training/paths/dynamics-365-marketing-fundamentals/",
+    youtube_video_id: "H2LpZqF_0Gk",
+    domain: "non_tech",
+    target_audience: "all",
+    badge: "CRM Consultant",
+    level: "Intermediate",
+    estimated_hours: 8,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  }
+];
+
 export const getLmsCourses = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const adminClient = getAdminClient();
+    const user = context.user;
     
     let courses: LmsCourseItem[] = [];
+    let isPersisted = false;
+
     try {
       const { data } = await adminClient
         .from("site_settings")
@@ -771,139 +897,73 @@ export const getLmsCourses = createServerFn({ method: "GET" })
         .eq("id", "custom_lms_courses")
         .maybeSingle();
 
-      if (data?.value?.courses && Array.isArray(data.value.courses)) {
+      if (data && data.value && Array.isArray(data.value.courses)) {
         courses = data.value.courses;
+        isPersisted = true;
       }
     } catch (err) {
       console.warn("[getLmsCourses] fetch error:", err);
     }
 
-    if (courses.length === 0) {
-      courses = [
-        {
-          id: "tech-gcp-foundations",
-          title: "Google Cloud Computing & Architecture Foundations",
-          description: "Master modern cloud architecture, compute engines, storage buckets, and serverless scaling on Google Cloud Platform.",
-          source: "Google Cloud",
-          url: "https://cloud.google.com/learn",
-          youtube_video_id: "EN4fEbcFZ_E",
-          domain: "tech",
-          target_audience: "all",
-          badge: "Cloud Scholar",
-          level: "Beginner",
-          estimated_hours: 12,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: "tech-azure-fundamentals",
-          title: "Microsoft Azure Cloud Fundamentals (AZ-900)",
-          description: "Core Azure architecture, security management, identity governance, and enterprise cloud compliance.",
-          source: "Microsoft Learn",
-          url: "https://learn.microsoft.com/en-us/training/paths/microsoft-azure-fundamentals-describe-cloud-concepts/",
-          youtube_video_id: "NKEFW2WJbcE",
-          domain: "tech",
-          target_audience: "all",
-          badge: "Azure Specialist",
-          level: "Beginner",
-          estimated_hours: 8,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: "tech-dsa-masterclass",
-          title: "Data Structures & Algorithms (DSA) Full Course",
-          description: "Comprehensive algorithmic problem solving, trees, graphs, dynamic programming, and complexity optimization.",
-          source: "YouTube",
-          url: "https://www.youtube.com/watch?v=8hly31xKli0",
-          youtube_video_id: "8hly31xKli0",
-          domain: "tech",
-          target_audience: "all",
-          badge: "DSA Expert",
-          level: "Intermediate",
-          estimated_hours: 24,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: "tech-fullstack-react-node",
-          title: "Full Stack Web Development (React, TypeScript & Node.js)",
-          description: "Build robust, scalable enterprise web applications with TypeScript, modern React hooks, and PostgreSQL.",
-          source: "YouTube",
-          url: "https://www.youtube.com/watch?v=nu_pCVPKzTk",
-          youtube_video_id: "nu_pCVPKzTk",
-          domain: "tech",
-          target_audience: "all",
-          badge: "Full Stack Engineer",
-          level: "Intermediate",
-          estimated_hours: 18,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: "mgmt-google-pm",
-          title: "Google Project Management & Agile Sprint Delivery",
-          description: "Learn Agile project frameworks, risk mitigation, stakeholder management, and milestone tracking.",
-          source: "Google Careers",
-          url: "https://grow.google/project-management/",
-          youtube_video_id: "uWPIhoY54e8",
-          domain: "management",
-          target_audience: "all",
-          badge: "Agile PM Scholar",
-          level: "Beginner",
-          estimated_hours: 14,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: "mgmt-powerbi-analytics",
-          title: "Power BI & Business Intelligence Dashboarding",
-          description: "Transform business data into actionable visual KPI reports, DAX modeling, and real-time dashboards.",
-          source: "Microsoft Learn",
-          url: "https://learn.microsoft.com/en-us/training/paths/get-started-power-bi/",
-          youtube_video_id: "3u7MQz1EyPY",
-          domain: "management",
-          target_audience: "all",
-          badge: "Data Analyst Pro",
-          level: "Intermediate",
-          estimated_hours: 10,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: "nontech-digital-marketing",
-          title: "Fundamentals of Digital Marketing & Performance Growth",
-          description: "SEO optimization, social ads campaigns, conversion funnels, and CRM audience lifecycle management.",
-          source: "Google Digital Garage",
-          url: "https://learndigital.withgoogle.com/digitalgarage/course/digital-marketing",
-          youtube_video_id: "bixR-KIJKYM",
-          domain: "non_tech",
-          target_audience: "all",
-          badge: "Marketing Associate",
-          level: "Beginner",
-          estimated_hours: 10,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: "nontech-crm-sales",
-          title: "Enterprise CRM Systems & Lead Conversion Strategies",
-          description: "End-to-end B2B sales pipeline management, customer relationship scoring, and automated outreach.",
-          source: "Microsoft Learn",
-          url: "https://learn.microsoft.com/en-us/training/paths/dynamics-365-marketing-fundamentals/",
-          youtube_video_id: "H2LpZqF_0Gk",
-          domain: "non_tech",
-          target_audience: "all",
-          badge: "CRM Consultant",
-          level: "Intermediate",
-          estimated_hours: 8,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        }
-      ];
+    // If no row exists yet in database, seed it immediately with default catalog
+    if (!isPersisted) {
+      courses = DEFAULT_LMS_CATALOG;
+      try {
+        await adminClient.from("site_settings").upsert({
+          id: "custom_lms_courses",
+          value: { courses: DEFAULT_LMS_CATALOG },
+          updated_at: new Date().toISOString(),
+          updated_by: user.id,
+        });
+      } catch (seedErr) {
+        console.warn("[getLmsCourses] seed error:", seedErr);
+      }
     }
 
-    return courses;
+    // If Admin/Super Admin, return entire catalog without audience restrictions
+    const userRole = user.user_metadata?.role || "";
+    const isDirectorate = ["admin", "super_admin"].includes(userRole);
+    if (isDirectorate) {
+      return courses;
+    }
+
+    // Check user profile for domain filtering
+    let userDomain = "tech";
+    try {
+      const { data: prof } = await adminClient
+        .from("profiles")
+        .select("department, role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (prof) {
+        const dept = (prof.department || "").toLowerCase();
+        if (dept.includes("manage") || dept.includes("hr") || dept.includes("lead") || dept.includes("ops")) {
+          userDomain = "management";
+        } else if (dept.includes("sales") || dept.includes("market") || dept.includes("business") || dept.includes("crm")) {
+          userDomain = "non_tech";
+        }
+      }
+    } catch (e) {}
+
+    // Filter courses for Interns / Employees based on audience & domain
+    const visibleCourses = courses.filter((c) => {
+      if (c.is_active === false) return false;
+
+      const aud = c.target_audience || "all";
+      if (aud === "all") return true;
+      if (aud === "interns" && userRole !== "employee") return true;
+      if (aud === "employees" && userRole === "employee") return true;
+      if (aud === "domain") {
+        return c.domain === "all" || c.domain === userDomain;
+      }
+      if (aud === "specific_users") {
+        return Array.isArray(c.target_user_ids) && c.target_user_ids.includes(user.id);
+      }
+      return true;
+    });
+
+    return visibleCourses;
   });
 
 export const saveLmsCourse = createServerFn({ method: "POST" })
@@ -950,7 +1010,7 @@ export const saveLmsCourse = createServerFn({ method: "POST" })
       created_at: new Date().toISOString(),
     };
 
-    let courses: LmsCourseItem[] = [];
+    let courses: LmsCourseItem[] = DEFAULT_LMS_CATALOG;
     try {
       const { data: row } = await adminClient
         .from("site_settings")
@@ -969,12 +1029,16 @@ export const saveLmsCourse = createServerFn({ method: "POST" })
       courses.unshift(newCourseItem);
     }
 
-    await adminClient.from("site_settings").upsert({
+    const { error: upsertErr } = await adminClient.from("site_settings").upsert({
       id: "custom_lms_courses",
       value: { courses },
       updated_at: new Date().toISOString(),
-      updated_by: context.userId,
+      updated_by: context.user.id,
     });
+
+    if (upsertErr) {
+      throw new Error("Failed to save LMS course: " + upsertErr.message);
+    }
 
     return { success: true, course: newCourseItem };
   });
@@ -987,7 +1051,7 @@ export const deleteLmsCourse = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const adminClient = getAdminClient();
     
-    let courses: LmsCourseItem[] = [];
+    let courses: LmsCourseItem[] = DEFAULT_LMS_CATALOG;
     try {
       const { data: row } = await adminClient
         .from("site_settings")
@@ -1001,14 +1065,18 @@ export const deleteLmsCourse = createServerFn({ method: "POST" })
 
     const filtered = courses.filter(c => c.id !== data.courseId);
 
-    await adminClient.from("site_settings").upsert({
+    const { error: delErr } = await adminClient.from("site_settings").upsert({
       id: "custom_lms_courses",
       value: { courses: filtered },
       updated_at: new Date().toISOString(),
-      updated_by: context.userId,
+      updated_by: context.user.id,
     });
 
-    return { success: true };
+    if (delErr) {
+      throw new Error("Failed to delete LMS course: " + delErr.message);
+    }
+
+    return { success: true, remainingCount: filtered.length };
   });
 
 export const requestDoubtSolvingSession = createServerFn({ method: "POST" })
@@ -4718,38 +4786,87 @@ export const listAllReferralPricingRules = createServerFn({ method: "GET" })
       .select("id, full_name, email, role, department, referral_code")
       .not("referral_code", "is", null);
 
-    // 3. Fetch application conversion counts per referral code
+    // 3. Fetch application conversion counts & payment statuses per referral code
     const { data: appConversions } = await admin
       .from("applications")
-      .select("id, referral_code_used, status")
+      .select("id, email, referral_code_used, status, exam_fee_paid, exam_fee_amount, payment_status")
       .not("referral_code_used", "is", null);
 
-    const countsMap = new Map<string, { total: number; selected: number }>();
+    // 4. Fetch intern profiles for verified paid statuses
+    const { data: internProfiles } = await admin
+      .from("profiles")
+      .select("id, email, referral_code_used, exam_fee_paid, exam_fee_amount, is_fee_exempted")
+      .not("referral_code_used", "is", null);
+
+    const paidEmails = new Set<string>();
+    (internProfiles || []).forEach((ip: any) => {
+      if (ip.exam_fee_paid || ip.is_fee_exempted) {
+        if (ip.email) paidEmails.add(ip.email.toLowerCase().trim());
+      }
+    });
+
+    const metricsMap = new Map<string, { total: number; selected: number; paid: number; collectedAmount: number }>();
     (appConversions || []).forEach((a: any) => {
       const c = (a.referral_code_used || "").trim().toUpperCase();
       if (!c) return;
-      const current = countsMap.get(c) || { total: 0, selected: 0 };
+      const current = metricsMap.get(c) || { total: 0, selected: 0, paid: 0, collectedAmount: 0 };
       current.total += 1;
       if (a.status === "selected" || a.status === "hired") current.selected += 1;
-      countsMap.set(c, current);
+      
+      const isPaid = a.exam_fee_paid === true || 
+        ["paid", "completed", "success"].includes((a.payment_status || "").toLowerCase()) ||
+        (a.email && paidEmails.has(a.email.toLowerCase().trim()));
+
+      if (isPaid) {
+        current.paid += 1;
+        current.collectedAmount += Number(a.exam_fee_amount) || 0;
+      }
+
+      metricsMap.set(c, current);
     });
 
     const ruleMap = new Map<string, any>();
     rules.forEach((r: any) => {
       const code = (r.code || "").trim().toUpperCase();
+      const fee = Number(r.custom_exam_fee ?? 499);
+      const commission = Number(r.commission_reward ?? 200);
+      const usage = metricsMap.get(code)?.total || 0;
+      const paid = metricsMap.get(code)?.paid || 0;
+      const selected = metricsMap.get(code)?.selected || 0;
+      const grossRevenue = paid > 0 ? (metricsMap.get(code)?.collectedAmount || paid * fee) : 0;
+      
+      // Payment Gateway Transaction Fee: 2% + 18% GST on Fee (Total ~ 2.36% of gross)
+      const gatewayFee = Math.round(grossRevenue * 0.02 * 100) / 100;
+      const gatewayGst = Math.round(gatewayFee * 0.18 * 100) / 100;
+      const totalGatewayCost = Math.round((gatewayFee + gatewayGst) * 100) / 100;
+      
+      // Referral Commission: paid count * commission_reward
+      const totalCommission = paid * commission;
+      
+      // Net Company Retained
+      const netCompanyMargin = Math.round((grossRevenue - totalCommission - totalGatewayCost) * 100) / 100;
+
       ruleMap.set(code, {
         id: r.id,
         code,
-        referrer_name: r.referrer_name || "Custom Campaign / Promo",
-        custom_exam_fee: Number(r.custom_exam_fee ?? 199),
+        referrer_name: r.referrer_name || "Custom Campaign / Partner",
+        custom_exam_fee: fee,
         discount_amount: Number(r.discount_amount ?? 0),
-        commission_reward: Number(r.commission_reward ?? 50),
+        commission_reward: commission,
         is_active: r.is_active !== false,
         notes: r.notes || "",
         created_at: r.created_at,
         is_custom_rule: true,
-        usage_count: countsMap.get(code)?.total || 0,
-        selected_count: countsMap.get(code)?.selected || 0,
+        usage_count: usage,
+        paid_count: paid,
+        unpaid_count: Math.max(0, usage - paid),
+        selected_count: selected,
+        gross_revenue: grossRevenue,
+        gateway_fee: gatewayFee,
+        gateway_gst: gatewayGst,
+        total_gateway_cost: totalGatewayCost,
+        total_commission_payable: totalCommission,
+        net_company_margin: netCompanyMargin,
       });
     });
 
@@ -4757,25 +4874,47 @@ export const listAllReferralPricingRules = createServerFn({ method: "GET" })
     (profileCodes || []).forEach((p: any) => {
       const code = (p.referral_code || "").trim().toUpperCase();
       if (!code) return;
+      
+      const usage = metricsMap.get(code)?.total || 0;
+      const paid = metricsMap.get(code)?.paid || 0;
+      const selected = metricsMap.get(code)?.selected || 0;
+      const fee = 499;
+      const commission = 200;
+      const grossRevenue = paid > 0 ? (metricsMap.get(code)?.collectedAmount || paid * fee) : 0;
+      
+      const gatewayFee = Math.round(grossRevenue * 0.02 * 100) / 100;
+      const gatewayGst = Math.round(gatewayFee * 0.18 * 100) / 100;
+      const totalGatewayCost = Math.round((gatewayFee + gatewayGst) * 100) / 100;
+      const totalCommission = paid * commission;
+      const netCompanyMargin = Math.round((grossRevenue - totalCommission - totalGatewayCost) * 100) / 100;
+
       if (!ruleMap.has(code)) {
         ruleMap.set(code, {
           id: p.id,
           code,
           referrer_name: `${p.full_name || "Intern/Employee"} (${p.role || "Member"})`,
           referrer_email: p.email,
-          custom_exam_fee: 199,
+          custom_exam_fee: fee,
           discount_amount: 0,
-          commission_reward: 50,
+          commission_reward: commission,
           is_active: true,
           notes: `Auto-generated for ${p.full_name || p.email}`,
           created_at: new Date().toISOString(),
           is_custom_rule: false,
-          usage_count: countsMap.get(code)?.total || 0,
-          selected_count: countsMap.get(code)?.selected || 0,
+          usage_count: usage,
+          paid_count: paid,
+          unpaid_count: Math.max(0, usage - paid),
+          selected_count: selected,
+          gross_revenue: grossRevenue,
+          gateway_fee: gatewayFee,
+          gateway_gst: gatewayGst,
+          total_gateway_cost: totalGatewayCost,
+          total_commission_payable: totalCommission,
+          net_company_margin: netCompanyMargin,
         });
       } else {
         const existing = ruleMap.get(code);
-        if (existing && existing.referrer_name === "Custom Campaign / Promo") {
+        if (existing && existing.referrer_name === "Custom Campaign / Partner") {
           existing.referrer_name = `${p.full_name || "Intern/Employee"} (${p.role || "Member"})`;
           existing.referrer_email = p.email;
         }
@@ -4791,9 +4930,9 @@ export const upsertReferralPricingRule = createServerFn({ method: "POST" })
     id: z.string().uuid().optional(),
     code: z.string().min(2).max(25),
     referrer_name: z.string().optional(),
-    custom_exam_fee: z.number().min(0),
+    custom_exam_fee: z.number().min(0).default(499),
     discount_amount: z.number().min(0).default(0),
-    commission_reward: z.number().min(0).default(50),
+    commission_reward: z.number().min(0).default(200),
     is_active: z.boolean().default(true),
     notes: z.string().optional(),
     sync_to_existing_interns: z.boolean().optional(),
@@ -4876,10 +5015,10 @@ export const lookupReferralCodePricing = createServerFn({ method: "GET" })
         return {
           valid: true,
           code: cleanCode,
-          custom_exam_fee: Number(rule.custom_exam_fee ?? 199),
+          custom_exam_fee: Number(rule.custom_exam_fee ?? 499),
           discount_amount: Number(rule.discount_amount ?? 0),
-          referrer_name: rule.referrer_name || "Official Referral",
-          message: `Referral code applied! Exam fee: ₹${rule.custom_exam_fee}${rule.discount_amount > 0 ? ` (₹${rule.discount_amount} Discount)` : ''}`,
+          referrer_name: rule.referrer_name || "Official Partner Referral",
+          message: "🎉 Hurray! You have a chance to win up to 60–80% off in the fee once selected.",
         };
       }
     } catch (e) {}
@@ -4895,20 +5034,20 @@ export const lookupReferralCodePricing = createServerFn({ method: "GET" })
       return {
         valid: true,
         code: cleanCode,
-        custom_exam_fee: 199,
+        custom_exam_fee: 499,
         discount_amount: 0,
         referrer_name: profile.full_name || "Verified Intern",
-        message: `Verified referral from ${profile.full_name || "Intern"}! Standard Exam Fee: ₹199`,
+        message: "🎉 Hurray! You have a chance to win up to 60–80% off in the fee once selected.",
       };
     }
 
     return {
       valid: false,
       code: cleanCode,
-      custom_exam_fee: 199,
+      custom_exam_fee: 499,
       discount_amount: 0,
       referrer_name: "",
-      message: "Referral code not found. Standard fee ₹199 applies.",
+      message: "Referral code not found.",
     };
   });
 

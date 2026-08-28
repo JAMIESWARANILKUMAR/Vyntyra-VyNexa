@@ -873,7 +873,12 @@ function AdminSettingsPage() {
     );
   });
 
-  const totalConversions = referralRules.reduce((acc, r) => acc + (r.usage_count || 0), 0);
+  const totalReferredCount = referralRules.reduce((acc, r) => acc + (r.usage_count || 0), 0);
+  const totalPaidCount = referralRules.reduce((acc, r) => acc + (r.paid_count || 0), 0);
+  const totalGrossRevenue = referralRules.reduce((acc, r) => acc + (r.gross_revenue || 0), 0);
+  const totalCommissionPayable = referralRules.reduce((acc, r) => acc + (r.total_commission_payable || 0), 0);
+  const totalGatewayCosts = referralRules.reduce((acc, r) => acc + (r.total_gateway_cost || 0), 0);
+  const totalNetCompanyMargin = referralRules.reduce((acc, r) => acc + (r.net_company_margin || 0), 0);
   const totalCustomRules = referralRules.filter(r => r.is_custom_rule).length;
 
   return (
@@ -980,23 +985,31 @@ function AdminSettingsPage() {
             </div>
           </div>
 
-          {/* Key Metrics Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x border-b bg-slate-50/60 text-xs">
-            <div className="p-4">
-              <span className="text-slate-500 font-medium block">Total Referral Codes</span>
-              <span className="text-xl font-bold text-slate-900 mt-1 block">{referralRules.length}</span>
+          {/* Key Metrics Bar with Commission & Merchant Gateway Breakdown */}
+          <div className="grid grid-cols-2 md:grid-cols-6 divide-y md:divide-y-0 md:divide-x border-b bg-slate-50/60 text-xs">
+            <div className="p-3.5">
+              <span className="text-slate-500 font-medium block">Total Referred</span>
+              <span className="text-lg font-bold text-slate-900 mt-0.5 block">{totalReferredCount} candidates</span>
             </div>
-            <div className="p-4">
-              <span className="text-slate-500 font-medium block">Custom Pricing Rules</span>
-              <span className="text-xl font-bold text-indigo-600 mt-1 block">{totalCustomRules}</span>
+            <div className="p-3.5">
+              <span className="text-slate-500 font-medium block">Paid Candidates</span>
+              <span className="text-lg font-bold text-emerald-600 mt-0.5 block">{totalPaidCount} paid</span>
             </div>
-            <div className="p-4">
-              <span className="text-slate-500 font-medium block">Total Conversions / Uses</span>
-              <span className="text-xl font-bold text-emerald-600 mt-1 block">{totalConversions}</span>
+            <div className="p-3.5">
+              <span className="text-slate-500 font-medium block">Gross Fee Collected</span>
+              <span className="text-lg font-bold text-slate-900 mt-0.5 block">₹{totalGrossRevenue.toLocaleString("en-IN")}</span>
             </div>
-            <div className="p-4">
-              <span className="text-slate-500 font-medium block">Default Standard Fee</span>
-              <span className="text-xl font-bold text-slate-800 mt-1 block">₹199</span>
+            <div className="p-3.5">
+              <span className="text-slate-500 font-medium block">Partner Commissions</span>
+              <span className="text-lg font-bold text-purple-700 mt-0.5 block">₹{totalCommissionPayable.toLocaleString("en-IN")}</span>
+            </div>
+            <div className="p-3.5">
+              <span className="text-slate-500 font-medium block">Gateway Fee + GST (2.36%)</span>
+              <span className="text-lg font-bold text-amber-700 mt-0.5 block">₹{totalGatewayCosts.toLocaleString("en-IN")}</span>
+            </div>
+            <div className="p-3.5 bg-emerald-50/50">
+              <span className="text-emerald-800 font-semibold block">Net Company Margin</span>
+              <span className="text-lg font-extrabold text-emerald-700 mt-0.5 block">₹{totalNetCompanyMargin.toLocaleString("en-IN")}</span>
             </div>
           </div>
 
@@ -1012,9 +1025,9 @@ function AdminSettingsPage() {
                   className="pl-9 text-xs h-9"
                 />
               </div>
-              <div className="text-xs text-slate-500 flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                Interns who apply with these codes automatically receive the configured custom exam fee.
+              <div className="text-xs text-slate-500 flex items-center gap-1.5 bg-slate-50 border px-3 py-1.5 rounded-lg">
+                <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                <span>Standard Merchant Gateway (2% fee + 18% GST = 2.36%) is automatically calculated alongside partner commissions.</span>
               </div>
             </div>
 
@@ -1036,11 +1049,14 @@ function AdminSettingsPage() {
                     <thead>
                       <tr className="bg-slate-100/80 text-slate-700 font-bold border-b text-[11px] uppercase tracking-wider">
                         <th className="p-3.5">Referral Code</th>
-                        <th className="p-3.5">Referrer / Owner</th>
-                        <th className="p-3.5">Exam Fee (₹)</th>
-                        <th className="p-3.5">Discount</th>
-                        <th className="p-3.5">Reward</th>
-                        <th className="p-3.5">Usage / Hired</th>
+                        <th className="p-3.5">Referrer / Partner</th>
+                        <th className="p-3.5">Candidate Fee (₹)</th>
+                        <th className="p-3.5">Assigned Commission</th>
+                        <th className="p-3.5">Referred / Paid</th>
+                        <th className="p-3.5">Gross Revenue</th>
+                        <th className="p-3.5">Total Commission</th>
+                        <th className="p-3.5">PG Fee + GST (2.36%)</th>
+                        <th className="p-3.5">Net Company Profit</th>
                         <th className="p-3.5">Status</th>
                         <th className="p-3.5 text-right">Actions</th>
                       </tr>
@@ -1056,7 +1072,7 @@ function AdminSettingsPage() {
                               </span>
                               {isCustom && (
                                 <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
-                                  Custom Price
+                                  Custom
                                 </span>
                               )}
                             </td>
@@ -1065,27 +1081,31 @@ function AdminSettingsPage() {
                               {rule.notes && <div className="text-[10px] text-slate-400 italic max-w-xs truncate">{rule.notes}</div>}
                             </td>
                             <td className="p-3.5 font-bold text-slate-900">
-                              <span className={`px-2 py-0.5 rounded-lg text-xs font-extrabold ${
-                                rule.custom_exam_fee === 0 ? "bg-emerald-100 text-emerald-800" :
-                                rule.custom_exam_fee < 199 ? "bg-blue-100 text-blue-800" :
-                                "bg-slate-100 text-slate-700"
-                              }`}>
-                                {rule.custom_exam_fee === 0 ? "FREE (₹0)" : `₹${rule.custom_exam_fee}`}
+                              <span className="px-2 py-0.5 rounded-lg text-xs font-extrabold bg-slate-100 text-slate-800">
+                                ₹{rule.custom_exam_fee}
                               </span>
                             </td>
-                            <td className="p-3.5 text-slate-600 font-medium">
-                              {rule.discount_amount > 0 ? (
-                                <span className="text-emerald-700 font-semibold">₹{rule.discount_amount} OFF</span>
-                              ) : (
-                                <span className="text-slate-400">—</span>
-                              )}
-                            </td>
-                            <td className="p-3.5 text-slate-600 font-medium">
-                              ₹{rule.commission_reward}
+                            <td className="p-3.5 text-purple-700 font-bold">
+                              ₹{rule.commission_reward} <span className="text-[10px] font-normal text-slate-500">/paid</span>
                             </td>
                             <td className="p-3.5">
-                              <span className="font-bold text-slate-900">{rule.usage_count || 0}</span>
-                              <span className="text-slate-400 text-[10px] ml-1">({rule.selected_count || 0} hired)</span>
+                              <div className="font-bold text-slate-900">{rule.usage_count || 0} referred</div>
+                              <div className="text-emerald-700 font-semibold text-[10px]">{rule.paid_count || 0} paid ({rule.selected_count || 0} hired)</div>
+                            </td>
+                            <td className="p-3.5 font-bold text-slate-900">
+                              ₹{(rule.gross_revenue || 0).toLocaleString("en-IN")}
+                            </td>
+                            <td className="p-3.5 font-extrabold text-purple-700">
+                              ₹{(rule.total_commission_payable || 0).toLocaleString("en-IN")}
+                            </td>
+                            <td className="p-3.5 text-amber-800 font-medium">
+                              ₹{(rule.total_gateway_cost || 0).toLocaleString("en-IN")}
+                              <span className="text-[9px] text-slate-400 block">(2% + 18% GST)</span>
+                            </td>
+                            <td className="p-3.5">
+                              <span className="px-2 py-0.5 rounded-lg text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-200">
+                                ₹{(rule.net_company_margin || 0).toLocaleString("en-IN")}
+                              </span>
                             </td>
                             <td className="p-3.5">
                               <span className={`inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
@@ -1116,15 +1136,15 @@ function AdminSettingsPage() {
                                     setIsReferralModalOpen(true);
                                   }}
                                 >
-                                  <Edit3 className="h-3 w-3 mr-1" /> Edit Pricing
+                                  <Edit3 className="h-3 w-3 mr-1" /> Edit
                                 </Button>
                                 {isCustom && (
                                   <Button
                                     size="sm"
                                     variant="ghost"
                                     className="h-7 w-7 p-0 text-red-600 hover:bg-red-50"
-                                    title="Reset / Delete Custom Pricing"
                                     onClick={() => handleDeleteReferralRule(rule.code)}
+                                    title="Delete custom rule"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </Button>
@@ -2153,7 +2173,7 @@ function AdminSettingsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Custom Exam Fee (₹) *</label>
+                  <label className="font-bold text-slate-700 block mb-1">Candidate Exam Fee (₹) *</label>
                   <Input 
                     type="number"
                     min="0"
@@ -2162,41 +2182,30 @@ function AdminSettingsPage() {
                     required
                     className="font-bold"
                   />
-                  <span className="text-[10px] text-slate-400 mt-1 block">Default standard fee is ₹199. Set 0 for free.</span>
+                  <span className="text-[10px] text-slate-400 mt-1 block">Fee charged to candidate (e.g. ₹499).</span>
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Discount Amount (₹)</label>
-                  <Input 
-                    type="number"
-                    min="0"
-                    value={referralForm.discount_amount}
-                    onChange={(e) => setReferralForm({ ...referralForm, discount_amount: Number(e.target.value) })}
-                  />
-                  <span className="text-[10px] text-slate-400 mt-1 block">Displayed on application form as savings.</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Referrer Reward / Commission (₹)</label>
+                  <label className="font-bold text-slate-700 block mb-1">Assigned Partner Commission (₹) *</label>
                   <Input 
                     type="number"
                     min="0"
                     value={referralForm.commission_reward}
                     onChange={(e) => setReferralForm({ ...referralForm, commission_reward: Number(e.target.value) })}
+                    required
+                    className="font-bold text-purple-700"
                   />
-                  <span className="text-[10px] text-slate-400 mt-1 block">Payable to referrer per hired intern.</span>
+                  <span className="text-[10px] text-slate-400 mt-1 block">Payable to referrer per paid candidate (e.g. ₹200).</span>
                 </div>
+              </div>
 
-                <div className="flex flex-col justify-end">
-                  <div className="flex items-center justify-between p-2.5 border rounded-lg bg-slate-50">
-                    <span className="font-semibold text-slate-700">Code Active</span>
-                    <Switch 
-                      checked={referralForm.is_active}
-                      onCheckedChange={(v) => setReferralForm({ ...referralForm, is_active: v })}
-                    />
-                  </div>
+              <div>
+                <div className="flex items-center justify-between p-2.5 border rounded-lg bg-slate-50">
+                  <span className="font-semibold text-slate-700">Code Active</span>
+                  <Switch 
+                    checked={referralForm.is_active}
+                    onCheckedChange={(v) => setReferralForm({ ...referralForm, is_active: v })}
+                  />
                 </div>
               </div>
 
