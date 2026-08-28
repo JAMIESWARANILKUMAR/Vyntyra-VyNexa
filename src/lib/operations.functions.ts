@@ -4691,16 +4691,17 @@ export const submitTaskUrl = createServerFn({ method: "POST" })
 export const getOrCreateReferralCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: profile, error } = await supabase
+    const admin = getAdminClient();
+    const { data: profile, error } = await admin
       .from("profiles")
-      .select("id, full_name, intern_id, referral_code")
+      .select("id, full_name, email, intern_id, referral_code")
       .eq("id", context.userId)
       .single();
 
     if (error || !profile) throw new Error("Profile not found");
 
     if (profile.referral_code) {
-      return { referralCode: profile.referral_code };
+      return { referralCode: profile.referral_code.trim().toUpperCase() };
     }
 
     // Generate unique referral code: first 2 of name + "VY" + last 2 of ID
@@ -4722,7 +4723,7 @@ export const getOrCreateReferralCode = createServerFn({ method: "POST" })
     
     const code = `${namePart}${brandingPart}${idPart}`.slice(0, 6);
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await admin
       .from("profiles")
       .update({ referral_code: code })
       .eq("id", context.userId);
@@ -4730,7 +4731,7 @@ export const getOrCreateReferralCode = createServerFn({ method: "POST" })
     if (updateError) {
       // Fallback for duplicates
       const fallbackCode = `${code.slice(0, 5)}${Math.floor(Math.random() * 10)}`;
-      const { error: fallbackErr } = await supabase
+      const { error: fallbackErr } = await admin
         .from("profiles")
         .update({ referral_code: fallbackCode })
         .eq("id", context.userId);
@@ -4747,11 +4748,11 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
     const admin = getAdminClient();
     const { data: profile } = await admin
       .from("profiles")
-      .select("id, full_name, referral_code")
+      .select("id, full_name, email, intern_id, referral_code, role")
       .eq("id", context.userId)
       .single();
 
-    if (!profile || !profile.referral_code) {
+    if (!profile) {
       return {
         referralCode: "",
         totalReferred: 0,
@@ -4769,41 +4770,85 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
       };
     }
 
-    const code = profile.referral_code.trim().toUpperCase();
+    let code = (profile.referral_code || "").trim().toUpperCase();
 
-    // Check if there is a custom pricing rule for this referral code
+    // Auto-generate code if missing
+    if (!code) {
+      const namePart = (profile.full_name || "VY")
+        .trim()
+        .replace(/[^a-zA-Z]/g, "")
+        .slice(0, 2)
+        .toUpperCase()
+        .padEnd(2, "A");
+      const brandingPart = "VY";
+      const idPart = (profile.intern_id && profile.intern_id.length >= 2)
+        ? profile.intern_id.slice(-2).toUpperCase()
+        : profile.id.slice(-2).toUpperCase();
+      code = `${namePart}${brandingPart}${idPart}`.slice(0, 6);
+
+      await admin
+        .from("profiles")
+        .update({ referral_code: code })
+        .eq("id", context.userId);
+    }
+
+    // Collect all codes associated with this user (standard code + custom partner rules)
+    const allUserCodes = new Set<string>();
+    if (code) allUserCodes.add(code);
+
     let candidateExamFee = 499;
     let commissionRate = 200;
+
     try {
-      const { data: rule } = await admin
+      const { data: rules } = await admin
         .from("referral_pricing_rules")
-        .select("custom_exam_fee, commission_reward")
-        .eq("code", code)
-        .maybeSingle();
-      if (rule) {
-        if (rule.custom_exam_fee !== undefined && rule.custom_exam_fee !== null) {
-          candidateExamFee = Number(rule.custom_exam_fee);
+        .select("code, custom_exam_fee, commission_reward, referrer_name, referrer_email, created_by");
+      
+      (rules || []).forEach((r: any) => {
+        const rCode = (r.code || "").trim().toUpperCase();
+        const isMyRule = (rCode === code) ||
+          (r.created_by && r.created_by === context.userId) ||
+          (r.referrer_email && profile.email && r.referrer_email.toLowerCase().trim() === profile.email.toLowerCase().trim()) ||
+          (r.referrer_name && profile.full_name && r.referrer_name.toLowerCase().trim() === profile.full_name.toLowerCase().trim());
+
+        if (isMyRule && rCode) {
+          allUserCodes.add(rCode);
+          if (r.custom_exam_fee !== undefined && r.custom_exam_fee !== null) {
+            candidateExamFee = Number(r.custom_exam_fee);
+          }
+          if (r.commission_reward !== undefined && r.commission_reward !== null) {
+            commissionRate = Number(r.commission_reward);
+          }
         }
-        if (rule.commission_reward !== undefined && rule.commission_reward !== null) {
-          commissionRate = Number(rule.commission_reward);
-        }
-      }
+      });
     } catch (e) {
       console.warn("Could not check referral_pricing_rules for user code:", e);
     }
 
+    const codeList = Array.from(allUserCodes);
+
+    // 1. Fetch all applications matching any of the user's referral codes
     const { data: applications } = await admin
       .from("applications")
-      .select("id, full_name, email, role, status, exam_fee_paid, exam_fee_amount, payment_status, created_at")
-      .ilike("referral_code_used", code)
+      .select("id, full_name, email, role, status, exam_fee_paid, exam_fee_amount, payment_status, referral_code_used, created_at")
       .order("created_at", { ascending: false });
 
-    // Fetch verified paid intern profiles
+    // 2. Fetch all profiles (interns) matching any of the user's referral codes
     const { data: internProfiles } = await admin
       .from("profiles")
-      .select("id, email, exam_fee_paid, is_fee_exempted")
-      .ilike("referral_code_used", code);
+      .select("id, full_name, email, role, referral_code_used, exam_fee_paid, exam_fee_amount, is_fee_exempted, created_at");
 
+    const matchedApps = (applications || []).filter((a: any) => {
+      const used = (a.referral_code_used || "").trim().toUpperCase();
+      return used && allUserCodes.has(used);
+    });
+
+    const matchedProfiles = (internProfiles || []).filter((p: any) => {
+      const used = (p.referral_code_used || "").trim().toUpperCase();
+      return used && allUserCodes.has(used);
+    });
+
+    // Map of verified paid emails
     const paidEmails = new Set<string>();
     (internProfiles || []).forEach((ip: any) => {
       if (ip.exam_fee_paid || ip.is_fee_exempted) {
@@ -4814,8 +4859,14 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
     let paidCount = 0;
     let selectedCount = 0;
     let totalGrossRevenue = 0;
+    const seenEmails = new Set<string>();
+    const candidateList: any[] = [];
 
-    const candidateList = (applications || []).map((a: any) => {
+    // Process matching applications first
+    matchedApps.forEach((a: any) => {
+      const emailKey = (a.email || a.id).toLowerCase().trim();
+      seenEmails.add(emailKey);
+
       const isPaid = a.exam_fee_paid === true || 
         ["paid", "completed", "success"].includes((a.payment_status || "").toLowerCase()) ||
         (a.email && paidEmails.has(a.email.toLowerCase().trim()));
@@ -4828,19 +4879,18 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
         selectedCount += 1;
       }
 
-      // Individual candidate financial breakdown
       const indivGross = isPaid ? (Number(a.exam_fee_amount) || candidateExamFee) : 0;
       const indivGateway = isPaid ? Math.round(indivGross * (25.78 / 998) * 100) / 100 : 0;
       const indivGovtCert = isPaid ? 199 : 0;
       const indivCommission = isPaid ? commissionRate : 0;
       const indivNetEarnings = isPaid ? Math.max(0, Math.round((indivCommission - indivGateway) * 100) / 100) : 0;
 
-      return {
+      candidateList.push({
         id: a.id,
-        candidate_name: a.full_name,
+        candidate_name: a.full_name || "Applicant",
         email: a.email,
-        role_applied: a.role,
-        status: a.status,
+        role_applied: a.role || "Intern",
+        status: a.status || "applied",
         is_paid: isPaid,
         created_at: a.created_at,
         gross_amount: indivGross,
@@ -4848,23 +4898,55 @@ export const getMyReferralConversions = createServerFn({ method: "GET" })
         govt_cert_fee: indivGovtCert,
         earned_commission: indivCommission,
         net_earnings: indivNetEarnings,
-      };
+      });
+    });
+
+    // Merge any profiles that used the code but were not in applications table
+    matchedProfiles.forEach((p: any) => {
+      const emailKey = (p.email || p.id).toLowerCase().trim();
+      if (!seenEmails.has(emailKey)) {
+        seenEmails.add(emailKey);
+        const isPaid = p.exam_fee_paid === true || p.is_fee_exempted === true || (p.email && paidEmails.has(p.email.toLowerCase().trim()));
+
+        if (isPaid) {
+          paidCount += 1;
+          totalGrossRevenue += Number(p.exam_fee_amount) || candidateExamFee;
+        }
+        selectedCount += 1;
+
+        const indivGross = isPaid ? (Number(p.exam_fee_amount) || candidateExamFee) : 0;
+        const indivGateway = isPaid ? Math.round(indivGross * (25.78 / 998) * 100) / 100 : 0;
+        const indivGovtCert = isPaid ? 199 : 0;
+        const indivCommission = isPaid ? commissionRate : 0;
+        const indivNetEarnings = isPaid ? Math.max(0, Math.round((indivCommission - indivGateway) * 100) / 100) : 0;
+
+        candidateList.push({
+          id: p.id,
+          candidate_name: p.full_name || "Intern",
+          email: p.email,
+          role_applied: p.role || "Internship Program",
+          status: "selected",
+          is_paid: isPaid,
+          created_at: p.created_at || new Date().toISOString(),
+          gross_amount: indivGross,
+          gateway_fee: indivGateway,
+          govt_cert_fee: indivGovtCert,
+          earned_commission: indivCommission,
+          net_earnings: indivNetEarnings,
+        });
+      }
     });
 
     const grossRevenue = totalGrossRevenue || (paidCount * candidateExamFee);
-    // Merchant Gateway & Settlement charge ratio: 25.78 on 998 gross (approx ₹12.89 per ₹499 transaction)
     const gatewayCost = Math.round(grossRevenue * (25.78 / 998) * 100) / 100;
-    // Govt Certification fee: ₹199 per paid candidate
     const govtCertAllocation = paidCount * 199;
-    // Total Referrer Gross Commission
     const grossCommission = paidCount * commissionRate;
-    // Equalized Net Referrer Earnings
     const netCommissionEarnings = Math.max(0, Math.round((grossCommission - gatewayCost) * 100) / 100);
-    // Company Net Retained Profit
     const netCompanyProfit = Math.round((grossRevenue - gatewayCost - govtCertAllocation - grossCommission) * 100) / 100;
 
     return {
       referralCode: code,
+      allReferralCodes: codeList,
       totalReferred: candidateList.length,
       paidCount,
       selectedCount,

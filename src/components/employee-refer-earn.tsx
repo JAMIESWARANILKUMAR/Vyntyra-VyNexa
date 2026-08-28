@@ -32,13 +32,13 @@ export function EmployeeReferEarn() {
     refetchInterval: 5000,
   });
 
-  const referralCode = referralCodeQ.data?.referralCode || "";
   const referralData: any = referralConversionsQ.data || {};
+  const referralCode = referralData.referralCode || referralCodeQ.data?.referralCode || "";
   const candidates: any[] = referralData.candidates || (Array.isArray(referralData) ? referralData : []);
 
   const totalReferred = referralData.totalReferred ?? candidates.length;
   const paidCount = referralData.paidCount ?? candidates.filter((c: any) => c.is_paid).length;
-  const grossRevenue = referralData.grossRevenue ?? (paidCount * 499);
+  const grossRevenue = referralData.grossRevenue ?? (paidCount * (referralData.candidateExamFee || 499));
   const gatewayCost = referralData.gatewayCost ?? Math.round(grossRevenue * (25.78 / 998) * 100) / 100;
   const govtCertAllocation = referralData.govtCertAllocation ?? (paidCount * 199);
   const grossCommission = referralData.grossCommission ?? (paidCount * (referralData.commissionRate || 200));
