@@ -5254,6 +5254,70 @@ export const deleteReferralPricingRule = createServerFn({ method: "POST" })
     return { success: true, message: `Referral pricing rule for ${cleanCode} removed.` };
   });
 
+export const bulkUpdateReferralPricingRules = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    codes: z.array(z.string().min(1)).min(1),
+    custom_exam_fee: z.number().min(0),
+    commission_reward: z.number().min(0),
+    is_active: z.boolean().optional(),
+    sync_to_existing_interns: z.boolean().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    const cleanCodes = Array.from(new Set(data.codes.map((c) => c.trim().toUpperCase()).filter(Boolean)));
+
+    if (cleanCodes.length === 0) {
+      return { success: false, updatedCount: 0, message: "No valid codes provided." };
+    }
+
+    const updates = cleanCodes.map((code) => ({
+      code,
+      custom_exam_fee: data.custom_exam_fee,
+      commission_reward: data.commission_reward,
+      is_active: data.is_active !== undefined ? data.is_active : true,
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { error: upsertErr } = await admin
+      .from("referral_pricing_rules")
+      .upsert(updates, { onConflict: "code" });
+
+    if (upsertErr) {
+      console.warn("Bulk referral_pricing_rules upsert error:", upsertErr.message);
+      throw new Error(`Failed to update referral pricing rules: ${upsertErr.message}`);
+    }
+
+    if (data.sync_to_existing_interns) {
+      const { data: matchedApps } = await admin
+        .from("applications")
+        .select("email, referral_code_used");
+
+      const matchingEmails = (matchedApps || [])
+        .filter((a: any) => cleanCodes.includes((a.referral_code_used || "").trim().toUpperCase()))
+        .map((a: any) => (a.email || "").toLowerCase().trim())
+        .filter(Boolean);
+
+      if (matchingEmails.length > 0) {
+        await admin
+          .from("profiles")
+          .update({
+            exam_fee_amount: data.custom_exam_fee,
+            updated_at: new Date().toISOString(),
+          })
+          .in("email", matchingEmails);
+      }
+    }
+
+    return {
+      success: true,
+      updatedCount: cleanCodes.length,
+      codes: cleanCodes,
+      custom_exam_fee: data.custom_exam_fee,
+      commission_reward: data.commission_reward,
+    };
+  });
+
 export const lookupReferralCodePricing = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({
     code: z.string().min(1),

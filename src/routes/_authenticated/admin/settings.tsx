@@ -18,6 +18,7 @@ import {
   getDashboardSettings, updateDashboardSetting, updateInternFeeSettings, 
   initializeDashboardSettings, listTeamMembers, purgeAllNocs,
   listAllReferralPricingRules, upsertReferralPricingRule, deleteReferralPricingRule,
+  bulkUpdateReferralPricingRules,
   sendUrgentPaymentPopupNotification, toggleInternNocDownload, toggleAllInternsNocDownload,
   recordManualInternPayment, assignReferralCodeToIntern
 } from "@/lib/operations.functions";
@@ -75,6 +76,7 @@ function AdminSettingsPage() {
   const fetchReferralPricingRules = useServerFn(listAllReferralPricingRules);
   const doUpsertReferralPricingRule = useServerFn(upsertReferralPricingRule);
   const doDeleteReferralPricingRule = useServerFn(deleteReferralPricingRule);
+  const doBulkUpdateReferralPricing = useServerFn(bulkUpdateReferralPricingRules);
   const doSendUrgentPopup = useServerFn(sendUrgentPaymentPopupNotification);
 
   const fetchBranding = useServerFn(getBrandingSettings);
@@ -120,6 +122,15 @@ function AdminSettingsPage() {
 
   // Referral code management state
   const [referralSearch, setReferralSearch] = useState("");
+  const [selectedReferralCodes, setSelectedReferralCodes] = useState<Set<string>>(new Set());
+  const [isBulkPricingModalOpen, setIsBulkPricingModalOpen] = useState(false);
+  const [isSavingBulkPricing, setIsSavingBulkPricing] = useState(false);
+  const [bulkPricingForm, setBulkPricingForm] = useState({
+    custom_exam_fee: 499,
+    commission_reward: 200,
+    is_active: true,
+    sync_to_existing_interns: true,
+  });
   const [internFeeSearch, setInternFeeSearch] = useState("");
   const [internFeeFilter, setInternFeeFilter] = useState<"all" | "scheduled" | "unpaid" | "paid" | "exempted">("all");
   const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
@@ -862,6 +873,56 @@ function AdminSettingsPage() {
     }
   }
 
+  function toggleSelectAllReferrals() {
+    if (selectedReferralCodes.size === filteredReferralRules.length && filteredReferralRules.length > 0) {
+      setSelectedReferralCodes(new Set());
+    } else {
+      setSelectedReferralCodes(new Set(filteredReferralRules.map((r) => r.code)));
+    }
+  }
+
+  function toggleSelectReferral(code: string) {
+    setSelectedReferralCodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) {
+        next.delete(code);
+      } else {
+        next.add(code);
+      }
+      return next;
+    });
+  }
+
+  async function handleApplyBulkPricing(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    const codesToUpdate = Array.from(selectedReferralCodes);
+    if (codesToUpdate.length === 0) {
+      return toast.error("Please select at least one referral code.");
+    }
+
+    setIsSavingBulkPricing(true);
+    try {
+      const res = await doBulkUpdateReferralPricing({
+        data: {
+          codes: codesToUpdate,
+          custom_exam_fee: Number(bulkPricingForm.custom_exam_fee),
+          commission_reward: Number(bulkPricingForm.commission_reward),
+          is_active: bulkPricingForm.is_active,
+          sync_to_existing_interns: bulkPricingForm.sync_to_existing_interns,
+        }
+      });
+
+      toast.success(`Successfully updated pricing for ${res.updatedCount} referral code(s)! (Fee: ₹${bulkPricingForm.custom_exam_fee}, Commission: ₹${bulkPricingForm.commission_reward})`);
+      setIsBulkPricingModalOpen(false);
+      setSelectedReferralCodes(new Set());
+      qc.invalidateQueries({ queryKey: ["admin-referral-pricing-rules"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to bulk update referral pricing.");
+    } finally {
+      setIsSavingBulkPricing(false);
+    }
+  }
+
   const referralRules: any[] = referralRulesQ.data || [];
   const filteredReferralRules = referralRules.filter((r) => {
     if (!referralSearch.trim()) return true;
@@ -964,6 +1025,14 @@ function AdminSettingsPage() {
             </div>
 
             <div className="flex items-center gap-2">
+              {selectedReferralCodes.size > 0 && (
+                <Button
+                  onClick={() => setIsBulkPricingModalOpen(true)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white gap-1.5 shadow-xs font-semibold text-xs h-9"
+                >
+                  <Sparkles className="h-4 w-4" /> Bulk Edit Pricing ({selectedReferralCodes.size})
+                </Button>
+              )}
               <Button 
                 onClick={() => {
                   setReferralForm({
@@ -1019,7 +1088,7 @@ function AdminSettingsPage() {
           </div>
 
           <div className="p-5 space-y-4">
-            {/* Search & Filter */}
+            {/* Search, Filter & Bulk Selection Actions */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div className="relative flex-1 max-w-md">
                 <Search className="h-4 w-4 absolute left-3 top-2.5 text-slate-400" />
@@ -1030,10 +1099,96 @@ function AdminSettingsPage() {
                   className="pl-9 text-xs h-9"
                 />
               </div>
-              <div className="text-xs text-slate-500 flex items-center gap-1.5 bg-slate-50 border px-3 py-1.5 rounded-lg">
-                <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                <span>Equal PG & Tax Policy: Payment gateway fees, settlement costs, and taxes are divided 50% / 50% equally between Referrer Commission and Company Net Margin across all current and future transactions. ₹199/paid is allocated for Govt Certification.</span>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={toggleSelectAllReferrals}
+                  className="text-xs h-8 gap-1.5 border-slate-300"
+                >
+                  <CheckCheck className="h-3.5 w-3.5 text-indigo-600" />
+                  {selectedReferralCodes.size === filteredReferralRules.length && filteredReferralRules.length > 0 
+                    ? "Deselect All" 
+                    : `Select All (${filteredReferralRules.length})`}
+                </Button>
+                {selectedReferralCodes.size > 0 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setSelectedReferralCodes(new Set())}
+                    className="text-xs h-8 text-slate-500 hover:text-slate-900"
+                  >
+                    Clear Selection
+                  </Button>
+                )}
               </div>
+            </div>
+
+            {/* Quick Bulk Pricing Action Banner */}
+            {selectedReferralCodes.size > 0 && (
+              <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 border border-indigo-500/40 rounded-2xl p-4 text-white shadow-xl flex flex-wrap items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="flex items-center gap-3">
+                  <div className="bg-indigo-500/30 text-indigo-300 px-3 py-1.5 rounded-xl border border-indigo-400/40 text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                    <Tag className="h-3.5 w-3.5" />
+                    {selectedReferralCodes.size} Selected {selectedReferralCodes.size === filteredReferralRules.length ? "(All Codes)" : ""}
+                  </div>
+                  <span className="text-xs text-slate-300 font-medium hidden md:inline">
+                    Apply custom exam fee and partner commission to all selected codes
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5 text-xs">
+                  <div className="flex items-center gap-1 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700">
+                    <span className="text-[11px] text-slate-400 font-semibold">Candidate Fee: ₹</span>
+                    <input 
+                      type="number"
+                      min="0"
+                      value={bulkPricingForm.custom_exam_fee}
+                      onChange={(e) => setBulkPricingForm({ ...bulkPricingForm, custom_exam_fee: Number(e.target.value) })}
+                      className="w-16 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-white focus:outline-hidden focus:border-indigo-400"
+                      placeholder="499"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700">
+                    <span className="text-[11px] text-purple-300 font-semibold">Commission: ₹</span>
+                    <input 
+                      type="number"
+                      min="0"
+                      value={bulkPricingForm.commission_reward}
+                      onChange={(e) => setBulkPricingForm({ ...bulkPricingForm, commission_reward: Number(e.target.value) })}
+                      className="w-16 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-purple-300 focus:outline-hidden focus:border-indigo-400"
+                      placeholder="200"
+                    />
+                  </div>
+
+                  <Button
+                    size="sm"
+                    disabled={isSavingBulkPricing}
+                    onClick={() => handleApplyBulkPricing()}
+                    className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs h-8 px-4 rounded-xl shadow-lg gap-1.5 transition-all"
+                  >
+                    {isSavingBulkPricing ? <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-950" /> : <Sparkles className="h-3.5 w-3.5 fill-slate-950" />}
+                    Apply to {selectedReferralCodes.size} Selected
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsBulkPricingModalOpen(true)}
+                    className="bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 text-xs h-8 px-3 rounded-xl gap-1"
+                  >
+                    <Edit3 className="h-3 w-3" /> Advanced
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Policy transparency info */}
+            <div className="text-xs text-slate-500 flex items-center gap-1.5 bg-slate-50 border px-3 py-2 rounded-xl">
+              <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+              <span>Equal PG & Tax Policy: Payment gateway fees, settlement costs, and taxes are divided 50% / 50% equally between Referrer Commission and Company Net Margin across all current and future transactions. ₹199/paid is allocated for Govt Certification.</span>
             </div>
 
             {/* Referral Table */}
@@ -1053,6 +1208,15 @@ function AdminSettingsPage() {
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-slate-100/80 text-slate-700 font-bold border-b text-[11px] uppercase tracking-wider">
+                        <th className="p-3.5 w-10 text-center">
+                          <input 
+                            type="checkbox"
+                            checked={filteredReferralRules.length > 0 && selectedReferralCodes.size === filteredReferralRules.length}
+                            onChange={toggleSelectAllReferrals}
+                            className="h-4 w-4 rounded accent-indigo-600 cursor-pointer"
+                            title="Select All / Deselect All"
+                          />
+                        </th>
                         <th className="p-3.5">Referral Code</th>
                         <th className="p-3.5">Referrer / Partner</th>
                         <th className="p-3.5">Fee (₹)</th>
@@ -1070,10 +1234,19 @@ function AdminSettingsPage() {
                     <tbody className="divide-y divide-slate-100 bg-white">
                       {filteredReferralRules.map((rule) => {
                         const isCustom = rule.is_custom_rule;
+                        const isSelected = selectedReferralCodes.has(rule.code);
                         return (
-                          <tr key={rule.code} className="hover:bg-indigo-50/40 transition-colors">
+                          <tr key={rule.code} className={`transition-colors ${isSelected ? "bg-indigo-50/90 font-medium" : "hover:bg-indigo-50/40"}`}>
+                            <td className="p-3.5 w-10 text-center">
+                              <input 
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleSelectReferral(rule.code)}
+                                className="h-4 w-4 rounded accent-indigo-600 cursor-pointer"
+                              />
+                            </td>
                             <td className="p-3.5 font-mono font-bold text-indigo-900 flex items-center gap-2">
-                              <span className="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded text-xs">
+                              <span className={`px-2 py-0.5 rounded text-xs border ${isSelected ? "bg-indigo-600 text-white border-indigo-700" : "bg-indigo-50 text-indigo-700 border-indigo-200"}`}>
                                 {rule.code}
                               </span>
                               {isCustom && (
@@ -2253,6 +2426,146 @@ function AdminSettingsPage() {
                   className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
                 >
                   {isSavingReferral ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Saving...</> : "Save Pricing Rule"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── BULK REFERRAL PRICING & COMMISSION OVERRIDE MODAL ─── */}
+      {isBulkPricingModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b pb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-purple-600 text-white rounded-lg">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">
+                    Bulk Update Referral Pricing &amp; Commission
+                  </h3>
+                  <p className="text-xs text-slate-500">Apply new exam fee and commission reward across selected codes.</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setIsBulkPricingModalOpen(false)}>✕</Button>
+            </div>
+
+            <form onSubmit={handleApplyBulkPricing} className="space-y-4 pt-4 text-xs">
+              {/* Selected Codes Summary */}
+              <div>
+                <label className="font-bold text-slate-700 block mb-1.5 flex items-center justify-between">
+                  <span>Selected Codes ({selectedReferralCodes.size})</span>
+                  <span className="text-[10px] text-indigo-600 font-normal">
+                    {selectedReferralCodes.size === filteredReferralRules.length ? "All Filtered Codes Selected" : "Selected Subset"}
+                  </span>
+                </label>
+                <div className="max-h-24 overflow-y-auto p-2.5 bg-slate-50 border rounded-xl flex flex-wrap gap-1.5">
+                  {Array.from(selectedReferralCodes).map((c) => (
+                    <span key={c} className="bg-indigo-100 text-indigo-800 border border-indigo-200 font-mono font-bold text-[11px] px-2 py-0.5 rounded-md flex items-center gap-1">
+                      {c}
+                      <button 
+                        type="button" 
+                        onClick={() => toggleSelectReferral(c)}
+                        className="text-indigo-400 hover:text-indigo-800 ml-0.5"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Candidate Exam Fee (₹) *</label>
+                  <Input 
+                    type="number"
+                    min="0"
+                    value={bulkPricingForm.custom_exam_fee}
+                    onChange={(e) => setBulkPricingForm({ ...bulkPricingForm, custom_exam_fee: Number(e.target.value) })}
+                    required
+                    className="font-bold"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-1 block">New fee for candidates using these codes.</span>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Partner Commission (₹) *</label>
+                  <Input 
+                    type="number"
+                    min="0"
+                    value={bulkPricingForm.commission_reward}
+                    onChange={(e) => setBulkPricingForm({ ...bulkPricingForm, commission_reward: Number(e.target.value) })}
+                    required
+                    className="font-bold text-purple-700"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-1 block">Payable to referrer per paid candidate.</span>
+                </div>
+              </div>
+
+              {/* Real-time Accounting Breakdown Preview */}
+              <div className="p-3 bg-slate-50 border rounded-xl space-y-1 text-[11px] text-slate-600">
+                <div className="font-bold text-slate-800 text-xs flex items-center gap-1">
+                  <CreditCard className="h-3.5 w-3.5 text-indigo-600" /> Unit Economics per Paid Candidate:
+                </div>
+                <div className="flex justify-between pt-1">
+                  <span>Gross Candidate Fee:</span>
+                  <span className="font-bold text-slate-900">₹{bulkPricingForm.custom_exam_fee}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Est. Payment Gateway Charge (~2.58%):</span>
+                  <span className="text-amber-700 font-medium">₹{(Math.round((bulkPricingForm.custom_exam_fee * (25.78 / 998)) * 100) / 100).toFixed(2)} (50% Referrer / 50% Company)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Govt Certification Allocation:</span>
+                  <span className="text-blue-700 font-medium">₹199.00</span>
+                </div>
+                <div className="flex justify-between border-t pt-1">
+                  <span>Referrer Net Commission:</span>
+                  <span className="font-bold text-purple-700">₹{(Math.max(0, Math.round((bulkPricingForm.commission_reward - (bulkPricingForm.custom_exam_fee * (25.78 / 998) / 2)) * 100) / 100)).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Company Net Margin:</span>
+                  <span className="font-extrabold text-emerald-700">₹{(Math.round((bulkPricingForm.custom_exam_fee - bulkPricingForm.commission_reward - 199 - (bulkPricingForm.custom_exam_fee * (25.78 / 998) / 2)) * 100) / 100).toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between p-2.5 border rounded-lg bg-slate-50">
+                  <span className="font-semibold text-slate-700">Codes Active Status</span>
+                  <Switch 
+                    checked={bulkPricingForm.is_active}
+                    onCheckedChange={(v) => setBulkPricingForm({ ...bulkPricingForm, is_active: v })}
+                  />
+                </div>
+              </div>
+
+              <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+                <label className="flex items-start gap-2 cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={bulkPricingForm.sync_to_existing_interns} 
+                    onChange={(e) => setBulkPricingForm({ ...bulkPricingForm, sync_to_existing_interns: e.target.checked })}
+                    className="mt-0.5 accent-indigo-600 rounded"
+                  />
+                  <span className="text-xs text-indigo-950 font-medium">
+                    Automatically sync this fee to all existing interns and applicants who applied with these referral codes.
+                  </span>
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <Button type="button" variant="outline" size="sm" onClick={() => setIsBulkPricingModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={isSavingBulkPricing || selectedReferralCodes.size === 0}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
+                >
+                  {isSavingBulkPricing ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Updating {selectedReferralCodes.size} Codes...</> : `Update ${selectedReferralCodes.size} Referral Codes`}
                 </Button>
               </div>
             </form>
