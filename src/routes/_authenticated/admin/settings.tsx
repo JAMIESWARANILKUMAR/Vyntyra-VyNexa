@@ -1032,7 +1032,7 @@ function AdminSettingsPage() {
               </div>
               <div className="text-xs text-slate-500 flex items-center gap-1.5 bg-slate-50 border px-3 py-1.5 rounded-lg">
                 <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                <span>Financial Allocation Model: ₹499 Candidate Fee = ₹199 Govt Certification + ₹100 Platform & Evaluation Ops + ₹12.50 PG Processing + ₹187.50 Partner Net Commission.</span>
+                <span>Equal PG & Tax Policy: Payment gateway fees, settlement costs, and taxes are divided 50% / 50% equally between Referrer Commission and Company Net Margin across all current and future transactions. ₹199/paid is allocated for Govt Certification.</span>
               </div>
             </div>
 
@@ -1103,7 +1103,7 @@ function AdminSettingsPage() {
                             </td>
                             <td className="p-3.5 text-amber-800 font-medium">
                               -₹{(rule.total_gateway_cost || 0).toLocaleString("en-IN")}
-                              <span className="text-[9px] text-slate-400 block">(25.78/998)</span>
+                              <span className="text-[9px] text-slate-400 block">(50% split)</span>
                             </td>
                             <td className="p-3.5 text-blue-800 font-medium">
                               -₹{(rule.govt_cert_fee || 0).toLocaleString("en-IN")}
@@ -1111,7 +1111,7 @@ function AdminSettingsPage() {
                             </td>
                             <td className="p-3.5 font-extrabold text-purple-700">
                               ₹{(rule.net_commission_payable ?? rule.total_commission_payable ?? 0).toLocaleString("en-IN")}
-                              <span className="text-[9px] text-slate-400 block font-normal">(₹{(rule.commission_reward - 12.5)}/paid)</span>
+                              <span className="text-[9px] text-slate-400 block font-normal">(after 50% PG share)</span>
                             </td>
                             <td className="p-3.5">
                               <span className="px-2 py-0.5 rounded-lg text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-200">

@@ -40,13 +40,13 @@ export function EmployeeReferEarn() {
   const paidCount = referralData.paidCount ?? candidates.filter((c: any) => c.is_paid).length;
   const grossRevenue = referralData.grossRevenue ?? (paidCount * (referralData.candidateExamFee || 499));
   const gatewayCost = referralData.gatewayCost ?? Math.round(grossRevenue * (25.78 / 998) * 100) / 100;
-  const gatewayCostReferrerShare = referralData.gatewayCostReferrerShare ?? (paidCount * 12.5);
-  const gatewayCostCompanyShare = referralData.gatewayCostCompanyShare ?? Math.max(0, Math.round((gatewayCost - gatewayCostReferrerShare) * 100) / 100);
+  const gatewayCostReferrerShare = referralData.gatewayCostReferrerShare ?? Math.round((gatewayCost / 2) * 100) / 100;
+  const gatewayCostCompanyShare = referralData.gatewayCostCompanyShare ?? Math.round((gatewayCost - gatewayCostReferrerShare) * 100) / 100;
   const govtCertAllocation = referralData.govtCertAllocation ?? (paidCount * 199);
   const commissionRate = referralData.commissionRate || 200;
   const grossCommission = referralData.grossCommission ?? (paidCount * commissionRate);
-  const netCommissionEarnings = referralData.netCommissionEarnings ?? (paidCount * Math.max(0, commissionRate - 12.5));
-  const netCompanyProfit = referralData.netCompanyProfit ?? Math.round((grossRevenue - netCommissionEarnings - govtCertAllocation - gatewayCost) * 100) / 100;
+  const netCommissionEarnings = referralData.netCommissionEarnings ?? Math.max(0, Math.round((grossCommission - gatewayCostReferrerShare) * 100) / 100);
+  const netCompanyProfit = referralData.netCompanyProfit ?? Math.round((grossRevenue - grossCommission - govtCertAllocation - gatewayCostCompanyShare) * 100) / 100;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 w-full max-w-7xl mx-auto">
@@ -83,7 +83,7 @@ export function EmployeeReferEarn() {
             <Coins className="h-6 w-6 text-amber-500" /> Referral & Commission Earnings Hub
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Share your unique code, track candidate applications, and view real-time commission earnings with ₹12.50/candidate gateway deductions and certification reserves.
+            Share your unique code, track candidate applications, and view real-time commission earnings with 50/50 equal payment gateway & tax charge sharing.
           </p>
         </div>
 
@@ -122,8 +122,10 @@ export function EmployeeReferEarn() {
             <span className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">Commission Rate</span>
             <Coins className="h-4 w-4 text-blue-500" />
           </div>
-          <div className="text-2xl font-extrabold text-blue-900">₹{commissionRate - 12.5}</div>
-          <span className="text-[10px] text-slate-400">Net per paid candidate (₹{commissionRate} base − ₹12.50 PG)</span>
+          <div className="text-2xl font-extrabold text-blue-900">
+            ₹{paidCount > 0 ? (Math.round((netCommissionEarnings / paidCount) * 100) / 100) : (commissionRate - 6.45)}
+          </div>
+          <span className="text-[10px] text-slate-400">Net/candidate (after 50% equal PG & tax sharing)</span>
         </div>
 
         <div className="p-4 rounded-xl border-2 border-purple-300 bg-purple-50/90 shadow-xs">
@@ -132,7 +134,7 @@ export function EmployeeReferEarn() {
             <Sparkles className="h-4 w-4 text-purple-600 animate-pulse" />
           </div>
           <div className="text-2xl font-black text-purple-900">₹{netCommissionEarnings.toLocaleString("en-IN")}</div>
-          <span className="text-[10px] text-purple-700 font-semibold">{paidCount} paid × ₹{commissionRate - 12.5} net commission</span>
+          <span className="text-[10px] text-purple-700 font-semibold">₹{grossCommission} gross − ₹{gatewayCostReferrerShare} (50% PG & tax share)</span>
         </div>
       </div>
 
@@ -140,9 +142,9 @@ export function EmployeeReferEarn() {
       <div className="p-4 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-slate-50 border border-indigo-200/80 rounded-xl text-xs flex items-start gap-3">
         <Sparkles className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
         <div className="space-y-1 text-slate-700 leading-relaxed">
-          <div className="font-bold text-slate-900">Official Candidate Fee & Allocation Structure:</div>
+          <div className="font-bold text-slate-900">50/50 Equal Gateway & Tax Sharing Policy:</div>
           <div className="text-slate-600">
-            Each candidate skilling fee (₹499) is systematically allocated towards <strong>Government Certification & Verification (₹199)</strong>, <strong>Platform LMS Infrastructure, Assessment & Operational Administration (₹100)</strong>, <strong>Payment Gateway Processing (₹12.50)</strong>, and <strong>Your Direct Partner Commission (₹187.50)</strong>.
+            Payment gateway processing charges, settlement fees, and applicable taxes are <strong>divided equally (50% / 50%)</strong> between the Referrer's Commission and Company Income across all current and future transactions. ₹199 per paid candidate is dedicated to Government Certification reserves.
           </div>
         </div>
       </div>
@@ -377,10 +379,10 @@ export function EmployeeReferEarn() {
                           {isPaid ? (
                             <div>
                               <span className="text-purple-700 font-bold bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-lg">
-                                +₹{r.net_earnings ?? Math.max(0, commission - 12.5)}
+                                +₹{r.net_earnings ?? Math.max(0, commission - Math.round(((r.gateway_fee || 12.89) / 2) * 100) / 100)}
                               </span>
                               <div className="text-[9px] text-slate-400 font-normal mt-1">
-                                ₹{commission} gross − ₹{r.gateway_fee_share ?? 12.5} PG
+                                ₹{commission} gross − ₹{r.gateway_fee_share ?? Math.round(((r.gateway_fee || 12.89) / 2) * 100) / 100} (50% PG & Tax)
                               </div>
                             </div>
                           ) : (
