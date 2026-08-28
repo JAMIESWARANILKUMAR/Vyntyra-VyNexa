@@ -121,7 +121,7 @@ export function EmployeeReferEarn() {
             <Coins className="h-4 w-4 text-blue-500" />
           </div>
           <div className="text-2xl font-extrabold text-blue-900">
-            ₹{paidCount > 0 ? (Math.round((netCommissionEarnings / paidCount) * 100) / 100) : (commissionRate - 6.45)}
+            ₹{paidCount > 0 ? (Math.round((netCommissionEarnings / paidCount) * 100) / 100).toFixed(2) : (Math.max(0, commissionRate - Math.round((499 * (25.78 / 998) / 2) * 100) / 100)).toFixed(2)}
           </div>
           <span className="text-[10px] text-slate-400">Net/candidate (after 50% equal PG & tax sharing)</span>
         </div>
@@ -131,7 +131,7 @@ export function EmployeeReferEarn() {
             <span className="text-[11px] font-black uppercase tracking-wider">Your Net Earnings</span>
             <Sparkles className="h-4 w-4 text-purple-600 animate-pulse" />
           </div>
-          <div className="text-2xl font-black text-purple-900">₹{netCommissionEarnings.toLocaleString("en-IN")}</div>
+          <div className="text-2xl font-black text-purple-900">₹{Number(netCommissionEarnings).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           <span className="text-[10px] text-purple-700 font-semibold">₹{grossCommission} gross − ₹{gatewayCostReferrerShare} (50% PG & tax share)</span>
         </div>
       </div>
@@ -377,10 +377,10 @@ export function EmployeeReferEarn() {
                           {isPaid ? (
                             <div>
                               <span className="text-purple-700 font-bold bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-lg">
-                                +₹{r.net_earnings ?? Math.max(0, commission - Math.round(((r.gateway_fee || 12.89) / 2) * 100) / 100)}
+                                +₹{Number(r.net_earnings !== undefined ? r.net_earnings : Math.max(0, commission - Math.round(((r.gateway_fee || 12.89) / 2) * 100) / 100)).toFixed(2)}
                               </span>
                               <div className="text-[9px] text-slate-400 font-normal mt-1">
-                                ₹{commission} gross − ₹{r.gateway_fee_share ?? Math.round(((r.gateway_fee || 12.89) / 2) * 100) / 100} (50% PG & Tax)
+                                ₹{commission} gross − ₹{Number(r.gateway_fee_share ?? Math.round(((r.gateway_fee || 12.89) / 2) * 100) / 100).toFixed(2)} (50% PG &amp; Tax)
                               </div>
                             </div>
                           ) : (
