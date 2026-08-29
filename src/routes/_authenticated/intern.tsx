@@ -785,6 +785,74 @@ function InternDashboard() {
     }
   }, [TABS, activeTab]);
 
+  // ── Construct Unified Real-Time Live Marquee Updates (Holidays, Tasks, Meetings, Announcements, Alerts) ──
+  const holidays: any[] = holidaysQ.data || [];
+  const nowMs = Date.now();
+  const thirtyDaysAhead = nowMs + 30 * 24 * 60 * 60 * 1000;
+
+  const marqueeItems: { id: string; type: string; typeColor: string; title: string; subtitle?: string }[] = [];
+
+  // 1. Direct Unread Alerts & Notifications
+  notifications.filter((n: any) => !n.is_read).forEach((n: any) => {
+    marqueeItems.push({
+      id: `alert-${n.id}`,
+      type: "ALERT",
+      typeColor: "text-rose-300 bg-rose-950/90 border-rose-500/50 shadow-xs",
+      title: n.title,
+      subtitle: n.message,
+    });
+  });
+
+  // 2. Upcoming Meetings (Scheduled within next 7 days or today)
+  meetings.filter((m: any) => {
+    const meetMs = new Date(m.scheduled_at).getTime();
+    return meetMs >= nowMs - 3600000 && meetMs <= nowMs + 7 * 24 * 60 * 60 * 1000;
+  }).forEach((m: any) => {
+    const meetTime = new Date(m.scheduled_at).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit', hour12: true });
+    const meetDate = new Date(m.scheduled_at).toLocaleDateString("en-IN", { weekday: 'short', month: 'short', day: 'numeric' });
+    marqueeItems.push({
+      id: `meet-${m.id}`,
+      type: "LIVE MEETING",
+      typeColor: "text-indigo-300 bg-indigo-950/90 border-indigo-500/50 shadow-xs",
+      title: `Scheduled Video Sync: "${m.title}" · ${meetDate} at ${meetTime}`,
+    });
+  });
+
+  // 3. Pending Tasks & Assignments
+  pendingTasks.forEach((t: any) => {
+    const dueText = t.deadline ? `Due: ${new Date(t.deadline).toLocaleDateString("en-IN", { month: 'short', day: 'numeric' })}` : "Active";
+    marqueeItems.push({
+      id: `task-${t.id}`,
+      type: "ASSIGNMENT",
+      typeColor: "text-amber-300 bg-amber-950/90 border-amber-500/50 shadow-xs",
+      title: `Task Pending Review: "${t.title}" (${dueText})`,
+    });
+  });
+
+  // 4. Upcoming Company Holidays (next 30 days)
+  holidays.filter((h: any) => {
+    const hMs = new Date(h.date).getTime();
+    return hMs >= nowMs - 86400000 && hMs <= thirtyDaysAhead;
+  }).forEach((h: any) => {
+    const hDate = new Date(h.date).toLocaleDateString("en-IN", { weekday: 'short', month: 'short', day: 'numeric' });
+    marqueeItems.push({
+      id: `holiday-${h.id || h.date}`,
+      type: "HOLIDAY",
+      typeColor: "text-teal-300 bg-teal-950/90 border-teal-500/50 shadow-xs",
+      title: `Company Holiday: ${h.name} (${hDate})`,
+    });
+  });
+
+  // 5. Official Announcements & Bulletins
+  announcements.forEach((a: any) => {
+    marqueeItems.push({
+      id: `ann-${a.id}`,
+      type: (a.type || "ANNOUNCEMENT").toUpperCase(),
+      typeColor: "text-emerald-300 bg-emerald-950/90 border-emerald-500/50 shadow-xs",
+      title: a.title,
+    });
+  });
+
   return (
     <div className="min-h-screen bg-[#07090E] text-slate-100 font-sans selection:bg-emerald-600 selection:text-white relative overflow-x-hidden">
       
@@ -1000,34 +1068,57 @@ function InternDashboard() {
           </div>
         </div>
 
-        {/* ── Horizontal Touch-Scrollable Tabs Bar ── */}
-        <div className="flex items-center overflow-x-auto border-t border-slate-800/80 px-2 sm:px-4 gap-1.5 py-2 scrollbar-none bg-[#050811]/95">
-          {TABS.map((t: any) => {
-            const isActive = activeTab === t.id;
-            const TabIcon = t.icon;
-            return (
-              <button 
-                key={t.id} 
-                onClick={() => setActiveTab(t.id as any)}
-                className={`shrink-0 px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-                  isActive 
-                    ? "bg-emerald-600 text-white shadow-md border border-emerald-400/40" 
-                    : t.isPrimary
-                    ? "text-amber-300 bg-amber-950/50 border border-amber-500/40 hover:bg-amber-900/60"
-                    : "text-slate-400 bg-slate-900/80 border border-slate-800/80 hover:bg-slate-800 hover:text-slate-200"
-                }`}
-              >
-                {TabIcon && <TabIcon className={`h-3.5 w-3.5 ${isActive ? "text-white" : t.isPrimary ? "text-amber-400" : "text-slate-400"}`} />}
-                <span>{t.label}</span>
-                {t.isPrimary && t.count > 0 && !isActive && (
-                  <span className="px-1.5 py-0.2 text-[9px] font-extrabold rounded-full bg-amber-500 text-slate-950">
-                    {t.count}
+        {/* ── Live Updates & Notifications Marquee Sub-Bar ── */}
+        {marqueeItems.length > 0 ? (
+          <div className="bg-[#050811]/95 text-slate-200 text-xs py-2 overflow-hidden flex whitespace-nowrap border-t border-slate-800/80 relative z-10 backdrop-blur-md">
+            <div className="animate-marquee flex items-center gap-8 sm:gap-12 shrink-0 min-w-full">
+              {marqueeItems.map((item) => (
+                <div key={item.id} className="inline-flex items-center gap-2 px-2 py-0.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
+                  <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.typeColor} shrink-0`}>
+                    {item.type}
                   </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+                  <span className="font-medium text-slate-200 text-xs truncate max-w-xs sm:max-w-none">
+                    {item.title}
+                  </span>
+                  {item.subtitle && (
+                    <span className="text-slate-400 text-[11px] hidden md:inline truncate max-w-sm">
+                      — {item.subtitle}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="animate-marquee flex items-center gap-8 sm:gap-12 shrink-0 min-w-full ml-8 sm:ml-12">
+              {marqueeItems.map((item) => (
+                <div key={`dup-${item.id}`} className="inline-flex items-center gap-2 px-2 py-0.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
+                  <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.typeColor} shrink-0`}>
+                    {item.type}
+                  </span>
+                  <span className="font-medium text-slate-200 text-xs truncate max-w-xs sm:max-w-none">
+                    {item.title}
+                  </span>
+                  {item.subtitle && (
+                    <span className="text-slate-400 text-[11px] hidden md:inline truncate max-w-sm">
+                      — {item.subtitle}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-[#050811]/95 text-slate-400 text-[11px] py-2 px-4 flex items-center justify-between border-t border-slate-800/80 relative z-10 backdrop-blur-md">
+            <div className="inline-flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              <span className="font-semibold text-slate-300">Live Workspace Active</span>
+              <span>·</span>
+              <span>All services operational</span>
+            </div>
+            <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">VCS Directorate Live Feed</span>
+          </div>
+        )}
       </header>
 
       {/* ── LUXURY SLIDEOVER HAMBURGER NAVIGATION DRAWER ── */}
@@ -1225,30 +1316,6 @@ function InternDashboard() {
               </p>
             </div>
 
-          </div>
-        </div>
-      )}
-
-      {/* Marquee Notifications */}
-      {announcements.length > 0 && (
-        <div className="bg-[#0A0F1D] text-slate-200 text-xs py-2 overflow-hidden flex whitespace-nowrap border-b border-slate-800/80 relative z-10">
-          <div className="animate-marquee flex gap-12 shrink-0 min-w-full">
-            {announcements.map((a: any) => (
-              <span key={a.id} className="inline-flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                <span className="font-semibold uppercase tracking-wider text-emerald-400">{a.type || 'Update'}</span>
-                <span className="opacity-90">{a.title}</span>
-              </span>
-            ))}
-          </div>
-          <div className="animate-marquee flex gap-12 shrink-0 min-w-full ml-12">
-            {announcements.map((a: any) => (
-              <span key={a.id} className="inline-flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                <span className="font-semibold uppercase tracking-wider text-emerald-400">{a.type || 'Update'}</span>
-                <span className="opacity-90">{a.title}</span>
-              </span>
-            ))}
           </div>
         </div>
       )}
