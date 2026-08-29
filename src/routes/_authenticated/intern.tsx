@@ -3794,52 +3794,44 @@ function InternDashboard() {
                       </div>
                     </div>
 
-                    {/* Kotak Mahindra Bank Gateway Card */}
+                    {/* Kotak Mahindra Bank Gateway Card (Coming Soon) */}
                     <div
-                      onClick={() => setPaymentGatewaySelected("kotak")}
-                      className={`p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${
-                        paymentGatewaySelected === "kotak"
-                          ? "border-rose-500 bg-rose-50/60 dark:bg-rose-950/20 shadow-md shadow-rose-500/10 ring-2 ring-rose-500/20"
-                          : "border-slate-200 dark:border-slate-800 hover:border-rose-300 bg-white dark:bg-slate-800"
-                      }`}
+                      onClick={() => {
+                        toast.info("Kotak Mahindra Bank Payment Gateway integration is coming soon! Please proceed with PayU Enterprise Gateway.");
+                      }}
+                      className="p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/40 opacity-75 transition-all cursor-pointer relative overflow-hidden hover:opacity-90"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3.5">
-                          <div className="h-12 w-14 rounded-xl bg-gradient-to-br from-rose-600 via-red-600 to-indigo-900 text-white flex flex-col items-center justify-center font-black tracking-tight shadow-md shadow-rose-600/30 shrink-0">
+                          <div className="h-12 w-14 rounded-xl bg-gradient-to-br from-rose-700/80 via-red-700/80 to-indigo-950 text-white flex flex-col items-center justify-center font-black tracking-tight shadow-sm shrink-0">
                             <span className="text-[9px] uppercase font-bold tracking-widest text-rose-200">Bank</span>
                             <span className="text-xs font-black tracking-tighter">KOTAK</span>
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <h4 className="font-extrabold text-slate-900 dark:text-white text-base">Kotak Mahindra Bank Gateway</h4>
-                              <span className="text-[9px] font-bold text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/50 px-2 py-0.5 rounded-full uppercase">
-                                Direct Bank PG
+                              <h4 className="font-bold text-slate-700 dark:text-slate-300 text-base">Kotak Mahindra Bank Gateway</h4>
+                              <span className="text-[9px] font-bold text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-800/50 px-2 py-0.5 rounded-full uppercase">
+                                Coming Soon
                               </span>
                             </div>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                              Direct Kotak 811, NetBanking, Instant UPI &amp; Cards with 256-bit bank-grade encryption
+                              Direct Kotak 811, NetBanking, Instant UPI &amp; Cards — Integration in Progress
                             </p>
                           </div>
                         </div>
 
-                        <div className="shrink-0">
-                          {paymentGatewaySelected === "kotak" ? (
-                            <div className="h-6 w-6 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-xs">
-                              <Check className="h-4 w-4" />
-                            </div>
-                          ) : (
-                            <div className="h-6 w-6 rounded-full border-2 border-slate-300" />
-                          )}
+                        <div className="shrink-0 flex items-center gap-2">
+                          <span className="text-[10px] font-medium text-slate-400 hidden sm:inline">Coming Soon</span>
+                          <Lock className="h-4 w-4 text-slate-400" />
                         </div>
                       </div>
 
                       {/* Payment Channels Pill Grid */}
-                      <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-rose-200/60 dark:border-rose-800/40 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
-                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Kotak NetBanking (Instant Settlement)</span>
-                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Kotak 811 UPI &amp; Mobile Banking</span>
-                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Unified Payments Interface (All UPI)</span>
-                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Credit / Debit Cards (Visa / Mastercard / RuPay)</span>
-                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Corporate Banking &amp; NEFT / IMPS</span>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/60 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                        <span className="px-2 py-0.5 rounded-md bg-white/60 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700">Kotak NetBanking</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/60 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700">Kotak 811 UPI</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/60 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700">Credit / Debit Cards</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/60 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700">UPI &amp; Corporate Banking</span>
                       </div>
                     </div>
 
