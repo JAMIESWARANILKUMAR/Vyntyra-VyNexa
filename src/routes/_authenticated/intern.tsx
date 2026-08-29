@@ -8,7 +8,7 @@ import {
   Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
   Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, ArrowLeft, Zap, ChevronRight, X, Trophy, Flame, AlertCircle,
-  Printer, Receipt, Tag, Building2, CheckCheck
+  Printer, Receipt, Tag, Building2, CheckCheck, Menu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -164,6 +164,7 @@ function InternDashboard() {
   const [copiedInvite, setCopiedInvite] = useState(false);
   const [showReferralPopup, setShowReferralPopup] = useState(() => localStorage.getItem("dismissed-referral-popup") !== "true");
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [showForcePasswordModal, setShowForcePasswordModal] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -748,29 +749,33 @@ function InternDashboard() {
   };
 
   const TABS = [
-    { id: "overview",       label: "Overview", shortLabel: "Overview", enabled: isModuleEnabled("overview") },
+    { id: "overview",       label: "Overview", shortLabel: "Overview", icon: Compass, category: "Core Work", enabled: isModuleEnabled("overview") },
     { 
       id: "tasks",          
       label: `Tasks & Assignments (${pendingTasks.length})`, 
       shortLabel: `Tasks (${pendingTasks.length})`,
       isPrimary: true,
       count: pendingTasks.length,
+      icon: ClipboardList,
+      category: "Core Work",
       enabled: isModuleEnabled("tasks") 
     },
-    { id: "deliverables",   label: `Deliverables (${deliverables.length})`, shortLabel: "Deliverables", enabled: isModuleEnabled("deliverables") },
-    { id: "standups",       label: `Standups (${standups.length})`, shortLabel: "Standups", enabled: isModuleEnabled("standups") },
-    { id: "attendance",     label: `Attendance (${attendanceLogs.length})`, shortLabel: "Attendance", enabled: isModuleEnabled("attendance") },
-    { id: "kanban",         label: "Sprint Board", shortLabel: "Sprint", enabled: isModuleEnabled("kanban") },
-    { id: "meetings",       label: "Meetings", shortLabel: "Meetings", enabled: isModuleEnabled("meetings") },
-    { id: "resources",      label: `Resources (${resources.length})`, shortLabel: "Resources", enabled: isModuleEnabled("resources") },
-    { id: "onboarding",     label: "Onboarding", shortLabel: "Onboarding", enabled: isModuleEnabled("onboarding") },
-    { id: "lms",            label: "LMS & Skills", shortLabel: "LMS", enabled: isModuleEnabled("lms") },
-    { id: "ppo",            label: "PPO & Credentials", shortLabel: "PPO", enabled: isModuleEnabled("ppo") },
-    { id: "leaves",         label: `Leaves (${myLeaves.length})`, shortLabel: "Leaves", enabled: isModuleEnabled("leaves") },
-    { id: "support",        label: `Support (${supportQueries.length})`, shortLabel: "Support", enabled: isModuleEnabled("support") },
-    { id: "refer",          label: "Refer & Earn", shortLabel: "Refer", enabled: isModuleEnabled("refer") },
-    { id: "notes",          label: "Notes", shortLabel: "Notes", enabled: isModuleEnabled("notes") },
-    { id: "feedback",       label: "Feedback", shortLabel: "Feedback", enabled: isModuleEnabled("feedback") },
+    { id: "deliverables",   label: `Deliverables (${deliverables.length})`, shortLabel: "Deliverables", icon: Send, category: "Core Work", enabled: isModuleEnabled("deliverables") },
+    { id: "kanban",         label: "Sprint Board", shortLabel: "Sprint", icon: Layers, category: "Core Work", enabled: isModuleEnabled("kanban") },
+    { id: "lms",            label: "LMS & Skills", shortLabel: "LMS", icon: BookOpen, category: "Core Work", enabled: isModuleEnabled("lms") },
+
+    { id: "standups",       label: `Standups (${standups.length})`, shortLabel: "Standups", icon: Clock, category: "Routine & Compliance", enabled: isModuleEnabled("standups") },
+    { id: "attendance",     label: `Attendance (${attendanceLogs.length})`, shortLabel: "Attendance", icon: CalendarDays, category: "Routine & Compliance", enabled: isModuleEnabled("attendance") },
+    { id: "onboarding",     label: "Onboarding", shortLabel: "Onboarding", icon: GraduationCap, category: "Routine & Compliance", enabled: isModuleEnabled("onboarding") },
+    { id: "ppo",            label: "PPO & Credentials", shortLabel: "PPO", icon: Trophy, category: "Routine & Compliance", enabled: isModuleEnabled("ppo") },
+
+    { id: "meetings",       label: "Meetings", shortLabel: "Meetings", icon: Video, category: "Connect & Support", enabled: isModuleEnabled("meetings") },
+    { id: "resources",      label: `Resources (${resources.length})`, shortLabel: "Resources", icon: FolderOpen, category: "Connect & Support", enabled: isModuleEnabled("resources") },
+    { id: "leaves",         label: `Leaves (${myLeaves.length})`, shortLabel: "Leaves", icon: CalendarDays, category: "Connect & Support", enabled: isModuleEnabled("leaves") },
+    { id: "support",        label: `Support (${supportQueries.length})`, shortLabel: "Support", icon: HelpCircle, category: "Connect & Support", enabled: isModuleEnabled("support") },
+    { id: "refer",          label: "Refer & Earn", shortLabel: "Refer", icon: DollarSign, category: "Connect & Support", enabled: isModuleEnabled("refer") },
+    { id: "notes",          label: "Notes", shortLabel: "Notes", icon: FileText, category: "Connect & Support", enabled: isModuleEnabled("notes") },
+    { id: "feedback",       label: "Feedback", shortLabel: "Feedback", icon: MessageCircle, category: "Connect & Support", enabled: isModuleEnabled("feedback") },
   ].filter(t => t.enabled);
 
   // Auto-switch tab if current active tab is disabled by admin
@@ -793,41 +798,45 @@ function InternDashboard() {
 
       {/* Luxury Obsidian Top Header */}
       <header className="sticky top-0 z-40 bg-[#090D16]/95 backdrop-blur-2xl border-b border-slate-800/80 shadow-2xl shadow-black/60 relative">
-        <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4 overflow-hidden">
+        <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Logo & Portal Badge */}
-          <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0 min-w-0">
             <div className="h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-xl shadow-lg shadow-emerald-950/60 border border-emerald-400/40 flex items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
               V
             </div>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-xs sm:text-sm font-bold text-white tracking-tight leading-tight truncate">Vyntyra Connect</span>
-                <span className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
+                <span className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Intern Associate
                 </span>
               </div>
-              <span className="hidden md:block text-[10px] text-slate-400 font-medium truncate capitalize">{displayName} · {profile?.intern_id || "Portal"}</span>
+              <span className="hidden sm:block text-[10px] text-slate-400 font-medium truncate capitalize">
+                {displayName} · {profile?.intern_id || "Portal"}
+              </span>
             </div>
           </div>
 
-          {/* Desktop & Tablet Navigation */}
-          <nav className="hidden lg:flex items-center gap-1 overflow-x-auto py-1 scrollbar-none max-w-[60%]">
-            {TABS.map((t: any) => {
+          {/* Desktop Tab Navigation (Clean Obsidian Pill Bar for 2xl Screens) */}
+          <nav className="hidden 2xl:flex items-center gap-1 overflow-x-auto py-1 scrollbar-none max-w-[50%] bg-[#060912]/80 border border-slate-800/80 rounded-2xl px-2">
+            {TABS.slice(0, 8).map((t: any) => {
               const isActive = activeTab === t.id;
+              const TabIcon = t.icon;
               return (
                 <button 
                   key={t.id} 
                   onClick={() => setActiveTab(t.id as any)}
                   className={`shrink-0 px-3 py-1.5 text-xs font-bold rounded-xl transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
                     isActive 
-                      ? "bg-emerald-600 text-white shadow-lg shadow-emerald-950/60 border border-emerald-400/30" 
+                      ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md border border-emerald-400/40" 
                       : t.isPrimary
                       ? "text-amber-300 bg-amber-950/50 hover:bg-amber-900/60 border border-amber-500/30"
                       : "text-slate-400 hover:text-white hover:bg-slate-800/60"
                   }`}
                 >
-                  {t.isPrimary && <ClipboardList className="h-3.5 w-3.5 text-amber-400" />}
+                  {TabIcon && <TabIcon className={`h-3.5 w-3.5 ${isActive ? "text-white" : t.isPrimary ? "text-amber-400" : "text-slate-400"}`} />}
                   <span>{t.label}</span>
                   {t.isPrimary && t.count > 0 && !isActive && (
                     <span className="px-1.5 py-0.2 text-[9px] font-extrabold rounded-full bg-amber-500 text-slate-950">
@@ -839,18 +848,18 @@ function InternDashboard() {
             })}
           </nav>
 
-          {/* User Profile, Quick Tasks, Attendance & Sign Out */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Direct Quick Link to Tasks */}
+          {/* User Actions Cluster */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Quick Link to Tasks */}
             <Button
               size="sm"
               onClick={() => setActiveTab("tasks")}
-              className={`h-8 px-2.5 sm:px-3 text-xs font-bold transition-all shadow-md gap-1.5 cursor-pointer ${
+              className={`h-8 px-2 sm:px-3 text-xs font-bold transition-all shadow-md gap-1 sm:gap-1.5 cursor-pointer ${
                 activeTab === "tasks"
                   ? "bg-emerald-600 text-white border border-emerald-400/40"
                   : "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 border border-amber-400/80"
               }`}
-              title="Go directly to My Tasks & Assignments"
+              title="Tasks & Assignments"
             >
               <ClipboardList className="h-3.5 w-3.5 text-slate-950" />
               <span className="hidden sm:inline">Tasks</span>
@@ -864,43 +873,45 @@ function InternDashboard() {
             {/* Quick Shift Clock In / Out */}
             {todayAttendance ? (
               todayAttendance.clock_out ? (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-xl bg-slate-900/90 text-slate-400 border border-slate-700">
+                <span className="hidden sm:inline-flex text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-xl bg-slate-900/90 text-slate-400 border border-slate-700">
                   Shift Ended
                 </span>
               ) : (
                 <Button 
-                  size="sm"
+                  size="sm" 
                   variant="outline"
                   onClick={handleClockOut} 
                   disabled={isClocking}
-                  className="h-8 px-2.5 text-xs font-bold border-rose-500/40 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 hover:text-white transition-all gap-1 cursor-pointer"
+                  className="h-8 px-2 sm:px-2.5 text-xs font-bold border-rose-500/40 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 hover:text-white transition-all gap-1 cursor-pointer"
+                  title="Shift Clock Out"
                 >
                   {isClocking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5 text-rose-400" />}
-                  Clock Out
+                  <span className="hidden sm:inline">Clock Out</span>
                 </Button>
               )
             ) : (
               <Button 
-                size="sm"
+                size="sm" 
                 onClick={handleClockIn} 
                 disabled={isClocking}
-                className="h-8 px-2.5 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-950/60 gap-1 cursor-pointer"
+                className="h-8 px-2 sm:px-2.5 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-950/60 gap-1 cursor-pointer"
+                title="Shift Clock In"
               >
                 {isClocking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5" />}
-                Clock In
+                <span className="hidden sm:inline">Clock In</span>
               </Button>
             )}
 
-            {/* WhatsApp Community Group Link */}
+            {/* WhatsApp Community Link (Hidden on smallest mobile to prevent wrapping) */}
             <a
               href="https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5"
               target="_blank"
               rel="noreferrer"
-              title="Join Official Project VyNexa WhatsApp Group"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-900/50 transition-colors shadow-sm"
+              title="Official Project VyNexa WhatsApp Group"
+              className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-900/50 transition-colors shadow-sm"
             >
-              <MessageCircle className="h-4 w-4 text-emerald-400" />
-              <span className="hidden sm:inline">WhatsApp</span>
+              <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
+              <span>WhatsApp</span>
             </a>
 
             {/* Notification Bell */}
@@ -909,11 +920,12 @@ function InternDashboard() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative h-8 w-8 text-slate-300 hover:text-emerald-400 rounded-full hover:bg-slate-800/80 cursor-pointer"
+                className="relative h-8 w-8 text-slate-300 hover:text-emerald-400 rounded-xl hover:bg-slate-800/80 cursor-pointer border border-slate-800 bg-slate-900/60"
+                title="Notifications"
               >
-                <Bell className="h-4.5 w-4.5" />
+                <Bell className="h-4 w-4" />
                 {unreadNotificationsCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none animate-pulse">
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none animate-pulse">
                     {unreadNotificationsCount}
                   </span>
                 )}
@@ -954,56 +966,268 @@ function InternDashboard() {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 sm:h-9 sm:w-9 ring-2 ring-emerald-500/40 shadow-sm shrink-0" />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setProfileModalOpen(true)}
-                className="h-8 px-2 sm:px-2.5 text-xs font-bold rounded-xl border-slate-700 bg-slate-900/90 text-slate-200 hover:bg-slate-800 hover:text-white gap-1 shadow-xs cursor-pointer"
-                title="Edit Details"
-              >
-                <User className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">Settings</span>
-              </Button>
-            </div>
-            
+            {/* Profile Avatar & Quick Details Modal */}
+            <button
+              onClick={() => setProfileModalOpen(true)}
+              className="flex items-center gap-1.5 p-0.5 rounded-xl hover:bg-slate-800/80 transition-colors cursor-pointer"
+              title="Profile & Settings"
+            >
+              <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 sm:h-8.5 sm:w-8.5 ring-2 ring-emerald-500/40 shadow-sm shrink-0" />
+            </button>
+
+            {/* Desktop Direct Sign Out Button */}
             <Button
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="h-8 px-2 sm:px-3 text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-950/50 border border-rose-500/30 rounded-xl transition-colors text-xs font-bold shrink-0 flex items-center gap-1 cursor-pointer"
+              className="hidden xl:inline-flex h-8 px-2.5 text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-950/50 border border-rose-500/30 rounded-xl transition-colors text-xs font-bold shrink-0 items-center gap-1 cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Sign Out</span>
+              <span>Sign Out</span>
             </Button>
+
+            {/* ── HAMBURGER MENU BUTTON ── */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-slate-900 border border-slate-700 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0"
+              aria-label="Open Navigation Menu"
+              title="Open Navigation Directory"
+            >
+              <Menu className="h-4.5 w-4.5" />
+            </button>
           </div>
         </div>
 
-        {/* Mobile / Smartphone Touch-Scrollable Navigation */}
-        <div className="lg:hidden flex items-center overflow-x-auto border-t border-slate-800/80 px-3 gap-1.5 py-2 scrollbar-none bg-[#050811]/90">
+        {/* ── Horizontal Touch-Scrollable Tabs Bar ── */}
+        <div className="flex items-center overflow-x-auto border-t border-slate-800/80 px-2 sm:px-4 gap-1.5 py-2 scrollbar-none bg-[#050811]/95">
           {TABS.map((t: any) => {
             const isActive = activeTab === t.id;
+            const TabIcon = t.icon;
             return (
               <button 
                 key={t.id} 
                 onClick={() => setActiveTab(t.id as any)}
-                className={`shrink-0 px-3 py-1 text-xs font-bold rounded-xl transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer ${
+                className={`shrink-0 px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
                   isActive 
-                    ? "bg-emerald-600 text-white shadow-md border border-emerald-400/30" 
+                    ? "bg-emerald-600 text-white shadow-md border border-emerald-400/40" 
                     : t.isPrimary
-                    ? "text-amber-300 bg-amber-950/50 border border-amber-500/40"
-                    : "text-slate-400 bg-slate-900/90 border border-slate-800 hover:bg-slate-800"
+                    ? "text-amber-300 bg-amber-950/50 border border-amber-500/40 hover:bg-amber-900/60"
+                    : "text-slate-400 bg-slate-900/80 border border-slate-800/80 hover:bg-slate-800 hover:text-slate-200"
                 }`}
               >
-                {t.isPrimary && <ClipboardList className="h-3 w-3 text-amber-400" />}
+                {TabIcon && <TabIcon className={`h-3.5 w-3.5 ${isActive ? "text-white" : t.isPrimary ? "text-amber-400" : "text-slate-400"}`} />}
                 <span>{t.label}</span>
+                {t.isPrimary && t.count > 0 && !isActive && (
+                  <span className="px-1.5 py-0.2 text-[9px] font-extrabold rounded-full bg-amber-500 text-slate-950">
+                    {t.count}
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
       </header>
+
+      {/* ── LUXURY SLIDEOVER HAMBURGER NAVIGATION DRAWER ── */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Slide-in Drawer Container */}
+          <div className="relative w-full max-w-sm sm:max-w-md bg-[#090D16] border-l border-slate-800/90 shadow-2xl h-full flex flex-col z-10 animate-in slide-in-from-right duration-300 text-white">
+            
+            {/* Drawer Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-800/80 bg-gradient-to-r from-[#090D16] via-[#0E131F] to-[#090D16] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-xl shadow-md border border-emerald-400/40 flex items-center justify-center text-white font-black text-sm">
+                  V
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-sm text-white">Portal Navigation</h3>
+                    <span className="bg-emerald-500/20 text-emerald-300 text-[8px] font-extrabold px-1.5 py-0.5 rounded-full border border-emerald-500/40 uppercase">
+                      Intern
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400">Vyntyra Connect Associate Workspace</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="h-8 w-8 rounded-full bg-slate-900 border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Close Menu"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Intern Profile Card inside Drawer */}
+            <div className="p-4 bg-[#0E131F]/90 border-b border-slate-800/80 space-y-3">
+              <div className="flex items-center gap-3">
+                <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-12 w-12 ring-2 ring-emerald-500/40 shadow-md shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-bold text-sm text-white truncate">{displayName}</h4>
+                  <p className="text-xs text-slate-400 truncate">{email}</p>
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                    <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+                      {profile?.intern_id || "VCS-INT-2026"}
+                    </span>
+                    <span className="text-[9px] text-slate-300 bg-slate-800 px-2 py-0.5 rounded-md truncate max-w-[140px]">
+                      {profile?.position || "Intern Associate"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions Strip */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
+                {/* Clock In / Out */}
+                {todayAttendance ? (
+                  todayAttendance.clock_out ? (
+                    <div className="px-2.5 py-2 rounded-xl bg-slate-900 text-center text-[10px] font-bold text-slate-400 border border-slate-800">
+                      ✓ Shift Completed
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        handleClockOut();
+                        setMobileMenuOpen(false);
+                      }}
+                      disabled={isClocking}
+                      className="h-9 text-xs font-bold border-rose-500/40 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 w-full rounded-xl gap-1.5 cursor-pointer"
+                    >
+                      <Clock className="h-3.5 w-3.5 text-rose-400" /> Clock Out
+                    </Button>
+                  )
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      handleClockIn();
+                      setMobileMenuOpen(false);
+                    }}
+                    disabled={isClocking}
+                    className="h-9 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white w-full rounded-xl gap-1.5 shadow-md cursor-pointer"
+                  >
+                    <Clock className="h-3.5 w-3.5" /> Clock In
+                  </Button>
+                )}
+
+                {/* Edit Profile / Details */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setProfileModalOpen(true);
+                  }}
+                  className="h-9 text-xs font-bold bg-slate-900 border-slate-700 text-slate-200 hover:bg-slate-800 rounded-xl gap-1.5 cursor-pointer"
+                >
+                  <User className="h-3.5 w-3.5 text-emerald-400" /> Settings
+                </Button>
+              </div>
+
+              {/* WhatsApp Community Link */}
+              <a
+                href="https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 hover:bg-emerald-900/50 transition-colors text-xs font-bold text-emerald-300"
+              >
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-emerald-400" />
+                  <span>Join Official WhatsApp Group</span>
+                </div>
+                <ExternalLink className="h-3.5 w-3.5 text-emerald-400" />
+              </a>
+            </div>
+
+            {/* Categorized Tab Navigation */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-5 scrollbar-thin">
+              {["Core Work", "Routine & Compliance", "Connect & Support"].map((categoryName) => {
+                const categoryTabs = TABS.filter((t: any) => t.category === categoryName || (!t.category && categoryName === "Core Work"));
+                if (categoryTabs.length === 0) return null;
+
+                return (
+                  <div key={categoryName} className="space-y-1.5">
+                    <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-500 px-2">
+                      {categoryName}
+                    </h5>
+                    <div className="space-y-1">
+                      {categoryTabs.map((tab: any) => {
+                        const isActive = activeTab === tab.id;
+                        const TabIcon = tab.icon || Compass;
+                        return (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveTab(tab.id as any);
+                              setMobileMenuOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                              isActive
+                                ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-950/60 border border-emerald-400/40"
+                                : tab.isPrimary
+                                ? "bg-amber-950/40 text-amber-300 border border-amber-500/30 hover:bg-amber-900/50"
+                                : "bg-slate-900/60 text-slate-300 border border-slate-800/80 hover:bg-slate-800 hover:text-white"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className={`p-1.5 rounded-lg ${isActive ? "bg-white/20" : "bg-slate-800 text-slate-400"}`}>
+                                <TabIcon className={`h-4 w-4 ${isActive ? "text-white" : tab.isPrimary ? "text-amber-400" : "text-slate-300"}`} />
+                              </div>
+                              <span className="tracking-tight">{tab.label}</span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              {tab.isPrimary && tab.count > 0 && (
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black ${isActive ? "bg-slate-950 text-amber-400" : "bg-amber-500 text-slate-950"}`}>
+                                  {tab.count}
+                                </span>
+                              )}
+                              <ChevronRight className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="p-4 border-t border-slate-800/80 bg-[#060912] space-y-3">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleSignOut();
+                }}
+                className="w-full h-10 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-300 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
+              >
+                <LogOut className="h-4 w-4 text-rose-400" />
+                <span>Sign Out from Portal</span>
+              </Button>
+              <p className="text-center text-[10px] text-slate-500 font-medium">
+                Vyntyra Consultancy Services · Project VyNexa Directorate
+              </p>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* Marquee Notifications */}
       {announcements.length > 0 && (
