@@ -3750,7 +3750,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
                 <div className="space-y-1">
                   <Label className="text-[11px] font-bold text-slate-700">Payment Mode</Label>
                   <Input 
-                    placeholder="e.g. UPI Transfer / PayU" 
+                    placeholder="e.g. Kotak Mahindra Bank / PayU / UPI" 
                     value={form.payment_mode || ""} 
                     onChange={e => setForm({ ...form, payment_mode: e.target.value })}
                     className="bg-white h-8 text-xs" 

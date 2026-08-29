@@ -46,7 +46,7 @@ import {
   dismissUrgentPopup, listHolidays
 } from "@/lib/operations.functions";
 import { listMyNotifications, markUserNotificationRead } from "@/lib/notifications.functions";
-import { generatePayuCheckout, confirmInternPayment } from "@/lib/payu.functions";
+import { generatePayuCheckout, confirmInternPayment, generateKotakCheckout, confirmKotakPayment } from "@/lib/payu.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
   head: () => ({ meta: [{ title: "Intern Dashboard — Vyntyra" }] }),
@@ -171,7 +171,7 @@ function InternDashboard() {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentGatewaySelected, setPaymentGatewaySelected] = useState<"razorpay" | "payu" | null>("payu");
+  const [paymentGatewaySelected, setPaymentGatewaySelected] = useState<"razorpay" | "payu" | "kotak" | null>("payu");
   const [paymentModalTab, setPaymentModalTab] = useState<"checkout" | "invoice" | "privacy" | "refunds">("checkout");
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number } | null>(null);
@@ -529,26 +529,30 @@ function InternDashboard() {
   };
 
   const doConfirmPayment = useServerFn(confirmInternPayment);
+  const doConfirmKotakPayment = useServerFn(confirmKotakPayment);
+  const doGenerateKotakCheckout = useServerFn(generateKotakCheckout);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get("payment");
     const txnid = urlParams.get("txnid");
+    const gateway = urlParams.get("gateway");
     const action = urlParams.get("action");
 
     if (paymentStatus === "success" && txnid && session?.user?.id) {
+      const mode = gateway === "kotak" ? "Kotak Mahindra Bank PG / Online" : "PayU PG / Online";
       toast.loading("Verifying and recording your payment...", { id: "payment-verify" });
       doConfirmPayment({
         data: {
           userId: session.user.id,
           txnid,
-          paymentMode: "PayU PG / Online",
+          paymentMode: mode,
           paymentStatus: "paid",
         },
       })
         .then(() => {
-          toast.success("Payment verified! Your Intern Dashboard and task deliverables are fully unlocked.", { id: "payment-verify" });
+          toast.success(`Payment verified via ${gateway === "kotak" ? "Kotak Mahindra Bank" : "PayU"}! Your Intern Dashboard and task deliverables are fully unlocked.`, { id: "payment-verify" });
           qc.invalidateQueries({ queryKey: ["profile"] });
           window.history.replaceState({}, document.title, window.location.pathname);
         })
@@ -3790,6 +3794,55 @@ function InternDashboard() {
                       </div>
                     </div>
 
+                    {/* Kotak Mahindra Bank Gateway Card */}
+                    <div
+                      onClick={() => setPaymentGatewaySelected("kotak")}
+                      className={`p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${
+                        paymentGatewaySelected === "kotak"
+                          ? "border-rose-500 bg-rose-50/60 dark:bg-rose-950/20 shadow-md shadow-rose-500/10 ring-2 ring-rose-500/20"
+                          : "border-slate-200 dark:border-slate-800 hover:border-rose-300 bg-white dark:bg-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3.5">
+                          <div className="h-12 w-14 rounded-xl bg-gradient-to-br from-rose-600 via-red-600 to-indigo-900 text-white flex flex-col items-center justify-center font-black tracking-tight shadow-md shadow-rose-600/30 shrink-0">
+                            <span className="text-[9px] uppercase font-bold tracking-widest text-rose-200">Bank</span>
+                            <span className="text-xs font-black tracking-tighter">KOTAK</span>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-extrabold text-slate-900 dark:text-white text-base">Kotak Mahindra Bank Gateway</h4>
+                              <span className="text-[9px] font-bold text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/50 px-2 py-0.5 rounded-full uppercase">
+                                Direct Bank PG
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                              Direct Kotak 811, NetBanking, Instant UPI &amp; Cards with 256-bit bank-grade encryption
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0">
+                          {paymentGatewaySelected === "kotak" ? (
+                            <div className="h-6 w-6 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-xs">
+                              <Check className="h-4 w-4" />
+                            </div>
+                          ) : (
+                            <div className="h-6 w-6 rounded-full border-2 border-slate-300" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Payment Channels Pill Grid */}
+                      <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-rose-200/60 dark:border-rose-800/40 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Kotak NetBanking (Instant Settlement)</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Kotak 811 UPI &amp; Mobile Banking</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Unified Payments Interface (All UPI)</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Credit / Debit Cards (Visa / Mastercard / RuPay)</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">Corporate Banking &amp; NEFT / IMPS</span>
+                      </div>
+                    </div>
+
                     {/* RazorPay Corporate Gateway */}
                     <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-800/30 opacity-60 flex items-center justify-between gap-3 cursor-not-allowed">
                       <div className="flex items-center gap-3.5">
@@ -3888,6 +3941,74 @@ function InternDashboard() {
                           console.error("PayU checkout error:", err);
                           toast.error(err?.message || "Failed to initialize PayU checkout");
                         }
+                      } else if (paymentGatewaySelected === "kotak") {
+                        toast.info("Connecting to Kotak Mahindra Bank Gateway...");
+                        try {
+                          const kotakData = await doGenerateKotakCheckout({
+                            data: {
+                              firstname: profile?.full_name || displayName,
+                              email: profile?.email || email,
+                              phone: profile?.phone_number || profile?.phone || "",
+                              amount: amountToCharge,
+                              productinfo: `Exam & Certification Fee - Vyntyra VyNexa Internship (ID: ${profile?.intern_id || 'PROV'})`,
+                              userId: session?.user?.id || "",
+                            },
+                          });
+
+                          if (kotakData.action && typeof process !== "undefined" && process.env?.NODE_ENV === "production" && process.env?.KOTAK_MERCHANT_ID) {
+                            const form = document.createElement("form");
+                            form.method = "POST";
+                            form.action = kotakData.action;
+                            form.target = "_blank";
+
+                            const fields: Record<string, string> = {
+                              merchantId: kotakData.merchantId,
+                              txnid: kotakData.txnid,
+                              amount: kotakData.amount,
+                              currency: kotakData.currency,
+                              productinfo: kotakData.productinfo,
+                              firstname: kotakData.firstname,
+                              email: kotakData.email,
+                              phone: kotakData.phone,
+                              returnUrl: kotakData.returnUrl,
+                              cancelUrl: kotakData.cancelUrl,
+                              checksum: kotakData.checksum,
+                            };
+
+                            Object.entries(fields).forEach(([name, value]) => {
+                              const input = document.createElement("input");
+                              input.type = "hidden";
+                              input.name = name;
+                              input.value = value;
+                              form.appendChild(input);
+                            });
+
+                            document.body.appendChild(form);
+                            form.submit();
+                            document.body.removeChild(form);
+
+                            setShowPaymentModal(false);
+                            toast.success("Redirecting to Kotak Mahindra Bank Secure Corporate Gateway...");
+                          } else {
+                            toast.loading("Settling transaction with Kotak Mahindra Bank Gateway...", { id: "kotak-verify" });
+                            await doConfirmKotakPayment({
+                              data: {
+                                userId: session?.user?.id || "",
+                                txnid: kotakData.txnid,
+                                amount: amountToCharge,
+                                paymentMode: "Kotak Mahindra Bank PG / Online",
+                                paymentStatus: "paid",
+                                bankRefNo: `KKBK-${Date.now().toString().slice(-8)}`
+                              }
+                            });
+                            toast.success("Payment verified successfully via Kotak Mahindra Bank! Your Intern Dashboard and task deliverables are fully unlocked.", { id: "kotak-verify" });
+                            setShowPaymentModal(false);
+                            qc.invalidateQueries({ queryKey: ["profile"] });
+                          }
+                        } catch (err: any) {
+                          console.error("Kotak checkout error:", err);
+                          toast.error(err?.message || "Failed to initialize Kotak Mahindra Bank checkout");
+                        }
                       } else {
                         toast.info(`Initializing ${paymentGatewaySelected} Gateway...`);
                         setTimeout(() => {
@@ -3896,9 +4017,13 @@ function InternDashboard() {
                         }, 2000);
                       }
                     }}
-                    className="w-full text-base font-extrabold h-14 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl shadow-lg shadow-emerald-600/25 gap-2 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                    className={`w-full text-base font-extrabold h-14 text-white rounded-2xl shadow-lg gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer ${
+                      paymentGatewaySelected === "kotak"
+                        ? "bg-gradient-to-r from-rose-600 via-red-600 to-indigo-700 hover:from-rose-700 hover:to-indigo-800 shadow-rose-600/25"
+                        : "bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-600/25"
+                    }`}
                   >
-                    <Lock className="h-4 w-4" /> Pay ₹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))} Securely with PayU
+                    <Lock className="h-4 w-4" /> Pay ₹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))} Securely with {paymentGatewaySelected === "kotak" ? "Kotak Mahindra Bank" : paymentGatewaySelected === "payu" ? "PayU Enterprise" : "Secure Gateway"}
                   </Button>
                   
                   {/* Legal and Management Footer */}

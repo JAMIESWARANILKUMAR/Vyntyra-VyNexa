@@ -2981,6 +2981,8 @@ function AdminSettingsPage() {
                     onChange={(e) => setManualPaymentForm({ ...manualPaymentForm, paymentMode: e.target.value })}
                     className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs shadow-xs focus:outline-none focus:ring-1 focus:ring-ring"
                   >
+                    <option value="Kotak Mahindra Bank PG / Online">Kotak Mahindra Bank PG / Online</option>
+                    <option value="PayU PG / Online">PayU PG / Online</option>
                     <option value="Direct UPI Transfer">Direct UPI Transfer (GPay / PhonePe / Paytm)</option>
                     <option value="Bank NEFT / IMPS / RTGS">Bank NEFT / IMPS / RTGS</option>
                     <option value="QR Code Scan">QR Code Scan</option>
