@@ -97,14 +97,14 @@ export function EmployeeReferEarn() {
       </div>
 
       {/* ─── Partner Earnings & Fee Breakdown Cards ─── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-5 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl space-y-1">
           <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Referred</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Referred</span>
             <Users className="h-4 w-4 text-indigo-400" />
           </div>
           <div className="text-2xl font-black text-white">{totalReferred}</div>
-          <span className="text-[10px] text-slate-500 font-medium">Total Registered Applicants</span>
+          <span className="text-[10px] text-slate-500 font-medium">Registered Applicants</span>
         </div>
 
         <div className="p-5 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl space-y-1">
@@ -114,17 +114,6 @@ export function EmployeeReferEarn() {
           </div>
           <div className="text-2xl font-black text-emerald-400">{paidCount}</div>
           <span className="text-[10px] text-slate-500 font-medium">Successfully Enrolled</span>
-        </div>
-
-        <div className="p-5 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl space-y-1">
-          <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400">Net Rate</span>
-            <Coins className="h-4 w-4 text-blue-400" />
-          </div>
-          <div className="text-2xl font-black text-blue-300">
-            ₹{paidCount > 0 ? (Math.round((netCommissionEarnings / paidCount) * 100) / 100).toFixed(2) : (Math.max(0, commissionRate - Math.round((499 * (25.78 / 998) / 2) * 100) / 100)).toFixed(2)}
-          </div>
-          <span className="text-[10px] text-slate-500 font-medium">Net/candidate (after 50% PG sharing)</span>
         </div>
 
         <div className="p-5 rounded-3xl border border-purple-500/40 bg-purple-950/30 shadow-xl backdrop-blur-xl space-y-1 relative overflow-hidden">
