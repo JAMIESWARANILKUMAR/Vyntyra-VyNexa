@@ -15,7 +15,8 @@ import {
   Sparkles, Zap, Wallet, ExternalLink, VolumeX, ShieldCheck, Laptop, Receipt,
   LifeBuoy, Award, GraduationCap, FileCheck, HelpCircle, Layers, CreditCard,
   Building2, Plus, ArrowUpRight, HeartHandshake, CheckSquare, FileUp, Printer, Shield, Radio, Cpu, RotateCcw,
-  Coins, CheckCheck, Target, Flame, Calendar, Play, FolderOpen
+  Coins, CheckCheck, Target, Flame, Calendar, Play, FolderOpen,
+  Menu, X, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -559,6 +560,7 @@ function EmployeeDashboard() {
 
   const session = sessionQ.data;
   const email = session?.user?.email || "";
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const [interviewsFeedback, setInterviewsFeedback] = useState<Record<string, { summary: string; remarks: string }>>({});
 
@@ -1346,6 +1348,18 @@ function EmployeeDashboard() {
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Sign Out</span>
             </Button>
+
+            {/* ── HAMBURGER MENU BUTTON ── */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="h-9 px-3 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-700 hover:to-purple-700 text-white border border-indigo-400/40 shadow-md shadow-indigo-950/60 flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shrink-0"
+              aria-label="Open Employee Navigation Menu"
+              title="Open Executive Operations Directory"
+            >
+              <Menu className="h-4.5 w-4.5 text-white stroke-[2.5]" />
+              <span className="text-xs font-black tracking-wider uppercase hidden sm:inline text-white">Menu</span>
+            </button>
           </div>
         </div>
         
@@ -1380,6 +1394,167 @@ function EmployeeDashboard() {
           </div>
         </div>
       </header>
+
+      {/* ── EMPLOYEE MOBILE SLIDE-IN NAVIGATION DRAWER ── */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          {/* Backdrop Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Slide-in Drawer Container */}
+          <div className="relative w-full max-w-sm sm:max-w-md bg-[#090D16] border-l border-slate-800 shadow-2xl h-full flex flex-col z-10 animate-in slide-in-from-right duration-300 text-white">
+            
+            {/* Drawer Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-800 bg-gradient-to-r from-indigo-950 via-[#0E131F] to-indigo-950 flex items-center justify-between shadow-md">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl shadow-lg border border-indigo-400/40 flex items-center justify-center text-white font-black text-sm">
+                  V
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-sm text-white">Vyntyra Ops</h3>
+                    <span className="bg-indigo-500/20 text-indigo-300 text-[8px] font-extrabold px-1.5 py-0.5 rounded-full border border-indigo-500/40 uppercase">
+                      Executive
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400">Employee &amp; Mentorship Directory</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="h-8 w-8 rounded-full bg-slate-900 border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Close Navigation Menu"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Employee Profile Card inside Drawer */}
+            <div className="p-4 bg-slate-900/90 border-b border-slate-800 space-y-3">
+              <div className="flex items-center gap-3">
+                <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-12 w-12 rounded-2xl ring-2 ring-indigo-500/40 shadow-md shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-extrabold text-sm text-white truncate">{displayName}</h4>
+                  <p className="text-xs text-slate-400 font-mono truncate">{email}</p>
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                    <span className="text-[9px] font-mono font-bold text-indigo-300 bg-indigo-950 border border-indigo-500/40 px-2 py-0.5 rounded-md">
+                      {profile?.position || "Executive Associate"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Shift Biometric Action */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+                {!todayAttendance ? (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      handleClockIn();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="h-9 text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white w-full rounded-xl gap-1.5 shadow-md cursor-pointer"
+                  >
+                    <Fingerprint className="h-3.5 w-3.5" /> Clock In
+                  </Button>
+                ) : !todayAttendance.clock_out_time ? (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      handleClockOut();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="h-9 text-xs font-bold border-rose-500/40 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 w-full rounded-xl gap-1.5 cursor-pointer"
+                  >
+                    <Fingerprint className="h-3.5 w-3.5 text-rose-400" /> Clock Out
+                  </Button>
+                ) : (
+                  <div className="px-2.5 py-2 rounded-xl bg-slate-900 text-center text-[10px] font-bold text-slate-400 border border-slate-800">
+                    ✓ Shift Ended
+                  </div>
+                )}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setProfileModalOpen(true);
+                  }}
+                  className="h-9 text-xs font-bold bg-slate-900 border-slate-700 text-slate-200 hover:bg-slate-800 rounded-xl gap-1.5 cursor-pointer"
+                >
+                  <User className="h-3.5 w-3.5 text-indigo-400" /> Settings
+                </Button>
+              </div>
+            </div>
+
+            {/* Categorized Executive Tab List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin">
+              <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-500 px-2 mb-2">
+                Executive Modules &amp; Directories
+              </h5>
+              <div className="space-y-1">
+                {TABS.map((tab: any) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(tab.id as any);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                        isActive
+                          ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white shadow-lg shadow-indigo-950/60 border border-indigo-400/40"
+                          : "bg-slate-900/60 text-slate-300 border border-slate-800/80 hover:bg-slate-800 hover:text-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="tracking-tight">{tab.label}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        {('badge' in tab && tab.badge !== undefined) && tab.badge > 0 && (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black ${
+                            isActive ? "bg-white/30 text-white" : "bg-slate-800 text-indigo-300 border border-slate-700"
+                          }`}>
+                            {tab.badge}
+                          </span>
+                        )}
+                        <ChevronRight className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="p-4 border-t border-slate-800 bg-[#060912] space-y-3">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleSignOut();
+                }}
+                className="w-full h-10 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-300 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
+              >
+                <LogOut className="h-4 w-4 text-rose-400" />
+                <span>Sign Out from Executive Portal</span>
+              </Button>
+              <p className="text-center text-[10px] text-slate-500 font-medium">
+                Vyntyra Ops · Project VyNexa Directorate
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Marquee Notifications (Corporate broadcast ticker) */}
       {announcements.length > 0 && (
