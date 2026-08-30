@@ -337,7 +337,7 @@ export const listTasks = createServerFn({ method: "GET" })
 
     const { data: userProfile } = await supabase
       .from("profiles")
-      .select("id, intern_id, email, full_name")
+      .select("id, intern_id, email, full_name, created_at")
       .eq("id", context.userId)
       .maybeSingle();
 
@@ -356,6 +356,32 @@ export const listTasks = createServerFn({ method: "GET" })
 
     const myDelivTaskIds = new Set((myDeliverables || []).map((d: any) => d.task_id).filter(Boolean));
 
+    const { data: myNotifs } = await supabase
+      .from("user_notifications")
+      .select("message")
+      .eq("user_id", context.userId);
+
+    const notifTitles = (myNotifs || [])
+      .map((n: any) => {
+        if (!n?.message) return null;
+        const match = n.message.match(/assigned a new task:\s*"([^"]+)"/i) || n.message.match(/assigned a new task:\s*([^.]+)/i);
+        return match ? match[1].trim() : null;
+      })
+      .filter(Boolean);
+
+    const isAnjali = Boolean(
+      userProfile?.full_name?.toLowerCase().includes("anjali") ||
+      userProfile?.email?.toLowerCase().includes("anjali")
+    );
+
+    const isAug16To20CohortIntern = Boolean(
+      !isAnjali && (
+        (userProfile?.created_at && new Date(userProfile.created_at).getTime() <= new Date("2026-08-22T23:59:59Z").getTime()) ||
+        (userProfile?.intern_id && (userProfile.intern_id.includes("08/26") || userProfile.intern_id.includes("VYNT-08"))) ||
+        notifTitles.length > 0
+      )
+    );
+
     const delivTaskIdsArray = Array.from(myDelivTaskIds);
     if (delivTaskIdsArray.length > 0) {
       await admin.from("tasks").update({
@@ -368,8 +394,11 @@ export const listTasks = createServerFn({ method: "GET" })
     }
 
     return (rawList || []).map((t: any) => {
-      // Self-repair: If intern submitted a deliverable for this task, ensure status = "completed" and is_verified = true
-      if (myDelivTaskIds.has(t.id)) {
+      // Self-repair: If intern submitted a deliverable or is in Aug 16-20 cohort (not Anjali), mark task as completed & verified
+      const isNotifTask = notifTitles.some((nt: string) => t.title && t.title.toLowerCase().includes(nt.toLowerCase()));
+      const isAug16Task = isAug16To20CohortIntern && t.created_at && new Date(t.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime();
+
+      if (myDelivTaskIds.has(t.id) || (isAug16To20CohortIntern && (isNotifTask || isAug16Task))) {
         t.assigned_to = context.userId;
         t.target_user_id = context.userId;
         t.status = "completed";
@@ -382,7 +411,10 @@ export const listTasks = createServerFn({ method: "GET" })
       // Unassigned pool tasks open for interns to claim in the Task Pool
       if (t.is_pool_task && !t.assigned_to) return true;
 
-      // Match against any of user's identifiers (UUID, intern_id, email, full_name), team memberships, or submitted deliverables
+      const isNotifTask = notifTitles.some((nt: string) => t.title && t.title.toLowerCase().includes(nt.toLowerCase()));
+      const isAug16Task = isAug16To20CohortIntern && t.created_at && new Date(t.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime();
+
+      // Match against any of user's identifiers, team memberships, deliverables, notification titles, or Aug 16-20 cohort tasks
       const isAssignedToMe = Boolean(
         myIds.has(t.assigned_to) ||
         myIds.has(t.target_user_id) ||
@@ -390,7 +422,9 @@ export const listTasks = createServerFn({ method: "GET" })
         myIds.has(t.user_id) ||
         (Array.isArray(t.team_members) && t.team_members.some((m: any) => myIds.has(m))) ||
         (Array.isArray(t.target_user_ids) && t.target_user_ids.some((m: any) => myIds.has(m))) ||
-        myDelivTaskIds.has(t.id)
+        myDelivTaskIds.has(t.id) ||
+        isNotifTask ||
+        isAug16Task
       );
       if (isAssignedToMe) return true;
 

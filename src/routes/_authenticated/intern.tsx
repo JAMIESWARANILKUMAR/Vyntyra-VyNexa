@@ -746,6 +746,27 @@ function InternDashboard() {
     profile?.full_name,
   ].filter(Boolean);
 
+  const assignedTaskTitlesFromNotifs = (notifications || [])
+    .map((n: any) => {
+      if (!n?.message) return null;
+      const match = n.message.match(/assigned a new task:\s*"([^"]+)"/i) || n.message.match(/assigned a new task:\s*([^.]+)/i);
+      return match ? match[1].trim() : null;
+    })
+    .filter(Boolean);
+
+  const isAnjali = Boolean(
+    profile?.full_name?.toLowerCase().includes("anjali") ||
+    profile?.email?.toLowerCase().includes("anjali")
+  );
+
+  const isAug16To20CohortIntern = Boolean(
+    !isAnjali && (
+      (profile?.created_at && new Date(profile.created_at).getTime() <= new Date("2026-08-22T23:59:59Z").getTime()) ||
+      (profile?.intern_id && (profile.intern_id.includes("08/26") || profile.intern_id.includes("VYNT-08"))) ||
+      assignedTaskTitlesFromNotifs.length > 0
+    )
+  );
+
   const poolTasks = tasks.filter((t: any) => t.is_pool_task === true && !t.assigned_to);
   const myTasks = tasks.filter((t: any) => {
     if (!t) return false;
@@ -761,9 +782,12 @@ function InternDashboard() {
     );
 
     const isDeliverableMatch = myDeliverableTaskIds.includes(t.id);
+    const isNotifTask = assignedTaskTitlesFromNotifs.some((title: string) => t.title && t.title.toLowerCase().includes(title.toLowerCase()));
+    const isAug16Task = isAug16To20CohortIntern && t.created_at && new Date(t.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime();
 
-    return isDirectMatch || isDeliverableMatch;
+    return isDirectMatch || isDeliverableMatch || isNotifTask || isAug16Task;
   });
+
   const completedTasks = myTasks.filter((t: any) => 
     t.status === "completed" || 
     t.status === "verified" || 
@@ -772,22 +796,23 @@ function InternDashboard() {
     t.status === "resolved" ||
     t.status === "graded" ||
     t.is_verified === true ||
-    myDeliverableTaskIds.includes(t.id)
+    myDeliverableTaskIds.includes(t.id) ||
+    (isAug16To20CohortIntern && (
+      assignedTaskTitlesFromNotifs.some((title: string) => t.title && t.title.toLowerCase().includes(title.toLowerCase())) ||
+      (t.created_at && new Date(t.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime())
+    ))
   );
+
   const verifiedTasks = completedTasks;
   const inProgressTasks = myTasks.filter((t: any) => 
     (t.status === "pending" || t.status === "in_progress" || t.status === "blocked" || t.status === "rejected") &&
-    !myDeliverableTaskIds.includes(t.id) &&
-    !t.is_verified
-  );
-  const submittedTasks = myTasks.filter((t: any) => (t.status === "submitted" || t.status === "under_review") && !completedTasks.some((c: any) => c.id === t.id));
-  const pendingTasks = inProgressTasks;
-  const isAug16CohortIntern = Boolean(
-    (profile?.created_at && new Date(profile.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime()) ||
-    (profile?.intern_id && (profile.intern_id.includes("08/26") || profile.intern_id.includes("VYNT-08")))
+    !completedTasks.some((c: any) => c.id === t.id)
   );
 
-  const baseAug16Credits = isAug16CohortIntern ? 10 : 0;
+  const submittedTasks = myTasks.filter((t: any) => (t.status === "submitted" || t.status === "under_review") && !completedTasks.some((c: any) => c.id === t.id));
+  const pendingTasks = inProgressTasks;
+
+  const baseAug16Credits = isAug16To20CohortIntern ? 10 : 0;
   const deliverableCredits = (deliverables || []).reduce((acc: number, d: any) => acc + (d.credits || 10), 0);
   const profileCredits = (profile as any)?.credits || (profile as any)?.earned_credits || (profile as any)?.points || 0;
   const taskEarnedCredits = completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
