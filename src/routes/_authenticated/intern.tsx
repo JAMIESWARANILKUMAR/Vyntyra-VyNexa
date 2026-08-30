@@ -1174,11 +1174,12 @@ function InternDashboard() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-white border border-orange-200 hover:border-orange-400 text-slate-700 hover:text-orange-600 flex items-center justify-center transition-all shadow-xs active:scale-95 cursor-pointer shrink-0"
+              className="h-9 sm:h-10 px-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white border border-amber-400/50 shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shrink-0"
               aria-label="Open Navigation Menu"
               title="Open Navigation Directory"
             >
-              <Menu className="h-4.5 w-4.5" />
+              <Menu className="h-4.5 w-4.5 text-white stroke-[2.5]" />
+              <span className="text-xs font-black tracking-wider uppercase hidden sm:inline text-white">Menu</span>
             </button>
           </div>
         </div>
@@ -1266,29 +1267,29 @@ function InternDashboard() {
           />
 
           {/* Slide-in Drawer Container */}
-          <div className="relative w-full max-w-sm sm:max-w-md bg-[#090D16] border-l border-slate-800/90 shadow-2xl h-full flex flex-col z-10 animate-in slide-in-from-right duration-300 text-white">
+          <div className="relative w-full max-w-sm sm:max-w-md bg-[#FAF6F0] border-l border-amber-200/90 shadow-2xl h-full flex flex-col z-10 animate-in slide-in-from-right duration-300 text-slate-900">
             
             {/* Drawer Header */}
-            <div className="p-4 sm:p-5 border-b border-slate-800/80 bg-gradient-to-r from-[#090D16] via-[#0E131F] to-[#090D16] flex items-center justify-between">
+            <div className="p-4 sm:p-5 border-b border-amber-200/80 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 flex items-center justify-between shadow-md">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-xl shadow-md border border-emerald-400/40 flex items-center justify-center text-white font-black text-sm">
+                <div className="h-9 w-9 bg-white/20 rounded-xl shadow-inner border border-white/30 flex items-center justify-center text-white font-black text-sm">
                   V
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-sm text-white">Portal Navigation</h3>
-                    <span className="bg-emerald-500/20 text-emerald-300 text-[8px] font-extrabold px-1.5 py-0.5 rounded-full border border-emerald-500/40 uppercase">
+                    <span className="bg-white/20 text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded-full border border-white/30 uppercase">
                       Intern
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-400">Vyntyra Connect Associate Workspace</p>
+                  <p className="text-[10px] text-amber-100/90">Vyntyra Connect Associate Workspace</p>
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="h-8 w-8 rounded-full bg-slate-900 border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+                className="h-8 w-8 rounded-full bg-white/20 border border-white/30 text-white hover:bg-white/30 flex items-center justify-center transition-colors cursor-pointer"
                 aria-label="Close Menu"
               >
                 <X className="h-4 w-4" />
@@ -1619,15 +1620,15 @@ function InternDashboard() {
               </div>
 
               {/* Details grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-slate-800/80 p-0 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-amber-200/70 p-0 text-xs bg-white/80">
                 {[
-                  { icon: <Mail className="h-4 w-4 text-emerald-400" />, label: "Email", value: email },
-                  { icon: <Phone className="h-4 w-4 text-blue-400" />, label: "Contact", value: profile?.phone || "—" },
-                  { icon: <MapPin className="h-4 w-4 text-rose-400" />, label: "Address", value: profile?.address || "—" },
-                  { icon: <Briefcase className="h-4 w-4 text-purple-400" />, label: "Domain", value: profile?.department || "—" },
-                  { icon: <CalendarDays className="h-4 w-4 text-amber-400" />, label: "Internship Start", value: profile?.start_date ? new Date(profile.start_date).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "—" },
+                  { icon: <Mail className="h-4 w-4 text-emerald-600" />, label: "Email", value: email },
+                  { icon: <Phone className="h-4 w-4 text-blue-600" />, label: "Contact", value: profile?.phone || "—" },
+                  { icon: <MapPin className="h-4 w-4 text-rose-600" />, label: "Address", value: profile?.address || "—" },
+                  { icon: <Briefcase className="h-4 w-4 text-purple-600" />, label: "Domain", value: profile?.department || "—" },
+                  { icon: <CalendarDays className="h-4 w-4 text-amber-600" />, label: "Internship Start", value: profile?.start_date ? new Date(profile.start_date).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "—" },
                   {
-                    icon: <Clock className="h-4 w-4 text-teal-400" />,
+                    icon: <Clock className="h-4 w-4 text-teal-600" />,
                     label: "End Date / Remaining",
                     value: profile?.end_date
                       ? (() => {
@@ -1638,36 +1639,36 @@ function InternDashboard() {
                       : "—",
                   },
                 ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3.5 px-6 py-4 hover:bg-slate-800/30 transition-colors">
-                    <div className="h-8 w-8 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">{item.icon}</div>
+                  <div key={i} className="flex items-start gap-3.5 px-6 py-4 hover:bg-amber-50/50 transition-colors">
+                    <div className="h-9 w-9 rounded-2xl bg-amber-100/70 border border-amber-200 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">{item.icon}</div>
                     <div className="min-w-0">
-                      <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">{item.label}</div>
-                      <div className="text-sm font-semibold text-slate-200 mt-0.5 break-words">{item.value}</div>
+                      <div className="text-[10px] font-black uppercase tracking-wider text-amber-900/80">{item.label}</div>
+                      <div className="text-sm font-black text-slate-900 mt-0.5 break-words">{item.value}</div>
                     </div>
                   </div>
                 ))}
               </div>
 
               {/* Document downloads */}
-              <div className="border-t border-slate-800/80 px-6 py-4 bg-[#0A0D17]/90 flex flex-wrap gap-3 items-center justify-between">
+              <div className="border-t border-amber-200/80 px-6 py-4 bg-gradient-to-r from-[#FAF5EC] via-[#FFFDF9] to-[#FAF5EC] flex flex-wrap gap-3 items-center justify-between shadow-inner">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 mr-1">Your Documents:</span>
+                  <span className="text-[11px] font-black uppercase tracking-wider text-amber-950 mr-1">Your Documents:</span>
                   {docsQ.isLoading ? (
-                    <span className="text-xs text-slate-400 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Loading...</span>
+                    <span className="text-xs text-amber-900 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin text-orange-600" /> Loading...</span>
                   ) : (
                     <>
                       <a
                         href={docsQ.data?.offerLetterUrl || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
                           docsQ.data?.offerLetterUrl
-                            ? "bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 shadow-md"
-                            : "bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed pointer-events-none"
+                            ? "bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white border border-amber-500 shadow-md shadow-orange-500/10"
+                            : "bg-amber-100/60 text-slate-400 border border-amber-200 cursor-not-allowed pointer-events-none"
                         }`}
                         onClick={(e) => { if (!docsQ.data?.offerLetterUrl) e.preventDefault(); }}
                       >
-                        <FileText className="h-3.5 w-3.5 text-indigo-400" />
+                        <FileText className="h-3.5 w-3.5 text-amber-100" />
                         Download Offer Letter
                       </a>
                       {docsQ.data?.nocDownloadEnabled && (
@@ -1675,23 +1676,23 @@ function InternDashboard() {
                           href={docsQ.data?.nocUrl || "#"}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
                             docsQ.data?.nocUrl
-                              ? "bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-950/50"
-                              : "bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed pointer-events-none"
+                              ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/10"
+                              : "bg-amber-100/60 text-slate-400 border border-amber-200 cursor-not-allowed pointer-events-none"
                           }`}
                           onClick={(e) => { if (!docsQ.data?.nocUrl) e.preventDefault(); }}
                         >
-                          <Award className="h-3.5 w-3.5 text-blue-200" />
+                          <Award className="h-3.5 w-3.5 text-blue-100" />
                           Download NOC Certificate
                           {!docsQ.data?.nocUrl && <span className="ml-1 opacity-70">(Not Ready)</span>}
                         </a>
                       )}
 
                       {profile?.exam_fee_paid && (
-                        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-blue-950/60 text-blue-300 border border-blue-500/40 shadow-xs">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-blue-400" />
-                          <span>Fee Paid · Ref: <strong className="font-mono">{profile.payment_reference_no || `TXN-${(profile.id || "").slice(0, 6).toUpperCase()}`}</strong> ({profile.payment_mode || "Online"})</span>
+                        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-100/80 text-emerald-900 border border-emerald-300 shadow-xs">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                          <span>Fee Paid · Ref: <strong className="font-mono text-emerald-950">{profile.payment_reference_no || `TXN-${(profile.id || "").slice(0, 6).toUpperCase()}`}</strong> ({profile.payment_mode || "Online"})</span>
                         </div>
                       )}
                     </>
@@ -1700,10 +1701,10 @@ function InternDashboard() {
 
                 <button
                   onClick={() => docsQ.refetch()}
-                  className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-amber-900 hover:text-orange-600 transition-colors cursor-pointer"
                   title="Refresh document links"
                 >
-                  <RefreshCw className="h-3 w-3" />
+                  <RefreshCw className="h-3 w-3 text-orange-500" />
                   Refresh
                 </button>
               </div>
