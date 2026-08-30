@@ -696,17 +696,29 @@ function EmployeeDashboard() {
     onError: (err: Error) => toast.error(err.message)
   });
 
-  const handleAssignTask = (internId?: string) => {
-    if (internId) {
-      setTargetInternId(internId);
-    } else {
+  const handleAssignTaskMode = (scope: "single" | "multiple" | "all", internId?: string) => {
+    setAssignScope(scope);
+    if (scope === "all") {
       setTargetInternId(null);
-      if (selectedInterns.length === 0) {
-        toast.error("Please select at least one intern to assign a task.");
-        return;
+    } else if (scope === "single") {
+      setTargetInternId(internId || (myInterns[0]?.id || null));
+    } else if (scope === "multiple") {
+      setTargetInternId(null);
+      if (selectedInterns.length === 0 && myInterns.length > 0) {
+        setSelectedInterns(myInterns.map((i: any) => i.id));
       }
     }
     setIsTaskModalOpen(true);
+  };
+
+  const handleAssignTask = (internId?: string) => {
+    if (internId) {
+      handleAssignTaskMode("single", internId);
+    } else if (selectedInterns.length > 0) {
+      handleAssignTaskMode("multiple");
+    } else {
+      handleAssignTaskMode("all");
+    }
   };
 
   const submitAssignTask = () => {
@@ -714,7 +726,28 @@ function EmployeeDashboard() {
       toast.error("Task title is required.");
       return;
     }
-    const ids = targetInternId ? [targetInternId] : selectedInterns;
+
+    let ids: string[] = [];
+    if (assignScope === "single") {
+      if (!targetInternId) {
+        toast.error("Please select a target intern.");
+        return;
+      }
+      ids = [targetInternId];
+    } else if (assignScope === "multiple") {
+      if (selectedInterns.length === 0) {
+        toast.error("Please select at least 1 intern to assign task.");
+        return;
+      }
+      ids = selectedInterns;
+    } else if (assignScope === "all") {
+      ids = myInterns.map((i: any) => i.id);
+      if (ids.length === 0) {
+        toast.error("No allocated interns found to assign task.");
+        return;
+      }
+    }
+
     assignTaskMutation.mutate({
       title: taskTitle,
       description: taskDesc,
@@ -786,6 +819,7 @@ function EmployeeDashboard() {
   // Mentor management state
   const [selectedInterns, setSelectedInterns] = useState<string[]>([]);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [assignScope, setAssignScope] = useState<"single" | "multiple" | "all">("single");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDesc, setTaskDesc] = useState("");
   const [taskPriority, setTaskPriority] = useState<"low"|"medium"|"high">("medium");
@@ -2063,9 +2097,23 @@ function EmployeeDashboard() {
                   >
                     <Video className="h-4 w-4" /> Schedule Mentee Meeting
                   </Button>
-                  {selectedInterns.length > 0 && (
-                    <Button onClick={() => handleAssignTask()} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md gap-1.5 h-9 cursor-pointer">
-                      <Plus className="h-4 w-4" /> Assign Bulk Task ({selectedInterns.length})
+
+                  <Button 
+                    onClick={() => handleAssignTaskMode("all")} 
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-md gap-1.5 h-9 cursor-pointer"
+                    disabled={myInterns.length === 0}
+                    title="Assign task to ALL allocated interns in 1 click"
+                  >
+                    <Sparkles className="h-4 w-4" /> Assign to ALL ({myInterns.length})
+                  </Button>
+
+                  {selectedInterns.length > 0 ? (
+                    <Button onClick={() => handleAssignTaskMode("multiple")} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md gap-1.5 h-9 cursor-pointer">
+                      <Plus className="h-4 w-4" /> Assign Selected ({selectedInterns.length})
+                    </Button>
+                  ) : (
+                    <Button onClick={() => handleAssignTaskMode("single")} className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs rounded-xl shadow-md gap-1.5 h-9 cursor-pointer">
+                      <Plus className="h-4 w-4" /> Assign Task
                     </Button>
                   )}
                 </div>
@@ -3176,11 +3224,124 @@ function EmployeeDashboard() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsTaskModalOpen(false)} />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} className="relative w-full max-w-lg bg-[#0F172A] border border-slate-700 rounded-3xl shadow-2xl p-8 z-10 overflow-hidden text-white">
               <h3 className="text-xl font-bold tracking-tight text-white mb-1">Assign Task</h3>
-              <p className="text-slate-400 text-xs mb-6">
-                {targetInternId ? "Assigning task to 1 intern." : `Assigning bulk task to ${selectedInterns.length} interns.`}
+              <p className="text-slate-400 text-xs mb-5">
+                Assign tasks to 1 intern, multiple selected interns, or all allocated mentees in 1 click.
               </p>
               
               <div className="space-y-4">
+                {/* Target Scope Switcher (1, Multiple, ALL) */}
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold mb-1.5 block">
+                    Assign Target Scope
+                  </Label>
+                  <div className="grid grid-cols-3 gap-2 bg-[#131B2E] p-1.5 rounded-2xl border border-slate-700">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAssignScope("single");
+                        if (!targetInternId && myInterns.length > 0) {
+                          setTargetInternId(myInterns[0].id);
+                        }
+                      }}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        assignScope === "single"
+                          ? "bg-indigo-600 text-white shadow-md"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <User className="h-3.5 w-3.5" /> 1 Intern
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAssignScope("multiple");
+                        if (selectedInterns.length === 0 && myInterns.length > 0) {
+                          setSelectedInterns(myInterns.slice(0, Math.min(2, myInterns.length)).map((i: any) => i.id));
+                        }
+                      }}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        assignScope === "multiple"
+                          ? "bg-emerald-600 text-white shadow-md"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <Users className="h-3.5 w-3.5" /> Multiple ({selectedInterns.length})
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setAssignScope("all")}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        assignScope === "all"
+                          ? "bg-purple-600 text-white shadow-md"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <Sparkles className="h-3.5 w-3.5" /> ALL ({myInterns.length})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Scope-specific Target Controls */}
+                {assignScope === "single" && myInterns.length > 0 && (
+                  <div>
+                    <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold mb-1.5 block">Select Target Intern</Label>
+                    <select
+                      value={targetInternId || (myInterns[0]?.id || "")}
+                      onChange={(e) => setTargetInternId(e.target.value)}
+                      className="w-full rounded-xl border border-slate-700 bg-[#131B2E] text-white px-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {myInterns.map((i: any) => (
+                        <option key={i.id} value={i.id} className="bg-[#0F172A]">
+                          {i.full_name} ({i.email}) {i.sub_domain ? `• Sub-domain: ${i.sub_domain}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {assignScope === "multiple" && myInterns.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold block">Select Target Interns ({selectedInterns.length} selected)</Label>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedInterns(selectedInterns.length === myInterns.length ? [] : myInterns.map((i: any) => i.id))}
+                        className="text-[11px] text-indigo-400 hover:underline font-semibold"
+                      >
+                        {selectedInterns.length === myInterns.length ? "Deselect All" : "Select All"}
+                      </button>
+                    </div>
+                    <div className="max-h-36 overflow-y-auto bg-[#131B2E] border border-slate-700 rounded-2xl p-2.5 space-y-1.5">
+                      {myInterns.map((i: any) => (
+                        <label key={i.id} className="flex items-center justify-between p-2 hover:bg-slate-800/60 rounded-xl cursor-pointer text-xs">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedInterns.includes(i.id)}
+                              onChange={(e) => setSelectedInterns(prev => e.target.checked ? [...prev, i.id] : prev.filter(id => id !== i.id))}
+                              className="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
+                            />
+                            <span className="font-bold text-white">{i.full_name}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-mono">{i.sub_domain || i.department || i.email}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {assignScope === "all" && (
+                  <div className="p-3 bg-purple-950/60 border border-purple-500/30 rounded-2xl flex items-center gap-3 text-xs text-purple-200">
+                    <Sparkles className="h-5 w-5 text-purple-400 shrink-0" />
+                    <div>
+                      <div className="font-bold">1-Click Global Assignment for All Mentees</div>
+                      <div className="text-[11px] text-purple-300/80">This sprint task will be simultaneously assigned to all {myInterns.length} assigned interns in 1 click.</div>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold mb-1.5 block">Task Title</Label>
                   <Input placeholder="E.g., Complete UI mockups" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} className="rounded-xl bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500" />
