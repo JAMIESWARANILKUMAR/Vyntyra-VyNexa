@@ -1381,6 +1381,116 @@ function InternDashboard() {
         {/* ─── OVERVIEW ─── */}
         {activeTab === "overview" && (
           <>
+            {/* ─── LUXURY HERO BANNER & REAL-TIME PERFORMANCE MATRIX ─── */}
+            <div className="relative overflow-hidden rounded-3xl border border-slate-800/80 bg-gradient-to-r from-[#0B0F19] via-[#0E1526] to-[#0A111F] p-6 sm:p-8 shadow-2xl backdrop-blur-2xl">
+              {/* Background ambient glow accents */}
+              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-20 left-10 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl" />
+              
+              <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="space-y-2 max-w-2xl">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-950/60 px-3 py-1 text-[11px] font-bold text-emerald-300 backdrop-blur-md shadow-xs">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                    <span>Active Internship Sprint Workspace</span>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                    Welcome Back, <span className="bg-gradient-to-r from-emerald-300 via-teal-200 to-emerald-400 bg-clip-text text-transparent">{profile?.full_name || displayName}</span> 👋
+                  </h1>
+                  <p className="text-xs sm:text-sm font-medium text-slate-300 leading-relaxed">
+                    Track your daily shift timecard, sprint task milestones, assigned mentor syncs, and official credential documents in one unified portal.
+                  </p>
+                </div>
+
+                {/* Top Action Quick Buttons */}
+                <div className="flex items-center gap-3 flex-wrap shrink-0 w-full lg:w-auto">
+                  <Button
+                    onClick={() => setActiveTab("tasks")}
+                    className="flex-1 lg:flex-none bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs h-11 px-5 rounded-2xl shadow-lg shadow-emerald-950/60 gap-2 cursor-pointer border border-emerald-400/30"
+                  >
+                    <ClipboardList className="h-4 w-4" />
+                    My Tasks ({myTasks.length})
+                  </Button>
+                  <Button
+                    onClick={() => setActiveTab("lms")}
+                    className="flex-1 lg:flex-none bg-slate-900/90 hover:bg-slate-800 text-slate-200 font-bold text-xs h-11 px-5 rounded-2xl border border-slate-700 shadow-md gap-2 cursor-pointer"
+                  >
+                    <BookOpen className="h-4 w-4 text-amber-400" />
+                    LMS Learning
+                  </Button>
+                </div>
+              </div>
+
+              {/* ── REAL-TIME STAT MATRIX GRID ── */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-7 pt-6 border-t border-slate-800/80">
+                {/* Stat 1: Sprint Progress */}
+                <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-2 shadow-inner">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                      <Target className="h-3.5 w-3.5 text-emerald-400" />
+                      Sprint Progress
+                    </span>
+                    <span className="font-mono font-bold text-emerald-400 text-xs">{progress}%</span>
+                  </div>
+                  <div className="text-xl font-black text-white font-mono">{earnedCredits} / {totalAssignedCredits} <span className="text-xs text-slate-400 font-sans font-medium">Credits</span></div>
+                  {/* Progress Bar */}
+                  <div className="w-full bg-slate-800/80 h-2 rounded-full overflow-hidden border border-slate-700/50">
+                    <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(52,211,153,0.5)]" style={{ width: `${Math.max(5, progress)}%` }} />
+                  </div>
+                </div>
+
+                {/* Stat 2: Active Pending Tasks */}
+                <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-2 shadow-inner">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                      <ClipboardList className="h-3.5 w-3.5 text-amber-400" />
+                      Pending Tasks
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 font-bold text-[10px] border border-amber-500/30">
+                      {pendingTasks.length} Active
+                    </span>
+                  </div>
+                  <div className="text-xl font-black text-white font-mono">{pendingTasks.length} <span className="text-xs text-slate-400 font-sans font-medium">Sprint Deliverables</span></div>
+                  <div className="text-[11px] text-slate-400 font-medium truncate">
+                    {completedTasks.length} Verified &amp; Completed
+                  </div>
+                </div>
+
+                {/* Stat 3: Attendance Streak */}
+                <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-2 shadow-inner">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                      <Flame className="h-3.5 w-3.5 text-orange-400" />
+                      Work Streak
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-orange-950 text-orange-300 font-bold text-[10px] border border-orange-500/30">
+                      🔥 Active
+                    </span>
+                  </div>
+                  <div className="text-xl font-black text-white font-mono">{dayStreak} <span className="text-xs text-slate-400 font-sans font-medium">Days Streak</span></div>
+                  <div className="text-[11px] text-slate-400 font-medium truncate">
+                    {attendanceLogs.length} Total Shift Logs Recorded
+                  </div>
+                </div>
+
+                {/* Stat 4: Mentor & Domain */}
+                <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-2 shadow-inner">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                      <Award className="h-3.5 w-3.5 text-indigo-400" />
+                      Mentor Lead
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
+                      Assigned
+                    </span>
+                  </div>
+                  <div className="text-sm font-extrabold text-white truncate">{mentor?.full_name || "Technical Team Lead"}</div>
+                  <div className="text-[11px] text-emerald-400 font-medium truncate">
+                    {profile?.department || "Software Engineering"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* ─── INTERN PROFILE CARD ─── */}
             <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl overflow-hidden">
               {/* Card header */}
