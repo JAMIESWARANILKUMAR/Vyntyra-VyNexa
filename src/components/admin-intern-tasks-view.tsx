@@ -161,13 +161,13 @@ export function AdminInternTasksView() {
   }
 
   async function handleSendTaskWhatsAppSubmit() {
-    if (!taskEmailForm.recipient_phone) {
-      return toast.error("Intern phone number is missing for WhatsApp.");
+    if (!taskEmailForm.recipient_phone || !taskEmailForm.recipient_phone.trim()) {
+      return toast.error("Please enter the intern's WhatsApp phone number in the field above.");
     }
     try {
       const res = await doGenTaskWhatsApp({
         data: {
-          recipientPhone: taskEmailForm.recipient_phone,
+          recipientPhone: taskEmailForm.recipient_phone.trim(),
           recipientName: taskEmailForm.recipient_name,
           taskTitle: taskEmailForm.task_title,
           taskStatus: taskEmailForm.task_status,
@@ -175,6 +175,7 @@ export function AdminInternTasksView() {
         },
       });
       window.open(res.whatsappUrl, "_blank");
+      toast.success("WhatsApp status notification opened!");
     } catch (err: any) {
       toast.error("Failed to generate WhatsApp: " + err.message);
     }
@@ -1367,7 +1368,7 @@ export function AdminInternTasksView() {
             </DialogHeader>
 
             <div className="space-y-4 py-2 text-xs">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Intern Name</label>
                   <Input value={taskEmailForm.recipient_name} onChange={(e) => setTaskEmailForm({ ...taskEmailForm, recipient_name: e.target.value })} />
@@ -1375,6 +1376,18 @@ export function AdminInternTasksView() {
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Recipient Email *</label>
                   <Input value={taskEmailForm.recipient_email} onChange={(e) => setTaskEmailForm({ ...taskEmailForm, recipient_email: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1 flex items-center justify-between">
+                    <span>WhatsApp Phone</span>
+                    {!taskEmailForm.recipient_phone && <span className="text-[10px] text-amber-600 font-normal">(Required for WhatsApp)</span>}
+                  </label>
+                  <Input 
+                    placeholder="e.g. +91 9876543210" 
+                    value={taskEmailForm.recipient_phone} 
+                    onChange={(e) => setTaskEmailForm({ ...taskEmailForm, recipient_phone: e.target.value })} 
+                    className={!taskEmailForm.recipient_phone ? "border-amber-400 focus:ring-amber-400" : ""}
+                  />
                 </div>
               </div>
 
