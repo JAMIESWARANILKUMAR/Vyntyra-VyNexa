@@ -1826,18 +1826,21 @@ function InternDashboard() {
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {[
-                { icon: <ClipboardList className="h-5 w-5 text-amber-400" />, label: "Pending Tasks", value: pendingTasks.length, border: "border-amber-500/30", bg: "bg-amber-950/30" },
-                { icon: <CheckCircle2 className="h-5 w-5 text-emerald-400" />, label: "Completed", value: completedTasks.length, border: "border-emerald-500/30", bg: "bg-emerald-950/30" },
-                { icon: <CreditCard className="h-5 w-5 text-indigo-400" />, label: "Credits Score", value: `${earnedCredits} / ${totalAssignedCredits}`, border: "border-indigo-500/30", bg: "bg-indigo-950/30" },
-                { icon: <Flame className="h-5 w-5 text-orange-400 animate-pulse" />, label: "Day Streak", value: `${dayStreak} Days`, border: "border-orange-500/30", bg: "bg-orange-950/30" },
-                { icon: <Video className="h-5 w-5 text-blue-400" />, label: "Meetings", value: meetings.filter(m => new Date(m.scheduled_at) >= new Date()).length, border: "border-blue-500/30", bg: "bg-blue-950/30" },
-                { icon: <BookOpen className="h-5 w-5 text-purple-400" />, label: "Resources", value: resources.length, border: "border-purple-500/30", bg: "bg-purple-950/30" },
+                { icon: <ClipboardList className="h-5 w-5 text-amber-400" />, label: "Pending Tasks", value: pendingTasks.length, border: "border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.15)]", bg: "bg-gradient-to-br from-amber-950/40 via-[#0E131F] to-[#0A0D17]" },
+                { icon: <CheckCircle2 className="h-5 w-5 text-emerald-400" />, label: "Completed", value: completedTasks.length, border: "border-emerald-500/40 shadow-[0_0_15px_rgba(52,211,153,0.15)]", bg: "bg-gradient-to-br from-emerald-950/40 via-[#0E131F] to-[#0A0D17]" },
+                { icon: <CreditCard className="h-5 w-5 text-indigo-400" />, label: "Credits Score", value: `${earnedCredits} / ${totalAssignedCredits}`, border: "border-indigo-500/40 shadow-[0_0_15px_rgba(99,102,241,0.15)]", bg: "bg-gradient-to-br from-indigo-950/40 via-[#0E131F] to-[#0A0D17]" },
+                { icon: <Flame className="h-5 w-5 text-orange-400 animate-pulse" />, label: "Day Streak", value: `${dayStreak} Days`, border: "border-orange-500/40 shadow-[0_0_15px_rgba(249,115,22,0.15)]", bg: "bg-gradient-to-br from-orange-950/40 via-[#0E131F] to-[#0A0D17]" },
+                { icon: <Video className="h-5 w-5 text-blue-400" />, label: "Meetings", value: meetings.filter(m => new Date(m.scheduled_at) >= new Date()).length, border: "border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.15)]", bg: "bg-gradient-to-br from-blue-950/40 via-[#0E131F] to-[#0A0D17]" },
+                { icon: <BookOpen className="h-5 w-5 text-purple-400" />, label: "Resources", value: resources.length, border: "border-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.15)]", bg: "bg-gradient-to-br from-purple-950/40 via-[#0E131F] to-[#0A0D17]" },
               ].map((s, i) => (
-                <div key={i} className={`rounded-2xl border ${s.border} ${s.bg} p-4 flex items-center gap-3.5 shadow-lg backdrop-blur-xl`}>
-                  <div className="h-9 w-9 rounded-xl bg-slate-900/90 border border-slate-700/60 flex items-center justify-center shadow-inner shrink-0">{s.icon}</div>
-                  <div className="min-w-0">
-                    <div className="text-xl font-black text-white truncate">{s.value}</div>
-                    <div className="text-[10px] text-slate-400 uppercase tracking-wider font-extrabold truncate">{s.label}</div>
+                <div key={i} className={`rounded-3xl border ${s.border} ${s.bg} p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-2xl backdrop-blur-2xl transition-all duration-300 hover:scale-[1.02]`}>
+                  <div className="flex items-center justify-between">
+                    <div className="h-10 w-10 rounded-2xl bg-slate-950/80 border border-slate-700/60 flex items-center justify-center shadow-inner shrink-0">{s.icon}</div>
+                    <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-slate-900/80 px-2 py-0.5 rounded-full border border-slate-800">SYNC</span>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-black text-white font-mono tracking-tight">{s.value}</div>
+                    <div className="text-[10px] text-slate-400 uppercase tracking-wider font-extrabold mt-0.5 truncate">{s.label}</div>
                   </div>
                 </div>
               ))}

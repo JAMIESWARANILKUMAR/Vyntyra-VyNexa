@@ -89,17 +89,17 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* 2. Code & PR Submission Hub */}
-        <div className="rounded-xl border bg-white p-6 shadow-sm space-y-4">
-          <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
-            <GitBranch className="h-4 w-4 text-purple-600" /> Code & PR Submission Hub
+        <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 shadow-2xl backdrop-blur-xl space-y-4 text-slate-100">
+          <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
+            <GitBranch className="h-4.5 w-4.5 text-purple-400" /> Code &amp; PR Submission Hub
           </h3>
-          <p className="text-xs text-slate-500">Link your pull request URLs and branches to your daily assigned tasks for mentor code review.</p>
+          <p className="text-xs text-slate-400">Link your pull request URLs and branches to your daily assigned tasks for mentor code review.</p>
 
           <form onSubmit={handlePrSubmit} className="space-y-3">
             <div className="grid grid-cols-3 gap-2">
               <input
                 type="text"
-                className="col-span-1 rounded-md border p-2 text-xs font-mono"
+                className="col-span-1 rounded-xl border border-slate-700/80 bg-[#060912] p-2.5 text-xs font-mono text-white placeholder:text-slate-500 focus:border-purple-500 outline-none"
                 placeholder="Branch (e.g. main)"
                 value={repoBranch}
                 onChange={(e) => setRepoBranch(e.target.value)}
@@ -107,61 +107,65 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
               <input
                 type="url"
                 required
-                className="col-span-2 rounded-md border p-2 text-xs font-mono"
+                className="col-span-2 rounded-xl border border-slate-700/80 bg-[#060912] p-2.5 text-xs font-mono text-white placeholder:text-slate-500 focus:border-purple-500 outline-none"
                 placeholder="https://github.com/org/repo/pull/123"
                 value={prUrl}
                 onChange={(e) => setPrUrl(e.target.value)}
               />
             </div>
-            <Button type="submit" size="sm" className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs">
+            <Button type="submit" size="sm" className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs h-10 rounded-xl shadow-lg shadow-purple-950/60 cursor-pointer">
               Submit PR for Review
             </Button>
           </form>
 
           {/* Submissions & Mentor Comments */}
           <div className="space-y-2.5 pt-2">
-            <span className="text-[11px] font-bold text-slate-400 uppercase">Recent Code Submissions & In-Line Reviews</span>
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Recent Code Submissions &amp; In-Line Reviews</span>
             <div className="space-y-2 max-h-[220px] overflow-y-auto">
-              {prLogs.map((p, i) => (
-                <div key={i} className="p-3 rounded-lg border bg-slate-50 space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <a href={p.pr} target="_blank" rel="noreferrer" className="font-semibold text-purple-700 hover:underline truncate max-w-[240px]">
-                      {p.title}
-                    </a>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${p.status === "Approved" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
-                      {p.status}
-                    </span>
+              {prLogs.length === 0 ? (
+                <div className="p-4 text-center text-slate-500 text-xs italic">No PRs submitted yet today.</div>
+              ) : (
+                prLogs.map((p, i) => (
+                  <div key={i} className="p-3.5 rounded-2xl border border-slate-800 bg-[#070B14]/80 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <a href={p.pr} target="_blank" rel="noreferrer" className="font-bold text-purple-300 hover:underline truncate max-w-[240px]">
+                        {p.title}
+                      </a>
+                      <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase border ${p.status === "Approved" ? "bg-emerald-950/80 text-emerald-300 border-emerald-500/40" : "bg-amber-950/80 text-amber-300 border-amber-500/40"}`}>
+                        {p.status}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 italic">💬 Mentor Comment: "{p.comments}"</p>
                   </div>
-                  <p className="text-[11px] text-slate-600 italic">💬 Mentor Comment: "{p.comments}"</p>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
 
         {/* 3. Technical Bug & Ticket Log */}
-        <div className="rounded-xl border bg-white p-6 shadow-sm space-y-4">
+        <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 shadow-2xl backdrop-blur-xl space-y-4 text-slate-100">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
-              <Bug className="h-4 w-4 text-red-600" /> Technical Bug & Issue Tracker
+            <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
+              <Bug className="h-4.5 w-4.5 text-rose-400" /> Technical Bug &amp; Issue Tracker
             </h3>
-            <Button size="sm" variant="outline" className="h-7 text-xs text-red-700 border-red-200 hover:bg-red-50" onClick={() => setBugOpen(!bugOpen)}>
+            <Button size="sm" variant="outline" className="h-8 text-xs font-bold text-rose-300 border-rose-500/40 bg-rose-950/40 hover:bg-rose-900/60 rounded-xl cursor-pointer" onClick={() => setBugOpen(!bugOpen)}>
               <Plus className="h-3.5 w-3.5 mr-1" /> Report Bug
             </Button>
           </div>
 
           {bugOpen && (
-            <form onSubmit={handleBugSubmit} className="p-4 rounded-xl border bg-red-50/40 space-y-3">
+            <form onSubmit={handleBugSubmit} className="p-4 rounded-2xl border border-rose-500/30 bg-rose-950/20 space-y-3">
               <input
                 type="text"
                 required
-                className="w-full rounded-md border p-2 text-xs"
+                className="w-full rounded-xl border border-slate-700 bg-[#060912] p-2.5 text-xs text-white placeholder:text-slate-500 focus:border-rose-500 outline-none"
                 placeholder="Bug Title (e.g. Supabase RLS timeout on query)"
                 value={bugForm.title}
                 onChange={(e) => setBugForm({ ...bugForm, title: e.target.value })}
               />
               <textarea
-                className="w-full rounded-md border p-2 text-xs"
+                className="w-full rounded-xl border border-slate-700 bg-[#060912] p-2.5 text-xs text-white placeholder:text-slate-500 focus:border-rose-500 outline-none"
                 rows={2}
                 placeholder="Error log snippet or steps to reproduce..."
                 value={bugForm.description}
@@ -169,7 +173,7 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
               />
               <div className="grid grid-cols-2 gap-2">
                 <select
-                  className="rounded-md border p-2 text-xs"
+                  className="rounded-xl border border-slate-700 bg-[#060912] p-2 text-xs text-white outline-none"
                   value={bugForm.severity}
                   onChange={(e: any) => setBugForm({ ...bugForm, severity: e.target.value })}
                 >
@@ -179,37 +183,37 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
                 </select>
                 <input
                   type="url"
-                  className="rounded-md border p-2 text-xs"
+                  className="rounded-xl border border-slate-700 bg-[#060912] p-2 text-xs text-white placeholder:text-slate-500 outline-none"
                   placeholder="Repo / Commit URL"
                   value={bugForm.repo_url}
                   onChange={(e) => setBugForm({ ...bugForm, repo_url: e.target.value })}
                 />
               </div>
-              <Button type="submit" size="sm" className="bg-red-600 hover:bg-red-700 text-white text-xs w-full">
+              <Button type="submit" size="sm" className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs h-9 rounded-xl w-full cursor-pointer shadow-lg shadow-rose-950/60">
                 File Technical Ticket
               </Button>
             </form>
           )}
 
-          <div className="divide-y max-h-[260px] overflow-y-auto">
+          <div className="divide-y divide-slate-800/80 max-h-[260px] overflow-y-auto">
             {bugs.length === 0 ? (
-              <div className="p-6 text-center text-slate-400 text-xs">No active bugs reported. All systems running cleanly!</div>
+              <div className="p-6 text-center text-slate-400 text-xs italic">No active bugs reported. All systems running cleanly!</div>
             ) : (
               bugs.map((b) => (
                 <div key={b.id} className="py-3 flex items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${b.severity === "Blocker" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
+                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase border ${b.severity === "Blocker" ? "bg-rose-950 text-rose-300 border-rose-500/40" : "bg-amber-950 text-amber-300 border-amber-500/40"}`}>
                         {b.severity}
                       </span>
-                      <h4 className="font-semibold text-xs text-slate-900">{b.title}</h4>
+                      <h4 className="font-bold text-xs text-slate-100">{b.title}</h4>
                     </div>
-                    {b.description && <p className="text-xs text-slate-500 mt-1 line-clamp-1">{b.description}</p>}
+                    {b.description && <p className="text-xs text-slate-400 mt-1 line-clamp-1">{b.description}</p>}
                   </div>
                   <Button
                     size="sm"
                     variant="ghost"
-                    className={`h-7 text-xs ${b.status === "resolved" ? "text-emerald-600" : "text-slate-500"}`}
+                    className={`h-7 text-xs font-bold ${b.status === "resolved" ? "text-emerald-400 hover:text-emerald-300" : "text-slate-400 hover:text-white"}`}
                     onClick={() => onUpdateBugStatus(b.id, b.status === "resolved" ? "open" : "resolved")}
                   >
                     {b.status === "resolved" ? <CheckCircle2 className="h-4 w-4" /> : "Resolve"}
