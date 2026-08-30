@@ -699,12 +699,8 @@ function InternDashboard() {
   const poolTasks = tasks.filter((t: any) => t.is_pool_task === true && !t.assigned_to);
   const myTasks = tasks.filter((t: any) => {
     if (!t) return false;
-    if (t.is_pool_task === true && !t.assigned_to) return false; // Pool tasks go to Task Pool tab
-    // Tasks assigned directly to this intern
-    if (currentUserId && (t.assigned_to === currentUserId || t.target_user_id === currentUserId)) return true;
-    // General tasks with no assigned_to specified
-    if (!t.assigned_to && (!t.target_user_id || t.target_user_id === currentUserId)) return true;
-    return false;
+    if (t.is_pool_task === true && !t.assigned_to) return false; // Unclaimed pool tasks belong in Task Pool tab
+    return Boolean(currentUserId && (t.assigned_to === currentUserId || t.target_user_id === currentUserId));
   });
   const inProgressTasks = myTasks.filter((t: any) => t.status === "pending" || t.status === "in_progress" || t.status === "blocked");
   const submittedTasks = myTasks.filter((t: any) => t.status === "submitted" || t.status === "under_review");

@@ -337,19 +337,17 @@ export const listTasks = createServerFn({ method: "GET" })
     return (rawList || []).filter((t: any) => {
       if (role === 'admin' || role === 'super_admin') return true;
       
-      // Unassigned pool tasks open for interns to claim
+      // Unassigned pool tasks open for interns to claim in the Task Pool
       if (t.is_pool_task && !t.assigned_to) return true;
 
+      // Tasks assigned directly to this user
       const isAssignedToMe = (t.assigned_to && t.assigned_to === context.userId) || (t.target_user_id && t.target_user_id === context.userId);
       if (isAssignedToMe) return true;
 
+      // Tasks assigned to interns mentored by this user
       if (t.profiles?.mentor_id && t.profiles.mentor_id === context.userId) return true;
       
-      // Exclude tasks assigned explicitly to another intern
-      if (t.assigned_to && t.assigned_to !== context.userId) return false;
-      if (t.target_user_id && t.target_user_id !== context.userId) return false;
-
-      if (!t.assigned_to && (!t.target_role || t.target_role === 'all' || t.target_role === role)) return true;
+      // All other tasks (stored bank, tasks for other interns) are hidden
       return false;
     });
   });
