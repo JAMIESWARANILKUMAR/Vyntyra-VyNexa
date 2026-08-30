@@ -768,7 +768,8 @@ function InternDashboard() {
   );
 
   const poolTasks = tasks.filter((t: any) => t.is_pool_task === true && !t.assigned_to);
-  const myTasks = tasks.filter((t: any) => {
+
+  const matchedTasks = tasks.filter((t: any) => {
     if (!t) return false;
     if (t.is_pool_task === true && !t.assigned_to) return false; // Unclaimed pool tasks belong in Task Pool tab
 
@@ -783,12 +784,20 @@ function InternDashboard() {
 
     const isDeliverableMatch = myDeliverableTaskIds.includes(t.id);
     const isNotifTask = assignedTaskTitlesFromNotifs.some((title: string) => t.title && t.title.toLowerCase().includes(title.toLowerCase()));
-    const isAug16Task = isAug16To20CohortIntern && t.created_at && new Date(t.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime();
 
-    return isDirectMatch || isDeliverableMatch || isNotifTask || isAug16Task;
+    return isDirectMatch || isDeliverableMatch || isNotifTask;
   });
 
-  const completedTasks = myTasks.filter((t: any) => 
+  let myTasks = matchedTasks;
+  if (isAug16To20CohortIntern && myTasks.length === 0) {
+    const aug16FirstTask = tasks.find((t: any) => !t.is_pool_task || (t.created_at && new Date(t.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime()));
+    if (aug16FirstTask) {
+      myTasks = [aug16FirstTask];
+    }
+  }
+
+  // Cap cohort completed tasks to 1 (10 credits) unless intern submitted multiple deliverables
+  const completedTasksCandidate = myTasks.filter((t: any) => 
     t.status === "completed" || 
     t.status === "verified" || 
     t.status === "approved" || 
@@ -797,36 +806,19 @@ function InternDashboard() {
     t.status === "graded" ||
     t.is_verified === true ||
     myDeliverableTaskIds.includes(t.id) ||
-    (isAug16To20CohortIntern && (
-      assignedTaskTitlesFromNotifs.some((title: string) => t.title && t.title.toLowerCase().includes(title.toLowerCase())) ||
-      (t.created_at && new Date(t.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime())
-    ))
+    isAug16To20CohortIntern
   );
+
+  const maxAllowedCompleted = Math.max(1, deliverables.length);
+  const completedTasks = completedTasksCandidate.slice(0, isAug16To20CohortIntern ? maxAllowedCompleted : completedTasksCandidate.length);
 
   const verifiedTasks = completedTasks;
-  const inProgressTasks = myTasks.filter((t: any) => 
-    (t.status === "pending" || t.status === "in_progress" || t.status === "blocked" || t.status === "rejected") &&
-    !completedTasks.some((c: any) => c.id === t.id)
-  );
-
+  const inProgressTasks = myTasks.filter((t: any) => !completedTasks.some((c: any) => c.id === t.id));
   const submittedTasks = myTasks.filter((t: any) => (t.status === "submitted" || t.status === "under_review") && !completedTasks.some((c: any) => c.id === t.id));
   const pendingTasks = inProgressTasks;
 
-  const baseAug16Credits = isAug16To20CohortIntern ? 10 : 0;
-  const deliverableCredits = (deliverables || []).reduce((acc: number, d: any) => acc + (d.credits || 10), 0);
-  const profileCredits = (profile as any)?.credits || (profile as any)?.earned_credits || (profile as any)?.points || 0;
-  const taskEarnedCredits = completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
-
-  const earnedCredits = Math.max(
-    taskEarnedCredits,
-    deliverableCredits,
-    profileCredits,
-    deliverables.length > 0 ? deliverables.length * 10 : 0,
-    baseAug16Credits
-  );
-
-  const rawAssignedCredits = myTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
-  const totalAssignedCredits = Math.max(rawAssignedCredits, earnedCredits, myTasks.length > 0 ? myTasks.length * 10 : earnedCredits);
+  const earnedCredits = isAug16To20CohortIntern ? 10 * completedTasks.length : completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
+  const totalAssignedCredits = isAug16To20CohortIntern ? 10 * Math.max(1, myTasks.length) : Math.max(myTasks.reduce((acc, t) => acc + (t.credits || 10), 0), earnedCredits);
   const totalPoints = earnedCredits;
   const progress = totalAssignedCredits > 0 ? Math.round((earnedCredits / totalAssignedCredits) * 100) : (earnedCredits > 0 ? 100 : 0);
 

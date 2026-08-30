@@ -391,29 +391,25 @@ export const listTasks = createServerFn({ method: "GET" })
       }).in("id", delivTaskIdsArray);
     }
 
-    return (rawList || []).map((t: any) => {
-      // Self-repair: If intern submitted a deliverable or is in Aug 16-20 cohort (not Anjali), mark task as completed & verified
-      const isNotifTask = notifTitles.some((nt: string) => t.title && t.title.toLowerCase().includes(nt.toLowerCase()));
-      const isAug16Task = isAug16To20CohortIntern && t.created_at && new Date(t.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime();
-
-      if (myDelivTaskIds.has(t.id) || (isAug16To20CohortIntern && (isNotifTask || isAug16Task))) {
+    const mappedList = (rawList || []).map((t: any) => {
+      // Self-repair: If intern submitted a deliverable, mark task as completed
+      if (myDelivTaskIds.has(t.id)) {
         t.assigned_to = context.userId;
-        t.target_user_id = context.userId;
         t.status = "completed";
-        t.is_verified = true;
       }
       return t;
-    }).filter((t: any) => {
+    });
+
+    return mappedList.filter((t: any) => {
       if (role === 'admin' || role === 'super_admin') return true;
       
       // Unassigned pool tasks open for interns to claim in the Task Pool
       if (t.is_pool_task && !t.assigned_to) return true;
 
       const isNotifTask = notifTitles.some((nt: string) => t.title && t.title.toLowerCase().includes(nt.toLowerCase()));
-      const isAug16Task = isAug16To20CohortIntern && t.created_at && new Date(t.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime();
 
-      // Match against any of user's identifiers, team memberships, deliverables, notification titles, or Aug 16-20 cohort tasks
-      const isAssignedToMe = Boolean(
+      // Match against any of user's identifiers, team memberships, deliverables, or notification title
+      const isDirectAssigned = Boolean(
         myIds.has(t.assigned_to) ||
         myIds.has(t.target_user_id) ||
         myIds.has(t.claimed_by) ||
@@ -421,10 +417,20 @@ export const listTasks = createServerFn({ method: "GET" })
         (Array.isArray(t.team_members) && t.team_members.some((m: any) => myIds.has(m))) ||
         (Array.isArray(t.target_user_ids) && t.target_user_ids.some((m: any) => myIds.has(m))) ||
         myDelivTaskIds.has(t.id) ||
-        isNotifTask ||
-        isAug16Task
+        isNotifTask
       );
-      if (isAssignedToMe) return true;
+
+      if (isDirectAssigned) return true;
+
+      // For Aug 16-20 cohort interns without a direct task match, pick the 1st template task created on Aug 16
+      if (isAug16To20CohortIntern) {
+        const aug16FirstTask = (rawList || []).find((st: any) => !st.is_pool_task || (st.created_at && new Date(st.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime()));
+        if (aug16FirstTask && aug16FirstTask.id === t.id) {
+          t.assigned_to = context.userId;
+          t.status = "completed";
+          return true;
+        }
+      }
 
       // Tasks assigned to interns mentored by this user
       if (t.profiles?.mentor_id && t.profiles.mentor_id === context.userId) return true;
