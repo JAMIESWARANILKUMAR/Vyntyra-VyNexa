@@ -393,7 +393,7 @@ export const listTasks = createServerFn({ method: "GET" })
 
     const mappedList = (rawList || []).map((t: any) => {
       // Self-repair: If intern submitted a deliverable, mark task as completed
-      if (myDelivTaskIds.has(t.id)) {
+      if (myDeliverables && myDelivTaskIds.has(t.id)) {
         t.assigned_to = context.userId;
         t.status = "completed";
       }
@@ -421,16 +421,6 @@ export const listTasks = createServerFn({ method: "GET" })
       );
 
       if (isDirectAssigned) return true;
-
-      // For Aug 16-20 cohort interns without a direct task match, pick the 1st template task created on Aug 16
-      if (isAug16To20CohortIntern) {
-        const aug16FirstTask = (rawList || []).find((st: any) => !st.is_pool_task || (st.created_at && new Date(st.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime()));
-        if (aug16FirstTask && aug16FirstTask.id === t.id) {
-          t.assigned_to = context.userId;
-          t.status = "completed";
-          return true;
-        }
-      }
 
       // Tasks assigned to interns mentored by this user
       if (t.profiles?.mentor_id && t.profiles.mentor_id === context.userId) return true;

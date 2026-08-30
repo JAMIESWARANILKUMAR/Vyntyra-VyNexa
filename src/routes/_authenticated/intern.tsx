@@ -770,7 +770,7 @@ function InternDashboard() {
 
   const poolTasks = tasks.filter((t: any) => t.is_pool_task === true && !t.assigned_to);
 
-  const matchedTasks = tasks.filter((t: any) => {
+  const myTasks = tasks.filter((t: any) => {
     if (!t) return false;
     if (t.is_pool_task === true && !t.assigned_to) return false; // Unclaimed pool tasks belong in Task Pool tab
 
@@ -789,16 +789,7 @@ function InternDashboard() {
     return isDirectMatch || isDeliverableMatch || isNotifTask;
   });
 
-  let myTasks = matchedTasks;
-  if (isAug16To20CohortIntern && myTasks.length === 0) {
-    const aug16FirstTask = tasks.find((t: any) => !t.is_pool_task || (t.created_at && new Date(t.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime()));
-    if (aug16FirstTask) {
-      myTasks = [aug16FirstTask];
-    }
-  }
-
-  // Cap cohort completed tasks to 1 (10 credits) unless intern submitted multiple deliverables
-  const completedTasksCandidate = myTasks.filter((t: any) => 
+  const completedTasks = myTasks.filter((t: any) => 
     t.status === "completed" || 
     t.status === "verified" || 
     t.status === "approved" || 
@@ -810,18 +801,17 @@ function InternDashboard() {
     isAug16To20CohortIntern
   );
 
-  const maxAllowedCompleted = Math.max(1, deliverables.length);
-  const completedTasks = completedTasksCandidate.slice(0, isAug16To20CohortIntern ? maxAllowedCompleted : completedTasksCandidate.length);
-
   const verifiedTasks = completedTasks;
-  const inProgressTasks = myTasks.filter((t: any) => !completedTasks.some((c: any) => c.id === t.id));
+  const inProgressTasks = myTasks.filter((t: any) => (t.status === "pending" || t.status === "in_progress" || t.status === "blocked" || t.status === "rejected") && !completedTasks.some((c: any) => c.id === t.id));
   const submittedTasks = myTasks.filter((t: any) => (t.status === "submitted" || t.status === "under_review") && !completedTasks.some((c: any) => c.id === t.id));
   const pendingTasks = inProgressTasks;
 
-  const earnedCredits = isAug16To20CohortIntern ? 10 * completedTasks.length : completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
-  const totalAssignedCredits = isAug16To20CohortIntern ? 10 * Math.max(1, myTasks.length) : Math.max(myTasks.reduce((acc, t) => acc + (t.credits || 10), 0), earnedCredits);
+  const taskEarnedCredits = completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
+  const earnedCredits = isAug16To20CohortIntern ? Math.max(10, taskEarnedCredits) : taskEarnedCredits;
+  const rawAssignedCredits = myTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
+  const totalAssignedCredits = Math.max(rawAssignedCredits, earnedCredits, myTasks.length > 0 ? myTasks.length * 10 : 10);
   const totalPoints = earnedCredits;
-  const progress = totalAssignedCredits > 0 ? Math.round((earnedCredits / totalAssignedCredits) * 100) : (earnedCredits > 0 ? 100 : 0);
+  const progress = totalAssignedCredits > 0 ? Math.round((earnedCredits / totalAssignedCredits) * 100) : 100;
 
   const fetchDashboardSettings = useServerFn(getDashboardSettings);
   const dashboardSettingsQ = useQuery({ queryKey: ["dashboard-settings"], queryFn: () => fetchDashboardSettings() });
