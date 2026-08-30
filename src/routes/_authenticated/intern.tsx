@@ -695,8 +695,17 @@ function InternDashboard() {
     }
   }
 
+  const currentUserId = session?.user?.id;
   const poolTasks = tasks.filter((t: any) => t.is_pool_task === true && !t.assigned_to);
-  const myTasks = tasks.filter((t: any) => !(t.is_pool_task === true && !t.assigned_to));
+  const myTasks = tasks.filter((t: any) => {
+    if (!t) return false;
+    if (t.is_pool_task === true && !t.assigned_to) return false; // Pool tasks go to Task Pool tab
+    // Tasks assigned directly to this intern
+    if (currentUserId && (t.assigned_to === currentUserId || t.target_user_id === currentUserId)) return true;
+    // General tasks with no assigned_to specified
+    if (!t.assigned_to && (!t.target_user_id || t.target_user_id === currentUserId)) return true;
+    return false;
+  });
   const inProgressTasks = myTasks.filter((t: any) => t.status === "pending" || t.status === "in_progress" || t.status === "blocked");
   const submittedTasks = myTasks.filter((t: any) => t.status === "submitted" || t.status === "under_review");
   const completedTasks = myTasks.filter((t) => t.status === "completed");
@@ -790,14 +799,15 @@ function InternDashboard() {
   const nowMs = Date.now();
   const thirtyDaysAhead = nowMs + 30 * 24 * 60 * 60 * 1000;
 
-  const marqueeItems: { id: string; type: string; typeColor: string; title: string; subtitle?: string }[] = [];
+  const marqueeItems: { id: string; type: string; typeColor: string; icon: React.ReactNode; title: string; subtitle?: string }[] = [];
 
   // 1. Direct Unread Alerts & Notifications
   notifications.filter((n: any) => !n.is_read).forEach((n: any) => {
     marqueeItems.push({
       id: `alert-${n.id}`,
       type: "ALERT",
-      typeColor: "text-rose-300 bg-rose-950/90 border-rose-500/50 shadow-xs",
+      typeColor: "text-rose-300 bg-rose-950/80 border-rose-500/40 shadow-xs",
+      icon: <AlertCircle className="h-3 w-3 text-rose-400 shrink-0" />,
       title: n.title,
       subtitle: n.message,
     });
@@ -813,7 +823,8 @@ function InternDashboard() {
     marqueeItems.push({
       id: `meet-${m.id}`,
       type: "LIVE MEETING",
-      typeColor: "text-indigo-300 bg-indigo-950/90 border-indigo-500/50 shadow-xs",
+      typeColor: "text-indigo-300 bg-indigo-950/80 border-indigo-500/40 shadow-xs",
+      icon: <Video className="h-3 w-3 text-indigo-400 shrink-0" />,
       title: `Scheduled Video Sync: "${m.title}" · ${meetDate} at ${meetTime}`,
     });
   });
@@ -824,7 +835,8 @@ function InternDashboard() {
     marqueeItems.push({
       id: `task-${t.id}`,
       type: "ASSIGNMENT",
-      typeColor: "text-amber-300 bg-amber-950/90 border-amber-500/50 shadow-xs",
+      typeColor: "text-amber-300 bg-amber-950/80 border-amber-500/40 shadow-xs",
+      icon: <ClipboardList className="h-3 w-3 text-amber-400 shrink-0" />,
       title: `Task Pending Review: "${t.title}" (${dueText})`,
     });
   });
@@ -838,7 +850,8 @@ function InternDashboard() {
     marqueeItems.push({
       id: `holiday-${h.id || h.date}`,
       type: "HOLIDAY",
-      typeColor: "text-teal-300 bg-teal-950/90 border-teal-500/50 shadow-xs",
+      typeColor: "text-teal-300 bg-teal-950/80 border-teal-500/40 shadow-xs",
+      icon: <CalendarDays className="h-3 w-3 text-teal-400 shrink-0" />,
       title: `Company Holiday: ${h.name} (${hDate})`,
     });
   });
@@ -848,7 +861,8 @@ function InternDashboard() {
     marqueeItems.push({
       id: `ann-${a.id}`,
       type: (a.type || "ANNOUNCEMENT").toUpperCase(),
-      typeColor: "text-emerald-300 bg-emerald-950/90 border-emerald-500/50 shadow-xs",
+      typeColor: "text-emerald-300 bg-emerald-950/80 border-emerald-500/40 shadow-xs",
+      icon: <Sparkles className="h-3 w-3 text-emerald-400 shrink-0" />,
       title: a.title,
     });
   });
@@ -870,8 +884,21 @@ function InternDashboard() {
           
           {/* Logo & Portal Badge */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0 min-w-0">
-            <div className="h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-xl shadow-lg shadow-emerald-950/60 border border-emerald-400/40 flex items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
-              V
+            <div className="relative group shrink-0">
+              <div className="absolute -inset-1 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl blur-xs opacity-60 group-hover:opacity-100 transition duration-300" />
+              <img 
+                src="/favicon.png" 
+                alt="VyNexa / Vyntyra Logo" 
+                className="relative h-9 w-9 sm:h-10 sm:w-10 object-contain rounded-xl bg-slate-950 p-1 border border-emerald-400/50 shadow-lg shadow-emerald-950/60 shrink-0"
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.display = "none";
+                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = "flex";
+                }}
+              />
+              <div className="hidden relative h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-xl shadow-lg shadow-emerald-950/60 border border-emerald-400/40 items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
+                V
+              </div>
             </div>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
@@ -1070,42 +1097,62 @@ function InternDashboard() {
 
         {/* ── Live Updates & Notifications Marquee Sub-Bar ── */}
         {marqueeItems.length > 0 ? (
-          <div className="bg-[#050811]/95 text-slate-200 text-xs py-2.5 overflow-hidden flex whitespace-nowrap border-t border-slate-800/80 relative z-10 backdrop-blur-md group cursor-default" title="Hover to pause ticker">
-            <div className="animate-marquee flex items-center gap-8 sm:gap-12 shrink-0 min-w-full group-hover:[animation-play-state:paused]">
-              {marqueeItems.map((item) => (
-                <div key={item.id} className="inline-flex items-center gap-2 px-2 py-0.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
-                  <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.typeColor} shrink-0`}>
-                    {item.type}
-                  </span>
-                  <span className="font-medium text-slate-200 text-xs truncate max-w-xs sm:max-w-none">
-                    {item.title}
-                  </span>
-                  {item.subtitle && (
-                    <span className="text-slate-400 text-[11px] hidden md:inline truncate max-w-sm">
-                      — {item.subtitle}
-                    </span>
-                  )}
-                </div>
-              ))}
+          <div 
+            className="bg-[#04060E]/95 text-slate-200 text-xs py-2 overflow-hidden flex whitespace-nowrap border-t border-b border-slate-800/90 relative z-10 backdrop-blur-xl group cursor-pointer shadow-inner" 
+            title="Hover to pause live ticker"
+          >
+            {/* Left Fixed Ticker Badge */}
+            <div className="shrink-0 bg-[#070C1B] border-r border-slate-800 px-3 py-1 flex items-center gap-2 z-20 shadow-md">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">
+                LIVE TICKER
+              </span>
+              <span className="hidden group-hover:inline text-[9px] font-bold text-amber-400 bg-amber-950/80 px-1.5 py-0.2 rounded border border-amber-500/40">
+                ⏸ PAUSED
+              </span>
             </div>
-            <div className="animate-marquee flex items-center gap-8 sm:gap-12 shrink-0 min-w-full ml-8 sm:ml-12 group-hover:[animation-play-state:paused]">
-              {marqueeItems.map((item) => (
-                <div key={`dup-${item.id}`} className="inline-flex items-center gap-2 px-2 py-0.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
-                  <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.typeColor} shrink-0`}>
-                    {item.type}
-                  </span>
-                  <span className="font-medium text-slate-200 text-xs truncate max-w-xs sm:max-w-none">
-                    {item.title}
-                  </span>
-                  {item.subtitle && (
-                    <span className="text-slate-400 text-[11px] hidden md:inline truncate max-w-sm">
-                      — {item.subtitle}
+
+            {/* Marquee Content Rail */}
+            <div className="flex overflow-hidden relative flex-1 min-w-0">
+              <div className="animate-marquee-slow flex items-center gap-10 sm:gap-14 shrink-0 min-w-full group-hover:[animation-play-state:paused] pl-4">
+                {marqueeItems.map((item) => (
+                  <div key={item.id} className="inline-flex items-center gap-2.5 px-3 py-1 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:bg-slate-800/80 transition-all">
+                    {item.icon}
+                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.typeColor} shrink-0`}>
+                      {item.type}
                     </span>
-                  )}
-                </div>
-              ))}
+                    <span className="font-semibold text-slate-200 text-xs truncate max-w-xs sm:max-w-none">
+                      {item.title}
+                    </span>
+                    {item.subtitle && (
+                      <span className="text-slate-400 text-[11px] hidden md:inline truncate max-w-sm">
+                        — {item.subtitle}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="animate-marquee-slow flex items-center gap-10 sm:gap-14 shrink-0 min-w-full ml-10 sm:ml-14 group-hover:[animation-play-state:paused]">
+                {marqueeItems.map((item) => (
+                  <div key={`dup-${item.id}`} className="inline-flex items-center gap-2.5 px-3 py-1 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:bg-slate-800/80 transition-all">
+                    {item.icon}
+                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.typeColor} shrink-0`}>
+                      {item.type}
+                    </span>
+                    <span className="font-semibold text-slate-200 text-xs truncate max-w-xs sm:max-w-none">
+                      {item.title}
+                    </span>
+                    {item.subtitle && (
+                      <span className="text-slate-400 text-[11px] hidden md:inline truncate max-w-sm">
+                        — {item.subtitle}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ) : (
