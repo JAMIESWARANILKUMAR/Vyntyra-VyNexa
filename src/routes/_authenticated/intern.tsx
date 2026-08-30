@@ -178,6 +178,33 @@ function InternDashboard() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
+  // ── Multilingual Welcome Greeting Rotator (5 second delay) ──
+  const MULTILINGUAL_GREETINGS = [
+    { lang: "English", text: "Welcome Back" },
+    { lang: "Telugu", text: "సుస్వాగతం" },
+    { lang: "Kannada", text: "ಸುಸ್ವಾಗತ" },
+    { lang: "Hindi", text: "पुनः स्वागत है" },
+    { lang: "Bengali", text: "স্বাগতম" },
+    { lang: "Tamil", text: "மீண்டும் வருக" },
+    { lang: "Malayalam", text: "വീണ്ടും സ്വാഗതം" },
+    { lang: "Marathi", text: "पुनश्च स्वागत" },
+    { lang: "Gujarati", text: "સાદર સ્વાગત છે" },
+  ];
+  const [greetingIndex, setGreetingIndex] = useState(0);
+  const [greetingFade, setGreetingFade] = useState(true);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setGreetingFade(false);
+      setTimeout(() => {
+        setGreetingIndex((prev) => (prev + 1) % MULTILINGUAL_GREETINGS.length);
+        setGreetingFade(true);
+      }, 400);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentGatewaySelected, setPaymentGatewaySelected] = useState<"razorpay" | "payu" | "kotak" | null>("payu");
   const [paymentModalTab, setPaymentModalTab] = useState<"checkout" | "invoice" | "privacy" | "refunds">("checkout");
@@ -1297,17 +1324,17 @@ function InternDashboard() {
             </div>
 
             {/* Intern Profile Card inside Drawer */}
-            <div className="p-4 bg-white/95 border border-orange-200/80 shadow-lg shadow-orange-950/5 space-y-3">
+            <div className="p-4 bg-white/95 border border-amber-200/90 shadow-lg shadow-amber-950/5 space-y-3">
               <div className="flex items-center gap-3">
-                <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-12 w-12 ring-2 ring-emerald-500/40 shadow-md shrink-0" />
+                <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-12 w-12 ring-2 ring-amber-400/60 shadow-md shrink-0 text-slate-900" />
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-bold text-sm text-slate-900 truncate">{displayName}</h4>
-                  <p className="text-xs text-slate-500 truncate">{email}</p>
+                  <h4 className="font-extrabold text-sm text-slate-950 truncate">{displayName}</h4>
+                  <p className="text-xs text-slate-600 font-medium truncate">{email}</p>
                   <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                    <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+                    <span className="text-[9px] font-mono font-bold text-orange-700 bg-orange-100/90 border border-orange-300 px-2 py-0.5 rounded-md">
                       {profile?.intern_id || "VCS-INT-2026"}
                     </span>
-                    <span className="text-[9px] text-slate-300 bg-slate-800 px-2 py-0.5 rounded-md truncate max-w-[140px]">
+                    <span className="text-[9px] text-amber-950 bg-amber-100/70 border border-amber-300 px-2 py-0.5 rounded-md font-bold truncate max-w-[140px]">
                       {profile?.position || "Intern Associate"}
                     </span>
                   </div>
@@ -1315,11 +1342,11 @@ function InternDashboard() {
               </div>
 
               {/* Quick Actions Strip */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-amber-200/80">
                 {/* Clock In / Out */}
                 {todayAttendance ? (
                   todayAttendance.clock_out ? (
-                    <div className="px-2.5 py-2 rounded-xl bg-slate-900 text-center text-[10px] font-bold text-slate-400 border border-slate-800">
+                    <div className="px-2.5 py-2 rounded-xl bg-amber-100/70 text-center text-[10px] font-bold text-amber-950 border border-amber-200">
                       ✓ Shift Completed
                     </div>
                   ) : (
@@ -1331,9 +1358,9 @@ function InternDashboard() {
                         setMobileMenuOpen(false);
                       }}
                       disabled={isClocking}
-                      className="h-9 text-xs font-bold border-rose-500/40 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 w-full rounded-xl gap-1.5 cursor-pointer"
+                      className="h-9 text-xs font-bold border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 w-full rounded-xl gap-1.5 cursor-pointer"
                     >
-                      <Clock className="h-3.5 w-3.5 text-rose-400" /> Clock Out
+                      <Clock className="h-3.5 w-3.5 text-rose-600" /> Clock Out
                     </Button>
                   )
                 ) : (
@@ -1344,7 +1371,7 @@ function InternDashboard() {
                       setMobileMenuOpen(false);
                     }}
                     disabled={isClocking}
-                    className="h-9 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white w-full rounded-xl gap-1.5 shadow-md cursor-pointer"
+                    className="h-9 text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white w-full rounded-xl gap-1.5 shadow-md cursor-pointer"
                   >
                     <Clock className="h-3.5 w-3.5" /> Clock In
                   </Button>
@@ -1358,9 +1385,9 @@ function InternDashboard() {
                     setMobileMenuOpen(false);
                     setProfileModalOpen(true);
                   }}
-                  className="h-9 text-xs font-bold bg-slate-900 border-slate-700 text-slate-200 hover:bg-slate-800 rounded-xl gap-1.5 cursor-pointer"
+                  className="h-9 text-xs font-bold bg-amber-50/80 border-amber-300 text-amber-950 hover:bg-amber-100 rounded-xl gap-1.5 cursor-pointer"
                 >
-                  <User className="h-3.5 w-3.5 text-emerald-400" /> Settings
+                  <User className="h-3.5 w-3.5 text-orange-600" /> Settings
                 </Button>
               </div>
 
@@ -1369,13 +1396,13 @@ function InternDashboard() {
                 href="https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 hover:bg-emerald-900/50 transition-colors text-xs font-bold text-emerald-300"
+                className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 hover:bg-emerald-100/80 transition-colors text-xs font-bold text-emerald-950"
               >
                 <div className="flex items-center gap-2">
-                  <MessageCircle className="h-4 w-4 text-emerald-400" />
+                  <MessageCircle className="h-4 w-4 text-emerald-600" />
                   <span>Join Official WhatsApp Group</span>
                 </div>
-                <ExternalLink className="h-3.5 w-3.5 text-emerald-400" />
+                <ExternalLink className="h-3.5 w-3.5 text-emerald-600" />
               </a>
             </div>
 
@@ -1387,7 +1414,7 @@ function InternDashboard() {
 
                 return (
                   <div key={categoryName} className="space-y-1.5">
-                    <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-500 px-2">
+                    <h5 className="text-[10px] font-black uppercase tracking-wider text-amber-950 px-2">
                       {categoryName}
                     </h5>
                     <div className="space-y-1">
@@ -1404,26 +1431,26 @@ function InternDashboard() {
                             }}
                             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                               isActive
-                                ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-950/60 border border-emerald-400/40"
+                                ? "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20 border border-amber-400/50"
                                 : tab.isPrimary
-                                ? "bg-amber-950/40 text-amber-300 border border-amber-500/30 hover:bg-amber-900/50"
-                                : "bg-slate-900/60 text-slate-300 border border-slate-800/80 hover:bg-slate-800 hover:text-white"
+                                ? "bg-amber-100/80 text-amber-950 border border-amber-300 hover:bg-amber-200/80"
+                                : "bg-white text-slate-800 border border-amber-200/80 hover:bg-amber-50 hover:text-orange-700 shadow-xs"
                             }`}
                           >
                             <div className="flex items-center gap-2.5">
-                              <div className={`p-1.5 rounded-lg ${isActive ? "bg-white/20" : "bg-slate-800 text-slate-400"}`}>
-                                <TabIcon className={`h-4 w-4 ${isActive ? "text-white" : tab.isPrimary ? "text-amber-400" : "text-slate-300"}`} />
+                              <div className={`p-1.5 rounded-lg ${isActive ? "bg-white/20" : "bg-amber-100/70 text-amber-900 border border-amber-200"}`}>
+                                <TabIcon className={`h-4 w-4 ${isActive ? "text-white" : tab.isPrimary ? "text-orange-600" : "text-amber-900"}`} />
                               </div>
                               <span className="tracking-tight">{tab.label}</span>
                             </div>
 
                             <div className="flex items-center gap-1.5">
                               {tab.isPrimary && tab.count > 0 && (
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black ${isActive ? "bg-slate-950 text-amber-400" : "bg-amber-500 text-slate-950"}`}>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black ${isActive ? "bg-white text-orange-600" : "bg-orange-500 text-white"}`}>
                                   {tab.count}
                                 </span>
                               )}
-                              <ChevronRight className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
+                              <ChevronRight className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-amber-800"}`} />
                             </div>
                           </button>
                         );
@@ -1435,23 +1462,22 @@ function InternDashboard() {
             </div>
 
             {/* Drawer Footer */}
-            <div className="p-4 border-t border-slate-800/80 bg-[#060912] space-y-3">
+            <div className="p-4 border-t border-amber-200/80 bg-[#FAF5EC] space-y-3">
               <Button
                 variant="ghost"
                 onClick={() => {
                   setMobileMenuOpen(false);
                   handleSignOut();
                 }}
-                className="w-full h-10 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-300 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
+                className="w-full h-10 rounded-xl bg-rose-100 hover:bg-rose-200 border border-rose-300 text-rose-800 font-extrabold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
               >
-                <LogOut className="h-4 w-4 text-rose-400" />
+                <LogOut className="h-4 w-4 text-rose-600" />
                 <span>Sign Out from Portal</span>
               </Button>
-              <p className="text-center text-[10px] text-slate-500 font-medium">
+              <p className="text-center text-[10px] text-amber-900/70 font-medium">
                 Vyntyra Consultancy Services · Project VyNexa Directorate
               </p>
             </div>
-
           </div>
         </div>
       )}
@@ -1486,8 +1512,17 @@ function InternDashboard() {
                     <span className="h-2 w-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
                     <span>Active Internship Sprint Workspace</span>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-                    Welcome Back, <span className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 bg-clip-text text-transparent">{profile?.full_name || displayName}</span> 👋
+                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex flex-wrap items-center gap-2">
+                    <span className={`inline-flex items-center gap-2 transition-all duration-500 ease-out transform ${greetingFade ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-2 scale-95"}`}>
+                      <span className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 bg-clip-text text-transparent font-extrabold">
+                        {MULTILINGUAL_GREETINGS[greetingIndex].text}
+                      </span>
+                      <span className="text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-950 border border-amber-300 shadow-xs">
+                        {MULTILINGUAL_GREETINGS[greetingIndex].lang}
+                      </span>
+                    </span>
+                    <span className="text-slate-800">,</span>
+                    <span className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 bg-clip-text text-transparent">{profile?.full_name || displayName}</span> 👋
                   </h1>
                   <p className="text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">
                     Track your daily shift timecard, sprint task milestones, assigned mentor syncs, and official credential documents in one unified portal.
@@ -2980,29 +3015,29 @@ function InternDashboard() {
 
               {/* Official Mentor Banner */}
               {mentor && (
-                <div className="p-5 bg-indigo-950/30 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+                <div className="p-5 bg-gradient-to-r from-[#FFFDF9] via-[#FAF5EC] to-[#FFFDF9] border-b border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs shadow-inner">
                   <div className="flex items-center gap-3.5">
-                    <div className="h-11 w-11 rounded-2xl bg-indigo-600 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-md">
+                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-md shadow-orange-500/20 border border-amber-400/50">
                       {mentor.full_name?.slice(0, 2).toUpperCase() || "VM"}
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-white text-sm">{mentor.full_name}</span>
-                        <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-950 border border-indigo-500/40 text-indigo-300">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-black text-slate-950 text-base">{mentor.full_name}</span>
+                        <span className="text-[10px] uppercase font-black tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100/90 border border-amber-300 text-amber-950 shadow-xs">
                           {mentor.is_lead ? "Official Lead Mentor" : "Assigned Mentor"}
                         </span>
                       </div>
-                      <div className="text-slate-400 text-[11px] mt-0.5 flex items-center gap-3 flex-wrap">
-                        <span>{mentor.position || mentor.department || "Lead Technical Director"}</span>
-                        <span>•</span>
-                        <a href={`mailto:${mentor.email}`} className="text-indigo-400 hover:underline flex items-center gap-1">
-                          <Mail className="h-3 w-3" /> {mentor.email}
+                      <div className="text-slate-700 text-xs mt-1 flex items-center gap-3 flex-wrap font-medium">
+                        <span className="font-extrabold text-orange-700">{mentor.position || mentor.department || "Lead Technical Director"}</span>
+                        <span className="text-amber-300">•</span>
+                        <a href={`mailto:${mentor.email}`} className="text-blue-700 hover:text-blue-900 font-bold underline decoration-blue-300 flex items-center gap-1">
+                          <Mail className="h-3.5 w-3.5 text-blue-600" /> {mentor.email}
                         </a>
                         {mentor.phone_number && (
                           <>
-                            <span>•</span>
-                            <a href={`tel:${mentor.phone_number}`} className="text-indigo-400 hover:underline flex items-center gap-1">
-                              <Phone className="h-3 w-3" /> {mentor.phone_number}
+                            <span className="text-amber-300">•</span>
+                            <a href={`tel:${mentor.phone_number}`} className="text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1">
+                              <Phone className="h-3.5 w-3.5 text-emerald-600" /> {mentor.phone_number}
                             </a>
                           </>
                         )}
@@ -3013,8 +3048,7 @@ function InternDashboard() {
                   <div className="flex items-center gap-2 shrink-0">
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="h-8 text-xs border-indigo-500/40 bg-indigo-950/60 text-indigo-300 hover:bg-indigo-900 font-bold gap-1 cursor-pointer"
+                      className="h-9 text-xs border border-emerald-500/50 bg-emerald-600 hover:bg-emerald-700 text-white font-black gap-1.5 shadow-md shadow-emerald-500/20 rounded-xl cursor-pointer"
                       onClick={() => {
                         const defaultGroup = "https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5";
                         const msg = `Hello Mentor ${mentor.full_name}!\n\nI have a question regarding my internship tasks on Project VyNexa.\n\nFrom: ${displayName} (${profile?.intern_id || "Intern"})\nEmail: ${profile?.email}`;
@@ -3023,7 +3057,7 @@ function InternDashboard() {
                         window.open(url, "_blank");
                       }}
                     >
-                      <MessageCircle className="h-3.5 w-3.5 text-emerald-400" /> WhatsApp Mentor
+                      <MessageCircle className="h-4 w-4 text-white" /> WhatsApp Mentor
                     </Button>
                   </div>
                 </div>
