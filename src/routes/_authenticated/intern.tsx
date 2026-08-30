@@ -782,10 +782,28 @@ function InternDashboard() {
   );
   const submittedTasks = myTasks.filter((t: any) => (t.status === "submitted" || t.status === "under_review") && !completedTasks.some((c: any) => c.id === t.id));
   const pendingTasks = inProgressTasks;
-  const earnedCredits = completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
-  const totalAssignedCredits = myTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
-  const totalPoints = earnedCredits; // for backwards compatibility
-  const progress = totalAssignedCredits > 0 ? Math.round((earnedCredits / totalAssignedCredits) * 100) : 0;
+  const isAug16CohortIntern = Boolean(
+    (profile?.created_at && new Date(profile.created_at).getTime() <= new Date("2026-08-18T23:59:59Z").getTime()) ||
+    (profile?.intern_id && (profile.intern_id.includes("08/26") || profile.intern_id.includes("VYNT-08")))
+  );
+
+  const baseAug16Credits = isAug16CohortIntern ? 10 : 0;
+  const deliverableCredits = (deliverables || []).reduce((acc: number, d: any) => acc + (d.credits || 10), 0);
+  const profileCredits = (profile as any)?.credits || (profile as any)?.earned_credits || (profile as any)?.points || 0;
+  const taskEarnedCredits = completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
+
+  const earnedCredits = Math.max(
+    taskEarnedCredits,
+    deliverableCredits,
+    profileCredits,
+    deliverables.length > 0 ? deliverables.length * 10 : 0,
+    baseAug16Credits
+  );
+
+  const rawAssignedCredits = myTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
+  const totalAssignedCredits = Math.max(rawAssignedCredits, earnedCredits, myTasks.length > 0 ? myTasks.length * 10 : earnedCredits);
+  const totalPoints = earnedCredits;
+  const progress = totalAssignedCredits > 0 ? Math.round((earnedCredits / totalAssignedCredits) * 100) : (earnedCredits > 0 ? 100 : 0);
 
   const fetchDashboardSettings = useServerFn(getDashboardSettings);
   const dashboardSettingsQ = useQuery({ queryKey: ["dashboard-settings"], queryFn: () => fetchDashboardSettings() });
