@@ -1689,35 +1689,39 @@ function InternDashboard() {
             </div>
 
             {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
-            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-6 text-slate-950 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-amber-400 relative overflow-hidden">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-slate-950/20 backdrop-blur-md flex items-center justify-center text-slate-950 shrink-0 shadow-inner">
+            <div className="bg-gradient-to-r from-[#0F172A] via-[#1C263B] to-[#0F172A] rounded-3xl p-6 text-white shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-amber-500/30 relative overflow-hidden backdrop-blur-2xl">
+              <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-amber-500/10 blur-2xl" />
+              <div className="flex items-center gap-4 relative z-10">
+                <div className="h-12 w-12 rounded-2xl bg-amber-500/15 border border-amber-500/40 backdrop-blur-md flex items-center justify-center text-amber-400 shrink-0 shadow-lg shadow-amber-950/40">
                   <ClipboardList className="h-6 w-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-950">My Tasks &amp; Sprint Deliverables Hub</h3>
-                    <span className="px-2.5 py-0.5 rounded-full bg-slate-950 text-white text-[10px] font-black uppercase tracking-wide">
+                    <h3 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
+                      My Tasks &amp; Sprint Deliverables Hub
+                      <Sparkles className="h-4 w-4 text-amber-400 animate-pulse" />
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-950/80 border border-amber-500/40 text-amber-300 text-[10px] font-black uppercase tracking-wide">
                       {pendingTasks.length} Pending
                     </span>
                     {inProgressTasks.length > 0 && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-200 text-[10px] font-black uppercase tracking-wide">
+                      <span className="px-2.5 py-0.5 rounded-full bg-blue-950/80 border border-blue-500/40 text-blue-200 text-[10px] font-black uppercase tracking-wide">
                         {inProgressTasks.length} In Progress
                       </span>
                     )}
                   </div>
-                  <p className="text-xs font-semibold text-slate-950/80 mt-0.5">
+                  <p className="text-xs font-medium text-slate-300 mt-1">
                     Find your sprint tasks, claim from open pool tasks, and submit repository/PR links for mentor review.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0">
+              <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0 relative z-10">
                 <Button
                   onClick={() => setActiveTab("tasks")}
-                  className="w-full md:w-auto bg-slate-950 hover:bg-black text-white font-bold text-xs h-10 px-6 rounded-2xl shadow-xl gap-2 cursor-pointer"
+                  className="w-full md:w-auto bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs h-10 px-6 rounded-2xl shadow-xl shadow-amber-950/50 gap-2 cursor-pointer border border-amber-300/40 transition-all hover:scale-[1.02]"
                 >
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-slate-950" />
                   Open Tasks Workspace &rarr;
                 </Button>
               </div>
