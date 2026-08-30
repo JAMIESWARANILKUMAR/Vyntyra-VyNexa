@@ -933,43 +933,43 @@ function InternDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-slate-100 font-sans selection:bg-emerald-600 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#0B132B] text-slate-100 font-sans selection:bg-blue-600 selection:text-white relative overflow-x-hidden">
       
-      {/* Ambient Luxury Glow Lights */}
+      {/* Corporate Standard Ambient Glow Mesh */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-emerald-600/10 rounded-full blur-[140px]" />
-        <div className="absolute top-1/4 -right-32 w-[600px] h-[600px] bg-teal-600/10 rounded-full blur-[140px]" />
-        <div className="absolute -bottom-40 left-1/3 w-[700px] h-[700px] bg-indigo-600/8 rounded-full blur-[160px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:28px_28px] opacity-40" />
+        <div className="absolute -top-32 -left-32 w-[700px] h-[700px] bg-blue-600/10 rounded-full blur-[160px]" />
+        <div className="absolute top-1/3 -right-32 w-[700px] h-[700px] bg-indigo-600/10 rounded-full blur-[160px]" />
+        <div className="absolute -bottom-40 left-1/4 w-[800px] h-[800px] bg-slate-800/20 rounded-full blur-[180px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b18_1px,transparent_1px),linear-gradient(to_bottom,#1e293b18_1px,transparent_1px)] bg-[size:4rem_4rem]" />
       </div>
 
-      {/* Luxury Obsidian Top Header */}
-      <header className="sticky top-0 z-40 bg-[#090D16]/95 backdrop-blur-2xl border-b border-slate-800/80 shadow-2xl shadow-black/60 relative">
+      {/* Corporate Executive Top Header */}
+      <header className="sticky top-0 z-40 bg-[#0F172A]/95 backdrop-blur-2xl border-b border-slate-800/80 shadow-2xl shadow-black/60 relative">
         <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Logo & Portal Badge */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0 min-w-0">
             <div className="relative group shrink-0">
-              <div className="absolute -inset-1 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl blur-xs opacity-60 group-hover:opacity-100 transition duration-300" />
+              <div className="absolute -inset-1 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl blur-xs opacity-60 group-hover:opacity-100 transition duration-300" />
               <img 
                 src="/favicon.png" 
                 alt="VyNexa / Vyntyra Logo" 
-                className="relative h-9 w-9 sm:h-10 sm:w-10 object-contain rounded-xl bg-slate-950 p-1 border border-emerald-400/50 shadow-lg shadow-emerald-950/60 shrink-0"
+                className="relative h-9 w-9 sm:h-10 sm:w-10 object-contain rounded-xl bg-slate-950 p-1 border border-blue-400/50 shadow-lg shadow-blue-950/60 shrink-0"
                 onError={(e) => {
                   (e.currentTarget as HTMLElement).style.display = "none";
                   const fallback = e.currentTarget.nextElementSibling as HTMLElement;
                   if (fallback) fallback.style.display = "flex";
                 }}
               />
-              <div className="hidden relative h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-xl shadow-lg shadow-emerald-950/60 border border-emerald-400/40 items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
+              <div className="hidden relative h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl shadow-lg shadow-blue-950/60 border border-blue-400/40 items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
                 V
               </div>
             </div>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-xs sm:text-sm font-bold text-white tracking-tight leading-tight truncate">Vyntyra Connect</span>
-                <span className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="bg-blue-500/20 border border-blue-500/40 text-blue-300 text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
                   Intern Associate
                 </span>
               </div>
@@ -990,7 +990,7 @@ function InternDashboard() {
                   onClick={() => setActiveTab(t.id as any)}
                   className={`shrink-0 px-3 py-1.5 text-xs font-bold rounded-xl transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
                     isActive 
-                      ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md border border-emerald-400/40" 
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md border border-blue-400/40" 
                       : t.isPrimary
                       ? "text-amber-300 bg-amber-950/50 hover:bg-amber-900/60 border border-amber-500/30"
                       : "text-slate-400 hover:text-white hover:bg-slate-800/60"
@@ -1016,7 +1016,7 @@ function InternDashboard() {
               onClick={() => setActiveTab("tasks")}
               className={`h-8 px-2 sm:px-3 text-xs font-bold transition-all shadow-md gap-1 sm:gap-1.5 cursor-pointer ${
                 activeTab === "tasks"
-                  ? "bg-emerald-600 text-white border border-emerald-400/40"
+                  ? "bg-blue-600 text-white border border-blue-400/40"
                   : "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 border border-amber-400/80"
               }`}
               title="Tasks & Assignments"
@@ -1451,19 +1451,20 @@ function InternDashboard() {
         {activeTab === "overview" && (
           <>
             {/* ─── LUXURY HERO BANNER & REAL-TIME PERFORMANCE MATRIX ─── */}
-            <div className="relative overflow-hidden rounded-3xl border border-slate-800/80 bg-gradient-to-r from-[#0B0F19] via-[#0E1526] to-[#0A111F] p-6 sm:p-8 shadow-2xl backdrop-blur-2xl">
+            {/* ─── CORPORATE EXECUTIVE HERO BANNER & PERFORMANCE MATRIX ─── */}
+            <div className="relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-r from-[#0F172A] via-[#1C263B] to-[#0F172A] p-6 sm:p-8 shadow-2xl backdrop-blur-2xl">
               {/* Background ambient glow accents */}
-              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-20 left-10 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl" />
+              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-600/10 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-20 left-10 h-64 w-64 rounded-full bg-indigo-600/10 blur-3xl" />
               
               <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                 <div className="space-y-2 max-w-2xl">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-950/60 px-3 py-1 text-[11px] font-bold text-emerald-300 backdrop-blur-md shadow-xs">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                  <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-950/70 px-3 py-1 text-[11px] font-bold text-blue-300 backdrop-blur-md shadow-xs">
+                    <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
                     <span>Active Internship Sprint Workspace</span>
                   </div>
                   <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                    Welcome Back, <span className="bg-gradient-to-r from-emerald-300 via-teal-200 to-emerald-400 bg-clip-text text-transparent">{profile?.full_name || displayName}</span> 👋
+                    Welcome Back, <span className="bg-gradient-to-r from-blue-300 via-sky-200 to-indigo-300 bg-clip-text text-transparent">{profile?.full_name || displayName}</span> 👋
                   </h1>
                   <p className="text-xs sm:text-sm font-medium text-slate-300 leading-relaxed">
                     Track your daily shift timecard, sprint task milestones, assigned mentor syncs, and official credential documents in one unified portal.
@@ -1474,7 +1475,7 @@ function InternDashboard() {
                 <div className="flex items-center gap-3 flex-wrap shrink-0 w-full lg:w-auto">
                   <Button
                     onClick={() => setActiveTab("tasks")}
-                    className="flex-1 lg:flex-none bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs h-11 px-5 rounded-2xl shadow-lg shadow-emerald-950/60 gap-2 cursor-pointer border border-emerald-400/30"
+                    className="flex-1 lg:flex-none bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs h-11 px-5 rounded-2xl shadow-lg shadow-blue-950/60 gap-2 cursor-pointer border border-blue-400/30 transition-all hover:scale-[1.02]"
                   >
                     <ClipboardList className="h-4 w-4" />
                     My Tasks ({myTasks.length})
@@ -1495,15 +1496,15 @@ function InternDashboard() {
                 <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-2 shadow-inner">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <Target className="h-3.5 w-3.5 text-emerald-400" />
+                      <Target className="h-3.5 w-3.5 text-blue-400" />
                       Sprint Progress
                     </span>
-                    <span className="font-mono font-bold text-emerald-400 text-xs">{progress}%</span>
+                    <span className="font-mono font-bold text-blue-400 text-xs">{progress}%</span>
                   </div>
                   <div className="text-xl font-black text-white font-mono">{earnedCredits} / {totalAssignedCredits} <span className="text-xs text-slate-400 font-sans font-medium">Credits</span></div>
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-800/80 h-2 rounded-full overflow-hidden border border-slate-700/50">
-                    <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(52,211,153,0.5)]" style={{ width: `${Math.max(5, progress)}%` }} />
+                    <div className="bg-gradient-to-r from-blue-500 via-sky-400 to-indigo-500 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" style={{ width: `${Math.max(5, progress)}%` }} />
                   </div>
                 </div>
 
@@ -1561,21 +1562,21 @@ function InternDashboard() {
             </div>
 
             {/* ─── INTERN PROFILE CARD ─── */}
-            <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl overflow-hidden">
+            <div className="rounded-3xl border border-slate-800/80 bg-[#0F172A]/90 shadow-xl backdrop-blur-xl overflow-hidden">
               {/* Card header */}
-              <div className="bg-gradient-to-r from-[#0C101B] via-[#0E1527] to-emerald-950/60 px-6 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-5 border-b border-slate-800/80">
+              <div className="bg-gradient-to-r from-[#0F172A] via-[#1C263B] to-[#0F172A] px-6 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-5 border-b border-slate-800/80">
                 <div className="flex items-center gap-5 min-w-0">
                   <div className="relative shrink-0 group">
-                    <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 rounded-2xl ring-2 ring-emerald-500/40 shadow-2xl text-2xl" />
+                    <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 rounded-2xl ring-2 ring-blue-500/40 shadow-2xl text-2xl" />
                     <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl cursor-pointer text-white">
                       <span className="text-[10px] font-bold uppercase tracking-wider">Upload</span>
                       <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.webp" onChange={handleImageUpload} />
                     </label>
-                    <span className="absolute -bottom-1 -right-1 bg-emerald-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-slate-900 shadow">INTERN</span>
+                    <span className="absolute -bottom-1 -right-1 bg-blue-600 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-slate-900 shadow">INTERN</span>
                   </div>
                   <div className="min-w-0">
                     <div className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">{profile?.full_name || displayName}</div>
-                    <div className="text-emerald-400 text-xs font-mono font-bold mt-0.5 flex items-center gap-2">
+                    <div className="text-blue-400 text-xs font-mono font-bold mt-0.5 flex items-center gap-2">
                       <span>{profile?.intern_id || "VYN-INT-PRO"}</span>
                       <span className="h-1 w-1 rounded-full bg-slate-500" />
                       <span className="text-slate-400 font-sans font-medium">{profile?.department || "Associate Intern"}</span>
@@ -1586,7 +1587,7 @@ function InternDashboard() {
 
                 {mentor && (
                   <div className="shrink-0 text-left sm:text-right bg-slate-900/80 rounded-2xl p-3.5 border border-slate-700/60 backdrop-blur-md w-full sm:w-auto shadow-inner">
-                    <div className="text-[10px] text-emerald-400 font-black uppercase tracking-wider mb-0.5 flex items-center sm:justify-end gap-1.5">
+                    <div className="text-[10px] text-blue-400 font-black uppercase tracking-wider mb-0.5 flex items-center sm:justify-end gap-1.5">
                       <Sparkles className="h-3 w-3" /> Assigned Mentor
                     </div>
                     <div className="text-sm font-bold text-white">{mentor.full_name}</div>
@@ -1646,9 +1647,7 @@ function InternDashboard() {
                       >
                         <FileText className="h-3.5 w-3.5 text-indigo-400" />
                         Download Offer Letter
-                        {!docsQ.data?.offerLetterUrl && <span className="ml-1 opacity-70">(Not Ready)</span>}
                       </a>
-
                       {docsQ.data?.nocDownloadEnabled && (
                         <a
                           href={docsQ.data?.nocUrl || "#"}
@@ -1656,20 +1655,20 @@ function InternDashboard() {
                           rel="noopener noreferrer"
                           className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             docsQ.data?.nocUrl
-                              ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-950/50"
+                              ? "bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-950/50"
                               : "bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed pointer-events-none"
                           }`}
                           onClick={(e) => { if (!docsQ.data?.nocUrl) e.preventDefault(); }}
                         >
-                          <Award className="h-3.5 w-3.5 text-emerald-200" />
+                          <Award className="h-3.5 w-3.5 text-blue-200" />
                           Download NOC Certificate
                           {!docsQ.data?.nocUrl && <span className="ml-1 opacity-70">(Not Ready)</span>}
                         </a>
                       )}
 
                       {profile?.exam_fee_paid && (
-                        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/60 text-emerald-300 border border-emerald-500/40 shadow-xs">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-blue-950/60 text-blue-300 border border-blue-500/40 shadow-xs">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-blue-400" />
                           <span>Fee Paid · Ref: <strong className="font-mono">{profile.payment_reference_no || `TXN-${(profile.id || "").slice(0, 6).toUpperCase()}`}</strong> ({profile.payment_mode || "Online"})</span>
                         </div>
                       )}
@@ -1728,10 +1727,10 @@ function InternDashboard() {
             </div>
 
             {/* ─── ATTENDANCE TIMECARD WIDGET ─── */}
-            <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-7 shadow-xl backdrop-blur-xl space-y-6">
+            <div className="rounded-3xl border border-slate-800/80 bg-[#0F172A]/90 p-6 sm:p-7 shadow-xl backdrop-blur-xl space-y-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
                 <div className="flex items-center gap-3.5">
-                  <div className="h-11 w-11 rounded-2xl bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-inner">
+                  <div className="h-11 w-11 rounded-2xl bg-blue-950/60 text-blue-400 border border-blue-500/30 flex items-center justify-center shadow-inner">
                     <Clock className="h-5 w-5" />
                   </div>
                   <div>
@@ -1745,7 +1744,7 @@ function InternDashboard() {
                     todayAttendance
                       ? todayAttendance.clock_out
                         ? "bg-slate-800 text-slate-300 border border-slate-700"
-                        : "bg-emerald-950/80 text-emerald-300 border border-emerald-500/50 animate-pulse"
+                        : "bg-blue-950/80 text-blue-300 border border-blue-500/50 animate-pulse"
                       : "bg-amber-950/60 text-amber-300 border border-amber-500/40"
                   }`}>
                     Status: {todayAttendance ? (todayAttendance.clock_out ? "Completed" : "Active Shift") : "Offline"}
