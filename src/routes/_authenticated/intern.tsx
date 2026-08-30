@@ -1817,14 +1817,14 @@ function InternDashboard() {
             </div>
 
             {/* Domain Workspace Auto-Detected Header Strip */}
-            <div className="rounded-2xl border border-slate-800/80 bg-[#0E131F]/90 p-4 flex items-center justify-between gap-4 shadow-xl backdrop-blur-xl flex-wrap">
+            <div className="rounded-2xl border border-orange-200/80 bg-white/95 p-4 flex items-center justify-between gap-4 shadow-xl shadow-orange-950/5 backdrop-blur-xl flex-wrap">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 flex items-center justify-center font-black text-xs shadow-inner">
+                <div className="h-9 w-9 rounded-xl bg-orange-100 border border-orange-300 text-orange-800 flex items-center justify-center font-black text-xs shadow-xs">
                   {selectedDomain === "management" ? "MBA" : selectedDomain === "non_tech" ? "CRM" : "DEV"}
                 </div>
                 <div>
-                  <div className="text-[10px] font-black uppercase tracking-wider text-emerald-400">Assigned Domain Workspace</div>
-                  <div className="text-xs font-bold text-white">
+                  <div className="text-[10px] font-black uppercase tracking-wider text-orange-600">Assigned Domain Workspace</div>
+                  <div className="text-xs font-black text-slate-900">
                     {selectedDomain === "management" 
                       ? "MBA / BBA Business Management & Corporate Operations" 
                       : selectedDomain === "non_tech" 
@@ -1836,11 +1836,11 @@ function InternDashboard() {
 
               {/* View Switcher Dropdown */}
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-slate-400 font-medium">Switch View:</span>
+                <span className="text-[11px] text-slate-600 font-bold">Switch View:</span>
                 <select
                   value={selectedDomain}
                   onChange={(e: any) => setSelectedDomain(e.target.value)}
-                  className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-bold text-slate-200 outline-none focus:border-emerald-500"
+                  className="rounded-xl border border-orange-200 bg-white px-3 py-1.5 text-xs font-black text-slate-900 outline-none focus:border-orange-500 shadow-xs"
                 >
                   <option value="management">MBA / BBA Management & Operations</option>
                   <option value="tech">Tech & Software Engineering</option>
@@ -1898,21 +1898,21 @@ function InternDashboard() {
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {[
-                { icon: <ClipboardList className="h-5 w-5 text-amber-400" />, label: "Pending Tasks", value: pendingTasks.length, border: "border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.15)]", bg: "bg-gradient-to-br from-amber-950/40 via-[#0E131F] to-[#0A0D17]" },
-                { icon: <CheckCircle2 className="h-5 w-5 text-emerald-400" />, label: "Completed", value: completedTasks.length, border: "border-emerald-500/40 shadow-[0_0_15px_rgba(52,211,153,0.15)]", bg: "bg-gradient-to-br from-emerald-950/40 via-[#0E131F] to-[#0A0D17]" },
-                { icon: <CreditCard className="h-5 w-5 text-indigo-400" />, label: "Credits Score", value: `${earnedCredits} / ${totalAssignedCredits}`, border: "border-indigo-500/40 shadow-[0_0_15px_rgba(99,102,241,0.15)]", bg: "bg-gradient-to-br from-indigo-950/40 via-[#0E131F] to-[#0A0D17]" },
-                { icon: <Flame className="h-5 w-5 text-orange-400 animate-pulse" />, label: "Day Streak", value: `${dayStreak} Days`, border: "border-orange-500/40 shadow-[0_0_15px_rgba(249,115,22,0.15)]", bg: "bg-gradient-to-br from-orange-950/40 via-[#0E131F] to-[#0A0D17]" },
-                { icon: <Video className="h-5 w-5 text-blue-400" />, label: "Meetings", value: meetings.filter(m => new Date(m.scheduled_at) >= new Date()).length, border: "border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.15)]", bg: "bg-gradient-to-br from-blue-950/40 via-[#0E131F] to-[#0A0D17]" },
-                { icon: <BookOpen className="h-5 w-5 text-purple-400" />, label: "Resources", value: resources.length, border: "border-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.15)]", bg: "bg-gradient-to-br from-purple-950/40 via-[#0E131F] to-[#0A0D17]" },
+                { icon: <ClipboardList className="h-5 w-5 text-orange-600" />, label: "Pending Tasks", value: pendingTasks.length, border: "border-orange-200/80", bg: "bg-white" },
+                { icon: <CheckCircle2 className="h-5 w-5 text-emerald-600" />, label: "Completed", value: completedTasks.length, border: "border-orange-200/80", bg: "bg-white" },
+                { icon: <CreditCard className="h-5 w-5 text-orange-600" />, label: "Credits Score", value: `${earnedCredits} / ${totalAssignedCredits}`, border: "border-orange-200/80", bg: "bg-white" },
+                { icon: <Flame className="h-5 w-5 text-amber-500 animate-pulse" />, label: "Day Streak", value: `${dayStreak} Days`, border: "border-orange-200/80", bg: "bg-white" },
+                { icon: <Video className="h-5 w-5 text-orange-600" />, label: "Meetings", value: meetings.filter(m => new Date(m.scheduled_at) >= new Date()).length, border: "border-orange-200/80", bg: "bg-white" },
+                { icon: <BookOpen className="h-5 w-5 text-orange-600" />, label: "Resources", value: resources.length, border: "border-orange-200/80", bg: "bg-white" },
               ].map((s, i) => (
-                <div key={i} className={`rounded-3xl border ${s.border} ${s.bg} p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-2xl backdrop-blur-2xl transition-all duration-300 hover:scale-[1.02]`}>
+                <div key={i} className={`rounded-3xl border ${s.border} ${s.bg} p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-md shadow-orange-950/5 backdrop-blur-2xl transition-all duration-300 hover:scale-[1.02]`}>
                   <div className="flex items-center justify-between">
-                    <div className="h-10 w-10 rounded-2xl bg-slate-950/80 border border-slate-700/60 flex items-center justify-center shadow-inner shrink-0">{s.icon}</div>
-                    <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-slate-900/80 px-2 py-0.5 rounded-full border border-slate-800">SYNC</span>
+                    <div className="h-10 w-10 rounded-2xl bg-orange-50 border border-orange-200 flex items-center justify-center shadow-xs shrink-0">{s.icon}</div>
+                    <span className="text-[9px] font-black uppercase tracking-wider text-orange-800 bg-orange-100 px-2 py-0.5 rounded-full border border-orange-300">SYNC</span>
                   </div>
                   <div>
-                    <div className="text-2xl font-black text-white font-mono tracking-tight">{s.value}</div>
-                    <div className="text-[10px] text-slate-400 uppercase tracking-wider font-extrabold mt-0.5 truncate">{s.label}</div>
+                    <div className="text-2xl font-black text-slate-900 font-mono tracking-tight">{s.value}</div>
+                    <div className="text-[10px] text-slate-600 uppercase tracking-wider font-extrabold mt-0.5 truncate">{s.label}</div>
                   </div>
                 </div>
               ))}
@@ -1921,7 +1921,7 @@ function InternDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Calendar */}
               <div className="lg:col-span-1">
-                <h2 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-emerald-400" />Calendar</h2>
+                <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 mb-3 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-orange-600" />Calendar</h2>
                 <MonthlyCalendar events={[...schedules, ...meetings]} holidays={holidaysQ.data || []} />
               </div>
 
@@ -1929,63 +1929,63 @@ function InternDashboard() {
                 {/* My Tasks */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                      <ClipboardList className="h-4 w-4 text-amber-400" />
+                    <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2">
+                      <ClipboardList className="h-4 w-4 text-orange-600" />
                       My Assignments ({myTasks.length})
                     </h2>
                     <Button 
                       variant="link" 
                       onClick={() => setActiveTab("tasks")} 
-                      className="text-xs font-bold text-amber-400 hover:text-amber-300 p-0 h-auto gap-1 cursor-pointer"
+                      className="text-xs font-bold text-orange-600 hover:text-orange-700 p-0 h-auto gap-1 cursor-pointer"
                     >
                       View All &amp; Task Pool &rarr;
                     </Button>
                   </div>
-                  <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl overflow-hidden">
+                  <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl overflow-hidden">
                     {tasksQ.isLoading ? (
-                      <div className="p-8 flex items-center justify-center gap-2 text-slate-400 text-sm"><Loader2 className="h-4 w-4 animate-spin" />Loading...</div>
+                      <div className="p-8 flex items-center justify-center gap-2 text-slate-600 text-sm font-medium"><Loader2 className="h-4 w-4 animate-spin text-orange-500" />Loading...</div>
                     ) : tasks.length === 0 ? (
-                      <div className="p-8 text-center text-slate-400 text-sm space-y-2">
+                      <div className="p-8 text-center text-slate-600 text-sm space-y-2 font-medium">
                         <p>No tasks assigned yet.</p>
                         <Button 
                           size="sm" 
                           variant="outline" 
                           onClick={() => setActiveTab("tasks")}
-                          className="text-xs font-bold text-amber-300 bg-amber-950/50 border-amber-500/40 cursor-pointer"
+                          className="text-xs font-black text-orange-900 bg-orange-100 border-orange-300 cursor-pointer shadow-xs"
                         >
                           Check Open Task Pool
                         </Button>
                       </div>
                     ) : (
-                      <div className="divide-y divide-slate-800/80">
+                      <div className="divide-y divide-orange-200/60">
                         {myTasks.slice(0, 4).map((task: any) => {
                           const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
                           return (
                             <div 
                               key={task.id} 
                               onClick={() => setActiveTab("tasks")}
-                              className="p-4 flex items-center justify-between gap-4 hover:bg-slate-800/40 transition-colors cursor-pointer"
+                              className="p-4 flex items-center justify-between gap-4 hover:bg-orange-50/50 transition-colors cursor-pointer"
                               title="Click to view full details and submit deliverable"
                             >
                               <div className="flex items-center gap-3 min-w-0">
                                 <span className={`h-2 w-2 rounded-full shrink-0 ${s.dot}`} />
                                 <div className="min-w-0">
-                                  <div className="font-bold text-sm truncate text-white">{task.title}</div>
-                                  {task.due_date && <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-1"><Clock className="h-3 w-3" />Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</div>}
+                                  <div className="font-extrabold text-sm truncate text-slate-900">{task.title}</div>
+                                  {task.due_date && <div className="text-xs text-slate-600 mt-0.5 flex items-center gap-1 font-semibold"><Clock className="h-3 w-3 text-orange-500" />Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</div>}
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <span className={`text-[10px] px-2.5 py-0.5 rounded-full border font-bold uppercase ${s.badge}`}>{s.label}</span>
-                                <span className="text-xs text-amber-400 font-bold hidden sm:inline">&rarr;</span>
+                                <span className={`text-[10px] px-2.5 py-0.5 rounded-full border font-black uppercase ${s.badge}`}>{s.label}</span>
+                                <span className="text-xs text-orange-600 font-black hidden sm:inline">&rarr;</span>
                               </div>
                             </div>
                           );
                         })}
                         {myTasks.length > 4 && (
-                          <div className="p-3 bg-[#0A0D17]/90 text-center">
+                          <div className="p-3 bg-orange-50/60 text-center">
                             <button
                               onClick={() => setActiveTab("tasks")}
-                              className="text-xs font-bold text-amber-400 hover:text-amber-300 cursor-pointer hover:underline"
+                              className="text-xs font-black text-orange-600 hover:text-orange-700 cursor-pointer hover:underline"
                             >
                               + {myTasks.length - 4} more assigned tasks. Click to view all &rarr;
                             </button>
@@ -1998,24 +1998,24 @@ function InternDashboard() {
 
                 {/* Featured Resources */}
                 <div>
-                  <h2 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2"><BookOpen className="h-4 w-4 text-emerald-400" />Quick Resources</h2>
-                  <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl overflow-hidden">
+                  <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 mb-3 flex items-center gap-2"><BookOpen className="h-4 w-4 text-orange-600" />Quick Resources</h2>
+                  <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl overflow-hidden">
                     {resourcesQ.isLoading ? (
-                      <div className="p-6 text-center text-slate-400 text-sm flex justify-center gap-2 items-center"><Loader2 className="h-4 w-4 animate-spin" />Loading...</div>
+                      <div className="p-6 text-center text-slate-600 text-sm flex justify-center gap-2 items-center font-medium"><Loader2 className="h-4 w-4 animate-spin text-orange-500" />Loading...</div>
                     ) : resources.length === 0 ? (
-                      <div className="p-6 text-center text-slate-400 text-sm">No resources posted yet</div>
+                      <div className="p-6 text-center text-slate-600 text-sm font-medium">No resources posted yet</div>
                     ) : (
-                      <div className="divide-y divide-slate-800/80">
+                      <div className="divide-y divide-orange-200/60">
                         {resources.slice(0, 3).map((r: any) => {
                           const ri = RESOURCE_ICONS[r.type] || RESOURCE_ICONS.link;
                           const isDocOrSheet = r.url?.includes("docs.google.com") || r.url?.includes(".xls") || r.url?.includes(".csv") || r.type === "document";
                           return (
-                            <div key={r.id} className="flex items-center justify-between gap-3 p-4 hover:bg-slate-800/40 transition-colors group">
+                            <div key={r.id} className="flex items-center justify-between gap-3 p-4 hover:bg-orange-50/50 transition-colors group">
                               <a href={r.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 flex-1 min-w-0">
                                 <div className={`h-9 w-9 rounded-xl border flex items-center justify-center shrink-0 ${ri.color}`}>{ri.icon}</div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="font-semibold text-sm text-white group-hover:text-emerald-400 transition-colors truncate">{r.title}</div>
-                                  {r.description && <div className="text-xs text-slate-400 truncate">{r.description}</div>}
+                                  <div className="font-extrabold text-sm text-slate-900 group-hover:text-orange-600 transition-colors truncate">{r.title}</div>
+                                  {r.description && <div className="text-xs text-slate-600 truncate font-medium">{r.description}</div>}
                                 </div>
                               </a>
                               <div className="flex items-center gap-2 shrink-0">
@@ -2044,25 +2044,25 @@ function InternDashboard() {
 
         {/* ─── ATTENDANCE TAB ─── */}
         {activeTab === "attendance" && (
-          <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-8 shadow-xl backdrop-blur-xl space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+          <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-orange-200/80 pb-5">
               <div className="flex items-center gap-3.5">
-                <div className="h-11 w-11 rounded-2xl bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-inner">
+                <div className="h-11 w-11 rounded-2xl bg-orange-100 text-orange-600 border border-orange-300 flex items-center justify-center shadow-xs">
                   <Clock className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-white">Intern Attendance &amp; Shift Timecard</h2>
-                  <p className="text-xs text-slate-400">Record your daily work presence and view historical shift logs</p>
+                  <h2 className="text-base font-extrabold text-slate-900">Intern Attendance &amp; Shift Timecard</h2>
+                  <p className="text-xs text-slate-600">Record your daily work presence and view historical shift logs</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
                   todayAttendance
                     ? todayAttendance.clock_out
-                      ? "bg-slate-800 text-slate-300 border border-slate-700"
-                      : "bg-emerald-950/80 text-emerald-300 border border-emerald-500/50 animate-pulse"
-                    : "bg-amber-950/60 text-amber-300 border border-amber-500/40"
+                      ? "bg-slate-100 text-slate-700 border border-slate-300"
+                      : "bg-orange-100 text-orange-800 border border-orange-300 animate-pulse"
+                    : "bg-amber-100 text-amber-800 border border-amber-300"
                 }`}>
                   Status: {todayAttendance ? (todayAttendance.clock_out ? "Completed" : "Active Shift") : "Offline"}
                 </span>
@@ -2072,7 +2072,7 @@ function InternDashboard() {
                     <Button
                       onClick={handleClockOut}
                       disabled={isClocking}
-                      className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs gap-2 px-5 h-10 rounded-xl shadow-lg shadow-rose-950/50 cursor-pointer"
+                      className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs gap-2 px-5 h-10 rounded-xl shadow-md shadow-rose-500/20 cursor-pointer"
                     >
                       {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
                       Clock Out Now
@@ -2082,7 +2082,7 @@ function InternDashboard() {
                   <Button
                     onClick={handleClockIn}
                     disabled={isClocking}
-                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs gap-2 px-6 h-10 rounded-xl shadow-lg shadow-emerald-950/60 cursor-pointer"
+                    className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs gap-2 px-6 h-10 rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer border border-orange-400/30"
                   >
                     {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
                     Clock In Now
@@ -2093,80 +2093,82 @@ function InternDashboard() {
 
             {/* Timecard Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              <div className="bg-[#131B2E]/90 p-4 rounded-2xl border border-slate-800/80 flex items-center justify-between shadow-md">
+              <div className="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/80 flex items-center justify-between shadow-xs">
                 <div>
-                  <div className="text-slate-400 font-semibold mb-0.5">Today Clock In</div>
-                  <div className="text-base font-bold text-white font-mono">
+                  <div className="text-slate-600 font-bold mb-0.5">Today Clock In</div>
+                  <div className="text-base font-black text-slate-900 font-mono">
                     {todayAttendance?.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                   </div>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
+                <div className="h-9 w-9 rounded-xl bg-orange-100 border border-orange-300 text-orange-600 flex items-center justify-center">
                   <Clock className="h-4 w-4" />
                 </div>
               </div>
 
-              <div className="bg-[#131B2E]/90 p-4 rounded-2xl border border-slate-800/80 flex items-center justify-between shadow-md">
+              <div className="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/80 flex items-center justify-between shadow-xs">
                 <div>
-                  <div className="text-slate-400 font-semibold mb-0.5">Today Clock Out</div>
-                  <div className="text-base font-bold text-white font-mono">
+                  <div className="text-slate-600 font-bold mb-0.5">Today Clock Out</div>
+                  <div className="text-base font-black text-slate-900 font-mono">
                     {todayAttendance?.clock_out ? new Date(todayAttendance.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                   </div>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-teal-950/60 border border-teal-500/30 text-teal-400 flex items-center justify-center">
+                <div className="h-9 w-9 rounded-xl bg-amber-100 border border-amber-300 text-amber-600 flex items-center justify-center">
                   <CheckCircle2 className="h-4 w-4" />
                 </div>
               </div>
 
-              <div className="bg-[#131B2E]/90 p-4 rounded-2xl border border-slate-800/80 flex items-center justify-between shadow-md">
+              <div className="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/80 flex items-center justify-between shadow-xs">
                 <div>
-                  <div className="text-slate-400 font-semibold mb-0.5">Total Days Present</div>
-                  <div className="text-base font-bold text-white font-mono">
+                  <div className="text-slate-600 font-bold mb-0.5">Total Days Present</div>
+                  <div className="text-base font-black text-slate-900 font-mono">
                     {attendanceLogs.length} Days
                   </div>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-indigo-950/60 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
+                <div className="h-9 w-9 rounded-xl bg-orange-100 border border-orange-300 text-orange-600 flex items-center justify-center">
                   <CalendarDays className="h-4 w-4" />
                 </div>
               </div>
             </div>
 
             {/* Attendance History Table */}
-            <div className="space-y-3 pt-2">
-              <h3 className="font-bold text-white text-sm">Attendance History Logs</h3>
-              <div className="border border-slate-800/80 rounded-2xl overflow-hidden shadow-md">
-                <table className="w-full text-left text-xs">
+            <div className="space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-600">Shift History Log</h3>
+              <div className="rounded-2xl border border-orange-200/80 overflow-hidden shadow-xs">
+                <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="bg-[#0A0D17] border-b border-slate-800/80 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                      <th className="px-5 py-3.5">Date</th>
-                      <th className="px-5 py-3.5">Clock In</th>
-                      <th className="px-5 py-3.5">Clock Out</th>
-                      <th className="px-5 py-3.5">Status</th>
+                    <tr className="bg-orange-50/80 border-b border-orange-200/80 text-slate-700 font-black uppercase tracking-wider text-[10px]">
+                      <th className="p-3">Date</th>
+                      <th className="p-3">Clock In</th>
+                      <th className="p-3">Clock Out</th>
+                      <th className="p-3">Total Duration</th>
+                      <th className="p-3 text-right">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/80 text-slate-300 bg-[#0E131F]/90">
+                  <tbody className="divide-y divide-orange-200/60 text-slate-800 bg-white">
                     {attendanceLogs.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="px-5 py-8 text-center text-slate-500 font-medium">
-                          No attendance logs recorded yet. Click "Clock In Now" to log today's shift presence.
-                        </td>
+                        <td colSpan={5} className="p-6 text-center text-slate-500 italic">No historical shift logs recorded yet.</td>
                       </tr>
                     ) : (
                       attendanceLogs.map((log: any) => (
-                        <tr key={log.id} className="hover:bg-slate-800/40 transition-colors">
-                          <td className="px-5 py-3.5 font-bold text-white">
+                        <tr key={log.id} className="hover:bg-orange-50/50 transition-colors">
+                          <td className="p-3 font-mono font-bold text-slate-900">
                             {new Date(log.date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
                           </td>
-                          <td className="px-5 py-3.5 font-mono text-slate-300">
+                          <td className="p-3 font-mono">
                             {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                           </td>
-                          <td className="px-5 py-3.5 font-mono text-slate-300">
+                          <td className="p-3 font-mono">
                             {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                           </td>
-                          <td className="px-5 py-3.5">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                          <td className="p-3 font-mono">
+                            {log.clock_in && log.clock_out ? `${Math.round((new Date(log.clock_out).getTime() - new Date(log.clock_in).getTime()) / (1000 * 60 * 60))} hrs` : "In Progress"}
+                          </td>
+                          <td className="p-3 text-right">
+                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
                               log.clock_in && !log.clock_out 
-                                ? "bg-emerald-950/80 text-emerald-300 border-emerald-500/40" 
-                                : "bg-slate-900 text-slate-400 border-slate-700"
+                                ? "bg-orange-100 text-orange-800 border-orange-300" 
+                                : "bg-emerald-100 text-emerald-800 border-emerald-300"
                             }`}>
                               {log.clock_in && !log.clock_out ? "Active Shift" : "Completed"}
                             </span>
@@ -2555,14 +2557,14 @@ function InternDashboard() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Submission Form */}
-              <div className="lg:col-span-1 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-7 shadow-xl backdrop-blur-xl space-y-4">
-                <h2 className="font-bold text-sm flex items-center gap-2 text-white"><Upload className="h-4 w-4 text-purple-400" /> Submit Assignment / Deliverable</h2>
+              <div className="lg:col-span-1 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-4">
+                <h2 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><Upload className="h-4 w-4 text-orange-600" /> Submit Assignment / Deliverable</h2>
                 <div className="space-y-3.5 text-xs">
                   {tasks && tasks.length > 0 && (
                     <div>
-                      <label className="font-semibold text-slate-300 mb-1.5 block">Link to Assigned Task (Optional)</label>
+                      <label className="font-bold text-slate-700 mb-1.5 block">Link to Assigned Task (Optional)</label>
                       <select 
-                        className="w-full rounded-xl border border-slate-700 p-2.5 text-xs bg-slate-900 text-slate-200 outline-none focus:border-purple-500"
+                        className="w-full rounded-xl border border-orange-200 p-2.5 text-xs bg-white text-slate-900 outline-none focus:border-orange-500 shadow-xs"
                         value={deliverableForm.task_id || ""}
                         onChange={(e) => {
                           const selectedTid = e.target.value;
@@ -2585,9 +2587,9 @@ function InternDashboard() {
                   )}
 
                   <div>
-                    <label className="font-semibold text-slate-300 mb-1.5 block">Deliverable Title</label>
+                    <label className="font-bold text-slate-700 mb-1.5 block">Deliverable Title</label>
                     <input 
-                      className="w-full rounded-xl border border-slate-700 p-2.5 text-xs bg-slate-900 text-slate-200 placeholder:text-slate-500 outline-none focus:border-purple-500" 
+                      className="w-full rounded-xl border border-orange-200 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs" 
                       value={deliverableForm.title} 
                       onChange={e => setDeliverableForm({...deliverableForm, title: e.target.value})} 
                       placeholder="e.g. Microservice Implementation & Test Suite" 
@@ -2595,9 +2597,9 @@ function InternDashboard() {
                   </div>
 
                   <div>
-                    <label className="font-semibold text-slate-300 mb-1.5 block">Submission URL (GitHub Repo / PR / Figma / Drive)</label>
+                    <label className="font-bold text-slate-700 mb-1.5 block">Submission URL (GitHub Repo / PR / Figma / Drive)</label>
                     <input 
-                      className="w-full rounded-xl border border-slate-700 p-2.5 text-xs bg-slate-900 text-slate-200 placeholder:text-slate-500 outline-none focus:border-purple-500" 
+                      className="w-full rounded-xl border border-orange-200 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs" 
                       value={deliverableForm.submission_url} 
                       onChange={e => setDeliverableForm({...deliverableForm, submission_url: e.target.value})} 
                       placeholder="https://github.com/... or google drive link" 
@@ -2605,9 +2607,9 @@ function InternDashboard() {
                   </div>
 
                   <div>
-                    <label className="font-semibold text-slate-300 mb-1.5 block">Submission Notes / Highlights (Optional)</label>
+                    <label className="font-bold text-slate-700 mb-1.5 block">Submission Notes / Highlights (Optional)</label>
                     <textarea 
-                      className="w-full rounded-xl border border-slate-700 p-2.5 text-xs bg-slate-900 text-slate-200 placeholder:text-slate-500 outline-none focus:border-purple-500" 
+                      className="w-full rounded-xl border border-orange-200 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs" 
                       rows={3} 
                       value={deliverableForm.notes} 
                       onChange={e => setDeliverableForm({...deliverableForm, notes: e.target.value})} 
@@ -2616,7 +2618,7 @@ function InternDashboard() {
                   </div>
 
                   <Button 
-                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold h-10 rounded-xl shadow-lg shadow-purple-950/60 cursor-pointer" 
+                    className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs h-10 rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer border border-orange-400/30" 
                     onClick={async () => {
                       if (!deliverableForm.title.trim() || !deliverableForm.submission_url.trim()) { 
                         toast.error("Please enter both Deliverable Title and Submission URL."); 
@@ -2651,21 +2653,21 @@ function InternDashboard() {
               </div>
 
               {/* Submissions Feed */}
-              <div className="lg:col-span-2 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-7 shadow-xl backdrop-blur-xl space-y-4">
-                <h2 className="font-bold text-sm text-white">Submitted Deliverables &amp; Mentor Feedback</h2>
-                <div className="divide-y divide-slate-800/80 max-h-[480px] overflow-y-auto">
+              <div className="lg:col-span-2 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-4">
+                <h2 className="font-extrabold text-sm text-slate-900">Submitted Deliverables &amp; Mentor Feedback</h2>
+                <div className="divide-y divide-orange-200/60 max-h-[480px] overflow-y-auto">
                   {deliverables.length === 0 ? (
                     <div className="p-8 text-center text-slate-500 text-xs">No deliverables submitted yet.</div>
                   ) : (
                     deliverables.map((del: any) => (
                       <div key={del.id} className="py-4 space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-white">{del.title}</span>
-                          <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${del.status === 'approved' ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40' : del.status === 'under_review' ? 'bg-blue-950/70 text-blue-300 border-blue-500/40' : 'bg-amber-950/70 text-amber-300 border-amber-500/40'}`}>{del.status}</span>
+                          <span className="font-extrabold text-slate-900">{del.title}</span>
+                          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${del.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : del.status === 'under_review' ? 'bg-orange-100 text-orange-800 border-orange-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>{del.status}</span>
                         </div>
-                        <a href={del.submission_url} target="_blank" rel="noreferrer" className="text-xs text-purple-400 hover:underline inline-flex items-center gap-1"><ExternalLink className="h-3 w-3" /> {del.submission_url}</a>
-                        {del.notes && <p className="text-xs text-slate-400">{del.notes}</p>}
-                        {del.feedback && <p className="text-xs text-emerald-300 bg-emerald-950/50 p-2.5 rounded-xl border border-emerald-500/30 mt-2"><strong>Mentor Feedback:</strong> {del.feedback}</p>}
+                        <a href={del.submission_url} target="_blank" rel="noreferrer" className="text-xs text-orange-600 hover:underline inline-flex items-center gap-1 font-bold"><ExternalLink className="h-3 w-3" /> {del.submission_url}</a>
+                        {del.notes && <p className="text-xs text-slate-600">{del.notes}</p>}
+                        {del.feedback && <p className="text-xs text-emerald-950 bg-emerald-50 p-2.5 rounded-xl border border-emerald-300 mt-2 font-medium"><strong>Mentor Feedback:</strong> {del.feedback}</p>}
                       </div>
                     ))
                   )}

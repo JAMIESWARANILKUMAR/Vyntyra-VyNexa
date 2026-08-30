@@ -78,27 +78,27 @@ export function MonthlyCalendar({ events = [], holidays = [] }: MonthlyCalendarP
     day === today.getDate() && current.month === today.getMonth() && current.year === today.getFullYear();
 
   return (
-    <div className="rounded-2xl border border-slate-800/80 bg-[#0B101E]/95 shadow-xl backdrop-blur-xl overflow-hidden text-slate-100">
+    <div className="rounded-2xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl overflow-hidden text-slate-900">
       {/* Header */}
-      <div className="px-5 py-4 flex items-center justify-between border-b border-slate-800/80 bg-gradient-to-r from-indigo-950/40 via-[#0E1528] to-slate-900/60">
+      <div className="px-5 py-4 flex items-center justify-between border-b border-orange-200/80 bg-gradient-to-r from-white via-[#FFF7F4] to-[#FFF1EC]">
         <button 
           onClick={prev} 
-          className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer border border-transparent hover:border-slate-700"
+          className="p-1.5 rounded-xl hover:bg-orange-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer border border-transparent hover:border-orange-200"
           title="Previous Month"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-indigo-950/80 border border-indigo-500/30 text-indigo-400">
+          <div className="p-1.5 rounded-lg bg-orange-100 border border-orange-300 text-orange-600">
             <CalendarIcon className="h-4 w-4" />
           </div>
-          <h3 className="font-extrabold text-sm tracking-wide text-white">
+          <h3 className="font-extrabold text-sm tracking-wide text-slate-900">
             {MONTHS[current.month]} {current.year}
           </h3>
         </div>
         <button 
           onClick={next} 
-          className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer border border-transparent hover:border-slate-700"
+          className="p-1.5 rounded-xl hover:bg-orange-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer border border-transparent hover:border-orange-200"
           title="Next Month"
         >
           <ChevronRight className="h-4 w-4" />
@@ -106,16 +106,16 @@ export function MonthlyCalendar({ events = [], holidays = [] }: MonthlyCalendarP
       </div>
 
       {/* Day Labels */}
-      <div className="grid grid-cols-7 border-b border-slate-800/80 bg-slate-950/60">
+      <div className="grid grid-cols-7 border-b border-orange-200/80 bg-orange-50/80">
         {DAYS.map((d, i) => (
-          <div key={d} className={`py-2 text-center text-[10px] font-bold uppercase tracking-wider ${i === 0 || i === 6 ? "text-rose-400" : "text-slate-400"}`}>
+          <div key={d} className={`py-2 text-center text-[10px] font-black uppercase tracking-wider ${i === 0 || i === 6 ? "text-rose-600" : "text-slate-600"}`}>
             {d}
           </div>
         ))}
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-7 divide-x divide-y divide-slate-800/40 border-b border-slate-800/80">
+      <div className="grid grid-cols-7 divide-x divide-y divide-orange-100 border-b border-orange-200/80">
         {cells.map((cell, i) => {
           const dayEvents = cell.cur ? eventsForDay(cell.day) : [];
           const dayHolidays = cell.cur ? holidaysForDay(cell.day) : [];
@@ -128,19 +128,19 @@ export function MonthlyCalendar({ events = [], holidays = [] }: MonthlyCalendarP
               key={i}
               onClick={() => cell.cur && setSelected(cell.day)}
               className={`relative py-2.5 text-sm text-center transition-all min-h-[52px] ${
-                !cell.cur ? "text-slate-700 pointer-events-none" : "cursor-pointer hover:bg-slate-800/60"
-              } ${isSelected ? "bg-indigo-950/40" : ""} ${hasHolidays ? "bg-amber-950/20" : ""}`}
+                !cell.cur ? "text-slate-300 pointer-events-none" : "cursor-pointer hover:bg-orange-50/80"
+              } ${isSelected ? "bg-orange-100/60" : ""} ${hasHolidays ? "bg-amber-50" : ""}`}
             >
               <span className={`inline-flex h-7 w-7 items-center justify-center rounded-xl text-xs transition-all ${
                 isToday(cell.day) && cell.cur
-                  ? "bg-indigo-600 text-white font-black shadow-[0_0_12px_rgba(99,102,241,0.5)] border border-indigo-400/40"
+                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black shadow-md border border-orange-400/40"
                   : hasHolidays && cell.cur
-                  ? "bg-amber-500/90 text-white font-black shadow-[0_0_10px_rgba(245,158,11,0.3)] border border-amber-400/40"
+                  ? "bg-amber-500 text-white font-black shadow-xs border border-amber-400"
                   : isSelected
-                  ? "font-extrabold text-indigo-400 ring-1 ring-indigo-500/50 bg-slate-900"
+                  ? "font-extrabold text-orange-600 ring-2 ring-orange-400 bg-white"
                   : cell.cur
-                  ? "font-semibold text-slate-300 hover:text-white"
-                  : "text-slate-700"
+                  ? "font-bold text-slate-800 hover:text-orange-600"
+                  : "text-slate-300"
               }`}>
                 {cell.day}
               </span>
@@ -148,10 +148,10 @@ export function MonthlyCalendar({ events = [], holidays = [] }: MonthlyCalendarP
               {/* Badges / Dots */}
               <span className="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-1">
                 {hasHolidays && (
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_#fbbf24]" title={dayHolidays[0].name} />
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shadow-xs" title={dayHolidays[0].name} />
                 )}
                 {hasEvents && dayEvents.slice(0, 2).map((_, ei) => (
-                  <span key={ei} className="h-1.5 w-1.5 rounded-full bg-indigo-400 shadow-[0_0_6px_#818cf8]" />
+                  <span key={ei} className="h-1.5 w-1.5 rounded-full bg-orange-500 shadow-xs" />
                 ))}
               </span>
             </button>
@@ -161,38 +161,38 @@ export function MonthlyCalendar({ events = [], holidays = [] }: MonthlyCalendarP
 
       {/* Selected Day Details */}
       {selected !== null && (
-        <div className="px-4 py-3.5 bg-slate-950/80 min-h-[75px] space-y-2.5">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-800 pb-2">
-            <span className="flex items-center gap-1.5 text-white font-extrabold">
-              <Sparkles className="h-3 w-3 text-indigo-400" />
+        <div className="px-4 py-3.5 bg-orange-50/40 min-h-[75px] space-y-2.5">
+          <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center justify-between border-b border-orange-200 pb-2">
+            <span className="flex items-center gap-1.5 text-slate-900 font-black">
+              <Sparkles className="h-3 w-3 text-orange-500" />
               {MONTHS[current.month]} {selected}, {current.year}
             </span>
             {selectedHolidays.length > 0 && (
-              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-                <PartyPopper className="h-3 w-3 text-amber-400" /> Official Holiday
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
+                <PartyPopper className="h-3 w-3 text-amber-600" /> Official Holiday
               </span>
             )}
           </div>
 
           {/* Holiday List on this day */}
           {selectedHolidays.map((h) => (
-            <div key={h.id} className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/30 text-amber-200 flex items-start gap-2.5">
-              <PartyPopper className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+            <div key={h.id} className="p-3 rounded-xl bg-amber-100/60 border border-amber-300 text-amber-950 flex items-start gap-2.5">
+              <PartyPopper className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
               <div className="text-xs">
-                <div className="font-bold text-white flex items-center gap-1.5">
+                <div className="font-extrabold text-slate-900 flex items-center gap-1.5">
                   <span>{h.name}</span>
-                  <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded bg-amber-900/80 text-amber-300 border border-amber-500/30">
+                  <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 border border-amber-300">
                     {h.type || "Holiday"}
                   </span>
                 </div>
-                {h.description && <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">{h.description}</p>}
+                {h.description && <p className="text-[11px] text-slate-700 mt-1 leading-relaxed">{h.description}</p>}
               </div>
             </div>
           ))}
 
           {/* Events list on this day */}
           {selectedEvents.length === 0 && selectedHolidays.length === 0 ? (
-            <p className="text-xs text-slate-500 text-center py-2 font-medium">No schedules or holidays recorded on this day.</p>
+            <p className="text-xs text-slate-600 text-center py-2 font-medium">No schedules or holidays recorded on this day.</p>
           ) : (
             <div className="space-y-2">
               {selectedEvents.map((e: any) => {
@@ -200,26 +200,26 @@ export function MonthlyCalendar({ events = [], holidays = [] }: MonthlyCalendarP
                 const eventTime = e.event_time || (e.scheduled_at ? new Date(e.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null);
 
                 return (
-                  <div key={e.id} className="flex flex-col gap-1.5 text-xs bg-[#0E1528] p-3 rounded-xl border border-slate-800 shadow-md">
+                  <div key={e.id} className="flex flex-col gap-1.5 text-xs bg-white p-3 rounded-xl border border-orange-200 shadow-xs">
                     <div className="flex items-center gap-2 flex-wrap justify-between">
                       <div className="flex items-center gap-2">
-                        <span className={`h-2 w-2 rounded-full shrink-0 ${meetingUrl ? "bg-indigo-400 shadow-[0_0_8px_#818cf8] animate-pulse" : "bg-emerald-400 shadow-[0_0_8px_#34d399]"}`} />
-                        <span className="font-bold text-white text-xs">{e.title}</span>
+                        <span className={`h-2 w-2 rounded-full shrink-0 ${meetingUrl ? "bg-orange-500 animate-pulse" : "bg-emerald-500"}`} />
+                        <span className="font-extrabold text-slate-900 text-xs">{e.title}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         {e.target_role && (
-                          <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-300">
                             {e.target_role === "all" ? "Everyone" : e.target_role}
                           </span>
                         )}
                         {eventTime && (
-                          <span className="text-indigo-300 bg-indigo-950/80 border border-indigo-500/30 font-bold px-2 py-0.5 rounded-full text-[10px]">
+                          <span className="text-orange-900 bg-orange-100 border border-orange-300 font-bold px-2 py-0.5 rounded-full text-[10px]">
                             ⏰ {eventTime}
                           </span>
                         )}
                       </div>
                     </div>
-                    {e.description && <div className="text-slate-400 text-[11px] leading-relaxed pt-0.5">{e.description}</div>}
+                    {e.description && <div className="text-slate-600 text-[11px] leading-relaxed pt-0.5">{e.description}</div>}
                     
                     {meetingUrl && (
                       <div className="flex items-center gap-2 pt-1.5 flex-wrap">
@@ -227,7 +227,7 @@ export function MonthlyCalendar({ events = [], holidays = [] }: MonthlyCalendarP
                           href={meetingUrl} 
                           target="_blank" 
                           rel="noreferrer" 
-                          className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-500 px-3 py-1 rounded-xl transition-all shadow-md shadow-indigo-950/60 cursor-pointer"
+                          className="inline-flex items-center gap-1 text-[11px] font-black text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 px-3 py-1 rounded-xl transition-all shadow-sm cursor-pointer"
                         >
                           <Video className="h-3 w-3" /> Join Live Meeting
                         </a>
@@ -236,7 +236,7 @@ export function MonthlyCalendar({ events = [], holidays = [] }: MonthlyCalendarP
                             href={e.gcal_url} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-xl transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700 bg-white hover:bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-xl transition-colors cursor-pointer"
                           >
                             🗓️ Google Calendar
                           </a>
