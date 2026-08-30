@@ -361,7 +361,7 @@ export const listTasks = createServerFn({ method: "GET" })
       // Unassigned pool tasks open for interns to claim in the Task Pool
       if (t.is_pool_task && !t.assigned_to) return true;
 
-      // Match against any of user's identifiers (UUID, intern_id, email, full_name) or deliverables or global intern target_role
+      // Match against any of user's identifiers (UUID, intern_id, email, full_name), team memberships, or submitted deliverables
       const isAssignedToMe = Boolean(
         myIds.has(t.assigned_to) ||
         myIds.has(t.target_user_id) ||
@@ -369,11 +369,7 @@ export const listTasks = createServerFn({ method: "GET" })
         myIds.has(t.user_id) ||
         (Array.isArray(t.team_members) && t.team_members.some((m: any) => myIds.has(m))) ||
         (Array.isArray(t.target_user_ids) && t.target_user_ids.some((m: any) => myIds.has(m))) ||
-        myDelivTaskIds.has(t.id) ||
-        t.target_role === 'intern' ||
-        t.target_role === 'all' ||
-        t.is_general === true ||
-        t.is_all_interns === true
+        myDelivTaskIds.has(t.id)
       );
       if (isAssignedToMe) return true;
 
@@ -5718,40 +5714,76 @@ export const moveTasksToStoredBank = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const admin = getAdminClient();
     
-    // Update tasks to be stored pool tasks (unassigned, pending start)
-    const { data: updated, error } = await admin
+    // 1. Fetch source tasks to clone for repository pool
+    const { data: sourceTasks, error: fetchErr } = await admin
       .from("tasks")
-      .update({
-        is_pool_task: true,
-        assigned_to: null,
-        target_user_id: null,
-        status: "pending",
-        deliverable_url: null,
-        submission_url: null,
-        progress_percentage: 0,
-        time_spent_hours: 0,
-        admin_remarks: null,
-        progress_notes: null,
-        updated_at: new Date().toISOString(),
-      })
-      .in("id", data.taskIds)
-      .select();
+      .select("*")
+      .in("id", data.taskIds);
 
-    if (error) {
-      // Schema safe fallback
-      const { error: fallbackErr } = await admin
-        .from("tasks")
-        .update({
-          assigned_to: null,
-          status: "pending",
-          updated_at: new Date().toISOString(),
-        })
-        .in("id", data.taskIds);
-
-      if (fallbackErr) throw new Error("Failed to store tasks in repository: " + fallbackErr.message);
+    if (fetchErr || !sourceTasks || sourceTasks.length === 0) {
+      throw new Error("Could not find the selected tasks to move to repository.");
     }
 
-    return { success: true, count: data.taskIds.length };
+    const now = new Date().toISOString();
+    const clonedPayloads: any[] = [];
+
+    for (const st of sourceTasks) {
+      // If task is already an unassigned pool task, update its timestamp
+      if (!st.assigned_to && st.is_pool_task) {
+        await admin.from("tasks").update({
+          status: "pending",
+          updated_at: now
+        }).eq("id", st.id);
+        continue;
+      }
+
+      // Clone task as a new template task for stored bank pool
+      clonedPayloads.push({
+        title: st.title,
+        description: st.description,
+        task_file_url: st.task_file_url || null,
+        task_doc_url: st.task_doc_url || null,
+        task_meet_link: st.task_meet_link || null,
+        report_template_url: st.report_template_url || null,
+        credits: st.credits || 10,
+        due_date: st.due_date || null,
+        priority: st.priority || "medium",
+        assigned_to: null,
+        target_user_id: null,
+        target_role: "intern",
+        status: "pending",
+        is_pool_task: true,
+        progress_percentage: 0,
+        time_spent_hours: 0,
+        deliverable_url: null,
+        submission_url: null,
+        admin_remarks: null,
+        progress_notes: null,
+        is_verified: false,
+        created_by: context.userId,
+        created_at: now,
+        task_domain: st.task_domain || "all",
+      });
+
+      // Preserve/restore original completed task record for its assigned intern
+      if (st.assigned_to) {
+        await admin.from("tasks").update({
+          is_pool_task: false,
+          status: st.status === "pending" ? "completed" : st.status,
+          is_verified: true,
+          updated_at: now,
+        }).eq("id", st.id);
+      }
+    }
+
+    if (clonedPayloads.length > 0) {
+      const { error: insertErr } = await admin.from("tasks").insert(clonedPayloads);
+      if (insertErr) {
+        console.warn("[moveTasksToStoredBank] Cloned insert warning:", insertErr.message);
+      }
+    }
+
+    return { success: true, count: sourceTasks.length };
   });
 
 export const assignStoredTasksToInterns = createServerFn({ method: "POST" })

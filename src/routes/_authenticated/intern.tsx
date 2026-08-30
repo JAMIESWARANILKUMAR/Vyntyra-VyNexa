@@ -762,14 +762,7 @@ function InternDashboard() {
 
     const isDeliverableMatch = myDeliverableTaskIds.includes(t.id);
 
-    const isGlobalInternTask = Boolean(
-      t.target_role === "intern" || 
-      t.target_role === "all" || 
-      t.is_general === true || 
-      t.is_all_interns === true
-    );
-
-    return isDirectMatch || isDeliverableMatch || isGlobalInternTask;
+    return isDirectMatch || isDeliverableMatch;
   });
   const inProgressTasks = myTasks.filter((t: any) => t.status === "pending" || t.status === "in_progress" || t.status === "blocked" || t.status === "rejected");
   const submittedTasks = myTasks.filter((t: any) => t.status === "submitted" || t.status === "under_review");
