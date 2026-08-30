@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { 
   Shield, Users, CheckCircle2, AlertTriangle, TrendingUp, DollarSign, 
-  Award, Clock, Layers, FileCheck, ArrowUpRight, BarChart2, Briefcase, FileText, PieChart
+  Award, Clock, Layers, FileCheck, ArrowUpRight, BarChart2, Briefcase, FileText, PieChart, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 interface ManagementWorkspaceProps {
   standups: any[];
@@ -37,8 +38,48 @@ export function ManagementDomainWorkspace({ standups, deliverables, onApproveSta
   };
 
   return (
-    <div className="space-y-6">
-      
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
+      {/* 1. Header Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <motion.div whileHover={{ y: -3 }} className="p-5 rounded-3xl bg-gradient-to-br from-violet-950/80 via-slate-900 to-slate-950 border border-violet-500/30 backdrop-blur-xl shadow-xl space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-violet-400 uppercase tracking-wider flex items-center gap-1.5">
+              <CheckCircle2 className="h-4 w-4" /> Standup Compliance
+            </span>
+            <Sparkles className="h-4 w-4 text-violet-400 animate-pulse" />
+          </div>
+          <p className="text-2xl font-black text-white font-mono">{standupCompliance}%</p>
+          <p className="text-xs text-slate-400 font-medium">{approvedStandups} of {standups.length} daily logs verified</p>
+        </motion.div>
+
+        <motion.div whileHover={{ y: -3 }} className="p-5 rounded-3xl bg-gradient-to-br from-indigo-950/80 via-slate-900 to-slate-950 border border-indigo-500/30 backdrop-blur-xl shadow-xl space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+              <FileCheck className="h-4 w-4" /> Sprint Deliverables
+            </span>
+            <span className="text-xs font-mono font-bold text-indigo-300 bg-indigo-900/60 px-2 py-0.5 rounded-full">VERIFIED</span>
+          </div>
+          <p className="text-2xl font-black text-white font-mono">{approvedDeliverables} Approved</p>
+          <p className="text-xs text-slate-400 font-medium">Verified deliverables in database</p>
+        </motion.div>
+
+        <motion.div whileHover={{ y: -3 }} className="p-5 rounded-3xl bg-gradient-to-br from-emerald-950/80 via-slate-900 to-slate-950 border border-emerald-500/30 backdrop-blur-xl shadow-xl space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Award className="h-4 w-4" /> Management Status
+            </span>
+            <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-900/60 px-2 py-0.5 rounded-full">ACTIVE</span>
+          </div>
+          <p className="text-2xl font-black text-white font-mono">Lead Operations</p>
+          <p className="text-xs text-slate-400 font-medium">Executive oversight & milestone management</p>
+        </motion.div>
+      </div>    
+
       {/* MBA & BBA Specialized Domain Header */}
       <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white p-6 shadow-xl border border-slate-800 space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -207,6 +248,6 @@ export function ManagementDomainWorkspace({ standups, deliverables, onApproveSta
 
       </div>
 
-    </div>
+    </motion.div>
   );
 }

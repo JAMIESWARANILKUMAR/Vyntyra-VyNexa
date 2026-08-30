@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { 
   Code2, GitBranch, ExternalLink, ShieldAlert, Cpu, Layers, 
-  Terminal, CheckCircle2, AlertCircle, Plus, MessageSquare, Play, Bug
+  Terminal, CheckCircle2, AlertCircle, Plus, MessageSquare, Play, Bug, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 interface TechWorkspaceProps {
   bugs: any[];
@@ -47,17 +48,30 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
   };
 
   return (
-    <div className="space-y-6">
-      
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
       {/* 1. Developer IDE & Ecosystem Quick Launch Grid */}
-      <div className="rounded-2xl bg-slate-900 text-white p-6 shadow-xl border border-slate-800 space-y-4">
+      <div className="rounded-3xl bg-gradient-to-r from-[#0D121F] via-[#11192E] to-[#0A101D] text-white p-6 sm:p-7 shadow-2xl border border-slate-800/80 backdrop-blur-xl space-y-5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Cpu className="h-5 w-5 text-emerald-400" />
-            <h2 className="font-bold text-base text-slate-100">Integrated Developer Workspace & Deployment Links</h2>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-900/50">
+              <Cpu className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h2 className="font-extrabold text-base text-slate-100 flex items-center gap-2">
+                Tech Engineering Workspace
+                <Sparkles className="h-4 w-4 text-cyan-400 animate-pulse" />
+              </h2>
+              <p className="text-xs text-slate-400">Integrated developer tools, deployment links & staging environments</p>
+            </div>
           </div>
-          <span className="text-xs font-mono text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-800">
-            ENV: STAGING-US-EAST
+          <span className="text-[11px] font-mono font-bold text-cyan-400 bg-cyan-950/80 px-3 py-1 rounded-full border border-cyan-800/60 shadow-xs flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-ping" />
+            ENV: STAGING-PROD
           </span>
         </div>
 
@@ -70,18 +84,20 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
             { name: "Hostinger Portal", icon: <Cpu className="h-4 w-4 text-amber-400" />, url: "https://hostinger.com" },
             { name: "Render Logs", icon: <Terminal className="h-4 w-4 text-sky-400" />, url: "https://render.com" },
           ].map((item, idx) => (
-            <a
+            <motion.a
+              whileHover={{ y: -3, scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               key={idx}
               href={item.url}
               target="_blank"
               rel="noreferrer"
-              className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/80 hover:bg-slate-800 hover:border-emerald-500 transition-all flex flex-col items-center gap-2 group text-center"
+              className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:bg-slate-800 hover:border-cyan-500/50 transition-all flex flex-col items-center gap-2.5 group text-center shadow-md backdrop-blur-md"
             >
-              <div className="h-8 w-8 rounded-lg bg-slate-900 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="h-9 w-9 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center group-hover:scale-110 group-hover:border-cyan-500/40 transition-all">
                 {item.icon}
               </div>
-              <span className="text-xs font-medium text-slate-300 group-hover:text-white truncate max-w-full">{item.name}</span>
-            </a>
+              <span className="text-xs font-semibold text-slate-300 group-hover:text-cyan-300 truncate max-w-full">{item.name}</span>
+            </motion.a>
           ))}
         </div>
       </div>
@@ -226,6 +242,6 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
 
       </div>
 
-    </div>
+    </motion.div>
   );
 }

@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { 
   Users, Phone, Mail, MessageCircle, DollarSign, Calendar, Plus, 
-  TrendingUp, BarChart3, CheckCircle2, AlertCircle, FileText, Send, Share2
+  TrendingUp, BarChart3, CheckCircle2, AlertCircle, FileText, Send, Share2, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 interface NonTechWorkspaceProps {
   leads: any[];
@@ -51,9 +52,9 @@ export function NonTechDomainWorkspace({ leads, onAddLead, onUpdateLeadStatus, o
         follow_up_date: "",
       });
       setLeadModalOpen(false);
-      toast.success("Lead record created!");
+      toast.success("New CRM Lead added to pipeline!");
     } catch (err) {
-      toast.error("Failed to create lead");
+      toast.error("Failed to add lead");
     }
   };
 
