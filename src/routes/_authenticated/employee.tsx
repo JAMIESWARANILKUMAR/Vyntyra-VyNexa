@@ -2133,7 +2133,7 @@ function EmployeeDashboard() {
                           />
                         </th>
                         <th className="px-5 py-4">Intern / Mentee</th>
-                        <th className="px-5 py-4">Department</th>
+                        <th className="px-5 py-4">Department &amp; Sub-Domain</th>
                         <th className="px-5 py-4">Direct Contact</th>
                         <th className="px-5 py-4 text-right">Actions &amp; Oversight</th>
                       </tr>
@@ -2144,6 +2144,7 @@ function EmployeeDashboard() {
                       ) : (
                         myInterns.map((intern: any) => {
                           const urls = getInternContactUrls(intern);
+                          const subDomainText = intern.sub_domain || intern.subdomain || "Full Stack Web Development";
                           return (
                             <tr key={intern.id} className="hover:bg-slate-800/40 transition-colors">
                               <td className="px-5 py-4">
@@ -2170,10 +2171,15 @@ function EmployeeDashboard() {
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-5 py-4">
-                                <span className="text-xs text-slate-300 font-medium bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
-                                  {intern.department || "Engineering & Technology"}
-                                </span>
+                              <td className="px-5 py-4 space-y-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-[11px] font-extrabold text-amber-300 bg-amber-950/90 px-2.5 py-1 rounded-lg border border-amber-500/40 tracking-tight shadow-xs">
+                                    🎯 {subDomainText}
+                                  </span>
+                                </div>
+                                <div className="text-[10px] text-slate-400 font-medium">
+                                  {intern.department || "Technology & Software"}
+                                </div>
                               </td>
                               <td className="px-5 py-4">
                                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -3649,10 +3655,15 @@ function EmployeeDashboard() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-extrabold text-white text-sm truncate">{contactingIntern.full_name}</h3>
                     <div className="text-xs text-slate-400 font-mono truncate">{contactingIntern.email}</div>
-                    <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
-                      <span>Track: <strong className="text-slate-200">{contactingIntern.department || "Engineering"}</strong></span>
+                    <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1 flex-wrap">
+                      <span>Department: <strong className="text-slate-200">{contactingIntern.department || "Technology & Software"}</strong></span>
+                      <span>•</span>
+                      <span>Sub-Domain: <strong className="text-amber-300 font-bold">{contactingIntern.sub_domain || contactingIntern.subdomain || "Full Stack Web Development"}</strong></span>
                       {contactingIntern.phone && (
-                        <span>Phone: <strong className="text-indigo-300 font-mono">{contactingIntern.phone}</strong></span>
+                        <>
+                          <span>•</span>
+                          <span>Phone: <strong className="text-indigo-300 font-mono">{contactingIntern.phone}</strong></span>
+                        </>
                       )}
                     </div>
                   </div>
