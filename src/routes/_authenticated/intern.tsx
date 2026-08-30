@@ -8,7 +8,7 @@ import {
   Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
   Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, ArrowLeft, Zap, ChevronRight, X, Trophy, Flame, AlertCircle,
-  Printer, Receipt, Tag, Building2, CheckCheck, Menu
+  Printer, Receipt, Tag, Building2, CheckCheck, Menu, Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import { TechDomainWorkspace } from "@/components/tech-domain-workspace";
 import { NonTechDomainWorkspace } from "@/components/non-tech-domain-workspace";
 import { ManagementDomainWorkspace } from "@/components/management-domain-workspace";
+import { IntegratedChromeBrowser } from "@/components/integrated-chrome-browser";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { EmployeeReferEarn } from "@/components/employee-refer-earn";
 import { 
@@ -157,7 +158,7 @@ function FeeCountdownTimer({ deadline }: { deadline?: string | null }) {
 
 function InternDashboard() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements" | "leaves" | "support" | "refer">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "browser" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements" | "leaves" | "support" | "refer">("overview");
   const [newNote, setNewNote] = useState("");
   const [feedback, setFeedback] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
@@ -768,6 +769,7 @@ function InternDashboard() {
     { id: "deliverables",   label: `Deliverables (${deliverables.length})`, shortLabel: "Deliverables", icon: Send, category: "Core Work", enabled: isModuleEnabled("deliverables") },
     { id: "kanban",         label: "Sprint Board", shortLabel: "Sprint", icon: Layers, category: "Core Work", enabled: isModuleEnabled("kanban") },
     { id: "lms",            label: "LMS & Skills", shortLabel: "LMS", icon: BookOpen, category: "Core Work", enabled: isModuleEnabled("lms") },
+    { id: "browser",        label: "Chrome Browser", shortLabel: "Browser", icon: Globe, category: "Core Work", enabled: isModuleEnabled("browser") },
 
     { id: "standups",       label: `Standups (${standups.length})`, shortLabel: "Standups", icon: Clock, category: "Routine & Compliance", enabled: isModuleEnabled("standups") },
     { id: "attendance",     label: `Attendance (${attendanceLogs.length})`, shortLabel: "Attendance", icon: CalendarDays, category: "Routine & Compliance", enabled: isModuleEnabled("attendance") },
@@ -2348,6 +2350,13 @@ function InternDashboard() {
                 );
               })()}
             </div>
+          </div>
+        )}
+
+        {/* ─── INTEGRATED CHROME BROWSER TAB ─── */}
+        {activeTab === "browser" && (
+          <div className="space-y-4">
+            <IntegratedChromeBrowser />
           </div>
         )}
 
