@@ -386,9 +386,7 @@ export const listTasks = createServerFn({ method: "GET" })
     if (delivTaskIdsArray.length > 0) {
       await admin.from("tasks").update({
         assigned_to: context.userId,
-        target_user_id: context.userId,
         status: "completed",
-        is_verified: true,
         updated_at: new Date().toISOString()
       }).in("id", delivTaskIdsArray);
     }
