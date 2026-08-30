@@ -933,43 +933,43 @@ function InternDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0B132B] text-slate-100 font-sans selection:bg-blue-600 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#FFF9F7] via-[#FFF3EF] to-[#FFEDE7] text-slate-900 font-sans selection:bg-orange-500 selection:text-white relative overflow-x-hidden">
       
-      {/* Corporate Standard Ambient Glow Mesh */}
+      {/* Soft Warm Orange Ambient Glow Mesh */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-[700px] h-[700px] bg-blue-600/10 rounded-full blur-[160px]" />
-        <div className="absolute top-1/3 -right-32 w-[700px] h-[700px] bg-indigo-600/10 rounded-full blur-[160px]" />
-        <div className="absolute -bottom-40 left-1/4 w-[800px] h-[800px] bg-slate-800/20 rounded-full blur-[180px]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b18_1px,transparent_1px),linear-gradient(to_bottom,#1e293b18_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+        <div className="absolute -top-32 -left-32 w-[700px] h-[700px] bg-orange-300/20 rounded-full blur-[160px]" />
+        <div className="absolute top-1/3 -right-32 w-[700px] h-[700px] bg-amber-300/20 rounded-full blur-[160px]" />
+        <div className="absolute -bottom-40 left-1/4 w-[800px] h-[800px] bg-rose-200/20 rounded-full blur-[180px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#f973160a_1px,transparent_1px),linear-gradient(to_bottom,#f973160a_1px,transparent_1px)] bg-[size:4rem_4rem]" />
       </div>
 
-      {/* Corporate Executive Top Header */}
-      <header className="sticky top-0 z-40 bg-[#0F172A]/95 backdrop-blur-2xl border-b border-slate-800/80 shadow-2xl shadow-black/60 relative">
+      {/* Luxury Warm White Top Header */}
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-2xl border-b border-orange-200/70 shadow-sm shadow-orange-950/5 relative">
         <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Logo & Portal Badge */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0 min-w-0">
             <div className="relative group shrink-0">
-              <div className="absolute -inset-1 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl blur-xs opacity-60 group-hover:opacity-100 transition duration-300" />
+              <div className="absolute -inset-1 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl blur-xs opacity-60 group-hover:opacity-100 transition duration-300" />
               <img 
                 src="/favicon.png" 
                 alt="VyNexa / Vyntyra Logo" 
-                className="relative h-9 w-9 sm:h-10 sm:w-10 object-contain rounded-xl bg-slate-950 p-1 border border-blue-400/50 shadow-lg shadow-blue-950/60 shrink-0"
+                className="relative h-9 w-9 sm:h-10 sm:w-10 object-contain rounded-xl bg-white p-1 border border-orange-300/80 shadow-md shadow-orange-500/10 shrink-0"
                 onError={(e) => {
                   (e.currentTarget as HTMLElement).style.display = "none";
                   const fallback = e.currentTarget.nextElementSibling as HTMLElement;
                   if (fallback) fallback.style.display = "flex";
                 }}
               />
-              <div className="hidden relative h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl shadow-lg shadow-blue-950/60 border border-blue-400/40 items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
+              <div className="hidden relative h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl shadow-md shadow-orange-500/20 border border-orange-300/60 items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
                 V
               </div>
             </div>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="text-xs sm:text-sm font-bold text-white tracking-tight leading-tight truncate">Vyntyra Connect</span>
-                <span className="bg-blue-500/20 border border-blue-500/40 text-blue-300 text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
+                <span className="text-xs sm:text-sm font-black text-slate-900 tracking-tight leading-tight truncate">Vyntyra Connect</span>
+                <span className="bg-orange-100 border border-orange-300/80 text-orange-800 text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
                   Intern Associate
                 </span>
               </div>
@@ -979,8 +979,8 @@ function InternDashboard() {
             </div>
           </div>
 
-          {/* Desktop Tab Navigation (Clean Obsidian Pill Bar for 2xl Screens) */}
-          <nav className="hidden 2xl:flex items-center gap-1 overflow-x-auto py-1 scrollbar-none max-w-[50%] bg-[#060912]/80 border border-slate-800/80 rounded-2xl px-2">
+          {/* Desktop Tab Navigation (Clean White & Orange Pill Bar for 2xl Screens) */}
+          <nav className="hidden 2xl:flex items-center gap-1 overflow-x-auto py-1 scrollbar-none max-w-[50%] bg-orange-50/90 border border-orange-200/80 rounded-2xl px-2">
             {TABS.slice(0, 8).map((t: any) => {
               const isActive = activeTab === t.id;
               const TabIcon = t.icon;
@@ -990,16 +990,16 @@ function InternDashboard() {
                   onClick={() => setActiveTab(t.id as any)}
                   className={`shrink-0 px-3 py-1.5 text-xs font-bold rounded-xl transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
                     isActive 
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md border border-blue-400/40" 
+                      ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20 border border-orange-400/40" 
                       : t.isPrimary
-                      ? "text-amber-300 bg-amber-950/50 hover:bg-amber-900/60 border border-amber-500/30"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                      ? "text-orange-900 bg-orange-100/90 hover:bg-orange-200/80 border border-orange-300/80"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-orange-100/50"
                   }`}
                 >
-                  {TabIcon && <TabIcon className={`h-3.5 w-3.5 ${isActive ? "text-white" : t.isPrimary ? "text-amber-400" : "text-slate-400"}`} />}
+                  {TabIcon && <TabIcon className={`h-3.5 w-3.5 ${isActive ? "text-white" : t.isPrimary ? "text-orange-600" : "text-slate-500"}`} />}
                   <span>{t.label}</span>
                   {t.isPrimary && t.count > 0 && !isActive && (
-                    <span className="px-1.5 py-0.2 text-[9px] font-extrabold rounded-full bg-amber-500 text-slate-950">
+                    <span className="px-1.5 py-0.2 text-[9px] font-extrabold rounded-full bg-orange-500 text-white shadow-xs">
                       {t.count}
                     </span>
                   )}
@@ -1016,8 +1016,8 @@ function InternDashboard() {
               onClick={() => setActiveTab("tasks")}
               className={`h-8 px-2 sm:px-3 text-xs font-bold transition-all shadow-md gap-1 sm:gap-1.5 cursor-pointer ${
                 activeTab === "tasks"
-                  ? "bg-blue-600 text-white border border-blue-400/40"
-                  : "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 border border-amber-400/80"
+                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white border border-orange-400/40 shadow-orange-500/20"
+                  : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border border-orange-300 shadow-orange-500/20"
               }`}
               title="Tasks & Assignments"
             >
@@ -1273,12 +1273,12 @@ function InternDashboard() {
             </div>
 
             {/* Intern Profile Card inside Drawer */}
-            <div className="p-4 bg-[#0E131F]/90 border-b border-slate-800/80 space-y-3">
+            <div className="p-4 bg-white/95 border border-orange-200/80 shadow-lg shadow-orange-950/5 space-y-3">
               <div className="flex items-center gap-3">
                 <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-12 w-12 ring-2 ring-emerald-500/40 shadow-md shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-bold text-sm text-white truncate">{displayName}</h4>
-                  <p className="text-xs text-slate-400 truncate">{email}</p>
+                  <h4 className="font-bold text-sm text-slate-900 truncate">{displayName}</h4>
+                  <p className="text-xs text-slate-500 truncate">{email}</p>
                   <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                     <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-md">
                       {profile?.intern_id || "VCS-INT-2026"}
@@ -1450,23 +1450,22 @@ function InternDashboard() {
         {/* ─── OVERVIEW ─── */}
         {activeTab === "overview" && (
           <>
-            {/* ─── LUXURY HERO BANNER & REAL-TIME PERFORMANCE MATRIX ─── */}
-            {/* ─── CORPORATE EXECUTIVE HERO BANNER & PERFORMANCE MATRIX ─── */}
-            <div className="relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-r from-[#0F172A] via-[#1C263B] to-[#0F172A] p-6 sm:p-8 shadow-2xl backdrop-blur-2xl">
+            {/* ─── ELEGANT SUNSET ORANGE HERO BANNER & PERFORMANCE MATRIX ─── */}
+            <div className="relative overflow-hidden rounded-3xl border border-orange-200/80 bg-gradient-to-r from-white via-[#FFF7F4] to-[#FFF1EC] p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-2xl">
               {/* Background ambient glow accents */}
-              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-600/10 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-20 left-10 h-64 w-64 rounded-full bg-indigo-600/10 blur-3xl" />
+              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-orange-300/20 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-20 left-10 h-64 w-64 rounded-full bg-amber-300/20 blur-3xl" />
               
               <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                 <div className="space-y-2 max-w-2xl">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-950/70 px-3 py-1 text-[11px] font-bold text-blue-300 backdrop-blur-md shadow-xs">
-                    <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
+                  <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/80 bg-orange-100/90 px-3 py-1 text-[11px] font-bold text-orange-900 shadow-xs">
+                    <span className="h-2 w-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
                     <span>Active Internship Sprint Workspace</span>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                    Welcome Back, <span className="bg-gradient-to-r from-blue-300 via-sky-200 to-indigo-300 bg-clip-text text-transparent">{profile?.full_name || displayName}</span> 👋
+                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+                    Welcome Back, <span className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 bg-clip-text text-transparent">{profile?.full_name || displayName}</span> 👋
                   </h1>
-                  <p className="text-xs sm:text-sm font-medium text-slate-300 leading-relaxed">
+                  <p className="text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">
                     Track your daily shift timecard, sprint task milestones, assigned mentor syncs, and official credential documents in one unified portal.
                   </p>
                 </div>
@@ -1475,86 +1474,86 @@ function InternDashboard() {
                 <div className="flex items-center gap-3 flex-wrap shrink-0 w-full lg:w-auto">
                   <Button
                     onClick={() => setActiveTab("tasks")}
-                    className="flex-1 lg:flex-none bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs h-11 px-5 rounded-2xl shadow-lg shadow-blue-950/60 gap-2 cursor-pointer border border-blue-400/30 transition-all hover:scale-[1.02]"
+                    className="flex-1 lg:flex-none bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs h-11 px-5 rounded-2xl shadow-lg shadow-orange-500/25 gap-2 cursor-pointer border border-orange-400/30 transition-all hover:scale-[1.02]"
                   >
                     <ClipboardList className="h-4 w-4" />
                     My Tasks ({myTasks.length})
                   </Button>
                   <Button
                     onClick={() => setActiveTab("lms")}
-                    className="flex-1 lg:flex-none bg-slate-900/90 hover:bg-slate-800 text-slate-200 font-bold text-xs h-11 px-5 rounded-2xl border border-slate-700 shadow-md gap-2 cursor-pointer"
+                    className="flex-1 lg:flex-none bg-white hover:bg-orange-50 text-slate-800 font-extrabold text-xs h-11 px-5 rounded-2xl border border-orange-200 shadow-sm gap-2 cursor-pointer"
                   >
-                    <BookOpen className="h-4 w-4 text-amber-400" />
+                    <BookOpen className="h-4 w-4 text-orange-500" />
                     LMS Learning
                   </Button>
                 </div>
               </div>
 
               {/* ── REAL-TIME STAT MATRIX GRID ── */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-7 pt-6 border-t border-slate-800/80">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-7 pt-6 border-t border-orange-200/70">
                 {/* Stat 1: Sprint Progress */}
-                <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-2 shadow-inner">
+                <div className="p-4 rounded-2xl bg-white/90 border border-orange-200/80 backdrop-blur-md space-y-2 shadow-md shadow-orange-950/5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <Target className="h-3.5 w-3.5 text-blue-400" />
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                      <Target className="h-3.5 w-3.5 text-orange-500" />
                       Sprint Progress
                     </span>
-                    <span className="font-mono font-bold text-blue-400 text-xs">{progress}%</span>
+                    <span className="font-mono font-black text-orange-600 text-xs">{progress}%</span>
                   </div>
-                  <div className="text-xl font-black text-white font-mono">{earnedCredits} / {totalAssignedCredits} <span className="text-xs text-slate-400 font-sans font-medium">Credits</span></div>
+                  <div className="text-xl font-black text-slate-900 font-mono">{earnedCredits} / {totalAssignedCredits} <span className="text-xs text-slate-500 font-sans font-medium">Credits</span></div>
                   {/* Progress Bar */}
-                  <div className="w-full bg-slate-800/80 h-2 rounded-full overflow-hidden border border-slate-700/50">
-                    <div className="bg-gradient-to-r from-blue-500 via-sky-400 to-indigo-500 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" style={{ width: `${Math.max(5, progress)}%` }} />
+                  <div className="w-full bg-orange-100 h-2 rounded-full overflow-hidden border border-orange-200/70">
+                    <div className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-400 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]" style={{ width: `${Math.max(5, progress)}%` }} />
                   </div>
                 </div>
 
                 {/* Stat 2: Active Pending Tasks */}
-                <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-2 shadow-inner">
+                <div className="p-4 rounded-2xl bg-white/90 border border-orange-200/80 backdrop-blur-md space-y-2 shadow-md shadow-orange-950/5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <ClipboardList className="h-3.5 w-3.5 text-amber-400" />
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                      <ClipboardList className="h-3.5 w-3.5 text-amber-500" />
                       Pending Tasks
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 font-bold text-[10px] border border-amber-500/30">
+                    <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 font-black text-[10px] border border-orange-300">
                       {pendingTasks.length} Active
                     </span>
                   </div>
-                  <div className="text-xl font-black text-white font-mono">{pendingTasks.length} <span className="text-xs text-slate-400 font-sans font-medium">Sprint Deliverables</span></div>
-                  <div className="text-[11px] text-slate-400 font-medium truncate">
+                  <div className="text-xl font-black text-slate-900 font-mono">{pendingTasks.length} <span className="text-xs text-slate-500 font-sans font-medium">Sprint Deliverables</span></div>
+                  <div className="text-[11px] text-slate-500 font-medium truncate">
                     {completedTasks.length} Verified &amp; Completed
                   </div>
                 </div>
 
                 {/* Stat 3: Attendance Streak */}
-                <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-2 shadow-inner">
+                <div className="p-4 rounded-2xl bg-white/90 border border-orange-200/80 backdrop-blur-md space-y-2 shadow-md shadow-orange-950/5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <Flame className="h-3.5 w-3.5 text-orange-400" />
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                      <Flame className="h-3.5 w-3.5 text-orange-500" />
                       Work Streak
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-orange-950 text-orange-300 font-bold text-[10px] border border-orange-500/30">
+                    <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 font-black text-[10px] border border-orange-300">
                       🔥 Active
                     </span>
                   </div>
-                  <div className="text-xl font-black text-white font-mono">{dayStreak} <span className="text-xs text-slate-400 font-sans font-medium">Days Streak</span></div>
-                  <div className="text-[11px] text-slate-400 font-medium truncate">
+                  <div className="text-xl font-black text-slate-900 font-mono">{dayStreak} <span className="text-xs text-slate-500 font-sans font-medium">Days Streak</span></div>
+                  <div className="text-[11px] text-slate-500 font-medium truncate">
                     {attendanceLogs.length} Total Shift Logs Recorded
                   </div>
                 </div>
 
                 {/* Stat 4: Mentor & Domain */}
-                <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-2 shadow-inner">
+                <div className="p-4 rounded-2xl bg-white/90 border border-orange-200/80 backdrop-blur-md space-y-2 shadow-md shadow-orange-950/5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <Award className="h-3.5 w-3.5 text-indigo-400" />
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                      <Award className="h-3.5 w-3.5 text-amber-500" />
                       Mentor Lead
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
+                    <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 font-black text-[10px] border border-orange-300">
                       Assigned
                     </span>
                   </div>
-                  <div className="text-sm font-extrabold text-white truncate">{mentor?.full_name || "Technical Team Lead"}</div>
-                  <div className="text-[11px] text-emerald-400 font-medium truncate">
+                  <div className="text-sm font-extrabold text-slate-900 truncate">{mentor?.full_name || "Technical Team Lead"}</div>
+                  <div className="text-[11px] text-orange-600 font-bold truncate">
                     {profile?.department || "Software Engineering"}
                   </div>
                 </div>
@@ -1562,36 +1561,36 @@ function InternDashboard() {
             </div>
 
             {/* ─── INTERN PROFILE CARD ─── */}
-            <div className="rounded-3xl border border-slate-800/80 bg-[#0F172A]/90 shadow-xl backdrop-blur-xl overflow-hidden">
+            <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl overflow-hidden">
               {/* Card header */}
-              <div className="bg-gradient-to-r from-[#0F172A] via-[#1C263B] to-[#0F172A] px-6 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-5 border-b border-slate-800/80">
+              <div className="bg-gradient-to-r from-[#FFF8F5] via-[#FFF3EE] to-white px-6 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-5 border-b border-orange-200/80">
                 <div className="flex items-center gap-5 min-w-0">
                   <div className="relative shrink-0 group">
-                    <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 rounded-2xl ring-2 ring-blue-500/40 shadow-2xl text-2xl" />
+                    <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 rounded-2xl ring-2 ring-orange-400/60 shadow-xl text-2xl" />
                     <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl cursor-pointer text-white">
                       <span className="text-[10px] font-bold uppercase tracking-wider">Upload</span>
                       <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.webp" onChange={handleImageUpload} />
                     </label>
-                    <span className="absolute -bottom-1 -right-1 bg-blue-600 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-slate-900 shadow">INTERN</span>
+                    <span className="absolute -bottom-1 -right-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-white shadow-md">INTERN</span>
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">{profile?.full_name || displayName}</div>
-                    <div className="text-blue-400 text-xs font-mono font-bold mt-0.5 flex items-center gap-2">
+                    <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">{profile?.full_name || displayName}</div>
+                    <div className="text-orange-600 text-xs font-mono font-black mt-0.5 flex items-center gap-2">
                       <span>{profile?.intern_id || "VYN-INT-PRO"}</span>
-                      <span className="h-1 w-1 rounded-full bg-slate-500" />
-                      <span className="text-slate-400 font-sans font-medium">{profile?.department || "Associate Intern"}</span>
+                      <span className="h-1 w-1 rounded-full bg-slate-300" />
+                      <span className="text-slate-600 font-sans font-medium">{profile?.department || "Associate Intern"}</span>
                     </div>
-                    <div className="text-slate-400 text-xs mt-1 truncate">{email}</div>
+                    <div className="text-slate-500 text-xs mt-1 truncate">{email}</div>
                   </div>
                 </div>
 
                 {mentor && (
-                  <div className="shrink-0 text-left sm:text-right bg-slate-900/80 rounded-2xl p-3.5 border border-slate-700/60 backdrop-blur-md w-full sm:w-auto shadow-inner">
-                    <div className="text-[10px] text-blue-400 font-black uppercase tracking-wider mb-0.5 flex items-center sm:justify-end gap-1.5">
+                  <div className="shrink-0 text-left sm:text-right bg-orange-50/90 rounded-2xl p-3.5 border border-orange-200/80 backdrop-blur-md w-full sm:w-auto shadow-xs">
+                    <div className="text-[10px] text-orange-600 font-black uppercase tracking-wider mb-0.5 flex items-center sm:justify-end gap-1.5">
                       <Sparkles className="h-3 w-3" /> Assigned Mentor
                     </div>
-                    <div className="text-sm font-bold text-white">{mentor.full_name}</div>
-                    <div className="text-xs text-slate-400">{mentor.department || mentor.position || "Technical Lead"}</div>
+                    <div className="text-sm font-extrabold text-slate-900">{mentor.full_name}</div>
+                    <div className="text-xs text-slate-600">{mentor.department || mentor.position || "Technical Lead"}</div>
                   </div>
                 )}
               </div>
@@ -1688,28 +1687,29 @@ function InternDashboard() {
             </div>
 
             {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
-            <div className="bg-gradient-to-r from-[#0F172A] via-[#1C263B] to-[#0F172A] rounded-3xl p-6 text-white shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-amber-500/30 relative overflow-hidden backdrop-blur-2xl">
-              <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-amber-500/10 blur-2xl" />
+            {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
+            <div className="bg-gradient-to-r from-white via-[#FFF7F4] to-[#FFF1EC] rounded-3xl p-6 text-slate-900 shadow-xl shadow-orange-950/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-orange-200/80 relative overflow-hidden backdrop-blur-2xl">
+              <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-orange-300/20 blur-2xl" />
               <div className="flex items-center gap-4 relative z-10">
-                <div className="h-12 w-12 rounded-2xl bg-amber-500/15 border border-amber-500/40 backdrop-blur-md flex items-center justify-center text-amber-400 shrink-0 shadow-lg shadow-amber-950/40">
+                <div className="h-12 w-12 rounded-2xl bg-orange-100 border border-orange-300 backdrop-blur-md flex items-center justify-center text-orange-600 shrink-0 shadow-sm">
                   <ClipboardList className="h-6 w-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900 flex items-center gap-2">
                       My Tasks &amp; Sprint Deliverables Hub
-                      <Sparkles className="h-4 w-4 text-amber-400 animate-pulse" />
+                      <Sparkles className="h-4 w-4 text-orange-500 animate-pulse" />
                     </h3>
-                    <span className="px-2.5 py-0.5 rounded-full bg-amber-950/80 border border-amber-500/40 text-amber-300 text-[10px] font-black uppercase tracking-wide">
+                    <span className="px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800 border border-orange-300 text-[10px] font-black uppercase tracking-wide">
                       {pendingTasks.length} Pending
                     </span>
                     {inProgressTasks.length > 0 && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-blue-950/80 border border-blue-500/40 text-blue-200 text-[10px] font-black uppercase tracking-wide">
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-black uppercase tracking-wide">
                         {inProgressTasks.length} In Progress
                       </span>
                     )}
                   </div>
-                  <p className="text-xs font-medium text-slate-300 mt-1">
+                  <p className="text-xs font-medium text-slate-600 mt-1">
                     Find your sprint tasks, claim from open pool tasks, and submit repository/PR links for mentor review.
                   </p>
                 </div>
@@ -1718,34 +1718,34 @@ function InternDashboard() {
               <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0 relative z-10">
                 <Button
                   onClick={() => setActiveTab("tasks")}
-                  className="w-full md:w-auto bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs h-10 px-6 rounded-2xl shadow-xl shadow-amber-950/50 gap-2 cursor-pointer border border-amber-300/40 transition-all hover:scale-[1.02]"
+                  className="w-full md:w-auto bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs h-10 px-6 rounded-2xl shadow-lg shadow-orange-500/25 gap-2 cursor-pointer border border-orange-400/30 transition-all hover:scale-[1.02]"
                 >
-                  <CheckCircle2 className="h-4 w-4 text-slate-950" />
+                  <CheckCircle2 className="h-4 w-4 text-white" />
                   Open Tasks Workspace &rarr;
                 </Button>
               </div>
             </div>
 
             {/* ─── ATTENDANCE TIMECARD WIDGET ─── */}
-            <div className="rounded-3xl border border-slate-800/80 bg-[#0F172A]/90 p-6 sm:p-7 shadow-xl backdrop-blur-xl space-y-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+            <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-orange-200/70 pb-5">
                 <div className="flex items-center gap-3.5">
-                  <div className="h-11 w-11 rounded-2xl bg-blue-950/60 text-blue-400 border border-blue-500/30 flex items-center justify-center shadow-inner">
+                  <div className="h-11 w-11 rounded-2xl bg-orange-100 text-orange-600 border border-orange-300 flex items-center justify-center shadow-xs">
                     <Clock className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-white">Daily Attendance &amp; Shift Timecard</h2>
-                    <p className="text-xs text-slate-400">Record your daily work presence and view historical shift logs</p>
+                    <h2 className="text-base font-extrabold text-slate-900">Daily Attendance &amp; Shift Timecard</h2>
+                    <p className="text-xs text-slate-500">Record your daily work presence and view historical shift logs</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                  <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
                     todayAttendance
                       ? todayAttendance.clock_out
-                        ? "bg-slate-800 text-slate-300 border border-slate-700"
-                        : "bg-blue-950/80 text-blue-300 border border-blue-500/50 animate-pulse"
-                      : "bg-amber-950/60 text-amber-300 border border-amber-500/40"
+                        ? "bg-slate-100 text-slate-700 border border-slate-300"
+                        : "bg-orange-100 text-orange-800 border border-orange-300 animate-pulse"
+                      : "bg-amber-100 text-amber-800 border border-amber-300"
                   }`}>
                     Status: {todayAttendance ? (todayAttendance.clock_out ? "Completed" : "Active Shift") : "Offline"}
                   </span>
@@ -1756,7 +1756,7 @@ function InternDashboard() {
                         onClick={handleClockOut}
                         disabled={isClocking || isClockingDisabled}
                         title={clockingDisabledReason}
-                        className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs gap-2 px-5 h-10 rounded-xl shadow-lg shadow-rose-950/50 disabled:opacity-50 cursor-pointer"
+                        className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs gap-2 px-5 h-10 rounded-xl shadow-lg shadow-rose-500/20 disabled:opacity-50 cursor-pointer"
                       >
                         {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
                         Clock Out Now
@@ -1767,7 +1767,7 @@ function InternDashboard() {
                       onClick={handleClockIn}
                       disabled={isClocking || isClockingDisabled}
                       title={clockingDisabledReason}
-                      className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs gap-2 px-6 h-10 rounded-xl shadow-lg shadow-emerald-950/60 disabled:opacity-50 cursor-pointer"
+                      className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs gap-2 px-6 h-10 rounded-xl shadow-lg shadow-orange-500/25 disabled:opacity-50 cursor-pointer"
                     >
                       {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
                       Clock In Now
@@ -1778,38 +1778,38 @@ function InternDashboard() {
 
               {/* Timecard Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                <div className="bg-[#131B2E]/90 p-4 rounded-2xl border border-slate-800/80 flex items-center justify-between shadow-md">
+                <div className="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/80 flex items-center justify-between shadow-xs">
                   <div>
-                    <div className="text-slate-400 font-semibold mb-0.5">Today Clock In</div>
-                    <div className="text-base font-bold text-white font-mono">
+                    <div className="text-slate-500 font-bold mb-0.5">Today Clock In</div>
+                    <div className="text-base font-black text-slate-900 font-mono">
                       {todayAttendance?.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                     </div>
                   </div>
-                  <div className="h-9 w-9 rounded-xl bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
+                  <div className="h-9 w-9 rounded-xl bg-orange-100 border border-orange-300 text-orange-600 flex items-center justify-center">
                     <Clock className="h-4 w-4" />
                   </div>
                 </div>
 
-                <div className="bg-[#131B2E]/90 p-4 rounded-2xl border border-slate-800/80 flex items-center justify-between shadow-md">
+                <div className="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/80 flex items-center justify-between shadow-xs">
                   <div>
-                    <div className="text-slate-400 font-semibold mb-0.5">Today Clock Out</div>
-                    <div className="text-base font-bold text-white font-mono">
+                    <div className="text-slate-500 font-bold mb-0.5">Today Clock Out</div>
+                    <div className="text-base font-black text-slate-900 font-mono">
                       {todayAttendance?.clock_out ? new Date(todayAttendance.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                     </div>
                   </div>
-                  <div className="h-9 w-9 rounded-xl bg-teal-950/60 border border-teal-500/30 text-teal-400 flex items-center justify-center">
+                  <div className="h-9 w-9 rounded-xl bg-amber-100 border border-amber-300 text-amber-600 flex items-center justify-center">
                     <CheckCircle2 className="h-4 w-4" />
                   </div>
                 </div>
 
-                <div className="bg-[#131B2E]/90 p-4 rounded-2xl border border-slate-800/80 flex items-center justify-between shadow-md">
+                <div className="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/80 flex items-center justify-between shadow-xs">
                   <div>
-                    <div className="text-slate-400 font-semibold mb-0.5">Total Days Present</div>
-                    <div className="text-base font-bold text-white font-mono">
+                    <div className="text-slate-500 font-bold mb-0.5">Total Days Present</div>
+                    <div className="text-base font-black text-slate-900 font-mono">
                       {attendanceLogs.length} Days
                     </div>
                   </div>
-                  <div className="h-9 w-9 rounded-xl bg-indigo-950/60 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
+                  <div className="h-9 w-9 rounded-xl bg-orange-100 border border-orange-300 text-orange-600 flex items-center justify-center">
                     <CalendarDays className="h-4 w-4" />
                   </div>
                 </div>
