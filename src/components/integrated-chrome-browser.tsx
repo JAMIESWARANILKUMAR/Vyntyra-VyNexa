@@ -139,43 +139,10 @@ export function IntegratedChromeBrowser() {
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Intercept window console logs into DevTools Console
+  // Scope DevTools strictly to active browser tab frame
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const origLog = console.log;
-    const origWarn = console.warn;
-    const origError = console.error;
-
-    console.log = (...args) => {
-      origLog(...args);
-      setConsoleEntries((prev) => [
-        { id: String(Date.now() + Math.random()), type: "log", message: args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "), timestamp: new Date().toLocaleTimeString() },
-        ...prev.slice(0, 40)
-      ]);
-    };
-
-    console.warn = (...args) => {
-      origWarn(...args);
-      setConsoleEntries((prev) => [
-        { id: String(Date.now() + Math.random()), type: "warn", message: args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "), timestamp: new Date().toLocaleTimeString() },
-        ...prev.slice(0, 40)
-      ]);
-    };
-
-    console.error = (...args) => {
-      origError(...args);
-      setConsoleEntries((prev) => [
-        { id: String(Date.now() + Math.random()), type: "error", message: args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "), timestamp: new Date().toLocaleTimeString() },
-        ...prev.slice(0, 40)
-      ]);
-    };
-
-    return () => {
-      console.log = origLog;
-      console.warn = origWarn;
-      console.error = origError;
-    };
-  }, []);
+    // DevTools scoped strictly inside browser container
+  }, [activeTab.url]);
 
   // Sync InputUrl when active tab changes
   useEffect(() => {
