@@ -738,19 +738,38 @@ function InternDashboard() {
 
   const myDeliverableTaskIds = (deliverables || []).map((d: any) => d.task_id).filter(Boolean);
 
+  const myIdentifiers = [
+    currentUserId,
+    profile?.id,
+    profile?.intern_id,
+    profile?.email,
+    profile?.full_name,
+  ].filter(Boolean);
+
   const poolTasks = tasks.filter((t: any) => t.is_pool_task === true && !t.assigned_to);
   const myTasks = tasks.filter((t: any) => {
     if (!t) return false;
     if (t.is_pool_task === true && !t.assigned_to) return false; // Unclaimed pool tasks belong in Task Pool tab
-    return Boolean(currentUserId && (
-      t.assigned_to === currentUserId || 
-      t.target_user_id === currentUserId ||
-      t.user_id === currentUserId ||
-      t.claimed_by === currentUserId ||
-      (Array.isArray(t.team_members) && t.team_members.includes(currentUserId)) ||
-      (Array.isArray(t.target_user_ids) && t.target_user_ids.includes(currentUserId)) ||
-      myDeliverableTaskIds.includes(t.id)
-    ));
+
+    const isDirectMatch = myIdentifiers.some((id) => 
+      t.assigned_to === id || 
+      t.target_user_id === id || 
+      t.user_id === id || 
+      t.claimed_by === id ||
+      (Array.isArray(t.team_members) && t.team_members.includes(id)) ||
+      (Array.isArray(t.target_user_ids) && t.target_user_ids.includes(id))
+    );
+
+    const isDeliverableMatch = myDeliverableTaskIds.includes(t.id);
+
+    const isGlobalInternTask = Boolean(
+      t.target_role === "intern" || 
+      t.target_role === "all" || 
+      t.is_general === true || 
+      t.is_all_interns === true
+    );
+
+    return isDirectMatch || isDeliverableMatch || isGlobalInternTask;
   });
   const inProgressTasks = myTasks.filter((t: any) => t.status === "pending" || t.status === "in_progress" || t.status === "blocked" || t.status === "rejected");
   const submittedTasks = myTasks.filter((t: any) => t.status === "submitted" || t.status === "under_review");

@@ -334,10 +334,24 @@ export const listTasks = createServerFn({ method: "GET" })
       rawList = plain;
     }
 
+    const { data: userProfile } = await supabase
+      .from("profiles")
+      .select("id, intern_id, email, full_name")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const myIds = new Set([
+      context.userId,
+      userProfile?.id,
+      userProfile?.intern_id,
+      userProfile?.email,
+      userProfile?.full_name,
+    ].filter(Boolean));
+
     const { data: myDeliverables } = await supabase
       .from("deliverables")
-      .select("task_id")
-      .eq("user_id", context.userId);
+      .select("task_id, user_id")
+      .or(`user_id.eq.${context.userId}${userProfile?.intern_id ? `,user_id.eq.${userProfile.intern_id}` : ""}${userProfile?.email ? `,user_id.eq.${userProfile.email}` : ""}`);
 
     const myDelivTaskIds = new Set((myDeliverables || []).map((d: any) => d.task_id).filter(Boolean));
 
@@ -347,15 +361,19 @@ export const listTasks = createServerFn({ method: "GET" })
       // Unassigned pool tasks open for interns to claim in the Task Pool
       if (t.is_pool_task && !t.assigned_to) return true;
 
-      // Tasks assigned directly, claimed, created, team-assigned, or submitted deliverables by this user
+      // Match against any of user's identifiers (UUID, intern_id, email, full_name) or deliverables or global intern target_role
       const isAssignedToMe = Boolean(
-        (t.assigned_to && t.assigned_to === context.userId) || 
-        (t.target_user_id && t.target_user_id === context.userId) ||
-        (t.claimed_by && t.claimed_by === context.userId) ||
-        (t.user_id && t.user_id === context.userId) ||
-        (Array.isArray(t.team_members) && t.team_members.includes(context.userId)) ||
-        (Array.isArray(t.target_user_ids) && t.target_user_ids.includes(context.userId)) ||
-        myDelivTaskIds.has(t.id)
+        myIds.has(t.assigned_to) ||
+        myIds.has(t.target_user_id) ||
+        myIds.has(t.claimed_by) ||
+        myIds.has(t.user_id) ||
+        (Array.isArray(t.team_members) && t.team_members.some((m: any) => myIds.has(m))) ||
+        (Array.isArray(t.target_user_ids) && t.target_user_ids.some((m: any) => myIds.has(m))) ||
+        myDelivTaskIds.has(t.id) ||
+        t.target_role === 'intern' ||
+        t.target_role === 'all' ||
+        t.is_general === true ||
+        t.is_all_interns === true
       );
       if (isAssignedToMe) return true;
 
