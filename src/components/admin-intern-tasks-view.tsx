@@ -23,6 +23,7 @@ import { sendTaskNotificationEmail, generateTaskWhatsApp } from "@/lib/notificat
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export function AdminInternTasksView() {
@@ -112,12 +113,31 @@ export function AdminInternTasksView() {
     credits: 10,
   });
 
-  function openTaskEmailModal(t: any, defaultStatus?: string) {
+  async function openTaskEmailModal(t: any, defaultStatus?: string) {
     const profile = t.assigned_profile || {};
     const email = profile.email || "";
     const name = profile.full_name || profile.name || "";
-    const phone = profile.phone || profile.phone_number || "";
+    let phone = profile.phone || profile.phone_number || profile.mobile || profile.whatsapp || "";
     const status = defaultStatus || t.status || "assigned";
+    const targetId = t.assigned_to || t.target_user_id || t.user_id;
+
+    // Auto-fetch intern phone number from profiles table if missing from cached profile
+    if (!phone && (targetId || email)) {
+      try {
+        let q = supabase.from("profiles").select("phone, phone_number");
+        if (targetId) {
+          q = q.eq("id", targetId);
+        } else if (email) {
+          q = q.eq("email", email);
+        }
+        const { data: pData } = await q.maybeSingle();
+        if (pData) {
+          phone = pData.phone || pData.phone_number || "";
+        }
+      } catch (err) {
+        console.warn("[openTaskEmailModal] Phone auto-fetch error:", err);
+      }
+    }
 
     setTaskEmailForm({
       recipient_email: email,

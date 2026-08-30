@@ -1344,7 +1344,7 @@ export const listAllInternTasksWithProgress = createServerFn({ method: "GET" })
 
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("id, full_name, email, department, position, intern_id, avatar_url");
+      .select("id, full_name, email, phone, phone_number, department, position, intern_id, avatar_url");
 
     const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
 
