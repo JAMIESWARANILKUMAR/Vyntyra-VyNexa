@@ -556,7 +556,7 @@ export const updateTaskByAdmin = createServerFn({ method: "POST" })
     id: z.string().uuid(),
     title: z.string().optional(),
     description: z.string().optional(),
-    status: z.enum(["pending", "in_progress", "completed", "blocked"]).optional(),
+    status: z.enum(["pending", "in_progress", "submitted", "under_review", "completed", "blocked", "rejected"]).optional(),
     priority: z.enum(["low", "medium", "high"]).optional(),
     assigned_to: z.string().nullable().optional(),
     progress_percentage: z.number().optional(),
@@ -564,15 +564,19 @@ export const updateTaskByAdmin = createServerFn({ method: "POST" })
     project_requirements: z.string().optional(),
     deliverable_url: z.string().optional(),
     time_spent_hours: z.number().optional(),
+    task_file_url: z.string().optional().nullable(),
+    task_doc_url: z.string().optional().nullable(),
+    report_template_url: z.string().optional().nullable(),
+    ppt_template_url: z.string().optional().nullable(),
+    task_meet_link: z.string().optional().nullable(),
+    due_date: z.string().optional().nullable(),
   }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    if (roleData?.role !== 'admin') throw new Error("Unauthorized");
-
+    const admin = getAdminClient();
     const updatePayload: any = { ...data };
     delete updatePayload.id;
 
-    const { error } = await supabase
+    const { error } = await admin
       .from("tasks")
       .update(updatePayload)
       .eq("id", data.id);
@@ -591,6 +595,7 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
       due_date: z.string().optional(),
       priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
       report_template_url: z.string().optional(),
+      ppt_template_url: z.string().optional(),
       domain: z.string().optional(),
     })).min(1),
     target_intern_ids: z.array(z.string()).optional(),
@@ -609,100 +614,50 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
     
     // If selected specific intern IDs, filter to those
     if (data.target_intern_ids && data.target_intern_ids.length > 0) {
-      activeInterns = activeInterns.filter((p: any) => data.target_intern_ids!.includes(p.id));
+      const targetSet = new Set(data.target_intern_ids);
+      activeInterns = activeInterns.filter((i) => targetSet.has(i.id));
     }
 
-    if (!activeInterns.length) {
-      const { data: fallbackProfiles } = await admin
-        .from("profiles")
-        .select("id, department, position, full_name, email");
-      activeInterns = fallbackProfiles || [];
+    if (activeInterns.length === 0) {
+      throw new Error("No active interns found to assign tasks to.");
     }
 
-    if (!activeInterns.length) throw new Error("No active interns found in system to assign tasks to.");
-
+    // 2. Map CSV tasks to interns
     const taskPayloads: any[] = [];
-    const now = new Date().toISOString();
-
-    // Helper to check domain match
-    const matchInternDomain = (profile: any, domainStr: string | undefined): boolean => {
-      if (!domainStr || domainStr.toLowerCase() === "all" || domainStr.trim() === "") return true;
-      
-      const dept = (profile.department || "").toLowerCase();
-      const pos = (profile.position || "").toLowerCase();
-      const target = domainStr.toLowerCase().trim();
-      
-      if (target === "tech" || target === "engineering" || target === "technology") {
-        return dept.includes("tech") || dept.includes("eng") || dept.includes("soft") || dept.includes("dev") || dept.includes("data") || dept.includes("web") || dept.includes("ml") || dept.includes("ai") ||
-               pos.includes("tech") || pos.includes("eng") || pos.includes("soft") || pos.includes("dev") || pos.includes("data") || pos.includes("web") || pos.includes("ml") || pos.includes("ai");
-      }
-      
-      if (target === "non_tech" || target === "marketing" || target === "sales" || target === "design") {
-        return dept.includes("market") || dept.includes("sales") || dept.includes("crm") || dept.includes("design") || dept.includes("social") ||
-               pos.includes("market") || pos.includes("sales") || pos.includes("crm") || pos.includes("design") || pos.includes("social");
-      }
-      
-      if (target === "management" || target === "business" || target === "mba" || target === "operations") {
-        return dept.includes("manage") || dept.includes("mba") || dept.includes("bba") || dept.includes("ops") || dept.includes("operation") || dept.includes("business") ||
-               pos.includes("manage") || pos.includes("mba") || pos.includes("bba") || pos.includes("ops") || pos.includes("operation") || pos.includes("business");
-      }
-      
-      return dept.includes(target) || pos.includes(target);
-    };
-
-    // Distribute tasks to matching interns
-    const assignedInternIds = new Set<string>();
-    for (const taskItem of data.tasks) {
-      const targetInterns = activeInterns.filter((profile: any) => matchInternDomain(profile, taskItem.domain));
-      const internsToAssign = targetInterns.length > 0 ? targetInterns : activeInterns;
-      
-      const unassignedInterns = internsToAssign.filter((i: any) => !assignedInternIds.has(i.id));
-      const intern = unassignedInterns.length > 0 ? unassignedInterns[0] : internsToAssign[0];
-      if (!intern) continue;
-
-      assignedInternIds.add(intern.id);
-
+    data.tasks.forEach((taskItem, idx) => {
+      const targetIntern = activeInterns[idx % activeInterns.length];
       taskPayloads.push({
         title: taskItem.title,
-        description: taskItem.description || "Assigned Internship Project Task",
+        description: taskItem.description || null,
         project_requirements: taskItem.task_file_url || null,
         task_file_url: taskItem.task_file_url || null,
         task_doc_url: taskItem.task_doc_url || null,
         report_template_url: taskItem.report_template_url || null,
-        deliverable_url: null,
+        ppt_template_url: taskItem.ppt_template_url || null,
+        assigned_to: targetIntern.id,
+        target_user_id: targetIntern.id,
         due_date: taskItem.due_date || null,
         priority: taskItem.priority || "medium",
-        assigned_to: intern.id,
-        target_user_id: intern.id,
-        target_role: "intern",
         status: "pending",
         is_pool_task: false,
         created_by: context.userId,
-        created_at: now,
-        task_domain: taskItem.domain || "all"
       });
-    }
+    });
 
-    if (taskPayloads.length === 0) {
-      return { success: true, assignedCount: 0, internCount: activeInterns.length };
-    }
-
-    const { error } = await admin.from("tasks").insert(taskPayloads);
-    if (error) {
-      const fallbackPayloads = taskPayloads.map(t => {
-        const copy: any = { ...t };
+    const { error: insertErr } = await admin.from("tasks").insert(taskPayloads);
+    if (insertErr) {
+      const fallbackPayloads = taskPayloads.map((t) => {
+        const copy = { ...t };
         delete copy.target_user_id;
+        delete copy.report_template_url;
+        delete copy.ppt_template_url;
         return copy;
       });
-      const { error: err2 } = await admin.from("tasks").insert(fallbackPayloads);
-      if (err2) throw new Error(err2.message);
+      const { error: fallbackErr } = await admin.from("tasks").insert(fallbackPayloads);
+      if (fallbackErr) throw new Error(fallbackErr.message);
     }
 
-    return {
-      success: true,
-      assignedCount: taskPayloads.length,
-      internCount: activeInterns.length,
-    };
+    return { count: taskPayloads.length };
   });
 
 export const assignManualTaskToInterns = createServerFn({ method: "POST" })
@@ -712,6 +667,8 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
     description: z.string().optional(),
     task_file_url: z.string().optional(),
     task_doc_url: z.string().optional(),
+    report_template_url: z.string().optional(),
+    ppt_template_url: z.string().optional(),
     task_meet_link: z.string().optional(),
     assignment_mode: z.enum(["individual", "team", "pool", "all"]).optional().default("individual"),
     team_name: z.string().optional(),
@@ -735,6 +692,8 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
       project_requirements: data.task_file_url || null,
       task_file_url: data.task_file_url || null,
       task_doc_url: data.task_doc_url || null,
+      report_template_url: data.report_template_url || null,
+      ppt_template_url: data.ppt_template_url || null,
       task_meet_link: data.task_meet_link || null,
       assignment_mode: data.assignment_mode || "individual",
       team_id: teamId,

@@ -15,7 +15,7 @@ import {
   Sparkles, Zap, Wallet, ExternalLink, VolumeX, ShieldCheck, Laptop, Receipt,
   LifeBuoy, Award, GraduationCap, FileCheck, HelpCircle, Layers, CreditCard,
   Building2, Plus, ArrowUpRight, HeartHandshake, CheckSquare, FileUp, Printer, Shield, Radio, Cpu, RotateCcw,
-  Coins, CheckCheck, Target, Flame, Calendar
+  Coins, CheckCheck, Target, Flame, Calendar, Play, FolderOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +49,7 @@ import {
   assignManualTaskToInterns, getMenteeAttendance,
   listAssignedSupportQueries, updateSupportProgressNotes, requestSupportMeeting,
   reviewDeadlineExtension, getDashboardSettings,
-  listInternTasksForMentor, updateTaskExecution,
+  listInternTasksForMentor, updateTaskExecution, updateTaskByAdmin,
   listHolidays, createMeeting, updateMeeting,
   submitMentorTaskVerificationReport, scheduleMentorMeeting,
   listAutomatedEmailLogs, deleteAutomatedEmailLog, sendPromotionalInternshipEmail
@@ -663,7 +663,18 @@ function EmployeeDashboard() {
   });
 
   const assignTaskMutation = useMutation({
-    mutationFn: async (payload: { title: string; description: string; priority: "low"|"medium"|"high"; due_date: string; target_intern_ids: string[] }) => {
+    mutationFn: async (payload: { 
+      title: string; 
+      description: string; 
+      priority: "low"|"medium"|"high"; 
+      due_date: string; 
+      target_intern_ids: string[];
+      task_doc_url?: string;
+      report_template_url?: string;
+      ppt_template_url?: string;
+      task_file_url?: string;
+      task_meet_link?: string;
+    }) => {
       return assignInternTask({ data: payload });
     },
     onSuccess: (res) => {
@@ -671,6 +682,11 @@ function EmployeeDashboard() {
       setIsTaskModalOpen(false);
       setTaskTitle("");
       setTaskDesc("");
+      setTaskDocUrl("");
+      setReportTemplateUrl("");
+      setPptTemplateUrl("");
+      setTaskFileUrl("");
+      setTaskMeetLink("");
       setSelectedInterns([]);
       setTargetInternId(null);
       qc.invalidateQueries({ queryKey: ["my-tasks"] });
@@ -704,7 +720,12 @@ function EmployeeDashboard() {
       description: taskDesc,
       priority: taskPriority,
       due_date: taskDueDate,
-      target_intern_ids: ids
+      target_intern_ids: ids,
+      task_doc_url: taskDocUrl.trim() || undefined,
+      report_template_url: reportTemplateUrl.trim() || undefined,
+      ppt_template_url: pptTemplateUrl.trim() || undefined,
+      task_file_url: taskFileUrl.trim() || undefined,
+      task_meet_link: taskMeetLink.trim() || undefined,
     });
   };
 
@@ -771,6 +792,50 @@ function EmployeeDashboard() {
   const [taskDueDate, setTaskDueDate] = useState("");
   const [targetInternId, setTargetInternId] = useState<string | null>(null); // null means bulk
   
+  // Task Document & Assignment States
+  const [taskDocUrl, setTaskDocUrl] = useState("");
+  const [reportTemplateUrl, setReportTemplateUrl] = useState("");
+  const [pptTemplateUrl, setPptTemplateUrl] = useState("");
+  const [taskFileUrl, setTaskFileUrl] = useState("");
+  const [taskMeetLink, setTaskMeetLink] = useState("");
+
+  const [editTaskModalOpen, setEditTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<any>(null);
+  const doUpdateTaskByAdmin = useServerFn(updateTaskByAdmin);
+  const [isUpdatingTask, setIsUpdatingTask] = useState(false);
+
+  const handleEditTaskSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTask) return;
+    setIsUpdatingTask(true);
+    try {
+      await doUpdateTaskByAdmin({
+        data: {
+          id: editingTask.id,
+          title: editingTask.title,
+          description: editingTask.description,
+          priority: editingTask.priority,
+          due_date: editingTask.due_date,
+          status: editingTask.status,
+          task_doc_url: editingTask.task_doc_url || null,
+          report_template_url: editingTask.report_template_url || null,
+          ppt_template_url: editingTask.ppt_template_url || null,
+          task_file_url: editingTask.task_file_url || null,
+          task_meet_link: editingTask.task_meet_link || null,
+        }
+      });
+      toast.success("Task & Document links updated successfully!");
+      setEditTaskModalOpen(false);
+      setEditingTask(null);
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update task");
+    } finally {
+      setIsUpdatingTask(false);
+    }
+  };
+
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [viewingIntern, setViewingIntern] = useState<any>(null);
   const [viewingInternAttendance, setViewingInternAttendance] = useState<any[]>([]);
@@ -1570,13 +1635,51 @@ function EmployeeDashboard() {
                               {task.description}
                             </p>
                           )}
-                          <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
+                          <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1 flex-wrap">
                             {task.due_date && <span>Deadline: <strong className="text-slate-300">{new Date(task.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</strong></span>}
                             {task.credits && <span>Credits: <strong className="text-indigo-400">{task.credits}</strong></span>}
+                            
+                            {/* Document & Template Links */}
+                            {task.task_doc_url && (
+                              <a href={task.task_doc_url} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline flex items-center gap-1 font-bold">
+                                <BookOpen className="h-3 w-3" /> Handbook
+                              </a>
+                            )}
+                            {task.report_template_url && (
+                              <a href={task.report_template_url} target="_blank" rel="noreferrer" className="text-orange-400 hover:underline flex items-center gap-1 font-bold">
+                                <FileText className="h-3 w-3" /> Report Template
+                              </a>
+                            )}
+                            {task.ppt_template_url && (
+                              <a href={task.ppt_template_url} target="_blank" rel="noreferrer" className="text-amber-400 hover:underline flex items-center gap-1 font-bold">
+                                <Play className="h-3 w-3" /> PPT File
+                              </a>
+                            )}
+                            {task.task_file_url && (
+                              <a href={task.task_file_url} target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline flex items-center gap-1 font-bold">
+                                <FolderOpen className="h-3 w-3" /> Project Files
+                              </a>
+                            )}
+                            {task.task_meet_link && (
+                              <a href={task.task_meet_link} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline flex items-center gap-1 font-bold">
+                                <Video className="h-3 w-3" /> Meet Link
+                              </a>
+                            )}
                           </div>
                         </div>
 
-                        <div className="shrink-0 flex items-center gap-2">
+                        <div className="shrink-0 flex items-center gap-2 flex-wrap">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingTask(task);
+                              setEditTaskModalOpen(true);
+                            }}
+                            className="bg-slate-900 border-slate-700 text-slate-200 hover:bg-slate-800 text-xs font-semibold rounded-xl cursor-pointer"
+                          >
+                            Edit Task &amp; Docs
+                          </Button>
                           {task.status === "pending" && (
                             <Button
                               size="sm"
@@ -3104,9 +3207,39 @@ function EmployeeDashboard() {
                     </select>
                   </div>
                 </div>
+
+                {/* Additional Document & Template Links */}
+                <div className="space-y-3 pt-2 border-t border-slate-800">
+                  <div>
+                    <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold mb-1.5 block">Task Handbook / Guide URL (Optional)</Label>
+                    <Input placeholder="https://docs.google.com/document/d/... or PDF URL" value={taskDocUrl} onChange={(e) => setTaskDocUrl(e.target.value)} className="rounded-xl bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500 text-xs" />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold mb-1.5 block">Task Report Template URL</Label>
+                      <Input placeholder="https://docs.google.com/document/..." value={reportTemplateUrl} onChange={(e) => setReportTemplateUrl(e.target.value)} className="rounded-xl bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500 text-xs" />
+                    </div>
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold mb-1.5 block">PPT Presentation URL</Label>
+                      <Input placeholder="https://docs.google.com/presentation/..." value={pptTemplateUrl} onChange={(e) => setPptTemplateUrl(e.target.value)} className="rounded-xl bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500 text-xs" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold mb-1.5 block">Project Files / Specs URL</Label>
+                      <Input placeholder="https://github.com/... or Google Drive" value={taskFileUrl} onChange={(e) => setTaskFileUrl(e.target.value)} className="rounded-xl bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500 text-xs" />
+                    </div>
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold mb-1.5 block">Google Meet Link</Label>
+                      <Input placeholder="https://meet.google.com/..." value={taskMeetLink} onChange={(e) => setTaskMeetLink(e.target.value)} className="rounded-xl bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500 text-xs" />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-8 flex justify-end gap-3">
+              <div className="mt-6 flex justify-end gap-3">
                 <Button variant="ghost" onClick={() => setIsTaskModalOpen(false)} className="rounded-xl text-slate-400 hover:text-white">Cancel</Button>
                 <Button 
                   onClick={submitAssignTask} 
@@ -3121,6 +3254,136 @@ function EmployeeDashboard() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* ─── EDIT ASSIGNED TASK & DOC LINKS MODAL ─── */}
+      <Dialog open={editTaskModalOpen} onOpenChange={setEditTaskModalOpen}>
+        <DialogContent className="sm:max-w-lg bg-[#0F172A] border border-slate-700 text-white rounded-3xl p-6 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-white">
+              <ClipboardList className="h-5 w-5 text-indigo-400" />
+              Edit Task &amp; Document Links
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-400">
+              Update task description, deadline, report URL, handbook guide, PPT file, and project links.
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingTask && (
+            <form onSubmit={handleEditTaskSubmit} className="space-y-4 py-2 text-xs">
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold block">Task Title</Label>
+                <Input
+                  required
+                  value={editingTask.title || ""}
+                  onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
+                  className="rounded-xl bg-[#131B2E] border-slate-700 text-white text-xs"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold block">Description</Label>
+                <Textarea
+                  rows={2}
+                  value={editingTask.description || ""}
+                  onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
+                  className="rounded-xl bg-[#131B2E] border-slate-700 text-white text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold block">Priority</Label>
+                  <select
+                    value={editingTask.priority || "medium"}
+                    onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value })}
+                    className="w-full rounded-xl border border-slate-700 bg-[#131B2E] text-white p-2.5 text-xs font-semibold outline-none"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold block">Due Date</Label>
+                  <Input
+                    type="date"
+                    value={editingTask.due_date ? editingTask.due_date.split("T")[0] : ""}
+                    onChange={(e) => setEditingTask({ ...editingTask, due_date: e.target.value })}
+                    className="rounded-xl bg-[#131B2E] border-slate-700 text-white text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-2 border-t border-slate-800">
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold block">Task Handbook / Guide URL</Label>
+                  <Input
+                    placeholder="https://docs.google.com/document/d/..."
+                    value={editingTask.task_doc_url || ""}
+                    onChange={(e) => setEditingTask({ ...editingTask, task_doc_url: e.target.value })}
+                    className="rounded-xl bg-[#131B2E] border-slate-700 text-white text-xs"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold block">Task Report Template URL</Label>
+                    <Input
+                      placeholder="https://docs.google.com/document/..."
+                      value={editingTask.report_template_url || ""}
+                      onChange={(e) => setEditingTask({ ...editingTask, report_template_url: e.target.value })}
+                      className="rounded-xl bg-[#131B2E] border-slate-700 text-white text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold block">PPT Presentation URL</Label>
+                    <Input
+                      placeholder="https://docs.google.com/presentation/..."
+                      value={editingTask.ppt_template_url || ""}
+                      onChange={(e) => setEditingTask({ ...editingTask, ppt_template_url: e.target.value })}
+                      className="rounded-xl bg-[#131B2E] border-slate-700 text-white text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold block">Project Files / Specs URL</Label>
+                    <Input
+                      placeholder="https://github.com/... or Drive"
+                      value={editingTask.task_file_url || ""}
+                      onChange={(e) => setEditingTask({ ...editingTask, task_file_url: e.target.value })}
+                      className="rounded-xl bg-[#131B2E] border-slate-700 text-white text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase tracking-wider text-slate-300 font-bold block">Google Meet Link</Label>
+                    <Input
+                      placeholder="https://meet.google.com/..."
+                      value={editingTask.task_meet_link || ""}
+                      onChange={(e) => setEditingTask({ ...editingTask, task_meet_link: e.target.value })}
+                      className="rounded-xl bg-[#131B2E] border-slate-700 text-white text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-2.5 border-t border-slate-800">
+                <Button type="button" variant="ghost" size="sm" className="text-slate-400 hover:text-white" onClick={() => setEditTaskModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isUpdatingTask} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">
+                  {isUpdatingTask ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+                  Save Task &amp; Doc Links
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Intern Attendance Modal */}
       <AnimatePresence>

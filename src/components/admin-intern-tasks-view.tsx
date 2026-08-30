@@ -16,7 +16,7 @@ import { InternTaskAssignmentModal } from "@/components/intern-task-assignment-m
 import {
   ClipboardList, Search, Plus, CheckCircle2, Clock, AlertTriangle, ExternalLink,
   Trash2, Sparkles, Filter, FileText, Check, RotateCcw, User, Eye, Download, Bell,
-  Mail, MessageSquare, Loader2, Send, Users, Video
+  Mail, MessageSquare, Loader2, Send, Users, Video, BookOpen, Play
 } from "lucide-react";
 import { sendTaskNotification } from "@/lib/notifications.functions";
 import { sendTaskNotificationEmail, generateTaskWhatsApp } from "@/lib/notifications-omni.functions";
@@ -1133,12 +1133,27 @@ export function AdminInternTasksView() {
                         <div className="flex items-center gap-3 sm:gap-4 text-[11px] text-slate-400 flex-wrap pt-1">
                           <span>Created: {new Date(t.created_at).toLocaleDateString()}</span>
                           {t.task_file_url && (
-                            <a href={t.task_file_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium">
-                              <FileText className="h-3.5 w-3.5" /> View Task File
+                            <a href={t.task_file_url} target="_blank" rel="noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1 font-bold">
+                              <FileText className="h-3.5 w-3.5" /> Task Spec/Files
+                            </a>
+                          )}
+                          {t.task_doc_url && (
+                            <a href={t.task_doc_url} target="_blank" rel="noreferrer" className="text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 font-bold">
+                              <BookOpen className="h-3.5 w-3.5" /> Handbook
+                            </a>
+                          )}
+                          {t.report_template_url && (
+                            <a href={t.report_template_url} target="_blank" rel="noreferrer" className="text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center gap-1 font-bold">
+                              <FileText className="h-3.5 w-3.5" /> Report Template
+                            </a>
+                          )}
+                          {t.ppt_template_url && (
+                            <a href={t.ppt_template_url} target="_blank" rel="noreferrer" className="text-amber-600 dark:text-amber-400 hover:underline inline-flex items-center gap-1 font-bold">
+                              <Play className="h-3.5 w-3.5" /> PPT File
                             </a>
                           )}
                           {t.task_meet_link && (
-                            <a href={t.task_meet_link} target="_blank" rel="noreferrer" className="text-blue-700 hover:underline inline-flex items-center gap-1 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                            <a href={t.task_meet_link} target="_blank" rel="noreferrer" className="text-blue-700 dark:text-blue-400 hover:underline inline-flex items-center gap-1 font-bold bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
                               <Video className="h-3.5 w-3.5 text-blue-600" /> Meet Link
                             </a>
                           )}

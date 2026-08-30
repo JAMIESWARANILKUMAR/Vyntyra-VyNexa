@@ -873,12 +873,19 @@ function OperationsDashboard() {
           description: editingTaskByAdmin.description,
           priority: editingTaskByAdmin.priority,
           due_date: editingTaskByAdmin.due_date,
+          status: editingTaskByAdmin.status,
+          task_doc_url: editingTaskByAdmin.task_doc_url || null,
+          report_template_url: editingTaskByAdmin.report_template_url || null,
+          ppt_template_url: editingTaskByAdmin.ppt_template_url || null,
+          task_file_url: editingTaskByAdmin.task_file_url || null,
+          task_meet_link: editingTaskByAdmin.task_meet_link || null,
         },
       });
-      toast.success("Task updated!");
+      toast.success("Task & Document links updated successfully!");
       setEditingTaskByAdmin(null);
       qc.invalidateQueries({ queryKey: ["tasks"] });
       qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to update task");
     }
@@ -3416,11 +3423,72 @@ function OperationsDashboard() {
                   />
                 </div>
               </div>
+              <div className="space-y-3 pt-2 border-t">
+                <div className="space-y-1.5">
+                  <Label>Task Handbook / Guide URL</Label>
+                  <Input
+                    placeholder="https://docs.google.com/document/d/..."
+                    value={editingTaskByAdmin.task_doc_url || ""}
+                    onChange={(e) =>
+                      setEditingTaskByAdmin({ ...editingTaskByAdmin, task_doc_url: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Task Report Template URL</Label>
+                    <Input
+                      placeholder="https://docs.google.com/document/..."
+                      value={editingTaskByAdmin.report_template_url || ""}
+                      onChange={(e) =>
+                        setEditingTaskByAdmin({ ...editingTaskByAdmin, report_template_url: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>PPT Presentation URL</Label>
+                    <Input
+                      placeholder="https://docs.google.com/presentation/..."
+                      value={editingTaskByAdmin.ppt_template_url || ""}
+                      onChange={(e) =>
+                        setEditingTaskByAdmin({ ...editingTaskByAdmin, ppt_template_url: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Project Files / Specs URL</Label>
+                    <Input
+                      placeholder="https://github.com/... or Drive"
+                      value={editingTaskByAdmin.task_file_url || ""}
+                      onChange={(e) =>
+                        setEditingTaskByAdmin({ ...editingTaskByAdmin, task_file_url: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Google Meet Link</Label>
+                    <Input
+                      placeholder="https://meet.google.com/..."
+                      value={editingTaskByAdmin.task_meet_link || ""}
+                      onChange={(e) =>
+                        setEditingTaskByAdmin({ ...editingTaskByAdmin, task_meet_link: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
               <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => setEditingTaskByAdmin(null)}>
                   Cancel
                 </Button>
-                <Button type="submit">Save Changes</Button>
+                <Button type="submit">Save Task &amp; Doc Links</Button>
               </DialogFooter>
             </form>
           )}

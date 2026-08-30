@@ -343,7 +343,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
 
       qc.invalidateQueries({ queryKey: ["my-tasks"] });
       qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
-      toast.success(`Assigned ${res.assignedCount} tasks across ${res.internCount} intern(s)! Every intern received a task.`);
+      toast.success(`Assigned ${res.count} tasks to active intern(s)!`);
       onClose();
     } catch (err: any) {
       toast.error(err.message || "Failed to bulk assign tasks");
