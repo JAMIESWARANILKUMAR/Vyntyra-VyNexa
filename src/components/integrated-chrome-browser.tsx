@@ -6,7 +6,7 @@ import {
   Wrench, Bug, Cpu, Layers, Code, Play, RefreshCw, Settings, Trash2, Eye,
   ZoomIn, ZoomOut, History, Command, Share2, HelpCircle, Monitor, Sliders,
   MousePointer, Filter, Ban, PlayCircle, StopCircle, HardDrive, Database,
-  Activity, Layout, Sun, Moon
+  Activity, Layout, Sun, Moon, MoreVertical, ChevronDown, ChevronRight, AlertCircle, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -50,27 +50,6 @@ const PRESET_WALLPAPERS = [
   { id: "synthwave", title: "Synthwave Sunset Grid", url: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1920&q=80" },
 ];
 
-interface ChromeConsoleEntry {
-  id: string;
-  type: "log" | "warn" | "error" | "info" | "system";
-  message: string;
-  source?: string;
-  timestamp: string;
-}
-
-interface ChromeNetworkEntry {
-  id: string;
-  name: string;
-  url: string;
-  method: string;
-  status: number;
-  statusText: string;
-  type: string;
-  size: string;
-  time: string;
-  headers?: Record<string, string>;
-}
-
 export function IntegratedChromeBrowser() {
   // Multi-Tab Management
   const [tabs, setTabs] = useState<TabState[]>([
@@ -98,53 +77,38 @@ export function IntegratedChromeBrowser() {
 
   // Background Customization State
   const [wallpaperUrl, setWallpaperUrl] = useState<string>(() => {
-    return localStorage.getItem("vynexa-search-bg-v3") || PRESET_WALLPAPERS[0].url;
+    return localStorage.getItem("vynexa-search-bg-v4") || PRESET_WALLPAPERS[0].url;
   });
   const [wallpaperOpacity, setWallpaperOpacity] = useState<number>(() => {
-    return parseFloat(localStorage.getItem("vynexa-search-bg-op-v3") || "0.45");
+    return parseFloat(localStorage.getItem("vynexa-search-bg-op-v4") || "0.45");
   });
   const [showWallpaperModal, setShowWallpaperModal] = useState(false);
   const [customBgInput, setCustomBgInput] = useState("");
 
-  // ─── CHROME DEVTOOLS STATE ───
-  const [showDevTools, setShowDevTools] = useState(false);
-  const [devDockPosition, setDevDockPosition] = useState<"bottom" | "right">("right");
-  const [chromeTab, setChromeTab] = useState<"elements" | "console" | "network" | "application" | "performance">("console");
-  
-  // Console Filter States
-  const [consoleFilter, setConsoleFilter] = useState<"all" | "errors" | "warnings" | "info">("all");
-  const [consoleSearchQuery, setConsoleSearchQuery] = useState("");
+  // ─── EXACT GOOGLE CHROME DEVTOOLS STATE (Matching Reference Image) ───
+  const [showDevTools, setShowDevTools] = useState(true);
+  const [devDockPosition, setDevDockPosition] = useState<"bottom" | "right">("bottom");
+  const [chromeTab, setChromeTab] = useState<"Elements" | "Console" | "Sources" | "Network" | "Performance" | "Memory" | "Application" | "Security" | "Lighthouse" | "Recorder">("Elements");
+  const [elementsSubTab, setElementsSubTab] = useState<"Styles" | "Computed" | "Layout" | "Event Listeners">("Layout");
+
+  // DOM Inspection Tree State
+  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({
+    html: true,
+    head: false,
+    body: true,
+  });
+  const [selectedNode, setSelectedNode] = useState("body");
+
+  // Console Execution State
   const [jsPromptInput, setJsPromptInput] = useState("");
-  const [consoleEntries, setConsoleEntries] = useState<ChromeConsoleEntry[]>([
-    { id: "1", type: "system", message: "Google Chrome DevTools Protocol v128.0.6613.85 Initialized", timestamp: new Date().toLocaleTimeString() },
-    { id: "2", type: "info", message: "[DOM Inspector] Highlight & click any element to inspect computed CSS styles", timestamp: new Date().toLocaleTimeString() },
-    { id: "3", type: "log", message: "[Network Pipeline] Proxy Interceptor monitoring fetch/XHR requests", timestamp: new Date().toLocaleTimeString() },
-    { id: "4", type: "info", message: "[JavaScript V8 Engine] Memory Heap: 18.4 MB / 64 MB allocated", timestamp: new Date().toLocaleTimeString() },
+  const [consoleEntries, setConsoleEntries] = useState<Array<{ id: string; type: "log" | "warn" | "error" | "info"; text: string; time: string }>>([
+    { id: "1", type: "info", text: "Chrome DevTools Protocol v128.0 Active", time: new Date().toLocaleTimeString() },
+    { id: "2", type: "log", text: "VyNexa Viewport loaded cleanly with 0 unhandled promise rejections.", time: new Date().toLocaleTimeString() },
   ]);
-
-  // Network State
-  const [networkEntries, setNetworkEntries] = useState<ChromeNetworkEntry[]>([
-    { id: "1", name: "search?q=vynexa", url: activeTab.url, method: "GET", status: 200, statusText: "OK", type: "document", size: "14.2 KB", time: "38ms" },
-    { id: "2", name: "v8-engine.js", url: "https://cdn.vynexa.connect/v8.js", method: "GET", status: 200, statusText: "OK", type: "script", size: "82.4 KB", time: "18ms" },
-    { id: "3", name: "inter-font.woff2", url: "https://fonts.gstatic.com/s/inter/v13/woff2", method: "GET", status: 304, statusText: "Not Modified", type: "font", size: "32.1 KB", time: "8ms" },
-  ]);
-  const [selectedNetworkReq, setSelectedNetworkReq] = useState<ChromeNetworkEntry | null>(null);
-
-  // Application Storage State
-  const [storageType, setStorageType] = useState<"localStorage" | "sessionStorage" | "cookies">("localStorage");
-
-  // Element Inspector State
-  const [inspectMode, setInspectMode] = useState(false);
-  const [selectedDomTag, setSelectedDomTag] = useState<string>("div#vynexa-root.viewport-active");
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Scope DevTools strictly to active browser tab frame
-  useEffect(() => {
-    // DevTools scoped strictly inside browser container
-  }, [activeTab.url]);
-
-  // Sync InputUrl when active tab changes
+  // Sync Omnibox URL on tab change
   useEffect(() => {
     setInputUrl(activeTab.url);
   }, [activeTabId, activeTab.url]);
@@ -182,7 +146,7 @@ export function IntegratedChromeBrowser() {
 
   const applyWallpaper = (url: string) => {
     setWallpaperUrl(url);
-    localStorage.setItem("vynexa-search-bg-v3", url);
+    localStorage.setItem("vynexa-search-bg-v4", url);
     toast.success("Wallpaper updated!");
   };
 
@@ -245,29 +209,8 @@ export function IntegratedChromeBrowser() {
       };
     });
 
-    // Add Network Request Entry
-    const namePart = target.split("/").pop() || target;
-    const newNetReq: ChromeNetworkEntry = {
-      id: String(Date.now()),
-      name: namePart.length > 25 ? namePart.slice(0, 25) + "..." : namePart,
-      url: target,
-      method: "GET",
-      status: 200,
-      statusText: "OK",
-      type: "document",
-      size: `${(Math.random() * 25 + 5).toFixed(1)} KB`,
-      time: `${Math.floor(Math.random() * 120) + 15}ms`,
-      headers: {
-        "Accept": "text/html,application/xhtml+xml",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/128.0.0.0",
-        "Cache-Control": "max-age=0",
-      }
-    };
-    setNetworkEntries((prev) => [newNetReq, ...prev.slice(0, 20)]);
-
-    // Add Console Entry
     setConsoleEntries((prev) => [
-      { id: String(Date.now()), type: "info", message: `[Chrome Navigation] Navigated to ${target}`, timestamp: new Date().toLocaleTimeString() },
+      { id: String(Date.now()), type: "info", text: `[Chrome Engine] Loaded ${target}`, time: new Date().toLocaleTimeString() },
       ...prev,
     ]);
   };
@@ -303,43 +246,35 @@ export function IntegratedChromeBrowser() {
     if (!jsPromptInput.trim()) return;
 
     const cmd = jsPromptInput.trim();
-    const timestamp = new Date().toLocaleTimeString();
-
-    let outputMessage = "";
+    let res = "";
     try {
-      if (cmd === "clear" || cmd === "clear()") {
+      if (cmd === "clear") {
         setConsoleEntries([]);
         setJsPromptInput("");
         return;
       }
-      const result = eval(cmd);
-      outputMessage = typeof result === "object" ? JSON.stringify(result, null, 2) : String(result);
+      res = String(eval(cmd));
     } catch (err: any) {
-      outputMessage = `Uncaught ${err?.name || "Error"}: ${err?.message || "Execution error"}`;
+      res = `Uncaught ${err?.message || "Execution Error"}`;
     }
 
     setConsoleEntries((prev) => [
-      { id: String(Date.now()), type: outputMessage.startsWith("Uncaught") ? "error" : "log", message: `> ${cmd} \n  ${outputMessage}`, timestamp },
+      { id: String(Date.now()), type: res.startsWith("Uncaught") ? "error" : "log", text: `> ${cmd}\n  ${res}`, time: new Date().toLocaleTimeString() },
       ...prev,
     ]);
     setJsPromptInput("");
   };
 
-  // Filtered Console Entries
-  const filteredConsoleLogs = consoleEntries.filter((log) => {
-    if (consoleFilter === "errors" && log.type !== "error") return false;
-    if (consoleFilter === "warnings" && log.type !== "warn") return false;
-    if (consoleFilter === "info" && log.type !== "info" && log.type !== "system") return false;
-    if (consoleSearchQuery && !log.message.toLowerCase().includes(consoleSearchQuery.toLowerCase())) return false;
-    return true;
-  });
+  const toggleNode = (nodeName: string) => {
+    setExpandedNodes((prev) => ({ ...prev, [nodeName]: !prev[nodeName] }));
+  };
 
   return (
     <div 
       className={`transition-all duration-300 flex flex-col relative overflow-hidden shadow-2xl ${
         isFullscreen 
           ? "fixed inset-0 z-50 bg-[#04060C] p-1" 
-          : "w-full rounded-3xl border border-slate-800/90 bg-[#060812] min-h-[90vh]"
+          : "w-full rounded-3xl border border-slate-800/90 bg-[#060812] min-h-[92vh]"
       }`}
     >
       {/* ─── HD WALLPAPER LAYER ─── */}
@@ -411,7 +346,7 @@ export function IntegratedChromeBrowser() {
             </div>
           </div>
 
-          {/* Window Action Tools */}
+          {/* Window Tool Controls */}
           <div className="flex items-center gap-2 shrink-0">
             {/* Viewport Zoom Controls */}
             <div className="hidden sm:flex items-center bg-slate-900 border border-slate-800 rounded-xl px-2 py-0.5 text-xs text-slate-300 gap-1.5">
@@ -471,12 +406,12 @@ export function IntegratedChromeBrowser() {
               onClick={() => setShowDevTools(!showDevTools)}
               className={`h-7 text-xs font-bold gap-1 px-2.5 cursor-pointer border rounded-xl ${
                 showDevTools 
-                  ? "bg-blue-950/90 border-blue-500/50 text-blue-300 shadow-[0_0_12px_rgba(59,130,246,0.4)]"
+                  ? "bg-[#332b1a] border-[#f5a623] text-[#f5a623] shadow-[0_0_12px_rgba(245,166,35,0.4)]"
                   : "bg-slate-900 border-slate-700 text-slate-300 hover:text-white"
               }`}
               title="Toggle Google Chrome DevTools Dock"
             >
-              <Wrench className="h-3.5 w-3.5 text-blue-400" />
+              <Wrench className="h-3.5 w-3.5 text-[#f5a623]" />
               <span>DevTools</span>
             </Button>
 
@@ -618,21 +553,20 @@ export function IntegratedChromeBrowser() {
         </div>
       </div>
 
-      {/* Loading Bar */}
+      {/* Loading Progress Bar */}
       {activeTab.isLoading && (
         <div className="relative z-10 w-full bg-slate-900 h-1 overflow-hidden">
           <div className="bg-gradient-to-r from-emerald-500 via-teal-400 to-indigo-500 h-full w-full animate-pulse" />
         </div>
       )}
 
-      {/* ─── MAIN CONTENT VIEWPORT FRAME / LANDING & CHROME DEVTOOLS SPLIT ─── */}
+      {/* ─── MAIN BROWSER VIEWPORT & DEVTOOLS DOCK SPLIT ─── */}
       <div className={`relative z-10 flex-1 flex ${devDockPosition === "right" ? "flex-col lg:flex-row" : "flex-col"} min-h-[72vh] w-full overflow-hidden`}>
-        {/* Render Page Viewport */}
+        {/* Render Active Browser Page */}
         <div className="flex-1 flex flex-col relative w-full h-full">
           {activeTab.url === "vynexa://search" ? (
             /* ─── VYNEXA SEARCH HOME LANDING PAGE ─── */
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-8 min-h-[65vh]">
-              {/* Logo Badge */}
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-3 px-6 py-3 rounded-3xl bg-gradient-to-r from-emerald-950/90 via-teal-950/70 to-indigo-950/90 border border-emerald-500/50 shadow-[0_0_35px_rgba(52,211,153,0.25)]">
                   <Globe className="h-8 w-8 text-emerald-400 animate-spin-slow" />
@@ -643,7 +577,7 @@ export function IntegratedChromeBrowser() {
                 </p>
               </div>
 
-              {/* Large Search Input */}
+              {/* Search Bar */}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -723,317 +657,310 @@ export function IntegratedChromeBrowser() {
           )}
         </div>
 
-        {/* ─── AUTHENTIC GOOGLE CHROME DEVTOOLS SUITE DOCK ─── */}
+        {/* ─── EXACT 1:1 REPLICA OF GOOGLE CHROME DEVTOOLS (Matching Reference Image) ─── */}
         {showDevTools && (
           <div 
-            className={`border-slate-800 bg-[#202124] text-[#e8eaed] font-mono text-xs flex flex-col shadow-2xl z-30 transition-all ${
+            className={`border-[#3c362e] bg-[#1e1a15] text-[#d4cfbf] font-mono text-xs flex flex-col shadow-2xl z-30 transition-all ${
               devDockPosition === "right" 
-                ? "w-full lg:w-[420px] border-t lg:border-t-0 lg:border-l h-96 lg:h-auto" 
+                ? "w-full lg:w-[500px] border-t lg:border-t-0 lg:border-l h-96 lg:h-auto" 
                 : "w-full border-t h-80"
             }`}
           >
-            {/* Chrome DevTools Header Bar */}
-            <div className="bg-[#292a2d] border-b border-[#3c4043] px-2 py-1 flex items-center justify-between shrink-0 select-none">
-              {/* Left Action Controls */}
+            {/* 1. Chrome DevTools Top Header Bar */}
+            <div className="bg-[#241f1a] border-b border-[#3c362e] px-2 py-1 flex items-center justify-between shrink-0 select-none text-[11px]">
+              {/* Left Side: Inspect Pointer & Device Mode */}
               <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-                {/* Inspect Element Toggle */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setInspectMode(!inspectMode);
-                    toast.info(`Inspect Element mode ${!inspectMode ? "Active (Click DOM node to inspect)" : "Disabled"}`);
-                  }}
-                  className={`p-1 rounded hover:bg-[#3c4043] cursor-pointer ${inspectMode ? "text-[#8ab4f8] bg-[#35363a]" : "text-[#9aa0a6]"}`}
+                  onClick={() => toast.info("Inspect element mode active. Click any node to select.")}
+                  className="p-1 rounded hover:bg-[#3c362e] text-[#f5a623] cursor-pointer"
                   title="Select an element in the page to inspect it (Ctrl+Shift+C)"
                 >
                   <MousePointer className="h-3.5 w-3.5" />
                 </button>
 
-                {/* Device Mode Toggle */}
                 <button
                   type="button"
-                  className="p-1 rounded hover:bg-[#3c4043] text-[#9aa0a6] hover:text-white cursor-pointer"
+                  className="p-1 rounded hover:bg-[#3c362e] text-[#b3ac9a] hover:text-white cursor-pointer"
                   title="Toggle device toolbar (Ctrl+Shift+M)"
                 >
                   <Laptop className="h-3.5 w-3.5" />
                 </button>
 
-                <div className="h-3 w-[1px] bg-[#5f6368] mx-1" />
+                <div className="h-3 w-[1px] bg-[#4a4237] mx-1" />
 
-                {/* Chrome DevTools Main Tabs */}
+                {/* Main Chrome DevTools Tabs (Exact Replica of Reference Screenshot) */}
                 {[
-                  { id: "elements", label: "Elements" },
-                  { id: "console", label: "Console" },
-                  { id: "network", label: "Network" },
-                  { id: "application", label: "Application" },
-                  { id: "performance", label: "Performance" },
+                  "Elements", "Console", "Sources", "Network", "Performance", 
+                  "Memory", "Application", "Security", "Lighthouse", "Recorder"
                 ].map((t) => (
                   <button
-                    key={t.id}
+                    key={t}
                     type="button"
-                    onClick={() => setChromeTab(t.id as any)}
-                    className={`px-2.5 py-1 text-xs font-semibold relative transition-all cursor-pointer ${
-                      chromeTab === t.id 
-                        ? "text-[#8ab4f8] font-bold" 
-                        : "text-[#9aa0a6] hover:text-[#e8eaed]"
+                    onClick={() => setChromeTab(t as any)}
+                    className={`px-2 py-1 text-xs font-semibold relative transition-all cursor-pointer ${
+                      chromeTab === t 
+                        ? "text-[#f5a623] font-bold" 
+                        : "text-[#b3ac9a] hover:text-[#e8eaed]"
                     }`}
                   >
-                    {t.label}
-                    {chromeTab === t.id && (
-                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#8ab4f8]" />
+                    {t}
+                    {chromeTab === t && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#f5a623]" />
                     )}
                   </button>
                 ))}
               </div>
 
-              {/* Right Controls */}
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setDevDockPosition(devDockPosition === "right" ? "bottom" : "right")}
-                  className="p-1 rounded hover:bg-[#3c4043] text-[#9aa0a6] hover:text-white cursor-pointer text-[10px]"
-                  title="Toggle Dock Position (Side / Bottom)"
-                >
-                  <Layout className="h-3.5 w-3.5" />
-                </button>
+              {/* Right Side Status & Dock Controls */}
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Error/Warning Badges matching image: 🔴 1 ⚠️ 1 */}
+                <div className="flex items-center gap-1 text-[10px] font-bold font-mono">
+                  <span className="flex items-center text-[#ff7b72] gap-0.5"><span className="h-2 w-2 rounded-full bg-[#ff7b72] inline-block" /> 1</span>
+                  <span className="flex items-center text-[#fdd663] gap-0.5"><span className="h-2 w-2 rounded-full bg-[#fdd663] inline-block" /> 1</span>
+                </div>
+
+                <Settings className="h-3.5 w-3.5 text-[#b3ac9a] hover:text-white cursor-pointer" />
+                <MoreVertical className="h-3.5 w-3.5 text-[#b3ac9a] hover:text-white cursor-pointer" />
+
                 <button
                   type="button"
                   onClick={() => setShowDevTools(false)}
-                  className="p-1 rounded hover:bg-[#3c4043] text-[#9aa0a6] hover:text-white font-bold cursor-pointer"
+                  className="text-[#b3ac9a] hover:text-white font-bold px-1 text-xs"
                 >
                   ✕
                 </button>
               </div>
             </div>
 
-            {/* Chrome DevTools Sub-Toolbar */}
-            <div className="bg-[#202124] border-b border-[#3c4043] px-2 py-1 flex items-center justify-between gap-2 shrink-0 text-[11px]">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConsoleEntries([]);
-                    setNetworkEntries([]);
-                    toast.success("DevTools console & logs cleared");
-                  }}
-                  className="p-1 rounded hover:bg-[#3c4043] text-[#9aa0a6] hover:text-white cursor-pointer"
-                  title="Clear Console & Network logs"
-                >
-                  <Ban className="h-3.5 w-3.5" />
-                </button>
-
-                <div className="h-3 w-[1px] bg-[#5f6368]" />
-
-                {chromeTab === "console" && (
-                  <div className="flex items-center gap-1">
-                    <Filter className="h-3 w-3 text-[#9aa0a6]" />
-                    <input
-                      type="text"
-                      value={consoleSearchQuery}
-                      onChange={(e) => setConsoleSearchQuery(e.target.value)}
-                      placeholder="Filter console..."
-                      className="bg-[#292a2d] border border-[#3c4043] rounded px-1.5 py-0.5 text-[11px] text-[#e8eaed] placeholder:text-[#80868b] outline-none w-28 sm:w-36"
-                    />
-
-                    {["all", "errors", "warnings", "info"].map((f) => (
-                      <button
-                        key={f}
-                        type="button"
-                        onClick={() => setConsoleFilter(f as any)}
-                        className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold cursor-pointer ${
-                          consoleFilter === f ? "bg-[#3c4043] text-[#8ab4f8]" : "text-[#9aa0a6] hover:text-white"
-                        }`}
-                      >
-                        {f}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <span className="text-[10px] text-[#9aa0a6] font-mono">
-                {chromeTab.toUpperCase()} ACTIVE
-              </span>
+            {/* 2. Breadcrumb Navigation Bar (Matching Reference Screenshot) */}
+            <div className="bg-[#1e1a15] border-b border-[#3c362e] px-3 py-0.5 text-[10px] text-[#b3ac9a] font-mono flex items-center gap-1 shrink-0 overflow-x-auto scrollbar-none">
+              <span className="text-[#f5a623]">#adopted-style-sheets</span>
+              <span>&gt;</span>
+              <span>html.focus-outline-visible</span>
+              <span>&gt;</span>
+              <span className="text-white font-bold">body</span>
             </div>
 
-            {/* Chrome DevTools Body Panels */}
-            <div className="flex-1 p-2 overflow-y-auto space-y-2 bg-[#17181c]">
-              {/* 1. ELEMENTS TAB */}
-              {chromeTab === "elements" && (
-                <div className="space-y-3">
-                  <div className="flex justify-between text-[10px] text-[#9aa0a6] border-b border-[#3c4043] pb-1">
-                    <span>DOM TREE INSPECTOR</span>
-                    <span className="text-[#8ab4f8] font-bold">{selectedDomTag}</span>
-                  </div>
-                  <div className="bg-[#202124] p-3 rounded border border-[#3c4043] font-mono text-[11px] leading-relaxed space-y-1">
-                    <div className="text-[#c586c0]">&lt;!DOCTYPE html&gt;</div>
-                    <div className="text-[#569cd6] pl-2">&lt;<span className="text-[#569cd6]">html</span> <span className="text-[#9cdcfe]">lang</span>=<span className="text-[#ce9178]">"en"</span> <span className="text-[#9cdcfe]">class</span>=<span className="text-[#ce9178]">"vynexa-chrome"</span>&gt;</div>
-                    <div className="text-[#569cd6] pl-4">&lt;<span className="text-[#569cd6]">head</span>&gt;</div>
-                    <div className="text-[#9cdcfe] pl-6">&lt;<span className="text-[#569cd6]">title</span>&gt;{activeTab.title}&lt;/<span className="text-[#569cd6]">title</span>&gt;</div>
-                    <div className="text-[#569cd6] pl-4">&lt;/<span className="text-[#569cd6]">head</span>&gt;</div>
-                    <div 
-                      onClick={() => setSelectedDomTag("body.vynexa-viewport")} 
-                      className={`text-[#569cd6] pl-4 cursor-pointer hover:bg-[#292a2d] px-1 rounded ${selectedDomTag.includes("body") ? "bg-[#35363a] font-bold" : ""}`}
-                    >
-                      &lt;<span className="text-[#569cd6]">body</span> <span className="text-[#9cdcfe]">class</span>=<span className="text-[#ce9178]">"vynexa-viewport"</span>&gt;
+            {/* 3. DevTools Main Body Panel (Split 2-Column Inspector for Elements Tab) */}
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-[#171410]">
+              {/* ─── ELEMENTS TAB ─── */}
+              {chromeTab === "Elements" && (
+                <>
+                  {/* Left Column: Interactive DOM Tree Inspector */}
+                  <div className="flex-1 p-3 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-1.5 border-b lg:border-b-0 lg:border-r border-[#3c362e]">
+                    <div className="text-[#807765]">&lt;!DOCTYPE html&gt;</div>
+
+                    {/* HTML Root */}
+                    <div>
+                      <div 
+                        onClick={() => toggleNode("html")} 
+                        className="flex items-center gap-1 cursor-pointer hover:bg-[#28231d] px-1 rounded"
+                      >
+                        <ChevronDown className={`h-3 w-3 text-[#b3ac9a] transition-transform ${expandedNodes.html ? "" : "-rotate-90"}`} />
+                        <span className="text-[#ff7b72]">&lt;html</span>
+                        <span className="text-[#f2cc60]">dir</span>=<span className="text-[#7ee787]">"ltr"</span>
+                        <span className="text-[#f2cc60]">lang</span>=<span className="text-[#7ee787]">"en"</span>
+                        <span className="text-[#f2cc60]">class</span>=<span className="text-[#7ee787]">"focus-outline-visible"</span>
+                        <span className="text-[#ff7b72]">&gt;</span>
+                      </div>
+
+                      {expandedNodes.html && (
+                        <div className="pl-4 space-y-1">
+                          {/* HEAD Node */}
+                          <div 
+                            onClick={() => toggleNode("head")}
+                            className="flex items-center gap-1 cursor-pointer hover:bg-[#28231d] px-1 rounded text-[#ff7b72]"
+                          >
+                            <ChevronRight className="h-3 w-3 text-[#b3ac9a]" />
+                            <span>&lt;head&gt;...&lt;/head&gt;</span>
+                          </div>
+
+                          {/* BODY Node */}
+                          <div>
+                            <div 
+                              onClick={() => {
+                                toggleNode("body");
+                                setSelectedNode("body");
+                              }}
+                              className={`flex items-center gap-1 cursor-pointer px-1 rounded ${selectedNode === "body" ? "bg-[#332b1a] text-[#f5a623] font-bold" : "hover:bg-[#28231d]"}`}
+                            >
+                              <ChevronDown className="h-3 w-3 text-[#b3ac9a]" />
+                              <span className="text-[#ff7b72]">&lt;body</span>
+                              <span className="text-[#f2cc60]">style</span>=<span className="text-[#7ee787]">"background-color: rgb(76, 56, 33);"</span>
+                              <span className="text-[#ff7b72]">&gt;</span>
+                              <span className="text-[#807765] ml-2 font-bold">== $0</span>
+                            </div>
+
+                            {expandedNodes.body && (
+                              <div className="pl-4 space-y-1 text-[10.5px]">
+                                <div className="text-[#ff7b72] pl-2">
+                                  &lt;iframe <span className="text-[#f2cc60]">id</span>=<span className="text-[#7ee787]">"backgroundImage"</span> <span className="text-[#f2cc60]">src</span>=""&gt;&lt;/iframe&gt;
+                                </div>
+                                <div className="text-[#ff7b72] pl-2">
+                                  &lt;ntp-app <span className="text-[#f2cc60]">style</span>=<span className="text-[#7ee787]">"--ntp-logo-color: rgba(254, 185, 104, 1.00);"</span>&gt;&lt;/ntp-app&gt;
+                                </div>
+                                <div className="text-[#ff7b72] pl-2">
+                                  &lt;script <span className="text-[#f2cc60]">type</span>=<span className="text-[#7ee787]">"module"</span> <span className="text-[#f2cc60]">src</span>=<span className="text-[#7ee787]">"new_tab_page.js"</span>&gt;&lt;/script&gt;
+                                </div>
+                                <div className="text-[#ff7b72] pl-2">
+                                  &lt;link <span className="text-[#f2cc60]">rel</span>=<span className="text-[#7ee787]">"stylesheet"</span> <span className="text-[#f2cc60]">href</span>=<span className="text-[#7ee787]">"chrome://resources/css/text_defaults.css"</span>&gt;
+                                </div>
+                                <div className="text-[#ff7b72] pl-2">
+                                  &lt;link <span className="text-[#f2cc60]">rel</span>=<span className="text-[#7ee787]">"stylesheet"</span> <span className="text-[#f2cc60]">href</span>=<span className="text-[#7ee787]">"chrome://theme/colors.css?sets=ui,chrome"</span>&gt;
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div 
-                      onClick={() => setSelectedDomTag("div#vynexa-root.viewport-active")} 
-                      className={`text-[#ce9178] pl-6 cursor-pointer hover:bg-[#292a2d] px-1 rounded ${selectedDomTag.includes("root") ? "bg-[#35363a] font-bold" : ""}`}
-                    >
-                      &lt;<span className="text-[#569cd6]">div</span> <span className="text-[#9cdcfe]">id</span>=<span className="text-[#ce9178]">"vynexa-root"</span>&gt;...&lt;/<span className="text-[#569cd6]">div</span>&gt;
-                    </div>
-                    <div className="text-[#569cd6] pl-4">&lt;/<span className="text-[#569cd6]">body</span>&gt;</div>
-                    <div className="text-[#569cd6] pl-2">&lt;/<span className="text-[#569cd6]">html</span>&gt;</div>
                   </div>
 
-                  {/* Computed CSS Rules Inspector */}
-                  <div className="border-t border-[#3c4043] pt-2 space-y-1.5">
-                    <div className="text-[10px] text-[#9aa0a6] uppercase font-bold">Computed CSS Rules &amp; Box Model</div>
-                    <div className="bg-[#202124] p-3 rounded border border-[#3c4043] space-y-1 text-[11px]">
-                      <div className="flex justify-between"><span className="text-[#8ab4f8]">display:</span> <span className="text-[#ce9178]">flex</span></div>
-                      <div className="flex justify-between"><span className="text-[#8ab4f8]">flex-direction:</span> <span className="text-[#ce9178]">column</span></div>
-                      <div className="flex justify-between"><span className="text-[#8ab4f8]">background-color:</span> <span className="text-[#ce9178]">#060812</span></div>
-                      <div className="flex justify-between"><span className="text-[#8ab4f8]">font-family:</span> <span className="text-[#ce9178]">Consolas, SF Mono, monospace</span></div>
+                  {/* Right Column: Styles / Computed / Layout / Event Listeners Panel */}
+                  <div className="w-full lg:w-72 bg-[#1e1a15] p-3 overflow-y-auto font-mono text-xs space-y-3 shrink-0">
+                    {/* Sub-Tabs: Styles | Computed | Layout | Event Listeners */}
+                    <div className="flex items-center gap-2 border-b border-[#3c362e] pb-1.5 text-[11px] overflow-x-auto scrollbar-none">
+                      {["Styles", "Computed", "Layout", "Event Listeners"].map((st) => (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => setElementsSubTab(st as any)}
+                          className={`font-semibold cursor-pointer whitespace-nowrap ${
+                            elementsSubTab === st ? "text-[#f5a623] border-b-2 border-[#f5a623] font-bold" : "text-[#b3ac9a] hover:text-white"
+                          }`}
+                        >
+                          {st}
+                        </button>
+                      ))}
                     </div>
+
+                    {/* Sub-Panel View 1: LAYOUT (Matching Reference Image) */}
+                    {elementsSubTab === "Layout" && (
+                      <div className="space-y-3 text-[11px]">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between font-bold text-[#f5a623]">
+                            <span className="flex items-center gap-1"><ChevronDown className="h-3 w-3" /> Grid / Grid Lanes</span>
+                          </div>
+
+                          <div className="pl-2 space-y-2 text-[#b3ac9a]">
+                            <div>Overlay display settings</div>
+                            <select className="bg-[#28231d] border border-[#3c362e] rounded px-2 py-1 text-xs text-white outline-none w-full">
+                              <option>Show line numbers</option>
+                              <option>Hide line numbers</option>
+                            </select>
+
+                            <div className="space-y-1.5 pt-1">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" className="rounded accent-[#f5a623]" />
+                                <span>Show track sizes</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" className="rounded accent-[#f5a623]" />
+                                <span>Show area names</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" className="rounded accent-[#f5a623]" />
+                                <span>Extend grid lines</span>
+                              </label>
+                            </div>
+                          </div>
+
+                          <div className="text-[10px] text-[#807765] italic pt-1">
+                            No grid or grid lanes layouts found on this page
+                          </div>
+                        </div>
+
+                        {/* Flexbox Overlays (Matching Reference Image) */}
+                        <div className="space-y-2 pt-2 border-t border-[#3c362e]">
+                          <div className="flex items-center justify-between font-bold text-[#f5a623]">
+                            <span className="flex items-center gap-1"><ChevronDown className="h-3 w-3" /> Flexbox Overlays</span>
+                          </div>
+
+                          <div className="pl-2 space-y-1.5 max-h-52 overflow-y-auto text-[#79c0ff]">
+                            {[
+                              "div#content", "div#oneGoogleBarStackingContext", "ntp-logo#logo", 
+                              "div#searchBoxContainer", "div#inputWrapper", "cr-searchbox-input#input", 
+                              "div#inputInnerContainer", "div#container", "div#contextMenuContainer",
+                              "cr-composebox-contextual-entrypoint", "cr-icon-button#entrypoint.ai-mode",
+                              "div#icon", "cr-icon", "button#imageUpload.dropdown-item", "button#fileUpload.dropdown-item"
+                            ].map((flexNode, idx) => (
+                              <label key={idx} className="flex items-center gap-2 cursor-pointer text-[10.5px]">
+                                <input type="checkbox" className="rounded accent-[#f5a623]" />
+                                <span className="hover:underline truncate">{flexNode}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sub-Panel View 2: STYLES */}
+                    {elementsSubTab === "Styles" && (
+                      <div className="space-y-2 text-[11px] font-mono">
+                        <div className="text-[#f5a623] font-bold">element.style &#123;</div>
+                        <div className="pl-3 text-[#79c0ff]">background-color: <span className="text-[#ffa657]">rgb(76, 56, 33)</span>;</div>
+                        <div className="text-[#f5a623] font-bold">&#125;</div>
+
+                        <div className="pt-2 text-[#f5a623] font-bold">html.focus-outline-visible &#123;</div>
+                        <div className="pl-3 text-[#79c0ff]">display: <span className="text-[#ffa657]">flex</span>;</div>
+                        <div className="pl-3 text-[#79c0ff]">flex-direction: <span className="text-[#ffa657]">column</span>;</div>
+                        <div className="pl-3 text-[#79c0ff]">font-family: <span className="text-[#7ee787]">"Segoe UI", sans-serif</span>;</div>
+                        <div className="text-[#f5a623] font-bold">&#125;</div>
+                      </div>
+                    )}
+
+                    {/* Sub-Panel View 3: COMPUTED */}
+                    {elementsSubTab === "Computed" && (
+                      <div className="space-y-2 text-[11px] font-mono text-[#79c0ff]">
+                        <div className="flex justify-between border-b border-[#3c362e] pb-1"><span>display</span> <span className="text-[#ffa657]">flex</span></div>
+                        <div className="flex justify-between border-b border-[#3c362e] pb-1"><span>height</span> <span className="text-[#ffa657]">742px</span></div>
+                        <div className="flex justify-between border-b border-[#3c362e] pb-1"><span>width</span> <span className="text-[#ffa657]">1280px</span></div>
+                        <div className="flex justify-between border-b border-[#3c362e] pb-1"><span>margin</span> <span className="text-[#ffa657]">0px</span></div>
+                      </div>
+                    )}
+
+                    {/* Sub-Panel View 4: EVENT LISTENERS */}
+                    {elementsSubTab === "Event Listeners" && (
+                      <div className="space-y-1.5 text-[11px] text-[#b3ac9a]">
+                        <div className="font-bold text-[#f5a623]">▼ click (2)</div>
+                        <div className="pl-3">div#searchBoxContainer</div>
+                        <div className="pl-3">button#imageUpload</div>
+                        <div className="font-bold text-[#f5a623] pt-1">▼ keydown (1)</div>
+                        <div className="pl-3">input#search</div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                </>
               )}
 
-              {/* 2. CONSOLE TAB */}
-              {chromeTab === "console" && (
-                <div className="space-y-2">
-                  <div className="space-y-1 max-h-64 overflow-y-auto font-mono text-[11px]">
-                    {filteredConsoleLogs.map((log) => (
-                      <div 
-                        key={log.id} 
-                        className={`p-1.5 border-b border-[#292a2d] flex items-start gap-2 ${
-                          log.type === "error" 
-                            ? "bg-[#2d1a1d] text-[#f28b82]" 
-                            : log.type === "warn" 
-                            ? "bg-[#332b1a] text-[#fdd663]" 
-                            : log.type === "system"
-                            ? "text-[#c586c0]"
-                            : "text-[#e8eaed]"
-                        }`}
-                      >
-                        <span className="text-[9px] text-[#80868b] shrink-0 font-mono">[{log.timestamp}]</span>
-                        <span className="whitespace-pre-wrap break-all flex-1">{log.message}</span>
+              {/* ─── CONSOLE TAB ─── */}
+              {chromeTab === "Console" && (
+                <div className="flex-1 p-3 overflow-y-auto space-y-2 font-mono text-xs">
+                  <div className="space-y-1 max-h-64 overflow-y-auto">
+                    {consoleEntries.map((c) => (
+                      <div key={c.id} className="p-1 border-b border-[#3c362e] flex items-start gap-2">
+                        <span className="text-[9px] text-[#807765]">[{c.time}]</span>
+                        <span className={`flex-1 whitespace-pre-wrap ${c.type === "error" ? "text-[#ff7b72]" : c.type === "warn" ? "text-[#fdd663]" : "text-[#d4cfbf]"}`}>
+                          {c.text}
+                        </span>
                       </div>
                     ))}
                   </div>
 
-                  {/* Chrome JS Execution Line */}
-                  <form onSubmit={handleExecuteJs} className="pt-2 border-t border-[#3c4043] flex items-center gap-2">
-                    <span className="text-[#8ab4f8] font-bold">&gt;</span>
+                  <form onSubmit={handleExecuteJs} className="pt-2 border-t border-[#3c362e] flex items-center gap-2">
+                    <span className="text-[#f5a623] font-bold">&gt;</span>
                     <input
                       type="text"
                       value={jsPromptInput}
                       onChange={(e) => setJsPromptInput(e.target.value)}
-                      placeholder="Type JavaScript expression to evaluate (e.g. location.href)..."
-                      className="flex-1 bg-[#292a2d] border border-[#3c4043] rounded px-2 py-1 text-xs text-[#e8eaed] placeholder:text-[#80868b] outline-none font-mono focus:border-[#8ab4f8]"
+                      placeholder="Type JavaScript expression to evaluate..."
+                      className="flex-1 bg-[#241f1a] border border-[#3c362e] rounded px-2 py-1 text-xs text-white placeholder:text-[#807765] outline-none font-mono focus:border-[#f5a623]"
                     />
-                    <Button type="submit" size="sm" className="h-7 bg-[#35363a] hover:bg-[#3c4043] text-[#8ab4f8] border border-[#3c4043] text-xs px-2.5 cursor-pointer">
+                    <Button type="submit" size="sm" className="h-7 bg-[#28231d] hover:bg-[#3c362e] text-[#f5a623] border border-[#3c362e] text-xs px-3 cursor-pointer">
                       Run
                     </Button>
                   </form>
-                </div>
-              )}
-
-              {/* 3. NETWORK TAB */}
-              {chromeTab === "network" && (
-                <div className="space-y-2">
-                  {/* Chrome Network Table */}
-                  <div className="border border-[#3c4043] rounded overflow-hidden">
-                    <div className="bg-[#292a2d] px-2 py-1 text-[10px] text-[#9aa0a6] grid grid-cols-6 font-bold border-b border-[#3c4043]">
-                      <span className="col-span-2">NAME</span>
-                      <span>STATUS</span>
-                      <span>TYPE</span>
-                      <span>SIZE</span>
-                      <span>TIME</span>
-                    </div>
-                    <div className="divide-y divide-[#292a2d] max-h-60 overflow-y-auto">
-                      {networkEntries.map((req) => (
-                        <div 
-                          key={req.id} 
-                          onClick={() => setSelectedNetworkReq(req)}
-                          className="px-2 py-1.5 grid grid-cols-6 text-[11px] hover:bg-[#292a2d] cursor-pointer items-center"
-                        >
-                          <span className="col-span-2 font-bold text-[#8ab4f8] truncate">{req.name}</span>
-                          <span className="text-[#81c995] font-bold">{req.status}</span>
-                          <span className="text-[#9aa0a6]">{req.type}</span>
-                          <span className="text-[#9aa0a6]">{req.size}</span>
-                          <span className="text-[#9aa0a6]">{req.time}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {selectedNetworkReq && (
-                    <div className="bg-[#202124] p-3 rounded border border-[#3c4043] space-y-2 text-[11px]">
-                      <div className="flex justify-between border-b border-[#3c4043] pb-1">
-                        <span className="font-bold text-[#8ab4f8]">Request Headers ({selectedNetworkReq.name})</span>
-                        <button onClick={() => setSelectedNetworkReq(null)} className="text-[#9aa0a6] hover:text-white">✕</button>
-                      </div>
-                      <div className="space-y-1 text-[#9aa0a6]">
-                        <div>Request URL: <strong className="text-white">{selectedNetworkReq.url}</strong></div>
-                        <div>Request Method: <strong className="text-[#81c995]">{selectedNetworkReq.method}</strong></div>
-                        <div>Status Code: <strong className="text-[#81c995]">{selectedNetworkReq.status} {selectedNetworkReq.statusText}</strong></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 4. APPLICATION TAB */}
-              {chromeTab === "application" && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 border-b border-[#3c4043] pb-1">
-                    {["localStorage", "sessionStorage", "cookies"].map((st) => (
-                      <button
-                        key={st}
-                        type="button"
-                        onClick={() => setStorageType(st as any)}
-                        className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold cursor-pointer ${
-                          storageType === st ? "bg-[#3c4043] text-[#8ab4f8]" : "text-[#9aa0a6]"
-                        }`}
-                      >
-                        {st}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="bg-[#202124] p-3 rounded border border-[#3c4043] space-y-2 text-[11px]">
-                    <div className="flex justify-between font-bold text-[#8ab4f8] border-b border-[#3c4043] pb-1">
-                      <span>KEY</span>
-                      <span>VALUE</span>
-                    </div>
-                    <div className="flex justify-between text-[#9aa0a6]">
-                      <span>vynexa-search-bg-v3</span>
-                      <span className="truncate max-w-[160px] text-white">Wallpaper Configured</span>
-                    </div>
-                    <div className="flex justify-between text-[#9aa0a6]">
-                      <span>vynexa-user-session</span>
-                      <span className="text-[#81c995]">Active (Authenticated)</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 5. PERFORMANCE TAB */}
-              {chromeTab === "performance" && (
-                <div className="space-y-3 text-[11px]">
-                  <div className="text-[10px] text-[#9aa0a6] uppercase font-bold">V8 Memory &amp; Frame Metrics</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-[#202124] p-3 rounded border border-[#3c4043]">
-                      <div className="text-[10px] text-[#9aa0a6]">JS HEAP SIZE</div>
-                      <div className="text-lg font-bold text-[#8ab4f8]">18.4 MB</div>
-                    </div>
-                    <div className="bg-[#202124] p-3 rounded border border-[#3c4043]">
-                      <div className="text-[10px] text-[#9aa0a6]">FRAME RATE</div>
-                      <div className="text-lg font-bold text-[#81c995]">60 FPS</div>
-                    </div>
-                  </div>
                 </div>
               )}
             </div>
@@ -1139,7 +1066,7 @@ export function IntegratedChromeBrowser() {
               </div>
             </div>
 
-            {/* Opacity Control */}
+            {/* Opacity Control Slider */}
             <div className="space-y-2 pt-2 border-t border-slate-800">
               <div className="flex justify-between items-center text-xs text-slate-300">
                 <span className="font-bold flex items-center gap-1.5"><Sliders className="h-3.5 w-3.5 text-teal-400" /> Wallpaper Opacity:</span>
@@ -1154,7 +1081,7 @@ export function IntegratedChromeBrowser() {
                 onChange={(e) => {
                   const val = parseFloat(e.target.value);
                   setWallpaperOpacity(val);
-                  localStorage.setItem("vynexa-search-bg-op-v3", String(val));
+                  localStorage.setItem("vynexa-search-bg-op-v4", String(val));
                 }}
                 className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
               />
@@ -1194,7 +1121,7 @@ export function IntegratedChromeBrowser() {
                 <button
                   type="button"
                   onClick={() => {
-                    localStorage.removeItem("vynexa-search-bg-v3");
+                    localStorage.removeItem("vynexa-search-bg-v4");
                     setWallpaperUrl("");
                     setShowWallpaperModal(false);
                     toast.success("Background reset to dark obsidian");
