@@ -673,6 +673,9 @@ function EmployeeDashboard() {
       setTaskDesc("");
       setSelectedInterns([]);
       setTargetInternId(null);
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["all-tasks"] });
     },
     onError: (err: Error) => toast.error(err.message)
   });

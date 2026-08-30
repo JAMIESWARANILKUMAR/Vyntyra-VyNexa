@@ -3068,7 +3068,7 @@ function OperationsDashboard() {
                     <div>
                       <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Task Completion Rate</div>
                       <div className="text-xl font-bold text-slate-800">
-                        {tasksQ.data?.length > 0 
+                        {tasksQ.data && tasksQ.data.length > 0 
                           ? `${Math.round((tasksQ.data.filter((t: any) => t.status === "completed").length / tasksQ.data.length) * 100)}%`
                           : "0%"}
                       </div>

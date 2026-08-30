@@ -316,18 +316,18 @@ const taskSchema = z.object({
 export const listTasks = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', context.userId).single();
-    const role = roleData?.role || 'employee';
     const admin = getAdminClient();
+    const { data: roleData } = await admin.from('user_roles').select('role').eq('user_id', context.userId).maybeSingle();
+    const role = roleData?.role || 'employee';
 
-    const { data, error } = await supabase
+    const { data, error } = await admin
       .from("tasks")
       .select("*, profiles!tasks_assigned_to_fkey(full_name, mentor_id)")
       .order("created_at", { ascending: false });
 
     let rawList = data;
     if (error) {
-      const { data: plain, error: e2 } = await supabase
+      const { data: plain, error: e2 } = await admin
         .from("tasks")
         .select("*")
         .order("created_at", { ascending: false });
@@ -335,28 +335,28 @@ export const listTasks = createServerFn({ method: "GET" })
       rawList = plain;
     }
 
-    const { data: userProfile } = await supabase
+    const { data: userProfile } = await admin
       .from("profiles")
-      .select("id, intern_id, email, full_name, created_at")
+      .select("id, intern_id, email, full_name, created_at, mentor_id")
       .eq("id", context.userId)
       .maybeSingle();
 
-    const myIds = new Set([
-      context.userId,
-      userProfile?.id,
-      userProfile?.intern_id,
-      userProfile?.email,
-      userProfile?.full_name,
-    ].filter(Boolean));
+    const myIdsLower = new Set([
+      context.userId?.toLowerCase(),
+      userProfile?.id?.toLowerCase(),
+      userProfile?.intern_id?.toLowerCase(),
+      userProfile?.email?.toLowerCase(),
+      userProfile?.full_name?.toLowerCase(),
+    ].filter(Boolean) as string[]);
 
-    const { data: myDeliverables } = await supabase
+    const { data: myDeliverables } = await admin
       .from("deliverables")
       .select("task_id, user_id")
       .or(`user_id.eq.${context.userId}${userProfile?.intern_id ? `,user_id.eq.${userProfile.intern_id}` : ""}${userProfile?.email ? `,user_id.eq.${userProfile.email}` : ""}`);
 
     const myDelivTaskIds = new Set((myDeliverables || []).map((d: any) => d.task_id).filter(Boolean));
 
-    const { data: myNotifs } = await supabase
+    const { data: myNotifs } = await admin
       .from("user_notifications")
       .select("message")
       .eq("user_id", context.userId);
@@ -368,19 +368,6 @@ export const listTasks = createServerFn({ method: "GET" })
         return match ? match[1].trim() : null;
       })
       .filter(Boolean);
-
-    const isAnjali = Boolean(
-      userProfile?.full_name?.toLowerCase().includes("anjali") ||
-      userProfile?.email?.toLowerCase().includes("anjali")
-    );
-
-    const isAug16To20CohortIntern = Boolean(
-      !isAnjali && (
-        (userProfile?.created_at && new Date(userProfile.created_at).getTime() <= new Date("2026-08-22T23:59:59Z").getTime()) ||
-        (userProfile?.intern_id && (userProfile.intern_id.includes("08/26") || userProfile.intern_id.includes("VYNT-08"))) ||
-        notifTitles.length > 0
-      )
-    );
 
     const delivTaskIdsArray = Array.from(myDelivTaskIds);
     if (delivTaskIdsArray.length > 0) {
@@ -408,19 +395,27 @@ export const listTasks = createServerFn({ method: "GET" })
 
       const isNotifTask = notifTitles.some((nt: string) => t.title && t.title.toLowerCase().includes(nt.toLowerCase()));
 
+      const hasIdMatch = (val: any) => {
+        if (!val) return false;
+        return myIdsLower.has(String(val).toLowerCase());
+      };
+
       // Match against any of user's identifiers, team memberships, deliverables, or notification title
       const isDirectAssigned = Boolean(
-        myIds.has(t.assigned_to) ||
-        myIds.has(t.target_user_id) ||
-        myIds.has(t.claimed_by) ||
-        myIds.has(t.user_id) ||
-        (Array.isArray(t.team_members) && t.team_members.some((m: any) => myIds.has(m))) ||
-        (Array.isArray(t.target_user_ids) && t.target_user_ids.some((m: any) => myIds.has(m))) ||
+        hasIdMatch(t.assigned_to) ||
+        hasIdMatch(t.target_user_id) ||
+        hasIdMatch(t.claimed_by) ||
+        hasIdMatch(t.user_id) ||
+        (Array.isArray(t.team_members) && t.team_members.some((m: any) => hasIdMatch(m))) ||
+        (Array.isArray(t.target_user_ids) && t.target_user_ids.some((m: any) => hasIdMatch(m))) ||
         myDelivTaskIds.has(t.id) ||
         isNotifTask
       );
 
       if (isDirectAssigned) return true;
+
+      // Direct Role Target (e.g. task assigned to all interns)
+      if (!t.assigned_to && !t.target_user_id && (t.target_role === "intern" || t.target_role === "all")) return true;
 
       // Tasks assigned to interns mentored by this user
       if (t.profiles?.mentor_id && t.profiles.mentor_id === context.userId) return true;

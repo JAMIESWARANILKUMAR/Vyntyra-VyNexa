@@ -354,7 +354,7 @@ function InternDashboard() {
   const referralData: any = referralConversionsQ.data || {};
   const referralConversions: any[] = referralData.candidates || (Array.isArray(referralData) ? referralData : []);
 
-  const tasksQ = useQuery({ queryKey: ["my-tasks"], queryFn: () => fetchTasks(), ...queryOpts });
+  const tasksQ = useQuery({ queryKey: ["my-tasks"], queryFn: () => fetchTasks(), staleTime: 3000, refetchInterval: 10000 });
   const meetingsQ = useQuery({ queryKey: ["my-meetings"], queryFn: () => fetchMeetings(), ...queryOpts });
   const schedulesQ = useQuery({ queryKey: ["my-schedules"], queryFn: () => fetchSchedules(), ...queryOpts });
   const announcementsQ = useQuery({ queryKey: ["my-announcements"], queryFn: () => fetchAnnouncements(), ...queryOpts });
@@ -616,6 +616,23 @@ function InternDashboard() {
     };
   }, [qc]);
 
+  // Realtime subscription for tasks table to auto-refresh tasks
+  useEffect(() => {
+    const channel = supabase
+      .channel("intern-tasks-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tasks" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["my-tasks"] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
+
   // Realtime subscription for user events (notifications, support, leaves)
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -770,23 +787,29 @@ function InternDashboard() {
 
   const poolTasks = tasks.filter((t: any) => t.is_pool_task === true && !t.assigned_to);
 
+  const myIdentifiersLower = myIdentifiers.map(id => String(id).toLowerCase());
+
   const myTasks = tasks.filter((t: any) => {
     if (!t) return false;
     if (t.is_pool_task === true && !t.assigned_to) return false; // Unclaimed pool tasks belong in Task Pool tab
 
-    const isDirectMatch = myIdentifiers.some((id) => 
-      t.assigned_to === id || 
-      t.target_user_id === id || 
-      t.user_id === id || 
-      t.claimed_by === id ||
-      (Array.isArray(t.team_members) && t.team_members.includes(id)) ||
-      (Array.isArray(t.target_user_ids) && t.target_user_ids.includes(id))
-    );
+    const isDirectMatch = myIdentifiersLower.some((id) => {
+      if (!id) return false;
+      return (
+        (t.assigned_to && String(t.assigned_to).toLowerCase() === id) || 
+        (t.target_user_id && String(t.target_user_id).toLowerCase() === id) || 
+        (t.user_id && String(t.user_id).toLowerCase() === id) || 
+        (t.claimed_by && String(t.claimed_by).toLowerCase() === id) ||
+        (Array.isArray(t.team_members) && t.team_members.some((m: any) => String(m).toLowerCase() === id)) ||
+        (Array.isArray(t.target_user_ids) && t.target_user_ids.some((m: any) => String(m).toLowerCase() === id))
+      );
+    });
 
     const isDeliverableMatch = myDeliverableTaskIds.includes(t.id);
     const isNotifTask = assignedTaskTitlesFromNotifs.some((title: string) => t.title && t.title.toLowerCase().includes(title.toLowerCase()));
+    const isInternRoleTarget = !t.assigned_to && !t.target_user_id && (t.target_role === "intern" || t.target_role === "all");
 
-    return isDirectMatch || isDeliverableMatch || isNotifTask;
+    return isDirectMatch || isDeliverableMatch || isNotifTask || isInternRoleTarget;
   });
 
   const completedTasks = myTasks.filter((t: any) => 
