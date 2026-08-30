@@ -379,12 +379,13 @@ export const listTasks = createServerFn({ method: "GET" })
     }
 
     const mappedList = (rawList || []).map((t: any) => {
+      const copy = normalizeTaskDocLinks(t);
       // Self-repair: If intern submitted a deliverable, mark task as completed
-      if (myDeliverables && myDelivTaskIds.has(t.id)) {
-        t.assigned_to = context.userId;
-        t.status = "completed";
+      if (myDeliverables && myDelivTaskIds.has(copy.id)) {
+        copy.assigned_to = context.userId;
+        copy.status = "completed";
       }
-      return t;
+      return copy;
     });
 
     return mappedList.filter((t: any) => {
@@ -550,6 +551,33 @@ export const updateTaskExecution = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+export function normalizeTaskDocLinks(t: any) {
+  if (!t) return t;
+  const copy = { ...t };
+  const desc = copy.description || "";
+
+  if (!copy.task_meet_link) {
+    const m = desc.match(/\[Meet:\s*([^\]\s]+)\]/);
+    if (m) copy.task_meet_link = m[1];
+  }
+  if (!copy.report_template_url) {
+    const m = desc.match(/\[ReportTemplate:\s*([^\]\s]+)\]/);
+    if (m) copy.report_template_url = m[1];
+  }
+  if (!copy.ppt_template_url) {
+    const m = desc.match(/\[PptTemplate:\s*([^\]\s]+)\]/);
+    if (m) copy.ppt_template_url = m[1];
+  }
+  if (!copy.task_doc_url) {
+    const m = desc.match(/\[DocUrl:\s*([^\]\s]+)\]/);
+    if (m) copy.task_doc_url = m[1];
+  }
+  if (!copy.task_file_url && copy.project_requirements && copy.project_requirements.startsWith("http")) {
+    copy.task_file_url = copy.project_requirements;
+  }
+  return copy;
+}
+
 export const updateTaskByAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
@@ -576,11 +604,69 @@ export const updateTaskByAdmin = createServerFn({ method: "POST" })
     const updatePayload: any = { ...data };
     delete updatePayload.id;
 
-    const { error } = await admin
+    // 1. Primary update attempt
+    let { error } = await admin
       .from("tasks")
       .update(updatePayload)
       .eq("id", data.id);
-    if (error) throw new Error(error.message);
+
+    // 2. If Postgres schema cache does not have some custom columns, apply smart fallback
+    if (error) {
+      console.warn("Primary task update schema notice, applying column fallback:", error.message);
+
+      let desc = updatePayload.description || "";
+      
+      if (updatePayload.task_meet_link && !desc.includes(updatePayload.task_meet_link)) {
+        desc = `[Meet: ${updatePayload.task_meet_link}]\n\n${desc}`;
+      }
+      if (updatePayload.report_template_url && !desc.includes(updatePayload.report_template_url)) {
+        desc = `[ReportTemplate: ${updatePayload.report_template_url}]\n\n${desc}`;
+      }
+      if (updatePayload.ppt_template_url && !desc.includes(updatePayload.ppt_template_url)) {
+        desc = `[PptTemplate: ${updatePayload.ppt_template_url}]\n\n${desc}`;
+      }
+      if (updatePayload.task_doc_url && !desc.includes(updatePayload.task_doc_url)) {
+        desc = `[DocUrl: ${updatePayload.task_doc_url}]\n\n${desc}`;
+      }
+
+      if (updatePayload.task_file_url) {
+        updatePayload.project_requirements = updatePayload.task_file_url;
+      }
+
+      const fallbackPayload: any = { ...updatePayload, description: desc.trim() };
+      delete fallbackPayload.task_meet_link;
+      delete fallbackPayload.report_template_url;
+      delete fallbackPayload.ppt_template_url;
+      delete fallbackPayload.task_doc_url;
+      delete fallbackPayload.task_file_url;
+
+      const { error: fallbackErr } = await admin
+        .from("tasks")
+        .update(fallbackPayload)
+        .eq("id", data.id);
+
+      if (fallbackErr) {
+        // Minimal safe payload
+        const safePayload: any = {
+          title: data.title,
+          description: desc.trim(),
+          priority: data.priority,
+          due_date: data.due_date,
+          status: data.status,
+          assigned_to: data.assigned_to,
+          project_requirements: data.task_file_url || data.project_requirements,
+        };
+        Object.keys(safePayload).forEach(k => safePayload[k] === undefined && delete safePayload[k]);
+
+        const { error: finalErr } = await admin
+          .from("tasks")
+          .update(safePayload)
+          .eq("id", data.id);
+
+        if (finalErr) throw new Error(finalErr.message);
+      }
+    }
+
     return { success: true };
   });
 
@@ -1263,9 +1349,10 @@ export const listAllInternTasksWithProgress = createServerFn({ method: "GET" })
     const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
 
     return (tasks || []).map((t: any) => {
-      const assignedId = t.assigned_to || t.target_user_id;
+      const norm = normalizeTaskDocLinks(t);
+      const assignedId = norm.assigned_to || norm.target_user_id;
       return {
-        ...t,
+        ...norm,
         assigned_profile: profileMap.get(assignedId) || null,
       };
     });
