@@ -1033,7 +1033,7 @@ function InternDashboard() {
             {/* Quick Shift Clock In / Out */}
             {todayAttendance ? (
               todayAttendance.clock_out ? (
-                <span className="hidden sm:inline-flex text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-xl bg-slate-900/90 text-slate-400 border border-slate-700">
+                <span className="hidden sm:inline-flex text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-xl bg-orange-100 text-orange-800 border border-orange-300">
                   Shift Ended
                 </span>
               ) : (
@@ -1042,10 +1042,10 @@ function InternDashboard() {
                   variant="outline"
                   onClick={handleClockOut} 
                   disabled={isClocking}
-                  className="h-8 px-2 sm:px-2.5 text-xs font-bold border-rose-500/40 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 hover:text-white transition-all gap-1 cursor-pointer"
+                  className="h-8 px-2 sm:px-2.5 text-xs font-bold border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 transition-all gap-1 cursor-pointer"
                   title="Shift Clock Out"
                 >
-                  {isClocking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5 text-rose-400" />}
+                  {isClocking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5 text-rose-600" />}
                   <span className="hidden sm:inline">Clock Out</span>
                 </Button>
               )
@@ -1054,10 +1054,10 @@ function InternDashboard() {
                 size="sm" 
                 onClick={handleClockIn} 
                 disabled={isClocking}
-                className="h-8 px-2 sm:px-2.5 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-950/60 gap-1 cursor-pointer"
+                className="h-8 px-2 sm:px-2.5 text-xs font-bold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md shadow-orange-500/20 gap-1 cursor-pointer"
                 title="Shift Clock In"
               >
-                {isClocking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5" />}
+                {isClocking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5 text-white" />}
                 <span className="hidden sm:inline">Clock In</span>
               </Button>
             )}
@@ -1068,9 +1068,9 @@ function InternDashboard() {
               target="_blank"
               rel="noreferrer"
               title="Official Project VyNexa WhatsApp Group"
-              className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-900/50 transition-colors shadow-sm"
+              className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 transition-colors shadow-xs"
             >
-              <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
+              <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
               <span>WhatsApp</span>
             </a>
 
@@ -1080,26 +1080,26 @@ function InternDashboard() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative h-8 w-8 text-slate-300 hover:text-emerald-400 rounded-xl hover:bg-slate-800/80 cursor-pointer border border-slate-800 bg-slate-900/60"
+                className="relative h-8 w-8 text-slate-700 hover:text-orange-600 rounded-xl hover:bg-orange-100/60 cursor-pointer border border-orange-200 bg-white shadow-xs"
                 title="Notifications"
               >
-                <Bell className="h-4 w-4" />
+                <Bell className="h-4 w-4 text-slate-700" />
                 {unreadNotificationsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none animate-pulse">
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[9px] font-bold text-white leading-none animate-pulse">
                     {unreadNotificationsCount}
                   </span>
                 )}
               </Button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-[#0F172A] rounded-2xl shadow-2xl border border-slate-700 py-3 z-50 overflow-hidden divide-y divide-slate-800 max-h-96 overflow-y-auto backdrop-blur-xl">
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-orange-200 py-3 z-50 overflow-hidden divide-y divide-orange-100 max-h-96 overflow-y-auto backdrop-blur-xl">
                   <div className="px-4 pb-2 flex items-center justify-between">
-                    <span className="font-bold text-xs text-white">In-App Notifications</span>
-                    <span className="text-[10px] text-slate-400 font-medium">Click to mark as read</span>
+                    <span className="font-extrabold text-xs text-slate-900">In-App Notifications</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Click to mark as read</span>
                   </div>
                   <div className="py-1">
                     {notifications.length === 0 ? (
-                      <div className="px-4 py-6 text-center text-slate-400 text-xs">No alerts or notifications yet</div>
+                      <div className="px-4 py-6 text-center text-slate-500 text-xs">No alerts or notifications yet</div>
                     ) : (
                       notifications.map((n: any) => (
                         <div 
@@ -1110,13 +1110,13 @@ function InternDashboard() {
                               qc.invalidateQueries({ queryKey: ["my-user-notifications", session?.user?.id] });
                             } catch (e) {}
                           }}
-                          className={`px-4 py-2.5 text-left transition-colors cursor-pointer hover:bg-slate-800/60 flex flex-col gap-0.5 ${!n.is_read ? 'bg-indigo-950/30' : ''}`}
+                          className={`px-4 py-2.5 text-left transition-colors cursor-pointer hover:bg-orange-50/80 flex flex-col gap-0.5 ${!n.is_read ? 'bg-orange-50/50' : ''}`}
                         >
                           <div className="flex items-center justify-between gap-1.5">
-                            <span className="font-bold text-xs text-white leading-snug">{n.title}</span>
-                            {!n.is_read && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />}
+                            <span className="font-extrabold text-xs text-slate-900 leading-snug">{n.title}</span>
+                            {!n.is_read && <span className="h-1.5 w-1.5 rounded-full bg-orange-500 shrink-0" />}
                           </div>
-                          <p className="text-slate-300 text-[11px] leading-relaxed">{n.message}</p>
+                          <p className="text-slate-700 text-[11px] leading-relaxed">{n.message}</p>
                           <span className="text-[9px] text-slate-500 font-mono mt-1">{new Date(n.created_at).toLocaleDateString()} at {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                       ))
@@ -1129,10 +1129,10 @@ function InternDashboard() {
             {/* Profile Avatar & Quick Details Modal */}
             <button
               onClick={() => setProfileModalOpen(true)}
-              className="flex items-center gap-1.5 p-0.5 rounded-xl hover:bg-slate-800/80 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 p-0.5 rounded-xl hover:bg-orange-100/60 transition-colors cursor-pointer"
               title="Profile & Settings"
             >
-              <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 sm:h-8.5 sm:w-8.5 ring-2 ring-emerald-500/40 shadow-sm shrink-0" />
+              <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 sm:h-8.5 sm:w-8.5 ring-2 ring-orange-400/60 shadow-sm shrink-0" />
             </button>
 
             {/* Desktop Direct Sign Out Button */}
@@ -1140,10 +1140,10 @@ function InternDashboard() {
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="hidden xl:inline-flex h-8 px-2.5 text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-950/50 border border-rose-500/30 rounded-xl transition-colors text-xs font-bold shrink-0 items-center gap-1 cursor-pointer"
+              className="hidden xl:inline-flex h-8 px-2.5 text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-colors text-xs font-extrabold shrink-0 items-center gap-1 cursor-pointer"
               title="Sign Out"
             >
-              <LogOut className="h-3.5 w-3.5" />
+              <LogOut className="h-3.5 w-3.5 text-rose-600" />
               <span>Sign Out</span>
             </Button>
 
@@ -1151,7 +1151,7 @@ function InternDashboard() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-slate-900 border border-slate-700 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0"
+              className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-white border border-orange-200 hover:border-orange-400 text-slate-700 hover:text-orange-600 flex items-center justify-center transition-all shadow-xs active:scale-95 cursor-pointer shrink-0"
               aria-label="Open Navigation Menu"
               title="Open Navigation Directory"
             >
@@ -2901,18 +2901,18 @@ function InternDashboard() {
         {activeTab === "tasks" && (
           <div className="space-y-6">
             {poolTasks.length > 0 && (
-              <div className="rounded-3xl border border-amber-500/30 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl overflow-hidden">
-                <div className="px-6 py-4.5 border-b border-amber-500/30 flex items-center justify-between bg-amber-950/20">
-                  <h2 className="font-bold flex items-center gap-2 text-amber-300"><ClipboardList className="h-5 w-5 text-amber-400" />Available Pool Tasks</h2>
+              <div className="rounded-3xl border border-orange-300 bg-orange-50/90 shadow-xl shadow-orange-950/5 overflow-hidden">
+                <div className="px-6 py-4.5 border-b border-orange-200 flex items-center justify-between bg-orange-100/60">
+                  <h2 className="font-extrabold flex items-center gap-2 text-orange-900"><ClipboardList className="h-5 w-5 text-orange-600" />Available Pool Tasks</h2>
                 </div>
-                <div className="divide-y divide-slate-800/80">
+                <div className="divide-y divide-orange-200/60">
                   {poolTasks.map((task: any) => (
-                    <div key={task.id} className="p-6 hover:bg-slate-800/40 transition-colors flex items-center justify-between gap-4">
+                    <div key={task.id} className="p-6 hover:bg-orange-100/40 transition-colors flex items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-sm text-white">{task.title}</h3>
-                        {task.description && <p className="text-xs text-slate-400 mt-1 line-clamp-2">{task.description}</p>}
+                        <h3 className="font-extrabold text-sm text-slate-900">{task.title}</h3>
+                        {task.description && <p className="text-xs text-slate-600 mt-1 line-clamp-2">{task.description}</p>}
                       </div>
-                      <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow-lg cursor-pointer" onClick={async () => {
+                      <Button size="sm" className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-xl shadow-md cursor-pointer" onClick={async () => {
                         try {
                           await doClaimPoolTask({ data: { id: task.id } });
                           toast.success("Task claimed!");
@@ -2927,14 +2927,14 @@ function InternDashboard() {
               </div>
             )}
 
-            <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl overflow-hidden">
-              <div className="px-6 py-5 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#090D16]">
+            <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 overflow-hidden">
+              <div className="px-6 py-5 border-b border-orange-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-orange-50/60">
                 <div>
-                  <h2 className="font-bold text-base text-white flex items-center gap-2">
-                    <ClipboardList className="h-5 w-5 text-emerald-400" />
+                  <h2 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    <ClipboardList className="h-5 w-5 text-orange-600" />
                     My Assigned Tasks &amp; Project Deliverables
                   </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Submit your deliverables for mentor review, grading, and completion verification.</p>
+                  <p className="text-xs text-slate-600 mt-0.5">Submit your deliverables for mentor review, grading, and completion verification.</p>
                 </div>
                 
                 <div className="flex items-center gap-2.5 flex-wrap">
@@ -2942,11 +2942,11 @@ function InternDashboard() {
                     href="https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5"
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-950/60 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 transition-colors"
                   >
                     <MessageCircle className="h-3.5 w-3.5" /> Join Official WhatsApp Group
                   </a>
-                  <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-tasks"] })} className="gap-1.5 text-xs text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer">
+                  <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-tasks"] })} className="gap-1.5 text-xs text-slate-700 hover:text-slate-900 hover:bg-orange-100/60 cursor-pointer border border-orange-200 bg-white">
                     <RefreshCw className={`h-3.5 w-3.5 ${tasksQ.isFetching ? "animate-spin" : ""}`} /> Refresh
                   </Button>
                 </div>
@@ -3004,13 +3004,13 @@ function InternDashboard() {
               )}
 
               {/* Task Status Filters Bar */}
-              <div className="px-6 py-3.5 bg-[#0A0D17] border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+              <div className="px-6 py-3.5 bg-orange-50/80 border-b border-orange-200/80 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => setTaskFilterTab("all")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      taskFilterTab === "all" ? "bg-emerald-600 text-white shadow-md shadow-emerald-950/60" : "bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800"
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      taskFilterTab === "all" ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20" : "bg-white border border-orange-200 text-slate-700 hover:bg-orange-100/60"
                     }`}
                   >
                     All Tasks ({myTasks.length})
@@ -3018,8 +3018,8 @@ function InternDashboard() {
                   <button
                     type="button"
                     onClick={() => setTaskFilterTab("in_progress")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      taskFilterTab === "in_progress" ? "bg-blue-600 text-white shadow-md shadow-blue-950/60" : "bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800"
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      taskFilterTab === "in_progress" ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20" : "bg-white border border-orange-200 text-slate-700 hover:bg-orange-100/60"
                     }`}
                   >
                     In Progress ({inProgressTasks.length})
@@ -3027,8 +3027,8 @@ function InternDashboard() {
                   <button
                     type="button"
                     onClick={() => setTaskFilterTab("submitted")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      taskFilterTab === "submitted" ? "bg-purple-600 text-white shadow-md shadow-purple-950/60" : "bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800"
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      taskFilterTab === "submitted" ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20" : "bg-white border border-orange-200 text-slate-700 hover:bg-orange-100/60"
                     }`}
                   >
                     Submitted / Under Review ({submittedTasks.length})
@@ -3036,8 +3036,8 @@ function InternDashboard() {
                   <button
                     type="button"
                     onClick={() => setTaskFilterTab("completed")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      taskFilterTab === "completed" ? "bg-teal-600 text-white shadow-md shadow-teal-950/60" : "bg-slate-900 border border-slate-700 text-teal-300 hover:bg-slate-800"
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                      taskFilterTab === "completed" ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20" : "bg-white border border-orange-200 text-orange-800 hover:bg-orange-100/60"
                     }`}
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -3045,17 +3045,17 @@ function InternDashboard() {
                   </button>
                 </div>
                 {taskFilterTab === "completed" && (
-                  <span className="text-[11px] font-semibold text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-2.5 py-1 rounded-xl flex items-center gap-1">
-                    <ShieldCheck className="h-3.5 w-3.5" /> Permanent Deliverables Archive
+                  <span className="text-[11px] font-black text-orange-900 bg-orange-100 border border-orange-300 px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-xs">
+                    <ShieldCheck className="h-3.5 w-3.5 text-orange-600" /> Permanent Deliverables Archive
                   </span>
                 )}
               </div>
 
               {tasksQ.isLoading ? (
-                <div className="p-12 flex items-center justify-center gap-2 text-slate-400"><Loader2 className="h-5 w-5 animate-spin" />Loading tasks...</div>
+                <div className="p-12 flex items-center justify-center gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-orange-500" />Loading tasks...</div>
               ) : (taskFilterTab === "all" ? myTasks : taskFilterTab === "in_progress" ? inProgressTasks : taskFilterTab === "submitted" ? submittedTasks : verifiedTasks).length === 0 ? (
-                <div className="p-12 text-center text-slate-500">
-                  <ClipboardList className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                <div className="p-12 text-center text-slate-600 font-medium">
+                  <ClipboardList className="h-10 w-10 mx-auto mb-3 text-orange-300" />
                   {taskFilterTab === "completed" 
                     ? "No verified tasks stored in your repository yet. Once submitted deliverables are reviewed and verified by mentors, they will be archived here permanently."
                     : taskFilterTab === "submitted"
@@ -3065,52 +3065,52 @@ function InternDashboard() {
                     : "No tasks assigned yet."}
                 </div>
               ) : (
-                <div className="divide-y divide-slate-800/80">
+                <div className="divide-y divide-orange-200/60">
                   {(taskFilterTab === "all" ? myTasks : taskFilterTab === "in_progress" ? inProgressTasks : taskFilterTab === "submitted" ? submittedTasks : verifiedTasks).map((task: any) => {
                     const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
                     const reportTemplate = task.report_template_url || "https://docs.google.com/document/d/1vA5W0h8Z7_Sample_Report_Template/edit?usp=sharing";
                     const pptTemplate = task.ppt_template_url || "https://docs.google.com/presentation/d/1tB6X0h8Z7_Sample_PPT_Template/edit?usp=sharing";
 
                     return (
-                      <div key={task.id} className="p-6 hover:bg-slate-800/30 transition-all border-b border-slate-800/80 last:border-0 flex flex-col gap-4">
+                      <div key={task.id} className="p-6 hover:bg-orange-50/40 transition-all border-b border-orange-200/60 last:border-0 flex flex-col gap-4">
                         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                           <div className="flex-1 min-w-0 space-y-2.5">
                             {/* Title & Badges */}
                             <div className="flex items-center gap-2.5 flex-wrap">
                               <span className={`h-2.5 w-2.5 rounded-full ${s.dot} shrink-0`} />
-                              <h3 className="font-bold text-sm text-white leading-snug">{task.title}</h3>
+                              <h3 className="font-black text-sm text-slate-900 leading-snug">{task.title}</h3>
                               
-                              <span className={`text-[10px] px-2.5 py-0.5 rounded-full border font-bold uppercase tracking-wider ${s.badge}`}>{s.label}</span>
+                              <span className={`text-[10px] px-2.5 py-0.5 rounded-full border font-black uppercase tracking-wider ${s.badge}`}>{s.label}</span>
                               {task.priority && (
-                                <span className={`text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-bold ${
-                                  task.priority === "high" ? "bg-rose-950 text-rose-300 border border-rose-500/40" :
-                                  task.priority === "medium" ? "bg-amber-950 text-amber-300 border border-amber-500/40" :
-                                  "bg-slate-900 text-slate-300 border border-slate-700"
+                                <span className={`text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold ${
+                                  task.priority === "high" ? "bg-rose-100 text-rose-800 border border-rose-300" :
+                                  task.priority === "medium" ? "bg-amber-100 text-amber-900 border border-amber-300" :
+                                  "bg-slate-100 text-slate-800 border border-slate-300"
                                 }`}>
                                   {task.priority} Priority
                                 </span>
                               )}
                               
                               {/* Level Badge */}
-                              <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-bold bg-indigo-950 text-indigo-300 border border-indigo-500/40">
+                              <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-indigo-100 text-indigo-900 border border-indigo-300">
                                 {task.level || "Beginner"}
                               </span>
 
                               {/* Credits Badge */}
-                              <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-bold bg-amber-950 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
-                                <CreditCard className="h-3 w-3 text-amber-400" /> {task.credits || 10} Credits
+                              <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-orange-100 text-orange-900 border border-orange-300 flex items-center gap-0.5">
+                                <CreditCard className="h-3 w-3 text-orange-600" /> {task.credits || 10} Credits
                               </span>
 
                               {/* Collaborative Team Badge */}
                               {(task.team_name || task.team_id || task.assignment_mode === "team") && (
-                                <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-bold bg-purple-950 text-purple-300 border border-purple-500/40 flex items-center gap-1">
-                                  <Users className="h-3 w-3 text-purple-400" /> {task.team_name || `Collaborative Team (${task.team_size || 2})`}
+                                <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-purple-100 text-purple-900 border border-purple-300 flex items-center gap-1">
+                                  <Users className="h-3 w-3 text-purple-600" /> {task.team_name || `Collaborative Team (${task.team_size || 2})`}
                                 </span>
                               )}
                             </div>
 
                             {task.description && (
-                              <p className="text-slate-300 text-xs leading-relaxed max-w-4xl">{task.description}</p>
+                              <p className="text-slate-700 font-medium text-xs leading-relaxed max-w-4xl">{task.description}</p>
                             )}
 
                             {/* Action links row & Resources */}
@@ -3120,36 +3120,36 @@ function InternDashboard() {
                                   href={task.task_meet_link} 
                                   target="_blank" 
                                   rel="noreferrer" 
-                                  className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer"
+                                  className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer"
                                 >
                                   <Video className="h-3.5 w-3.5" /> 📹 Join Task Meet
                                 </a>
                               )}
                               {(task.task_file_url || task.project_requirements) && (
-                                <a href={task.task_file_url || task.project_requirements} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer">
+                                <a href={task.task_file_url || task.project_requirements} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer">
                                   <FolderOpen className="h-3.5 w-3.5" /> Project Files
                                 </a>
                               )}
                               {task.task_doc_url && (
-                                <a href={task.task_doc_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer">
+                                <a href={task.task_doc_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer">
                                   <BookOpen className="h-3.5 w-3.5" /> Handbook Guide
                                 </a>
                               )}
                               {reportTemplate && (
-                                <a href={reportTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-slate-900 border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs font-bold px-4 py-2 rounded-xl shadow-sm transition-all cursor-pointer">
-                                  <FileText className="h-3.5 w-3.5 text-blue-400" /> Report Template
+                                <a href={reportTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white border border-orange-200 text-slate-800 hover:bg-orange-50 text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer">
+                                  <FileText className="h-3.5 w-3.5 text-orange-500" /> Report Template
                                 </a>
                               )}
                               {pptTemplate && (
-                                <a href={pptTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-slate-900 border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs font-bold px-4 py-2 rounded-xl shadow-sm transition-all cursor-pointer">
-                                  <Play className="h-3.5 w-3.5 text-amber-400" /> PPT Template
+                                <a href={pptTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white border border-orange-200 text-slate-800 hover:bg-orange-50 text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer">
+                                  <Play className="h-3.5 w-3.5 text-amber-500" /> PPT Template
                                 </a>
                               )}
                             </div>
                             
                             {task.due_date && (
-                              <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-slate-800 text-[11px] font-medium text-slate-400">
-                                <Clock className="h-3.5 w-3.5 text-slate-500" /> Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                              <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-orange-200/60 text-[11px] font-bold text-slate-600">
+                                <Clock className="h-3.5 w-3.5 text-orange-500" /> Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                               </div>
                             )}
 
@@ -3157,7 +3157,7 @@ function InternDashboard() {
                             {(task.admin_remarks || task.progress_notes) && (
                               <div className={`mt-3 p-4 rounded-2xl border text-xs space-y-1 ${
                                 task.status === "completed" 
-                                  ? "bg-emerald-950/40 border-emerald-500/40 text-emerald-200" 
+                                  ? "bg-emerald-50 border-emerald-300 text-emerald-950 font-medium" 
                                   : task.status === "blocked" || task.status === "rejected"
                                   ? "bg-rose-950/40 border-rose-500/40 text-rose-200"
                                   : "bg-indigo-950/40 border-indigo-500/40 text-indigo-200"
