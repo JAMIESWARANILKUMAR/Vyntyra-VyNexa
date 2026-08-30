@@ -769,7 +769,7 @@ function InternDashboard() {
     { id: "deliverables",   label: `Deliverables (${deliverables.length})`, shortLabel: "Deliverables", icon: Send, category: "Core Work", enabled: isModuleEnabled("deliverables") },
     { id: "kanban",         label: "Sprint Board", shortLabel: "Sprint", icon: Layers, category: "Core Work", enabled: isModuleEnabled("kanban") },
     { id: "lms",            label: "LMS & Skills", shortLabel: "LMS", icon: BookOpen, category: "Core Work", enabled: isModuleEnabled("lms") },
-    { id: "browser",        label: "Chrome Browser", shortLabel: "Browser", icon: Globe, category: "Core Work", enabled: isModuleEnabled("browser") },
+    { id: "browser",        label: "VyNexa Search", shortLabel: "VyNexa Search", icon: Globe, category: "Core Work", enabled: isModuleEnabled("browser") },
 
     { id: "standups",       label: `Standups (${standups.length})`, shortLabel: "Standups", icon: Clock, category: "Routine & Compliance", enabled: isModuleEnabled("standups") },
     { id: "attendance",     label: `Attendance (${attendanceLogs.length})`, shortLabel: "Attendance", icon: CalendarDays, category: "Routine & Compliance", enabled: isModuleEnabled("attendance") },
