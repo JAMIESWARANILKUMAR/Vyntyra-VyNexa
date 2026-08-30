@@ -1163,19 +1163,19 @@ function InternDashboard() {
         {/* ── Live Updates & Notifications Marquee Sub-Bar ── */}
         {marqueeItems.length > 0 ? (
           <div 
-            className="bg-[#04060E]/95 text-slate-200 text-xs py-2 overflow-hidden flex whitespace-nowrap border-t border-b border-slate-800/90 relative z-10 backdrop-blur-xl group cursor-pointer shadow-inner" 
+            className="bg-white/95 text-slate-900 text-xs py-2 overflow-hidden flex whitespace-nowrap border-t border-b border-orange-200/80 relative z-10 backdrop-blur-xl group cursor-pointer shadow-xs" 
             title="Hover to pause live ticker"
           >
             {/* Left Fixed Ticker Badge */}
-            <div className="shrink-0 bg-[#070C1B] border-r border-slate-800 px-3 py-1 flex items-center gap-2 z-20 shadow-md">
+            <div className="shrink-0 bg-orange-100/90 border-r border-orange-200 px-3 py-1 flex items-center gap-2 z-20 shadow-xs">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
               </span>
-              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">
+              <span className="text-[10px] font-black uppercase tracking-wider text-orange-600">
                 LIVE TICKER
               </span>
-              <span className="hidden group-hover:inline text-[9px] font-bold text-amber-400 bg-amber-950/80 px-1.5 py-0.2 rounded border border-amber-500/40">
+              <span className="hidden group-hover:inline text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded border border-amber-300">
                 ⏸ PAUSED
               </span>
             </div>
@@ -1184,16 +1184,16 @@ function InternDashboard() {
             <div className="flex overflow-hidden relative flex-1 min-w-0">
               <div className="animate-marquee-slow flex items-center gap-10 sm:gap-14 shrink-0 min-w-full group-hover:[animation-play-state:paused] pl-4">
                 {marqueeItems.map((item) => (
-                  <div key={item.id} className="inline-flex items-center gap-2.5 px-3 py-1 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:bg-slate-800/80 transition-all">
+                  <div key={item.id} className="inline-flex items-center gap-2.5 px-3 py-1 rounded-xl bg-orange-50/70 border border-orange-200/80 hover:bg-orange-100/80 transition-all shadow-2xs">
                     {item.icon}
                     <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.typeColor} shrink-0`}>
                       {item.type}
                     </span>
-                    <span className="font-semibold text-slate-200 text-xs truncate max-w-xs sm:max-w-none">
+                    <span className="font-extrabold text-slate-900 text-xs truncate max-w-xs sm:max-w-none">
                       {item.title}
                     </span>
                     {item.subtitle && (
-                      <span className="text-slate-400 text-[11px] hidden md:inline truncate max-w-sm">
+                      <span className="text-slate-600 text-[11px] font-medium hidden md:inline truncate max-w-sm">
                         — {item.subtitle}
                       </span>
                     )}
@@ -1202,16 +1202,16 @@ function InternDashboard() {
               </div>
               <div className="animate-marquee-slow flex items-center gap-10 sm:gap-14 shrink-0 min-w-full ml-10 sm:ml-14 group-hover:[animation-play-state:paused]">
                 {marqueeItems.map((item) => (
-                  <div key={`dup-${item.id}`} className="inline-flex items-center gap-2.5 px-3 py-1 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:bg-slate-800/80 transition-all">
+                  <div key={`dup-${item.id}`} className="inline-flex items-center gap-2.5 px-3 py-1 rounded-xl bg-orange-50/70 border border-orange-200/80 hover:bg-orange-100/80 transition-all shadow-2xs">
                     {item.icon}
                     <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.typeColor} shrink-0`}>
                       {item.type}
                     </span>
-                    <span className="font-semibold text-slate-200 text-xs truncate max-w-xs sm:max-w-none">
+                    <span className="font-extrabold text-slate-900 text-xs truncate max-w-xs sm:max-w-none">
                       {item.title}
                     </span>
                     {item.subtitle && (
-                      <span className="text-slate-400 text-[11px] hidden md:inline truncate max-w-sm">
+                      <span className="text-slate-600 text-[11px] font-medium hidden md:inline truncate max-w-sm">
                         — {item.subtitle}
                       </span>
                     )}
@@ -1221,12 +1221,12 @@ function InternDashboard() {
             </div>
           </div>
         ) : (
-          <div className="bg-[#050811]/95 text-slate-400 text-[11px] py-2 px-4 flex items-center justify-between border-t border-slate-800/80 relative z-10 backdrop-blur-md">
+          <div className="bg-white/95 text-slate-700 text-[11px] py-2 px-4 flex items-center justify-between border-t border-orange-200/80 relative z-10 backdrop-blur-md">
             <div className="inline-flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-              <span className="font-semibold text-slate-300">Live Workspace Active</span>
+              <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shadow-xs" />
+              <span className="font-bold text-slate-900">Live Workspace Active</span>
               <span>·</span>
-              <span>All services operational</span>
+              <span className="text-slate-600 font-medium">All services operational</span>
             </div>
             <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">VCS Directorate Live Feed</span>
           </div>
@@ -2186,11 +2186,11 @@ function InternDashboard() {
         {/* ─── ONBOARDING & PRE-BOARDING HUB ─── */}
         {activeTab === "onboarding" && (
           <div className="space-y-6">
-            <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-8 shadow-xl backdrop-blur-xl">
-              <h2 className="font-bold text-white text-base flex items-center gap-2 mb-1.5">
-                <Compass className="h-5 w-5 text-emerald-400" /> Welcome &amp; Orientation Roadmap (Week 1 to Week 8)
+            <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-xl">
+              <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
+                <Compass className="h-5 w-5 text-orange-600" /> Welcome &amp; Orientation Roadmap (Week 1 to Week 8)
               </h2>
-              <p className="text-xs text-slate-400 mb-6">Follow your structured orientation kit and weekly milestones for a seamless onboarding journey.</p>
+              <p className="text-xs text-slate-600 mb-6 font-medium">Follow your structured orientation kit and weekly milestones for a seamless onboarding journey.</p>
               
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {[
@@ -2199,13 +2199,13 @@ function InternDashboard() {
                   { week: "Week 4", title: "Mid-Term Sprint & Review", desc: "Mid-term appraisal scorecard & project demo.", done: false },
                   { week: "Week 8", title: "Final Showcase & PPO", desc: "Deliverable showcase, exit survey & verifiable certificate.", done: false }
                 ].map((w, idx) => (
-                  <div key={idx} className={`p-5 rounded-2xl border ${w.done ? 'bg-emerald-950/30 border-emerald-500/40' : 'bg-slate-900/60 border-slate-800/80'} shadow-md`}>
+                  <div key={idx} className={`p-5 rounded-2xl border ${w.done ? 'bg-emerald-50 border-emerald-300' : 'bg-orange-50/60 border-orange-200'} shadow-xs`}>
                     <div className="flex items-center justify-between mb-2.5">
-                      <span className={`text-[10px] uppercase font-mono font-black px-2.5 py-0.5 rounded-full border ${w.done ? 'bg-emerald-950 text-emerald-300 border-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>{w.week}</span>
-                      {w.done ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <Clock className="h-4 w-4 text-slate-500" />}
+                      <span className={`text-[10px] uppercase font-mono font-black px-2.5 py-0.5 rounded-full border ${w.done ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-orange-100 text-orange-800 border-orange-300'}`}>{w.week}</span>
+                      {w.done ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Clock className="h-4 w-4 text-orange-500" />}
                     </div>
-                    <div className="font-bold text-sm text-white">{w.title}</div>
-                    <div className="text-xs text-slate-400 mt-1">{w.desc}</div>
+                    <div className="font-black text-sm text-slate-900">{w.title}</div>
+                    <div className="text-xs text-slate-600 mt-1 font-medium">{w.desc}</div>
                   </div>
                 ))}
               </div>
@@ -2213,9 +2213,9 @@ function InternDashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Compliance & Legal Uploads */}
-              <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-7 shadow-xl backdrop-blur-xl space-y-4">
-                <h3 className="font-bold text-sm flex items-center gap-2 text-white"><FileCheck className="h-4 w-4 text-blue-400" /> Compliance &amp; Legal Uploads</h3>
-                <p className="text-xs text-slate-400">Upload your NOC, Student ID proof, signed NDA, and bank passbook proof.</p>
+              <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-4">
+                <h3 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><FileCheck className="h-4 w-4 text-orange-600" /> Compliance &amp; Legal Uploads</h3>
+                <p className="text-xs text-slate-600 font-medium">Upload your NOC, Student ID proof, signed NDA, and bank passbook proof.</p>
                 <div className="space-y-3">
                   {[
                     { label: "University NOC (No Objection Certificate)", status: "Uploaded" },
@@ -2223,19 +2223,19 @@ function InternDashboard() {
                     { label: "Signed NDA & Code of Conduct", status: "Pending Upload" },
                     { label: "Bank Account Passbook / Cancelled Cheque", status: "Uploaded" }
                   ].map((doc, i) => (
-                    <div key={i} className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-800 bg-[#131B2E]/80 text-xs shadow-xs">
-                      <span className="font-semibold text-slate-200">{doc.label}</span>
-                      <span className={`font-bold px-2.5 py-0.5 rounded-full border ${doc.status === 'Uploaded' ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40' : 'bg-amber-950/70 text-amber-300 border-amber-500/40'}`}>{doc.status}</span>
+                    <div key={i} className="flex items-center justify-between p-3.5 rounded-2xl border border-orange-200 bg-orange-50/60 text-xs shadow-xs">
+                      <span className="font-extrabold text-slate-900">{doc.label}</span>
+                      <span className={`font-black px-2.5 py-0.5 rounded-full border ${doc.status === 'Uploaded' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>{doc.status}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Tooling & Credentials Tracker */}
-              <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-7 shadow-xl backdrop-blur-xl space-y-4">
+              <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm flex items-center gap-2 text-white"><ShieldCheck className="h-4 w-4 text-purple-400" /> Tooling &amp; Access Tracker</h3>
-                  <Button size="sm" variant="outline" className="h-7 text-xs border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800 cursor-pointer" onClick={() => {
+                  <h3 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><ShieldCheck className="h-4 w-4 text-orange-600" /> Tooling &amp; Access Tracker</h3>
+                  <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-orange-200 bg-white text-slate-800 hover:bg-orange-50 cursor-pointer shadow-xs" onClick={() => {
                     const tool = prompt("Enter requested software/tool name (e.g. Figma, GitHub, AWS):");
                     if (tool) doCreateAccessRequest({ data: { tool_name: tool } }).then(() => { toast.success("Access requested!"); qc.invalidateQueries({ queryKey: ["my-access-requests"] }); });
                   }}>Request Access</Button>
@@ -2245,9 +2245,9 @@ function InternDashboard() {
                     <div className="text-xs text-slate-500 p-4 text-center">No active access requests. Click above to request software credentials.</div>
                   ) : (
                     accessRequests.map((req: any) => (
-                      <div key={req.id} className="flex items-center justify-between p-3 rounded-2xl border border-slate-800 bg-[#131B2E]/80 text-xs shadow-xs">
-                        <span className="font-semibold text-white">{req.tool_name}</span>
-                        <span className={`font-bold uppercase text-[10px] px-2.5 py-0.5 rounded-full border ${req.status === 'provisioned' ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40' : req.status === 'approved' ? 'bg-blue-950/70 text-blue-300 border-blue-500/40' : 'bg-amber-950/70 text-amber-300 border-amber-500/40'}`}>{req.status}</span>
+                      <div key={req.id} className="flex items-center justify-between p-3 rounded-2xl border border-orange-200 bg-orange-50/60 text-xs shadow-xs">
+                        <span className="font-extrabold text-slate-900">{req.tool_name}</span>
+                        <span className={`font-black uppercase text-[10px] px-2.5 py-0.5 rounded-full border ${req.status === 'provisioned' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : req.status === 'approved' ? 'bg-orange-100 text-orange-800 border-orange-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>{req.status}</span>
                       </div>
                     ))
                   )}
@@ -2260,18 +2260,18 @@ function InternDashboard() {
         {/* ─── LEARNING & SKILL PATH (LMS) ─── */}
         {activeTab === "lms" && (
           <div className="space-y-6">
-            <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-8 shadow-xl backdrop-blur-xl">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5 mb-6">
+            <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-xl">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-orange-200/80 pb-5 mb-6">
                 <div>
-                  <h2 className="font-bold text-white text-base flex items-center gap-2 mb-1">
-                    <BookMarked className="h-5 w-5 text-emerald-400" /> Structured Curriculum &amp; Skill Badges
+                  <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1">
+                    <BookMarked className="h-5 w-5 text-orange-600" /> Structured Curriculum &amp; Skill Badges
                   </h2>
-                  <p className="text-xs text-slate-400">Official certified training modules, video masterclasses, and skilling paths for: <span className="font-bold text-emerald-400 capitalize">{selectedDomain}</span></p>
+                  <p className="text-xs text-slate-600 font-medium">Official certified training modules, video masterclasses, and skilling paths for: <span className="font-extrabold text-orange-600 capitalize">{selectedDomain}</span></p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-400">Filter Domain:</span>
+                  <span className="text-xs text-slate-600 font-bold">Filter Domain:</span>
                   <select 
-                    className="rounded-xl border border-slate-700 bg-slate-900 p-1.5 text-xs font-bold text-slate-200 outline-none focus:border-emerald-500"
+                    className="rounded-xl border border-orange-200 bg-white p-1.5 text-xs font-black text-slate-900 outline-none focus:border-orange-500 shadow-xs"
                     value={selectedDomain}
                     onChange={(e) => setSelectedDomain(e.target.value as any)}
                   >
@@ -2283,8 +2283,8 @@ function InternDashboard() {
               </div>
 
               {lmsCoursesQ.isLoading ? (
-                <div className="p-12 flex items-center justify-center gap-2 text-slate-400 text-sm">
-                  <Loader2 className="h-5 w-5 animate-spin" /> Loading curated courses...
+                <div className="p-12 flex items-center justify-center gap-2 text-slate-600 text-sm font-medium">
+                  <Loader2 className="h-5 w-5 animate-spin text-orange-500" /> Loading curated courses...
                 </div>
               ) : (() => {
                 const availableCourses: LmsCourseItem[] = (lmsCoursesQ.data || []).filter((c: LmsCourseItem) => {
@@ -2300,8 +2300,8 @@ function InternDashboard() {
 
                 if (availableCourses.length === 0) {
                   return (
-                    <div className="p-12 text-center text-slate-500 text-sm space-y-2">
-                      <BookOpen className="h-8 w-8 mx-auto text-slate-600" />
+                    <div className="p-12 text-center text-slate-600 text-sm space-y-2 font-medium">
+                      <BookOpen className="h-8 w-8 mx-auto text-orange-400" />
                       <p>No courses assigned to your profile in this domain currently.</p>
                     </div>
                   );
@@ -2315,42 +2315,42 @@ function InternDashboard() {
                       const completed = dbRecord?.completed ?? false;
 
                       return (
-                        <div key={m.id || idx} className="rounded-2xl border border-slate-800/80 p-5 bg-[#131B2E]/90 hover:border-slate-700 transition-all flex flex-col justify-between shadow-lg">
+                        <div key={m.id || idx} className="rounded-2xl border border-orange-200/80 p-5 bg-orange-50/60 hover:bg-orange-100/40 transition-all flex flex-col justify-between shadow-xs">
                           <div>
                             <div className="flex justify-between items-start">
-                              <span className="text-[9px] uppercase font-mono bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded font-bold border border-emerald-800">{m.source}</span>
-                              {completed && <span className="text-[9px] uppercase font-mono bg-blue-950 text-blue-300 px-2 py-0.5 rounded font-bold border border-blue-800">Completed</span>}
+                              <span className="text-[9px] uppercase font-mono bg-orange-100 text-orange-900 px-2 py-0.5 rounded font-black border border-orange-300">{m.source}</span>
+                              {completed && <span className="text-[9px] uppercase font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-black border border-emerald-300">Completed</span>}
                             </div>
-                            <h3 className="font-bold text-xs text-white mt-3 line-clamp-2 min-h-[32px]">{m.title}</h3>
+                            <h3 className="font-extrabold text-xs text-slate-900 mt-3 line-clamp-2 min-h-[32px]">{m.title}</h3>
                             
                             {m.description && (
-                              <p className="text-[11px] text-slate-400 line-clamp-2 mt-1 leading-normal">{m.description}</p>
+                              <p className="text-[11px] text-slate-600 font-medium line-clamp-2 mt-1 leading-normal">{m.description}</p>
                             )}
 
                             <div className="mt-4">
-                              <div className="flex justify-between text-[11px] text-slate-400 mb-1">
+                              <div className="flex justify-between text-[11px] text-slate-600 font-medium mb-1">
                                 <span>Track Progress</span>
-                                <span className="font-bold text-slate-200">{progress}%</span>
+                                <span className="font-black text-slate-900">{progress}%</span>
                               </div>
-                              <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                                <div className="h-full bg-emerald-500 rounded-full transition-all duration-350" style={{ width: `${progress}%` }} />
+                              <div className="h-2 bg-orange-100 rounded-full overflow-hidden border border-orange-200/60">
+                                <div className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-350" style={{ width: `${progress}%` }} />
                               </div>
                             </div>
 
                             {updatingCourseIdx === idx ? (
-                              <div className="mt-4 p-2.5 bg-slate-900/90 rounded-xl border border-slate-700 flex items-center gap-2">
+                              <div className="mt-4 p-2.5 bg-white rounded-xl border border-orange-200 flex items-center gap-2 shadow-xs">
                                 <input 
                                   type="range" 
                                   min="0" 
                                   max="100" 
                                   value={courseProgressInput}
                                   onChange={(e) => setCourseProgressInput(parseInt(e.target.value))}
-                                  className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                                  className="w-full h-1 bg-orange-100 rounded-lg appearance-none cursor-pointer accent-orange-500"
                                 />
-                                <span className="text-xs font-mono font-bold w-8 text-right text-white">{courseProgressInput}%</span>
+                                <span className="text-xs font-mono font-black w-8 text-right text-slate-900">{courseProgressInput}%</span>
                                 <Button 
                                   size="sm"
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] h-6 px-2 cursor-pointer"
+                                  className="bg-orange-500 hover:bg-orange-600 text-white text-[10px] h-6 px-2 cursor-pointer font-black"
                                   onClick={async () => {
                                     try {
                                       await doUpdateLmsProgress({
@@ -2376,22 +2376,22 @@ function InternDashboard() {
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                className="mt-3 text-slate-400 hover:text-emerald-400 text-[10px] h-6 px-1.5 gap-1 cursor-pointer"
+                                className="mt-3 text-slate-600 hover:text-orange-600 text-[10px] h-6 px-1.5 gap-1 cursor-pointer font-bold"
                                 onClick={() => {
                                   setUpdatingCourseIdx(idx);
                                   setCourseProgressInput(progress);
                                 }}
                               >
-                                <RefreshCw className="h-3 w-3" /> Update Progress
+                                <RefreshCw className="h-3 w-3 text-orange-500" /> Update Progress
                               </Button>
                             )}
                           </div>
 
-                          <div className="mt-5 pt-3 border-t border-slate-800/80 space-y-2">
+                          <div className="mt-5 pt-3 border-t border-orange-200/60 space-y-2">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-amber-400 font-semibold flex items-center gap-1"><Award className="h-3.5 w-3.5 text-amber-400" /> {m.badge || "Skilling Badge"}</span>
+                              <span className="text-amber-800 font-extrabold flex items-center gap-1"><Award className="h-3.5 w-3.5 text-amber-500" /> {m.badge || "Skilling Badge"}</span>
                               {m.estimated_hours && (
-                                <span className="text-[10px] text-slate-500 font-mono">{m.estimated_hours}h</span>
+                                <span className="text-[10px] text-slate-500 font-mono font-bold">{m.estimated_hours}h</span>
                               )}
                             </div>
 
@@ -2400,7 +2400,7 @@ function InternDashboard() {
                                 <Button
                                   size="sm"
                                   onClick={() => setLmsVideoModalId(m.youtube_video_id || null)}
-                                  className="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold h-7 gap-1 cursor-pointer"
+                                  className="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-black h-7 gap-1 cursor-pointer"
                                 >
                                   <Play className="h-3 w-3 fill-white" /> Watch Video
                                 </Button>
@@ -2409,7 +2409,7 @@ function InternDashboard() {
                                 href={m.url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="flex-1 text-center px-2 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-200 inline-flex items-center justify-center gap-0.5 cursor-pointer border border-slate-700"
+                                className="flex-1 text-center px-2 py-1 rounded-xl bg-white hover:bg-orange-50 text-[11px] font-black text-slate-800 inline-flex items-center justify-center gap-0.5 cursor-pointer border border-orange-200 shadow-xs"
                               >
                                 Open Course ↗
                               </a>
@@ -2436,37 +2436,37 @@ function InternDashboard() {
         {activeTab === "kanban" && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="font-bold text-white text-base flex items-center gap-2">
-                <Layers className="h-5 w-5 text-blue-400" /> Sprint Kanban Board
+              <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                <Layers className="h-5 w-5 text-orange-600" /> Sprint Kanban Board
               </h2>
-              <div className="text-xs text-slate-400 font-medium">Click arrows to move tasks across sprint status columns</div>
+              <div className="text-xs text-slate-600 font-medium">Click arrows to move tasks across sprint status columns</div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {[
-                { title: "To Do", status: "pending", bg: "bg-[#0E131F]/90 border-slate-800/80" },
-                { title: "In Progress", status: "in_progress", bg: "bg-[#0E131F]/90 border-blue-500/30" },
-                { title: "In Review", status: "blocked", bg: "bg-[#0E131F]/90 border-amber-500/30" },
-                { title: "Completed", status: "completed", bg: "bg-[#0E131F]/90 border-emerald-500/30" }
+                { title: "To Do", status: "pending", bg: "bg-white border-orange-200/80" },
+                { title: "In Progress", status: "in_progress", bg: "bg-white border-orange-200/80" },
+                { title: "In Review", status: "blocked", bg: "bg-white border-orange-200/80" },
+                { title: "Completed", status: "completed", bg: "bg-white border-orange-200/80" }
               ].map((col) => {
                 const colTasks = myTasks.filter((t: any) => t.status === col.status);
                 return (
-                  <div key={col.status} className={`rounded-3xl border p-5 ${col.bg} min-h-[400px] flex flex-col shadow-xl backdrop-blur-xl`}>
-                    <div className="font-black text-xs uppercase tracking-wider text-slate-300 mb-3.5 flex items-center justify-between">
+                  <div key={col.status} className={`rounded-3xl border p-5 ${col.bg} min-h-[400px] flex flex-col shadow-xl shadow-orange-950/5 backdrop-blur-xl`}>
+                    <div className="font-black text-xs uppercase tracking-wider text-slate-800 mb-3.5 flex items-center justify-between">
                       <span>{col.title}</span>
-                      <span className="bg-slate-800 border border-slate-700 px-2.5 py-0.5 rounded-full text-white text-[10px]">{colTasks.length}</span>
+                      <span className="bg-orange-100 border border-orange-300 px-2.5 py-0.5 rounded-full text-orange-900 text-[10px] font-mono">{colTasks.length}</span>
                     </div>
                     <div className="space-y-3 flex-1 overflow-y-auto">
                       {colTasks.map((t: any) => (
-                        <div key={t.id} className="p-4 bg-[#131B2E]/90 rounded-2xl border border-slate-800/80 shadow-md space-y-2.5">
-                          <div className="font-bold text-xs text-white">{t.title}</div>
-                          {t.description && <p className="text-[11px] text-slate-400 line-clamp-2">{t.description}</p>}
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[10px]">
-                            <span className="font-bold text-slate-400 uppercase tracking-wider">{t.priority || "Medium"}</span>
+                        <div key={t.id} className="p-4 bg-orange-50/60 rounded-2xl border border-orange-200/80 shadow-xs space-y-2.5">
+                          <div className="font-extrabold text-xs text-slate-900">{t.title}</div>
+                          {t.description && <p className="text-[11px] text-slate-600 font-medium line-clamp-2">{t.description}</p>}
+                          <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 text-[10px]">
+                            <span className="font-black text-slate-600 uppercase tracking-wider">{t.priority || "Medium"}</span>
                             <div className="flex gap-1.5">
-                              {col.status !== 'pending' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-400 hover:text-white cursor-pointer" onClick={() => markTaskStatus(t.id, 'pending')}>←</Button>}
-                              {col.status !== 'in_progress' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-blue-400 hover:bg-blue-950 cursor-pointer" onClick={() => markTaskStatus(t.id, 'in_progress')}>→</Button>}
-                              {col.status !== 'completed' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-emerald-400 hover:bg-emerald-950 cursor-pointer" onClick={() => markTaskStatus(t.id, 'completed')}>✓</Button>}
+                              {col.status !== 'pending' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-600 hover:text-slate-900 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'pending')}>←</Button>}
+                              {col.status !== 'in_progress' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-orange-600 hover:bg-orange-100 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'in_progress')}>→</Button>}
+                              {col.status !== 'completed' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-emerald-600 hover:bg-emerald-100 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'completed')}>✓</Button>}
                             </div>
                           </div>
                         </div>
@@ -2484,16 +2484,16 @@ function InternDashboard() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Standup Form */}
-              <div className="lg:col-span-1 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-7 shadow-xl backdrop-blur-xl space-y-4">
-                <h2 className="font-bold text-sm flex items-center gap-2 text-white"><Send className="h-4 w-4 text-emerald-400" /> Submit Daily Standup Log</h2>
+              <div className="lg:col-span-1 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-4">
+                <h2 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><Send className="h-4 w-4 text-orange-600" /> Submit Daily Standup Log</h2>
                 
                 {/* Clock-in Button */}
-                <div className="p-4 rounded-2xl border border-slate-800 bg-[#131B2E]/90 flex items-center justify-between shadow-inner">
+                <div className="p-4 rounded-2xl border border-orange-200 bg-orange-50/60 flex items-center justify-between shadow-xs">
                   <div>
-                    <div className="text-xs font-bold text-white">Shift Clock-In</div>
-                    <div className="text-[10px] text-slate-400">{clockedIn ? `Clocked in at ${clockTime}` : 'Not clocked in today'}</div>
+                    <div className="text-xs font-black text-slate-900">Shift Clock-In</div>
+                    <div className="text-[10px] text-slate-600 font-medium">{clockedIn ? `Clocked in at ${clockTime}` : 'Not clocked in today'}</div>
                   </div>
-                  <Button size="sm" className={clockedIn ? "bg-rose-600 hover:bg-rose-700 text-white font-bold cursor-pointer" : "bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"} onClick={() => {
+                  <Button size="sm" className={clockedIn ? "bg-rose-600 hover:bg-rose-700 text-white font-black cursor-pointer" : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black cursor-pointer"} onClick={() => {
                     setClockedIn(!clockedIn);
                     setClockTime(new Date().toLocaleTimeString());
                     toast.success(clockedIn ? "Clocked out!" : "Clocked in for today's shift!");
@@ -2504,18 +2504,18 @@ function InternDashboard() {
 
                 <div className="space-y-3.5 text-xs">
                   <div>
-                    <label className="font-semibold text-slate-300 mb-1.5 block">What I did today</label>
-                    <textarea className="w-full rounded-xl border border-slate-700 bg-slate-900 p-3 text-slate-200 placeholder:text-slate-500 outline-none focus:border-emerald-500" rows={3} value={standupForm.did_today} onChange={e => setStandupForm({...standupForm, did_today: e.target.value})} placeholder="Tasks completed today..." />
+                    <label className="font-bold text-slate-700 mb-1.5 block">What I did today</label>
+                    <textarea className="w-full rounded-xl border border-orange-200 bg-white p-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs" rows={3} value={standupForm.did_today} onChange={e => setStandupForm({...standupForm, did_today: e.target.value})} placeholder="Tasks completed today..." />
                   </div>
                   <div>
-                    <label className="font-semibold text-slate-300 mb-1.5 block">What I'll do tomorrow</label>
-                    <textarea className="w-full rounded-xl border border-slate-700 bg-slate-900 p-3 text-slate-200 placeholder:text-slate-500 outline-none focus:border-emerald-500" rows={2} value={standupForm.will_do_tomorrow} onChange={e => setStandupForm({...standupForm, will_do_tomorrow: e.target.value})} placeholder="Planned tasks for tomorrow..." />
+                    <label className="font-bold text-slate-700 mb-1.5 block">What I'll do tomorrow</label>
+                    <textarea className="w-full rounded-xl border border-orange-200 bg-white p-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs" rows={2} value={standupForm.will_do_tomorrow} onChange={e => setStandupForm({...standupForm, will_do_tomorrow: e.target.value})} placeholder="Planned tasks for tomorrow..." />
                   </div>
                   <div>
-                    <label className="font-semibold text-slate-300 mb-1.5 block">Blockers (optional)</label>
-                    <input className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-emerald-500" value={standupForm.blockers} onChange={e => setStandupForm({...standupForm, blockers: e.target.value})} placeholder="Any roadblocks faced..." />
+                    <label className="font-bold text-slate-700 mb-1.5 block">Blockers (optional)</label>
+                    <input className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs" value={standupForm.blockers} onChange={e => setStandupForm({...standupForm, blockers: e.target.value})} placeholder="Any roadblocks faced..." />
                   </div>
-                  <Button className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-950/60 cursor-pointer" onClick={async () => {
+                  <Button className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer" onClick={async () => {
                     if (!standupForm.did_today || !standupForm.will_do_tomorrow) { toast.error("Please fill required standup fields"); return; }
                     try {
                       await doCreateStandup({ data: standupForm });
@@ -2528,21 +2528,21 @@ function InternDashboard() {
               </div>
 
               {/* Standup History */}
-              <div className="lg:col-span-2 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-7 shadow-xl backdrop-blur-xl space-y-4">
-                <h2 className="font-bold text-sm text-white">My Standup Log History</h2>
-                <div className="divide-y divide-slate-800/80 max-h-[480px] overflow-y-auto">
+              <div className="lg:col-span-2 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-4">
+                <h2 className="font-extrabold text-sm text-slate-900">My Standup Log History</h2>
+                <div className="divide-y divide-orange-200/60 max-h-[480px] overflow-y-auto">
                   {standups.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500 text-xs">No daily standups submitted yet. Fill out the log on the left.</div>
+                    <div className="p-8 text-center text-slate-500 text-xs font-medium">No daily standups submitted yet. Fill out the log on the left.</div>
                   ) : (
                     standups.map((st: any) => (
                       <div key={st.id} className="py-3.5 space-y-1">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-white">{st.date}</span>
-                          <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold uppercase border ${st.status === 'approved' ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40' : 'bg-amber-950/70 text-amber-300 border-amber-500/40'}`}>{st.status}</span>
+                          <span className="font-black text-slate-900">{st.date}</span>
+                          <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-black uppercase border ${st.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>{st.status}</span>
                         </div>
-                        <p className="text-xs text-slate-300"><strong>Did Today:</strong> {st.did_today}</p>
-                        <p className="text-xs text-slate-400"><strong>Tomorrow:</strong> {st.will_do_tomorrow}</p>
-                        {st.blockers && <p className="text-xs text-rose-400"><strong>Blockers:</strong> {st.blockers}</p>}
+                        <p className="text-xs text-slate-800 font-medium"><strong>Did Today:</strong> {st.did_today}</p>
+                        <p className="text-xs text-slate-600 font-medium"><strong>Tomorrow:</strong> {st.will_do_tomorrow}</p>
+                        {st.blockers && <p className="text-xs text-rose-600 font-semibold"><strong>Blockers:</strong> {st.blockers}</p>}
                       </div>
                     ))
                   )}
@@ -2680,25 +2680,25 @@ function InternDashboard() {
         {/* ─── PPO & CERTIFICATES ─── */}
         {activeTab === "ppo" && (
           <div className="space-y-6">
-            <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-8 shadow-xl backdrop-blur-xl">
-              <h2 className="font-bold text-white text-base flex items-center gap-2 mb-1.5">
-                <Sparkles className="h-5 w-5 text-amber-400" /> Pre-Employment Offer (PPO) &amp; Automated Certificates
+            <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-xl">
+              <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
+                <Sparkles className="h-5 w-5 text-amber-500" /> Pre-Employment Offer (PPO) &amp; Automated Certificates
               </h2>
-              <p className="text-xs text-slate-400 mb-6">Track your PPO conversion metrics and download official verifiable internship certificates upon offboarding.</p>
+              <p className="text-xs text-slate-600 font-medium mb-6">Track your PPO conversion metrics and download official verifiable internship certificates upon offboarding.</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* PPO Status */}
-                <div className="p-6 rounded-2xl border border-amber-500/30 bg-amber-950/20 space-y-4 shadow-md">
+                <div className="p-6 rounded-2xl border border-orange-200 bg-orange-50/60 space-y-4 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs uppercase text-amber-300 tracking-wider">PPO Conversion Score</span>
-                    <span className="font-mono font-black text-lg text-amber-200">
+                    <span className="font-black text-xs uppercase text-orange-900 tracking-wider">PPO Conversion Score</span>
+                    <span className="font-mono font-black text-lg text-orange-600">
                       {Math.min(100, Math.round(progress * 0.8 + Math.min(20, dayStreak * 2)))} / 100
                     </span>
                   </div>
-                  <div className="h-3 bg-amber-950 rounded-full overflow-hidden border border-amber-500/30">
-                    <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.min(100, Math.round(progress * 0.8 + Math.min(20, dayStreak * 2)))}%` }} />
+                  <div className="h-3 bg-orange-100 rounded-full overflow-hidden border border-orange-200">
+                    <div className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full" style={{ width: `${Math.min(100, Math.round(progress * 0.8 + Math.min(20, dayStreak * 2)))}%` }} />
                   </div>
-                  <div className="text-xs text-amber-300/90 space-y-1.5">
+                  <div className="text-xs text-slate-800 font-semibold space-y-1.5">
                     <div>{progress >= 85 ? "✓" : "○"} Task Credits Progress ({progress}%)</div>
                     <div>{dayStreak >= 5 ? "✓" : "○"} Day Clock-In Streak ({dayStreak} Days)</div>
                     <div>✓ Mid-Term Appraisal Grade: Exceeds Expectations</div>
@@ -2713,17 +2713,17 @@ function InternDashboard() {
                   const isCredUnlocked = Date.now() >= unlockDateObj.getTime();
 
                   return (
-                    <div className="p-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 space-y-4 shadow-md">
+                    <div className="p-6 rounded-2xl border border-emerald-300 bg-emerald-50/60 space-y-4 shadow-xs">
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs uppercase text-emerald-300 tracking-wider flex items-center gap-1.5">
-                          <Award className="h-4 w-4 text-emerald-400" /> Verifiable Credentials Engine
+                        <span className="font-black text-xs uppercase text-emerald-900 tracking-wider flex items-center gap-1.5">
+                          <Award className="h-4 w-4 text-emerald-600" /> Verifiable Credentials Engine
                         </span>
                         {isCredUnlocked ? (
-                          <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                             <Unlock className="h-3 w-3" /> Unlocked for Download
                           </span>
                         ) : (
-                          <span className="text-[10px] font-bold text-amber-300 bg-amber-950/80 border border-amber-500/40 px-2.5 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
+                          <span className="text-[10px] font-black text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
                             <Lock className="h-3 w-3" /> Unlocks 1 Day Before Completion
                           </span>
                         )}
@@ -2735,21 +2735,21 @@ function InternDashboard() {
                           { name: "Letter of Recommendation (LOR)", code: "VY-LOR-2026-92" },
                           { name: "Official Experience Certificate", code: "VY-EXP-2026-04" }
                         ].map((c, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-3.5 rounded-xl bg-[#131B2E]/90 border border-slate-800 text-xs shadow-sm hover:border-slate-700 transition-colors">
+                          <div key={idx} className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-orange-200/80 text-xs shadow-xs hover:border-orange-300 transition-colors">
                             <div className="flex items-center gap-2.5">
                               {!isCredUnlocked ? (
-                                <div className="h-8 w-8 rounded-full bg-amber-950/60 border border-amber-500/40 flex items-center justify-center shrink-0 relative">
-                                  <Lock className="h-4 w-4 text-amber-400 animate-bounce" />
-                                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-amber-400 rounded-full animate-ping" />
+                                <div className="h-8 w-8 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0 relative">
+                                  <Lock className="h-4 w-4 text-amber-600 animate-bounce" />
+                                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-amber-500 rounded-full animate-ping" />
                                 </div>
                               ) : (
-                                <div className="h-8 w-8 rounded-full bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center shrink-0">
-                                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-400" />
+                                <div className="h-8 w-8 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center shrink-0">
+                                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600" />
                                 </div>
                               )}
                               <div>
-                                <div className="font-bold text-white">{c.name}</div>
-                                <div className="text-[10px] font-mono text-slate-400">{c.code} &middot; ISO 9001:2015 Verified</div>
+                                <div className="font-extrabold text-slate-900">{c.name}</div>
+                                <div className="text-[10px] font-mono text-slate-600 font-semibold">{c.code} &middot; ISO 9001:2015 Verified</div>
                               </div>
                             </div>
 
@@ -2757,7 +2757,7 @@ function InternDashboard() {
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="h-8 text-xs text-emerald-300 border-emerald-500/40 bg-emerald-950/60 hover:bg-emerald-900 font-bold cursor-pointer"
+                                className="h-8 text-xs text-emerald-800 border-emerald-300 bg-emerald-100 hover:bg-emerald-200 font-black cursor-pointer"
                                 onClick={async () => {
                                   const loadingToast = toast.loading(`Generating ${c.name}...`);
                                   try {
@@ -2804,9 +2804,9 @@ function InternDashboard() {
                                 size="sm" 
                                 variant="outline" 
                                 disabled
-                                className="h-8 text-xs text-amber-400 border-amber-500/30 bg-amber-950/40 cursor-not-allowed font-medium opacity-80"
+                                className="h-8 text-xs text-amber-900 border-amber-300 bg-amber-100 cursor-not-allowed font-bold opacity-80"
                               >
-                                <Lock className="h-3.5 w-3.5 mr-1 text-amber-400" /> Locked
+                                <Lock className="h-3.5 w-3.5 mr-1 text-amber-600" /> Locked
                               </Button>
                             )}
                           </div>
@@ -2814,49 +2814,49 @@ function InternDashboard() {
                       </div>
 
                       {/* Mandatory Final Certification Exam & Fee Guidelines Notice */}
-                      <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-950/20 text-xs text-slate-300 space-y-2">
-                        <div className="font-bold text-amber-300 flex items-center gap-1.5 text-xs">
-                          <Sparkles className="h-4 w-4 text-amber-400" /> Mandatory Final Certification Exam &amp; Credential Guidelines
+                      <div className="p-4 rounded-2xl border border-amber-300 bg-amber-50/70 text-xs text-slate-800 space-y-2">
+                        <div className="font-extrabold text-amber-900 flex items-center gap-1.5 text-xs">
+                          <Sparkles className="h-4 w-4 text-amber-600" /> Mandatory Final Certification Exam &amp; Credential Guidelines
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[11px] text-slate-400 pt-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[11px] text-slate-700 font-medium pt-1">
                           <div className="flex items-start gap-1.5">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
+                            <CheckCircle2 className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
                             <span><strong>Exam Link:</strong> Shared by your Administrator upon completing your final module project.</span>
                           </div>
                           <div className="flex items-start gap-1.5">
-                            <CreditCard className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
+                            <CreditCard className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
                             <span>
                               <strong>Exam Fee:</strong> <strong>{profile?.is_fee_exempted ? "FEE exemption provided by VYNTYRA" : `₹${profile?.exam_fee_amount} (Inclusive of all GST)`}</strong>
                               {!profile?.is_fee_exempted && " — Mandatory skilling & credential verification fee."}
                             </span>
                           </div>
                           <div className="flex items-start gap-1.5">
-                            <RefreshCw className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
+                            <RefreshCw className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
                             <span><strong>Attempts Allowed:</strong> Maximum <strong>3 attempts</strong> permitted to achieve passing grade (70%).</span>
                           </div>
                           <div className="flex items-start gap-1.5">
-                            <Clock className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
+                            <Clock className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
                             <span><strong>Unlock Date:</strong> Credentials unlock automatically <strong>1 day prior</strong> ({unlockDateObj.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}) to completion.</span>
                           </div>
                         </div>
                       </div>
 
                       {isFeePaymentPending && (
-                        <div className="mt-5 p-5 rounded-2xl border-2 border-rose-500/40 bg-rose-950/30 shadow-lg space-y-4">
+                        <div className="mt-5 p-5 rounded-2xl border-2 border-rose-300 bg-rose-50/80 shadow-md space-y-4">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div className="flex items-start gap-3">
-                              <div className="p-2.5 bg-rose-900/60 border border-rose-500/40 rounded-xl text-rose-300 shrink-0 shadow-xs">
+                              <div className="p-2.5 bg-rose-100 border border-rose-300 rounded-xl text-rose-700 shrink-0 shadow-xs">
                                 <DollarSign className="h-6 w-6" />
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <h4 className="text-base font-bold text-white">Mandatory Exam Fee Payment Pending</h4>
+                                  <h4 className="text-base font-extrabold text-slate-900">Mandatory Exam Fee Payment Pending</h4>
                                   <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-600 text-white shadow-xs">
                                     Action Required
                                   </span>
                                 </div>
-                                <p className="text-xs text-rose-200 mt-1 font-medium leading-relaxed">
+                                <p className="text-xs text-slate-700 mt-1 font-medium leading-relaxed">
                                   Please pay the mandatory exam fee of <strong>₹{profile?.exam_fee_amount || 199}</strong> on or before{" "}
                                   <strong>
                                     {formatDeadlineDisplay(profile?.fee_payment_deadline)}
@@ -2866,18 +2866,18 @@ function InternDashboard() {
                               </div>
                             </div>
 
-                            <Button size="lg" className="bg-rose-600 hover:bg-rose-700 text-white font-black px-6 shadow-xl shadow-rose-950/60 h-12 shrink-0 rounded-xl cursor-pointer" onClick={() => setShowPaymentModal(true)}>
+                            <Button size="lg" className="bg-rose-600 hover:bg-rose-700 text-white font-black px-6 shadow-md shadow-rose-500/20 h-12 shrink-0 rounded-xl cursor-pointer" onClick={() => setShowPaymentModal(true)}>
                               Pay ₹{profile?.exam_fee_amount || 199} Now
                             </Button>
                           </div>
 
                           {/* Live Animated Countdown Timer */}
-                          <div className="p-4 bg-[#0A0D17] text-white rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-800 shadow-inner">
+                          <div className="p-4 bg-white text-slate-900 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-orange-200 shadow-xs">
                             <div className="flex items-center gap-2.5">
-                              <Clock className="h-5 w-5 text-amber-400 shrink-0 animate-spin duration-1000" />
+                              <Clock className="h-5 w-5 text-orange-600 shrink-0 animate-spin duration-1000" />
                               <div>
-                                <span className="text-xs font-bold text-white block">Time Remaining to Complete Payment:</span>
-                                <span className="text-[10px] text-slate-400">
+                                <span className="text-xs font-black text-slate-900 block">Time Remaining to Complete Payment:</span>
+                                <span className="text-[10px] text-slate-600 font-medium">
                                   Pay on or before {formatDeadlineDisplay(profile?.fee_payment_deadline, "the scheduled date")}
                                 </span>
                               </div>
@@ -2886,7 +2886,7 @@ function InternDashboard() {
                             <FeeCountdownTimer deadline={profile?.fee_payment_deadline} />
                           </div>
 
-                          <div className="p-3.5 bg-amber-950/30 border border-amber-500/30 rounded-2xl text-xs text-amber-300 font-medium leading-relaxed">
+                          <div className="p-3.5 bg-amber-100/70 border border-amber-300 rounded-2xl text-xs text-amber-900 font-semibold leading-relaxed">
                             <strong>Note / Information:</strong> Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
                           </div>
                         </div>
@@ -3411,7 +3411,7 @@ function InternDashboard() {
                                 <Button 
                                   size="sm" 
                                   variant="outline" 
-                                  className="h-8 text-xs text-slate-300 border-slate-700 bg-slate-900 hover:bg-slate-800 font-semibold rounded-xl cursor-pointer"
+                                  className="h-8 text-xs text-orange-900 border-orange-200 bg-white hover:bg-orange-50 font-bold rounded-xl cursor-pointer shadow-xs"
                                   onClick={() => {
                                     setShowExtensionModal(task);
                                     setExtensionReason("");
@@ -3437,14 +3437,14 @@ function InternDashboard() {
         {activeTab === "meetings" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1 space-y-3">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-emerald-400" />Calendar</h2>
-              <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-5 shadow-xl backdrop-blur-xl">
+              <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-orange-600" />Calendar</h2>
+              <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-5 shadow-xl shadow-orange-950/5 backdrop-blur-xl">
                 <MonthlyCalendar events={[...schedules, ...meetings]} holidays={holidaysQ.data || []} />
               </div>
             </div>
             <div className="lg:col-span-2 space-y-3">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2"><Video className="h-4 w-4 text-purple-400" />Meetings</h2>
-              <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 shadow-xl backdrop-blur-xl">
+              <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2"><Video className="h-4 w-4 text-orange-600" />Meetings</h2>
+              <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 shadow-xl shadow-orange-950/5 backdrop-blur-xl">
                 <MeetingsSection meetings={meetings} isLoading={meetingsQ.isLoading} isError={meetingsQ.isError} />
               </div>
             </div>
@@ -3455,32 +3455,32 @@ function InternDashboard() {
         {activeTab === "resources" && (
           <div className="space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="font-bold text-white flex items-center gap-2"><BookOpen className="h-5 w-5 text-emerald-400" />Learning Resources</h2>
-              <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-resources"] })} className="gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer">
+              <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><BookOpen className="h-5 w-5 text-orange-600" />Learning Resources</h2>
+              <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-resources"] })} className="gap-1.5 text-slate-700 hover:text-orange-600 hover:bg-orange-50 cursor-pointer font-bold">
                 <RefreshCw className={`h-3.5 w-3.5 ${resourcesQ.isFetching ? "animate-spin" : ""}`} />Refresh
               </Button>
             </div>
             {resourcesQ.isLoading ? (
-              <div className="flex items-center justify-center py-12 gap-2 text-slate-400"><Loader2 className="h-5 w-5 animate-spin" />Loading...</div>
+              <div className="flex items-center justify-center py-12 gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-orange-500" />Loading...</div>
             ) : resources.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90">
-                <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                <p className="font-bold text-white">No resources posted yet</p>
-                <p className="text-xs mt-1 text-slate-400">Your mentor and admin will post guides and documents here</p>
+              <div className="text-center py-12 text-slate-600 font-medium rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5">
+                <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-20 text-orange-600" />
+                <p className="font-extrabold text-slate-900">No resources posted yet</p>
+                <p className="text-xs mt-1 text-slate-600">Your mentor and admin will post guides and documents here</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {resources.map((r: any) => {
                   const ri = RESOURCE_ICONS[r.type] || RESOURCE_ICONS.link;
                   return (
-                    <a key={r.id} href={r.url} target="_blank" rel="noopener noreferrer"
-                      className="block rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 hover:border-slate-700 transition-all hover:-translate-y-0.5 group shadow-xl backdrop-blur-xl">
+                    <a key={r.id} href={r.url} target="_blank" rel="noreferrer"
+                      className="block rounded-3xl border border-orange-200/80 bg-white/95 p-6 hover:border-orange-300 transition-all hover:-translate-y-0.5 group shadow-xl shadow-orange-950/5 backdrop-blur-xl">
                       <div className={`h-12 w-12 rounded-2xl border flex items-center justify-center mb-4 ${ri.color}`}>{ri.icon}</div>
-                      <h3 className="font-bold text-sm text-white group-hover:text-emerald-400 transition-colors">{r.title}</h3>
-                      {r.description && <p className="text-xs text-slate-400 mt-1.5 line-clamp-2">{r.description}</p>}
-                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-800">
-                        <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 capitalize">{r.type}</span>
-                        <ExternalLink className="h-3.5 w-3.5 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                      <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-orange-600 transition-colors">{r.title}</h3>
+                      {r.description && <p className="text-xs text-slate-600 font-medium mt-1.5 line-clamp-2">{r.description}</p>}
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-orange-200/60">
+                        <span className="text-[10px] uppercase tracking-wider font-black text-slate-600 capitalize">{r.type}</span>
+                        <ExternalLink className="h-3.5 w-3.5 text-slate-500 group-hover:text-orange-600 transition-colors" />
                       </div>
                     </a>
                   );
@@ -3494,18 +3494,18 @@ function InternDashboard() {
         {activeTab === "announcements" && (
           <div className="space-y-4">
             {announcementsQ.isLoading ? (
-              <div className="flex items-center justify-center py-12 gap-2 text-slate-400"><Loader2 className="h-5 w-5 animate-spin" />Loading...</div>
+              <div className="flex items-center justify-center py-12 gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-orange-500" />Loading...</div>
             ) : announcements.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90"><Bell className="h-10 w-10 mx-auto mb-3 opacity-20" />No announcements yet</div>
+              <div className="text-center py-12 text-slate-600 font-medium rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5"><Bell className="h-10 w-10 mx-auto mb-3 opacity-20 text-orange-600" />No announcements yet</div>
             ) : (
               announcements.map((a: any) => (
-                <div key={a.id} className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl p-6 space-y-3">
+                <div key={a.id} className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl p-6 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-bold text-white">{a.title}</h3>
-                      <div className="text-xs text-slate-400 mt-0.5">{new Date(a.created_at).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</div>
+                      <h3 className="font-extrabold text-slate-900">{a.title}</h3>
+                      <div className="text-xs text-slate-600 font-semibold mt-0.5">{new Date(a.created_at).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</div>
                     </div>
-                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/40 font-bold uppercase tracking-wide shrink-0">
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-900 border border-orange-300 font-black uppercase tracking-wide shrink-0">
                       {a.source === "news" ? "News" : a.target_role === "all" ? "Everyone" : a.target_role}
                     </span>
                   </div>
@@ -3518,18 +3518,18 @@ function InternDashboard() {
 
         {/* ─── NOTES ─── */}
         {activeTab === "notes" && (
-          <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl p-6 sm:p-8 space-y-6">
-            <h2 className="font-bold text-white flex items-center gap-2"><FileText className="h-5 w-5 text-emerald-400" />My Notes</h2>
+          <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl p-6 sm:p-8 space-y-6">
+            <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><FileText className="h-5 w-5 text-orange-600" />My Notes</h2>
             <div className="flex gap-2">
               <textarea 
-                className="flex-1 rounded-2xl border border-slate-700 bg-slate-900 p-3.5 text-sm text-slate-200 placeholder:text-slate-500 outline-none focus:border-emerald-500"
+                className="flex-1 rounded-2xl border border-orange-200 bg-white p-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
                 placeholder="Write a note..." 
                 value={newNote} 
                 onChange={(e) => setNewNote(e.target.value)}
                 rows={3}
               />
             </div>
-            <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-950/60 cursor-pointer" onClick={async () => {
+            <Button className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer" onClick={async () => {
               if (!newNote.trim()) return;
               try {
                 await doCreateNote({ data: { content: newNote } });
@@ -3543,14 +3543,14 @@ function InternDashboard() {
 
             <div className="mt-8 space-y-4">
               {notesQ.isLoading ? (
-                <div className="text-slate-400 text-sm">Loading notes...</div>
+                <div className="text-slate-600 font-medium text-sm">Loading notes...</div>
               ) : notes.length === 0 ? (
-                <div className="text-slate-500 text-sm">No notes yet.</div>
+                <div className="text-slate-500 font-medium text-sm">No notes yet.</div>
               ) : (
                 notes.map((note: any) => (
-                  <div key={note.id} className="p-4 rounded-2xl bg-[#131B2E]/90 border border-slate-800/80 flex justify-between gap-4">
-                    <p className="text-sm text-slate-200 whitespace-pre-wrap">{note.content}</p>
-                    <Button variant="ghost" size="sm" className="text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 shrink-0 cursor-pointer" onClick={async () => {
+                  <div key={note.id} className="p-4 rounded-2xl bg-orange-50/60 border border-orange-200/80 flex justify-between gap-4 shadow-xs">
+                    <p className="text-sm text-slate-900 font-medium whitespace-pre-wrap">{note.content}</p>
+                    <Button variant="ghost" size="sm" className="text-rose-600 hover:text-rose-700 hover:bg-rose-100 shrink-0 cursor-pointer font-bold" onClick={async () => {
                       try {
                         await doDeleteNote({ data: { noteId: note.id } });
                         toast.success("Note deleted");
@@ -3568,17 +3568,17 @@ function InternDashboard() {
 
         {/* ─── FEEDBACK ─── */}
         {activeTab === "feedback" && (
-          <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 shadow-xl backdrop-blur-xl p-6 sm:p-8 max-w-2xl mx-auto space-y-6">
-            <h2 className="font-bold text-white flex items-center gap-2"><Mail className="h-5 w-5 text-emerald-400" />Submit Feedback</h2>
-            <p className="text-xs text-slate-400">We value your thoughts! Let us know how we can improve your intern experience.</p>
+          <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl p-6 sm:p-8 max-w-2xl mx-auto space-y-6">
+            <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><Mail className="h-5 w-5 text-orange-600" />Submit Feedback</h2>
+            <p className="text-xs text-slate-600 font-medium">We value your thoughts! Let us know how we can improve your intern experience.</p>
             <textarea 
-              className="w-full rounded-2xl border border-slate-700 bg-slate-900 p-3.5 text-sm text-slate-200 placeholder:text-slate-500 outline-none focus:border-emerald-500"
+              className="w-full rounded-2xl border border-orange-200 bg-white p-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
               placeholder="Your feedback..." 
               value={feedback} 
               onChange={(e) => setFeedback(e.target.value)}
               rows={5}
             />
-            <Button className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-950/60 cursor-pointer" onClick={async () => {
+            <Button className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer" onClick={async () => {
               if (!feedback.trim()) return;
               try {
                 await doCreateFeedback({ data: { content: feedback } });
@@ -3596,11 +3596,11 @@ function InternDashboard() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Raise Leave Form */}
-              <div className="lg:col-span-1 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-7 shadow-xl backdrop-blur-xl h-fit">
-                <h2 className="font-bold text-white text-base flex items-center gap-2 mb-1.5">
-                  <CalendarDays className="h-5 w-5 text-indigo-400" /> Request Leave
+              <div className="lg:col-span-1 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl h-fit">
+                <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
+                  <CalendarDays className="h-5 w-5 text-orange-600" /> Request Leave
                 </h2>
-                <p className="text-xs text-slate-400 mb-4">Request authorization for upcoming absence. Please coordinate tasks first.</p>
+                <p className="text-xs text-slate-600 font-medium mb-4">Request authorization for upcoming absence. Please coordinate tasks first.</p>
                 
                 <form 
                   onSubmit={async (e) => {
@@ -3624,40 +3624,40 @@ function InternDashboard() {
                   className="space-y-4"
                 >
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400">Start Date</label>
+                    <label className="text-[11px] font-extrabold text-slate-700">Start Date</label>
                     <input 
                       type="date"
                       required
                       value={leaveForm.start_date}
                       onChange={(e) => setLeaveForm({ ...leaveForm, start_date: e.target.value })}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs text-slate-200 outline-none focus:border-indigo-500"
+                      className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 outline-none focus:border-orange-500 shadow-xs"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400">End Date</label>
+                    <label className="text-[11px] font-extrabold text-slate-700">End Date</label>
                     <input 
                       type="date"
                       required
                       value={leaveForm.end_date}
                       onChange={(e) => setLeaveForm({ ...leaveForm, end_date: e.target.value })}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs text-slate-200 outline-none focus:border-indigo-500"
+                      className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 outline-none focus:border-orange-500 shadow-xs"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400">Reason</label>
+                    <label className="text-[11px] font-extrabold text-slate-700">Reason</label>
                     <textarea 
                       required
                       rows={4}
                       placeholder="Explain reason for absence, emergency contact details..."
                       value={leaveForm.reason}
                       onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-indigo-500"
+                      className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
                     />
                   </div>
                   <Button 
                     type="submit"
                     disabled={isSubmittingLeave}
-                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-950/60 cursor-pointer"
+                    className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer"
                   >
                     {isSubmittingLeave ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Submit Request
@@ -3666,31 +3666,31 @@ function InternDashboard() {
               </div>
 
               {/* Leave History List */}
-              <div className="lg:col-span-2 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-7 shadow-xl backdrop-blur-xl overflow-hidden">
-                <h2 className="font-bold text-white text-base flex items-center gap-2 mb-4">
-                  <Clock className="h-5 w-5 text-indigo-400" /> Leave History Requests
+              <div className="lg:col-span-2 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl overflow-hidden">
+                <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-4">
+                  <Clock className="h-5 w-5 text-orange-600" /> Leave History Requests
                 </h2>
                 
-                <div className="divide-y divide-slate-800/80 max-h-[500px] overflow-y-auto">
+                <div className="divide-y divide-orange-200/60 max-h-[500px] overflow-y-auto">
                   {myLeaves.length === 0 ? (
-                    <div className="py-12 text-center text-slate-500 text-xs">No leave requests found.</div>
+                    <div className="py-12 text-center text-slate-500 text-xs font-medium">No leave requests found.</div>
                   ) : (
                     myLeaves.map((l: any) => (
                       <div key={l.id} className="py-4 first:pt-0 last:pb-0 flex items-start justify-between gap-4">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-xs text-white">
+                            <span className="font-black text-xs text-slate-900">
                               {new Date(l.start_date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })} — {new Date(l.end_date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
                             </span>
-                            <span className={`text-[9px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full border ${
-                              l.status === 'approved' ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40' :
-                              l.status === 'rejected' ? 'bg-rose-950/70 text-rose-300 border-rose-500/40' :
-                              'bg-amber-950/70 text-amber-300 border-amber-500/40'
+                            <span className={`text-[9px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-full border ${
+                              l.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
+                              l.status === 'rejected' ? 'bg-rose-100 text-rose-800 border-rose-300' :
+                              'bg-amber-100 text-amber-800 border-amber-300'
                             }`}>
                               {l.status}
                             </span>
                           </div>
-                          <p className="text-slate-300 text-xs leading-relaxed mt-1">{l.reason}</p>
+                          <p className="text-slate-700 text-xs font-medium leading-relaxed mt-1">{l.reason}</p>
                         </div>
                       </div>
                     ))
@@ -3706,11 +3706,11 @@ function InternDashboard() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Raise Support Ticket Form */}
-              <div className="lg:col-span-1 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-7 shadow-xl backdrop-blur-xl h-fit">
-                <h2 className="font-bold text-white text-base flex items-center gap-2 mb-1.5">
-                  <HelpCircle className="h-5 w-5 text-purple-400" /> Raise Support Query
+              <div className="lg:col-span-1 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl h-fit">
+                <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
+                  <HelpCircle className="h-5 w-5 text-orange-600" /> Raise Support Query
                 </h2>
-                <p className="text-xs text-slate-400 mb-4">Need help? Open a query and a mentor/supervisor will assist you.</p>
+                <p className="text-xs text-slate-600 font-medium mb-4">Need help? Open a query and a mentor/supervisor will assist you.</p>
                 
                 <form 
                   onSubmit={async (e) => {
@@ -3734,11 +3734,11 @@ function InternDashboard() {
                   className="space-y-4"
                 >
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400">Query Category</label>
+                    <label className="text-[11px] font-extrabold text-slate-700">Query Category</label>
                     <select 
                       value={supportForm.category}
                       onChange={(e) => setSupportForm({ ...supportForm, category: e.target.value })}
-                      className="w-full rounded-xl border border-slate-700 p-2.5 text-xs bg-slate-900 text-slate-200 outline-none focus:border-purple-500"
+                      className="w-full rounded-xl border border-orange-200 p-2.5 text-xs bg-white text-slate-900 outline-none focus:border-orange-500 shadow-xs"
                     >
                       <option value="Technical">Technical Issue</option>
                       <option value="LMS">LMS &amp; Skills</option>
@@ -3748,31 +3748,31 @@ function InternDashboard() {
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400">Subject</label>
+                    <label className="text-[11px] font-extrabold text-slate-700">Subject</label>
                     <input 
                       type="text"
                       required
                       placeholder="Short subject description..."
                       value={supportForm.subject}
                       onChange={(e) => setSupportForm({ ...supportForm, subject: e.target.value })}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-purple-500"
+                      className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400">Description</label>
+                    <label className="text-[11px] font-extrabold text-slate-700">Description</label>
                     <textarea 
                       required
                       rows={4}
                       placeholder="Provide detailed description of your issue..."
                       value={supportForm.description}
                       onChange={(e) => setSupportForm({ ...supportForm, description: e.target.value })}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-purple-500"
+                      className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
                     />
                   </div>
                   <Button 
                     type="submit"
                     disabled={isSubmittingSupport}
-                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-950/60 cursor-pointer"
+                    className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer"
                   >
                     {isSubmittingSupport ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Raise Ticket
@@ -3781,14 +3781,14 @@ function InternDashboard() {
               </div>
 
               {/* Support History & Meeting Sync */}
-              <div className="lg:col-span-2 rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-6 sm:p-7 shadow-xl backdrop-blur-xl overflow-hidden">
-                <h2 className="font-bold text-white text-base flex items-center gap-2 mb-4">
-                  <MessageCircle className="h-5 w-5 text-purple-400" /> Support Query Tickets
+              <div className="lg:col-span-2 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl overflow-hidden">
+                <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-4">
+                  <MessageCircle className="h-5 w-5 text-orange-600" /> Support Query Tickets
                 </h2>
                 
-                <div className="divide-y divide-slate-800/80 max-h-[550px] overflow-y-auto space-y-4">
+                <div className="divide-y divide-orange-200/60 max-h-[550px] overflow-y-auto space-y-4">
                   {supportQueries.length === 0 ? (
-                    <div className="py-12 text-center text-slate-500 text-xs">No support queries raised yet.</div>
+                    <div className="py-12 text-center text-slate-500 text-xs font-medium">No support queries raised yet.</div>
                   ) : (
                     supportQueries.map((q: any) => {
                       const hasMeeting = q.meeting_id && q.meeting_status === "approved";
@@ -3797,17 +3797,17 @@ function InternDashboard() {
                           <div className="flex items-start justify-between gap-4 flex-wrap">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-bold text-sm text-white">{q.subject}</span>
-                                <span className="text-[10px] bg-purple-950/80 text-purple-300 px-2.5 py-0.5 rounded-full font-bold border border-purple-500/40">{q.category}</span>
-                                <span className={`text-[9px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full border ${
-                                  q.status === 'resolved' ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40' :
-                                  q.status === 'assigned' ? 'bg-blue-950/70 text-blue-300 border-blue-500/40' :
-                                  'bg-amber-950/70 text-amber-300 border-amber-500/40'
+                                <span className="font-black text-sm text-slate-900">{q.subject}</span>
+                                <span className="text-[10px] bg-orange-100 text-orange-900 px-2.5 py-0.5 rounded-full font-black border border-orange-300">{q.category}</span>
+                                <span className={`text-[9px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-full border ${
+                                  q.status === 'resolved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
+                                  q.status === 'assigned' ? 'bg-orange-100 text-orange-800 border-orange-300' :
+                                  'bg-amber-100 text-amber-800 border-amber-300'
                                 }`}>
                                   {q.status.replace("_", " ")}
                                 </span>
                               </div>
-                              <p className="text-slate-300 text-xs leading-relaxed mt-1">{q.description}</p>
+                              <p className="text-slate-600 text-xs font-medium leading-relaxed mt-1">{q.description}</p>
                             </div>
                             <span className="text-[10px] text-slate-400 font-mono">{new Date(q.created_at).toLocaleDateString()}</span>
                           </div>
@@ -3911,40 +3911,40 @@ function InternDashboard() {
       
 {/* ── Task Execution Workspace Dialog ── */}
 {selectedTaskWorkspace && (
-  <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div className="bg-[#0E131F] rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto border border-slate-800/80 text-white">
-      <div className="flex items-start justify-between border-b border-slate-800/80 pb-4">
+  <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+    <div className="bg-white/95 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto border border-orange-200/80 text-slate-900">
+      <div className="flex items-start justify-between border-b border-orange-200/80 pb-4">
         <div>
-          <span className="text-[10px] font-mono font-bold uppercase bg-emerald-950 text-emerald-300 border border-emerald-500/40 px-2.5 py-0.5 rounded-full">Task Workspace</span>
-          <h2 className="text-lg font-bold text-white mt-1.5">{selectedTaskWorkspace.title}</h2>
+          <span className="text-[10px] font-mono font-black uppercase bg-orange-100 text-orange-900 border border-orange-300 px-2.5 py-0.5 rounded-full">Task Workspace</span>
+          <h2 className="text-lg font-black text-slate-900 mt-1.5">{selectedTaskWorkspace.title}</h2>
           {selectedTaskWorkspace.accepted_at && (
-            <p className="text-xs text-emerald-400 font-medium mt-1">✓ You accepted this task on {new Date(selectedTaskWorkspace.accepted_at).toLocaleString()}</p>
+            <p className="text-xs text-emerald-700 font-bold mt-1">✓ You accepted this task on {new Date(selectedTaskWorkspace.accepted_at).toLocaleString()}</p>
           )}
         </div>
-        <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-800 rounded-full cursor-pointer" onClick={() => setSelectedTaskWorkspace(null)}>✕</Button>
+        <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-900 hover:bg-orange-100 rounded-full cursor-pointer font-bold" onClick={() => setSelectedTaskWorkspace(null)}>✕</Button>
       </div>
 
       {/* Mentor Review Feedback if present */}
       {(selectedTaskWorkspace.admin_remarks || (selectedTaskWorkspace.progress_notes && selectedTaskWorkspace.status === "completed")) && (
-        <div className="p-4 bg-emerald-950/40 border border-emerald-500/40 rounded-2xl text-xs space-y-1">
-          <div className="flex items-center gap-1.5 font-bold text-emerald-300">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" /> Official Mentor Feedback &amp; Review
+        <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl text-xs space-y-1">
+          <div className="flex items-center gap-1.5 font-black text-emerald-900">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Official Mentor Feedback &amp; Review
           </div>
-          <p className="text-emerald-200 leading-relaxed whitespace-pre-wrap">{selectedTaskWorkspace.admin_remarks || selectedTaskWorkspace.progress_notes}</p>
+          <p className="text-emerald-950 leading-relaxed font-medium whitespace-pre-wrap">{selectedTaskWorkspace.admin_remarks || selectedTaskWorkspace.progress_notes}</p>
         </div>
       )}
 
       <div className="space-y-4 text-xs">
         <div>
-          <label className="font-semibold text-slate-300 mb-1.5 block">Task Description</label>
-          <p className="text-slate-300 bg-[#131B2E]/90 p-3.5 rounded-xl border border-slate-800/80 leading-relaxed">{selectedTaskWorkspace.description || "No description provided."}</p>
+          <label className="font-extrabold text-slate-700 mb-1.5 block">Task Description</label>
+          <p className="text-slate-800 font-medium bg-orange-50/60 p-3.5 rounded-xl border border-orange-200/80 leading-relaxed">{selectedTaskWorkspace.description || "No description provided."}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="font-semibold text-slate-300 mb-1.5 block">Task Status</label>
+            <label className="font-extrabold text-slate-700 mb-1.5 block">Task Status</label>
             <select 
-              className="w-full rounded-xl border border-slate-700 p-2.5 text-xs bg-slate-900 text-slate-200 outline-none focus:border-emerald-500" 
+              className="w-full rounded-xl border border-orange-200 p-2.5 text-xs bg-white text-slate-900 outline-none focus:border-orange-500 font-extrabold shadow-xs" 
               value={selectedTaskWorkspace.status || "in_progress"} 
               onChange={e => setSelectedTaskWorkspace({...selectedTaskWorkspace, status: e.target.value})}
             >
@@ -5070,44 +5070,44 @@ function InternDashboard() {
 
       {/* ─── URGENT ONSCREEN POPUP NOTIFICATION MODAL ─── */}
       {profile?.urgent_popup_active && isFeePaymentPending && (
-        <div className="fixed inset-0 z-[150] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#0E131F] rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl border-2 border-rose-500/50 animate-in fade-in zoom-in-95 duration-200 text-white">
+        <div className="fixed inset-0 z-[150] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl border-2 border-rose-300 animate-in fade-in zoom-in-95 duration-200 text-slate-900">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3.5">
-                <div className="p-3 bg-rose-950/80 border border-rose-500/40 rounded-2xl text-rose-400 shadow-md animate-bounce duration-1000">
+                <div className="p-3 bg-rose-100 border border-rose-300 rounded-2xl text-rose-600 shadow-xs animate-bounce duration-1000">
                   <AlertCircle className="h-6 w-6" />
                 </div>
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rose-600 text-white shadow-xs">
                     High Priority Notice
                   </span>
-                  <h3 className="font-extrabold text-white text-lg mt-1 leading-tight">
+                  <h3 className="font-extrabold text-slate-900 text-lg mt-1 leading-tight">
                     {profile?.urgent_popup_title || "Urgent: Exam Fee Payment Required"}
                   </h3>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-rose-950/30 border border-rose-500/30 rounded-2xl text-xs text-rose-200 leading-relaxed font-medium">
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-slate-800 leading-relaxed font-medium">
               {profile?.urgent_popup_message || "Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional."}
             </div>
 
             {/* Countdown timer in modal */}
-            <div className="p-4 bg-[#0A0D17] text-white rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-inner border border-slate-800">
+            <div className="p-4 bg-orange-50/70 text-slate-900 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs border border-orange-200">
               <div>
-                <span className="text-xs font-bold text-white block">Payment Due Deadline:</span>
-                <span className="text-[10px] text-slate-400">
+                <span className="text-xs font-black text-slate-900 block">Payment Due Deadline:</span>
+                <span className="text-[10px] text-slate-600 font-medium">
                   {formatDeadlineDisplay(profile?.fee_payment_deadline, "Immediate Action Required")}
                 </span>
               </div>
               <FeeCountdownTimer deadline={profile?.fee_payment_deadline} />
             </div>
 
-            <div className="p-3.5 bg-amber-950/30 border border-amber-500/30 rounded-2xl text-[11px] text-amber-300 leading-relaxed font-medium">
+            <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-2xl text-[11px] text-amber-900 leading-relaxed font-semibold">
               <strong>Dashboard Restriction:</strong> Deliverable submissions and final verified certification remain locked until payment is verified.
             </div>
 
-            <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-800/80">
+            <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-orange-200/80">
               <button 
                 type="button" 
                 disabled={isDismissingPopup}
@@ -5123,14 +5123,14 @@ function InternDashboard() {
                     setIsDismissingPopup(false);
                   }
                 }}
-                className="text-xs font-semibold text-slate-400 hover:text-white underline underline-offset-4 order-2 sm:order-1 cursor-pointer"
+                className="text-xs font-bold text-slate-600 hover:text-slate-900 underline underline-offset-4 order-2 sm:order-1 cursor-pointer"
               >
                 {isDismissingPopup ? "Acknowledging..." : "Acknowledge & Remind Me Later"}
               </button>
 
               <Button 
                 size="lg" 
-                className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-6 h-11 rounded-xl shadow-lg shadow-rose-950/60 w-full sm:w-auto order-1 sm:order-2 gap-2 cursor-pointer"
+                className="bg-rose-600 hover:bg-rose-700 text-white font-black px-6 h-11 rounded-xl shadow-md shadow-rose-500/20 w-full sm:w-auto order-1 sm:order-2 gap-2 cursor-pointer"
                 onClick={() => {
                   setShowPaymentModal(true);
                 }}
@@ -5144,14 +5144,14 @@ function InternDashboard() {
 
       {/* ─── REQUEST DOUBT SOLVING SESSION DIALOG ─── */}
       <Dialog open={doubtModalOpen} onOpenChange={setDoubtModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#0E131F] border border-slate-800/80 text-white rounded-3xl p-6 shadow-2xl">
+        <DialogContent className="sm:max-w-md bg-white border border-orange-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base font-bold text-white">
-              <HelpCircle className="h-5 w-5 text-amber-400" />
+            <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-900">
+              <HelpCircle className="h-5 w-5 text-orange-600" />
               Request Doubt Solving Session
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-400">
-              Schedule an expedited 1-on-1 or group live sync with your mentor for: <strong>"{doubtTaskTitle}"</strong>
+            <DialogDescription className="text-xs text-slate-600 font-medium">
+              Schedule an expedited 1-on-1 or group live sync with your mentor for: <strong className="text-slate-900">"{doubtTaskTitle}"</strong>
             </DialogDescription>
           </DialogHeader>
 
@@ -5187,34 +5187,34 @@ function InternDashboard() {
             className="space-y-3.5 py-2 text-xs"
           >
             <div className="space-y-1.5">
-              <label className="font-bold text-slate-300 block">Doubt / Technical Topic *</label>
+              <label className="font-extrabold text-slate-700 block">Doubt / Technical Topic *</label>
               <Input
                 required
                 placeholder="e.g. Supabase RLS policy syntax error on deliverables query"
                 value={doubtTopic}
                 onChange={(e) => setDoubtTopic(e.target.value)}
-                className="text-xs bg-slate-900 border-slate-700 text-slate-200 placeholder:text-slate-500 rounded-xl outline-none focus:border-amber-500"
+                className="text-xs bg-white border-orange-200 text-slate-900 placeholder:text-slate-400 rounded-xl outline-none focus:border-orange-500 shadow-xs"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="font-bold text-slate-300 block">Current Blockers &amp; Attempts</label>
+              <label className="font-extrabold text-slate-700 block">Current Blockers &amp; Attempts</label>
               <textarea
                 rows={2}
                 placeholder="What error are you seeing? What steps have you tried so far?"
                 value={doubtBlockers}
                 onChange={(e) => setDoubtBlockers(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-amber-500"
+                className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-300 block">Session Format</label>
+                <label className="font-extrabold text-slate-700 block">Session Format</label>
                 <select
                   value={doubtType}
                   onChange={(e) => setDoubtType(e.target.value as any)}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs font-semibold text-slate-200 outline-none focus:border-amber-500"
+                  className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-orange-500 shadow-xs"
                 >
                   <option value="one_on_one">1-on-1 Mentorship Sync</option>
                   <option value="group_sync">Group Team Sync</option>
@@ -5222,21 +5222,21 @@ function InternDashboard() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-300 block">Preferred Time Slot</label>
+                <label className="font-extrabold text-slate-700 block">Preferred Time Slot</label>
                 <Input
                   placeholder="e.g. Today 5:00 PM or Tomorrow Morning"
                   value={doubtSlot}
                   onChange={(e) => setDoubtSlot(e.target.value)}
-                  className="text-xs bg-slate-900 border-slate-700 text-slate-200 placeholder:text-slate-500 rounded-xl outline-none focus:border-amber-500"
+                  className="text-xs bg-white border-orange-200 text-slate-900 placeholder:text-slate-400 rounded-xl outline-none focus:border-orange-500 shadow-xs"
                 />
               </div>
             </div>
 
-            <div className="pt-3 flex justify-end gap-2.5 border-t border-slate-800/80">
-              <Button type="button" variant="ghost" size="sm" className="text-slate-400 hover:text-white cursor-pointer" onClick={() => setDoubtModalOpen(false)}>
+            <div className="pt-3 flex justify-end gap-2.5 border-t border-orange-200/80">
+              <Button type="button" variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 cursor-pointer font-bold" onClick={() => setDoubtModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmittingDoubt} size="sm" className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-1.5 rounded-xl shadow-md cursor-pointer">
+              <Button type="submit" disabled={isSubmittingDoubt} size="sm" className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black gap-1.5 rounded-xl shadow-md cursor-pointer">
                 {isSubmittingDoubt ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                 Dispatch Doubt Request
               </Button>
@@ -5247,14 +5247,14 @@ function InternDashboard() {
 
       {/* ─── REQUEST RESOURCES DIALOG ─── */}
       <Dialog open={resourceModalOpen} onOpenChange={setResourceModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#0E131F] border border-slate-800/80 text-white rounded-3xl p-6 shadow-2xl">
+        <DialogContent className="sm:max-w-md bg-white border border-orange-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base font-bold text-white">
-              <FolderOpen className="h-5 w-5 text-indigo-400" />
+            <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-900">
+              <FolderOpen className="h-5 w-5 text-orange-600" />
               Request Project Resources
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-400">
-              Request software credentials, API keys, Figma files, datasets, or documentation for <strong>"{resourceTaskTitle}"</strong>
+            <DialogDescription className="text-xs text-slate-600 font-medium">
+              Request software credentials, API keys, Figma files, datasets, or documentation for <strong className="text-slate-900">"{resourceTaskTitle}"</strong>
             </DialogDescription>
           </DialogHeader>
 
@@ -5290,11 +5290,11 @@ function InternDashboard() {
           >
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-300 block">Resource Type *</label>
+                <label className="font-extrabold text-slate-700 block">Resource Type *</label>
                 <select
                   value={resourceType}
                   onChange={(e) => setResourceType(e.target.value)}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs font-semibold text-slate-200 outline-none focus:border-indigo-500"
+                  className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-orange-500 shadow-xs"
                 >
                   <option value="API Credentials & Access Keys">API Keys / Secrets</option>
                   <option value="Cloud Sandbox Access (AWS/GCP/Azure)">Cloud Sandbox Access</option>
@@ -5307,11 +5307,11 @@ function InternDashboard() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-300 block">Urgency Level</label>
+                <label className="font-extrabold text-slate-700 block">Urgency Level</label>
                 <select
                   value={resourceUrgency}
                   onChange={(e) => setResourceUrgency(e.target.value as any)}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs font-semibold text-slate-200 outline-none focus:border-indigo-500"
+                  className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-orange-500 shadow-xs"
                 >
                   <option value="normal">Normal (Within 24h)</option>
                   <option value="urgent">Urgent (Blocked Milestone)</option>
@@ -5321,22 +5321,22 @@ function InternDashboard() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="font-bold text-slate-300 block">Detailed Requirements &amp; Justification *</label>
+              <label className="font-extrabold text-slate-700 block">Detailed Requirements &amp; Justification *</label>
               <textarea
                 required
                 rows={3}
                 placeholder="Specify exact repo name, API scope, service account email, or dataset file needed..."
                 value={resourceDetails}
                 onChange={(e) => setResourceDetails(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-indigo-500"
+                className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
               />
             </div>
 
-            <div className="pt-3 flex justify-end gap-2.5 border-t border-slate-800/80">
-              <Button type="button" variant="ghost" size="sm" className="text-slate-400 hover:text-white cursor-pointer" onClick={() => setResourceModalOpen(false)}>
+            <div className="pt-3 flex justify-end gap-2.5 border-t border-orange-200/80">
+              <Button type="button" variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 cursor-pointer font-bold" onClick={() => setResourceModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmittingResource} size="sm" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold gap-1.5 rounded-xl shadow-lg shadow-indigo-950/60 cursor-pointer">
+              <Button type="submit" disabled={isSubmittingResource} size="sm" className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black gap-1.5 rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer">
                 {isSubmittingResource ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                 Submit Resource Request
               </Button>
