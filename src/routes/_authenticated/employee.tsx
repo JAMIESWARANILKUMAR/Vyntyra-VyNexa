@@ -512,8 +512,33 @@ function EmployeeDashboard() {
     queryKey: ["my-interns", sessionQ.data?.user?.id],
     queryFn: async () => {
       if (!sessionQ.data?.user?.id) return [];
-      const { data } = await supabase.from('profiles').select('*').eq('mentor_id', sessionQ.data.user.id);
-      return data || [];
+      const { data: profs } = await supabase.from('profiles').select('*').eq('mentor_id', sessionQ.data.user.id);
+      if (!profs || profs.length === 0) return [];
+
+      const emails = profs.map((p: any) => p.email).filter(Boolean);
+      if (emails.length > 0) {
+        const { data: apps } = await supabase
+          .from('applications')
+          .select('email, domain, sub_domain, role_applied')
+          .in('email', emails);
+
+        const appMap = new Map((apps || []).map((a: any) => [a.email?.toLowerCase(), a]));
+
+        return profs.map((p: any) => {
+          const app = appMap.get(p.email?.toLowerCase()) || {};
+          const domain = app.domain || p.department || "Technology & Software";
+          const subDomain = app.sub_domain || app.role_applied || p.sub_domain || p.subdomain || p.position || "Full Stack Web Development";
+          return {
+            ...p,
+            department: domain,
+            domain,
+            sub_domain: subDomain,
+            subdomain: subDomain,
+          };
+        });
+      }
+
+      return profs;
     },
     enabled: !!sessionQ.data?.user?.id
   });
