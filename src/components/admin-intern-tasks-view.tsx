@@ -241,7 +241,14 @@ export function AdminInternTasksView() {
   const totalCount = activeAssignedTasks.length;
   const inProgressCount = activeAssignedTasks.filter((t) => t?.status === "in_progress").length;
   const submittedCount = activeAssignedTasks.filter((t) => t?.status === "submitted" || t?.deliverable_url).length;
-  const completedCount = activeAssignedTasks.filter((t) => t?.status === "completed").length;
+  const completedCount = activeAssignedTasks.filter((t) => 
+    t?.status === "completed" || 
+    t?.status === "verified" || 
+    t?.status === "approved" || 
+    t?.status === "done" || 
+    t?.status === "resolved" || 
+    t?.is_verified === true
+  ).length;
 
   const handleUpdateStatus = async (taskId: string, newStatus: any, remarks?: string) => {
     try {

@@ -334,20 +334,34 @@ export const listTasks = createServerFn({ method: "GET" })
       rawList = plain;
     }
 
+    const { data: myDeliverables } = await supabase
+      .from("deliverables")
+      .select("task_id")
+      .eq("user_id", context.userId);
+
+    const myDelivTaskIds = new Set((myDeliverables || []).map((d: any) => d.task_id).filter(Boolean));
+
     return (rawList || []).filter((t: any) => {
       if (role === 'admin' || role === 'super_admin') return true;
       
       // Unassigned pool tasks open for interns to claim in the Task Pool
       if (t.is_pool_task && !t.assigned_to) return true;
 
-      // Tasks assigned directly to this user
-      const isAssignedToMe = (t.assigned_to && t.assigned_to === context.userId) || (t.target_user_id && t.target_user_id === context.userId);
+      // Tasks assigned directly, claimed, created, team-assigned, or submitted deliverables by this user
+      const isAssignedToMe = Boolean(
+        (t.assigned_to && t.assigned_to === context.userId) || 
+        (t.target_user_id && t.target_user_id === context.userId) ||
+        (t.claimed_by && t.claimed_by === context.userId) ||
+        (t.user_id && t.user_id === context.userId) ||
+        (Array.isArray(t.team_members) && t.team_members.includes(context.userId)) ||
+        (Array.isArray(t.target_user_ids) && t.target_user_ids.includes(context.userId)) ||
+        myDelivTaskIds.has(t.id)
+      );
       if (isAssignedToMe) return true;
 
       // Tasks assigned to interns mentored by this user
       if (t.profiles?.mentor_id && t.profiles.mentor_id === context.userId) return true;
       
-      // All other tasks (stored bank, tasks for other interns) are hidden
       return false;
     });
   });

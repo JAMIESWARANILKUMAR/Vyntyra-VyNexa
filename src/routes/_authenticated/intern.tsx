@@ -60,6 +60,11 @@ const TASK_STATUS_STYLES: Record<string, { dot: string; badge: string; label: st
   submitted:    { dot: "bg-purple-400",  badge: "bg-purple-950/70 text-purple-300 border-purple-500/40 shadow-xs",  label: "Submitted (Under Review)" },
   under_review: { dot: "bg-indigo-400",  badge: "bg-indigo-950/70 text-indigo-300 border-indigo-500/40 shadow-xs",  label: "Under Mentor Review" },
   completed:    { dot: "bg-emerald-400", badge: "bg-emerald-950/70 text-emerald-300 border-emerald-500/40 shadow-xs", label: "Verified & Completed" },
+  verified:     { dot: "bg-emerald-400", badge: "bg-emerald-950/70 text-emerald-300 border-emerald-500/40 shadow-xs", label: "Verified & Completed" },
+  approved:     { dot: "bg-emerald-400", badge: "bg-emerald-950/70 text-emerald-300 border-emerald-500/40 shadow-xs", label: "Approved & Verified" },
+  done:         { dot: "bg-emerald-400", badge: "bg-emerald-950/70 text-emerald-300 border-emerald-500/40 shadow-xs", label: "Completed" },
+  resolved:     { dot: "bg-emerald-400", badge: "bg-emerald-950/70 text-emerald-300 border-emerald-500/40 shadow-xs", label: "Resolved & Verified" },
+  graded:       { dot: "bg-emerald-400", badge: "bg-emerald-950/70 text-emerald-300 border-emerald-500/40 shadow-xs", label: "Graded & Verified" },
   blocked:      { dot: "bg-rose-400",    badge: "bg-rose-950/70 text-rose-300 border-rose-500/40 shadow-xs",        label: "Revision Requested" },
   rejected:     { dot: "bg-red-400",     badge: "bg-red-950/70 text-red-300 border-red-500/40 shadow-xs",          label: "Changes Needed" },
 };
@@ -697,21 +702,6 @@ function InternDashboard() {
   }
 
   const currentUserId = session?.user?.id;
-  const poolTasks = tasks.filter((t: any) => t.is_pool_task === true && !t.assigned_to);
-  const myTasks = tasks.filter((t: any) => {
-    if (!t) return false;
-    if (t.is_pool_task === true && !t.assigned_to) return false; // Unclaimed pool tasks belong in Task Pool tab
-    return Boolean(currentUserId && (t.assigned_to === currentUserId || t.target_user_id === currentUserId));
-  });
-  const inProgressTasks = myTasks.filter((t: any) => t.status === "pending" || t.status === "in_progress" || t.status === "blocked");
-  const submittedTasks = myTasks.filter((t: any) => t.status === "submitted" || t.status === "under_review");
-  const completedTasks = myTasks.filter((t) => t.status === "completed");
-  const verifiedTasks = completedTasks;
-  const pendingTasks = inProgressTasks;
-  const earnedCredits = completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
-  const totalAssignedCredits = myTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
-  const totalPoints = earnedCredits; // for backwards compatibility
-  const progress = totalAssignedCredits > 0 ? Math.round((earnedCredits / totalAssignedCredits) * 100) : 0;
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -745,6 +735,40 @@ function InternDashboard() {
   const standups: any[] = standupsQ.data || [];
   const deliverables: any[] = deliverablesQ.data || [];
   const accessRequests: any[] = accessRequestsQ.data || [];
+
+  const myDeliverableTaskIds = (deliverables || []).map((d: any) => d.task_id).filter(Boolean);
+
+  const poolTasks = tasks.filter((t: any) => t.is_pool_task === true && !t.assigned_to);
+  const myTasks = tasks.filter((t: any) => {
+    if (!t) return false;
+    if (t.is_pool_task === true && !t.assigned_to) return false; // Unclaimed pool tasks belong in Task Pool tab
+    return Boolean(currentUserId && (
+      t.assigned_to === currentUserId || 
+      t.target_user_id === currentUserId ||
+      t.user_id === currentUserId ||
+      t.claimed_by === currentUserId ||
+      (Array.isArray(t.team_members) && t.team_members.includes(currentUserId)) ||
+      (Array.isArray(t.target_user_ids) && t.target_user_ids.includes(currentUserId)) ||
+      myDeliverableTaskIds.includes(t.id)
+    ));
+  });
+  const inProgressTasks = myTasks.filter((t: any) => t.status === "pending" || t.status === "in_progress" || t.status === "blocked" || t.status === "rejected");
+  const submittedTasks = myTasks.filter((t: any) => t.status === "submitted" || t.status === "under_review");
+  const completedTasks = myTasks.filter((t: any) => 
+    t.status === "completed" || 
+    t.status === "verified" || 
+    t.status === "approved" || 
+    t.status === "done" || 
+    t.status === "resolved" ||
+    t.status === "graded" ||
+    t.is_verified === true
+  );
+  const verifiedTasks = completedTasks;
+  const pendingTasks = inProgressTasks;
+  const earnedCredits = completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
+  const totalAssignedCredits = myTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
+  const totalPoints = earnedCredits; // for backwards compatibility
+  const progress = totalAssignedCredits > 0 ? Math.round((earnedCredits / totalAssignedCredits) * 100) : 0;
 
   const fetchDashboardSettings = useServerFn(getDashboardSettings);
   const dashboardSettingsQ = useQuery({ queryKey: ["dashboard-settings"], queryFn: () => fetchDashboardSettings() });
