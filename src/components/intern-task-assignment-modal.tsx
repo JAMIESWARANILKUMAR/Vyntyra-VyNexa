@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { bulkAssignTasksFromCsv, assignManualTaskToInterns, listTaskTemplates, listTeamMembers } from "@/lib/operations.functions";
+import { bulkAssignTasksFromCsv, assignManualTaskToInterns, listTaskTemplates, listActiveInternsForCohortAssignment } from "@/lib/operations.functions";
 import { parseDocumentAndAssignTasks } from "@/lib/ai-tasks.functions";
 import { sendTaskNotificationEmail } from "@/lib/notifications-omni.functions";
 import { Upload, FileSpreadsheet, Plus, CheckCircle2, Loader2, Sparkles, Link2, Users, FileText, BookTemplate, Mail } from "lucide-react";
@@ -29,24 +29,21 @@ interface ParsedTask {
 
 export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"csv" | "manual" | "ai">("csv");
+  const [activeTab, setActiveTab] = useState<"csv" | "manual" | "ai">("manual");
 
   // Server functions
   const doBulkAssign = useServerFn(bulkAssignTasksFromCsv);
   const doManualAssign = useServerFn(assignManualTaskToInterns);
   const doAiAssign = useServerFn(parseDocumentAndAssignTasks);
   const fetchTaskTemplates = useServerFn(listTaskTemplates);
-  const fetchTeamMembers = useServerFn(listTeamMembers);
+  const fetchActiveInterns = useServerFn(listActiveInternsForCohortAssignment);
   const doSendTaskEmail = useServerFn(sendTaskNotificationEmail);
   const [notifyViaEmail, setNotifyViaEmail] = useState(true);
 
   // Fetch active interns list for manual selection
   const internsQ = useQuery({
     queryKey: ["active-interns-for-tasks"],
-    queryFn: async () => {
-      const members = await fetchTeamMembers();
-      return members.filter((m: any) => m.role === "intern" || (m.department || "").toLowerCase().includes("intern") || (m.position || "").toLowerCase().includes("intern"));
-    },
+    queryFn: () => fetchActiveInterns(),
     enabled: open,
   });
 
@@ -207,7 +204,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   const handleToggleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
     if (checked) {
-      setSelectedInternIds([]);
+      setSelectedInternIds(interns.map((i: any) => i.id));
     } else {
       setSelectedInternIds([]);
     }
@@ -240,14 +237,14 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
     }
 
     let targetIds: string[] = [];
-    if (assignmentMode === "all" && selectAll) {
-      targetIds = interns.map((i) => i.id);
+    if (assignmentMode === "all") {
+      targetIds = selectedInternIds.length > 0 ? selectedInternIds : interns.map((i) => i.id);
     } else if (assignmentMode === "team") {
-      if (selectedInternIds.length < 2) {
-        toast.error(`Please select at least 2 team members for collaborative team assignment (Target: ${teamSize} members).`);
+      if (selectedInternIds.length === 0) {
+        toast.error("Please select interns for this collaborative team assignment.");
         return;
       }
-      targetIds = selectedInternIds.slice(0, teamSize);
+      targetIds = selectedInternIds;
     } else if (assignmentMode === "individual") {
       if (selectedInternIds.length === 0) {
         toast.error("Please select an intern to assign this task to.");

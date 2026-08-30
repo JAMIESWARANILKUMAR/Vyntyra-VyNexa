@@ -486,7 +486,7 @@ export function AdminInternTasksView() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-full overflow-x-hidden space-y-6">
       {/* ── Top View Navigation Tabs ── */}
       <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl w-fit border shadow-xs">
         <button
@@ -523,45 +523,49 @@ export function AdminInternTasksView() {
       </div>
 
       {activeViewTab === "active" && (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full max-w-full">
           {/* Header Banner & Stat Cards */}
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white dark:bg-slate-950 p-6 rounded-2xl border shadow-sm">
-            <div>
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white dark:bg-slate-950 p-5 sm:p-6 rounded-2xl border shadow-sm">
+            <div className="min-w-0 flex-1">
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <ClipboardList className="h-6 w-6 text-indigo-600" /> Active Intern Tasks &amp; Progress Tracker
+                <ClipboardList className="h-6 w-6 text-indigo-600 shrink-0" /> Active Intern Tasks &amp; Progress Tracker
               </h2>
               <p className="text-xs text-slate-500 mt-1">
-                Monitor and verify live intern milestone submissions. Move completed or reusable tasks to the Stored Bank for future cohorts anytime.
+                Monitor and verify live intern milestone submissions. Move completed or reusable tasks directly to the Stored Bank for future cohorts with 1 click.
               </p>
             </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <Button
-            onClick={() => {
-              setRolloverModalOpen(true);
-              setRolloverStep(1);
-              const verifiedIds = tasks.filter(t => t.status === 'completed' || t.is_verified || t.status === 'submitted').map(t => t.id);
-              setSelectedVerifiedTaskIds(verifiedIds.length > 0 ? verifiedIds : tasks.slice(0, 5).map(t => t.id));
-            }}
-            className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-md gap-2"
-          >
-            <RotateCcw className="h-4 w-4" /> Move Verified Tasks for Next Cohort
-          </Button>
-          <Button
-            onClick={() => setClearAllModalOpen(true)}
-            variant="destructive"
-            className="font-semibold shadow-md shrink-0"
-          >
-            <Trash2 className="h-4 w-4 mr-2" /> Clear All Tasks
-          </Button>
-          <Button
-            onClick={() => setAssignModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md shrink-0"
-          >
-            <Plus className="h-4 w-4 mr-2" /> Assign Tasks (CSV / Manual)
-          </Button>
-        </div>
-      </div>
+            <div className="flex flex-wrap items-center gap-2 shrink-0 w-full lg:w-auto">
+              <Button
+                onClick={async () => {
+                  const completedIds = activeAssignedTasks
+                    .filter(t => t.status === 'completed' || t.is_verified)
+                    .map(t => t.id);
+                  if (completedIds.length === 0) {
+                    return toast.info("No completed tasks found in active list to move. You can also select specific tasks and click 'Move to Stored Bank'.");
+                  }
+                  await handleMoveToStoredBank(completedIds);
+                }}
+                className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-md gap-2 cursor-pointer text-xs h-9"
+                title="Immediately moves all completed tasks to the Stored Task Bank for future cohorts without needing to assign them first"
+              >
+                <FolderArchive className="h-4 w-4" /> Move Completed Tasks to Stored Bank (For Future)
+              </Button>
+              <Button
+                onClick={() => setClearAllModalOpen(true)}
+                variant="destructive"
+                className="font-semibold shadow-md shrink-0 text-xs h-9 cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4 mr-1.5" /> Clear All Tasks
+              </Button>
+              <Button
+                onClick={() => setAssignModalOpen(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md shrink-0 text-xs h-9 cursor-pointer"
+              >
+                <Plus className="h-4 w-4 mr-1.5" /> Assign Tasks (CSV / Manual)
+              </Button>
+            </div>
+          </div>
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -678,192 +682,163 @@ export function AdminInternTasksView() {
               const internName = internProfile?.full_name || internProfile?.email || "Assigned Intern";
               const taskFile = t.project_requirements || t.task_file_url;
               const submissionFile = t.deliverable_url;
-
               return (
-                <div key={t.id} className="p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                  {/* Bulk Checkbox */}
-                  <div className="mt-1">
-                    <Checkbox 
-                      checked={selectedTaskIds.includes(t.id)} 
-                      onCheckedChange={(checked) => handleToggleSelect(t.id, checked as boolean)}
-                    />
-                  </div>
-
-                  {/* Intern & Task Info */}
-                  <div className="space-y-1.5 flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{t.title}</span>
-
-                      {/* Status Badge */}
-                      {t.status === "completed" && (
-                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px]">
-                          <CheckCircle2 className="h-3 w-3 mr-1" /> Completed
-                        </Badge>
-                      )}
-                      {(t.status === "submitted" || submissionFile) && t.status !== "completed" && (
-                        <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200 text-[10px]">
-                          <Sparkles className="h-3 w-3 mr-1" /> Submitted
-                        </Badge>
-                      )}
-                      {t.status === "in_progress" && (
-                        <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px]">
-                          <Clock className="h-3 w-3 mr-1" /> In Progress
-                        </Badge>
-                      )}
-                      {t.status === "pending" && (
-                        <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-[10px]">
-                          Pending Start
-                        </Badge>
-                      )}
-
-                      <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-600">
-                        Priority: {t.priority || "medium"}
-                      </Badge>
-
-                      <Badge variant="outline" className="text-[10px] uppercase font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
-                        Level: {t.level || "Beginner"}
-                      </Badge>
-
-                      <Badge variant="outline" className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 border-amber-200 flex items-center gap-0.5">
-                        <CreditCard className="h-3 w-3 text-amber-600" /> {t.credits || 10} Credits
-                      </Badge>
-
-                      {(t.team_name || t.team_id || t.assignment_mode === "team") && (
-                        <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[10px] flex items-center gap-1">
-                          <Users className="h-3 w-3 text-purple-700" /> {t.team_name || `Collaborative Team (${t.team_size || 2})`}
-                        </Badge>
-                      )}
+                <div key={t.id} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0">
+                  {/* Left: Bulk Checkbox & Intern & Task Info */}
+                  <div className="flex items-start gap-3 flex-1 min-w-0 w-full">
+                    <div className="mt-1 shrink-0">
+                      <Checkbox 
+                        checked={selectedTaskIds.includes(t.id)} 
+                        onCheckedChange={(checked) => handleToggleSelect(t.id, checked as boolean)}
+                      />
                     </div>
 
-                    <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">{t.description}</p>
+                    {/* Intern & Task Info */}
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-sm text-slate-900 dark:text-slate-100 break-words">{t.title}</span>
 
-                    <div className="flex items-center gap-4 text-[11px] text-slate-500 flex-wrap pt-1">
-                      <span className="flex items-center gap-1 font-semibold text-slate-800 dark:text-slate-200">
-                        <User className="h-3.5 w-3.5 text-indigo-500" /> {internName} {internProfile?.intern_id ? `(${internProfile.intern_id})` : ""}
-                      </span>
+                        {/* Status Badge */}
+                        {t.status === "completed" && (
+                          <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px]">
+                            <CheckCircle2 className="h-3 w-3 mr-1" /> Completed
+                          </Badge>
+                        )}
+                        {(t.status === "submitted" || submissionFile) && t.status !== "completed" && (
+                          <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200 text-[10px]">
+                            <Sparkles className="h-3 w-3 mr-1" /> Submitted
+                          </Badge>
+                        )}
+                        {t.status === "in_progress" && (
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px]">
+                            <Clock className="h-3 w-3 mr-1" /> In Progress
+                          </Badge>
+                        )}
+                        {t.status === "pending" && (
+                          <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-[10px]">
+                            Pending Start
+                          </Badge>
+                        )}
 
-                      {t.due_date && (
-                        <span>Deadline: <strong className="text-slate-700 dark:text-slate-300">{t.due_date}</strong></span>
-                      )}
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-600">
+                          Priority: {t.priority || "medium"}
+                        </Badge>
 
-                      {taskFile && (
-                        <a
-                          href={taskFile}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium"
-                        >
-                          <FileText className="h-3.5 w-3.5" /> View Task File
-                        </a>
-                      )}
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
+                          Level: {t.level || "Beginner"}
+                        </Badge>
 
-                      {t.task_meet_link && (
-                        <a
-                          href={t.task_meet_link}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-700 hover:underline inline-flex items-center gap-1 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200"
-                        >
-                          <Video className="h-3.5 w-3.5 text-blue-600" /> Task Meet Link
-                        </a>
-                      )}
-                    </div>
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 border-amber-200 flex items-center gap-0.5">
+                          <CreditCard className="h-3 w-3 text-amber-600" /> {t.credits || 10} Credits
+                        </Badge>
 
-                    {/* Intern Submission Info */}
-                    {submissionFile && (
-                      <div className="mt-2 p-2.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 text-xs space-y-1">
-                        <div className="font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-1">
-                          <Sparkles className="h-3.5 w-3.5" /> Intern Deliverable Submitted:
-                        </div>
-                        <a
-                          href={submissionFile}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-indigo-700 dark:text-indigo-400 underline font-medium truncate block"
-                        >
-                          {submissionFile}
-                        </a>
-                        {t.progress_notes && (
-                          <div className="text-slate-600 dark:text-slate-300 text-[11px] italic">
-                            &ldquo;{t.progress_notes}&rdquo;
-                          </div>
+                        {(t.team_name || t.team_id || t.assignment_mode === "team") && (
+                          <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[10px] flex items-center gap-1">
+                            <Users className="h-3 w-3 text-purple-700" /> {t.team_name || `Collaborative Team (${t.team_size || 2})`}
+                          </Badge>
                         )}
                       </div>
-                    )}
 
-                    {/* Mentor Verification Report */}
-                    {(t.mentor_verification_status === "mentor_verified" || t.mentor_report) && (
-                      <div className="mt-2 p-3 rounded-xl bg-purple-50/90 dark:bg-purple-950/40 border border-purple-200 text-xs space-y-1.5 shadow-2xs">
-                        <div className="flex items-center justify-between flex-wrap gap-2">
-                          <span className="font-bold text-purple-950 dark:text-purple-300 flex items-center gap-1.5">
-                            <Award className="h-4 w-4 text-purple-600" />
-                            Mentor Verified by {t.mentor_name || "Assigned Mentor"}:
-                          </span>
-                          <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-[10px] font-bold">
-                            ⭐ Score: {t.mentor_rating || 5}/5 &middot; Recommended: +{t.mentor_recommended_credits || t.credits || 10} Credits
-                          </Badge>
-                        </div>
-                        <p className="text-slate-700 dark:text-slate-300 text-[11px] leading-relaxed italic">
-                          "{t.mentor_report || t.progress_notes}"
-                        </p>
-                      </div>
-                    )}
+                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 break-words">{t.description}</p>
 
-                    {/* Deadline Extension Review block */}
-                    {t.extension_status === "requested" && (
-                      <div className="mt-2 p-3 rounded-lg bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200 text-xs space-y-1.5">
-                        <div className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5 text-amber-700" /> Intern Requested Deadline Extension:
-                        </div>
-                        <div className="text-slate-700 dark:text-slate-200">
-                          <strong>Reason:</strong> "{t.extension_reason || 'No explanation provided.'}"
-                        </div>
-                        <div className="text-slate-500 text-[11px]">
-                          <strong>Requested New Date:</strong> {t.extension_requested_date ? new Date(t.extension_requested_date).toLocaleDateString() : ""}
-                        </div>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <Button 
-                            size="sm"
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-6 px-2 text-[10px]"
-                            onClick={async () => {
-                              try {
-                                await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'approved' } });
-                                toast.success("Deadline extension approved!");
-                                qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
-                              } catch (e) {
-                                toast.error("Failed to approve extension");
-                              }
-                            }}
+                      <div className="flex items-center gap-3 sm:gap-4 text-[11px] text-slate-500 flex-wrap pt-1">
+                        <span className="flex items-center gap-1 font-semibold text-slate-800 dark:text-slate-200">
+                          <User className="h-3.5 w-3.5 text-indigo-500 shrink-0" /> {internName} {internProfile?.intern_id ? `(${internProfile.intern_id})` : ""}
+                        </span>
+
+                        {t.due_date && (
+                          <span>Deadline: <strong className="text-slate-700 dark:text-slate-300">{t.due_date}</strong></span>
+                        )}
+
+                        {taskFile && (
+                          <a
+                            href={taskFile}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium"
                           >
-                            Approve
-                          </Button>
-                          <Button 
-                            size="sm"
-                            variant="outline"
-                            className="border-slate-300 text-rose-600 hover:bg-rose-50 font-bold h-6 px-2 text-[10px]"
-                            onClick={async () => {
-                              try {
-                                await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'rejected' } });
-                                toast.success("Deadline extension rejected!");
-                                qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
-                              } catch (e) {
-                                toast.error("Failed to reject extension");
-                              }
-                            }}
+                            <FileText className="h-3.5 w-3.5" /> View Task File
+                          </a>
+                        )}
+
+                        {t.task_meet_link && (
+                          <a
+                            href={t.task_meet_link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-700 hover:underline inline-flex items-center gap-1 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200"
                           >
-                            Reject
-                          </Button>
-                        </div>
+                            <Video className="h-3.5 w-3.5 text-blue-600" /> Meet Link
+                          </a>
+                        )}
                       </div>
-                    )}
+
+                      {/* Mentor Feedback / Progress notes */}
+                      {(t.mentor_report || t.progress_notes) && (
+                        <div className="mt-2 p-2.5 rounded-lg bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 text-xs">
+                          <span className="font-semibold text-indigo-900 dark:text-indigo-300">Admin/Mentor Notes:</span>{" "}
+                          <p className="text-slate-600 dark:text-slate-300 italic inline">
+                            "{t.mentor_report || t.progress_notes}"
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Deadline Extension Review block */}
+                      {t.extension_status === "requested" && (
+                        <div className="mt-2 p-3 rounded-lg bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200 text-xs space-y-1.5">
+                          <div className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5 text-amber-700" /> Intern Requested Deadline Extension:
+                          </div>
+                          <div className="text-slate-700 dark:text-slate-200">
+                            <strong>Reason:</strong> "{t.extension_reason || 'No explanation provided.'}"
+                          </div>
+                          <div className="text-slate-500 text-[11px]">
+                            <strong>Requested New Date:</strong> {t.extension_requested_date ? new Date(t.extension_requested_date).toLocaleDateString() : ""}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <Button 
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-6 px-2 text-[10px]"
+                              onClick={async () => {
+                                try {
+                                  await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'approved' } });
+                                  toast.success("Deadline extension approved!");
+                                  qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                                } catch (e) {
+                                  toast.error("Failed to approve extension");
+                                }
+                              }}
+                            >
+                              Approve
+                            </Button>
+                            <Button 
+                              size="sm"
+                              variant="outline"
+                              className="border-slate-300 text-rose-600 hover:bg-rose-50 font-bold h-6 px-2 text-[10px]"
+                              onClick={async () => {
+                                try {
+                                  await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'rejected' } });
+                                  toast.success("Deadline extension rejected!");
+                                  qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                                } catch (e) {
+                                  toast.error("Failed to reject extension");
+                                }
+                              }}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Admin Quick Actions */}
-                  <div className="flex items-center gap-2 shrink-0 self-end md:self-center flex-wrap">
+                  <div className="flex items-center gap-1.5 flex-wrap w-full xl:w-auto xl:shrink-0 justify-start xl:justify-end pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-100 dark:border-slate-800">
                     {t.mentor_verification_status === "mentor_verified" && t.status !== "completed" ? (
                       <Button
                         size="sm"
-                        className="h-8 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white gap-1 shadow-xs"
+                        className="h-8 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white gap-1 shadow-xs cursor-pointer"
                         onClick={async () => {
                           try {
                             const pts = t.mentor_recommended_credits || t.credits || 10;
@@ -875,45 +850,45 @@ export function AdminInternTasksView() {
                           }
                         }}
                       >
-                        <Award className="h-3.5 w-3.5 text-amber-300" /> Approve &amp; Award +{t.mentor_recommended_credits || t.credits || 10} Credits
+                        <Award className="h-3.5 w-3.5 text-amber-300" /> Approve &amp; Award +{t.mentor_recommended_credits || t.credits || 10}
                       </Button>
                     ) : (
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-8 text-xs bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                        className="h-8 text-xs font-bold bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 cursor-pointer"
                         onClick={() => handleUpdateStatus(t.id, "completed")}
                       >
-                        <Check className="h-3.5 w-3.5 mr-1" /> Approve / Complete
+                        <Check className="h-3.5 w-3.5 mr-1" /> Approve
                       </Button>
                     )}
 
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs text-amber-700 border-amber-200 hover:bg-amber-50"
+                      className="h-8 text-xs text-amber-700 border-amber-200 hover:bg-amber-50 cursor-pointer"
                       onClick={() => {
                         setSelectedTaskForReview(t);
                         setAdminRemarks(t.progress_notes || "");
                       }}
                     >
-                      <RotateCcw className="h-3.5 w-3.5 mr-1" /> Review / Feedback
+                      <RotateCcw className="h-3.5 w-3.5 mr-1" /> Review
                     </Button>
 
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs font-bold text-blue-700 bg-blue-50/70 border-blue-200 hover:bg-blue-100 gap-1.5 shadow-2xs"
+                      className="h-8 text-xs font-bold text-blue-700 bg-blue-50/70 border-blue-200 hover:bg-blue-100 gap-1.5 shadow-2xs cursor-pointer"
                       onClick={() => openTaskEmailModal(t)}
                       title="Send tailored Task Status email to this intern"
                     >
-                      <Mail className="h-3.5 w-3.5" /> Email Status
+                      <Mail className="h-3.5 w-3.5" /> Email
                     </Button>
 
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs font-bold text-teal-700 bg-teal-50/70 border-teal-200 hover:bg-teal-100 gap-1.5 shadow-2xs"
+                      className="h-8 text-xs font-bold text-teal-700 bg-teal-50/70 border-teal-200 hover:bg-teal-100 gap-1.5 shadow-2xs cursor-pointer"
                       onClick={() => openTaskEmailModal(t)}
                       title="Open formatted WhatsApp task status"
                     >
@@ -1113,22 +1088,23 @@ export function AdminInternTasksView() {
               filteredStoredTasks.map((t) => {
                 const isSelected = selectedStoredTaskIds.includes(t.id);
                 return (
-                  <div key={t.id} className="p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedStoredTaskIds(prev => [...prev, t.id]);
-                          } else {
-                            setSelectedStoredTaskIds(prev => prev.filter(id => id !== t.id));
-                          }
-                        }}
-                        className="mt-1"
-                      />
+                  <div key={t.id} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0">
+                    <div className="flex items-start gap-3 flex-1 min-w-0 w-full">
+                      <div className="mt-1 shrink-0">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedStoredTaskIds(prev => [...prev, t.id]);
+                            } else {
+                              setSelectedStoredTaskIds(prev => prev.filter(id => id !== t.id));
+                            }
+                          }}
+                        />
+                      </div>
                       <div className="space-y-1.5 flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{t.title}</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-sm text-slate-900 dark:text-slate-100 break-words">{t.title}</span>
                           <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] flex items-center gap-1 font-bold">
                             <FolderArchive className="h-3 w-3 text-emerald-700" /> Stored in Repository
                           </Badge>
@@ -1145,9 +1121,9 @@ export function AdminInternTasksView() {
                           )}
                         </div>
 
-                        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">{t.description || "No description."}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 break-words">{t.description || "No description."}</p>
 
-                        <div className="flex items-center gap-4 text-[11px] text-slate-400 flex-wrap pt-1">
+                        <div className="flex items-center gap-3 sm:gap-4 text-[11px] text-slate-400 flex-wrap pt-1">
                           <span>Created: {new Date(t.created_at).toLocaleDateString()}</span>
                           {t.task_file_url && (
                             <a href={t.task_file_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium">
@@ -1163,7 +1139,7 @@ export function AdminInternTasksView() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                    <div className="flex items-center gap-2 w-full xl:w-auto xl:shrink-0 justify-start xl:justify-end pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-100 dark:border-slate-800">
                       <Button
                         size="sm"
                         onClick={() => {

@@ -523,13 +523,16 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
     target_intern_ids: z.array(z.string()).optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
-    // 1. Fetch active intern profiles with department and position
-    const { data: profiles } = await supabase
+    const admin = getAdminClient();
+    let activeInterns: any[] = [];
+
+    // 1. Fetch active intern profiles with admin client
+    const { data: profiles } = await admin
       .from("profiles")
-      .select("id, role, department, position")
-      .or("role.eq.intern,department.ilike.%intern%,position.ilike.%intern%");
+      .select("id, role, department, position, full_name, email")
+      .or("role.eq.intern,intern_id.not.is.null,department.ilike.%intern%,position.ilike.%intern%");
     
-    let activeInterns = profiles || [];
+    activeInterns = profiles || [];
     
     // If selected specific intern IDs, filter to those
     if (data.target_intern_ids && data.target_intern_ids.length > 0) {
@@ -537,14 +540,9 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
     }
 
     if (!activeInterns.length) {
-      // Fallback to user roles
-      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "intern");
-      const roleUserIds = (roles || []).map((r: any) => r.user_id);
-      
-      const { data: fallbackProfiles } = await supabase
+      const { data: fallbackProfiles } = await admin
         .from("profiles")
-        .select("id, department, position")
-        .in("id", roleUserIds);
+        .select("id, department, position, full_name, email");
       activeInterns = fallbackProfiles || [];
     }
 
@@ -579,33 +577,23 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
       return dept.includes(target) || pos.includes(target);
     };
 
-    // Fetch existing tasks to prevent duplicates
-    const { data: existingTasks } = await supabase
-      .from("tasks")
-      .select("assigned_to, title");
-    const existingSet = new Set((existingTasks || []).map((t: any) => `${t.assigned_to}-${(t.title || "").trim().toLowerCase()}`));
-
-    // Distribute tasks to matching interns (1 per intern max)
+    // Distribute tasks to matching interns
     const assignedInternIds = new Set<string>();
     for (const taskItem of data.tasks) {
       const targetInterns = activeInterns.filter((profile: any) => matchInternDomain(profile, taskItem.domain));
-      const internsToAssign = targetInterns.length > 0 ? targetInterns : activeInterns; // Fallback to all if no domain match
+      const internsToAssign = targetInterns.length > 0 ? targetInterns : activeInterns;
       
       const unassignedInterns = internsToAssign.filter((i: any) => !assignedInternIds.has(i.id));
-      if (unassignedInterns.length === 0) {
-        continue; // Drop extra tasks if all matching interns already got one!
-      }
+      const intern = unassignedInterns.length > 0 ? unassignedInterns[0] : internsToAssign[0];
+      if (!intern) continue;
 
-      const intern = unassignedInterns[0];
       assignedInternIds.add(intern.id);
-
-      const fingerprint = `${intern.id}-${(taskItem.title || "").trim().toLowerCase()}`;
-      if (existingSet.has(fingerprint)) continue; // Skip duplicates
 
       taskPayloads.push({
         title: taskItem.title,
         description: taskItem.description || "Assigned Internship Project Task",
         project_requirements: taskItem.task_file_url || null,
+        task_file_url: taskItem.task_file_url || null,
         task_doc_url: taskItem.task_doc_url || null,
         report_template_url: taskItem.report_template_url || null,
         deliverable_url: null,
@@ -623,17 +611,17 @@ export const bulkAssignTasksFromCsv = createServerFn({ method: "POST" })
     }
 
     if (taskPayloads.length === 0) {
-      return { success: true, assignedCount: 0, internCount: activeInterns.length, skippedDuplicates: true };
+      return { success: true, assignedCount: 0, internCount: activeInterns.length };
     }
 
-    const { error } = await supabase.from("tasks").insert(taskPayloads);
+    const { error } = await admin.from("tasks").insert(taskPayloads);
     if (error) {
       const fallbackPayloads = taskPayloads.map(t => {
         const copy: any = { ...t };
         delete copy.target_user_id;
         return copy;
       });
-      const { error: err2 } = await supabase.from("tasks").insert(fallbackPayloads);
+      const { error: err2 } = await admin.from("tasks").insert(fallbackPayloads);
       if (err2) throw new Error(err2.message);
     }
 
@@ -652,7 +640,7 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
     task_file_url: z.string().optional(),
     task_doc_url: z.string().optional(),
     task_meet_link: z.string().optional(),
-    assignment_mode: z.enum(["individual", "team", "pool"]).optional().default("individual"),
+    assignment_mode: z.enum(["individual", "team", "pool", "all"]).optional().default("individual"),
     team_name: z.string().optional(),
     team_size: z.number().optional(),
     team_member_names: z.array(z.string()).optional(),
@@ -664,48 +652,42 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
     save_template: z.boolean().optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
+    const admin = getAdminClient();
     const now = new Date().toISOString();
     const teamId = data.assignment_mode === "team" ? `team-${Date.now()}` : null;
 
-    // Fetch existing tasks to prevent duplicates
-    const { data: existingTasks } = await supabase
-      .from("tasks")
-      .select("assigned_to, title")
-      .in("assigned_to", data.target_intern_ids);
-    const existingSet = new Set((existingTasks || []).map((t: any) => `${t.assigned_to}-${(t.title || "").trim().toLowerCase()}`));
-
-    const taskPayloads = data.target_intern_ids
-      .filter(internId => !existingSet.has(`${internId}-${data.title.trim().toLowerCase()}`))
-      .map(internId => ({
-        title: data.title,
-        description: data.description || "Manual Internship Task",
-        project_requirements: data.task_file_url || null,
-        task_doc_url: data.task_doc_url || null,
-        task_meet_link: data.task_meet_link || null,
-        assignment_mode: data.assignment_mode || "individual",
-        team_id: teamId,
-        team_name: data.team_name || (data.assignment_mode === "team" ? `Collaborative Team (${data.target_intern_ids.length})` : null),
-        team_size: data.assignment_mode === "team" ? data.target_intern_ids.length : 1,
-        team_member_names: data.team_member_names || null,
-        level: data.level || "Beginner",
-        credits: data.credits || 10,
-        due_date: data.due_date || null,
-        priority: data.priority || "medium",
-        assigned_to: internId,
-        target_user_id: internId,
-        target_role: "intern",
-        status: "pending",
-        is_pool_task: false,
-        created_by: context.userId,
-        created_at: now,
-      }));
+    const taskPayloads = data.target_intern_ids.map(internId => ({
+      title: data.title,
+      description: data.description || "Manual Internship Task",
+      project_requirements: data.task_file_url || null,
+      task_file_url: data.task_file_url || null,
+      task_doc_url: data.task_doc_url || null,
+      task_meet_link: data.task_meet_link || null,
+      assignment_mode: data.assignment_mode || "individual",
+      team_id: teamId,
+      team_name: data.team_name || (data.assignment_mode === "team" ? `Collaborative Team (${data.target_intern_ids.length})` : null),
+      team_size: data.assignment_mode === "team" ? data.target_intern_ids.length : 1,
+      team_member_names: data.team_member_names || null,
+      level: data.level || "Beginner",
+      credits: data.credits || 10,
+      due_date: data.due_date || null,
+      priority: data.priority || "medium",
+      assigned_to: internId,
+      target_user_id: internId,
+      target_role: "intern",
+      status: "pending",
+      is_pool_task: false,
+      created_by: context.userId,
+      created_at: now,
+    }));
 
     if (taskPayloads.length === 0) {
-      return { success: true, count: 0, skippedDuplicates: true };
+      return { success: true, count: 0 };
     }
 
-    const { error } = await supabase.from("tasks").insert(taskPayloads);
+    const { error } = await admin.from("tasks").insert(taskPayloads);
     if (error) {
+      console.warn("[assignManualTaskToInterns] primary insert warning:", error.message);
       // Fallback omitting custom columns if strict schema is in place
       const fallbackPayloads = taskPayloads.map(t => {
         const copy: any = { ...t };
@@ -724,18 +706,22 @@ export const assignManualTaskToInterns = createServerFn({ method: "POST" })
         }
         return copy;
       });
-      const { error: err2 } = await supabase.from("tasks").insert(fallbackPayloads);
+      const { error: err2 } = await admin.from("tasks").insert(fallbackPayloads);
       if (err2) throw new Error(err2.message);
     }
 
     if (data.save_template) {
-      await supabase.from("task_templates").insert({
-        title: data.title,
-        description: data.description || "",
-        task_file_url: data.task_file_url || null,
-        priority: data.priority || "medium",
-        domain: "general"
-      });
+      try {
+        await admin.from("task_templates").insert({
+          title: data.title,
+          description: data.description || "",
+          task_file_url: data.task_file_url || null,
+          priority: data.priority || "medium",
+          domain: "general"
+        });
+      } catch (tmplErr) {
+        console.warn("[assignManualTaskToInterns] template save skipped:", tmplErr);
+      }
     }
 
     return { success: true, count: taskPayloads.length };
