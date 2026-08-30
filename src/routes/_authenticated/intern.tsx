@@ -764,8 +764,6 @@ function InternDashboard() {
 
     return isDirectMatch || isDeliverableMatch;
   });
-  const inProgressTasks = myTasks.filter((t: any) => t.status === "pending" || t.status === "in_progress" || t.status === "blocked" || t.status === "rejected");
-  const submittedTasks = myTasks.filter((t: any) => t.status === "submitted" || t.status === "under_review");
   const completedTasks = myTasks.filter((t: any) => 
     t.status === "completed" || 
     t.status === "verified" || 
@@ -773,9 +771,16 @@ function InternDashboard() {
     t.status === "done" || 
     t.status === "resolved" ||
     t.status === "graded" ||
-    t.is_verified === true
+    t.is_verified === true ||
+    myDeliverableTaskIds.includes(t.id)
   );
   const verifiedTasks = completedTasks;
+  const inProgressTasks = myTasks.filter((t: any) => 
+    (t.status === "pending" || t.status === "in_progress" || t.status === "blocked" || t.status === "rejected") &&
+    !myDeliverableTaskIds.includes(t.id) &&
+    !t.is_verified
+  );
+  const submittedTasks = myTasks.filter((t: any) => (t.status === "submitted" || t.status === "under_review") && !completedTasks.some((c: any) => c.id === t.id));
   const pendingTasks = inProgressTasks;
   const earnedCredits = completedTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
   const totalAssignedCredits = myTasks.reduce((acc, t) => acc + (t.credits || 10), 0);
