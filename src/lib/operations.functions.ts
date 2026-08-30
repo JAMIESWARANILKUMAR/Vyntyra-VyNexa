@@ -5690,6 +5690,147 @@ export const rolloverVerifiedTasksToCohort = createServerFn({ method: "POST" })
       targetCohort: data.targetCohort,
     };
   });
+
+export const moveTasksToStoredBank = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    taskIds: z.array(z.string().uuid()).min(1),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const admin = getAdminClient();
+    
+    // Update tasks to be stored pool tasks (unassigned, pending start)
+    const { data: updated, error } = await admin
+      .from("tasks")
+      .update({
+        is_pool_task: true,
+        assigned_to: null,
+        target_user_id: null,
+        status: "pending",
+        deliverable_url: null,
+        submission_url: null,
+        progress_percentage: 0,
+        time_spent_hours: 0,
+        admin_remarks: null,
+        progress_notes: null,
+        updated_at: new Date().toISOString(),
+      })
+      .in("id", data.taskIds)
+      .select();
+
+    if (error) {
+      // Schema safe fallback
+      const { error: fallbackErr } = await admin
+        .from("tasks")
+        .update({
+          assigned_to: null,
+          status: "pending",
+          updated_at: new Date().toISOString(),
+        })
+        .in("id", data.taskIds);
+
+      if (fallbackErr) throw new Error("Failed to store tasks in repository: " + fallbackErr.message);
+    }
+
+    return { success: true, count: data.taskIds.length };
+  });
+
+export const assignStoredTasksToInterns = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    storedTaskIds: z.array(z.string().uuid()).min(1),
+    targetInternIds: z.array(z.string().uuid()).min(1),
+    dueDate: z.string().optional().nullable(),
+    priority: z.enum(["low", "medium", "high", "urgent"]).optional().default("medium"),
+    customInstructions: z.string().optional().nullable(),
+    notifyInterns: z.boolean().optional().default(true),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const admin = getAdminClient();
+
+    const { data: sourceTasks, error: fetchErr } = await admin
+      .from("tasks")
+      .select("*")
+      .in("id", data.storedTaskIds);
+
+    if (fetchErr || !sourceTasks || sourceTasks.length === 0) {
+      throw new Error("Could not find the selected stored tasks.");
+    }
+
+    const now = new Date().toISOString();
+    const taskPayloads: any[] = [];
+
+    for (const internId of data.targetInternIds) {
+      for (const st of sourceTasks) {
+        taskPayloads.push({
+          title: st.title,
+          description: data.customInstructions 
+            ? `${st.description || ""}\n\n[Assignment Instructions]: ${data.customInstructions}` 
+            : st.description,
+          task_file_url: st.task_file_url || null,
+          task_doc_url: st.task_doc_url || null,
+          task_meet_link: st.task_meet_link || null,
+          report_template_url: st.report_template_url || null,
+          credits: st.credits || 10,
+          due_date: data.dueDate || st.due_date || null,
+          priority: data.priority || st.priority || "medium",
+          assigned_to: internId,
+          target_user_id: internId,
+          target_role: "intern",
+          status: "pending",
+          is_pool_task: false,
+          progress_percentage: 0,
+          time_spent_hours: 0,
+          deliverable_url: null,
+          submission_url: null,
+          admin_remarks: null,
+          progress_notes: null,
+          is_verified: false,
+          verified_at: null,
+          verified_by: null,
+          created_by: context.userId,
+          created_at: now,
+          task_domain: st.task_domain || "all",
+        });
+      }
+    }
+
+    const { error: insertErr } = await admin.from("tasks").insert(taskPayloads);
+    if (insertErr) {
+      const fallbackPayloads = taskPayloads.map((t: any) => {
+        const copy = { ...t };
+        delete copy.target_user_id;
+        delete copy.is_pool_task;
+        return copy;
+      });
+      const { error: fbErr } = await admin.from("tasks").insert(fallbackPayloads);
+      if (fbErr) throw new Error("Failed to assign stored tasks: " + fbErr.message);
+    }
+
+    if (data.notifyInterns) {
+      for (const internId of data.targetInternIds) {
+        try {
+          await admin.from("notifications").insert({
+            user_id: internId,
+            title: "New Project Tasks Assigned",
+            message: `${sourceTasks.length} task(s) from the project repository have been assigned to your workspace.`,
+            type: "task_assigned",
+            is_read: false,
+            created_at: now,
+          });
+        } catch (notifErr) {
+          console.warn("[assignStoredTasksToInterns] notification skipped:", notifErr);
+        }
+      }
+    }
+
+    return { 
+      success: true, 
+      assignedCount: taskPayloads.length, 
+      internCount: data.targetInternIds.length 
+    };
+  });
+
 export const INTERN_MODULE_LIST = [
   "overview", "tasks", "kanban", "deliverables", "standups", "attendance",
   "meetings", "resources", "onboarding", "lms", "ppo", "leaves", 

@@ -4,10 +4,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { 
   listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, 
   reviewDeadlineExtension, bulkDeleteTasks, deleteTaskBatch, deleteAllInternTasks, 
-  adminFinalizeTaskCompletion, listActiveInternsForCohortAssignment, rolloverVerifiedTasksToCohort 
+  adminFinalizeTaskCompletion, listActiveInternsForCohortAssignment, rolloverVerifiedTasksToCohort,
+  moveTasksToStoredBank, assignStoredTasksToInterns
 } from "@/lib/operations.functions";
 import { Button } from "@/components/ui/button";
-import { Award, CreditCard, Layers, ArrowRight, CheckCheck, RefreshCw, SendHorizonal, Calendar } from "lucide-react";
+import { Award, CreditCard, Layers, ArrowRight, CheckCheck, RefreshCw, SendHorizonal, Calendar, FolderArchive, Archive, PackageCheck, BookmarkPlus, ArrowUpRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -39,11 +40,30 @@ export function AdminInternTasksView() {
   const doGenTaskWhatsApp = useServerFn(generateTaskWhatsApp);
   const fetchActiveInterns = useServerFn(listActiveInternsForCohortAssignment);
   const doRollover = useServerFn(rolloverVerifiedTasksToCohort);
+  const doMoveToStoredBank = useServerFn(moveTasksToStoredBank);
+  const doAssignStoredTasks = useServerFn(assignStoredTasksToInterns);
+
+  // Tab State: "active" (Assigned to Interns) vs "stored_bank" (Repository for Future)
+  const [activeViewTab, setActiveViewTab] = useState<"active" | "stored_bank">("active");
 
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+
+  // Stored Bank State
+  const [assignStoredModalOpen, setAssignStoredModalOpen] = useState(false);
+  const [selectedStoredTaskIds, setSelectedStoredTaskIds] = useState<string[]>([]);
+  const [storedTargetInternIds, setStoredTargetInternIds] = useState<string[]>([]);
+  const [storedDueDate, setStoredDueDate] = useState("");
+  const [storedPriority, setStoredPriority] = useState<"low" | "medium" | "high" | "urgent">("medium");
+  const [storedCustomInstructions, setStoredCustomInstructions] = useState("");
+  const [storedInternSearch, setStoredInternSearch] = useState("");
+  const [storedInternDomainFilter, setStoredInternDomainFilter] = useState("all");
+  const [isAssigningStored, setIsAssigningStored] = useState(false);
+  const [isStoringTasks, setIsStoringTasks] = useState(false);
+  const [storedTaskSearchQuery, setStoredTaskSearchQuery] = useState("");
+  const [storedTaskDomainFilter, setStoredTaskDomainFilter] = useState("all");
 
   // Cohort Rollover State
   const [rolloverModalOpen, setRolloverModalOpen] = useState(false);
@@ -168,8 +188,12 @@ export function AdminInternTasksView() {
 
   const tasks: any[] = tasksQ.data || [];
 
-  // Filter tasks with full null-safety
-  const filteredTasks = tasks.filter((t) => {
+  // Split tasks into Active Assigned vs Stored Future Repository
+  const activeAssignedTasks = tasks.filter((t) => t && t.assigned_to && !t.is_pool_task);
+  const storedBankTasks = tasks.filter((t) => t && (!t.assigned_to || t.is_pool_task));
+
+  // Filter Active Assigned Tasks
+  const filteredTasks = activeAssignedTasks.filter((t) => {
     if (!t) return false;
     const internName = t.assigned_profile?.full_name || t.assigned_profile?.email || "";
     const title = t.title || "";
@@ -187,7 +211,18 @@ export function AdminInternTasksView() {
     return titleMatches && statusMatches && priorityMatches;
   });
 
-  // Group tasks by batch safely
+  // Filter Stored Bank Tasks
+  const filteredStoredTasks = storedBankTasks.filter((t) => {
+    if (!t) return false;
+    const title = t.title || "";
+    const description = t.description || "";
+    const searchLower = (storedTaskSearchQuery || "").toLowerCase();
+    const titleMatches = !searchLower || title.toLowerCase().includes(searchLower) || description.toLowerCase().includes(searchLower);
+    const domainMatches = storedTaskDomainFilter === "all" || (t.task_domain || "").toLowerCase() === storedTaskDomainFilter.toLowerCase();
+    return titleMatches && domainMatches;
+  });
+
+  // Group active tasks by batch safely
   const groupedTasks = filteredTasks.reduce((acc, t) => {
     if (!t) return acc;
     const key = `${t.title || 'Untitled'}-${t.created_at || 'date'}`;
@@ -202,11 +237,11 @@ export function AdminInternTasksView() {
     return timeB - timeA;
   });
 
-  // Calculate statistics safely
-  const totalCount = tasks.length;
-  const inProgressCount = tasks.filter((t) => t?.status === "in_progress").length;
-  const submittedCount = tasks.filter((t) => t?.status === "submitted" || t?.deliverable_url).length;
-  const completedCount = tasks.filter((t) => t?.status === "completed").length;
+  // Calculate statistics safely for active tasks
+  const totalCount = activeAssignedTasks.length;
+  const inProgressCount = activeAssignedTasks.filter((t) => t?.status === "in_progress").length;
+  const submittedCount = activeAssignedTasks.filter((t) => t?.status === "submitted" || t?.deliverable_url).length;
+  const completedCount = activeAssignedTasks.filter((t) => t?.status === "completed").length;
 
   const handleUpdateStatus = async (taskId: string, newStatus: any, remarks?: string) => {
     try {
@@ -331,9 +366,62 @@ export function AdminInternTasksView() {
   const internsQ = useQuery({
     queryKey: ["active-interns-for-cohort"],
     queryFn: () => fetchActiveInterns(),
-    enabled: rolloverModalOpen,
+    enabled: rolloverModalOpen || assignStoredModalOpen,
   });
   const allActiveInterns: any[] = internsQ.data || [];
+
+  const handleMoveToStoredBank = async (taskIds: string[]) => {
+    if (!taskIds || taskIds.length === 0) {
+      return toast.error("Please select at least one task to move to Stored Bank.");
+    }
+    if (!confirm(`Are you sure you want to move ${taskIds.length} task(s) to the Stored Bank for future use? They will be unassigned from current interns and preserved in the repository.`)) {
+      return;
+    }
+    setIsStoringTasks(true);
+    try {
+      await doMoveToStoredBank({ data: { taskIds } });
+      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+      setSelectedTaskIds([]);
+      toast.success(`Successfully moved ${taskIds.length} task(s) to Stored Task Bank (For Future Use)!`);
+    } catch (err: any) {
+      toast.error("Failed to move tasks to store: " + err.message);
+    } finally {
+      setIsStoringTasks(false);
+    }
+  };
+
+  const handleAssignStoredTasksSubmit = async () => {
+    if (selectedStoredTaskIds.length === 0) {
+      return toast.error("Please select at least one stored task to assign.");
+    }
+    if (storedTargetInternIds.length === 0) {
+      return toast.error("Please select at least one intern to assign the task(s) to.");
+    }
+    setIsAssigningStored(true);
+    try {
+      const res = await doAssignStoredTasks({
+        data: {
+          storedTaskIds: selectedStoredTaskIds,
+          targetInternIds: storedTargetInternIds,
+          dueDate: storedDueDate || null,
+          priority: storedPriority,
+          customInstructions: storedCustomInstructions || null,
+          notifyInterns: true,
+        },
+      });
+      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+      toast.success(`Assigned ${res.assignedCount} task(s) to ${res.internCount} intern(s) successfully!`);
+      setAssignStoredModalOpen(false);
+      setSelectedStoredTaskIds([]);
+      setStoredTargetInternIds([]);
+    } catch (err: any) {
+      toast.error("Failed to assign stored tasks: " + err.message);
+    } finally {
+      setIsAssigningStored(false);
+    }
+  };
 
   const handleExecuteRollover = async () => {
     if (selectedVerifiedTaskIds.length === 0) {
@@ -399,16 +487,53 @@ export function AdminInternTasksView() {
 
   return (
     <div className="space-y-6">
-      {/* Header Banner & Stat Cards */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white dark:bg-slate-950 p-6 rounded-2xl border shadow-sm">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <ClipboardList className="h-6 w-6 text-indigo-600" /> Intern Task Assignment & Progress Tracker
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Assign tasks manually or via bulk CSV upload. Move verified tasks to new cohorts and track real-time progress.
-          </p>
-        </div>
+      {/* ── Top View Navigation Tabs ── */}
+      <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl w-fit border shadow-xs">
+        <button
+          type="button"
+          onClick={() => setActiveViewTab("active")}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+            activeViewTab === "active"
+              ? "bg-white dark:bg-slate-950 text-indigo-600 dark:text-indigo-400 shadow-sm border"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+          }`}
+        >
+          <ClipboardList className="h-4 w-4" />
+          <span>Active Assigned Tasks</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "active" ? "bg-indigo-100 text-indigo-700" : "bg-slate-200 text-slate-700"}`}>
+            {activeAssignedTasks.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveViewTab("stored_bank")}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+            activeViewTab === "stored_bank"
+              ? "bg-white dark:bg-slate-950 text-emerald-600 dark:text-emerald-400 shadow-sm border"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+          }`}
+        >
+          <FolderArchive className="h-4 w-4 text-emerald-600" />
+          <span>Stored Task Bank (Future Repository)</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "stored_bank" ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-700"}`}>
+            {storedBankTasks.length}
+          </span>
+        </button>
+      </div>
+
+      {activeViewTab === "active" && (
+        <div className="space-y-6">
+          {/* Header Banner & Stat Cards */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white dark:bg-slate-950 p-6 rounded-2xl border shadow-sm">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <ClipboardList className="h-6 w-6 text-indigo-600" /> Active Intern Tasks &amp; Progress Tracker
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Monitor and verify live intern milestone submissions. Move completed or reusable tasks to the Stored Bank for future cohorts anytime.
+              </p>
+            </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Button
@@ -511,13 +636,23 @@ export function AdminInternTasksView() {
           </label>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {selectedTaskIds.length > 0 && (
-            <Button size="sm" variant="destructive" onClick={handleBulkDelete} className="h-8 text-xs font-semibold">
-              <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete Selected
-            </Button>
+            <>
+              <Button 
+                size="sm" 
+                onClick={() => handleMoveToStoredBank(selectedTaskIds)} 
+                className="h-8 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs gap-1.5 cursor-pointer"
+                title="Unassign selected tasks from current interns and preserve in Stored Bank for future cohorts"
+              >
+                <FolderArchive className="h-3.5 w-3.5" /> Move to Stored Bank ({selectedTaskIds.length})
+              </Button>
+              <Button size="sm" variant="destructive" onClick={handleBulkDelete} className="h-8 text-xs font-semibold cursor-pointer">
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete Selected
+              </Button>
+            </>
           )}
-          <Button size="sm" variant="outline" onClick={handleExtractAll} className="h-8 text-xs font-semibold bg-white dark:bg-slate-950">
+          <Button size="sm" variant="outline" onClick={handleExtractAll} className="h-8 text-xs font-semibold bg-white dark:bg-slate-950 cursor-pointer">
             <Download className="h-3.5 w-3.5 mr-1.5 text-indigo-600" /> Extract {selectedTaskIds.length > 0 ? "Selected" : "All"}
           </Button>
         </div>
@@ -787,8 +922,18 @@ export function AdminInternTasksView() {
 
                     <Button
                       size="sm"
+                      variant="outline"
+                      className="h-8 text-xs font-bold text-amber-700 bg-amber-50/80 border-amber-200 hover:bg-amber-100 gap-1 shadow-2xs cursor-pointer"
+                      onClick={() => handleMoveToStoredBank([t.id])}
+                      title="Move task to Stored Bank (Unassigns from current intern and saves for future cohorts)"
+                    >
+                      <FolderArchive className="h-3.5 w-3.5 text-amber-600" /> Store for Future
+                    </Button>
+
+                    <Button
+                      size="sm"
                       variant="ghost"
-                      className="h-8 w-8 p-0 text-slate-400 hover:text-red-600"
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 cursor-pointer"
                       onClick={() => handleDeleteTask(t.id)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -838,6 +983,214 @@ export function AdminInternTasksView() {
           })
         )}
       </div>
+      </div>
+      )}
+
+      {/* ── STORED TASK BANK / FUTURE REPOSITORY VIEW ── */}
+      {activeViewTab === "stored_bank" && (
+        <div className="space-y-6">
+          {/* Stored Bank Banner */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white dark:bg-slate-950 p-6 rounded-2xl border shadow-sm">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <FolderArchive className="h-6 w-6 text-emerald-600" /> Stored Task Bank &amp; Future Repository
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Preserved project tasks and milestone templates ready to be assigned to upcoming cohorts or newly enrolled interns on demand.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <Button
+                onClick={() => {
+                  if (selectedStoredTaskIds.length === 0) {
+                    return toast.error("Please select at least one stored task to assign.");
+                  }
+                  setAssignStoredModalOpen(true);
+                }}
+                disabled={selectedStoredTaskIds.length === 0}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md gap-2 cursor-pointer disabled:opacity-50"
+              >
+                <Send className="h-4 w-4" /> Assign Selected Tasks ({selectedStoredTaskIds.length})
+              </Button>
+              <Button
+                onClick={() => setAssignModalOpen(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md shrink-0 cursor-pointer"
+              >
+                <Plus className="h-4 w-4 mr-2" /> Create / CSV Import
+              </Button>
+            </div>
+          </div>
+
+          {/* Stored Bank Filter Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-950 p-4 rounded-xl border">
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Search stored tasks by title or description..."
+                value={storedTaskSearchQuery}
+                onChange={(e) => setStoredTaskSearchQuery(e.target.value)}
+                className="pl-9 text-xs"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Select value={storedTaskDomainFilter} onValueChange={setStoredTaskDomainFilter}>
+                <SelectTrigger className="w-36 text-xs">
+                  <SelectValue placeholder="All Domains" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Domains</SelectItem>
+                  <SelectItem value="tech">Tech / Development</SelectItem>
+                  <SelectItem value="management">Management / Operations</SelectItem>
+                  <SelectItem value="non_tech">Marketing / Sales</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Stored Bank Bulk Actions */}
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-slate-900 border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <Checkbox 
+                id="select-all-stored" 
+                checked={filteredStoredTasks.length > 0 && selectedStoredTaskIds.length === filteredStoredTasks.length} 
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedStoredTaskIds(filteredStoredTasks.map(t => t.id));
+                  } else {
+                    setSelectedStoredTaskIds([]);
+                  }
+                }}
+              />
+              <label htmlFor="select-all-stored" className="text-sm font-medium cursor-pointer text-slate-700 dark:text-slate-300">
+                Select All Stored Tasks <span className="text-slate-500">({selectedStoredTaskIds.length} selected)</span>
+              </label>
+            </div>
+
+            {selectedStoredTaskIds.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => setAssignStoredModalOpen(true)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Send className="h-3.5 w-3.5" /> Assign to Intern(s) ({selectedStoredTaskIds.length})
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={async () => {
+                    if (!confirm(`Delete ${selectedStoredTaskIds.length} stored task(s) from repository?`)) return;
+                    try {
+                      await doBulkDelete({ data: { taskIds: selectedStoredTaskIds } });
+                      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                      setSelectedStoredTaskIds([]);
+                      toast.success("Tasks deleted from stored repository.");
+                    } catch (e: any) {
+                      toast.error("Failed to delete: " + e.message);
+                    }
+                  }}
+                  className="h-8 text-xs font-semibold cursor-pointer"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete Selected
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Stored Tasks List */}
+          <div className="rounded-xl border bg-white dark:bg-slate-950 shadow-sm overflow-hidden divide-y">
+            {filteredStoredTasks.length === 0 ? (
+              <div className="p-12 text-center text-slate-500 text-xs space-y-2">
+                <FolderArchive className="h-8 w-8 text-slate-400 mx-auto opacity-60" />
+                <p className="font-semibold text-sm text-slate-700 dark:text-slate-300">No tasks currently in the Stored Bank matching criteria.</p>
+                <p className="text-slate-400">
+                  You can move active tasks here by selecting them and clicking <strong>"Store for Future"</strong>, or import template tasks via CSV.
+                </p>
+              </div>
+            ) : (
+              filteredStoredTasks.map((t) => {
+                const isSelected = selectedStoredTaskIds.includes(t.id);
+                return (
+                  <div key={t.id} className="p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedStoredTaskIds(prev => [...prev, t.id]);
+                          } else {
+                            setSelectedStoredTaskIds(prev => prev.filter(id => id !== t.id));
+                          }
+                        }}
+                        className="mt-1"
+                      />
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{t.title}</span>
+                          <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] flex items-center gap-1 font-bold">
+                            <FolderArchive className="h-3 w-3 text-emerald-700" /> Stored in Repository
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-600">
+                            Priority: {t.priority || "medium"}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 border-amber-200">
+                            <CreditCard className="h-3 w-3 text-amber-600 inline mr-1" /> {t.credits || 10} Credits
+                          </Badge>
+                          {t.task_domain && (
+                            <Badge variant="outline" className="text-[10px] uppercase font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
+                              Domain: {t.task_domain}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">{t.description || "No description."}</p>
+
+                        <div className="flex items-center gap-4 text-[11px] text-slate-400 flex-wrap pt-1">
+                          <span>Created: {new Date(t.created_at).toLocaleDateString()}</span>
+                          {t.task_file_url && (
+                            <a href={t.task_file_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium">
+                              <FileText className="h-3.5 w-3.5" /> View Task File
+                            </a>
+                          )}
+                          {t.task_meet_link && (
+                            <a href={t.task_meet_link} target="_blank" rel="noreferrer" className="text-blue-700 hover:underline inline-flex items-center gap-1 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                              <Video className="h-3.5 w-3.5 text-blue-600" /> Meet Link
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedStoredTaskIds([t.id]);
+                          setAssignStoredModalOpen(true);
+                        }}
+                        className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-xs cursor-pointer"
+                      >
+                        <Send className="h-3.5 w-3.5" /> Pick &amp; Assign to Intern(s)
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 cursor-pointer"
+                        onClick={() => handleDeleteTask(t.id)}
+                        title="Delete from Repository"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Review Modal */}
       {selectedTaskForReview && (
@@ -1449,6 +1802,174 @@ export function AdminInternTasksView() {
                 </Button>
               )}
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Assign Stored Tasks to Interns Dialog ── */}
+      <Dialog open={assignStoredModalOpen} onOpenChange={setAssignStoredModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-50 dark:bg-slate-900">
+          <DialogHeader className="p-6 bg-white dark:bg-slate-950 border-b shrink-0">
+            <DialogTitle className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Send className="h-5 w-5 text-emerald-600" />
+              Assign Stored Tasks to Enrolled Interns
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500 mt-1">
+              Select one or multiple interns to assign the {selectedStoredTaskIds.length} stored task(s) from the repository.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-6 flex-1 overflow-y-auto space-y-6">
+            {/* Timeline & Instructions */}
+            <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border shadow-xs space-y-4">
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-emerald-600" /> Assignment Timeline &amp; Priority
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Submission Deadline</label>
+                  <Input
+                    type="date"
+                    value={storedDueDate}
+                    onChange={(e) => setStoredDueDate(e.target.value)}
+                    className="text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Task Priority</label>
+                  <Select value={storedPriority} onValueChange={(val: any) => setStoredPriority(val)}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low Priority</SelectItem>
+                      <SelectItem value="medium">Medium Priority</SelectItem>
+                      <SelectItem value="high">High Priority</SelectItem>
+                      <SelectItem value="urgent">Urgent / Critical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Custom Assignment Instructions / Addendum (Optional)</label>
+                <Textarea
+                  rows={2}
+                  placeholder="e.g. Please submit your GitHub repository link and report before final review."
+                  value={storedCustomInstructions}
+                  onChange={(e) => setStoredCustomInstructions(e.target.value)}
+                  className="text-xs"
+                />
+              </div>
+            </div>
+
+            {/* Target Intern Selection */}
+            <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
+                    <Users className="h-4 w-4 text-emerald-600" /> Select Target Interns ({storedTargetInternIds.length} Selected)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Select specific interns or assign to all.</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const filtered = allActiveInterns.filter((intern) => {
+                      const s = storedInternSearch.toLowerCase();
+                      return !s || (intern.full_name || '').toLowerCase().includes(s) || (intern.email || '').toLowerCase().includes(s) || (intern.intern_id || '').toLowerCase().includes(s);
+                    });
+                    if (storedTargetInternIds.length === filtered.length) {
+                      setStoredTargetInternIds([]);
+                    } else {
+                      setStoredTargetInternIds(filtered.map(i => i.id));
+                    }
+                  }}
+                  className="text-xs font-bold cursor-pointer"
+                >
+                  {storedTargetInternIds.length > 0 ? "Deselect All" : "Select All Interns"}
+                </Button>
+              </div>
+
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search interns by name, email, roll number, or domain..."
+                  value={storedInternSearch}
+                  onChange={(e) => setStoredInternSearch(e.target.value)}
+                  className="pl-9 text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[220px] overflow-y-auto pr-1">
+                {internsQ.isLoading ? (
+                  <div className="col-span-2 text-center py-8 text-slate-400 text-xs flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-emerald-600" /> Loading active interns...
+                  </div>
+                ) : allActiveInterns.length === 0 ? (
+                  <div className="col-span-2 text-center py-8 text-slate-400 text-xs">
+                    No active interns enrolled.
+                  </div>
+                ) : (
+                  allActiveInterns
+                    .filter((intern) => {
+                      const s = storedInternSearch.toLowerCase();
+                      return !s || (intern.full_name || '').toLowerCase().includes(s) || (intern.email || '').toLowerCase().includes(s) || (intern.intern_id || '').toLowerCase().includes(s);
+                    })
+                    .map((intern) => {
+                      const isSelected = storedTargetInternIds.includes(intern.id);
+                      return (
+                        <div
+                          key={intern.id}
+                          onClick={() => {
+                            setStoredTargetInternIds(prev =>
+                              prev.includes(intern.id) ? prev.filter(id => id !== intern.id) : [...prev, intern.id]
+                            );
+                          }}
+                          className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${
+                            isSelected
+                              ? "bg-emerald-50/80 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-700"
+                              : "bg-slate-50 dark:bg-slate-900 border-slate-200/80 hover:bg-white"
+                          }`}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => {
+                              setStoredTargetInternIds(prev =>
+                                prev.includes(intern.id) ? prev.filter(id => id !== intern.id) : [...prev, intern.id]
+                              );
+                            }}
+                            className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
+                              {intern.full_name || "Intern"}
+                            </div>
+                            <div className="text-[10px] text-slate-500 truncate">
+                              {intern.email} {intern.intern_id && `• ${intern.intern_id}`}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="p-4 bg-white dark:bg-slate-950 border-t shrink-0 flex items-center justify-between w-full">
+            <Button variant="outline" size="sm" onClick={() => setAssignStoredModalOpen(false)} className="text-xs cursor-pointer">
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={isAssigningStored || selectedStoredTaskIds.length === 0 || storedTargetInternIds.length === 0}
+              onClick={handleAssignStoredTasksSubmit}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+            >
+              {isAssigningStored ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
+              Assign {selectedStoredTaskIds.length} Task(s) to {storedTargetInternIds.length} Intern(s)
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

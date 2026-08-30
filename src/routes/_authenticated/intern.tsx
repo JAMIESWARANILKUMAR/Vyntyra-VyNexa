@@ -1070,8 +1070,8 @@ function InternDashboard() {
 
         {/* ── Live Updates & Notifications Marquee Sub-Bar ── */}
         {marqueeItems.length > 0 ? (
-          <div className="bg-[#050811]/95 text-slate-200 text-xs py-2 overflow-hidden flex whitespace-nowrap border-t border-slate-800/80 relative z-10 backdrop-blur-md">
-            <div className="animate-marquee flex items-center gap-8 sm:gap-12 shrink-0 min-w-full">
+          <div className="bg-[#050811]/95 text-slate-200 text-xs py-2.5 overflow-hidden flex whitespace-nowrap border-t border-slate-800/80 relative z-10 backdrop-blur-md group cursor-default" title="Hover to pause ticker">
+            <div className="animate-marquee flex items-center gap-8 sm:gap-12 shrink-0 min-w-full group-hover:[animation-play-state:paused]">
               {marqueeItems.map((item) => (
                 <div key={item.id} className="inline-flex items-center gap-2 px-2 py-0.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
@@ -1089,7 +1089,7 @@ function InternDashboard() {
                 </div>
               ))}
             </div>
-            <div className="animate-marquee flex items-center gap-8 sm:gap-12 shrink-0 min-w-full ml-8 sm:ml-12">
+            <div className="animate-marquee flex items-center gap-8 sm:gap-12 shrink-0 min-w-full ml-8 sm:ml-12 group-hover:[animation-play-state:paused]">
               {marqueeItems.map((item) => (
                 <div key={`dup-${item.id}`} className="inline-flex items-center gap-2 px-2 py-0.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
