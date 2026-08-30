@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { bulkAssignTasksFromCsv, assignManualTaskToInterns, listTaskTemplates, listActiveInternsForCohortAssignment } from "@/lib/operations.functions";
 import { parseDocumentAndAssignTasks } from "@/lib/ai-tasks.functions";
 import { sendTaskNotificationEmail } from "@/lib/notifications-omni.functions";
-import { Upload, FileSpreadsheet, Plus, CheckCircle2, Loader2, Sparkles, Link2, Users, FileText, BookTemplate, Mail } from "lucide-react";
+import { Upload, FileSpreadsheet, Plus, CheckCircle2, Loader2, Sparkles, Link2, Users, FileText, BookTemplate, Mail, Check, Search } from "lucide-react";
 import { toast } from "sonner";
 
 interface ParsedTask {
@@ -56,30 +56,19 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
   const interns = internsQ.data || [];
   const taskTemplates = templatesQ.data || [];
   const [selectedInternIds, setSelectedInternIds] = useState<string[]>([]);
-  const [selectAll, setSelectAll] = useState(true);
+  const [selectAll, setSelectAll] = useState(false);
+  const [internSearch, setInternSearch] = useState("");
 
   // Domains extracted from current interns
-  const uniqueDomains = Array.from(new Set(interns.map((i: any) => i.department || "General"))).filter(Boolean);
+  const uniqueDomains = Array.from(new Set(interns.map((i: any) => i.department || i.domain || "General"))).filter(Boolean);
   const [targetDomain, setTargetDomain] = useState<string>("All Domains");
+  const [targetSubDomain, setTargetSubDomain] = useState<string>("All Sub-Domains");
 
   // Sub-Domains extracted from current interns
   const uniqueSubDomains = Array.from(new Set(interns
-    .filter((i: any) => targetDomain === "All Domains" || (i.department || "General") === targetDomain)
+    .filter((i: any) => targetDomain === "All Domains" || (i.department || i.domain || "General") === targetDomain)
     .map((i: any) => i.position || "General")
   )).filter(Boolean);
-  const [targetSubDomain, setTargetSubDomain] = useState<string>("All Sub-Domains");
-
-  useEffect(() => {
-    if (!internsQ.data || internsQ.data.length === 0) return;
-    const filteredInterns = internsQ.data.filter((i: any) => {
-      const matchDomain = targetDomain === "All Domains" || (i.department || "General") === targetDomain;
-      const matchSubDomain = targetSubDomain === "All Sub-Domains" || (i.position || "General") === targetSubDomain;
-      return matchDomain && matchSubDomain;
-    });
-    setSelectedInternIds(filteredInterns.map((i: any) => i.id));
-    setSelectAll(true);
-  }, [targetDomain, targetSubDomain, internsQ.data]);
-
 
   // Manual Form State
   const [manualTitle, setManualTitle] = useState("");
@@ -534,15 +523,28 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
                     const matchDomain = targetDomain === "All Domains" || (i.department || "General") === targetDomain;
                     const matchSubDomain = targetSubDomain === "All Sub-Domains" || (i.position || "General") === targetSubDomain;
                     return matchDomain && matchSubDomain;
-                  }).map((i) => (
-                    <div key={i.id} className="flex items-center justify-between py-1.5 px-2 hover:bg-slate-50 dark:hover:bg-slate-900 rounded">
-                      <div>
-                        <div className="font-semibold text-slate-800 dark:text-slate-200">{i.full_name || i.email}</div>
-                        <div className="text-[10px] text-slate-500">{i.department || "Internship"} &middot; {i.intern_id || i.email}</div>
+                  }).map((i) => {
+                    const isSelected = selectedInternIds.includes(i.id);
+                    return (
+                      <div
+                        key={i.id}
+                        onClick={() => handleToggleIntern(i.id)}
+                        className={`flex items-center justify-between py-1.5 px-2 rounded cursor-pointer transition-all ${
+                          isSelected ? "bg-indigo-50 dark:bg-indigo-950/40 font-semibold" : "hover:bg-slate-50 dark:hover:bg-slate-900"
+                        }`}
+                      >
+                        <div>
+                          <div className="font-semibold text-slate-800 dark:text-slate-200">{i.full_name || i.email}</div>
+                          <div className="text-[10px] text-slate-500">{i.department || "Internship"} &middot; {i.intern_id || i.email}</div>
+                        </div>
+                        <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 border transition-all ${
+                          isSelected ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300 bg-white"
+                        }`}>
+                          {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                        </div>
                       </div>
-                      <Checkbox checked={selectedInternIds.includes(i.id)} onCheckedChange={() => handleToggleIntern(i.id)} />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -814,65 +816,150 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
 
               {/* Target Intern Selection */}
               <div className="border rounded-xl p-4 bg-white dark:bg-slate-950 space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <Users className="h-4 w-4 text-indigo-600" />
                     {assignmentMode === "team"
                       ? `Select Team Members (${selectedInternIds.length} of ${teamSize} selected)`
                       : assignmentMode === "individual"
-                      ? `Select Intern (${selectedInternIds.length === 1 ? "1 Selected" : "None Selected"})`
+                      ? `Select Target Intern (${selectedInternIds.length === 1 ? "1 Selected" : "None Selected"})`
                       : `Assign To Interns (${selectAll ? `All ${interns.length}` : selectedInternIds.length} Selected)`}
                   </Label>
-                  {assignmentMode === "all" && (
+                  {assignmentMode === "all" ? (
                     <div className="flex items-center gap-2">
-                      <Checkbox id="selectAllManual" checked={selectAll} onCheckedChange={(v) => handleToggleSelectAll(!!v)} />
-                      <label htmlFor="selectAllManual" className="text-xs font-medium text-slate-700 cursor-pointer">
-                        All Active Interns ({interns.length})
-                      </label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (selectAll || selectedInternIds.length === interns.length) {
+                            setSelectAll(false);
+                            setSelectedInternIds([]);
+                          } else {
+                            setSelectAll(true);
+                            setSelectedInternIds(interns.map((i: any) => i.id));
+                          }
+                        }}
+                        className="text-xs font-bold h-7 px-2.5"
+                      >
+                        {selectAll || selectedInternIds.length === interns.length ? "Deselect All" : "Select All Active Interns"}
+                      </Button>
                     </div>
+                  ) : (
+                    selectedInternIds.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedInternIds([])}
+                        className="text-xs text-slate-500 hover:text-slate-800 h-7 px-2"
+                      >
+                        Clear Selection
+                      </Button>
+                    )
                   )}
                 </div>
 
-                {(!selectAll || assignmentMode !== "all") && (
-                  <div className="max-h-64 overflow-y-auto divide-y border rounded bg-slate-50/50 text-xs">
-                    {uniqueDomains.map((domain: any) => {
-                      const domainInterns = interns.filter((i: any) => (i.department || "General") === domain);
+                {/* Intern Search Filter */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                  <Input
+                    placeholder="Search interns by name, email, roll number, or domain..."
+                    value={internSearch}
+                    onChange={(e) => setInternSearch(e.target.value)}
+                    className="pl-8 text-xs h-8 bg-slate-50 dark:bg-slate-900"
+                  />
+                </div>
+
+                {/* Selected Interns Highlight Tag Bar */}
+                {selectedInternIds.length > 0 && (
+                  <div className="p-2.5 bg-indigo-50/80 dark:bg-indigo-950/30 border border-indigo-200 rounded-lg text-xs flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-indigo-900 dark:text-indigo-300">
+                      {assignmentMode === "team" ? "👥 Team Members:" : "👤 Assigned To:"}
+                    </span>
+                    {interns
+                      .filter((i: any) => selectedInternIds.includes(i.id))
+                      .map((i: any) => (
+                        <span key={i.id} className="inline-flex items-center gap-1 bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-200 text-[11px] font-semibold">
+                          {i.full_name || i.email}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedInternIds(prev => prev.filter(id => id !== i.id));
+                            }}
+                            className="hover:text-rose-600 font-bold ml-1"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                  </div>
+                )}
+
+                <div className="max-h-64 overflow-y-auto divide-y border rounded bg-slate-50/50 text-xs">
+                  {internsQ.isLoading ? (
+                    <div className="p-8 text-center text-slate-400 flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-indigo-600" /> Loading active interns...
+                    </div>
+                  ) : interns.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400">
+                      No registered interns found.
+                    </div>
+                  ) : (
+                    uniqueDomains.map((domain: any) => {
+                      const domainInterns = interns
+                        .filter((i: any) => (i.department || i.domain || "General") === domain)
+                        .filter((i: any) => {
+                          const s = internSearch.toLowerCase().trim();
+                          if (!s) return true;
+                          return (i.full_name || "").toLowerCase().includes(s) ||
+                                 (i.email || "").toLowerCase().includes(s) ||
+                                 (i.intern_id || "").toLowerCase().includes(s) ||
+                                 (i.position || "").toLowerCase().includes(s);
+                        });
+
                       if (domainInterns.length === 0) return null;
                       
                       return (
                         <div key={domain} className="p-3">
-                          <h4 className="font-bold text-slate-800 mb-2 border-b pb-1 flex items-center justify-between">
-                            <span>Domain: <span className="text-indigo-700">{domain}</span></span>
+                          <h4 className="font-bold text-slate-800 dark:text-slate-200 mb-2 border-b pb-1 flex items-center justify-between">
+                            <span>Domain: <span className="text-indigo-700 dark:text-indigo-400">{domain}</span></span>
                             <span className="text-[10px] text-slate-500 font-normal">{domainInterns.length} Interns</span>
                           </h4>
-                          <div className="space-y-1">
+                          <div className="space-y-1.5">
                             {domainInterns.map((i: any) => {
                               const isSelected = selectedInternIds.includes(i.id);
                               return (
                                 <div
                                   key={i.id}
                                   onClick={() => handleToggleIntern(i.id)}
-                                  className={`flex items-center justify-between py-1.5 px-2 rounded-lg ml-2 cursor-pointer transition-all ${
+                                  className={`flex items-center justify-between py-2 px-3 rounded-lg cursor-pointer transition-all border ${
                                     isSelected
-                                      ? "bg-indigo-50 border border-indigo-300 font-semibold"
-                                      : "bg-white hover:bg-slate-50 border border-transparent hover:border-slate-200"
+                                      ? "bg-indigo-50/90 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-700 shadow-2xs font-semibold"
+                                      : "bg-white dark:bg-slate-900 hover:bg-slate-100/80 dark:hover:bg-slate-800 border-slate-200/80"
                                   }`}
                                 >
-                                  <div>
-                                    <div className="font-semibold text-slate-800">{i.full_name || i.email}</div>
-                                    <div className="text-[10px] text-slate-500">
-                                      <span className="font-medium text-emerald-600">{i.position || "General"}</span> &middot; {i.intern_id || i.email}
+                                  <div className="flex-1 min-w-0 pr-2">
+                                    <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">{i.full_name || i.email}</div>
+                                    <div className="text-[10px] text-slate-500 truncate">
+                                      <span className="font-medium text-indigo-600 dark:text-indigo-400">{i.position || "General"}</span> &middot; {i.intern_id || i.email}
                                     </div>
                                   </div>
-                                  <Checkbox checked={isSelected} onCheckedChange={() => handleToggleIntern(i.id)} />
+                                  <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 border transition-all ${
+                                    isSelected ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300 bg-white"
+                                  }`}>
+                                    {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                                  </div>
                                 </div>
                               );
                             })}
                           </div>
                         </div>
                       );
-                    })}
-                  </div>
-                )}
+                    })
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

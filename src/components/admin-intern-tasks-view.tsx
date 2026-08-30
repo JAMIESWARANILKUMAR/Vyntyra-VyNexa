@@ -1904,19 +1904,15 @@ export function AdminInternTasksView() {
                           }}
                           className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${
                             isSelected
-                              ? "bg-emerald-50/80 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-700"
+                              ? "bg-emerald-50/90 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-700 shadow-2xs font-semibold"
                               : "bg-slate-50 dark:bg-slate-900 border-slate-200/80 hover:bg-white"
                           }`}
                         >
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => {
-                              setStoredTargetInternIds(prev =>
-                                prev.includes(intern.id) ? prev.filter(id => id !== intern.id) : [...prev, intern.id]
-                              );
-                            }}
-                            className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                          />
+                          <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 border transition-all ${
+                            isSelected ? "bg-emerald-600 border-emerald-600 text-white" : "border-slate-300 bg-white"
+                          }`}>
+                            {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
                               {intern.full_name || "Intern"}
