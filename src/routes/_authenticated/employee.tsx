@@ -327,9 +327,9 @@ function BankAdsSection() {
           bankSupport="1860 266 2666 / 24x7 Corporate Helpline"
           vyntyraManager="Anil Kumar (Fin-Desk) · Ext: 402"
           ads={[
-            { videoId: "1qvcBjU_1Mk", title: "Kotak 811: Zero Balance", slogan: "No maintenance charges. Open digitally using video KYC in 3 mins.", feature: "100% digital onboarding" },
-            { videoId: "5UenpW0G6Jk", title: "Earn Higher Interest", slogan: "Get FD-like interest rates up to 7% p.a. on your savings balance.", feature: "ActivMoney auto-sweep" },
-            { videoId: "O-fDk4lI09E", title: "Kotak League Credit Card", slogan: "Lifetime free credit card with massive rewards on shopping.", feature: "Zero annual charges" }
+            { videoId: "/videos/kotak/kotak_ad_2.mp4", title: "Zero Balance Savings Account", slogan: "Open Kotak811 Zero Balance Account from anywhere digitally using Video KYC.", feature: "100% Digital Banking" },
+            { videoId: "/videos/kotak/kotak_ad_1.mp4", title: "FD Wala Savings with ActivMoney", slogan: "Earn FD-like interest up to 7% p.a. on your standard savings account balance.", feature: "Up to 7% Interest Rate" },
+            { videoId: "/videos/kotak/kotak_ad_3.mp4", title: "Scan, Pay and Earn Rewards", slogan: "Use the new Kotak811 Mobile Banking app to pay seamlessly and grab rewards.", feature: "Reward Points on Scan & Pay" }
           ]}
         />
 
@@ -345,9 +345,8 @@ function BankAdsSection() {
           bankSupport="1800 108 8888 / 24x7 Support"
           vyntyraManager="Vyntyra Partner Desk · Ext: 405"
           ads={[
-            { videoId: "tpKwQZ9_fEQ", title: "Monthly Interest Payouts", slogan: "Earn up to 7.25% p.a. and watch your savings compound every single month.", feature: "Compounded monthly interest" },
-            { videoId: "a7Sg-H2bWjE", title: "Zero Fee Banking Promise", slogan: "IDFC First Bank promises zero fee on 28 essential savings services.", feature: "Completely zero fee" },
-            { videoId: "2XoQ0z4fIks", title: "Premium Visa Debit Card", slogan: "Get complimentary airport lounge access and fuel surcharge waivers.", feature: "Visa Signature rewards" }
+            { videoId: "/videos/idfc/idfc_ad_2.mp4", title: "Open Savings Account in 5 Mins", slogan: "Open your IDFC FIRST Bank Savings Account online in just 5 mins.", feature: "5-Minute Online Setup" },
+            { videoId: "/videos/idfc/idfc_ad_1.mp4", title: "Lifetime Free Credit Cards", slogan: "Enjoy premium credit cards with zero annual fees and robust rewards.", feature: "No Annual Fee Cards" }
           ]}
         />
 
@@ -363,9 +362,9 @@ function BankAdsSection() {
           bankSupport="1860 419 5555 / 1860 500 5555"
           vyntyraManager="Vyntyra Partner Desk · Ext: 408"
           ads={[
-            { videoId: "xVi-fgAlrEs", title: "Axis ASAP Digital Savings", slogan: "Open instantly with zero paperwork and get a virtual debit card instantly.", feature: "Instant KYC validation" },
-            { videoId: "O8486c0t6uI", title: "Grab Deals Cashback Portal", slogan: "Enjoy flat 10% cashback on top brands like Flipkart, Amazon, and Swiggy.", feature: "Exclusive member benefits" },
-            { videoId: "Z8eW-U46C0A", title: "Automated Sweep-in Savings", slogan: "Get higher interest on excess funds while keeping high liquidity.", feature: "Flexible returns" }
+            { videoId: "/videos/axis/axis_ad_2.mp4", title: "Digital Savings Account", slogan: "Make every moment special with an Axis Bank Digital Savings Account.", feature: "Open in 4 Easy Steps" },
+            { videoId: "/videos/axis/axis_ad_3.mp4", title: "Open Account in 4 Steps", slogan: "Experience paperless account opening instantly using Video KYC.", feature: "100% Digital Setup" },
+            { videoId: "/videos/axis/axis_ad_1.mp4", title: "Dil Se Open Celebrations", slogan: "Celebrate every moment with exclusive rewards and lifestyle benefits.", feature: "Dil Se Open Privileges" }
           ]}
         />
       </div>
