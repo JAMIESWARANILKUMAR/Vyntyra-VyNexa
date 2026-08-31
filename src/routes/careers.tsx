@@ -45,6 +45,7 @@ import { CloudflareTurnstile } from "@/components/cloudflare-turnstile";
 import { Header } from "@/components/Header";
 import { lookupReferralCodePricing } from "@/lib/operations.functions";
 import { listCareerDomains, type DomainItem, DEFAULT_CAREER_DOMAINS } from "@/lib/domains.functions";
+import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
 
 export const Route = createFileRoute("/careers")({
   head: () => ({
@@ -53,8 +54,9 @@ export const Route = createFileRoute("/careers")({
       {
         name: "description",
         content:
-          "Apply to Project VyNexa — a next-generation search engine by Vyntyra Consultancy Services. Secure corporate careers portal.",
+          "Apply to Project VyNexa — next-generation search engine & AI solutions by Vyntyra Consultancy Services. Careers in Next.js, Flutter, Python AI, Cloud & DevOps across US, UK, UAE, Singapore, Canada, Australia, Germany, and Global.",
       },
+      ...GLOBAL_SEO_META_TAGS,
     ],
   }),
   component: ApplicationPage,

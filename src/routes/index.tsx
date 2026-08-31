@@ -22,23 +22,26 @@ import {
 } from "lucide-react";
 import { WorldClocks } from "@/components/world-clocks";
 
+import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "About Vyntyra Consultancy Services — Innovation, Talent & Technology" },
+      { title: "About Vyntyra Consultancy Services — Custom Web, Mobile & AI Solutions" },
       {
         name: "description",
         content:
-          "Vyntyra Consultancy Services is an innovation-driven firm providing IT consultancy, hiring & recruitment, branding, e-learning, marketing and R&D. Learn about our mission, services, leadership team and headquarters in Visakhapatnam, India.",
+          "Vyntyra Consultancy Services: Top-rated Custom Web Applications (Next.js/React - US), Mobile Apps (Flutter/React Native - UK), Enterprise AI (Python/LangChain - UAE/Dubai), Cloud & DevOps (AWS/Kubernetes - Singapore), Microservices (Node.js/Docker - Canada), MVP Firm (MERN - Australia), Fractional CTO (Germany), B2B SaaS (Global).",
       },
-      { property: "og:title", content: "About Vyntyra Consultancy Services" },
+      { property: "og:title", content: "About Vyntyra Consultancy Services — Innovation, Talent & Technology" },
       {
         property: "og:description",
         content:
-          "Innovation-driven IT consultancy, hiring, branding, e-learning, marketing and R&D. Headquartered in Visakhapatnam, India.",
+          "Global software development and IT consultancy firm specializing in Web, Mobile, Cloud, AI & Microservices.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      ...GLOBAL_SEO_META_TAGS,
     ],
   }),
   component: AboutPage,
