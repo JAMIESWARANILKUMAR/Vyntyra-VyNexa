@@ -42,7 +42,6 @@ import { Badge } from "@/components/ui/badge";
 export interface PlaybookIndustry {
   id: string;
   name: string;
-  icon: React.ElementType;
   targetRole: string;
   painPoint: string;
   emailSubject: string;
@@ -52,11 +51,17 @@ export interface PlaybookIndustry {
   defaultVars: Record<string, string>;
 }
 
+export const ICON_MAP: Record<string, React.ElementType> = {
+  restaurants: Utensils,
+  schools: GraduationCap,
+  salons: Scissors,
+  furniture: Armchair,
+};
+
 export const INITIAL_PLAYBOOK_INDUSTRIES: PlaybookIndustry[] = [
   {
     id: "restaurants",
     name: "Restaurants & Cafes",
-    icon: Utensils,
     targetRole: "Owner, General Manager, or Operations Head",
     painPoint: "25–35% marketplace commissions (Swiggy/Zomato/Uber Eats) and lost customer data",
     emailSubject: "Quick question regarding direct orders at {{Restaurant_Name}}",
@@ -101,7 +106,6 @@ Can I share a quick 2-minute demo video or 1-page breakdown with you today? 📈
   {
     id: "schools",
     name: "Schools, Colleges & Coaching",
-    icon: GraduationCap,
     targetRole: "Principal, Director, Chairman, or Administrative Head",
     painPoint: "Fragmented administrative tasks, manual fee collection delays, and poor parent communication",
     emailSubject: "Streamlining fee collection and administrative workflows for {{School_Name}}",
@@ -145,7 +149,6 @@ Would you be available for a brief 5-minute online walkthrough next Tuesday? �
   {
     id: "salons",
     name: "Beauty Salons & Wellness Spas",
-    icon: Scissors,
     targetRole: "Salon Owner, Studio Director, or Lead Esthetician",
     painPoint: "Appointment no-shows, messy manual booking calendars, and lost repeat bookings",
     emailSubject: "Reducing no-shows and boosting rebookings at {{Salon_Name}}",
@@ -187,7 +190,6 @@ Got 2 minutes to see how it looks on mobile? 📲`,
   {
     id: "furniture",
     name: "Furniture & Interior Showrooms",
-    icon: Armchair,
     targetRole: "Showroom Owner, Managing Partner, or Sales Director",
     painPoint: "Long sales cycles, difficulties visualizing products in customer spaces, and manual inventory/delivery tracking",
     emailSubject: "Accelerating custom quotes and visual sales for {{Showroom_Name}}",
@@ -239,13 +241,28 @@ export function AdminB2bPlaybook() {
   // Industry Template States with Local Storage Support
   const [industries, setIndustries] = useState<PlaybookIndustry[]>(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(LOCAL_STORAGE_PLAYBOOK_KEY);
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (err) {
-          console.error("Failed to parse saved playbook templates:", err);
+      try {
+        const saved = localStorage.getItem(LOCAL_STORAGE_PLAYBOOK_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return INITIAL_PLAYBOOK_INDUSTRIES.map((def) => {
+              const match = parsed.find((p: any) => p.id === def.id);
+              if (match) {
+                return {
+                  ...def,
+                  emailSubject: match.emailSubject || def.emailSubject,
+                  emailBodyTemplate: match.emailBodyTemplate || def.emailBodyTemplate,
+                  pitchScriptTemplate: match.pitchScriptTemplate || def.pitchScriptTemplate,
+                  whatsAppTemplate: match.whatsAppTemplate || def.whatsAppTemplate,
+                };
+              }
+              return def;
+            });
+          }
         }
+      } catch (err) {
+        console.error("Failed to parse saved playbook templates:", err);
       }
     }
     return INITIAL_PLAYBOOK_INDUSTRIES;
@@ -437,7 +454,7 @@ export function AdminB2bPlaybook() {
         <div className="border-b border-border pb-2 overflow-x-auto">
           <TabsList className="bg-muted/60 p-1.5 rounded-lg flex gap-1 h-auto min-w-max">
             {industries.map((ind) => {
-              const Icon = ind.icon;
+              const Icon = ICON_MAP[ind.id] || Building2;
               return (
                 <TabsTrigger
                   key={ind.id}
