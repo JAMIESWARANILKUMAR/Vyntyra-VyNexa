@@ -131,7 +131,7 @@ function BankAdCard({
           setActiveAdIndex((prevIndex) => (prevIndex + 1) % ads.length);
           return 0;
         }
-        return prev + 1.25; // 8 seconds per ad (100 / 1.25 * 100ms)
+        return prev + 1.25; // 8 seconds per ad
       });
     }, 100);
 
@@ -145,22 +145,22 @@ function BankAdCard({
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className={`relative overflow-hidden rounded-3xl border ${borderColor} bg-gradient-to-br ${bgColor} to-white p-6 md:p-8 shadow-sm hover:shadow-lg transition-all duration-300 w-full`}
+      className={`relative overflow-hidden rounded-3xl border ${borderColor} bg-gradient-to-br ${bgColor} via-[#0E131F] to-[#0A0E1A] p-6 md:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 w-full`}
     >
       {/* Decorative background blur */}
       <div 
-        className="absolute top-0 right-0 w-72 h-72 rounded-full filter blur-[100px] opacity-10 pointer-events-none"
+        className="absolute top-0 right-0 w-72 h-72 rounded-full filter blur-[100px] opacity-15 pointer-events-none"
         style={{ backgroundColor: themeColor }}
       />
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
         
-        {/* Left Side: YouTube Embed (Cropped to hide UI controls and titles) */}
+        {/* Left Side: YouTube Embed / MP4 Video */}
         <div className="lg:col-span-5 flex flex-col justify-center w-full">
           {/* Stories indicators */}
           <div className="flex gap-1.5 mb-3 px-1">
             {ads.map((_, index) => (
-              <div key={index} className="h-1 flex-1 bg-slate-200/50 rounded-full overflow-hidden">
+              <div key={index} className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden">
                 <div 
                   className="h-full transition-all duration-100"
                   style={{ 
@@ -174,7 +174,7 @@ function BankAdCard({
 
           {/* Autoplay Video Crop Container */}
           <div 
-            className="relative overflow-hidden w-full aspect-video rounded-2xl shadow-md border border-slate-100/50 bg-black z-0 lightning-glow"
+            className="relative overflow-hidden w-full aspect-video rounded-2xl shadow-xl border border-slate-700/60 bg-black z-0"
             style={{ '--glow-color': themeColor } as React.CSSProperties}
           >
             {activeAd.videoId.endsWith(".mp4") || activeAd.videoId.startsWith("/videos/") ? (
@@ -201,94 +201,191 @@ function BankAdCard({
                 tabIndex={-1}
               />
             )}
-            {/* Click Blocker Overlay - Capture pointer-events so video/iframe never gets hover or touch events */}
             <div className="absolute inset-0 bg-transparent z-20 pointer-events-auto" />
             
-            {/* Custom Overlay Tag */}
-            <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/60 rounded-md text-[9px] text-white flex items-center gap-1 backdrop-blur-sm pointer-events-none uppercase tracking-wider font-semibold z-30">
-              <VolumeX className="w-3.5 h-3.5" /> Live Ad
+            <div className="absolute bottom-3 right-3 px-2.5 py-1 bg-black/80 rounded-md text-[9px] text-white flex items-center gap-1.5 backdrop-blur-md pointer-events-none uppercase tracking-wider font-bold border border-white/10 z-30">
+              <VolumeX className="w-3.5 h-3.5 text-amber-400" /> Official Video Ad
             </div>
           </div>
         </div>
 
-        {/* Right Side: Premium Details, Instructions, and Call to Action */}
+        {/* Right Side: Details & Call to Action */}
         <div className="lg:col-span-7 flex flex-col justify-between h-full space-y-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="h-10 flex items-center">
+              <div className="h-10 flex items-center px-3 py-1 bg-white/95 rounded-xl shadow-sm border border-slate-200">
                 {logoError ? (
-                  <div className="text-xl font-black tracking-tight" style={{ color: themeColor }}>
+                  <div className="text-sm font-black tracking-tight" style={{ color: themeColor }}>
                     {bankName.toUpperCase()}
                   </div>
                 ) : (
                   <img 
                     src={logoUrl} 
                     alt={bankName} 
-                    className="h-full object-contain" 
+                    className="h-7 object-contain max-w-[160px]" 
                     onError={() => setLogoError(true)} 
                   />
                 )}
               </div>
-              <span className="text-[9px] px-2.5 py-1 bg-slate-100 text-slate-600 font-bold uppercase tracking-wider rounded-full border border-slate-200/60">
-                Preferred Partner
+              <span className="text-[9px] px-3 py-1 bg-amber-500/10 text-amber-300 font-extrabold uppercase tracking-widest rounded-full border border-amber-500/30 flex items-center gap-1">
+                <Sparkles className="h-3 w-3 text-amber-400" /> Preferred Partner
               </span>
             </div>
 
             <div className="space-y-1">
-              <h4 className="text-lg font-bold text-slate-900 tracking-tight transition-all duration-300">{activeAd.title}</h4>
-              <p className="text-xs text-slate-500 leading-relaxed transition-all duration-300">{activeAd.slogan}</p>
+              <h4 className="text-lg font-extrabold text-white tracking-tight transition-all duration-300">{activeAd.title}</h4>
+              <p className="text-xs text-slate-300 leading-relaxed transition-all duration-300">{activeAd.slogan}</p>
             </div>
 
             {/* Instruction Grid Panel */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/80 backdrop-blur-sm p-4 rounded-2xl border border-slate-100">
-              <div className="space-y-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-800">
+              <div className="space-y-0.5">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account Type</div>
-                <div className="text-xs font-semibold text-slate-700">{accountType}</div>
+                <div className="text-xs font-bold text-white">{accountType}</div>
               </div>
               
-              <div className="space-y-1">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Key Reward</div>
-                <div className="text-xs font-semibold text-slate-700">{activeAd.feature}</div>
+              <div className="space-y-0.5">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Key Benefit / Reward</div>
+                <div className="text-xs font-bold text-emerald-400">{activeAd.feature}</div>
               </div>
 
-              <div className="space-y-1 border-t border-slate-200/50 pt-2">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Official Bank Support</div>
-                <div className="text-xs font-semibold text-slate-700">{bankSupport}</div>
+              <div className="space-y-0.5 border-t border-slate-800 pt-2">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Official Helpline</div>
+                <div className="text-xs font-semibold text-slate-200">{bankSupport}</div>
               </div>
 
-              <div className="space-y-1 border-t border-slate-200/50 pt-2">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Vyntyra Account Manager</div>
-                <div className="text-xs font-semibold text-slate-600 italic">{vyntyraManager}</div>
+              <div className="space-y-0.5 border-t border-slate-800 pt-2">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Vyntyra Fin Desk Contact</div>
+                <div className="text-xs font-semibold text-indigo-300">{vyntyraManager}</div>
               </div>
 
-              <div className="space-y-1 md:col-span-2 border-t border-slate-200/50 pt-2.5 mt-1">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Available Branch Locations</div>
-                <div className="text-xs text-slate-600 font-medium leading-relaxed">
+              <div className="space-y-0.5 md:col-span-2 border-t border-slate-800 pt-2 mt-0.5">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Available Branch Hubs</div>
+                <div className="text-xs text-slate-300 font-medium leading-relaxed">
                   {branches.join(", ")}
                 </div>
               </div>
             </div>
           </div>
 
-          <a href={link} target="_self" className="block w-full sm:w-fit sm:min-w-[200px]">
+          <a href={link} target="_blank" rel="noreferrer" className="block w-full sm:w-fit sm:min-w-[220px]">
             <motion.button 
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ scale: 1.03 }}
-              className="w-full py-3 px-6 rounded-xl text-white font-medium text-sm transition-colors shadow-md relative overflow-hidden group flex items-center justify-center gap-2"
+              whileTap={{ scale: 0.96 }}
+              whileHover={{ scale: 1.02 }}
+              className="w-full py-3 px-6 rounded-xl text-white font-bold text-xs transition-all shadow-xl relative overflow-hidden group flex items-center justify-center gap-2 cursor-pointer border border-white/20"
               style={{ backgroundColor: themeColor }}
             >
-              <span className="relative z-10 flex items-center gap-2 font-semibold">
-                Open Account Now <ExternalLink className="w-4 h-4" />
+              <span className="relative z-10 flex items-center gap-2 font-bold tracking-wide">
+                Apply / Open Account Now <ExternalLink className="w-4 h-4" />
               </span>
-              <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+              <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
             </motion.button>
           </a>
         </div>
       </div>
-
-
-
     </motion.div>
+  );
+}
+
+function BankAdsSection() {
+  return (
+    <div className="space-y-6 w-full max-w-7xl mx-auto pt-2">
+      <div className="bg-gradient-to-r from-indigo-950 via-[#0E131F] to-slate-900 rounded-3xl border border-indigo-500/30 p-6 shadow-2xl backdrop-blur-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 bg-indigo-900/80 border border-indigo-500/40 rounded-xl text-amber-400">
+              <Building2 className="h-5 w-5" />
+            </span>
+            <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+              Exclusive Financial Perks & Corporate Salary Accounts
+            </span>
+          </div>
+          <h2 className="text-xl font-black text-white tracking-tight">
+            Vyntyra Official Partner Banking Ads & Account Benefits
+          </h2>
+          <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+            Zero-balance corporate salary accounts, auto-sweep FD interest rates up to 7.25% p.a., monthly interest credits, lifetime free credit cards, and direct Vyntyra account manager support.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3.5 py-1.5 rounded-full font-extrabold uppercase tracking-widest flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" /> Verified Banking Partners
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <BankAdCard 
+          bankName="Kotak Mahindra Bank"
+          logoUrl="https://upload.wikimedia.org/wikipedia/commons/e/ea/Kotak_Mahindra_Bank_logo.svg"
+          link="https://www.kotak.com/en/home.html"
+          themeColor="#e61a22"
+          borderColor="border-red-500/30"
+          bgColor="from-red-950/30"
+          accountType="Zero-Balance Corporate Salary Account"
+          branches={["Visakhapatnam (Dwaraka Nagar, MVP Colony)", "Hyderabad (Hitec City, Gachibowli)", "Bengaluru (Indiranagar, Koramangala)", "Chennai (T. Nagar)"]}
+          bankSupport="1860 266 2666 / 24x7 Corporate Helpline"
+          vyntyraManager="Anil Kumar (Fin-Desk) · Ext: 402"
+          ads={[
+            { videoId: "1qvcBjU_1Mk", title: "Kotak 811 Zero Balance Salary Account", slogan: "Zero maintenance fees with instant video KYC onboarding in 3 minutes.", feature: "100% digital onboarding & instant virtual Visa card" },
+            { videoId: "5UenpW0G6Jk", title: "ActivMoney Auto-Sweep Account", slogan: "Earn FD-like high interest rates up to 7% p.a. on surplus savings while retaining 100% liquidity.", feature: "Auto-sweep FD interest on liquid balance" },
+            { videoId: "O-fDk4lI09E", title: "Kotak League Corporate Credit Card", slogan: "Lifetime free credit card with 4x reward points on online shopping & fuel surcharge waiver.", feature: "Zero annual fees for Vyntyra employees" }
+          ]}
+        />
+
+        <BankAdCard 
+          bankName="IDFC FIRST Bank"
+          logoUrl="https://upload.wikimedia.org/wikipedia/commons/e/ec/Logo_of_IDFC_First_Bank.svg"
+          link="https://www.idfcfirstbank.com/"
+          themeColor="#901235"
+          borderColor="border-rose-500/30"
+          bgColor="from-rose-950/30"
+          accountType="Monthly Interest Credit Salary Account"
+          branches={["Visakhapatnam (Siripuram, Gajuwaka)", "Hyderabad (Banjara Hills, Madhapur)", "Bengaluru (MG Road, HSR Layout)", "Mumbai (BKC)"]}
+          bankSupport="1800 108 8888 / 24x7 Support"
+          vyntyraManager="Vyntyra Partner Desk · Ext: 405"
+          ads={[
+            { videoId: "tpKwQZ9_fEQ", title: "Monthly Interest Payouts up to 7.25% p.a.", slogan: "Earn high interest credited directly to your account every single month instead of quarterly.", feature: "Monthly interest payout compounding" },
+            { videoId: "a7Sg-H2bWjE", title: "Zero Fee Banking Guarantee", slogan: "IDFC FIRST Bank guarantees zero fees on 28 essential savings services including IMPS & ATM transactions.", feature: "100% zero hidden charges" },
+            { videoId: "2XoQ0z4fIks", title: "Visa Signature Debit Card Perks", slogan: "Free domestic airport lounge access, complimentary insurance coverage & cashback on dining.", feature: "Free airport lounge access & ₹1Cr insurance" }
+          ]}
+        />
+
+        <BankAdCard 
+          bankName="Axis Bank"
+          logoUrl="https://upload.wikimedia.org/wikipedia/commons/c/c8/Axis_Bank_logo.svg"
+          link="https://www.axisbank.com/"
+          themeColor="#97144D"
+          borderColor="border-pink-500/30"
+          bgColor="from-pink-950/30"
+          accountType="Axis Corporate Salary & Wealth Account"
+          branches={["Visakhapatnam (VIP Road, Sampath Vinayaka Temple Rd)", "Hyderabad (Jubilee Hills)", "Bengaluru (Koramangala, Whitefield)"]}
+          bankSupport="1860 419 5555 / 1860 500 5555"
+          vyntyraManager="Vyntyra Partner Desk · Ext: 408"
+          ads={[
+            { videoId: "xVi-fgAlrEs", title: "Axis Corporate Salary Account", slogan: "Instant account setup, zero minimum balance requirement, and free personal accident cover up to ₹10 Lakhs.", feature: "₹10L Complimentary Accident Cover" },
+            { videoId: "O8486c0t6uI", title: "Grab Deals Shopping & Dining Cashback", slogan: "Get up to 15% instant cashback on Amazon, Flipkart, Swiggy, and Zomato via Axis Grab Deals.", feature: "15% Instant cashback on top apps" }
+          ]}
+        />
+
+        <BankAdCard 
+          bankName="HDFC Bank"
+          logoUrl="https://upload.wikimedia.org/wikipedia/commons/2/28/HDFC_Bank_Logo.svg"
+          link="https://www.hdfcbank.com/"
+          themeColor="#004c8f"
+          borderColor="border-blue-500/30"
+          bgColor="from-blue-950/30"
+          accountType="HDFC Premium Corporate Salary Account"
+          branches={["Visakhapatnam (Waltair Uplands, Ram Nagar)", "Hyderabad (Ameerpet, Kondapur)", "Bengaluru (UB City)"]}
+          bankSupport="1800 202 6161 / Corporate Helpdesk"
+          vyntyraManager="Vyntyra Partner Desk · Ext: 401"
+          ads={[
+            { videoId: "4uXk3r1s378", title: "HDFC Millennium Corporate Salary", slogan: "Zero balance salary account with preferential home loan rates & instant pre-approved personal loans.", feature: "Preferential loan rates & pre-approved credit" },
+            { videoId: "92183_7_x1M", title: "Millennia Credit Card Cashback", slogan: "5% cashback on Amazon, Flipkart, Myntra, Swiggy & Uber with complimentary lounge access.", feature: "5% Unlimited cashback on top brands" }
+          ]}
+        />
+      </div>
+    </div>
   );
 }
 function EmployeeDashboard() {
@@ -1249,6 +1346,7 @@ function EmployeeDashboard() {
     { id: "attendance", label: "Attendance & Time", enabled: isModuleEnabled("attendance") },
     { id: "leave", label: "Leaves", enabled: isModuleEnabled("leave") },
     { id: "payouts", label: "Payouts & Expenses", enabled: isModuleEnabled("payouts") },
+    { id: "banking", label: "Banking & Perks", enabled: true },
     { id: "support", label: "Helpdesk Tickets", badge: tickets.filter((t: any) => t.status === "open").length, enabled: isModuleEnabled("support") },
     { id: "resolver_support", label: "Intern Queries", badge: assignedSupportQueries.filter((q: any) => q.status !== "resolved").length, enabled: isModuleEnabled("resolver_support") },
     { id: "meetings", label: "Meetings", enabled: isModuleEnabled("meetings") },
@@ -1816,6 +1914,11 @@ function EmployeeDashboard() {
                   </div>
                 </motion.div>
               </div>
+
+              {/* Partner Banking Ads Card Row */}
+              <div className="pt-4 border-t border-slate-800/80">
+                <BankAdsSection />
+              </div>
             </motion.div>
           )}
 
@@ -2262,6 +2365,18 @@ function EmployeeDashboard() {
                   ))
                 )}
               </div>
+
+              {/* Partner Banking Ads & Account Benefits */}
+              <div className="pt-6 border-t border-slate-800/80">
+                <BankAdsSection />
+              </div>
+            </motion.div>
+          )}
+
+          {/* ─── OFFICIAL PARTNER BANKING & PERKS TAB ─── */}
+          {activeTab === "banking" && (
+            <motion.div key="banking" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
+              <BankAdsSection />
             </motion.div>
           )}
 
