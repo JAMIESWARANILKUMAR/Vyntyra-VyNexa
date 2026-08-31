@@ -327,16 +327,16 @@ function BankAdsSection() {
           bankSupport="1860 266 2666 / 24x7 Corporate Helpline"
           vyntyraManager="Anil Kumar (Fin-Desk) · Ext: 402"
           ads={[
-            { videoId: "1qvcBjU_1Mk", title: "Kotak 811 Zero Balance Salary Account", slogan: "Zero maintenance fees with instant video KYC onboarding in 3 minutes.", feature: "100% digital onboarding & instant virtual Visa card" },
-            { videoId: "5UenpW0G6Jk", title: "ActivMoney Auto-Sweep Account", slogan: "Earn FD-like high interest rates up to 7% p.a. on surplus savings while retaining 100% liquidity.", feature: "Auto-sweep FD interest on liquid balance" },
-            { videoId: "O-fDk4lI09E", title: "Kotak League Corporate Credit Card", slogan: "Lifetime free credit card with 4x reward points on online shopping & fuel surcharge waiver.", feature: "Zero annual fees for Vyntyra employees" }
+            { videoId: "1qvcBjU_1Mk", title: "Kotak 811: Zero Balance", slogan: "No maintenance charges. Open digitally using video KYC in 3 mins.", feature: "100% digital onboarding" },
+            { videoId: "5UenpW0G6Jk", title: "Earn Higher Interest", slogan: "Get FD-like interest rates up to 7% p.a. on your savings balance.", feature: "ActivMoney auto-sweep" },
+            { videoId: "O-fDk4lI09E", title: "Kotak League Credit Card", slogan: "Lifetime free credit card with massive rewards on shopping.", feature: "Zero annual charges" }
           ]}
         />
 
         <BankAdCard 
-          bankName="IDFC FIRST Bank"
+          bankName="IDFC First Bank"
           logoUrl="https://upload.wikimedia.org/wikipedia/commons/e/ec/Logo_of_IDFC_First_Bank.svg"
-          link="https://www.idfcfirstbank.com/"
+          link="https://www.idfcfirst.bank.in/"
           themeColor="#901235"
           borderColor="border-rose-500/30"
           bgColor="from-rose-950/30"
@@ -345,16 +345,16 @@ function BankAdsSection() {
           bankSupport="1800 108 8888 / 24x7 Support"
           vyntyraManager="Vyntyra Partner Desk · Ext: 405"
           ads={[
-            { videoId: "tpKwQZ9_fEQ", title: "Monthly Interest Payouts up to 7.25% p.a.", slogan: "Earn high interest credited directly to your account every single month instead of quarterly.", feature: "Monthly interest payout compounding" },
-            { videoId: "a7Sg-H2bWjE", title: "Zero Fee Banking Guarantee", slogan: "IDFC FIRST Bank guarantees zero fees on 28 essential savings services including IMPS & ATM transactions.", feature: "100% zero hidden charges" },
-            { videoId: "2XoQ0z4fIks", title: "Visa Signature Debit Card Perks", slogan: "Free domestic airport lounge access, complimentary insurance coverage & cashback on dining.", feature: "Free airport lounge access & ₹1Cr insurance" }
+            { videoId: "tpKwQZ9_fEQ", title: "Monthly Interest Payouts", slogan: "Earn up to 7.25% p.a. and watch your savings compound every single month.", feature: "Compounded monthly interest" },
+            { videoId: "a7Sg-H2bWjE", title: "Zero Fee Banking Promise", slogan: "IDFC First Bank promises zero fee on 28 essential savings services.", feature: "Completely zero fee" },
+            { videoId: "2XoQ0z4fIks", title: "Premium Visa Debit Card", slogan: "Get complimentary airport lounge access and fuel surcharge waivers.", feature: "Visa Signature rewards" }
           ]}
         />
 
         <BankAdCard 
           bankName="Axis Bank"
           logoUrl="https://upload.wikimedia.org/wikipedia/commons/c/c8/Axis_Bank_logo.svg"
-          link="https://www.axisbank.com/"
+          link="https://www.axis.bank.in/"
           themeColor="#97144D"
           borderColor="border-pink-500/30"
           bgColor="from-pink-950/30"
@@ -363,25 +363,9 @@ function BankAdsSection() {
           bankSupport="1860 419 5555 / 1860 500 5555"
           vyntyraManager="Vyntyra Partner Desk · Ext: 408"
           ads={[
-            { videoId: "xVi-fgAlrEs", title: "Axis Corporate Salary Account", slogan: "Instant account setup, zero minimum balance requirement, and free personal accident cover up to ₹10 Lakhs.", feature: "₹10L Complimentary Accident Cover" },
-            { videoId: "O8486c0t6uI", title: "Grab Deals Shopping & Dining Cashback", slogan: "Get up to 15% instant cashback on Amazon, Flipkart, Swiggy, and Zomato via Axis Grab Deals.", feature: "15% Instant cashback on top apps" }
-          ]}
-        />
-
-        <BankAdCard 
-          bankName="HDFC Bank"
-          logoUrl="https://upload.wikimedia.org/wikipedia/commons/2/28/HDFC_Bank_Logo.svg"
-          link="https://www.hdfcbank.com/"
-          themeColor="#004c8f"
-          borderColor="border-blue-500/30"
-          bgColor="from-blue-950/30"
-          accountType="HDFC Premium Corporate Salary Account"
-          branches={["Visakhapatnam (Waltair Uplands, Ram Nagar)", "Hyderabad (Ameerpet, Kondapur)", "Bengaluru (UB City)"]}
-          bankSupport="1800 202 6161 / Corporate Helpdesk"
-          vyntyraManager="Vyntyra Partner Desk · Ext: 401"
-          ads={[
-            { videoId: "4uXk3r1s378", title: "HDFC Millennium Corporate Salary", slogan: "Zero balance salary account with preferential home loan rates & instant pre-approved personal loans.", feature: "Preferential loan rates & pre-approved credit" },
-            { videoId: "92183_7_x1M", title: "Millennia Credit Card Cashback", slogan: "5% cashback on Amazon, Flipkart, Myntra, Swiggy & Uber with complimentary lounge access.", feature: "5% Unlimited cashback on top brands" }
+            { videoId: "xVi-fgAlrEs", title: "Axis ASAP Digital Savings", slogan: "Open instantly with zero paperwork and get a virtual debit card instantly.", feature: "Instant KYC validation" },
+            { videoId: "O8486c0t6uI", title: "Grab Deals Cashback Portal", slogan: "Enjoy flat 10% cashback on top brands like Flipkart, Amazon, and Swiggy.", feature: "Exclusive member benefits" },
+            { videoId: "Z8eW-U46C0A", title: "Automated Sweep-in Savings", slogan: "Get higher interest on excess funds while keeping high liquidity.", feature: "Flexible returns" }
           ]}
         />
       </div>
