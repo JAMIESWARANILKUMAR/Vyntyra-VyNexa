@@ -33,6 +33,7 @@ import {
   Send,
   ShieldCheck,
   ClipboardList,
+  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +52,7 @@ import { InstallPwaButton } from "@/components/install-pwa-button";
 import { Switch } from "@/components/ui/switch";
 import { AdminInternTasksView } from "@/components/admin-intern-tasks-view";
 import { SelectionEmailTrackerDialog } from "@/components/selection-email-tracker-dialog";
+import { AdminB2bPlaybook } from "@/components/admin-b2b-playbook";
 import {
   changeApplicationStatus,
   listStatusEvents,
@@ -487,6 +489,12 @@ function AdminDashboard() {
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <InstallPwaButton />
             <Link
+              to="/admin/b2b-playbook"
+              className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-gold hover:bg-gold/10 font-semibold"
+            >
+              <BookOpen className="h-4 w-4" /> <span className="hidden sm:inline">B2B Playbook</span>
+            </Link>
+            <Link
               to="/admin/operations"
               className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
             >
@@ -560,10 +568,19 @@ function AdminDashboard() {
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <Button
-                    onClick={() => setSelectionTrackerOpen(true)}
+                    asChild
                     className="bg-gold hover:bg-gold/90 text-slate-950 font-bold text-xs shadow-lg flex items-center gap-1.5 border-0"
                   >
-                    <Mail className="h-4 w-4" /> Selection Email Status
+                    <Link to="/admin/b2b-playbook">
+                      <BookOpen className="h-4 w-4" /> B2B Sales Playbook
+                    </Link>
+                  </Button>
+
+                  <Button
+                    onClick={() => setSelectionTrackerOpen(true)}
+                    className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0"
+                  >
+                    <Mail className="h-4 w-4 text-gold" /> Selection Emails
                   </Button>
 
                   <Button
@@ -620,6 +637,39 @@ function AdminDashboard() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* ── B2B Cold Email & Pitch Script Playbook Preview Card ── */}
+        <div className="rounded-lg border border-indigo-500/20 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl p-5 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="h-10 w-10 rounded-lg bg-gold/10 border border-gold/30 flex items-center justify-center shrink-0">
+                <BookOpen className="h-5 w-5 text-gold" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gold bg-gold/10 px-2 py-0.5 rounded border border-gold/30">
+                    B2B Revenue Engine
+                  </span>
+                  <span className="text-xs text-slate-400">4 Targeted Sectors</span>
+                </div>
+                <h3 className="text-base font-bold text-white">
+                  B2B Cold Email & Pitch Script Playbook
+                </h3>
+                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                  High-converting B2B cold email templates and 45-second phone/walk-in pitch scripts targeting Restaurants, Schools & Colleges, Salons & Spas, and Furniture Showrooms.
+                </p>
+              </div>
+            </div>
+            <Button
+              asChild
+              className="bg-gold hover:bg-gold/90 text-slate-950 font-bold text-xs shadow-lg flex items-center gap-2 shrink-0 border-0"
+            >
+              <Link to="/admin/b2b-playbook">
+                Open Full Playbook <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
 

@@ -33,6 +33,7 @@ import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin/security'
 import { Route as AuthenticatedAdminOperationsRouteImport } from './routes/_authenticated/admin/operations'
 import { Route as AuthenticatedAdminEmailCampaignsRouteImport } from './routes/_authenticated/admin/email-campaigns'
+import { Route as AuthenticatedAdminB2bPlaybookRouteImport } from './routes/_authenticated/admin/b2b-playbook'
 
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
@@ -157,6 +158,12 @@ const AuthenticatedAdminEmailCampaignsRoute =
     path: '/admin/email-campaigns',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminB2bPlaybookRoute =
+  AuthenticatedAdminB2bPlaybookRouteImport.update({
+    id: '/admin/b2b-playbook',
+    path: '/admin/b2b-playbook',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/auth/employee': typeof AuthEmployeeRoute
   '/auth/intern': typeof AuthInternRoute
   '/status/$token': typeof StatusTokenRoute
+  '/admin/b2b-playbook': typeof AuthenticatedAdminB2bPlaybookRoute
   '/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
   '/admin/operations': typeof AuthenticatedAdminOperationsRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
@@ -202,6 +210,7 @@ export interface FileRoutesByTo {
   '/auth/employee': typeof AuthEmployeeRoute
   '/auth/intern': typeof AuthInternRoute
   '/status/$token': typeof StatusTokenRoute
+  '/admin/b2b-playbook': typeof AuthenticatedAdminB2bPlaybookRoute
   '/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
   '/admin/operations': typeof AuthenticatedAdminOperationsRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
@@ -229,6 +238,7 @@ export interface FileRoutesById {
   '/auth/employee': typeof AuthEmployeeRoute
   '/auth/intern': typeof AuthInternRoute
   '/status/$token': typeof StatusTokenRoute
+  '/_authenticated/admin/b2b-playbook': typeof AuthenticatedAdminB2bPlaybookRoute
   '/_authenticated/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
   '/_authenticated/admin/operations': typeof AuthenticatedAdminOperationsRoute
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/auth/employee'
     | '/auth/intern'
     | '/status/$token'
+    | '/admin/b2b-playbook'
     | '/admin/email-campaigns'
     | '/admin/operations'
     | '/admin/security'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/auth/employee'
     | '/auth/intern'
     | '/status/$token'
+    | '/admin/b2b-playbook'
     | '/admin/email-campaigns'
     | '/admin/operations'
     | '/admin/security'
@@ -307,6 +319,7 @@ export interface FileRouteTypes {
     | '/auth/employee'
     | '/auth/intern'
     | '/status/$token'
+    | '/_authenticated/admin/b2b-playbook'
     | '/_authenticated/admin/email-campaigns'
     | '/_authenticated/admin/operations'
     | '/_authenticated/admin/security'
@@ -501,6 +514,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminEmailCampaignsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/b2b-playbook': {
+      id: '/_authenticated/admin/b2b-playbook'
+      path: '/admin/b2b-playbook'
+      fullPath: '/admin/b2b-playbook'
+      preLoaderRoute: typeof AuthenticatedAdminB2bPlaybookRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -509,6 +529,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEmployeeRoute: typeof AuthenticatedEmployeeRoute
   AuthenticatedInternRoute: typeof AuthenticatedInternRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
+  AuthenticatedAdminB2bPlaybookRoute: typeof AuthenticatedAdminB2bPlaybookRoute
   AuthenticatedAdminEmailCampaignsRoute: typeof AuthenticatedAdminEmailCampaignsRoute
   AuthenticatedAdminOperationsRoute: typeof AuthenticatedAdminOperationsRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
@@ -521,6 +542,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEmployeeRoute: AuthenticatedEmployeeRoute,
   AuthenticatedInternRoute: AuthenticatedInternRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
+  AuthenticatedAdminB2bPlaybookRoute: AuthenticatedAdminB2bPlaybookRoute,
   AuthenticatedAdminEmailCampaignsRoute: AuthenticatedAdminEmailCampaignsRoute,
   AuthenticatedAdminOperationsRoute: AuthenticatedAdminOperationsRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,

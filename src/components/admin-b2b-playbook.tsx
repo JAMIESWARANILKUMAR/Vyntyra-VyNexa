@@ -1,0 +1,589 @@
+import React, { useState } from "react";
+import { 
+  Building2, 
+  Utensils, 
+  GraduationCap, 
+  Sparkles, 
+  Armchair, 
+  Scissors, 
+  Mail, 
+  PhoneCall, 
+  Copy, 
+  Check, 
+  Send, 
+  Calendar, 
+  Target, 
+  ShieldCheck, 
+  TrendingUp, 
+  AlertTriangle, 
+  FileText, 
+  ChevronRight,
+  Layers,
+  Zap,
+  CheckCircle2,
+  ExternalLink,
+  BookOpen
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+
+export interface PlaybookIndustry {
+  id: string;
+  name: string;
+  icon: React.ElementType;
+  targetRole: string;
+  painPoint: string;
+  emailSubject: string;
+  emailBodyTemplate: string;
+  pitchScriptTemplate: string;
+  defaultVars: Record<string, string>;
+}
+
+export const PLAYBOOK_INDUSTRIES: PlaybookIndustry[] = [
+  {
+    id: "restaurants",
+    name: "Restaurants & Cafes",
+    icon: Utensils,
+    targetRole: "Owner, General Manager, or Operations Head",
+    painPoint: "25–35% marketplace commissions (Swiggy/Zomato/Uber Eats) and lost customer data",
+    emailSubject: "Quick question regarding direct orders at {{Restaurant_Name}}",
+    emailBodyTemplate: `Hi {{First_Name}},
+
+Noticed the great reviews for {{Restaurant_Name}}’s {{popular_dish_or_specialty}} around {{City_or_Neighborhood}}.
+
+Most restaurant owners we speak with mention that third-party delivery platforms take between 20% and 30% on every order, while keeping customer data locked behind their apps.
+
+At Vyntyra Consultancy Services, we build direct, commission-free online ordering systems and WhatsApp-integrated menus that:
+
+• Keep 100% of order revenue directly in your bank account
+• Automate order routing straight to your kitchen/POS printer
+• Build a direct customer database for repeat promo SMS/WhatsApp campaigns
+
+Would you be open to a 7-minute call this Thursday at 3:00 PM to see how a direct ordering setup works for {{Restaurant_Name}}?
+
+Best regards,
+
+Team Vyntyra
+Vyntyra Consultancy Services Pvt. Ltd.
+{{Website_URL}} | {{Phone_Number}}`,
+    pitchScriptTemplate: `"Hi {{First_Name}}, I love what you’ve built with {{Restaurant_Name}}. Quick question: are you currently looking for ways to capture direct online orders without paying the heavy 25–30% aggregator commissions?
+
+I run tech consulting at Vyntyra. We help local dining brands launch their own branded online ordering platform and automated WhatsApp booking system. It routes directly to your kitchen, retains your customer database, and has zero per-order commissions. Could I leave a quick 1-page breakdown with you, or can we chat for 5 minutes after your lunch rush?"`,
+    defaultVars: {
+      Restaurant_Name: "The Grand Bistro",
+      First_Name: "Rajesh",
+      popular_dish_or_specialty: "Wood-fired Artisan Pizzas",
+      City_or_Neighborhood: "Visakhapatnam",
+      Website_URL: "https://vyntyra.com",
+      Phone_Number: "+91 98765 43210"
+    }
+  },
+  {
+    id: "schools",
+    name: "Schools, Colleges & Coaching",
+    icon: GraduationCap,
+    targetRole: "Principal, Director, Chairman, or Administrative Head",
+    painPoint: "Fragmented administrative tasks, manual fee collection delays, and poor parent communication",
+    emailSubject: "Streamlining fee collection and administrative workflows for {{School_Name}}",
+    emailBodyTemplate: `Respected {{First_Name}},
+
+Managing student admissions, timetable coordination, and parent updates across fragmented tools often creates administrative bottlenecks for growing institutions.
+
+Vyntyra Consultancy Services develops custom, all-in-one Campus ERP and Learning Management Systems specifically built to simplify academic administration:
+
+• Automated Fee Management: Direct payment gateway integration with instant SMS/WhatsApp fee reminders and auto-generated receipts
+• Unified Parent Portal: Real-time mobile attendance, grade reports, and digital notices in one place
+• Zero Clutter: A customized interface containing only the modules your staff actually uses, with no unnecessary recurring license bloat
+
+Could we schedule a brief 10-minute online walkthrough next Tuesday to demonstrate how this can streamline operations at {{School_Name}}?
+
+Warm regards,
+
+Team Vyntyra
+Vyntyra Consultancy Services Pvt. Ltd.
+{{Website_URL}} | {{Phone_Number}}`,
+    pitchScriptTemplate: `"Good morning {{First_Name}}. I’m contacting you from Vyntyra Consultancy Services. We specialize in custom educational ERP software.
+
+Many institutional heads tell us that off-the-shelf software is either too complex for teachers or lacks automated fee tracking. We build simplified, unified portals for attendance, auto-receipt fee collection, and parent communication customized to your exact syllabus and fee structures. I’d appreciate the opportunity to show you a quick 10-minute demo of how other institutes automated their administrative reporting."`,
+    defaultVars: {
+      School_Name: "St. Xavier Academy",
+      First_Name: "Dr. Sharma",
+      City_or_Neighborhood: "Hyderabad",
+      Website_URL: "https://vyntyra.com",
+      Phone_Number: "+91 98765 43210"
+    }
+  },
+  {
+    id: "salons",
+    name: "Beauty Salons & Wellness Spas",
+    icon: Scissors,
+    targetRole: "Salon Owner, Studio Director, or Lead Esthetician",
+    painPoint: "Appointment no-shows, messy manual booking calendars, and lost repeat bookings",
+    emailSubject: "Reducing no-shows and boosting rebookings at {{Salon_Name}}",
+    emailBodyTemplate: `Hi {{First_Name}},
+
+Running a high-volume salon like {{Salon_Name}} means every empty appointment slot or last-minute cancellation directly impacts your daily chair revenue.
+
+At Vyntyra Consultancy Services, we develop custom appointment booking web apps and automated reminder systems for premium salons:
+
+• Automated WhatsApp Reminders: Cut no-shows by up to 40% with automated confirmations and calendar sync
+• Seamless 24/7 Online Booking: Let clients book their favorite stylist and service directly from your Instagram bio or website
+• Stylist Commission & Inventory Tracking: Automatically calculate staff commissions and monitor product stock levels in real time
+
+Would you be open to a quick 5-minute chat this week to see how a streamlined booking flow can increase weekday chair occupancy?
+
+Best,
+
+Team Vyntyra
+Vyntyra Consultancy Services Pvt. Ltd.
+{{Website_URL}} | {{Phone_Number}}`,
+    pitchScriptTemplate: `"Hi {{First_Name}}, your salon’s work on Instagram looks incredible. Quick question—how are you currently handling appointment reminders and weekday bookings?
+
+We build custom online booking and automated WhatsApp reminder systems for salons. It allows your clients to book specific stylists 24/7 without calling, and sends automatic reminders to eliminate no-shows while tracking staff commissions automatically. If you have two minutes, I’d love to share a quick preview of how it looks on mobile."`,
+    defaultVars: {
+      Salon_Name: "Glow & Grace Luxury Spa",
+      First_Name: "Priya",
+      City_or_Neighborhood: "Bengaluru",
+      Website_URL: "https://vyntyra.com",
+      Phone_Number: "+91 98765 43210"
+    }
+  },
+  {
+    id: "furniture",
+    name: "Furniture & Interior Showrooms",
+    icon: Armchair,
+    targetRole: "Showroom Owner, Managing Partner, or Sales Director",
+    painPoint: "Long sales cycles, difficulties visualizing products in customer spaces, and manual inventory/delivery tracking",
+    emailSubject: "Accelerating custom quotes and visual sales for {{Showroom_Name}}",
+    emailBodyTemplate: `Hi {{First_Name}},
+
+When customers shop for furniture at {{Showroom_Name}}, one of the biggest reasons they hesitate before purchasing is uncertain spatial sizing and visualization.
+
+Vyntyra Consultancy Services designs custom digital catalogs, 3D/AR product visualizers, and showroom ERPs tailored for the furniture and interior design trade:
+
+• Interactive Digital Catalogs: Enable clients to view dimensions, fabric variants, and finish options interactively
+• Instant Quotation Calculators: Allow sales staff to generate detailed modular pricing and PDF invoices on an iPad in seconds
+• Warehouse & Dispatch Tracking: Track custom manufacturing orders from workshop production to home delivery
+
+Would you be open to a 10-minute demo on Friday to explore how interactive digital catalogs can help shorten your showroom sales cycle?
+
+Best regards,
+
+Team Vyntyra
+Vyntyra Consultancy Services Pvt. Ltd.
+{{Website_URL}} | {{Phone_Number}}`,
+    pitchScriptTemplate: `"Hello {{First_Name}}, you have a great collection in the showroom. Quick question: when clients are considering custom pieces or modular sets, do your reps have a fast way to generate instant visual quotes?
+
+At Vyntyra, we build custom digital catalog apps and showroom inventory software. Your sales team can showcase custom material options, generate itemized estimates on the spot, and track dispatch schedules effortlessly. Could I show you a 60-second demo on a tablet?"`,
+    defaultVars: {
+      Showroom_Name: "Urban Living Furniture Studio",
+      First_Name: "Vikram",
+      City_or_Neighborhood: "Visakhapatnam",
+      Website_URL: "https://vyntyra.com",
+      Phone_Number: "+91 98765 43210"
+    }
+  }
+];
+
+export function AdminB2bPlaybook() {
+  const [activeTab, setActiveTab] = useState<string>("restaurants");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const selectedIndustry = PLAYBOOK_INDUSTRIES.find((i) => i.id === activeTab) || PLAYBOOK_INDUSTRIES[0];
+
+  const [formVars, setFormVars] = useState<Record<string, string>>({
+    First_Name: selectedIndustry.defaultVars.First_Name || "Decision Maker",
+    Restaurant_Name: selectedIndustry.defaultVars.Restaurant_Name || selectedIndustry.defaultVars.School_Name || selectedIndustry.defaultVars.Salon_Name || selectedIndustry.defaultVars.Showroom_Name || "Business Name",
+    popular_dish_or_specialty: selectedIndustry.defaultVars.popular_dish_or_specialty || "Specialty Services",
+    City_or_Neighborhood: selectedIndustry.defaultVars.City_or_Neighborhood || "Metro Area",
+    Website_URL: "https://vyntyra.com",
+    Phone_Number: "+91 98765 43210"
+  });
+
+  const handleTabChange = (val: string) => {
+    setActiveTab(val);
+    const ind = PLAYBOOK_INDUSTRIES.find((i) => i.id === val);
+    if (ind) {
+      setFormVars((prev) => ({
+        ...prev,
+        First_Name: ind.defaultVars.First_Name || "Decision Maker",
+        Restaurant_Name: ind.defaultVars.Restaurant_Name || ind.defaultVars.School_Name || ind.defaultVars.Salon_Name || ind.defaultVars.Showroom_Name || "Target Business",
+        popular_dish_or_specialty: ind.defaultVars.popular_dish_or_specialty || "Core Offerings",
+        City_or_Neighborhood: ind.defaultVars.City_or_Neighborhood || "Visakhapatnam",
+      }));
+    }
+  };
+
+  const getSubstitutedText = (template: string): string => {
+    let result = template;
+    const currentBusinessName = formVars.Restaurant_Name || "Target Business";
+    result = result.replaceAll("{{Restaurant_Name}}", currentBusinessName);
+    result = result.replaceAll("{{School_Name}}", currentBusinessName);
+    result = result.replaceAll("{{Salon_Name}}", currentBusinessName);
+    result = result.replaceAll("{{Showroom_Name}}", currentBusinessName);
+    result = result.replaceAll("{{First_Name}}", formVars.First_Name || "Owner");
+    result = result.replaceAll("{{popular_dish_or_specialty}}", formVars.popular_dish_or_specialty || "specialty services");
+    result = result.replaceAll("{{City/Neighborhood}}", formVars.City_or_Neighborhood || "City");
+    result = result.replaceAll("{{City_or_Neighborhood}}", formVars.City_or_Neighborhood || "City");
+    result = result.replaceAll("{{Website_URL}}", formVars.Website_URL || "https://vyntyra.com");
+    result = result.replaceAll("{{Phone_Number}}", formVars.Phone_Number || "+91 98765 43210");
+    return result;
+  };
+
+  const copyToClipboard = (text: string, key: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    toast.success(`${label} copied to clipboard!`);
+    setTimeout(() => setCopiedKey(null), 2500);
+  };
+
+  const renderedSubject = getSubstitutedText(selectedIndustry.emailSubject);
+  const renderedBody = getSubstitutedText(selectedIndustry.emailBodyTemplate);
+  const renderedPitch = getSubstitutedText(selectedIndustry.pitchScriptTemplate);
+
+  return (
+    <div className="space-y-8">
+      {/* Header Banner */}
+      <div className="relative rounded-xl overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/20 text-white p-6 sm:p-8 shadow-2xl">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(99,102,241,0.15),transparent_70%)] pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-400/30 bg-indigo-500/10 px-3.5 py-1 text-xs font-semibold text-indigo-300 backdrop-blur-md">
+              <Zap className="h-3.5 w-3.5 text-gold animate-pulse" />
+              High-Converting B2B Cold Email & Pitch Script Engine
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              B2B Client Acquisition & Pitch Playbook
+            </h2>
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+              Targeted B2B outreach scripts for local decision-makers in Restaurants, Educational Institutions, Wellness Salons, and Interior Showrooms. Personalize variables and copy email/phone scripts in 1-click.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+            <Button
+              onClick={() => copyToClipboard(`${renderedSubject}\n\n${renderedBody}`, "full_email", "Full Cold Email")}
+              className="bg-gold hover:bg-gold/90 text-slate-950 font-bold text-xs shadow-lg flex items-center gap-2"
+            >
+              <Copy className="h-4 w-4" /> Copy Full Email
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Tabs Navigation */}
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-6">
+        <div className="border-b border-border pb-2 overflow-x-auto">
+          <TabsList className="bg-muted/60 p-1.5 rounded-lg flex gap-1 h-auto min-w-max">
+            {PLAYBOOK_INDUSTRIES.map((ind) => {
+              const Icon = ind.icon;
+              return (
+                <TabsTrigger
+                  key={ind.id}
+                  value={ind.id}
+                  className="data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm px-4 py-2.5 rounded-md text-xs font-semibold flex items-center gap-2 transition-all"
+                >
+                  <Icon className="h-4 w-4" />
+                  {ind.name}
+                </TabsTrigger>
+              );
+            })}
+            <TabsTrigger
+              value="best-practices"
+              className="data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm px-4 py-2.5 rounded-md text-xs font-semibold flex items-center gap-2 transition-all"
+            >
+              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              Outreach Best Practices & Cadence
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Industry Specific Content */}
+        {PLAYBOOK_INDUSTRIES.map((ind) => {
+          if (ind.id !== activeTab) return null;
+          const Icon = ind.icon;
+
+          return (
+            <TabsContent key={ind.id} value={ind.id} className="space-y-6 animate-in fade-in-50 duration-200">
+              {/* Target & Painpoint Summary Card */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <Card className="border border-border/80 shadow-sm bg-surface/50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                      <Target className="h-3.5 w-3.5 text-secondary" /> Decision-Maker Target Profile
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm font-semibold text-foreground">{ind.targetRole}</div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border border-amber-500/20 bg-amber-500/5 shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs uppercase tracking-widest text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5" /> Revenue & Operational Bottleneck
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">{ind.painPoint}</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Dynamic Variables Personalizer Bar */}
+              <Card className="border border-secondary/20 bg-card shadow-sm">
+                <CardHeader className="pb-3 border-b border-border">
+                  <CardTitle className="text-sm font-semibold flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-gold" />
+                      Outreach Variable Personalizer
+                    </span>
+                    <Badge variant="outline" className="text-[10px]">Real-time Preview</Badge>
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Substitute target business details to customize the cold email and phone pitch scripts instantly.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-muted-foreground">Decision Maker Name</label>
+                    <Input
+                      value={formVars.First_Name}
+                      onChange={(e) => setFormVars({ ...formVars, First_Name: e.target.value })}
+                      placeholder="e.g. Rajesh"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-muted-foreground">Business / Institution Name</label>
+                    <Input
+                      value={formVars.Restaurant_Name}
+                      onChange={(e) => setFormVars({ ...formVars, Restaurant_Name: e.target.value })}
+                      placeholder="e.g. The Grand Bistro"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-muted-foreground">Specialty / Feature</label>
+                    <Input
+                      value={formVars.popular_dish_or_specialty}
+                      onChange={(e) => setFormVars({ ...formVars, popular_dish_or_specialty: e.target.value })}
+                      placeholder="e.g. Artisan Pizzas"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-muted-foreground">City / Neighborhood</label>
+                    <Input
+                      value={formVars.City_or_Neighborhood}
+                      onChange={(e) => setFormVars({ ...formVars, City_or_Neighborhood: e.target.value })}
+                      placeholder="e.g. Visakhapatnam"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Script Showcase Section */}
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* 1. B2B Cold Email Template */}
+                <Card className="border border-border bg-card shadow-corp flex flex-col justify-between">
+                  <div>
+                    <CardHeader className="border-b border-border bg-muted/30 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-bold flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-secondary" />
+                          Value-First B2B Cold Email Template
+                        </CardTitle>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyToClipboard(`${renderedSubject}\n\n${renderedBody}`, `email_${ind.id}`, "Cold Email")}
+                          className="h-7 text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                        >
+                          {copiedKey === `email_${ind.id}` ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                          Copy Email
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-4 space-y-4">
+                      {/* Subject Line */}
+                      <div className="bg-surface rounded-md p-3 border border-border">
+                        <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">
+                          Subject Line:
+                        </div>
+                        <div className="text-xs font-semibold text-foreground select-all">
+                          {renderedSubject}
+                        </div>
+                      </div>
+
+                      {/* Email Body */}
+                      <div className="bg-surface rounded-md p-4 border border-border font-mono text-xs text-foreground/90 whitespace-pre-wrap leading-relaxed select-all max-h-[420px] overflow-y-auto">
+                        {renderedBody}
+                      </div>
+                    </CardContent>
+                  </div>
+                  <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between">
+                    <div className="text-[11px] text-muted-foreground">
+                      💡 Tip: Personalize the first line with real details from their Google Maps or social profiles.
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => copyToClipboard(renderedBody, `body_${ind.id}`, "Email Body")}
+                      className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+                    >
+                      Copy Body Only
+                    </Button>
+                  </div>
+                </Card>
+
+                {/* 2. Phone / Walk-in 45-Second Pitch Script */}
+                <Card className="border border-border bg-card shadow-corp flex flex-col justify-between">
+                  <div>
+                    <CardHeader className="border-b border-border bg-muted/30 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-bold flex items-center gap-2">
+                          <PhoneCall className="h-4 w-4 text-emerald-600" />
+                          45-Second Phone / Walk-in Pitch Script
+                        </CardTitle>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyToClipboard(renderedPitch, `pitch_${ind.id}`, "Pitch Script")}
+                          className="h-7 text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                        >
+                          {copiedKey === `pitch_${ind.id}` ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                          Copy Script
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-4 space-y-4">
+                      <div className="bg-emerald-500/5 rounded-md p-4 border border-emerald-500/20 text-xs text-foreground/90 leading-relaxed font-sans italic whitespace-pre-wrap select-all">
+                        {renderedPitch}
+                      </div>
+
+                      <div className="space-y-2 pt-2">
+                        <div className="text-xs font-semibold text-foreground">Key Pitch Objectives:</div>
+                        <ul className="space-y-1.5 text-xs text-muted-foreground">
+                          <li className="flex items-start gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                            Hook within 10 seconds by mentioning their exact business name and core product.
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                            Highlight the immediate ROI: 0% commissions, automated workflow, or zero no-shows.
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                            Low-friction call-to-action: Offer a 1-page breakdown or quick 5-minute off-peak chat.
+                          </li>
+                        </ul>
+                      </div>
+                    </CardContent>
+                  </div>
+                  <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between">
+                    <div className="text-[11px] text-muted-foreground">
+                      ⏱️ Duration: 45–60 Seconds
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => copyToClipboard(renderedPitch, `pitch_btn_${ind.id}`, "Phone Pitch")}
+                      className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                    >
+                      Copy Phone Pitch
+                    </Button>
+                  </div>
+                </Card>
+              </div>
+            </TabsContent>
+          );
+        })}
+
+        {/* Outreach Best Practices & Cadence Tab */}
+        <TabsContent value="best-practices" className="space-y-6 animate-in fade-in-50 duration-200">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="border border-border bg-card shadow-sm">
+              <CardHeader className="pb-2">
+                <Badge variant="outline" className="w-fit text-[10px] bg-secondary/10 text-secondary border-secondary/30 mb-1">Stage 1</Badge>
+                <CardTitle className="text-sm font-bold">Customization</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground leading-relaxed">
+                Always replace placeholders (<code className="text-foreground font-mono">popular_dish</code>, <code className="text-foreground font-mono">City</code>) with verified details from their Google Maps listing or social profile before hitting send.
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border bg-card shadow-sm">
+              <CardHeader className="pb-2">
+                <Badge variant="outline" className="w-fit text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 mb-1">Stage 2</Badge>
+                <CardTitle className="text-sm font-bold">Follow-Up 1 (Day 3)</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground leading-relaxed">
+                Send a soft reminder thread: <br />
+                <span className="italic text-foreground font-medium">"Hi {"{{First_Name}}"}", just floating this to the top of your inbox in case you missed it."</span>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border bg-card shadow-sm">
+              <CardHeader className="pb-2">
+                <Badge variant="outline" className="w-fit text-[10px] bg-indigo-500/10 text-indigo-600 border-indigo-500/30 mb-1">Stage 3</Badge>
+                <CardTitle className="text-sm font-bold">Follow-Up 2 (Day 6)</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground leading-relaxed">
+                Share a quick 3-bullet mini case study or feature highlight showing concrete metrics (e.g., 30% commission savings or 40% reduction in no-shows).
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border bg-card shadow-sm">
+              <CardHeader className="pb-2">
+                <Badge variant="outline" className="w-fit text-[10px] bg-destructive/10 text-destructive border-destructive/30 mb-1">Stage 4</Badge>
+                <CardTitle className="text-sm font-bold">Breakup Email (Day 10)</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground leading-relaxed">
+                Polite closing email: <br />
+                <span className="italic text-foreground font-medium">"Assuming direct online orders/automation isn't a priority right now, I'll stop reaching out."</span>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border border-indigo-500/20 bg-indigo-500/5 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-indigo-600" />
+                Delivery Mechanism & Domain Security Compliance
+              </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground">
+                Crucial steps to maintain domain reputation and ensure 99%+ inbox placement.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-xs text-foreground/90">
+              <div className="flex items-start gap-3 p-3 bg-card rounded-md border border-border">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold text-foreground">Verified Domain Sender:</span> Always send cold emails from a verified corporate domain email address (e.g., <code className="bg-muted px-1 py-0.5 rounded text-foreground font-mono">anil@vyntyra.com</code>).
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 bg-card rounded-md border border-border">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold text-foreground">SPF, DKIM, and DMARC Records:</span> Ensure your DNS records are configured with valid SPF, DKIM, and DMARC policies to prevent emails from landing in spam/junk folders.
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 bg-card rounded-md border border-border">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold text-foreground">Gradual Warmup:</span> Limit new outreach volume to 30–50 targeted personalized emails per day per inbox.
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
