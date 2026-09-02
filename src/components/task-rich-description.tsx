@@ -113,7 +113,7 @@ export function TaskRichDescription({
     const nameSet = new Set<string>();
 
     // Add passed objects
-    teamMembers.forEach(m => {
+    (teamMembers || []).forEach(m => {
       if (typeof m === "string") {
         if (!nameSet.has(m.toLowerCase())) {
           nameSet.add(m.toLowerCase());
