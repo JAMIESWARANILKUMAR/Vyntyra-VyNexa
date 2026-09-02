@@ -3260,7 +3260,7 @@ function InternDashboard() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 text-xs gap-1 border-amber-500/40 bg-amber-950/60 hover:bg-amber-900 text-amber-300 font-bold rounded-xl cursor-pointer"
+                                className="h-8 text-xs gap-1 border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-lg cursor-pointer"
                                 onClick={() => {
                                   setDoubtTaskId(task.id);
                                   setDoubtTaskTitle(task.title);
@@ -3271,14 +3271,14 @@ function InternDashboard() {
                                   setDoubtModalOpen(true);
                                 }}
                               >
-                                <HelpCircle className="h-3.5 w-3.5 text-amber-400" /> Request Doubt Session
+                                <HelpCircle className="h-3.5 w-3.5 text-amber-500" /> Request Doubt Session
                               </Button>
 
                               {/* Request Resources */}
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 text-xs gap-1 border-indigo-500/40 bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 font-bold rounded-xl cursor-pointer"
+                                className="h-8 text-xs gap-1 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg cursor-pointer"
                                 onClick={() => {
                                   setResourceTaskId(task.id);
                                   setResourceTaskTitle(task.title);
@@ -3288,14 +3288,14 @@ function InternDashboard() {
                                   setResourceModalOpen(true);
                                 }}
                               >
-                                <FolderOpen className="h-3.5 w-3.5 text-indigo-400" /> Request Resources
+                                <FolderOpen className="h-3.5 w-3.5 text-indigo-500" /> Request Resources
                               </Button>
 
                               {/* Contact Mentor */}
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="h-8 text-xs gap-1 border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold rounded-xl cursor-pointer"
+                                className="h-8 text-xs gap-1 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-lg cursor-pointer"
                                 onClick={() => {
                                   if (mentor) {
                                     const defaultGroup = "https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5";
@@ -3308,11 +3308,11 @@ function InternDashboard() {
                                   }
                                 }}
                               >
-                                <MessageCircle className="h-3.5 w-3.5 text-emerald-400" /> Contact Mentor
+                                <MessageCircle className="h-3.5 w-3.5 text-emerald-500" /> Contact Mentor
                               </Button>
 
-                              <Button size="sm" variant="outline" className="h-8 text-xs border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold rounded-xl cursor-pointer" onClick={() => setSelectedTaskWorkspace(task)}>
-                                <Layers className="h-3.5 w-3.5 mr-1 text-blue-400" /> Open Workspace
+                              <Button size="sm" variant="outline" className="h-8 text-xs border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-lg cursor-pointer" onClick={() => setSelectedTaskWorkspace(task)}>
+                                <Layers className="h-3.5 w-3.5 mr-1 text-blue-500" /> Open Workspace
                               </Button>
                             </div>
                           </div>
@@ -3320,31 +3320,31 @@ function InternDashboard() {
 
                         {/* Submission Link & Deadline Extension request section */}
                         {isFeePaymentPending ? (
-                          <div className="mt-2 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-amber-950/20 p-4 rounded-2xl border border-amber-500/30 shadow-md">
+                          <div className="mt-2 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm">
                             <div className="flex-1 space-y-1">
-                              <div className="flex items-center gap-1.5 font-bold text-amber-300 text-xs">
-                                <Lock className="h-4 w-4 text-amber-400 shrink-0" /> Task Submission Locked — Exam Fee Payment Required
+                              <div className="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
+                                <Lock className="h-4 w-4 text-amber-600 shrink-0" /> Task Submission Locked — Exam Fee Payment Required
                               </div>
-                              <p className="text-[11px] text-amber-200 leading-relaxed font-medium">
+                              <p className="text-[11px] text-amber-800 leading-relaxed font-medium">
                                 Please pay the mandatory exam fee of <strong>₹{profile?.exam_fee_amount || 199}</strong> to enable task deliverable submissions and activate your verified certificate upon completion.
                               </p>
-                              <p className="text-[10px] text-amber-400/80 italic">
+                              <p className="text-[10px] text-amber-700 italic">
                                 Note: Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
                               </p>
                             </div>
                             <Button 
                               size="sm" 
-                              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-4 shrink-0 rounded-xl cursor-pointer"
+                              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-4 shrink-0 rounded-lg cursor-pointer"
                               onClick={() => setShowPaymentModal(true)}
                             >
                               Pay ₹{profile?.exam_fee_amount || 199} to Unlock
                             </Button>
                           </div>
                         ) : (
-                          <div className="mt-2 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-[#131B2E]/90 p-4 rounded-2xl border border-slate-800/80">
+                          <div className="mt-2 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
                             {/* Submission Field */}
                             <div className="flex-1 space-y-2">
-                              <label className="text-[11px] font-bold text-slate-300 block">
+                              <label className="text-[11px] font-bold text-slate-700 block">
                                 Public Task Deliverable URL (GitHub Repo / Live PR / Google Drive / Figma / Vercel)
                               </label>
                               {submissionTaskId === task.id ? (
@@ -3355,14 +3355,14 @@ function InternDashboard() {
                                       placeholder="https://github.com/your-username/project or drive link"
                                       value={submissionUrl}
                                       onChange={(e) => setSubmissionUrl(e.target.value)}
-                                      className="flex-1 rounded-xl border border-slate-700 p-2.5 text-xs bg-slate-900 text-slate-200 placeholder:text-slate-500 outline-none focus:border-emerald-500"
+                                      className="flex-1 rounded-lg border border-slate-300 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                     />
                                     <input 
                                       type="text"
                                       placeholder="Optional submission notes / version..."
                                       value={submissionNotes}
                                       onChange={(e) => setSubmissionNotes(e.target.value)}
-                                      className="flex-1 sm:max-w-xs rounded-xl border border-slate-700 p-2.5 text-xs bg-slate-900 text-slate-200 placeholder:text-slate-500 outline-none focus:border-emerald-500"
+                                      className="flex-1 sm:max-w-xs rounded-lg border border-slate-300 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                     />
                                     <div className="flex items-center gap-2">
                                       <Button 
