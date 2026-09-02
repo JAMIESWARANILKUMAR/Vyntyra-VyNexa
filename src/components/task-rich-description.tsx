@@ -64,25 +64,28 @@ export function formatTaskText(rawText: string): {
 
   // 3. Replace LaTeX symbols with clean visual characters/arrows
   text = text
-    .replace(/\$\\rightarrow\$/gi, " ➔ ")
-    .replace(/\\rightarrow\b/gi, " ➔ ")
-    .replace(/\$\\Rightarrow\$/gi, " ➔ ")
-    .replace(/\\Rightarrow\b/gi, " ➔ ")
-    .replace(/\$\\leftrightarrow\$/gi, " ↔ ")
-    .replace(/\\leftrightarrow\b/gi, " ↔ ")
-    .replace(/\$\\leftarrow\$/gi, " ⬅ ")
-    .replace(/\\leftarrow\b/gi, " ⬅ ")
-    .replace(/\$\\le\$/gi, " ≤ ")
-    .replace(/\\le\b/gi, " ≤ ")
-    .replace(/\$\\ge\$/gi, " ≥ ")
-    .replace(/\\ge\b/gi, " ≥ ")
-    .replace(/\$\\times\$/gi, " × ")
-    .replace(/\\times\b/gi, " × ");
+    .replace(/\$\\rightarrow\$/gi, " -> ")
+    .replace(/\\rightarrow\b/gi, " -> ")
+    .replace(/\$\\Rightarrow\$/gi, " => ")
+    .replace(/\\Rightarrow\b/gi, " => ")
+    .replace(/\$\\leftrightarrow\$/gi, " <-> ")
+    .replace(/\\leftrightarrow\b/gi, " <-> ")
+    .replace(/\$\\leftarrow\$/gi, " <- ")
+    .replace(/\\leftarrow\b/gi, " <- ")
+    .replace(/\$\\le\$/gi, " <= ")
+    .replace(/\\le\b/gi, " <= ")
+    .replace(/\$\\ge\$/gi, " >= ")
+    .replace(/\\ge\b/gi, " >= ")
+    .replace(/\$\\times\$/gi, " x ")
+    .replace(/\\times\b/gi, " x ");
 
-  // Remove loose bullet points that AI sometimes generates at the start of bold lines
-  text = text.replace(/^[•\-\*]\s*(Challenge|Primary Persona|Secondary Persona|Visual Palette|Key Components|Required Screens)/gim, "$1");
+  // 4. Normalize weird non-standard AI bullets (like •) into standard Markdown dashes
+  text = text.replace(/^[•]\s*/gim, "- ");
+  
+  // 5. Remove loose bullet points that AI sometimes generates at the start of bold lines
+  text = text.replace(/^[\-\*]\s*(Challenge|Primary Persona|Secondary Persona|Visual Palette|Key Components|Required Screens)/gim, "$1");
 
-  // 4. Auto-structure squished numbered sections (e.g. "1. Problem ... 2. Workflow ... 3. Required ...")
+  // 6. Auto-structure squished numbered sections (e.g. "1. Problem ... 2. Workflow ... 3. Required ...")
   if (/^\d+\.\s+[A-Z]/.test(text)) {
     text = "### " + text;
   }
@@ -354,16 +357,16 @@ export function TaskRichDescription({
                 );
               },
               p({ children }) {
-                return <p className="mb-3 text-slate-600 whitespace-pre-wrap leading-relaxed">{children}</p>;
+                return <p className="mb-3 text-slate-600 whitespace-pre-wrap leading-relaxed last:mb-0">{children}</p>;
               },
               ul({ children }) {
-                return <ul className="list-disc list-inside space-y-1.5 my-3 text-slate-700">{children}</ul>;
+                return <ul className="list-disc list-outside pl-5 space-y-2 my-3 text-slate-700">{children}</ul>;
               },
               ol({ children }) {
-                return <ol className="list-decimal list-inside space-y-1.5 my-3 text-slate-700">{children}</ol>;
+                return <ol className="list-decimal list-outside pl-5 space-y-2 my-3 text-slate-700">{children}</ol>;
               },
               li({ children }) {
-                return <li className="text-slate-700">{children}</li>;
+                return <li className="text-slate-700 marker:text-slate-400">{children}</li>;
               },
               strong({ children }) {
                 return <strong className="font-semibold text-slate-900">{children}</strong>;
