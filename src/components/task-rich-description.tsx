@@ -79,6 +79,9 @@ export function formatTaskText(rawText: string): {
     .replace(/\$\\times\$/gi, " × ")
     .replace(/\\times\b/gi, " × ");
 
+  // Remove loose bullet points that AI sometimes generates at the start of bold lines
+  text = text.replace(/^[•\-\*]\s*(Challenge|Primary Persona|Secondary Persona|Visual Palette|Key Components|Required Screens)/gim, "$1");
+
   // 4. Auto-structure squished numbered sections (e.g. "1. Problem ... 2. Workflow ... 3. Required ...")
   if (/^\d+\.\s+[A-Z]/.test(text)) {
     text = "### " + text;
@@ -89,8 +92,12 @@ export function formatTaskText(rawText: string): {
   text = text.replace(/\b(Screen\s+\d+\s*\([^)]+\):?)/gi, "\n\n- **$1** ");
 
   // 6. Structure bold key labels like "Challenge:", "Primary Persona:", "Key Components:", "Visual Palette:"
+  // Use double newline so Markdown interprets it cleanly as a top-level list or paragraph.
   text = text
-    .replace(/\b(Challenge|Primary Persona|Secondary Persona|Visual Palette|Key Components|Required Screens|Required 4-Screen Wireframes):\s*/gi, "\n  - **$1:** ");
+    .replace(/\b(Challenge|Primary Persona|Secondary Persona|Visual Palette|Key Components|Required Screens|Required 4-Screen Wireframes):\s*/gi, "\n\n**$1:** ");
+
+  // Clean up any double/triple empty list artifacts
+  text = text.replace(/\n\n-\s*\n\n-/g, "\n\n-");
 
   return {
     cleanMarkdown: text,
@@ -165,8 +172,16 @@ export function TaskRichDescription({
           });
 
           const enriched = rawTeammatesList.map(item => {
-            const matched = profileMap.get(item.full_name.toLowerCase().trim()) || 
+            // 1. Try Exact match
+            let matched = profileMap.get(item.full_name.toLowerCase().trim()) || 
                             (item.email ? profileMap.get(item.email.toLowerCase().trim()) : null);
+            
+            // 2. Try Fuzzy match by first name if exact fails
+            if (!matched) {
+               const firstName = item.full_name.split(' ')[0].toLowerCase().trim();
+               matched = dbProfiles.find(p => p.full_name && p.full_name.toLowerCase().includes(firstName)) as TeammateInfo | undefined;
+            }
+
             return {
               ...item,
               ...(matched || {})
@@ -239,7 +254,7 @@ export function TaskRichDescription({
               const phoneClean = member.phone ? member.phone.replace(/[^0-9]/g, "") : "";
               const whatsappUrl = phoneClean
                 ? `https://wa.me/${phoneClean.startsWith("91") ? phoneClean : "91" + phoneClean}?text=${encodeURIComponent(`Hi ${member.full_name}, regarding our team task on Vyntyra!`)}`
-                : `https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5`;
+                : null;
 
               return (
                 <div
@@ -269,6 +284,11 @@ export function TaskRichDescription({
                   </div>
 
                   <div className="flex flex-col gap-2 shrink-0 border-t border-slate-100 pt-3 md:border-t-0 md:pt-0">
+                    {!member.email && !member.phone && (
+                      <div className="text-[11px] text-slate-400 italic flex items-center gap-1">
+                         <span>Contact info unavailable</span>
+                      </div>
+                    )}
                     {member.email && (
                       <a
                         href={`mailto:${member.email}`}
@@ -289,15 +309,17 @@ export function TaskRichDescription({
                           {member.phone}
                         </a>
                       )}
-                      <a
-                        href={whatsappUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
-                      >
-                        <MessageSquare className="h-3.5 w-3.5" />
-                        WhatsApp
-                      </a>
+                      {whatsappUrl && (
+                        <a
+                          href={whatsappUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
+                        >
+                          <MessageSquare className="h-3.5 w-3.5" />
+                          WhatsApp
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
