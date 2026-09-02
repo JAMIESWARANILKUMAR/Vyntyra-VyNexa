@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import { 
   Users, 
@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 
 interface TeammateInfo {
   id?: string;
@@ -56,15 +55,15 @@ export function formatTaskText(rawText: string): {
     text = text.replace(/\[Meet:\s*https?:\/\/[^\s\]]+\]/gi, "").trim();
   }
 
-  // 2. Extract [👥 Team: Name 1, Name 2, ...] or [Team: Name 1, Name 2, ...]
-  const teamMatch = text.match(/\[(?:👥\s*)?Team:\s*([^\]]+)\]/i);
+  // 2. Extract [👥 Team: Name 1, Name 2, ...]
+  const teamMatch = text.match(/\[👥\s*Team:\s*([^\]]+)\]/i) || text.match(/\[Team:\s*([^\]]+)\]/i);
   if (teamMatch) {
     const namesStr = teamMatch[1];
     namesStr.split(",").forEach(n => {
       const trimmed = n.trim();
       if (trimmed) parsedTeamNames.push(trimmed);
     });
-    text = text.replace(/\[(?:👥\s*)?Team:\s*[^\]]+\]/gi, "").trim();
+    text = text.replace(/\[👥?\s*Team:\s*[^\]]+\]/gi, "").trim();
   }
 
   // 3. Replace LaTeX symbols with clean visual characters/arrows
@@ -75,8 +74,6 @@ export function formatTaskText(rawText: string): {
     .replace(/\\Rightarrow\b/gi, " ➔ ")
     .replace(/\$\\leftrightarrow\$/gi, " ↔ ")
     .replace(/\\leftrightarrow\b/gi, " ↔ ")
-    .replace(/\$\\leftarrow\$/gi, " ⬅ ")
-    .replace(/\\leftarrow\b/gi, " ⬅ ")
     .replace(/\$\\le\$/gi, " ≤ ")
     .replace(/\\le\b/gi, " ≤ ")
     .replace(/\$\\ge\$/gi, " ≥ ")
@@ -85,18 +82,12 @@ export function formatTaskText(rawText: string): {
     .replace(/\\times\b/gi, " × ");
 
   // 4. Auto-structure squished numbered sections (e.g. "1. Problem ... 2. Workflow ... 3. Required ...")
-  // Ensure "1. ", "2. ", "3. ", "4. " get heading breaks even if at start or mid-string
-  if (/^\d+\.\s+[A-Z]/.test(text)) {
-    text = "### " + text;
-  }
+  // If numbers like " 2. ", " 3. ", " 4. " appear without preceding double newlines, inject heading breaks
   text = text.replace(/([^\n])\s*(\d+\.\s+[A-Z])/g, "$1\n\n### $2");
 
-  // 5. Structure Screens ("Screen 1 (...", "Screen 2 (...", etc.)
-  text = text.replace(/\b(Screen\s+\d+\s*\([^)]+\):?)/gi, "\n\n- **$1** ");
-
-  // 6. Structure bold key labels like "Challenge:", "Primary Persona:", "Key Components:", "Visual Palette:"
+  // 5. Structure bold section titles like "Challenge:", "Primary Persona:", etc.
   text = text
-    .replace(/\b(Challenge|Primary Persona|Secondary Persona|Visual Palette|Key Components|Required Screens|Required 4-Screen Wireframes):\s*/gi, "\n  - **$1:** ");
+    .replace(/\b(Challenge|Primary Persona|Secondary Persona|Visual Palette|Key Components|Required Screens|Required 4-Screen Wireframes):\s*/gi, "\n- **$1:** ");
 
   return {
     cleanMarkdown: text,
@@ -116,101 +107,58 @@ export function TaskRichDescription({
     [description]
   );
 
-  const [fetchedProfiles, setFetchedProfiles] = useState<TeammateInfo[]>([]);
-
   // Combine passed team members and parsed names
-  const rawTeammatesList = useMemo(() => {
+  const allTeammates = useMemo(() => {
     const list: TeammateInfo[] = [];
     const nameSet = new Set<string>();
 
+    // Add passed objects
     teamMembers.forEach(m => {
       if (typeof m === "string") {
-        if (m.trim() && !nameSet.has(m.toLowerCase().trim())) {
-          nameSet.add(m.toLowerCase().trim());
-          list.push({ full_name: m.trim() });
+        if (!nameSet.has(m.toLowerCase())) {
+          nameSet.add(m.toLowerCase());
+          list.push({ full_name: m });
         }
       } else if (m && m.full_name) {
-        if (!nameSet.has(m.full_name.toLowerCase().trim())) {
-          nameSet.add(m.full_name.toLowerCase().trim());
+        if (!nameSet.has(m.full_name.toLowerCase())) {
+          nameSet.add(m.full_name.toLowerCase());
           list.push(m);
         }
       }
     });
 
+    // Add parsed names from text
     parsedTeamNames.forEach(name => {
-      if (name.trim() && !nameSet.has(name.toLowerCase().trim())) {
-        nameSet.add(name.toLowerCase().trim());
-        list.push({ full_name: name.trim() });
+      if (!nameSet.has(name.toLowerCase())) {
+        nameSet.add(name.toLowerCase());
+        list.push({ full_name: name });
       }
     });
 
     return list;
   }, [teamMembers, parsedTeamNames]);
 
-  // Fetch full profile details (email, phone, avatar, domain) for teammates from DB if missing
-  useEffect(() => {
-    let isMounted = true;
-    async function lookupTeammateProfiles() {
-      if (rawTeammatesList.length === 0) return;
-
-      const searchNames = rawTeammatesList.map(t => t.full_name).filter(Boolean);
-      if (searchNames.length === 0) return;
-
-      try {
-        const { data: dbProfiles } = await supabase
-          .from("profiles")
-          .select("id, full_name, email, phone, avatar_url, department, domain, role, intern_id");
-
-        if (dbProfiles && isMounted) {
-          const profileMap = new Map<string, TeammateInfo>();
-          dbProfiles.forEach(p => {
-            if (p.full_name) profileMap.set(p.full_name.toLowerCase().trim(), p as TeammateInfo);
-            if (p.email) profileMap.set(p.email.toLowerCase().trim(), p as TeammateInfo);
-          });
-
-          const enriched = rawTeammatesList.map(item => {
-            const matched = profileMap.get(item.full_name.toLowerCase().trim()) || 
-                            (item.email ? profileMap.get(item.email.toLowerCase().trim()) : null);
-            return {
-              ...item,
-              ...(matched || {})
-            };
-          });
-
-          setFetchedProfiles(enriched);
-        }
-      } catch (err) {
-        console.warn("Failed to lookup teammate profiles:", err);
-      }
-    }
-
-    lookupTeammateProfiles();
-    return () => { isMounted = false; };
-  }, [rawTeammatesList]);
-
-  const displayTeammates = fetchedProfiles.length > 0 ? fetchedProfiles : rawTeammatesList;
-
-  if (!description && displayTeammates.length === 0 && !meetingUrl) {
+  if (!description && allTeammates.length === 0 && !meetingUrl) {
     return <span className="text-slate-400 italic text-xs">No description provided.</span>;
   }
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-3.5 ${className}`}>
       {/* ── 1-CLICK MEETING SYNC BANNER ── */}
       {meetingUrl && (
-        <div className="bg-gradient-to-r from-indigo-950 via-purple-950 to-slate-900 border border-indigo-500/40 rounded-2xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-3 backdrop-blur-md">
-          <div className="flex items-center gap-3.5">
-            <div className="h-11 w-11 bg-indigo-500/20 border border-indigo-400/40 rounded-xl flex items-center justify-center text-indigo-300 shadow-xs">
-              <Video className="h-6 w-6 animate-pulse text-indigo-400" />
+        <div className="bg-gradient-to-r from-indigo-950/90 via-purple-950/90 to-slate-900 border border-indigo-500/40 rounded-2xl p-3.5 shadow-lg flex flex-wrap items-center justify-between gap-3 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 bg-indigo-500/20 border border-indigo-400/40 rounded-xl flex items-center justify-center text-indigo-300 shadow-xs">
+              <Video className="h-5 w-5 animate-pulse" />
             </div>
             <div>
-              <div className="text-xs font-black text-white tracking-wide uppercase flex items-center gap-2">
+              <div className="text-xs font-black text-white tracking-wide uppercase flex items-center gap-1.5">
                 <span>Google Meet / Live Team Sync</span>
-                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] px-2.5 py-0.5 rounded-full font-extrabold uppercase tracking-widest">
-                  Active
+                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] px-2 py-0.2 rounded-full font-bold">
+                  Active Link
                 </span>
               </div>
-              <p className="text-[11px] text-indigo-200 font-mono truncate max-w-xs sm:max-w-md mt-0.5">
+              <p className="text-[11px] text-slate-300 font-mono truncate max-w-xs sm:max-w-md mt-0.5">
                 {meetingUrl}
               </p>
             </div>
@@ -220,42 +168,42 @@ export function TaskRichDescription({
             href={meetingUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs px-5 py-2.5 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0"
           >
             <span>Join 1-on-1 Sync</span>
-            <ExternalLink className="h-4 w-4" />
+            <ExternalLink className="h-3.5 w-3.5" />
           </a>
         </div>
       )}
 
       {/* ── COLLABORATIVE TEAMMATES CONTACT CARDS ── */}
-      {displayTeammates.length > 0 && (
-        <div className="bg-[#090D16] border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
-          <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+      {allTeammates.length > 0 && (
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-md">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-amber-400">
-              <Users className="h-4 w-4" /> Assigned Collaborative Team ({displayTeammates.length} Members)
+              <Users className="h-4 w-4" /> Assigned Collaborative Team ({allTeammates.length} Members)
             </div>
-            <span className="text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-extrabold uppercase tracking-wider">
+            <span className="text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-extrabold">
               Team Deliverable
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {displayTeammates.map((member, idx) => {
+            {allTeammates.map((member, idx) => {
               const phoneClean = member.phone ? member.phone.replace(/[^0-9]/g, "") : "";
               const whatsappUrl = phoneClean
                 ? `https://wa.me/${phoneClean.startsWith("91") ? phoneClean : "91" + phoneClean}?text=${encodeURIComponent(`Hi ${member.full_name}, regarding our team task on Vyntyra!`)}`
-                : `https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5`;
+                : null;
 
               return (
                 <div
                   key={idx}
-                  className="bg-[#0E131F] border border-slate-800/90 hover:border-slate-700 p-3.5 rounded-xl flex items-center justify-between gap-3 transition-all shadow-xs"
+                  className="bg-[#0B0F17] border border-slate-800 hover:border-slate-700 p-3 rounded-xl flex items-center justify-between gap-3 transition-all"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <Avatar className="h-10 w-10 border border-indigo-500/30 shadow-xs">
+                    <Avatar className="h-9 w-9 border border-indigo-500/30 shadow-xs">
                       <AvatarImage src={member.avatar_url} alt={member.full_name} />
-                      <AvatarFallback className="bg-gradient-to-br from-indigo-950 to-slate-900 text-indigo-300 font-black text-xs">
+                      <AvatarFallback className="bg-indigo-950 text-indigo-300 font-extrabold text-xs">
                         {member.full_name.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -268,22 +216,24 @@ export function TaskRichDescription({
                           </span>
                         )}
                       </div>
-                      <div className="text-[10px] text-indigo-400 font-semibold truncate mt-0.5">
+                      <div className="text-[10px] text-indigo-400 font-medium truncate">
                         {member.domain || member.department || member.role || "Engineering & Tech"}
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <a
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      title="Direct WhatsApp Message"
-                      className="h-8 w-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center transition-colors"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                    </a>
+                    {whatsappUrl && (
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Direct WhatsApp Message"
+                        className="h-8 w-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center transition-colors"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </a>
+                    )}
                     {member.email && (
                       <a
                         href={`mailto:${member.email}`}
@@ -314,42 +264,42 @@ export function TaskRichDescription({
       {cleanMarkdown && (
         <div
           className={`prose prose-slate max-w-none dark:prose-invert text-slate-200 text-xs leading-relaxed ${
-            compact ? "line-clamp-4" : ""
+            compact ? "line-clamp-3" : ""
           }`}
         >
           <ReactMarkdown
             components={{
               h1({ children }) {
-                return <h1 className="text-base font-black text-white mt-4 mb-2 border-b border-slate-800 pb-1">{children}</h1>;
+                return <h1 className="text-base font-black text-white mt-3 mb-2 border-b border-slate-800 pb-1">{children}</h1>;
               },
               h2({ children }) {
-                return <h2 className="text-sm font-extrabold text-indigo-300 mt-4 mb-2">{children}</h2>;
+                return <h2 className="text-sm font-extrabold text-indigo-300 mt-3 mb-1.5">{children}</h2>;
               },
               h3({ children }) {
                 return (
-                  <h3 className="text-xs font-black text-amber-300 uppercase tracking-wider mt-4 mb-2 bg-amber-950/40 border-l-4 border-amber-400 px-3 py-1.5 rounded-r-xl shadow-xs">
+                  <h3 className="text-xs font-bold text-amber-300 uppercase tracking-wider mt-3 mb-1 bg-amber-950/40 border-l-2 border-amber-400 pl-2.5 py-0.5 rounded-r-md">
                     {children}
                   </h3>
                 );
               },
               p({ children }) {
-                return <p className="mb-2 text-slate-300 whitespace-pre-wrap leading-relaxed font-normal">{children}</p>;
+                return <p className="mb-2 text-slate-300 whitespace-pre-wrap leading-relaxed">{children}</p>;
               },
               ul({ children }) {
-                return <ul className="list-disc list-inside space-y-1.5 my-2 text-slate-300 pl-2">{children}</ul>;
+                return <ul className="list-disc list-inside space-y-1 my-2 text-slate-300">{children}</ul>;
               },
               ol({ children }) {
-                return <ol className="list-decimal list-inside space-y-1.5 my-2 text-slate-300 pl-2">{children}</ol>;
+                return <ol className="list-decimal list-inside space-y-1 my-2 text-slate-300">{children}</ol>;
               },
               li({ children }) {
-                return <li className="text-slate-300 font-medium leading-relaxed">{children}</li>;
+                return <li className="text-slate-300 font-medium">{children}</li>;
               },
               strong({ children }) {
                 return <strong className="font-extrabold text-white">{children}</strong>;
               },
               code({ children }) {
                 return (
-                  <code className="bg-slate-800/90 text-indigo-300 text-[11px] font-mono px-2 py-0.5 rounded-md border border-slate-700/80">
+                  <code className="bg-slate-800 text-indigo-300 text-[11px] font-mono px-1.5 py-0.5 rounded border border-slate-700">
                     {children}
                   </code>
                 );
