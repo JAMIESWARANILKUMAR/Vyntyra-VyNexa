@@ -191,22 +191,22 @@ export function TaskRichDescription({
   }
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-5 ${className}`}>
       {/* ── 1-CLICK MEETING SYNC BANNER ── */}
       {meetingUrl && (
-        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-white border border-indigo-200 rounded-2xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3.5">
-            <div className="h-11 w-11 bg-indigo-100 border border-indigo-200 rounded-xl flex items-center justify-center text-indigo-600 shadow-sm">
-              <Video className="h-6 w-6 animate-pulse" />
+        <div className="bg-white border-l-4 border-l-blue-600 border-y border-r border-slate-200 rounded-r-lg p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-10 bg-blue-50 border border-blue-100 rounded-full flex items-center justify-center text-blue-600">
+              <Video className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs font-black text-indigo-900 tracking-wide uppercase flex items-center gap-2">
+              <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <span>Google Meet / Live Team Sync</span>
-                <span className="bg-emerald-100 text-emerald-700 border border-emerald-200 text-[9px] px-2.5 py-0.5 rounded-full font-extrabold uppercase tracking-widest">
+                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] px-2 py-0.5 rounded font-semibold uppercase tracking-wide">
                   Active
                 </span>
               </div>
-              <p className="text-[11px] text-indigo-600 font-mono truncate max-w-xs sm:max-w-md mt-0.5">
+              <p className="text-xs text-slate-500 font-mono mt-1">
                 {meetingUrl}
               </p>
             </div>
@@ -216,88 +216,89 @@ export function TaskRichDescription({
             href={meetingUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black text-xs px-5 py-2.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2 rounded-md transition-colors shrink-0"
           >
-            <span>Join 1-on-1 Sync</span>
-            <ExternalLink className="h-4 w-4" />
+            <Video className="h-4 w-4" />
+            <span>Join Meeting</span>
           </a>
         </div>
       )}
 
       {/* ── COLLABORATIVE TEAMMATES CONTACT CARDS ── */}
       {displayTeammates.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-800">
-              <Users className="h-4 w-4 text-indigo-600" /> Assigned Collaborative Team ({displayTeammates.length} Members)
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+            <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
+              <Users className="h-4 w-4 text-slate-500" /> 
+              Project Team ({displayTeammates.length})
             </div>
-            <span className="text-[10px] bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-full font-extrabold uppercase tracking-wider">
-              Team Deliverable
-            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {displayTeammates.map((member, idx) => {
               const phoneClean = member.phone ? member.phone.replace(/[^0-9]/g, "") : "";
               const whatsappUrl = phoneClean
                 ? `https://wa.me/${phoneClean.startsWith("91") ? phoneClean : "91" + phoneClean}?text=${encodeURIComponent(`Hi ${member.full_name}, regarding our team task on Vyntyra!`)}`
-                : `https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5`; // Fallback group chat
+                : `https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5`;
 
               return (
                 <div
                   key={idx}
-                  className="bg-slate-50 border border-slate-200 hover:border-slate-300 p-3.5 rounded-xl flex items-center justify-between gap-3 transition-all shadow-sm"
+                  className="bg-white border border-slate-200 p-4 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm hover:border-blue-300 transition-colors"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar className="h-10 w-10 border border-indigo-200 shadow-sm">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <Avatar className="h-12 w-12 border border-slate-200">
                       <AvatarImage src={member.avatar_url} alt={member.full_name} />
-                      <AvatarFallback className="bg-gradient-to-br from-indigo-100 to-blue-50 text-indigo-700 font-black text-xs">
+                      <AvatarFallback className="bg-slate-100 text-slate-600 font-bold text-sm">
                         {member.full_name.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-slate-800 truncate flex items-center gap-1.5">
-                        <span>{member.full_name}</span>
+                      <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <span className="truncate">{member.full_name}</span>
                         {member.intern_id && (
-                          <span className="text-[9px] font-mono text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded shadow-sm">
+                          <span className="text-[10px] font-mono text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded shrink-0">
                             {member.intern_id}
                           </span>
                         )}
                       </div>
-                      <div className="text-[10px] text-indigo-600 font-semibold truncate mt-0.5">
+                      <div className="text-xs text-slate-500 font-medium truncate mt-0.5">
                         {member.domain || member.department || member.role || "Engineering & Tech"}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <a
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      title="Direct WhatsApp Message"
-                      className="h-8 w-8 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-600 flex items-center justify-center transition-colors"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                    </a>
+                  <div className="flex flex-col gap-2 shrink-0 border-t border-slate-100 pt-3 md:border-t-0 md:pt-0">
                     {member.email && (
                       <a
                         href={`mailto:${member.email}`}
-                        title="Send Email"
-                        className="h-8 w-8 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-600 flex items-center justify-center transition-colors"
+                        className="flex items-center gap-2 text-xs text-slate-600 hover:text-blue-600 transition-colors"
                       >
-                        <Mail className="h-4 w-4" />
+                        <Mail className="h-3.5 w-3.5 text-slate-400" />
+                        {member.email}
                       </a>
                     )}
-                    {member.phone && (
+                    
+                    <div className="flex items-center gap-5">
+                      {member.phone && (
+                        <a
+                          href={`tel:${member.phone}`}
+                          className="flex items-center gap-2 text-xs text-slate-600 hover:text-blue-600 transition-colors"
+                        >
+                          <Phone className="h-3.5 w-3.5 text-slate-400" />
+                          {member.phone}
+                        </a>
+                      )}
                       <a
-                        href={`tel:${member.phone}`}
-                        title="Direct Call"
-                        className="h-8 w-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-600 flex items-center justify-center transition-colors"
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
                       >
-                        <Phone className="h-4 w-4" />
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        WhatsApp
                       </a>
-                    )}
+                    </div>
                   </div>
                 </div>
               );
@@ -316,36 +317,36 @@ export function TaskRichDescription({
           <ReactMarkdown
             components={{
               h1({ children }) {
-                return <h1 className="text-base font-black text-slate-900 mt-4 mb-2 border-b border-slate-200 pb-1">{children}</h1>;
+                return <h1 className="text-lg font-bold text-slate-900 mt-6 mb-3 border-b border-slate-200 pb-2">{children}</h1>;
               },
               h2({ children }) {
-                return <h2 className="text-sm font-extrabold text-indigo-700 mt-4 mb-2">{children}</h2>;
+                return <h2 className="text-base font-bold text-slate-800 mt-5 mb-2">{children}</h2>;
               },
               h3({ children }) {
                 return (
-                  <h3 className="text-xs font-black text-indigo-800 uppercase tracking-wider mt-4 mb-2 bg-indigo-50 border-l-4 border-indigo-500 px-3 py-1.5 rounded-r-xl shadow-sm">
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide mt-5 mb-2 pb-1 border-b border-slate-100">
                     {children}
                   </h3>
                 );
               },
               p({ children }) {
-                return <p className="mb-2 text-slate-600 whitespace-pre-wrap leading-relaxed font-normal">{children}</p>;
+                return <p className="mb-3 text-slate-600 whitespace-pre-wrap leading-relaxed">{children}</p>;
               },
               ul({ children }) {
-                return <ul className="list-disc list-inside space-y-1.5 my-2 text-slate-700 pl-2">{children}</ul>;
+                return <ul className="list-disc list-inside space-y-1.5 my-3 text-slate-700">{children}</ul>;
               },
               ol({ children }) {
-                return <ol className="list-decimal list-inside space-y-1.5 my-2 text-slate-700 pl-2">{children}</ol>;
+                return <ol className="list-decimal list-inside space-y-1.5 my-3 text-slate-700">{children}</ol>;
               },
               li({ children }) {
-                return <li className="text-slate-700 font-medium leading-relaxed">{children}</li>;
+                return <li className="text-slate-700">{children}</li>;
               },
               strong({ children }) {
-                return <strong className="font-extrabold text-slate-900">{children}</strong>;
+                return <strong className="font-semibold text-slate-900">{children}</strong>;
               },
               code({ children }) {
                 return (
-                  <code className="bg-slate-100 text-indigo-700 text-[11px] font-mono px-2 py-0.5 rounded-md border border-slate-200">
+                  <code className="bg-slate-50 text-slate-800 text-xs font-mono px-1.5 py-0.5 rounded border border-slate-200">
                     {children}
                   </code>
                 );
