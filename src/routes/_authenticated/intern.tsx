@@ -3170,9 +3170,7 @@ function InternDashboard() {
                               )}
                             </div>
 
-                            {task.description && (
-                              <TaskRichDescription description={task.description} teamMembers={task.team_members || task.team_member_names} />
-                            )}
+                            <TaskRichDescription description={task.description} teamMembers={task.team_members || task.team_member_names} />
 
                             {/* Action links row & Resources */}
                             <div className="mt-4 flex flex-wrap gap-2">

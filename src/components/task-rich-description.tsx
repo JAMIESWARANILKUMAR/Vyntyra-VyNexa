@@ -162,13 +162,14 @@ export function TaskRichDescription({
       try {
         const { data: dbProfiles } = await supabase
           .from("profiles")
-          .select("id, full_name, email, phone, avatar_url, department, domain, role, intern_id");
+          .select("id, full_name, email, phone, phone_number, avatar_url, department, domain, role, intern_id");
 
         if (dbProfiles && isMounted) {
           const profileMap = new Map<string, TeammateInfo>();
           dbProfiles.forEach(p => {
-            if (p.full_name) profileMap.set(p.full_name.toLowerCase().trim(), p as TeammateInfo);
-            if (p.email) profileMap.set(p.email.toLowerCase().trim(), p as TeammateInfo);
+            const mappedP = { ...p, phone: p.phone || p.phone_number } as TeammateInfo;
+            if (p.full_name) profileMap.set(p.full_name.toLowerCase().trim(), mappedP);
+            if (p.email) profileMap.set(p.email.toLowerCase().trim(), mappedP);
           });
 
           const enriched = rawTeammatesList.map(item => {
@@ -179,7 +180,8 @@ export function TaskRichDescription({
             // 2. Try Fuzzy match by first name if exact fails
             if (!matched) {
                const firstName = item.full_name.split(' ')[0].toLowerCase().trim();
-               matched = dbProfiles.find(p => p.full_name && p.full_name.toLowerCase().includes(firstName)) as TeammateInfo | undefined;
+               const fuzzy = dbProfiles.find(p => p.full_name && p.full_name.toLowerCase().includes(firstName));
+               if (fuzzy) matched = { ...fuzzy, phone: fuzzy.phone || fuzzy.phone_number } as TeammateInfo;
             }
 
             return {
