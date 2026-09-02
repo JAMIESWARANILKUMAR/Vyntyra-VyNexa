@@ -21,6 +21,7 @@ import {
 import { sendTaskNotification } from "@/lib/notifications.functions";
 import { sendTaskNotificationEmail, generateTaskWhatsApp } from "@/lib/notifications-omni.functions";
 import { toast } from "sonner";
+import { TaskRichDescription } from "@/components/task-rich-description";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -767,7 +768,9 @@ export function AdminInternTasksView() {
                         )}
                       </div>
 
-                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 break-words">{t.description}</p>
+                      {t.description && (
+                        <TaskRichDescription description={t.description} teamMembers={t.team_members || t.team_member_names} />
+                      )}
 
                       <div className="flex items-center gap-3 sm:gap-4 text-[11px] text-slate-500 flex-wrap pt-1">
                         <span className="flex items-center gap-1 font-semibold text-slate-800 dark:text-slate-200">
@@ -1149,7 +1152,9 @@ export function AdminInternTasksView() {
                           )}
                         </div>
 
-                        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 break-words">{t.description || "No description."}</p>
+                        {t.description && (
+                          <TaskRichDescription description={t.description} teamMembers={t.team_members || t.team_member_names} />
+                        )}
 
                         <div className="flex items-center gap-3 sm:gap-4 text-[11px] text-slate-400 flex-wrap pt-1">
                           <span>Created: {new Date(t.created_at).toLocaleDateString()}</span>

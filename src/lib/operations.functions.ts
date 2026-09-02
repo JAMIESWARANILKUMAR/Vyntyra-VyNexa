@@ -335,14 +335,20 @@ export const listTasks = createServerFn({ method: "GET" })
       rawList = plain;
     }
 
+    const authEmail = context.user?.email;
+
+    // Fetch user profile using ID, email, or intern_id to resolve ALL identifiers
     const { data: userProfile } = await admin
       .from("profiles")
       .select("id, intern_id, email, full_name, created_at, mentor_id")
-      .eq("id", context.userId)
+      .or(`id.eq.${context.userId}${authEmail ? `,email.eq.${authEmail}` : ""}`)
       .maybeSingle();
+
+    const userEmail = authEmail || userProfile?.email;
 
     const myIdsLower = new Set([
       context.userId?.toLowerCase(),
+      userEmail?.toLowerCase(),
       userProfile?.id?.toLowerCase(),
       userProfile?.intern_id?.toLowerCase(),
       userProfile?.email?.toLowerCase(),
@@ -398,10 +404,13 @@ export const listTasks = createServerFn({ method: "GET" })
 
       const hasIdMatch = (val: any) => {
         if (!val) return false;
-        return myIdsLower.has(String(val).toLowerCase());
+        return myIdsLower.has(String(val).toLowerCase().trim());
       };
 
-      // Match against any of user's identifiers, team memberships, deliverables, or notification title
+      const descNameMatch = userProfile?.full_name && t.description && t.description.toLowerCase().includes(userProfile.full_name.toLowerCase());
+      const descEmailMatch = userEmail && t.description && t.description.toLowerCase().includes(userEmail.toLowerCase());
+
+      // Match against any of user's identifiers, team memberships, deliverables, notification title, or description text
       const isDirectAssigned = Boolean(
         hasIdMatch(t.assigned_to) ||
         hasIdMatch(t.target_user_id) ||
@@ -409,8 +418,11 @@ export const listTasks = createServerFn({ method: "GET" })
         hasIdMatch(t.user_id) ||
         (Array.isArray(t.team_members) && t.team_members.some((m: any) => hasIdMatch(m))) ||
         (Array.isArray(t.target_user_ids) && t.target_user_ids.some((m: any) => hasIdMatch(m))) ||
+        (Array.isArray(t.team_member_names) && t.team_member_names.some((m: any) => hasIdMatch(m))) ||
         myDelivTaskIds.has(t.id) ||
-        isNotifTask
+        isNotifTask ||
+        descNameMatch ||
+        descEmailMatch
       );
 
       if (isDirectAssigned) return true;
@@ -5606,29 +5618,48 @@ export const dismissUrgentPopup = createServerFn({ method: "POST" })
 export const listInternTasksForMentor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
-    internId: z.string().uuid(),
+    internId: z.string().min(1),
   }).parse(d))
   .handler(async ({ data }) => {
     const admin = getAdminClient();
     
-    // Find all tasks assigned to this intern using service role
-    const { data: tasks, error } = await admin
+    // Fetch profile of target intern to resolve ALL identifiers
+    const { data: targetProfile } = await admin
+      .from("profiles")
+      .select("id, intern_id, email, full_name")
+      .or(`id.eq.${data.internId},intern_id.eq.${data.internId},email.eq.${data.internId}`)
+      .maybeSingle();
+
+    const targetIdsLower = new Set([
+      data.internId?.toLowerCase().trim(),
+      targetProfile?.id?.toLowerCase().trim(),
+      targetProfile?.intern_id?.toLowerCase().trim(),
+      targetProfile?.email?.toLowerCase().trim(),
+      targetProfile?.full_name?.toLowerCase().trim(),
+    ].filter(Boolean) as string[]);
+
+    const { data: rawTasks } = await admin
       .from("tasks")
       .select("*")
-      .or(`assigned_to.eq.${data.internId},target_user_id.eq.${data.internId}`)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.warn("[listInternTasksForMentor] Primary query error:", error.message);
-      const { data: fallback } = await admin
-        .from("tasks")
-        .select("*")
-        .eq("assigned_to", data.internId)
-        .order("created_at", { ascending: false });
-      return fallback || [];
-    }
+    return (rawTasks || []).filter((t: any) => {
+      const hasIdMatch = (val: any) => val && targetIdsLower.has(String(val).toLowerCase().trim());
+      const descNameMatch = targetProfile?.full_name && t.description && t.description.toLowerCase().includes(targetProfile.full_name.toLowerCase());
+      const descEmailMatch = targetProfile?.email && t.description && t.description.toLowerCase().includes(targetProfile.email.toLowerCase());
 
-    return tasks || [];
+      return Boolean(
+        hasIdMatch(t.assigned_to) ||
+        hasIdMatch(t.target_user_id) ||
+        hasIdMatch(t.claimed_by) ||
+        hasIdMatch(t.user_id) ||
+        (Array.isArray(t.team_members) && t.team_members.some((m: any) => hasIdMatch(m))) ||
+        (Array.isArray(t.target_user_ids) && t.target_user_ids.some((m: any) => hasIdMatch(m))) ||
+        (Array.isArray(t.team_member_names) && t.team_member_names.some((m: any) => hasIdMatch(m))) ||
+        descNameMatch ||
+        descEmailMatch
+      );
+    });
   });
 
 // ─── Cohort Task Rollover & Reassignment ─────────────────────────────

@@ -46,6 +46,7 @@ import { AdminLmsManager } from "@/components/admin-lms-manager";
 import { AdminProfileChangeApprovals } from "@/components/admin-profile-change-approvals";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { toast } from "sonner";
+import { TaskRichDescription } from "@/components/task-rich-description";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, DialogTrigger
@@ -1451,7 +1452,9 @@ function OperationsDashboard() {
                             )}
                             {t.due_date && <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{new Date(t.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>}
                           </div>
-                          {t.description && <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{t.description}</p>}
+                          {t.description && (
+                            <TaskRichDescription description={t.description} teamMembers={t.team_members || t.team_member_names} />
+                          )}
 
                           {/* Acceptance & Execution Details */}
                           <div className="mt-2 text-xs space-y-1 bg-slate-50 p-2.5 rounded-md border border-slate-200">

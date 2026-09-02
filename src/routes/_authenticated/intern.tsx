@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { RichContentRenderer } from "@/components/rich-content-renderer";
+import { TaskRichDescription } from "@/components/task-rich-description";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { MeetingsSection, MeetingCountdown, getJoinButtonState } from "@/components/meetings-section";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
@@ -3170,7 +3171,7 @@ function InternDashboard() {
                             </div>
 
                             {task.description && (
-                              <p className="text-slate-700 font-medium text-xs leading-relaxed max-w-4xl">{task.description}</p>
+                              <TaskRichDescription description={task.description} teamMembers={task.team_members || task.team_member_names} />
                             )}
 
                             {/* Action links row & Resources */}

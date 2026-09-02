@@ -24,6 +24,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { RichContentRenderer } from "@/components/rich-content-renderer";
+import { TaskRichDescription } from "@/components/task-rich-description";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { MeetingsSection } from "@/components/meetings-section";
 import { FirstLoginWelcomeModal } from "@/components/first-login-welcome-modal";
@@ -4202,8 +4203,8 @@ function EmployeeDashboard() {
                     <div key={task.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors flex flex-col gap-3">
                       <div className="flex items-start justify-between gap-4">
                         <div className="space-y-1">
-                          <h4 className="font-bold text-slate-900 text-xs">{task.title}</h4>
-                          <p className="text-[11px] text-slate-500 line-clamp-2">{task.description || "No description provided."}</p>
+                          <h4 className="font-bold text-slate-900 text-xs mb-1">{task.title}</h4>
+                          <TaskRichDescription description={task.description} teamMembers={task.team_members || task.team_member_names} />
                           
                           <div className="flex flex-wrap items-center gap-2 mt-2">
                             <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider ${s.badge}`}>{s.label}</span>
