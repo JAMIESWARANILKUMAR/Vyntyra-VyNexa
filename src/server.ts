@@ -46,6 +46,13 @@ function isH3SwallowedErrorBody(body: string): boolean {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    // Cloudflare Workers explicitly empty process.env for nodejs_compat.
+    // Polyfill process.env with the env bindings for Tanstack Start and Supabase to work.
+    const _process = globalThis.process;
+    if (_process && _process.env && env && typeof env === "object") {
+      Object.assign(_process.env, env);
+    }
+
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
