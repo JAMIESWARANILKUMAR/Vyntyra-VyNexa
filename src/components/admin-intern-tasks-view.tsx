@@ -103,13 +103,20 @@ export function AdminInternTasksView() {
   const [adminRemarks, setAdminRemarks] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Individual Task Status Email Modal State
+  // Task Status Email & Multi-Recipient Notification State
+  interface TaskEmailRecipient {
+    id: string;
+    taskId?: string;
+    name: string;
+    email: string;
+    phone: string;
+    selected: boolean;
+  }
+
   const [taskEmailModalOpen, setTaskEmailModalOpen] = useState(false);
   const [isSendingTaskEmail, setIsSendingTaskEmail] = useState(false);
+  const [taskEmailRecipients, setTaskEmailRecipients] = useState<TaskEmailRecipient[]>([]);
   const [taskEmailForm, setTaskEmailForm] = useState({
-    recipient_email: "",
-    recipient_name: "",
-    recipient_phone: "",
     task_title: "",
     task_status: "assigned", // 'assigned' | 'completed' | 'changes_requested' | 'submitted' | 'deadline_reminder'
     mentor_remarks: "",
@@ -118,39 +125,54 @@ export function AdminInternTasksView() {
     credits: 10,
   });
 
-  async function openTaskEmailModal(t: any, defaultStatus?: string) {
-    const profile = t.assigned_profile || {};
-    const email = profile.email || "";
-    const name = profile.full_name || profile.name || "";
-    let phone = profile.phone || profile.phone_number || profile.mobile || profile.whatsapp || "";
-    const status = defaultStatus || t.status || "assigned";
-    const targetId = t.assigned_to || t.target_user_id || t.user_id;
+  async function openTaskEmailModal(t: any, defaultStatus?: string, group?: any[]) {
+    // Determine all candidate rows (either full team group or single task)
+    const membersList = (Array.isArray(group) && group.length > 0) ? group : [t];
 
-    // Auto-fetch intern phone number from profiles table if missing from cached profile
-    if (!phone && (targetId || email)) {
+    const recipients: TaskEmailRecipient[] = membersList.map((m: any) => {
+      const profile = m.assigned_profile || {};
+      const email = profile.email || m.assigned_email || "";
+      const name = profile.full_name || profile.name || m.assigned_name || (email ? email.split("@")[0] : "Intern Candidate");
+      const phone = profile.phone || profile.phone_number || profile.mobile || profile.whatsapp || "";
+      const targetId = m.assigned_to || m.target_user_id || m.user_id || profile.id || "";
+      return {
+        id: targetId,
+        taskId: m.id,
+        name,
+        email,
+        phone,
+        selected: true,
+      };
+    });
+
+    // Auto-fetch intern phone numbers & names from profiles table if missing
+    const missingTargetIds = recipients.filter((r) => (!r.phone || !r.name || !r.email) && r.id).map((r) => r.id);
+    if (missingTargetIds.length > 0) {
       try {
-        let q = supabase.from("profiles").select("phone, phone_number");
-        if (targetId) {
-          q = q.eq("id", targetId);
-        } else if (email) {
-          q = q.eq("email", email);
-        }
-        const { data: pData } = await q.maybeSingle();
-        if (pData) {
-          phone = pData.phone || pData.phone_number || "";
+        const { data: pList } = await supabase
+          .from("profiles")
+          .select("id, full_name, email, phone, phone_number")
+          .in("id", missingTargetIds);
+        if (pList && pList.length > 0) {
+          pList.forEach((p: any) => {
+            const target = recipients.find((r) => r.id === p.id);
+            if (target) {
+              if (!target.name && p.full_name) target.name = p.full_name;
+              if (!target.email && p.email) target.email = p.email;
+              if (!target.phone) target.phone = p.phone || p.phone_number || "";
+            }
+          });
         }
       } catch (err) {
         console.warn("[openTaskEmailModal] Phone auto-fetch error:", err);
       }
     }
 
+    setTaskEmailRecipients(recipients);
     setTaskEmailForm({
-      recipient_email: email,
-      recipient_name: name,
-      recipient_phone: phone,
       task_title: t.title || "Internship Project Milestone",
-      task_status: status,
-      mentor_remarks: t.progress_notes || "",
+      task_status: defaultStatus || t.status || "assigned",
+      mentor_remarks: t.progress_notes || t.mentor_report || "",
       custom_subject: "",
       due_date: t.due_date || "",
       credits: t.credits || 10,
@@ -159,48 +181,75 @@ export function AdminInternTasksView() {
   }
 
   async function handleSendTaskEmailSubmit() {
-    if (!taskEmailForm.recipient_email) {
-      return toast.error("Recipient email is missing.");
+    const selectedRecipients = taskEmailRecipients.filter((r) => r.selected && r.email?.trim());
+    if (selectedRecipients.length === 0) {
+      return toast.error("Please select at least one intern with a valid email address.");
     }
     setIsSendingTaskEmail(true);
+    let sentCount = 0;
+    const errors: string[] = [];
+
     try {
-      await doSendTaskEmail({
-        data: {
-          recipient_email: taskEmailForm.recipient_email,
-          recipient_name: taskEmailForm.recipient_name,
-          task_title: taskEmailForm.task_title,
-          task_status: taskEmailForm.task_status,
-          mentor_remarks: taskEmailForm.mentor_remarks,
-          custom_subject: taskEmailForm.custom_subject || undefined,
-          due_date: taskEmailForm.due_date || undefined,
-          credits: taskEmailForm.credits,
-        },
-      });
-      toast.success(`Task status email dispatched to ${taskEmailForm.recipient_email}!`);
-      setTaskEmailModalOpen(false);
-    } catch (err: any) {
-      toast.error("Failed to send task email: " + err.message);
+      await Promise.allSettled(
+        selectedRecipients.map(async (r) => {
+          try {
+            await doSendTaskEmail({
+              data: {
+                recipient_email: r.email.trim(),
+                recipient_name: r.name.trim(),
+                task_title: taskEmailForm.task_title,
+                task_status: taskEmailForm.task_status,
+                mentor_remarks: taskEmailForm.mentor_remarks,
+                custom_subject: taskEmailForm.custom_subject || undefined,
+                due_date: taskEmailForm.due_date || undefined,
+                credits: taskEmailForm.credits,
+              },
+            });
+            if (r.taskId) {
+              try {
+                await doSendNotification({ data: { taskId: r.taskId } });
+              } catch {
+                // Ignore in-app notification error
+              }
+            }
+            sentCount++;
+          } catch (err: any) {
+            errors.push(`${r.name} (${r.email}): ${err.message}`);
+          }
+        })
+      );
+
+      if (sentCount > 0) {
+        toast.success(
+          `Task status email dispatched to ${sentCount} ${sentCount === 1 ? "intern" : "team members"}!`
+        );
+        setTaskEmailModalOpen(false);
+      }
+      if (errors.length > 0) {
+        toast.error(`Failed sending to ${errors.length} intern(s): ${errors[0]}`);
+      }
     } finally {
       setIsSendingTaskEmail(false);
     }
   }
 
-  async function handleSendTaskWhatsAppSubmit() {
-    if (!taskEmailForm.recipient_phone || !taskEmailForm.recipient_phone.trim()) {
-      return toast.error("Please enter the intern's WhatsApp phone number in the field above.");
+  async function handleSendTaskWhatsAppSubmit(targetRecipient?: TaskEmailRecipient) {
+    const r = targetRecipient || taskEmailRecipients.find((x) => x.selected && x.phone) || taskEmailRecipients[0];
+    if (!r || !r.phone || !r.phone.trim()) {
+      return toast.error("Please enter a valid WhatsApp phone number for this intern.");
     }
     try {
       const res = await doGenTaskWhatsApp({
         data: {
-          recipientPhone: taskEmailForm.recipient_phone.trim(),
-          recipientName: taskEmailForm.recipient_name,
+          recipientPhone: r.phone.trim(),
+          recipientName: r.name,
           taskTitle: taskEmailForm.task_title,
           taskStatus: taskEmailForm.task_status,
           remarks: taskEmailForm.mentor_remarks,
         },
       });
       window.open(res.whatsappUrl, "_blank");
-      toast.success("WhatsApp status notification opened!");
+      toast.success(`WhatsApp status notification opened for ${r.name}!`);
     } catch (err: any) {
       toast.error("Failed to generate WhatsApp: " + err.message);
     }
@@ -248,15 +297,21 @@ export function AdminInternTasksView() {
     return titleMatches && domainMatches;
   });
 
-  // Group active tasks safely: team tasks grouped by team_id, batch assignments grouped by title & date
+  // Group active tasks safely: team tasks grouped by team_id or title, batch assignments grouped by title & date
   const groupedTasks = filteredTasks.reduce((acc, t) => {
     if (!t) return acc;
-    const isTeam = Boolean(t.team_id || t.assignment_mode === "team" || t.team_name);
-    // If team task, group all member rows into ONE entry by team_id or title+minute
+    const isTeam = Boolean(
+      t.team_id || 
+      t.assignment_mode === "team" || 
+      t.team_name ||
+      (Array.isArray(t.team_member_names) && t.team_member_names.length > 1) ||
+      (t.description && (t.description.includes("[👥 Team:") || t.description.includes("[TeamId:")))
+    );
+    // If team task, group all member rows into ONE entry by team_id or normalized title (without timestamp so all additions group together)
     const key = t.team_id 
       ? `team-${t.team_id}` 
       : isTeam 
-        ? `team-${t.title || 'Untitled'}-${(t.created_at || 'date').substring(0, 16)}`
+        ? `team-${(t.title || 'Untitled').trim().toLowerCase()}`
         : `${t.title || 'Untitled'}-${t.created_at || 'date'}`;
 
     if (!acc[key]) acc[key] = [];
@@ -746,9 +801,26 @@ export function AdminInternTasksView() {
         ) : (
           groupedTaskEntries.map((group) => {
             const rep = group[0];
-            const isTeam = Boolean(rep.team_id || rep.assignment_mode === "team" || group.some((t: any) => t.team_id || t.assignment_mode === "team"));
+            const isTeam = Boolean(
+              rep.team_id || 
+              rep.assignment_mode === "team" || 
+              rep.team_name ||
+              (Array.isArray(rep.team_member_names) && rep.team_member_names.length > 1) ||
+              (rep.description && (rep.description.includes("[👥 Team:") || rep.description.includes("[TeamId:"))) ||
+              group.some((t: any) => 
+                t.team_id || 
+                t.assignment_mode === "team" || 
+                t.team_name ||
+                (Array.isArray(t.team_member_names) && t.team_member_names.length > 1) ||
+                (t.description && (t.description.includes("[👥 Team:") || t.description.includes("[TeamId:")))
+              )
+            );
             const isBatch = !isTeam && group.length > 1;
-            const groupKey = rep.team_id ? `team-${rep.team_id}` : `${rep.title}-${rep.created_at}`;
+            const groupKey = rep.team_id 
+              ? `team-${rep.team_id}` 
+              : isTeam 
+                ? `team-${(rep.title || 'Untitled').trim().toLowerCase()}`
+                : `${rep.title}-${rep.created_at}`;
             const isExpanded = expandedGroups.includes(groupKey);
 
             const renderTask = (t: any) => {
@@ -1145,6 +1217,17 @@ export function AdminInternTasksView() {
                                   [Deliverable]
                                 </a>
                               )}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openTaskEmailModal(t);
+                                }}
+                                className="text-blue-600 hover:text-blue-800 ml-1 cursor-pointer transition-colors"
+                                title={`Send individual email/WhatsApp to ${internName}`}
+                              >
+                                <Mail className="h-3 w-3 inline" />
+                              </button>
                             </div>
                           );
                         })}
@@ -1209,8 +1292,8 @@ export function AdminInternTasksView() {
                       size="sm"
                       variant="outline"
                       className="h-8 text-xs font-bold text-blue-700 bg-blue-50/70 border-blue-200 hover:bg-blue-100 gap-1.5 shadow-2xs cursor-pointer"
-                      onClick={() => openTaskEmailModal(rep)}
-                      title="Send tailored Task Status email"
+                      onClick={() => openTaskEmailModal(rep, undefined, group)}
+                      title="Send tailored Task Status email to entire collaborative team"
                     >
                       <Mail className="h-3.5 w-3.5" /> Email
                     </Button>
@@ -1219,8 +1302,8 @@ export function AdminInternTasksView() {
                       size="sm"
                       variant="outline"
                       className="h-8 text-xs font-bold text-teal-700 bg-teal-50/70 border-teal-200 hover:bg-teal-100 gap-1.5 shadow-2xs cursor-pointer"
-                      onClick={() => openTaskEmailModal(rep)}
-                      title="Open formatted WhatsApp task status"
+                      onClick={() => openTaskEmailModal(rep, undefined, group)}
+                      title="Open formatted WhatsApp task status for team"
                     >
                       <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
                     </Button>
@@ -1681,11 +1764,13 @@ export function AdminInternTasksView() {
       {/* ─── DEDICATED TASK STATUS EMAIL & NOTIFICATION MODAL ─── */}
       {taskEmailModalOpen && (
         <Dialog open={taskEmailModalOpen} onOpenChange={setTaskEmailModalOpen}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Mail className="h-5 w-5 text-blue-600" />
-                Send Task Status Email to Intern
+                {taskEmailRecipients.length > 1 
+                  ? `Send Task Notification to Team (${taskEmailRecipients.length} Members)`
+                  : "Send Task Status Email to Intern"}
               </DialogTitle>
               <DialogDescription>
                 Dispatch a tailored corporate email notification regarding milestone status, mentor remarks, or deadline reminders.
@@ -1693,36 +1778,123 @@ export function AdminInternTasksView() {
             </DialogHeader>
 
             <div className="space-y-4 py-2 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Intern Name</label>
-                  <Input value={taskEmailForm.recipient_name} onChange={(e) => setTaskEmailForm({ ...taskEmailForm, recipient_name: e.target.value })} />
+              {/* If multiple team members, show team member selection box */}
+              {taskEmailRecipients.length > 1 ? (
+                <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl p-3 space-y-2.5">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 text-xs">
+                      <Users className="h-4 w-4 text-purple-600" />
+                      Select Team Recipients ({taskEmailRecipients.filter(r => r.selected).length}/{taskEmailRecipients.length})
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setTaskEmailRecipients(prev => prev.map(r => ({ ...r, selected: true })))}
+                        className="text-[11px] text-blue-600 hover:underline font-semibold cursor-pointer"
+                      >
+                        Select All
+                      </button>
+                      <span className="text-slate-300 dark:text-slate-700">|</span>
+                      <button
+                        type="button"
+                        onClick={() => setTaskEmailRecipients(prev => prev.map(r => ({ ...r, selected: false })))}
+                        className="text-[11px] text-slate-500 hover:underline font-semibold cursor-pointer"
+                      >
+                        Deselect All
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="divide-y divide-slate-200/70 dark:divide-slate-800/70 max-h-48 overflow-y-auto pr-1">
+                    {taskEmailRecipients.map((r, idx) => (
+                      <div key={r.id || idx} className="py-2 flex items-center justify-between gap-2">
+                        <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                          <Checkbox
+                            checked={r.selected}
+                            onCheckedChange={(c) => {
+                              setTaskEmailRecipients(prev => prev.map((x, i) => i === idx ? { ...x, selected: Boolean(c) } : x));
+                            }}
+                          />
+                          <div className="min-w-0">
+                            <span className="font-bold text-slate-900 dark:text-slate-100 block truncate">{r.name || "Intern"}</span>
+                            <span className="text-slate-500 text-[11px] block truncate">{r.email || "No email"}</span>
+                          </div>
+                        </label>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Input
+                            placeholder="WhatsApp Phone"
+                            value={r.phone}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setTaskEmailRecipients(prev => prev.map((x, i) => i === idx ? { ...x, phone: val } : x));
+                            }}
+                            className="h-7 w-32 text-[11px] px-2 bg-white dark:bg-slate-950"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-teal-700 bg-teal-50 hover:bg-teal-100 border-teal-200 text-[11px] font-bold gap-1 cursor-pointer"
+                            onClick={() => handleSendTaskWhatsAppSubmit(r)}
+                            title={`Open WhatsApp chat with ${r.name}`}
+                          >
+                            <MessageSquare className="h-3 w-3" /> WhatsApp
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Recipient Email *</label>
-                  <Input value={taskEmailForm.recipient_email} onChange={(e) => setTaskEmailForm({ ...taskEmailForm, recipient_email: e.target.value })} required />
+              ) : (
+                /* Single Intern Fields */
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Intern Name</label>
+                    <Input 
+                      value={taskEmailRecipients[0]?.name || ""} 
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setTaskEmailRecipients(prev => prev.map((x, i) => i === 0 ? { ...x, name: val } : x));
+                      }} 
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Recipient Email *</label>
+                    <Input 
+                      value={taskEmailRecipients[0]?.email || ""} 
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setTaskEmailRecipients(prev => prev.map((x, i) => i === 0 ? { ...x, email: val } : x));
+                      }} 
+                      required 
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center justify-between">
+                      <span>WhatsApp Phone</span>
+                      {!taskEmailRecipients[0]?.phone && <span className="text-[10px] text-amber-600 font-normal">(For WhatsApp)</span>}
+                    </label>
+                    <Input 
+                      placeholder="e.g. +91 9876543210" 
+                      value={taskEmailRecipients[0]?.phone || ""} 
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setTaskEmailRecipients(prev => prev.map((x, i) => i === 0 ? { ...x, phone: val } : x));
+                      }} 
+                      className={!taskEmailRecipients[0]?.phone ? "border-amber-400 focus:ring-amber-400" : ""}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1 flex items-center justify-between">
-                    <span>WhatsApp Phone</span>
-                    {!taskEmailForm.recipient_phone && <span className="text-[10px] text-amber-600 font-normal">(Required for WhatsApp)</span>}
-                  </label>
-                  <Input 
-                    placeholder="e.g. +91 9876543210" 
-                    value={taskEmailForm.recipient_phone} 
-                    onChange={(e) => setTaskEmailForm({ ...taskEmailForm, recipient_phone: e.target.value })} 
-                    className={!taskEmailForm.recipient_phone ? "border-amber-400 focus:ring-amber-400" : ""}
-                  />
-                </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Task Title *</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Task Title *</label>
                   <Input value={taskEmailForm.task_title} onChange={(e) => setTaskEmailForm({ ...taskEmailForm, task_title: e.target.value })} required />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Task Status Notification Type *</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Task Status Notification Type *</label>
                   <Select
                     value={taskEmailForm.task_status}
                     onValueChange={(val) => setTaskEmailForm({ ...taskEmailForm, task_status: val })}
@@ -1742,7 +1914,7 @@ export function AdminInternTasksView() {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Mentor Remarks &amp; Official Feedback</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Mentor Remarks &amp; Official Feedback</label>
                 <Textarea
                   rows={3}
                   placeholder="e.g. Excellent work! Code submitted fulfills all acceptance criteria. Approved."
@@ -1754,16 +1926,16 @@ export function AdminInternTasksView() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Due Deadline (Optional)</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Due Deadline (Optional)</label>
                   <Input value={taskEmailForm.due_date} onChange={(e) => setTaskEmailForm({ ...taskEmailForm, due_date: e.target.value })} placeholder="e.g. 26 August 2026" />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Custom Subject (Optional)</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Custom Subject (Optional)</label>
                   <Input value={taskEmailForm.custom_subject} onChange={(e) => setTaskEmailForm({ ...taskEmailForm, custom_subject: e.target.value })} placeholder="Leave blank for auto-generated subject" />
                 </div>
               </div>
 
-              <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl text-blue-900 text-xs">
+              <div className="p-3 bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-xl text-blue-900 dark:text-blue-200 text-xs">
                 <strong>Corporate Template:</strong> Includes Vyntyra header, task milestone badge, mentor remarks box, and direct button linking to the Intern Dashboard.
               </div>
 
@@ -1771,22 +1943,26 @@ export function AdminInternTasksView() {
                 <Button variant="outline" size="sm" onClick={() => setTaskEmailModalOpen(false)}>
                   Cancel
                 </Button>
+                {taskEmailRecipients.length <= 1 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleSendTaskWhatsAppSubmit()}
+                    className="text-teal-700 border-teal-300 hover:bg-teal-50 font-bold gap-1 text-xs"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" /> Send via WhatsApp
+                  </Button>
+                )}
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={handleSendTaskWhatsAppSubmit}
-                  className="text-teal-700 border-teal-300 hover:bg-teal-50 font-bold gap-1 text-xs"
-                >
-                  <MessageSquare className="h-3.5 w-3.5" /> Send via WhatsApp
-                </Button>
-                <Button
-                  type="button"
-                  disabled={isSendingTaskEmail}
+                  disabled={isSendingTaskEmail || taskEmailRecipients.filter(r => r.selected).length === 0}
                   onClick={handleSendTaskEmailSubmit}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-1 text-xs"
                 >
                   {isSendingTaskEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-                  Dispatch Status Email
+                  {taskEmailRecipients.length > 1
+                    ? `Dispatch to ${taskEmailRecipients.filter(r => r.selected).length} Selected Interns`
+                    : "Dispatch Status Email"}
                 </Button>
               </div>
             </div>

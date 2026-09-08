@@ -113,11 +113,13 @@ export function ManageTeamModal({
           : "Task assignment updated successfully!"
       );
 
-      // Invalidate all related caches
-      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
-      qc.invalidateQueries({ queryKey: ["tasks"] });
-      qc.invalidateQueries({ queryKey: ["my-tasks"] });
-      qc.invalidateQueries({ queryKey: ["team-members"] });
+      // Invalidate and immediately refetch all related caches
+      await Promise.all([
+        qc.refetchQueries({ queryKey: ["admin-intern-tasks"] }),
+        qc.refetchQueries({ queryKey: ["tasks"] }),
+        qc.refetchQueries({ queryKey: ["my-tasks"] }),
+        qc.refetchQueries({ queryKey: ["team-members"] }),
+      ]);
 
       onOpenChange(false);
     } catch (err: any) {

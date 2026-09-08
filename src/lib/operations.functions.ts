@@ -590,6 +590,22 @@ export function normalizeTaskDocLinks(t: any) {
   if (!copy.task_file_url && copy.project_requirements && copy.project_requirements.startsWith("http")) {
     copy.task_file_url = copy.project_requirements;
   }
+  if (!copy.team_id) {
+    const m = desc.match(/\[TeamId:\s*([^\]\s]+)\]/i);
+    if (m) copy.team_id = m[1];
+  }
+  if (!copy.team_name) {
+    const m = desc.match(/\[TeamName:\s*([^\]]+)\]/i);
+    if (m) copy.team_name = m[1];
+  }
+  if (!copy.team_member_names || copy.team_member_names.length === 0) {
+    const m = desc.match(/\[👥 Team:\s*([^\]]+)\]/i);
+    if (m && m[1]) {
+      copy.team_member_names = m[1].split(",").map((s: string) => s.trim()).filter(Boolean);
+      copy.assignment_mode = "team";
+      if (!copy.team_size) copy.team_size = copy.team_member_names.length;
+    }
+  }
   return copy;
 }
 
@@ -837,6 +853,16 @@ export const updateTeamTaskMembers = createServerFn({ method: "POST" })
       effectiveTeamId = `team-${Date.now()}`;
     }
 
+    // Prepare clean description without old team tags
+    const cleanDesc = (sourceTask.description || "")
+      .replace(/\[TeamId:\s*[^\]\s]+\]\s*/gi, "")
+      .replace(/\[TeamName:\s*[^\]]+\]\s*/gi, "")
+      .replace(/\[👥 Team:\s*[^\]]+\]\s*/gi, "")
+      .trim();
+
+    const teamName = sourceTask.team_name || `Collaborative Team (${data.target_intern_ids.length})`;
+    const updatedDesc = `[TeamId: ${effectiveTeamId}] [TeamName: ${teamName}] [👥 Team: ${teamMemberNames.join(", ")}]\n\n${cleanDesc}`;
+
     // Case 1: Reduced to 1 intern (revert to individual task)
     if (data.target_intern_ids.length === 1) {
       const singleInternId = data.target_intern_ids[0];
@@ -859,6 +885,7 @@ export const updateTeamTaskMembers = createServerFn({ method: "POST" })
         team_name: null,
         team_size: 1,
         team_member_names: teamMemberNames,
+        description: cleanDesc,
         updated_at: now
       }).eq("id", sourceTask.id);
 
@@ -915,7 +942,6 @@ export const updateTeamTaskMembers = createServerFn({ method: "POST" })
 
     // Insert task rows for newly added interns
     if (newInternIds.length > 0) {
-      const teamName = sourceTask.team_name || `Collaborative Team (${data.target_intern_ids.length})`;
       const taskPayloads = newInternIds.map(internId => {
         const copy: any = { ...sourceTask };
         delete copy.id;
@@ -928,7 +954,9 @@ export const updateTeamTaskMembers = createServerFn({ method: "POST" })
         copy.team_size = data.target_intern_ids.length;
         copy.team_member_names = teamMemberNames;
         copy.assignment_mode = "team";
+        copy.description = updatedDesc;
         copy.created_at = now;
+        copy.updated_at = now;
         copy.status = "pending";
         return copy;
       });
@@ -943,7 +971,7 @@ export const updateTeamTaskMembers = createServerFn({ method: "POST" })
           delete copy.team_member_names;
           delete copy.assignment_mode;
           delete copy.target_user_id;
-          copy.description = `[👥 Team: ${teamMemberNames.join(", ")}]\n\n${copy.description || ""}`;
+          copy.description = updatedDesc;
           return copy;
         });
         await admin.from("tasks").insert(fallbackPayloads);
@@ -968,18 +996,19 @@ export const updateTeamTaskMembers = createServerFn({ method: "POST" })
       .map(t => t.id);
 
     if (remainingTaskIds.length > 0) {
-      const teamName = sourceTask.team_name || `Collaborative Team (${data.target_intern_ids.length})`;
       const { error: updateErr } = await admin.from("tasks").update({
         team_id: effectiveTeamId,
         team_name: teamName,
         team_size: data.target_intern_ids.length,
         team_member_names: teamMemberNames,
         assignment_mode: "team",
+        description: updatedDesc,
         updated_at: now
       }).in("id", remainingTaskIds);
 
       if (updateErr) {
         await admin.from("tasks").update({
+          description: updatedDesc,
           updated_at: now
         }).in("id", remainingTaskIds);
       }
