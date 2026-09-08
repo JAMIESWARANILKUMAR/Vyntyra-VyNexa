@@ -48,13 +48,24 @@ if (typeof window !== "undefined") {
 }
 
 export const getRouter = () => {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 2, // 2 minutes: instant data display from cache
+        gcTime: 1000 * 60 * 10,   // 10 minutes memory retention
+        refetchOnWindowFocus: false, // Prevents sudden stutter on tab switch
+        retry: 1,
+      },
+    },
+  });
 
   const router = createRouter({
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
+    defaultPreload: "intent",          // Preload route chunk & loader immediately on hover/touch
+    defaultPreloadDelay: 50,           // 50ms intent delay prevents wasted requests during fast scrolling
+    defaultPreloadStaleTime: 1000 * 30, // 30s: preloaded data stays valid for instant route transitions
   });
 
   return router;

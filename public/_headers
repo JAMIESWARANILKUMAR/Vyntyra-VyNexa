@@ -1,0 +1,26 @@
+# Cache hashed static assets forever
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+# Cache images, icons, and fonts with stale-while-revalidate
+/*.png
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+/*.jpg
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+/*.jpeg
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+/*.svg
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+/*.ico
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+/*.webp
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+/manifest.json
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+# Security and performance headers for all routes
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin

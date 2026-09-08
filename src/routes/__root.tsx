@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
@@ -153,19 +153,38 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function PageLoadingIndicator() {
   const isLoading = useRouterState({ select: (s) => s.status === 'pending' });
+  const [showSlowSpinner, setShowSlowSpinner] = useState(false);
+
+  useEffect(() => {
+    let timeout: any;
+    if (isLoading) {
+      timeout = setTimeout(() => setShowSlowSpinner(true), 600);
+    } else {
+      setShowSlowSpinner(false);
+    }
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
+
   if (!isLoading) return null;
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-background/95 backdrop-blur-md">
-      <div className="flex flex-col items-center gap-6">
-        <div className="relative flex items-center justify-center w-20 h-20">
-           <div className="absolute inset-0 rounded-full border-2 border-t-gold border-r-primary border-b-secondary border-l-transparent animate-spin" style={{ animationDuration: '3s' }} />
-           <div className="absolute inset-2 rounded-full border-2 border-b-gold/70 border-l-primary/70 border-t-secondary/70 border-r-transparent animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }} />
-           <img src="/icon-512.png" className="w-8 h-8 object-contain animate-pulse" alt="Loading" />
+    <>
+      {/* Sleek top loading progress bar for instantaneous, non-blocking navigation */}
+      <div className="fixed top-0 left-0 right-0 z-[1000] h-[2.5px] bg-gradient-to-r from-primary via-gold to-secondary animate-pulse shadow-sm shadow-gold/20" />
+
+      {/* Subtle overlay ONLY if route transition takes longer than 600ms */}
+      {showSlowSpinner && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative flex items-center justify-center w-14 h-14">
+              <div className="absolute inset-0 rounded-full border-2 border-t-gold border-r-primary border-b-secondary border-l-transparent animate-spin" style={{ animationDuration: '2s' }} />
+              <img src="/icon-512.png" className="w-6 h-6 object-contain" alt="Loading" />
+            </div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold">Loading Workspace</p>
+          </div>
         </div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold animate-pulse">Loading Workspace</p>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
 
