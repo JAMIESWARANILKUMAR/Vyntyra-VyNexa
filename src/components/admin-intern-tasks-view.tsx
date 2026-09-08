@@ -399,7 +399,7 @@ export function AdminInternTasksView() {
   const internsQ = useQuery({
     queryKey: ["active-interns-for-cohort"],
     queryFn: () => fetchActiveInterns(),
-    enabled: rolloverModalOpen || assignStoredModalOpen,
+    enabled: rolloverModalOpen || assignStoredModalOpen || isManageTeamOpen,
   });
   const allActiveInterns: any[] = internsQ.data || [];
 
@@ -1535,7 +1535,7 @@ export function AdminInternTasksView() {
         open={isManageTeamOpen} 
         onOpenChange={setIsManageTeamOpen} 
         task={manageTeamTask} 
-        interns={activeInternsQ.data || []} 
+        interns={allActiveInterns} 
       />
 
       {/* Clear All Confirmation Modal */}
