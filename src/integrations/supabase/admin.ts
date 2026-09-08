@@ -20,6 +20,12 @@ export function getAdminClient() {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
+      detectSessionInUrl: false,
+      storage: {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {},
+      },
     },
     global: {
       fetch: (...args) => fetch(...args),

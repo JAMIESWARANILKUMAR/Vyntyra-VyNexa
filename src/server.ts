@@ -48,9 +48,13 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     // Cloudflare Workers explicitly empty process.env for nodejs_compat.
     // Polyfill process.env with the env bindings for Tanstack Start and Supabase to work.
-    const _process = globalThis.process;
-    if (_process && _process.env && env && typeof env === "object") {
-      Object.assign(_process.env, env);
+    if (!globalThis.process) {
+      (globalThis as any).process = { env: {} };
+    } else if (!globalThis.process.env) {
+      (globalThis.process as any).env = {};
+    }
+    if (env && typeof env === "object") {
+      Object.assign(globalThis.process.env, env);
     }
 
     try {

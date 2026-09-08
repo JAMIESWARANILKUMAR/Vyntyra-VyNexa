@@ -14,12 +14,20 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error("Missing Supabase environment variables.");
 }
 
-const isBrowser = typeof window !== 'undefined';
+const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: isBrowser,
     autoRefreshToken: isBrowser,
+    detectSessionInUrl: isBrowser,
+    storage: isBrowser
+      ? undefined
+      : {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+        },
   },
   global: {
     fetch: (...args) => fetch(...args),
