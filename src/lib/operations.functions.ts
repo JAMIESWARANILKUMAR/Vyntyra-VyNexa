@@ -658,51 +658,138 @@ export const updateTeamTaskMembers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     taskId: z.string().min(1),
-    teamId: z.string().min(1),
+    teamId: z.string().optional().nullable(),
     target_intern_ids: z.array(z.string()).min(1),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const admin = getAdminClient();
+    const now = new Date().toISOString();
     
-    // 1. Get the source task to duplicate for new members
+    // 1. Get the source task
     const { data: sourceTask, error: sourceErr } = await admin.from("tasks").select("*").eq("id", data.taskId).single();
     if (sourceErr || !sourceTask) throw new Error("Source task not found");
-    
-    // 2. Fetch all current tasks for this team
-    const { data: existingTasks, error: teamErr } = await admin.from("tasks").select("id, assigned_to").eq("team_id", data.teamId);
-    if (teamErr) throw new Error("Failed to fetch team tasks");
-    
-    const existingInternIds = existingTasks.map((t: any) => t.assigned_to).filter(Boolean);
-    const newInternIds = data.target_intern_ids.filter(id => !existingInternIds.includes(id));
-    const removedInternIds = existingInternIds.filter((id: string) => !data.target_intern_ids.includes(id));
-    
-    // 3. Delete tasks for removed interns
-    if (removedInternIds.length > 0) {
-      await admin.from("tasks").delete().eq("team_id", data.teamId).in("assigned_to", removedInternIds);
-    }
-    
-    // 4. Create tasks for new interns
-    if (newInternIds.length > 0) {
-      const taskPayloads = newInternIds.map(internId => {
-        const copy = { ...sourceTask };
-        delete copy.id;
-        delete copy.created_at;
-        delete copy.updated_at;
-        copy.assigned_to = internId;
-        copy.target_user_id = internId;
-        return copy;
-      });
-      await admin.from("tasks").insert(taskPayloads);
-    }
-    
-    // 5. Update team_member_names for all remaining tasks in the team
+
+    // Fetch profile info for all target interns
     const { data: profiles } = await admin.from("profiles").select("id, full_name, email").in("id", data.target_intern_ids);
-    const teamMemberNames = profiles?.map((p: any) => p.full_name || p.email) || [];
-    
-    await admin.from("tasks").update({ 
-      team_member_names: teamMemberNames,
-      team_size: data.target_intern_ids.length 
-    }).eq("team_id", data.teamId);
+    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p.full_name || p.email]));
+    const teamMemberNames = data.target_intern_ids.map(id => profileMap.get(id) || id);
+
+    const currentTeamId = data.teamId || sourceTask.team_id;
+
+    if (currentTeamId) {
+      // 2a. Existing team: fetch all current tasks for this team
+      const { data: existingTasks, error: teamErr } = await admin.from("tasks").select("id, assigned_to").eq("team_id", currentTeamId);
+      if (teamErr) throw new Error("Failed to fetch team tasks");
+      
+      const existingInternIds = (existingTasks || []).map((t: any) => t.assigned_to).filter(Boolean);
+      const newInternIds = data.target_intern_ids.filter(id => !existingInternIds.includes(id));
+      const removedInternIds = existingInternIds.filter((id: string) => !data.target_intern_ids.includes(id));
+      
+      // Delete tasks for removed interns
+      if (removedInternIds.length > 0) {
+        await admin.from("tasks").delete().eq("team_id", currentTeamId).in("assigned_to", removedInternIds);
+      }
+      
+      // Create tasks for newly added interns
+      if (newInternIds.length > 0) {
+        const taskPayloads = newInternIds.map(internId => {
+          const copy = { ...sourceTask };
+          delete copy.id;
+          delete copy.created_at;
+          delete copy.updated_at;
+          copy.assigned_to = internId;
+          copy.target_user_id = internId;
+          copy.team_id = currentTeamId;
+          copy.team_size = data.target_intern_ids.length;
+          copy.team_member_names = teamMemberNames;
+          copy.assignment_mode = data.target_intern_ids.length > 1 ? "team" : "individual";
+          copy.created_at = now;
+          return copy;
+        });
+        await admin.from("tasks").insert(taskPayloads);
+
+        // Notify new members
+        for (const internId of newInternIds) {
+          await admin.from("user_notifications").insert({
+            user_id: internId,
+            title: "Added to Collaborative Team Task",
+            message: `You have been added to the team for task: "${sourceTask.title}" alongside ${teamMemberNames.join(", ")}.`,
+            type: "task_assigned",
+            link: "/intern",
+            created_at: now
+          });
+        }
+      }
+      
+      // Update team metadata for all remaining tasks in the team
+      await admin.from("tasks").update({ 
+        team_member_names: teamMemberNames,
+        team_size: data.target_intern_ids.length,
+        team_name: data.target_intern_ids.length > 1 ? (sourceTask.team_name || `Collaborative Team (${data.target_intern_ids.length})`) : null,
+        assignment_mode: data.target_intern_ids.length > 1 ? "team" : "individual",
+        updated_at: now
+      }).eq("team_id", currentTeamId);
+
+    } else {
+      // 2b. Task was previously individual: convert or reassign
+      if (data.target_intern_ids.length === 1) {
+        const targetId = data.target_intern_ids[0];
+        await admin.from("tasks").update({
+          assigned_to: targetId,
+          target_user_id: targetId,
+          team_member_names: teamMemberNames,
+          team_size: 1,
+          assignment_mode: "individual",
+          updated_at: now
+        }).eq("id", sourceTask.id);
+      } else {
+        const generatedTeamId = `team-${Date.now()}`;
+        const firstInternId = data.target_intern_ids[0];
+        const remainingInternIds = data.target_intern_ids.slice(1);
+
+        // Update original task to be first team member's row
+        await admin.from("tasks").update({
+          assigned_to: firstInternId,
+          target_user_id: firstInternId,
+          team_id: generatedTeamId,
+          team_name: `Collaborative Team (${data.target_intern_ids.length})`,
+          team_size: data.target_intern_ids.length,
+          team_member_names: teamMemberNames,
+          assignment_mode: "team",
+          updated_at: now
+        }).eq("id", sourceTask.id);
+
+        // Duplicate for other interns
+        const newPayloads = remainingInternIds.map(internId => {
+          const copy = { ...sourceTask };
+          delete copy.id;
+          delete copy.created_at;
+          delete copy.updated_at;
+          copy.assigned_to = internId;
+          copy.target_user_id = internId;
+          copy.team_id = generatedTeamId;
+          copy.team_name = `Collaborative Team (${data.target_intern_ids.length})`;
+          copy.team_size = data.target_intern_ids.length;
+          copy.team_member_names = teamMemberNames;
+          copy.assignment_mode = "team";
+          copy.created_at = now;
+          return copy;
+        });
+        await admin.from("tasks").insert(newPayloads);
+
+        // Notify new members
+        for (const internId of remainingInternIds) {
+          await admin.from("user_notifications").insert({
+            user_id: internId,
+            title: "Added to Collaborative Team Task",
+            message: `You have been added to the collaborative team task: "${sourceTask.title}" alongside ${teamMemberNames.join(", ")}.`,
+            type: "task_assigned",
+            link: "/intern",
+            created_at: now
+          });
+        }
+      }
+    }
     
     return { success: true };
   });

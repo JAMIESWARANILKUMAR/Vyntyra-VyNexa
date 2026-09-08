@@ -42,6 +42,7 @@ import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import EmailAutomationHub from "@/components/email-automation-hub";
 import { SmartAvatar } from "@/components/SmartAvatar";
 import { AdminInternTasksView } from "@/components/admin-intern-tasks-view";
+import { ManageTeamModal } from "@/components/manage-team-modal";
 import { AdminLmsManager } from "@/components/admin-lms-manager";
 import { AdminProfileChangeApprovals } from "@/components/admin-profile-change-approvals";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
@@ -168,6 +169,8 @@ function OperationsDashboard() {
   const doUpdateTicketStatus = useServerFn(updateSupportTicketStatus);
   const doUpdateTaskByAdmin = useServerFn(updateTaskByAdmin);
   const [editingTaskByAdmin, setEditingTaskByAdmin] = useState<any>(null);
+  const [manageTeamTask, setManageTeamTask] = useState<any>(null);
+  const [isManageTeamOpen, setIsManageTeamOpen] = useState(false);
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
   const fetchKudos = useServerFn(listKudos);
 
@@ -1487,6 +1490,19 @@ function OperationsDashboard() {
                           <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => setEditingTaskByAdmin(t)}>
                             Edit Task
                           </Button>
+                          {t.assigned_to && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="h-7 text-xs px-2 text-purple-600 border-purple-200 hover:bg-purple-50 flex items-center gap-1" 
+                              onClick={() => {
+                                setManageTeamTask(t);
+                                setIsManageTeamOpen(true);
+                              }}
+                            >
+                              <Users className="h-3 w-3" /> {(t.team_name || t.team_id || t.assignment_mode === "team") ? "Edit Team" : "+ Team"}
+                            </Button>
+                          )}
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/50 hover:text-destructive hover:bg-destructive/10 shrink-0">
@@ -3487,16 +3503,38 @@ function OperationsDashboard() {
                 </div>
               </div>
 
-              <DialogFooter>
-                <Button type="button" variant="ghost" onClick={() => setEditingTaskByAdmin(null)}>
-                  Cancel
+              <DialogFooter className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto text-purple-700 border-purple-200 hover:bg-purple-50 flex items-center gap-1.5 text-xs h-9"
+                  onClick={() => {
+                    setManageTeamTask(editingTaskByAdmin);
+                    setIsManageTeamOpen(true);
+                  }}
+                >
+                  <Users className="h-4 w-4" /> Manage Team Members
                 </Button>
-                <Button type="submit">Save Task &amp; Doc Links</Button>
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <Button type="button" variant="ghost" onClick={() => setEditingTaskByAdmin(null)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Save Task &amp; Doc Links</Button>
+                </div>
               </DialogFooter>
             </form>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Manage Team Modal for Admin Operations */}
+      <ManageTeamModal
+        open={isManageTeamOpen}
+        onOpenChange={setIsManageTeamOpen}
+        task={manageTeamTask}
+        interns={team.filter((m: any) => m.role === "intern")}
+      />
     </div>
   );
 }

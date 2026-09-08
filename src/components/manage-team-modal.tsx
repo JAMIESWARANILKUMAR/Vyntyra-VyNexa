@@ -54,11 +54,7 @@ export function ManageTeamModal({
 
   const handleSave = async () => {
     if (selectedInternIds.length === 0) {
-      toast.error("Team must have at least one member");
-      return;
-    }
-    if (!task?.team_id) {
-      toast.error("This is not a team task. Please recreate it as a team task.");
+      toast.error("Please select at least one intern.");
       return;
     }
     
@@ -67,12 +63,14 @@ export function ManageTeamModal({
       await doUpdateTeam({
         data: {
           taskId: task.id,
-          teamId: task.team_id,
+          teamId: task?.team_id || null,
           target_intern_ids: selectedInternIds
         }
       });
-      toast.success("Team updated successfully");
+      toast.success(selectedInternIds.length > 1 ? "Team updated and synced successfully!" : "Task assignment updated successfully!");
       qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
       onOpenChange(false);
     } catch (err: any) {
       toast.error(err.message || "Failed to update team");

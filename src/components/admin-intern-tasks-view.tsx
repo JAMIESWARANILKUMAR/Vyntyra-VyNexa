@@ -765,26 +765,40 @@ export function AdminInternTasksView() {
                           <CreditCard className="h-3 w-3 text-amber-600" /> {t.credits || 10} Credits
                         </Badge>
 
-                        {(t.team_name || t.team_id || t.assignment_mode === "team") && (
-                          <div className="flex items-center gap-1">
+                        {(t.team_name || t.team_id || t.assignment_mode === "team") ? (
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[10px] flex items-center gap-1">
                               <Users className="h-3 w-3 text-purple-700" /> {t.team_name || `Collaborative Team (${t.team_size || 2})`}
                             </Badge>
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-5 w-5 bg-purple-50 hover:bg-purple-200 text-purple-700"
+                              variant="outline"
+                              size="sm"
+                              className="h-5 text-[10px] px-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 font-semibold flex items-center gap-1 shadow-none"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setManageTeamTask(t);
                                 setIsManageTeamOpen(true);
                               }}
-                              title="Manage Team Members"
+                              title="Add or remove team members"
                             >
-                              <Plus className="h-3 w-3" />
+                              <Users className="h-2.5 w-2.5" /> Edit Team
                             </Button>
                           </div>
-                        )}
+                        ) : t.assigned_to ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-5 text-[10px] px-2 bg-slate-50 hover:bg-purple-50 text-slate-600 hover:text-purple-700 border-slate-200 hover:border-purple-200 flex items-center gap-1 font-medium shadow-none"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setManageTeamTask(t);
+                              setIsManageTeamOpen(true);
+                            }}
+                            title="Add more interns to turn this into a collaborative team task"
+                          >
+                            <Users className="h-2.5 w-2.5" /> + Add to Team
+                          </Button>
+                        ) : null}
                       </div>
 
                       {t.description && (
