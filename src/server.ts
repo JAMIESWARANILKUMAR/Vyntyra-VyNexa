@@ -28,8 +28,9 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   const body = await response.clone().text();
   if (!isH3SwallowedErrorBody(body)) return response;
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
-  return new Response(renderErrorPage(), {
+  const error = consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`);
+  console.error(error);
+  return new Response(renderErrorPage(error), {
     status: 500,
     headers: { "content-type": "text/html; charset=utf-8" },
   });
@@ -55,6 +56,18 @@ export default {
     }
     if (env && typeof env === "object") {
       Object.assign(globalThis.process.env, env);
+      for (const [key, val] of Object.entries(env as Record<string, any>)) {
+        if (typeof val === "string") {
+          if (!globalThis.process.env[key]) globalThis.process.env[key] = val;
+          if (key.startsWith("VITE_")) {
+            const bare = key.replace("VITE_", "");
+            if (!globalThis.process.env[bare]) globalThis.process.env[bare] = val;
+          } else {
+            const viteKey = `VITE_${key}`;
+            if (!globalThis.process.env[viteKey]) globalThis.process.env[viteKey] = val;
+          }
+        }
+      }
     }
 
     try {
@@ -63,7 +76,7 @@ export default {
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
+      return new Response(renderErrorPage(error), {
         status: 500,
         headers: { "content-type": "text/html; charset=utf-8" },
       });
