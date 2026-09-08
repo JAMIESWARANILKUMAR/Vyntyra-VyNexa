@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vyntyra-vy-nexa-cf",
+  "main": "@tanstack/react-start/server-entry",
+  "compatibility_date": "2026-02-24",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".output/public"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "<D1_DATABASE_NAME>",
+      "database_id": "<D1_DATABASE_ID>"
+    }
+  ]
+}

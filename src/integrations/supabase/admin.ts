@@ -16,5 +16,13 @@ export function getAdminClient() {
     throw new Error("Missing Supabase configuration");
   }
 
-  return createClient(supabaseUrl, supabaseServiceKey);
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      fetch: (...args) => fetch(...args),
+    },
+  });
 }
