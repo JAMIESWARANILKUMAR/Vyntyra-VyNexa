@@ -849,6 +849,12 @@ export const updateTeamTaskMembers = createServerFn({ method: "POST" })
 
     // Determine or generate team_id
     let effectiveTeamId = data.teamId || sourceTask.team_id;
+    if (!effectiveTeamId && sourceTask.description) {
+      const match = sourceTask.description.match(/\[TeamId:\s*([^\]\s]+)\]/i);
+      if (match) {
+        effectiveTeamId = match[1];
+      }
+    }
     if (!effectiveTeamId && data.target_intern_ids.length > 1) {
       effectiveTeamId = `team-${Date.now()}`;
     }
@@ -860,7 +866,16 @@ export const updateTeamTaskMembers = createServerFn({ method: "POST" })
       .replace(/\[👥 Team:\s*[^\]]+\]\s*/gi, "")
       .trim();
 
-    const teamName = sourceTask.team_name || `Collaborative Team (${data.target_intern_ids.length})`;
+    let customTeamName = sourceTask.team_name;
+    if (!customTeamName && sourceTask.description) {
+      const nameMatch = sourceTask.description.match(/\[TeamName:\s*([^\]]+)\]/i);
+      if (nameMatch) {
+        customTeamName = nameMatch[1].trim();
+      }
+    }
+    const teamName = (customTeamName && !customTeamName.startsWith("Collaborative Team"))
+      ? customTeamName
+      : `Collaborative Team (${data.target_intern_ids.length})`;
     const updatedDesc = `[TeamId: ${effectiveTeamId}] [TeamName: ${teamName}] [👥 Team: ${teamMemberNames.join(", ")}]\n\n${cleanDesc}`;
 
     // Case 1: Reduced to 1 intern (revert to individual task)
@@ -873,6 +888,12 @@ export const updateTeamTaskMembers = createServerFn({ method: "POST" })
           .from("tasks")
           .delete()
           .eq("team_id", effectiveTeamId)
+          .neq("id", sourceTask.id);
+
+        await admin
+          .from("tasks")
+          .delete()
+          .like("description", `%[TeamId: ${effectiveTeamId}]%`)
           .neq("id", sourceTask.id);
       }
 
@@ -897,29 +918,41 @@ export const updateTeamTaskMembers = createServerFn({ method: "POST" })
     if (effectiveTeamId) {
       const { data: tTasks } = await admin
         .from("tasks")
-        .select("id, assigned_to, target_user_id")
+        .select("id, assigned_to, target_user_id, created_at, description")
         .eq("team_id", effectiveTeamId);
-      if (tTasks) existingTasks = tTasks;
+      if (tTasks) existingTasks.push(...tTasks);
+
+      const { data: descTasks } = await admin
+        .from("tasks")
+        .select("id, assigned_to, target_user_id, created_at, description")
+        .like("description", `%[TeamId: ${effectiveTeamId}]%`);
+      if (descTasks) {
+        descTasks.forEach((dt: any) => {
+          if (!existingTasks.some(e => e.id === dt.id)) {
+            existingTasks.push(dt);
+          }
+        });
+      }
     }
 
     if (!existingTasks.some(t => t.id === sourceTask.id)) {
       existingTasks.push(sourceTask);
     }
 
-    // Check sibling tasks created together with same title if effectiveTeamId was freshly assigned
-    if (existingTasks.length <= 1 && sourceTask.created_at) {
-      const taskTime = new Date(sourceTask.created_at).getTime();
+    // Also check sibling tasks with the same title if team indicators match
+    if (sourceTask.title) {
       const { data: siblings } = await admin
         .from("tasks")
-        .select("id, assigned_to, target_user_id, created_at")
+        .select("id, assigned_to, target_user_id, created_at, description, team_name, assignment_mode")
         .eq("title", sourceTask.title);
 
       if (siblings) {
         siblings.forEach((s: any) => {
-          if (s.created_at && Math.abs(new Date(s.created_at).getTime() - taskTime) < 20000) {
-            if (!existingTasks.some(e => e.id === s.id)) {
-              existingTasks.push(s);
-            }
+          const isTeam = s.assignment_mode === "team" ||
+                         (s.team_name && s.team_name.startsWith("Collaborative Team")) ||
+                         (effectiveTeamId && s.description && s.description.includes(effectiveTeamId));
+          if (isTeam && !existingTasks.some(e => e.id === s.id)) {
+            existingTasks.push(s);
           }
         });
       }

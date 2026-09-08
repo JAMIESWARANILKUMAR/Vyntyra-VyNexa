@@ -275,6 +275,28 @@ function AdminDashboard() {
           qc.invalidateQueries({ queryKey: ["applications"] });
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "admin_notifications" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["admin-notifications"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "job_postings" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["job-postings"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tasks" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["tasks"] });
+          qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+        }
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);

@@ -25,9 +25,10 @@ interface TeammateInfo {
 
 interface TaskRichDescriptionProps {
   description: string;
-  teamMembers?: (TeammateInfo | string)[] | null;
+  teamMembers?: (TeammateInfo | any | string)[] | null;
   className?: string;
   compact?: boolean;
+  teamId?: string | null;
 }
 
 // Clean LaTeX symbols & fix unformatted pasted ChatGPT / Gemini text
@@ -41,6 +42,11 @@ export function formatTaskText(rawText: string): {
   let text = rawText;
   let meetingUrl: string | null = null;
   const parsedTeamNames: string[] = [];
+
+  // Strip [TeamId: ...] and [TeamName: ...] markers from display
+  text = text
+    .replace(/\[TeamId:\s*[^\]\s]+\]\s*/gi, "")
+    .replace(/\[TeamName:\s*[^\]]+\]\s*/gi, "");
 
   // 1. Extract [Meet: https://...] or raw Google Meet/Teams links
   const meetMatch = text.match(/\[Meet:\s*(https?:\/\/[^\s\]]+)\]/i) || 
@@ -114,13 +120,21 @@ export function TaskRichDescription({
   teamMembers,
   className = "",
   compact = false,
+  teamId,
 }: TaskRichDescriptionProps) {
   const { cleanMarkdown, meetingUrl, parsedTeamNames } = useMemo(
     () => formatTaskText(description || ""),
     [description]
   );
 
+  const effectiveTeamId = useMemo(() => {
+    if (teamId) return teamId;
+    const m = (description || "").match(/\[TeamId:\s*([^\]\s]+)\]/i);
+    return m ? m[1] : null;
+  }, [teamId, description]);
+
   const [fetchedProfiles, setFetchedProfiles] = useState<TeammateInfo[]>([]);
+  const [dbTeamMembers, setDbTeamMembers] = useState<TeammateInfo[]>([]);
 
   // Combine passed team members and parsed names safely
   const rawTeammatesList = useMemo(() => {
@@ -129,16 +143,27 @@ export function TaskRichDescription({
 
     const safeTeamMembers = Array.isArray(teamMembers) ? teamMembers : [];
     
-    safeTeamMembers.forEach(m => {
+    safeTeamMembers.forEach((m: any) => {
       if (typeof m === "string") {
         if (m.trim() && !nameSet.has(m.toLowerCase().trim())) {
           nameSet.add(m.toLowerCase().trim());
           list.push({ full_name: m.trim() });
         }
-      } else if (m && m.full_name) {
-        if (!nameSet.has(m.full_name.toLowerCase().trim())) {
-          nameSet.add(m.full_name.toLowerCase().trim());
-          list.push(m);
+      } else if (m) {
+        const name = m.full_name || m.name || (m.email ? m.email.split("@")[0] : "");
+        if (name && !nameSet.has(name.toLowerCase().trim())) {
+          nameSet.add(name.toLowerCase().trim());
+          list.push({
+            id: m.id,
+            full_name: name.trim(),
+            email: m.email,
+            phone: m.phone || m.phone_number,
+            avatar_url: m.avatar_url,
+            department: m.department,
+            domain: m.domain,
+            role: m.role,
+            intern_id: m.intern_id,
+          });
         }
       }
     });
@@ -152,6 +177,65 @@ export function TaskRichDescription({
 
     return list;
   }, [teamMembers, parsedTeamNames]);
+
+  // Fetch live team members directly from Supabase by team_id
+  useEffect(() => {
+    if (!effectiveTeamId) return;
+    let isMounted = true;
+
+    async function loadLiveTeam() {
+      try {
+        const { data: teamTasks } = await supabase
+          .from("tasks")
+          .select("assigned_to")
+          .eq("team_id", effectiveTeamId);
+
+        const assignedIds = (teamTasks || []).map((t: any) => t.assigned_to).filter(Boolean);
+        if (assignedIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, full_name, email, phone, phone_number, avatar_url, department, domain, role, intern_id")
+            .in("id", assignedIds);
+
+          if (profiles && isMounted) {
+            const list: TeammateInfo[] = profiles.map((p: any) => ({
+              id: p.id,
+              full_name: p.full_name || p.name || p.email || "Intern",
+              email: p.email,
+              phone: p.phone || p.phone_number,
+              avatar_url: p.avatar_url,
+              department: p.department,
+              domain: p.domain,
+              role: p.role,
+              intern_id: p.intern_id,
+            }));
+            setDbTeamMembers(list);
+          }
+        }
+      } catch (err) {
+        console.warn("[TaskRichDescription] loadLiveTeam error:", err);
+      }
+    }
+
+    loadLiveTeam();
+
+    // Supabase Realtime WebSocket subscription for live team tasks changes
+    const channel = supabase
+      .channel(`team-live-ws-${effectiveTeamId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tasks", filter: `team_id=eq.${effectiveTeamId}` },
+        () => {
+          loadLiveTeam();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, [effectiveTeamId]);
 
   // Fetch full profile details (email, phone, avatar, domain) for teammates from DB if missing
   useEffect(() => {
@@ -204,7 +288,13 @@ export function TaskRichDescription({
     return () => { isMounted = false; };
   }, [rawTeammatesList]);
 
-  const displayTeammates = fetchedProfiles.length > 0 ? fetchedProfiles : rawTeammatesList;
+  const displayTeammates = useMemo(() => {
+    // If DB has all live team members by team_id, prefer DB team members
+    if (dbTeamMembers.length > 0 && dbTeamMembers.length >= rawTeammatesList.length) {
+      return dbTeamMembers;
+    }
+    return fetchedProfiles.length > 0 ? fetchedProfiles : rawTeammatesList;
+  }, [dbTeamMembers, fetchedProfiles, rawTeammatesList]);
 
   if (!description && displayTeammates.length === 0 && !meetingUrl) {
     return <span className="text-slate-400 italic text-xs">No description provided.</span>;

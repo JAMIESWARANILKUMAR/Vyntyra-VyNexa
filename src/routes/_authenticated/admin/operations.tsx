@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
 import {
   listTeamMembers, provisionUser, revokeUser,
   listAnnouncements, createAnnouncement, deleteAnnouncement,
@@ -123,6 +124,71 @@ function OperationsDashboard() {
     setActiveTab(tab);
     navigate({ search: { tab }, replace: true });
   };
+
+  // Unified Realtime Supabase WebSocket subscription for instant push updates across admin operations
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-operations-realtime-ws")
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => {
+        qc.invalidateQueries({ queryKey: ["tasks"] });
+        qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+        qc.invalidateQueries({ queryKey: ["team-members"] });
+        qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "support_queries" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-support-queries"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "deliverables" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-deliverables"] });
+        qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "leaves" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-leaves"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "attendance" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-attendance"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "meetings" }, () => {
+        qc.invalidateQueries({ queryKey: ["meetings"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "schedules" }, () => {
+        qc.invalidateQueries({ queryKey: ["schedules"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "announcements" }, () => {
+        qc.invalidateQueries({ queryKey: ["announcements"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "automated_emails_log" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-email-logs"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "payouts" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-payouts"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "expenses" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-expenses"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "feedbacks" }, () => {
+        qc.invalidateQueries({ queryKey: ["feedbacks"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-tickets"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "access_requests" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-access-requests"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "bugs" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-bugs"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-leads"] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
 
   // Server functions
   const fetchHolidays = useServerFn(listHolidays);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { 
@@ -255,10 +255,45 @@ export function AdminInternTasksView() {
     }
   }
 
+  // Realtime Supabase WebSocket subscription for instant push updates on tasks, profiles, & deliverables
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-intern-tasks-realtime-ws")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tasks" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+          qc.invalidateQueries({ queryKey: ["tasks"] });
+          qc.invalidateQueries({ queryKey: ["my-tasks"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+          qc.invalidateQueries({ queryKey: ["team-members"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "deliverables" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
+
   const tasksQ = useQuery({
     queryKey: ["admin-intern-tasks"],
     queryFn: () => fetchTasks(),
-    refetchInterval: 5000, // Live poll task progress every 5 seconds
+    refetchInterval: 5000, // Live poll task progress every 5 seconds as fallback
   });
 
   const tasks: any[] = tasksQ.data || [];
@@ -1181,7 +1216,11 @@ export function AdminInternTasksView() {
                       </div>
 
                       {rep.description && (
-                        <TaskRichDescription description={rep.description} teamMembers={rep.team_members || rep.team_member_names} />
+                        <TaskRichDescription 
+                          description={rep.description} 
+                          teamMembers={group.map((t: any) => t.assigned_profile || { full_name: t.assigned_name || t.title })}
+                          teamId={rep.team_id}
+                        />
                       )}
 
                       {/* Team Members List Row */}
