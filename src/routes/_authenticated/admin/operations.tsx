@@ -477,6 +477,22 @@ function OperationsDashboard() {
 
   const tasks = tasksQ.data || [];
 
+  // Consolidate team tasks so one team assignment displays as one entry in Operations tasks list
+  const displayTasks = (() => {
+    const raw: any[] = tasksQ.data || [];
+    const seenTeamIds = new Set<string>();
+    const result: any[] = [];
+
+    for (const t of raw) {
+      if (t.team_id) {
+        if (seenTeamIds.has(t.team_id)) continue;
+        seenTeamIds.add(t.team_id);
+      }
+      result.push(t);
+    }
+    return result;
+  })();
+
   // Mutations
   async function handleProvision(e: React.FormEvent) {
     e.preventDefault();
@@ -1437,10 +1453,10 @@ function OperationsDashboard() {
                   <div className="p-8 flex items-center justify-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
                 ) : tasksQ.isError ? (
                   <ErrorState message="Could not load tasks. Ensure the tasks table exists." onRetry={() => tasksQ.refetch()} />
-                ) : (tasksQ.data || []).length === 0 ? (
+                ) : displayTasks.length === 0 ? (
                   <EmptyState icon={<ClipboardList className="h-6 w-6" />} message={team.length === 0 ? "Add team members first, then assign tasks" : "No tasks yet. Assign one above!"} />
                 ) : (
-                  (tasksQ.data as any[]).map((t: any) => (
+                  displayTasks.map((t: any) => (
                     <div key={t.id} className="p-4 hover:bg-slate-50 transition-colors">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
@@ -1450,6 +1466,10 @@ function OperationsDashboard() {
                             <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium capitalize ${taskStatusStyles[t.status] || taskStatusStyles.pending}`}>{(t.status || "pending").replace("_", " ")}</span>
                             {t.is_pool_task ? (
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-semibold">INTERN POOL</span>
+                            ) : (t.team_id || t.assignment_mode === "team") ? (
+                              <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 flex items-center gap-1">
+                                <Users className="h-3 w-3 text-purple-600" /> {t.team_name || "Collaborative Team"} {t.team_member_names?.length ? `(${t.team_member_names.join(", ")})` : ""}
+                              </span>
                             ) : (
                               <span className="text-xs text-muted-foreground">→ {t.profiles?.full_name || getMemberName(t.assigned_to)}</span>
                             )}

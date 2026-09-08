@@ -248,10 +248,17 @@ export function AdminInternTasksView() {
     return titleMatches && domainMatches;
   });
 
-  // Group active tasks by batch safely
+  // Group active tasks safely: team tasks grouped by team_id, batch assignments grouped by title & date
   const groupedTasks = filteredTasks.reduce((acc, t) => {
     if (!t) return acc;
-    const key = `${t.title || 'Untitled'}-${t.created_at || 'date'}`;
+    const isTeam = Boolean(t.team_id || t.assignment_mode === "team" || t.team_name);
+    // If team task, group all member rows into ONE entry by team_id or title+minute
+    const key = t.team_id 
+      ? `team-${t.team_id}` 
+      : isTeam 
+        ? `team-${t.title || 'Untitled'}-${(t.created_at || 'date').substring(0, 16)}`
+        : `${t.title || 'Untitled'}-${t.created_at || 'date'}`;
+
     if (!acc[key]) acc[key] = [];
     acc[key].push(t);
     return acc;
@@ -294,6 +301,24 @@ export function AdminInternTasksView() {
     }
   };
 
+  const handleUpdateTeamStatus = async (taskIds: string[], newStatus: any) => {
+    try {
+      for (const id of taskIds) {
+        await doReview({
+          data: {
+            taskId: id,
+            status: newStatus,
+          },
+        });
+      }
+      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+      toast.success(`Team task marked as ${newStatus} for all members.`);
+    } catch (err: any) {
+      toast.error("Failed to update team task: " + err.message);
+    }
+  };
+
   const handleDeleteBatch = async (title: string, created_at: string) => {
     if (!confirm(`Are you sure you want to delete this mass-assigned task? This will delete it for ALL assigned interns.`)) return;
     try {
@@ -303,6 +328,21 @@ export function AdminInternTasksView() {
       toast.success("Batch deleted successfully.");
     } catch (err: any) {
       toast.error("Failed to delete batch: " + err.message);
+    }
+  };
+
+  const handleDeleteTeamTask = async (taskIds: string[], teamTitle?: string) => {
+    if (!confirm(`Are you sure you want to delete this collaborative team task "${teamTitle || ''}"? This will delete it for all assigned team members.`)) return;
+    try {
+      for (const id of taskIds) {
+        await doDelete({ data: { id } });
+      }
+      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Team task deleted successfully.");
+    } catch (err: any) {
+      toast.error("Failed to delete team task: " + err.message);
     }
   };
 
@@ -705,9 +745,10 @@ export function AdminInternTasksView() {
           </div>
         ) : (
           groupedTaskEntries.map((group) => {
-            const isBatch = group.length > 1;
             const rep = group[0];
-            const groupKey = `${rep.title}-${rep.created_at}`;
+            const isTeam = Boolean(rep.team_id || rep.assignment_mode === "team" || group.some((t: any) => t.team_id || t.assignment_mode === "team"));
+            const isBatch = !isTeam && group.length > 1;
+            const groupKey = rep.team_id ? `team-${rep.team_id}` : `${rep.title}-${rep.created_at}`;
             const isExpanded = expandedGroups.includes(groupKey);
 
             const renderTask = (t: any) => {
@@ -981,6 +1022,232 @@ export function AdminInternTasksView() {
                 </div>
               );
             };
+
+            if (isTeam) {
+              const allGroupIds = group.map(t => t.id);
+              const isGroupAllSelected = allGroupIds.every(id => selectedTaskIds.includes(id));
+              const taskFile = rep.project_requirements || rep.task_file_url;
+              const allCompleted = group.every(t => t.status === "completed" || t.is_verified);
+              const anySubmitted = group.some(t => t.status === "submitted" || t.deliverable_url);
+              const anyInProgress = group.some(t => t.status === "in_progress");
+              const teamStatus = allCompleted ? "completed" : anySubmitted ? "submitted" : anyInProgress ? "in_progress" : (rep.status || "pending");
+
+              return (
+                <div key={groupKey} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0 border-b last:border-0 bg-purple-50/10">
+                  {/* Left: Checkbox & Team Info */}
+                  <div className="flex items-start gap-3 flex-1 min-w-0 w-full">
+                    <div className="mt-1 shrink-0">
+                      <Checkbox 
+                        checked={isGroupAllSelected} 
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedTaskIds(prev => Array.from(new Set([...prev, ...allGroupIds])));
+                          } else {
+                            setSelectedTaskIds(prev => prev.filter(id => !allGroupIds.includes(id)));
+                          }
+                        }}
+                      />
+                    </div>
+
+                    <div className="space-y-2 flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-sm text-slate-900 dark:text-slate-100 break-words">{rep.title}</span>
+
+                        {/* Status Badge */}
+                        {teamStatus === "completed" && (
+                          <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px]">
+                            <CheckCircle2 className="h-3 w-3 mr-1" /> All Completed
+                          </Badge>
+                        )}
+                        {teamStatus === "submitted" && (
+                          <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200 text-[10px]">
+                            <Sparkles className="h-3 w-3 mr-1" /> Submissions Received
+                          </Badge>
+                        )}
+                        {teamStatus === "in_progress" && (
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px]">
+                            <Clock className="h-3 w-3 mr-1" /> In Progress
+                          </Badge>
+                        )}
+                        {teamStatus === "pending" && (
+                          <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-[10px]">
+                            Pending Start
+                          </Badge>
+                        )}
+
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-600">
+                          Priority: {rep.priority || "medium"}
+                        </Badge>
+
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
+                          Level: {rep.level || "Beginner"}
+                        </Badge>
+
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 border-amber-200 flex items-center gap-0.5">
+                          <CreditCard className="h-3 w-3 text-amber-600" /> {rep.credits || 10} Credits
+                        </Badge>
+
+                        {/* Team Badge & Manage Team Button */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[10px] flex items-center gap-1 font-semibold">
+                            <Users className="h-3 w-3 text-purple-700" /> {rep.team_name || `Collaborative Team (${group.length})`}
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-5 text-[10px] px-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300 font-bold flex items-center gap-1 shadow-2xs cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setManageTeamTask(rep);
+                              setIsManageTeamOpen(true);
+                            }}
+                            title="Add or remove team members"
+                          >
+                            <Users className="h-2.5 w-2.5" /> Edit Team
+                          </Button>
+                        </div>
+                      </div>
+
+                      {rep.description && (
+                        <TaskRichDescription description={rep.description} teamMembers={rep.team_members || rep.team_member_names} />
+                      )}
+
+                      {/* Team Members List Row */}
+                      <div className="flex items-center gap-2 flex-wrap pt-1">
+                        <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                          <Users className="h-3 w-3 text-purple-600" /> Team Members:
+                        </span>
+                        {group.map((t: any) => {
+                          const p = t.assigned_profile;
+                          const internName = p?.full_name || p?.email || "Assigned Intern";
+                          return (
+                            <div 
+                              key={t.id} 
+                              className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md px-2 py-0.5 text-xs text-slate-800 dark:text-slate-200"
+                            >
+                              <User className="h-3 w-3 text-purple-600 shrink-0" />
+                              <span className="font-semibold">{internName}</span>
+                              {p?.intern_id && <span className="text-[10px] text-slate-400">({p.intern_id})</span>}
+                              {t.status === "completed" && (
+                                <Badge className="bg-emerald-100 text-emerald-800 text-[9px] px-1 py-0 h-4 font-bold">Completed</Badge>
+                              )}
+                              {(t.status === "submitted" || t.deliverable_url) && t.status !== "completed" && (
+                                <Badge className="bg-indigo-100 text-indigo-800 text-[9px] px-1 py-0 h-4 font-bold">Submitted</Badge>
+                              )}
+                              {t.deliverable_url && (
+                                <a 
+                                  href={t.deliverable_url} 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  className="text-purple-600 hover:underline font-bold text-[10px]"
+                                  title="View submitted deliverable"
+                                >
+                                  [Deliverable]
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Footer Details: Deadline, Task File, Meet Link */}
+                      <div className="flex items-center gap-3 sm:gap-4 text-[11px] text-slate-500 flex-wrap pt-1">
+                        {rep.due_date && (
+                          <span>Deadline: <strong className="text-slate-700 dark:text-slate-300">{rep.due_date}</strong></span>
+                        )}
+
+                        {taskFile && (
+                          <a
+                            href={taskFile}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium"
+                          >
+                            <FileText className="h-3.5 w-3.5" /> View Task File
+                          </a>
+                        )}
+
+                        {rep.task_meet_link && (
+                          <a
+                            href={rep.task_meet_link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-700 hover:underline inline-flex items-center gap-1 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200"
+                          >
+                            <Video className="h-3.5 w-3.5 text-blue-600" /> Meet Link
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Quick Actions */}
+                  <div className="flex items-center gap-1.5 flex-wrap w-full xl:w-auto xl:shrink-0 justify-start xl:justify-end pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-100 dark:border-slate-800">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs font-bold bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 cursor-pointer"
+                      onClick={() => handleUpdateTeamStatus(allGroupIds, "completed")}
+                      title="Mark task completed for all team members"
+                    >
+                      <Check className="h-3.5 w-3.5 mr-1" /> Approve Team
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs text-amber-700 border-amber-200 hover:bg-amber-50 cursor-pointer"
+                      onClick={() => {
+                        setSelectedTaskForReview(rep);
+                        setAdminRemarks(rep.progress_notes || "");
+                      }}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5 mr-1" /> Review
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs font-bold text-blue-700 bg-blue-50/70 border-blue-200 hover:bg-blue-100 gap-1.5 shadow-2xs cursor-pointer"
+                      onClick={() => openTaskEmailModal(rep)}
+                      title="Send tailored Task Status email"
+                    >
+                      <Mail className="h-3.5 w-3.5" /> Email
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs font-bold text-teal-700 bg-teal-50/70 border-teal-200 hover:bg-teal-100 gap-1.5 shadow-2xs cursor-pointer"
+                      onClick={() => openTaskEmailModal(rep)}
+                      title="Open formatted WhatsApp task status"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs font-bold text-amber-700 bg-amber-50/80 border-amber-200 hover:bg-amber-100 gap-1 shadow-2xs cursor-pointer"
+                      onClick={() => handleMoveToStoredBank(allGroupIds)}
+                      title="Move team task to Stored Bank for future cohorts"
+                    >
+                      <FolderArchive className="h-3.5 w-3.5 text-amber-600" /> Store for Future
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 cursor-pointer"
+                      onClick={() => handleDeleteTeamTask(allGroupIds, rep.title)}
+                      title="Delete this collaborative team task for all members"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            }
 
             if (!isBatch) return renderTask(rep);
 

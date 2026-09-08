@@ -817,28 +817,78 @@ function InternDashboard() {
 
   const myIdentifiersLower = myIdentifiers.map(id => String(id).toLowerCase());
 
-  const myTasks = tasks.filter((t: any) => {
+  const rawMyTasks = tasks.filter((t: any) => {
     if (!t) return false;
     if (t.is_pool_task === true && !t.assigned_to) return false; // Unclaimed pool tasks belong in Task Pool tab
 
+    // 1. Direct assignment match
     const isDirectMatch = myIdentifiersLower.some((id) => {
       if (!id) return false;
       return (
         (t.assigned_to && String(t.assigned_to).toLowerCase() === id) || 
         (t.target_user_id && String(t.target_user_id).toLowerCase() === id) || 
         (t.user_id && String(t.user_id).toLowerCase() === id) || 
-        (t.claimed_by && String(t.claimed_by).toLowerCase() === id) ||
+        (t.claimed_by && String(t.claimed_by).toLowerCase() === id)
+      );
+    });
+
+    if (isDirectMatch) return true;
+
+    // 2. Deliverable match
+    const isDeliverableMatch = myDeliverableTaskIds.includes(t.id);
+    if (isDeliverableMatch) return true;
+
+    // 3. Team membership match - ONLY if unassigned or assigned to me (avoid picking up teammate's row)
+    const isTeamMember = myIdentifiersLower.some((id) => {
+      if (!id) return false;
+      return (
         (Array.isArray(t.team_members) && t.team_members.some((m: any) => String(m).toLowerCase() === id)) ||
         (Array.isArray(t.target_user_ids) && t.target_user_ids.some((m: any) => String(m).toLowerCase() === id)) ||
         (Array.isArray(t.team_member_names) && t.team_member_names.some((m: any) => String(m).toLowerCase() === id))
       );
     });
 
-    const isDeliverableMatch = myDeliverableTaskIds.includes(t.id);
-    const isInternRoleTarget = !t.assigned_to && !t.target_user_id && (t.target_role === "intern" || t.target_role === "all");
+    if (isTeamMember) {
+      const assignedToMe = myIdentifiersLower.some(id => t.assigned_to && String(t.assigned_to).toLowerCase() === id);
+      if (!t.assigned_to || assignedToMe) return true;
+    }
 
-    return isDirectMatch || isDeliverableMatch || isInternRoleTarget;
+    const isInternRoleTarget = !t.assigned_to && !t.target_user_id && (t.target_role === "intern" || t.target_role === "all");
+    return isInternRoleTarget;
   });
+
+  // Deduplicate by team_id and id so the intern NEVER sees repeated tasks
+  const myTasks = (() => {
+    const seenTeamIds = new Set<string>();
+    const seenTaskIds = new Set<string>();
+    const result: any[] = [];
+
+    // Prioritize tasks directly assigned to this intern first
+    const sorted = [...rawMyTasks].sort((a, b) => {
+      const aIsDirect = myIdentifiersLower.some(id => 
+        (a.assigned_to && String(a.assigned_to).toLowerCase() === id) ||
+        (a.target_user_id && String(a.target_user_id).toLowerCase() === id)
+      );
+      const bIsDirect = myIdentifiersLower.some(id => 
+        (b.assigned_to && String(b.assigned_to).toLowerCase() === id) ||
+        (b.target_user_id && String(b.target_user_id).toLowerCase() === id)
+      );
+      if (aIsDirect && !bIsDirect) return -1;
+      if (!aIsDirect && bIsDirect) return 1;
+      return 0;
+    });
+
+    for (const t of sorted) {
+      if (seenTaskIds.has(t.id)) continue;
+      if (t.team_id) {
+        if (seenTeamIds.has(t.team_id)) continue;
+        seenTeamIds.add(t.team_id);
+      }
+      seenTaskIds.add(t.id);
+      result.push(t);
+    }
+    return result;
+  })();
 
   const completedTasks = myTasks.filter((t: any) => 
     t.status === "completed" || 
