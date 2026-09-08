@@ -4004,6 +4004,117 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
       return { success: true, resendId, provider: providerUsed };
   });
 
+export const sendB2bPitchEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    recipient_email: z.string().trim().email("Please enter a valid recipient email address"),
+    recipient_name: z.string().optional(),
+    subject: z.string().min(1, "Subject is required"),
+    body_text: z.string().min(1, "Body text is required"),
+    industry_name: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const recipientEmail = data.recipient_email.trim().toLowerCase();
+    const recipientName = data.recipient_name?.trim() || "Business Decision Maker";
+    const subject = data.subject.trim();
+    const bodyText = data.body_text.trim();
+    const industry = data.industry_name || "Enterprise";
+
+    const formattedBodyHtml = bodyText
+      .split("\n\n")
+      .map(para => `<p style="margin:0 0 14px 0;font-size:14px;line-height:1.7;color:#334155;">${para.replace(/\n/g, "<br/>")}</p>`)
+      .join("");
+
+    const htmlContent = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>${subject}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0b1120;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#334155;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#0b1120;padding:35px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:620px;background-color:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 20px 40px -10px rgba(0,0,0,0.5);">
+          <tr>
+            <td style="background-color:#0f172a;padding:26px 36px;text-align:left;border-bottom:3px solid #6366f1;">
+              <div style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.02em;">Vyntyra Consultancy Services</div>
+              <div style="color:#818cf8;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px;">Digital Solutions &middot; Client Growth Engine</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:36px;text-align:left;">
+              <div style="font-size:14px;line-height:1.75;color:#1e293b;">
+                ${formattedBodyHtml}
+              </div>
+              <div style="margin-top:32px;padding-top:20px;border-top:1px solid #e2e8f0;color:#64748b;font-size:12px;line-height:1.6;">
+                <strong>Vyntyra Consultancy Services Pvt. Ltd.</strong><br/>
+                Engineering Scalable Systems, Custom Apps &middot; Web, POS, &amp; Growth Tech<br/>
+                <a href="https://vyntyraconsultancyservices.in" style="color:#4f46e5;font-weight:600;text-decoration:none;">vyntyraconsultancyservices.in</a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    let resendId: string | null = null;
+    let providerUsed: "resend" | "brevo" = "resend";
+    const hasResend = !!process.env.RESEND_API_KEY;
+    const hasBrevo = !!process.env.BREVO_API_KEY;
+
+    if (hasResend) {
+      try {
+        const { Resend } = await import("resend");
+        const resend = new Resend(process.env.RESEND_API_KEY!);
+        const resp = await resend.emails.send({
+          from: "Vyntyra Outreach <outreach@vyntyraconsultancyservices.in>",
+          to: recipientEmail,
+          subject: subject,
+          html: htmlContent,
+          replyTo: "contact@vyntyraconsultancyservices.in",
+        });
+        if (resp.error) throw new Error(resp.error.message);
+        resendId = resp.data?.id || null;
+      } catch (rErr: any) {
+        if (hasBrevo) {
+          resendId = await sendViaBrevo({ recipientEmail, recipientName, subject, htmlContent });
+          providerUsed = "brevo";
+        } else {
+          throw rErr;
+        }
+      }
+    } else if (hasBrevo) {
+      resendId = await sendViaBrevo({ recipientEmail, recipientName, subject, htmlContent });
+      providerUsed = "brevo";
+    } else {
+      throw new Error("Neither RESEND_API_KEY nor BREVO_API_KEY is configured on the server.");
+    }
+
+    // Record log in automated_emails_log
+    try {
+      const adminClient = getAdminClient();
+      const now = new Date();
+      await adminClient.from("automated_emails_log").insert({
+        recipient_email: recipientEmail,
+        recipient_name: recipientName,
+        domain: "B2B Outreach",
+        sub_domain: industry,
+        email_template_id: `B2B Pitch: ${subject}`,
+        delivery_status: "sent",
+        sent_date: now.toISOString().split('T')[0],
+        sent_time: now.toISOString().split('T')[1].substring(0, 8)
+      });
+    } catch (e: any) {
+      console.warn("[sendB2bPitchEmail] Log warning:", e.message);
+    }
+
+    return { success: true, messageId: resendId, provider: providerUsed };
+  });
+
 // Secondary Email Service Helper for Brevo API
 async function sendViaBrevo({ recipientEmail, recipientName, subject, htmlContent }: { recipientEmail: string; recipientName?: string; subject: string; htmlContent: string }) {
   const apiKey = process.env.BREVO_API_KEY;

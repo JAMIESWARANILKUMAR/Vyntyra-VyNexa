@@ -829,15 +829,15 @@ function InternDashboard() {
         (t.user_id && String(t.user_id).toLowerCase() === id) || 
         (t.claimed_by && String(t.claimed_by).toLowerCase() === id) ||
         (Array.isArray(t.team_members) && t.team_members.some((m: any) => String(m).toLowerCase() === id)) ||
-        (Array.isArray(t.target_user_ids) && t.target_user_ids.some((m: any) => String(m).toLowerCase() === id))
+        (Array.isArray(t.target_user_ids) && t.target_user_ids.some((m: any) => String(m).toLowerCase() === id)) ||
+        (Array.isArray(t.team_member_names) && t.team_member_names.some((m: any) => String(m).toLowerCase() === id))
       );
     });
 
     const isDeliverableMatch = myDeliverableTaskIds.includes(t.id);
-    const isNotifTask = assignedTaskTitlesFromNotifs.some((title: string) => t.title && t.title.toLowerCase().includes(title.toLowerCase()));
     const isInternRoleTarget = !t.assigned_to && !t.target_user_id && (t.target_role === "intern" || t.target_role === "all");
 
-    return isDirectMatch || isDeliverableMatch || isNotifTask || isInternRoleTarget;
+    return isDirectMatch || isDeliverableMatch || isInternRoleTarget;
   });
 
   const completedTasks = myTasks.filter((t: any) => 

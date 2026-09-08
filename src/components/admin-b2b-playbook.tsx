@@ -29,8 +29,11 @@ import {
   Eye,
   MessageSquare,
   Smartphone,
-  UserCheck
+  UserCheck,
+  Loader2
 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { sendB2bPitchEmail } from "@/lib/operations.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -236,6 +239,9 @@ export function AdminB2bPlaybook() {
   const [activeTab, setActiveTab] = useState<string>("restaurants");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [targetPhone, setTargetPhone] = useState<string>("919876543210");
+  const [targetEmail, setTargetEmail] = useState<string>("");
+  const [isSendingDirectEmail, setIsSendingDirectEmail] = useState<boolean>(false);
+  const doSendEmail = useServerFn(sendB2bPitchEmail);
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
   // Industry Template States with Local Storage Support
@@ -388,6 +394,43 @@ export function AdminB2bPlaybook() {
     toast.success("Opening WhatsApp with pre-filled pitch message!");
   };
 
+  const openEmailLink = (subjectText: string, bodyText: string) => {
+    const cleanedEmail = targetEmail.trim();
+    const encodedSubject = encodeURIComponent(subjectText);
+    const encodedBody = encodeURIComponent(bodyText);
+    const mailtoUrl = cleanedEmail
+      ? `mailto:${cleanedEmail}?subject=${encodedSubject}&body=${encodedBody}`
+      : `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
+    window.open(mailtoUrl, "_blank");
+    toast.success(cleanedEmail ? `Opening default mail client to email ${cleanedEmail}!` : "Opening default mail client with pre-filled pitch email!");
+  };
+
+  const handleDirectSendEmail = async (subjectText: string, bodyText: string, industryName: string) => {
+    const cleanedEmail = targetEmail.trim();
+    if (!cleanedEmail) {
+      toast.error("Please enter a Target Email Address in the personalizer above first.");
+      return;
+    }
+    setIsSendingDirectEmail(true);
+    try {
+      await doSendEmail({
+        data: {
+          recipient_email: cleanedEmail,
+          recipient_name: formVars.First_Name || "Decision Maker",
+          subject: subjectText,
+          body_text: bodyText,
+          industry_name: industryName,
+        }
+      });
+      toast.success(`Official pitch email sent to ${cleanedEmail} successfully via Vyntyra Gateway!`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send via server API. Launching default email client instead...");
+      openEmailLink(subjectText, bodyText);
+    } finally {
+      setIsSendingDirectEmail(false);
+    }
+  };
+
   const renderedSubject = getSubstitutedText(isEditing ? editSubject : selectedIndustry.emailSubject);
   const renderedBody = getSubstitutedText(isEditing ? editEmailBody : selectedIndustry.emailBodyTemplate);
   const renderedPitch = getSubstitutedText(isEditing ? editPitchScript : selectedIndustry.pitchScriptTemplate);
@@ -523,7 +566,7 @@ export function AdminB2bPlaybook() {
                     Update business details to customize the Email, Phone Pitch, and WhatsApp messages in real time.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                   <div className="space-y-1">
                     <label className="text-[11px] font-semibold text-muted-foreground">Decision Maker Name</label>
                     <Input
@@ -569,6 +612,17 @@ export function AdminB2bPlaybook() {
                       onChange={(e) => setTargetPhone(e.target.value)}
                       placeholder="919876543210"
                       className="h-8 text-xs border-emerald-500/40 focus:border-emerald-500 font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                      <Mail className="h-3.5 w-3.5" /> Target Email Address
+                    </label>
+                    <Input
+                      value={targetEmail}
+                      onChange={(e) => setTargetEmail(e.target.value)}
+                      placeholder="owner@business.com"
+                      className="h-8 text-xs border-indigo-500/40 focus:border-indigo-500 font-mono"
                     />
                   </div>
                 </CardContent>
@@ -687,16 +741,35 @@ export function AdminB2bPlaybook() {
                       </div>
                     </CardContent>
                   </div>
-                  <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between">
-                    <div className="text-[11px] text-muted-foreground">
-                      💡 Tip: Personalize line 1 with real details from Google Maps.
+                  <div className="p-4 border-t border-border bg-indigo-500/5 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button
+                        size="sm"
+                        onClick={() => openEmailLink(renderedSubject, renderedBody)}
+                        className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-1.5 shadow-sm"
+                        title="Open default email client (Gmail, Outlook, Apple Mail) with pre-filled pitch"
+                      >
+                        <Send className="h-3.5 w-3.5" /> 1-Click Send Email
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isSendingDirectEmail}
+                        onClick={() => handleDirectSendEmail(renderedSubject, renderedBody, ind.name)}
+                        className="h-8 text-xs border-indigo-500/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/10 font-semibold flex items-center gap-1.5"
+                        title="Dispatch email directly via Vyntyra official mail gateway"
+                      >
+                        {isSendingDirectEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                        {isSendingDirectEmail ? "Sending..." : "Direct API Send"}
+                      </Button>
                     </div>
                     <Button
                       size="sm"
+                      variant="outline"
                       onClick={() => copyToClipboard(renderedBody, `body_${ind.id}`, "Email Body")}
-                      className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+                      className="h-8 text-xs font-semibold"
                     >
-                      Copy Body Only
+                      <Copy className="h-3.5 w-3.5" /> Copy Body Only
                     </Button>
                   </div>
                 </Card>
@@ -752,15 +825,21 @@ export function AdminB2bPlaybook() {
                       </div>
                     </CardContent>
                   </div>
-                  <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between">
-                    <span className="text-[11px] text-muted-foreground">HTML Corporate Styling Applied</span>
+                  <div className="p-4 border-t border-border bg-muted/10 flex flex-wrap items-center justify-between gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => openEmailLink(renderedSubject, renderedBody)}
+                      className="h-8 text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold flex items-center gap-1.5 shadow-sm"
+                    >
+                      <Mail className="h-3.5 w-3.5" /> 1-Click Launch Email
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => copyToClipboard(renderedSubject, `subj_${ind.id}`, "Subject Line")}
                       className="h-8 text-xs font-semibold"
                     >
-                      Copy Subject Line
+                      <Copy className="h-3.5 w-3.5" /> Copy Subject Line
                     </Button>
                   </div>
                 </Card>
