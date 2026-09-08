@@ -26,6 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ManageTeamModal } from "@/components/manage-team-modal";
 
 export function AdminInternTasksView() {
   const qc = useQueryClient();
@@ -47,6 +48,9 @@ export function AdminInternTasksView() {
 
   // Tab State: "active" (Assigned to Interns) vs "stored_bank" (Repository for Future)
   const [activeViewTab, setActiveViewTab] = useState<"active" | "stored_bank">("active");
+
+  const [manageTeamTask, setManageTeamTask] = useState<any>(null);
+  const [isManageTeamOpen, setIsManageTeamOpen] = useState(false);
 
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
@@ -762,9 +766,24 @@ export function AdminInternTasksView() {
                         </Badge>
 
                         {(t.team_name || t.team_id || t.assignment_mode === "team") && (
-                          <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[10px] flex items-center gap-1">
-                            <Users className="h-3 w-3 text-purple-700" /> {t.team_name || `Collaborative Team (${t.team_size || 2})`}
-                          </Badge>
+                          <div className="flex items-center gap-1">
+                            <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[10px] flex items-center gap-1">
+                              <Users className="h-3 w-3 text-purple-700" /> {t.team_name || `Collaborative Team (${t.team_size || 2})`}
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 bg-purple-50 hover:bg-purple-200 text-purple-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setManageTeamTask(t);
+                                setIsManageTeamOpen(true);
+                              }}
+                              title="Manage Team Members"
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
                         )}
                       </div>
 
@@ -1496,6 +1515,14 @@ export function AdminInternTasksView() {
 
       {/* Bulk / Manual Task Assignment Modal */}
       <InternTaskAssignmentModal open={assignModalOpen} onClose={() => setAssignModalOpen(false)} />
+
+      {/* Manage Team Modal */}
+      <ManageTeamModal 
+        open={isManageTeamOpen} 
+        onOpenChange={setIsManageTeamOpen} 
+        task={manageTeamTask} 
+        interns={activeInternsQ.data || []} 
+      />
 
       {/* Clear All Confirmation Modal */}
       <Dialog open={clearAllModalOpen} onOpenChange={setClearAllModalOpen}>

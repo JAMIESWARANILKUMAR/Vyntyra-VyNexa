@@ -362,31 +362,11 @@ export const listTasks = createServerFn({ method: "GET" })
 
     const myDelivTaskIds = new Set((myDeliverables || []).map((d: any) => d.task_id).filter(Boolean));
 
-    const { data: myNotifs } = await admin
-      .from("user_notifications")
-      .select("message")
-      .eq("user_id", context.userId);
-
-    const notifTitles = (myNotifs || [])
-      .map((n: any) => {
-        if (!n?.message) return null;
-        const match = n.message.match(/assigned a new task:\s*"([^"]+)"/i) || n.message.match(/assigned a new task:\s*([^.]+)/i);
-        return match ? match[1].trim() : null;
-      })
-      .filter(Boolean);
-
     const delivTaskIdsArray = Array.from(myDelivTaskIds);
-    if (delivTaskIdsArray.length > 0) {
-      await admin.from("tasks").update({
-        assigned_to: context.userId,
-        status: "completed",
-        updated_at: new Date().toISOString()
-      }).in("id", delivTaskIdsArray);
-    }
 
     const mappedList = (rawList || []).map((t: any) => {
       const copy = normalizeTaskDocLinks(t);
-      // Self-repair: If intern submitted a deliverable, mark task as completed
+      // Self-repair: If intern submitted a deliverable, show task as completed in UI
       if (myDeliverables && myDelivTaskIds.has(copy.id)) {
         copy.assigned_to = context.userId;
         copy.status = "completed";
@@ -400,17 +380,12 @@ export const listTasks = createServerFn({ method: "GET" })
       // Unassigned pool tasks open for interns to claim in the Task Pool
       if (t.is_pool_task && !t.assigned_to) return true;
 
-      const isNotifTask = notifTitles.some((nt: string) => t.title && t.title.toLowerCase().includes(nt.toLowerCase()));
-
       const hasIdMatch = (val: any) => {
         if (!val) return false;
         return myIdsLower.has(String(val).toLowerCase().trim());
       };
 
-      const descNameMatch = userProfile?.full_name && t.description && t.description.toLowerCase().includes(userProfile.full_name.toLowerCase());
-      const descEmailMatch = userEmail && t.description && t.description.toLowerCase().includes(userEmail.toLowerCase());
-
-      // Match against any of user's identifiers, team memberships, deliverables, notification title, or description text
+      // Match against any of user's identifiers, team memberships, deliverables
       const isDirectAssigned = Boolean(
         hasIdMatch(t.assigned_to) ||
         hasIdMatch(t.target_user_id) ||
@@ -419,10 +394,7 @@ export const listTasks = createServerFn({ method: "GET" })
         (Array.isArray(t.team_members) && t.team_members.some((m: any) => hasIdMatch(m))) ||
         (Array.isArray(t.target_user_ids) && t.target_user_ids.some((m: any) => hasIdMatch(m))) ||
         (Array.isArray(t.team_member_names) && t.team_member_names.some((m: any) => hasIdMatch(m))) ||
-        myDelivTaskIds.has(t.id) ||
-        isNotifTask ||
-        descNameMatch ||
-        descEmailMatch
+        myDelivTaskIds.has(t.id)
       );
 
       if (isDirectAssigned) return true;
@@ -679,6 +651,59 @@ export const updateTaskByAdmin = createServerFn({ method: "POST" })
       }
     }
 
+    return { success: true };
+  });
+
+export const updateTeamTaskMembers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    taskId: z.string().min(1),
+    teamId: z.string().min(1),
+    target_intern_ids: z.array(z.string()).min(1),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const admin = getAdminClient();
+    
+    // 1. Get the source task to duplicate for new members
+    const { data: sourceTask, error: sourceErr } = await admin.from("tasks").select("*").eq("id", data.taskId).single();
+    if (sourceErr || !sourceTask) throw new Error("Source task not found");
+    
+    // 2. Fetch all current tasks for this team
+    const { data: existingTasks, error: teamErr } = await admin.from("tasks").select("id, assigned_to").eq("team_id", data.teamId);
+    if (teamErr) throw new Error("Failed to fetch team tasks");
+    
+    const existingInternIds = existingTasks.map((t: any) => t.assigned_to).filter(Boolean);
+    const newInternIds = data.target_intern_ids.filter(id => !existingInternIds.includes(id));
+    const removedInternIds = existingInternIds.filter((id: string) => !data.target_intern_ids.includes(id));
+    
+    // 3. Delete tasks for removed interns
+    if (removedInternIds.length > 0) {
+      await admin.from("tasks").delete().eq("team_id", data.teamId).in("assigned_to", removedInternIds);
+    }
+    
+    // 4. Create tasks for new interns
+    if (newInternIds.length > 0) {
+      const taskPayloads = newInternIds.map(internId => {
+        const copy = { ...sourceTask };
+        delete copy.id;
+        delete copy.created_at;
+        delete copy.updated_at;
+        copy.assigned_to = internId;
+        copy.target_user_id = internId;
+        return copy;
+      });
+      await admin.from("tasks").insert(taskPayloads);
+    }
+    
+    // 5. Update team_member_names for all remaining tasks in the team
+    const { data: profiles } = await admin.from("profiles").select("id, full_name, email").in("id", data.target_intern_ids);
+    const teamMemberNames = profiles?.map((p: any) => p.full_name || p.email) || [];
+    
+    await admin.from("tasks").update({ 
+      team_member_names: teamMemberNames,
+      team_size: data.target_intern_ids.length 
+    }).eq("team_id", data.teamId);
+    
     return { success: true };
   });
 
