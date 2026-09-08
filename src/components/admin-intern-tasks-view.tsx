@@ -257,36 +257,47 @@ export function AdminInternTasksView() {
 
   // Realtime Supabase WebSocket subscription for instant push updates on tasks, profiles, & deliverables
   useEffect(() => {
-    const channel = supabase
-      .channel("admin-intern-tasks-realtime-ws")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "tasks" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
-          qc.invalidateQueries({ queryKey: ["tasks"] });
-          qc.invalidateQueries({ queryKey: ["my-tasks"] });
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "profiles" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
-          qc.invalidateQueries({ queryKey: ["team-members"] });
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "deliverables" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
-        }
-      )
-      .subscribe();
+    let channel: any = null;
+    try {
+      channel = supabase
+        .channel(`admin-intern-tasks-realtime-ws-${Math.random().toString(36).slice(2, 8)}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "tasks" },
+          () => {
+            qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+            qc.invalidateQueries({ queryKey: ["tasks"] });
+            qc.invalidateQueries({ queryKey: ["my-tasks"] });
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "profiles" },
+          () => {
+            qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+            qc.invalidateQueries({ queryKey: ["team-members"] });
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "deliverables" },
+          () => {
+            qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[AdminInternTasksView] Supabase Realtime subscription error:", err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch {
+          // ignore
+        }
+      }
     };
   }, [qc]);
 

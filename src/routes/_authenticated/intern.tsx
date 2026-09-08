@@ -629,35 +629,57 @@ function InternDashboard() {
 
   // Realtime subscription for meetings table to auto-refresh meetings
   useEffect(() => {
-    const channel = supabase
-      .channel("intern-meetings-live")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "meetings" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["my-meetings"] });
-        }
-      )
-      .subscribe();
+    let channel: any = null;
+    try {
+      channel = supabase
+        .channel(`intern-meetings-live-${Math.random().toString(36).slice(2, 8)}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "meetings" },
+          () => {
+            qc.invalidateQueries({ queryKey: ["my-meetings"] });
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[Intern] Realtime meetings subscription error:", err);
+    }
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch {
+          // ignore
+        }
+      }
     };
   }, [qc]);
 
   // Realtime subscription for tasks table to auto-refresh tasks
   useEffect(() => {
-    const channel = supabase
-      .channel("intern-tasks-live")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "tasks" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["my-tasks"] });
-        }
-      )
-      .subscribe();
+    let channel: any = null;
+    try {
+      channel = supabase
+        .channel(`intern-tasks-live-${Math.random().toString(36).slice(2, 8)}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "tasks" },
+          () => {
+            qc.invalidateQueries({ queryKey: ["my-tasks"] });
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[Intern] Realtime tasks subscription error:", err);
+    }
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch {
+          // ignore
+        }
+      }
     };
   }, [qc]);
 
@@ -665,33 +687,44 @@ function InternDashboard() {
   useEffect(() => {
     if (!session?.user?.id) return;
     
-    const userChannel = supabase
-      .channel(`user-updates-${session.user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "user_notifications", filter: `user_id=eq.${session.user.id}` },
-        () => {
-          qc.invalidateQueries({ queryKey: ["my-user-notifications", session?.user?.id] });
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "support_queries", filter: `intern_id=eq.${session.user.id}` },
-        () => {
-          qc.invalidateQueries({ queryKey: ["my-support-queries", session?.user?.id] });
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "leave_requests", filter: `user_id=eq.${session.user.id}` },
-        () => {
-          qc.invalidateQueries({ queryKey: ["my-leaves", session?.user?.id] });
-        }
-      )
-      .subscribe();
+    let userChannel: any = null;
+    try {
+      userChannel = supabase
+        .channel(`user-updates-${session.user.id}-${Math.random().toString(36).slice(2, 8)}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "user_notifications", filter: `user_id=eq.${session.user.id}` },
+          () => {
+            qc.invalidateQueries({ queryKey: ["my-user-notifications", session?.user?.id] });
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "support_queries", filter: `intern_id=eq.${session.user.id}` },
+          () => {
+            qc.invalidateQueries({ queryKey: ["my-support-queries", session?.user?.id] });
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "leave_requests", filter: `user_id=eq.${session.user.id}` },
+          () => {
+            qc.invalidateQueries({ queryKey: ["my-leaves", session?.user?.id] });
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[Intern] Realtime user events subscription error:", err);
+    }
 
     return () => {
-      supabase.removeChannel(userChannel);
+      if (userChannel) {
+        try {
+          supabase.removeChannel(userChannel);
+        } catch {
+          // ignore
+        }
+      }
     };
   }, [session?.user?.id, qc]);
 

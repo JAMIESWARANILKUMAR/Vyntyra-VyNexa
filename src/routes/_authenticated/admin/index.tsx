@@ -266,40 +266,52 @@ function AdminDashboard() {
 
   // Live Supabase Realtime subscription for applications table
   useEffect(() => {
-    const channel = supabase
-      .channel("admin-applications-live")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "applications" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["applications"] });
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "admin_notifications" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["admin-notifications"] });
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "job_postings" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["job-postings"] });
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "tasks" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["tasks"] });
-          qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
-        }
-      )
-      .subscribe();
+    let channel: any = null;
+    try {
+      channel = supabase
+        .channel(`admin-applications-live-${Math.random().toString(36).slice(2, 8)}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "applications" },
+          () => {
+            qc.invalidateQueries({ queryKey: ["applications"] });
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "admin_notifications" },
+          () => {
+            qc.invalidateQueries({ queryKey: ["admin-notifications"] });
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "job_postings" },
+          () => {
+            qc.invalidateQueries({ queryKey: ["job-postings"] });
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "tasks" },
+          () => {
+            qc.invalidateQueries({ queryKey: ["tasks"] });
+            qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[AdminIndex] Supabase Realtime subscription error:", err);
+    }
+
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch {
+          // ignore
+        }
+      }
     };
   }, [qc]);
 

@@ -220,20 +220,32 @@ export function TaskRichDescription({
     loadLiveTeam();
 
     // Supabase Realtime WebSocket subscription for live team tasks changes
-    const channel = supabase
-      .channel(`team-live-ws-${effectiveTeamId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "tasks", filter: `team_id=eq.${effectiveTeamId}` },
-        () => {
-          loadLiveTeam();
-        }
-      )
-      .subscribe();
+    let channel: any = null;
+    try {
+      const channelTopic = `team-live-ws-${effectiveTeamId}-${Math.random().toString(36).slice(2, 9)}`;
+      channel = supabase
+        .channel(channelTopic)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "tasks", filter: `team_id=eq.${effectiveTeamId}` },
+          () => {
+            if (isMounted) loadLiveTeam();
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[TaskRichDescription] Supabase Realtime subscription error:", err);
+    }
 
     return () => {
       isMounted = false;
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch {
+          // ignore cleanup errors
+        }
+      }
     };
   }, [effectiveTeamId]);
 

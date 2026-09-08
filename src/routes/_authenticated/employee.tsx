@@ -504,18 +504,29 @@ function EmployeeDashboard() {
 
   // Realtime subscription for meetings table to auto-refresh meetings
   useEffect(() => {
-    const channel = supabase
-      .channel("employee-meetings-live")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "meetings" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["my-meetings"] });
-        }
-      )
-      .subscribe();
+    let channel: any = null;
+    try {
+      channel = supabase
+        .channel(`employee-meetings-live-${Math.random().toString(36).slice(2, 8)}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "meetings" },
+          () => {
+            qc.invalidateQueries({ queryKey: ["my-meetings"] });
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[Employee] Realtime meetings subscription error:", err);
+    }
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch {
+          // ignore
+        }
+      }
     };
   }, [qc]);
 
@@ -523,18 +534,29 @@ function EmployeeDashboard() {
   useEffect(() => {
     const userId = sessionQ.data?.user?.id;
     if (!userId) return;
-    const supportChannel = supabase
-      .channel(`employee-support-updates-${userId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "support_queries", filter: `assigned_employee_id=eq.${userId}` },
-        () => {
-          qc.invalidateQueries({ queryKey: ["assigned-support-queries", userId] });
-        }
-      )
-      .subscribe();
+    let supportChannel: any = null;
+    try {
+      supportChannel = supabase
+        .channel(`employee-support-updates-${userId}-${Math.random().toString(36).slice(2, 8)}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "support_queries", filter: `assigned_employee_id=eq.${userId}` },
+          () => {
+            qc.invalidateQueries({ queryKey: ["assigned-support-queries", userId] });
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[Employee] Realtime support subscription error:", err);
+    }
     return () => {
-      supabase.removeChannel(supportChannel);
+      if (supportChannel) {
+        try {
+          supabase.removeChannel(supportChannel);
+        } catch {
+          // ignore
+        }
+      }
     };
   }, [sessionQ.data?.user?.id, qc]);
 
