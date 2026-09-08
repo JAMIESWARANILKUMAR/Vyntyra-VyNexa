@@ -115,7 +115,36 @@ export function formatTaskText(rawText: string): {
   };
 }
 
-export function TaskRichDescription({
+class TaskRichDescriptionErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallbackText: string; className?: string },
+  { hasError: boolean }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any) {
+    console.warn("[TaskRichDescription] Captured render error:", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className={`text-sm text-slate-700 whitespace-pre-wrap ${this.props.className || ""}`}>
+          {this.props.fallbackText}
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function TaskRichDescriptionInner({
   description,
   teamMembers,
   className = "",
@@ -487,5 +516,13 @@ export function TaskRichDescription({
         </div>
       )}
     </div>
+  );
+}
+
+export function TaskRichDescription(props: TaskRichDescriptionProps) {
+  return (
+    <TaskRichDescriptionErrorBoundary fallbackText={props.description || ""} className={props.className}>
+      <TaskRichDescriptionInner {...props} />
+    </TaskRichDescriptionErrorBoundary>
   );
 }
