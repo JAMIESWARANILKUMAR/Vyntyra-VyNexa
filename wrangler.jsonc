@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "vyntyra-vy-nexa-cf",
-  "main": "@tanstack/react-start/server-entry",
+  "name": "vyntyra-vy-nexa",
+  "main": ".output/server/index.mjs",
   "compatibility_date": "2026-02-24",
   "compatibility_flags": [
     "nodejs_compat"
@@ -9,12 +9,13 @@
   "assets": {
     "binding": "ASSETS",
     "directory": ".output/public"
-  },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "<D1_DATABASE_NAME>",
-      "database_id": "<D1_DATABASE_ID>"
-    }
-  ]
+  }
+  // If you configure a Cloudflare D1 database in the future, uncomment below and provide your real D1 database details:
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "your-database-name",
+  //     "database_id": "your-database-uuid"
+  //   }
+  // ]
 }

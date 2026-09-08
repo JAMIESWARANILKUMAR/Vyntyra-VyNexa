@@ -23,7 +23,7 @@ export default defineConfig({
     tanstackStart({
       server: { entry: "server" },
     }),
-    ...(isCloudflare && !isVercel
+    ...(process.env.CLOUDFLARE_VITE_PLUGIN === "true"
       ? [cloudflare({ viteEnvironment: { name: "ssr" } })]
       : []),
     nitro({
