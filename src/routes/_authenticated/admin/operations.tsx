@@ -1552,10 +1552,32 @@ function OperationsDashboard() {
                 ) : displayTasks.length === 0 ? (
                   <EmptyState icon={<ClipboardList className="h-6 w-6" />} message={team.length === 0 ? "Add team members first, then assign tasks" : "No tasks yet. Assign one above!"} />
                 ) : (
-                  displayTasks.map((t: any) => (
-                    <div key={t.id} className="p-4 hover:bg-slate-50 transition-colors">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
+                  <>
+                    <div className="bg-slate-50/80 border-b p-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-10 backdrop-blur-sm">
+                      <div className="flex items-center gap-3">
+                        <input type="checkbox" className="rounded border-gray-300 w-4 h-4 cursor-pointer"
+                          checked={selectedTasks.length > 0 && selectedTasks.length === displayTasks.length}
+                          onChange={(e) => setSelectedTasks(e.target.checked ? displayTasks.map((t: any) => t.id) : [])}
+                        />
+                        <span className="text-sm font-medium text-slate-700">{selectedTasks.length} selected</span>
+                      </div>
+                      {selectedTasks.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Input type="date" value={bulkDueDate} onChange={(e) => setBulkDueDate(e.target.value)} className="h-8 text-xs w-[130px] sm:w-[140px]" />
+                          <Button size="sm" className="h-8 text-xs" onClick={handleBulkUpdateDueDate}>Update Deadline</Button>
+                        </div>
+                      )}
+                    </div>
+                    {displayTasks.map((t: any) => (
+                      <div key={t.id} className="p-4 hover:bg-slate-50 transition-colors">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="pt-1 pr-2">
+                            <input type="checkbox" className="rounded border-gray-300 w-4 h-4 cursor-pointer"
+                              checked={selectedTasks.includes(t.id)}
+                              onChange={(e) => setSelectedTasks(e.target.checked ? [...selectedTasks, t.id] : selectedTasks.filter(id => id !== t.id))}
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-sm">{t.title}</h4>
                           <div className="flex flex-wrap items-center gap-2 mt-1.5">
                             <span className={`text-[10px] px-1.5 py-0.5 rounded border font-semibold uppercase tracking-wide ${priorityStyles[t.priority] || priorityStyles.medium}`}>{t.priority}</span>
@@ -1639,7 +1661,8 @@ function OperationsDashboard() {
                         </div>
                       </div>
                     </div>
-                  ))
+                  }
+                  </>
                 )}
               </div>
             </section>

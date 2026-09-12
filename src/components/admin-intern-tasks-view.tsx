@@ -835,7 +835,13 @@ export function AdminInternTasksView() {
         
         <div className="flex items-center gap-2 flex-wrap">
           {selectedTaskIds.length > 0 && (
-            <>
+              <>
+                <div className="flex items-center gap-1.5 mr-2 border-r pr-3 border-slate-300">
+                  <Input type="date" value={bulkDueDate} onChange={(e) => setBulkDueDate(e.target.value)} className="h-8 text-xs w-[130px]" />
+                  <Button size="sm" onClick={handleBulkUpdateDueDate} className="h-8 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-xs cursor-pointer">
+                    Update Deadline
+                  </Button>
+                </div>
               <Button 
                 size="sm" 
                 onClick={() => handleMoveToStoredBank(selectedTaskIds)} 
@@ -2561,6 +2567,7 @@ export function AdminInternTasksView() {
     </div>
   );
 }
+
 
 
 
