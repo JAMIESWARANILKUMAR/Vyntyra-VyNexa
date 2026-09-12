@@ -5286,6 +5286,66 @@ export const submitTaskUrl = createServerFn({ method: "POST" })
       console.warn("[submitTaskUrl] notification skipped:", notifErr);
     }
 
+    // Send email notifications
+    try {
+      const { Resend } = await import("resend");
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      
+      const { data: internProfile } = await adminClient
+        .from("profiles")
+        .select("mentor_id, full_name, email")
+        .eq("id", context.userId)
+        .single();
+      
+      let mentorEmail = null;
+      let mentorName = null;
+      if (internProfile?.mentor_id) {
+         const { data: mentorProfile } = await adminClient
+           .from("profiles")
+           .select("email, full_name")
+           .eq("id", internProfile.mentor_id)
+           .single();
+         if (mentorProfile) {
+           mentorEmail = mentorProfile.email;
+           mentorName = mentorProfile.full_name;
+         }
+      }
+
+      // Email Intern
+      if (internProfile?.email) {
+        await resend.emails.send({
+          from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
+          to: internProfile.email,
+          subject: `Task Submitted Successfully: ${updatedTaskTitle}`,
+          html: `<p>Hi ${internProfile.full_name || 'Intern'},</p>
+          <p>Your task deliverable for <strong>${updatedTaskTitle}</strong> has been submitted successfully.</p>
+          <p>Deliverable URL: <a href="${url}">${url}</a></p>
+          <p>It is now queued for mentor review.</p>`
+        });
+      }
+
+      // Email Admin & Mentor
+      const adminEmail = "hr@vyntyraconsultancyservices.in";
+      const notifyEmails = [adminEmail];
+      if (mentorEmail && mentorEmail !== adminEmail) {
+        notifyEmails.push(mentorEmail);
+      }
+      
+      await resend.emails.send({
+        from: "Vyntyra System <careers@vyntyraconsultancyservices.in>",
+        to: notifyEmails,
+        subject: `[Notification] Task Submitted by ${internProfile?.full_name || 'Intern'}`,
+        html: `<p>An intern has submitted a task deliverable.</p>
+        <p><strong>Intern:</strong> ${internProfile?.full_name || 'Unknown'} (${internProfile?.email || 'Unknown'})</p>
+        <p><strong>Task:</strong> ${updatedTaskTitle}</p>
+        <p><strong>URL:</strong> <a href="${url}">${url}</a></p>
+        <p>Please review it in the Admin / Mentor Dashboard.</p>`
+      });
+
+    } catch (emailErr) {
+       console.warn("[submitTaskUrl] email notification failed:", emailErr);
+    }
+
     return { success: true, url, title: updatedTaskTitle };
   });
 
