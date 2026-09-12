@@ -143,7 +143,7 @@ export const listTeamMembers = createServerFn({ method: "GET" })
 
     (profiles || []).forEach((p: any) => {
       const authUser = authUsers.find((u: any) => u.id === p.id);
-      const assignedRole = roleMap.get(p.id) || (p.intern_id ? "intern" : "employee");
+      const assignedRole = roleMap.get(p.id) || p.role || (p.intern_id ? "intern" : "employee");
       const email = (p.email || authUser?.email || "").toLowerCase();
       const full_name = p.full_name || authUser?.user_metadata?.full_name || email.split("@")[0];
       const matchedApp = appByEmail.get(email) || appById.get(p.id) || {};
