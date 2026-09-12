@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { 
   listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, 
-  reviewDeadlineExtension, bulkDeleteTasks, deleteTaskBatch, deleteAllInternTasks, 
+  reviewDeadlineExtension, bulkDeleteTasks, bulkUpdateTasks, deleteTaskBatch, deleteAllInternTasks, 
   adminFinalizeTaskCompletion, listActiveInternsForCohortAssignment, rolloverVerifiedTasksToCohort,
   moveTasksToStoredBank, assignStoredTasksToInterns
 } from "@/lib/operations.functions";
@@ -35,6 +35,7 @@ export function AdminInternTasksView() {
   const doAdminFinalize = useServerFn(adminFinalizeTaskCompletion);
   const doDelete = useServerFn(deleteTask);
   const doBulkDelete = useServerFn(bulkDeleteTasks);
+  const doBulkUpdateTasks = useServerFn(bulkUpdateTasks);
   const doReviewDeadlineExtension = useServerFn(reviewDeadlineExtension);
   const doDeleteBatch = useServerFn(deleteTaskBatch);
   const doClearAllTasks = useServerFn(deleteAllInternTasks);
@@ -97,6 +98,7 @@ export function AdminInternTasksView() {
   
   // Bulk Selection State
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const [bulkDueDate, setBulkDueDate] = useState("");
 
   // Review modal state
   const [selectedTaskForReview, setSelectedTaskForReview] = useState<any>(null);
@@ -472,6 +474,23 @@ export function AdminInternTasksView() {
       setSelectedTaskIds(prev => [...prev, taskId]);
     } else {
       setSelectedTaskIds(prev => prev.filter(id => id !== taskId));
+    }
+  };
+
+    const handleBulkUpdateDueDate = async () => {
+    if (!bulkDueDate || selectedTaskIds.length === 0) {
+      toast.error("Please select tasks and a due date first");
+      return;
+    }
+    try {
+      await doBulkUpdateTasks({ data: { taskIds: selectedTaskIds, due_date: bulkDueDate } });
+      toast.success("Due dates updated successfully!");
+      setSelectedTaskIds([]);
+      setBulkDueDate("");
+      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update tasks");
     }
   };
 
@@ -2542,3 +2561,8 @@ export function AdminInternTasksView() {
     </div>
   );
 }
+
+
+
+
+
