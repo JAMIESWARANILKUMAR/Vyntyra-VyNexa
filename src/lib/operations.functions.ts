@@ -143,7 +143,23 @@ export const listTeamMembers = createServerFn({ method: "GET" })
 
     (profiles || []).forEach((p: any) => {
       const authUser = authUsers.find((u: any) => u.id === p.id);
-      const assignedRole = roleMap.get(p.id) || p.role || (p.intern_id ? "intern" : "employee");
+              let calculatedRole = p.role;
+        
+        // Explicit ID-based checking (EMP = employee, INT = intern)
+        if (p.employee_id && String(p.employee_id).toUpperCase().startsWith("EMP")) {
+          calculatedRole = "employee";
+        } else if (p.intern_id && String(p.intern_id).toUpperCase().startsWith("EMP")) {
+          calculatedRole = "employee";
+        } else if (p.intern_id && String(p.intern_id).toUpperCase().startsWith("INT")) {
+          calculatedRole = "intern";
+        } else if (p.employee_id && String(p.employee_id).toUpperCase().startsWith("INT")) {
+          calculatedRole = "intern";
+        } else if (!calculatedRole) {
+          calculatedRole = p.intern_id ? "intern" : "employee";
+        }
+
+        const assignedRole = roleMap.get(p.id) || calculatedRole;
+
       const email = (p.email || authUser?.email || "").toLowerCase();
       const full_name = p.full_name || authUser?.user_metadata?.full_name || email.split("@")[0];
       const matchedApp = appByEmail.get(email) || appById.get(p.id) || {};
