@@ -1,3 +1,4 @@
+import { DashboardHeader } from '@/components/dashboard-header';
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -509,62 +510,23 @@ function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <header className="border-b border-border bg-card sticky top-0 z-40">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 min-h-[56px] sm:h-16 py-2 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0 shrink-0">
-            <img src="/icon-512.png" alt="Vyntyra" className="h-8 sm:h-10 w-auto shrink-0" />
-            <div className="border-l border-border pl-3 min-w-0 hidden md:block">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-medium whitespace-nowrap">
-                Super Admin
-              </div>
-              <div className="text-sm font-semibold text-primary truncate">Vyntyra Careers</div>
-            </div>
-          </div>
-          <div className="flex items-center flex-wrap gap-1 sm:gap-2 pb-1 sm:pb-0 w-full sm:w-auto">
-            <InstallPwaButton />
-            <Link
-              to="/admin/b2b-playbook"
-              className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-gold hover:bg-gold/10 font-semibold"
-            >
-              <BookOpen className="h-4 w-4" /> <span className="hidden sm:inline">B2B Playbook</span>
-            </Link>
-            <Link
-              to="/admin/operations"
-              className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
-            >
-              <Users className="h-4 w-4" /> <span className="hidden sm:inline">Operations</span>
-            </Link>
-            <Link
-              to="/admin/email-campaigns"
-              className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
-            >
-              <Mail className="h-4 w-4" /> <span className="hidden sm:inline">Email Campaigns</span>
-            </Link>
-            <Link
-              to="/cms"
-              className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
-            >
-              <Settings2 className="h-4 w-4" /> <span className="hidden sm:inline">CMS</span>
-            </Link>
-            <Link to="/templates" className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-bold border border-emerald-200 shadow-sm bg-white"><Mail className="h-4 w-4" /> <span className="hidden sm:inline">Promotional Email Details</span></Link><Link to="/templates" className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"><Settings2 className="h-4 w-4" /> <span className="hidden sm:inline">All Templates</span></Link>
-            <Link
-              to="/admin/security"
-              className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
-            >
-              <Shield className="h-4 w-4" /> <span className="hidden sm:inline">Security</span>
-            </Link>
-            <Link
-              to="/admin/settings"
-              className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
-            >
-              <Settings2 className="h-4 w-4" /> <span className="hidden sm:inline">Settings</span>
-            </Link>
-            <Button variant="ghost" size="sm" onClick={signOut}>
-              <LogOut className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Sign out</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <DashboardHeader 
+          panelName="Super Admin Dashboard"
+          onSignOut={async () => {
+            await supabase.auth.signOut();
+            window.location.href = "/login";
+          }}
+          links={[
+            { href: "/admin/b2b-playbook", label: "B2B Playbook", icon: BookOpen, colorClass: "text-gold hover:bg-gold/10" },
+            { href: "/admin/operations", label: "Operations", icon: Users },
+            { href: "/admin/email-campaigns", label: "Email Campaigns", icon: Mail },
+            { href: "/cms", label: "CMS", icon: Settings2 },
+            { href: "/templates", label: "Promotional Email Details", icon: Mail, colorClass: "text-emerald-600 border border-emerald-500/30 hover:bg-emerald-50" },
+            { href: "/templates", label: "All Templates", icon: FileText },
+            { href: "/admin/security", label: "Security", icon: Shield },
+            { href: "/admin/settings", label: "Settings", icon: Settings2 }
+          ]}
+        />
 
       <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
         {/* ── Hero Greeting ── */}
@@ -3034,3 +2996,4 @@ function PayslipModalDialog({ app, open, onClose }: { app: any; open: boolean; o
     </Dialog>
   );
 }
+
