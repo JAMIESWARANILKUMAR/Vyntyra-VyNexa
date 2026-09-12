@@ -13,11 +13,6 @@
     "binding": "ASSETS",
     "directory": ".output/public"
   },
-  "vars": {
-    "SUPABASE_URL": "https://yvcocxnucmqxigrgkzha.supabase.co",
-    "SUPABASE_ANON_KEY": "sb_publishable_tPu7MwjyM1jh0TLGDr7-CA_biaOnQp8",
-    "SUPABASE_SERVICE_ROLE_KEY": "PASTE_YOUR_SERVICE_ROLE_KEY_HERE"
-  },
   "observability": {
     "logs": {
       "enabled": true,
