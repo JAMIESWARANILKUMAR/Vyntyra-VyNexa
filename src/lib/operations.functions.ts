@@ -4034,7 +4034,6 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
       }
 
       // Record log in automated_emails_log using Admin Client
-      const adminClient = getAdminClient();
       const now = new Date();
       const { error: logError } = await adminClient.from("automated_emails_log").insert({
         recipient_email: recipientEmail,
