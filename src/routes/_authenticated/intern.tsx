@@ -1099,7 +1099,7 @@ function InternDashboard() {
                 V
               </div>
             </div>
-            <div className="flex flex-col min-w-0">
+            <div className="hidden sm:flex flex-col min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-xs sm:text-sm font-black text-slate-900 tracking-tight leading-tight truncate">Vyntyra Connect</span>
                 <span className="bg-orange-100 border border-orange-300/80 text-orange-800 text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-xs">
@@ -1143,7 +1143,7 @@ function InternDashboard() {
           </nav>
 
           {/* User Actions Cluster */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
             {/* Quick Link to Tasks */}
             <Button
               size="sm"

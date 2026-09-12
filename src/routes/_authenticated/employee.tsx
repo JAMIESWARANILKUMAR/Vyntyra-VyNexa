@@ -1386,7 +1386,7 @@ function EmployeeDashboard() {
             <div className="h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl shadow-lg shadow-indigo-950/60 border border-indigo-400/40 flex items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
               V
             </div>
-            <div className="flex flex-col min-w-0">
+            <div className="hidden sm:flex flex-col min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-xs sm:text-sm font-bold text-white tracking-tight leading-tight truncate">Vyntyra Ops</span>
                 <span className="bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
@@ -1424,7 +1424,7 @@ function EmployeeDashboard() {
               ) : null}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
               <div className="hidden sm:flex flex-col text-right">
                 <span className="text-xs font-bold text-white max-w-[120px] truncate">{displayName}</span>
                 <span className="text-[10px] text-slate-400 font-mono max-w-[120px] truncate">{email}</span>
