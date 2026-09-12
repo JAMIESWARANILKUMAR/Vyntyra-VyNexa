@@ -3909,17 +3909,28 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
     let providerUsed: "resend" | "brevo" = "resend";
     let status: "sent" | "failed" = "sent";
     let errorMessage: string | null = null;
+    let htmlContent = "";
 
-              </div>
-            </td>
-          </tr>
+    // Fetch dynamic promotional template
+    const { data: templateData } = await adminClient
+      .from("status_email_templates")
+      .select("subject, html_body")
+      .eq("id", "promotional")
+      .single();
 
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+    if (templateData?.html_body) {
+      if (!data.custom_subject) {
+        subject = templateData.subject || subject;
+      }
+      
+      htmlContent = templateData.html_body
+        .replace(/\{\{\s*recipientName\s*\}\}/g, recipientName)
+        .replace(/\{\{\s*universityName\s*\}\}/g, universityName)
+        .replace(/\{\{\s*domain\s*\}\}/g, domain)
+        .replace(/\{\{\s*subDomain\s*\}\}/g, subDomain);
+    } else {
+      throw new Error("Promotional email template not found in database. Please configure it in CMS Templates.");
+    }
 
       // Equal usage & daily limit safety strategy: check monthly & today's usage for Resend vs Brevo
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
