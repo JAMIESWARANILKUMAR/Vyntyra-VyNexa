@@ -1,4 +1,6 @@
-﻿import { useState, useEffect } from "react";
+const fs = require('fs');
+
+const content = \import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Menu, X, LogOut, Clock, Layers } from "lucide-react";
 import { InstallPwaButton } from "@/components/install-pwa-button";
@@ -76,7 +78,7 @@ export function DashboardHeader({
                 <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider">{panelName}</div>
                 <div className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 mt-1">
                   <Clock className="w-3 h-3" />
-                  {time.toLocaleDateString()} • {time.toLocaleTimeString()}
+                  {time.toLocaleDateString()} � {time.toLocaleTimeString()}
                 </div>
               </div>
               <button onClick={() => setMenuOpen(false)} className="p-2 rounded-full hover:bg-slate-200 text-slate-600">
@@ -97,7 +99,7 @@ export function DashboardHeader({
                   return (
                     <button
                       key={idx}
-                      onClick={() => { setMenuOpen(false); link.onClick!(); }}
+                      onClick={() => { setMenuOpen(false); link.onClick(); }}
                       className={"flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-colors w-full text-left " + (link.colorClass || "text-slate-700 hover:bg-surface hover:text-primary")}
                     >
                       <link.icon className="w-5 h-5" />
@@ -135,5 +137,6 @@ export function DashboardHeader({
       )}
     </>
   );
-}
+}\;
 
+fs.writeFileSync('src/components/dashboard-header.tsx', content, 'utf8');
