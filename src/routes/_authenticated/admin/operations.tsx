@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   listTeamMembers, provisionUser, revokeUser,
   listAnnouncements, createAnnouncement, deleteAnnouncement,
-  listTasks, createTask, deleteTask,
+  listTasks, createTask, deleteTask, bulkUpdateTasks,
   listSchedules, createSchedule, deleteSchedule,
   listMeetings, createMeeting, deleteMeeting, updateMeeting,
   listResources, createResource, deleteResource,
@@ -214,6 +214,7 @@ function OperationsDashboard() {
   const fetchTasks = useServerFn(listTasks);
   const doCreateTask = useServerFn(createTask);
   const doDeleteTask = useServerFn(deleteTask);
+  const doBulkUpdateTasks = useServerFn(bulkUpdateTasks);
   const fetchSchedules = useServerFn(listSchedules);
   const doCreateSchedule = useServerFn(createSchedule);
   const doDeleteSchedule = useServerFn(deleteSchedule);
@@ -263,6 +264,8 @@ function OperationsDashboard() {
   const [provisionForm, setProvisionForm] = useState({ full_name: "", email: "", password: "", role: "employee" as "employee" | "intern", department: "", position: "", bank_account_number: "", employee_id: "", intern_id: "", duration_months: "" });
   const [announcementForm, setAnnouncementForm] = useState({ title: "", body: "", target_role: "all" as "employee" | "intern" | "all" });
   const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium" as "low" | "medium" | "high", is_pool_task: false });
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [bulkDueDate, setBulkDueDate] = useState("");
   const [scheduleForm, setScheduleForm] = useState({ title: "", description: "", event_date: "", event_time: "", target_role: "all" as "employee" | "intern" | "all" | "individual", target_user_id: "" });
   const [meetingForm, setMeetingForm] = useState({
     title: "",
@@ -652,6 +655,22 @@ function OperationsDashboard() {
       qc.invalidateQueries({ queryKey: ["announcements"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to delete");
+    }
+  }
+
+    async function handleBulkUpdateDueDate() {
+    if (!bulkDueDate || selectedTasks.length === 0) {
+      toast.error("Please select tasks and a due date first");
+      return;
+    }
+    try {
+      await doBulkUpdateTasks({ data: { taskIds: selectedTasks, due_date: bulkDueDate } });
+      toast.success("Due dates updated successfully!");
+      setSelectedTasks([]);
+      setBulkDueDate("");
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update tasks");
     }
   }
 
@@ -4533,3 +4552,5 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
     </div>
   );
 }
+
+

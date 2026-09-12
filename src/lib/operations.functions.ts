@@ -391,7 +391,7 @@ export const listTasks = createServerFn({ method: "GET" })
       return copy;
     });
 
-    if (role === 'admin' || role === 'super_admin') return mappedList;
+    if (role === 'admin' || role === 'super_admin' || role === 'employee') return mappedList;
 
     const hasIdMatch = (val: any) => {
       if (!val) return false;
@@ -482,6 +482,21 @@ export const createTask = createServerFn({ method: "POST" })
     } else if (error) {
       throw new Error(error.message);
     }
+    return { success: true };
+  });
+
+
+export const bulkUpdateTasks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    taskIds: z.array(z.string().uuid()),
+    due_date: z.string().optional()
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    if (!data.taskIds.length) return { success: true };
+    const { error } = await admin.from("tasks").update({ due_date: data.due_date }).in("id", data.taskIds);
+    if (error) throw new Error(error.message);
     return { success: true };
   });
 
@@ -7551,6 +7566,8 @@ export const scheduleMentorMeeting = createServerFn({ method: "POST" })
       message: `Meeting scheduled and invitations dispatched to ${interns?.length || 0} assigned intern(s)!`,
     };
   });
+
+
 
 
 
