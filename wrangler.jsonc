@@ -25,13 +25,6 @@
       "head_sampling_rate": 1,
       "persist": true
     }
-  }
-  // If you configure a Cloudflare D1 database in the future, uncomment below and provide your real D1 database details:
-  // "d1_databases": [
-  //   {
-  //     "binding": "DB",
-  //     "database_name": "your-database-name",
-  //     "database_id": "your-database-uuid"
-  //   }
-  // ]
+  },
+  "keep_vars": true
 }
