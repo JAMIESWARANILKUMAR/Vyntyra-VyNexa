@@ -5250,6 +5250,10 @@ export const submitTaskUrl = createServerFn({ method: "POST" })
       .select()
       .maybeSingle();
 
+    if (error) {
+      throw new Error(`Failed to update task: ${error.message}`);
+    }
+
     if (updatedTask?.title) {
       updatedTaskTitle = updatedTask.title;
     }
