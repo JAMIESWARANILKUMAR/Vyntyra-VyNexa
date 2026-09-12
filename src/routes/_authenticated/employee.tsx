@@ -1,4 +1,4 @@
-﻿import { DashboardHeader } from '@/components/dashboard-header';
+import { DashboardHeader } from '@/components/dashboard-header';
 import { listAssignedInterviews, submitInterviewFeedback } from "@/lib/applications.functions";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -2903,7 +2903,7 @@ function EmployeeDashboard() {
                             <p className="text-slate-300 text-xs leading-relaxed bg-slate-900/80 p-3 rounded-2xl border border-slate-800 mt-2">{q.description}</p>
                           </div>
                           
-                          <div className="shrink-0 flex flex-col items-end gap-2">
+                          <div className="shrink-0 flex flex-col items-start sm:items-end gap-2">
                             <span className="text-[11px] text-slate-400 font-mono">{new Date(q.created_at).toLocaleDateString()}</span>
                             
                             {q.status !== "resolved" ? (
@@ -3889,7 +3889,7 @@ function EmployeeDashboard() {
                 </div>
               </div>
               
-              <div className="flex-1 overflow-y-auto min-h-[300px] border border-slate-800 rounded-2xl bg-slate-900/60">
+              <div className="flex-1 overflow-auto min-h-[300px] border border-slate-800 rounded-2xl bg-slate-900/60">
                 {isLoadingMenteeAttendance ? (
                   <div className="h-full flex items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
@@ -3899,7 +3899,7 @@ function EmployeeDashboard() {
                     No attendance records found for this intern.
                   </div>
                 ) : (
-                  <table className="w-full text-xs text-left">
+                  <table className="w-full text-xs text-left min-w-[500px]">
                     <thead className="bg-slate-900 text-slate-400 font-bold sticky top-0 uppercase text-[10px] tracking-wider border-b border-slate-800">
                       <tr>
                         <th className="px-6 py-4">Date</th>

@@ -1,4 +1,4 @@
-﻿import { DashboardHeader } from '@/components/dashboard-header';
+import { DashboardHeader } from '@/components/dashboard-header';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -2278,8 +2278,8 @@ function InternDashboard() {
             {/* Attendance History Table */}
             <div className="space-y-3">
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-600">Shift History Log</h3>
-              <div className="rounded-2xl border border-orange-200/80 overflow-hidden shadow-xs">
-                <table className="w-full text-left border-collapse text-xs">
+              <div className="rounded-2xl border border-orange-200/80 overflow-x-auto shadow-xs">
+                <table className="w-full text-left border-collapse text-xs min-w-[500px]">
                   <thead>
                     <tr className="bg-orange-50/80 border-b border-orange-200/80 text-slate-700 font-black uppercase tracking-wider text-[10px]">
                       <th className="p-3">Date</th>
@@ -3054,7 +3054,7 @@ function InternDashboard() {
                 </div>
                 <div className="divide-y divide-orange-200/60">
                   {poolTasks.map((task: any) => (
-                    <div key={task.id} className="p-6 hover:bg-orange-100/40 transition-colors flex items-center justify-between gap-4">
+                    <div key={task.id} className="p-6 hover:bg-orange-100/40 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-extrabold text-sm text-slate-900">{task.title}</h3>
                         {task.description && <p className="text-xs text-slate-600 mt-1 line-clamp-2">{task.description}</p>}
@@ -3321,7 +3321,7 @@ function InternDashboard() {
                           </div>
 
                           {/* Top Right action column */}
-                          <div className="flex flex-col items-end gap-2 shrink-0 md:pl-4">
+                          <div className="flex flex-col items-start sm:items-end gap-2 shrink-0 md:pl-4">
                             {task.accepted_at ? (
                               <div className="text-[11px] text-emerald-300 bg-emerald-950/60 border border-emerald-500/40 px-3 py-1 rounded-xl font-medium flex items-center gap-1">
                                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Accepted on {new Date(task.accepted_at).toLocaleDateString()}
@@ -4815,8 +4815,8 @@ function InternDashboard() {
                     </div>
 
                     {/* Breakdown Table */}
-                    <div className="border rounded-xl overflow-hidden bg-white dark:bg-slate-900 mt-2">
-                      <table className="w-full text-xs text-left">
+                    <div className="border rounded-xl overflow-x-auto bg-white dark:bg-slate-900 mt-2">
+                      <table className="w-full text-xs text-left min-w-[400px]">
                         <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-[10px] uppercase">
                           <tr>
                             <th className="p-2.5">Item Description</th>

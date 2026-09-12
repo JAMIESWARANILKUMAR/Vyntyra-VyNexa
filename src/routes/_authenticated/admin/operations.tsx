@@ -2879,7 +2879,7 @@ function OperationsDashboard() {
                             </a>
                           )}
                         </div>
-                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
                           <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${exp.status === 'approved' ? 'bg-blue-100 text-blue-800' : exp.status === 'paid' ? 'bg-emerald-100 text-emerald-800' : exp.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>
                             {exp.status}
                           </span>
@@ -3002,7 +3002,7 @@ function OperationsDashboard() {
                             )}
                           </div>
 
-                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
                             <span className="text-[10px] text-slate-400 font-mono">{new Date(q.created_at).toLocaleDateString()}</span>
                             
                             {q.meeting_status === "requested" && (
@@ -3068,7 +3068,7 @@ function OperationsDashboard() {
                           </div>
                           <p className="text-sm text-slate-700 font-light mt-2 leading-relaxed">{tick.description}</p>
                         </div>
-                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
                           <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${tick.status === 'resolved' ? 'bg-emerald-100 text-emerald-800' : tick.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>
                             {tick.status}
                           </span>

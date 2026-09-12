@@ -465,10 +465,10 @@ function TaskRichDescriptionInner({
         </div>
       )}
 
-      {/* ── STRUCTURED RICH MARKDOWN DESCRIPTION ── */}
+      {/* 🚀 STRUCTURED RICH MARKDOWN DESCRIPTION 🚀 */}
       {cleanMarkdown && (
         <div
-          className={`prose prose-slate max-w-none text-slate-700 text-sm leading-relaxed ${
+          className={`prose prose-slate max-w-none text-slate-700 text-sm leading-relaxed break-words prose-p:break-words prose-a:break-all prose-pre:overflow-x-auto prose-table:overflow-x-auto ${
             compact ? "line-clamp-4" : ""
           }`}
         >
