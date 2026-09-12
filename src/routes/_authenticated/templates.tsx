@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/templates")({
   component: TemplatesPage,
 });
 
-const STATUSES = ["new", "reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected", "hired"] as const;
+const STATUSES = ["new", "reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected", "hired", "promotional"] as const;
 
 function TemplatesPage() {
   const list = useServerFn(listStatusTemplates);
