@@ -4,42 +4,57 @@
  * Cloudflare injects runtime bindings into globalThis.__env__ on each fetch event.
  */
 
+function resolveValue(val: any): string | undefined {
+  if (!val) return undefined;
+  const str = String(val).trim();
+  if (str === "" || str === "undefined" || str === "null") return undefined;
+  return str;
+}
+
 export function getEnv(key: string): string | undefined {
+  let val: string | undefined;
+
   // 1. Check Cloudflare Worker global environment
   const cfEnv = (globalThis as any).__env__ || (globalThis as any).env;
   if (cfEnv && typeof cfEnv === "object") {
-    if (cfEnv[key]) return String(cfEnv[key]);
+    val = resolveValue(cfEnv[key]);
+    if (val) return val;
+    
     if (key.startsWith("VITE_")) {
-      const bare = key.slice(5);
-      if (cfEnv[bare]) return String(cfEnv[bare]);
+      val = resolveValue(cfEnv[key.slice(5)]);
+      if (val) return val;
     } else {
-      const viteKey = `VITE_${key}`;
-      if (cfEnv[viteKey]) return String(cfEnv[viteKey]);
+      val = resolveValue(cfEnv[`VITE_${key}`]);
+      if (val) return val;
     }
   }
 
   // 2. Check process.env (Node / Vercel / local dev / hydrated worker)
   if (typeof process !== "undefined" && process.env) {
-    if (process.env[key]) return String(process.env[key]);
+    val = resolveValue(process.env[key]);
+    if (val) return val;
+
     if (key.startsWith("VITE_")) {
-      const bare = key.slice(5);
-      if (process.env[bare]) return String(process.env[bare]);
+      val = resolveValue(process.env[key.slice(5)]);
+      if (val) return val;
     } else {
-      const viteKey = `VITE_${key}`;
-      if (process.env[viteKey]) return String(process.env[viteKey]);
+      val = resolveValue(process.env[`VITE_${key}`]);
+      if (val) return val;
     }
   }
 
   // 3. Check import.meta.env (Vite client build-time defines)
   if (typeof import.meta !== "undefined" && (import.meta as any).env) {
     const metaEnv = (import.meta as any).env;
-    if (metaEnv[key]) return String(metaEnv[key]);
+    val = resolveValue(metaEnv[key]);
+    if (val) return val;
+
     if (key.startsWith("VITE_")) {
-      const bare = key.slice(5);
-      if (metaEnv[bare]) return String(metaEnv[bare]);
+      val = resolveValue(metaEnv[key.slice(5)]);
+      if (val) return val;
     } else {
-      const viteKey = `VITE_${key}`;
-      if (metaEnv[viteKey]) return String(metaEnv[viteKey]);
+      val = resolveValue(metaEnv[`VITE_${key}`]);
+      if (val) return val;
     }
   }
 
