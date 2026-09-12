@@ -1,3 +1,4 @@
+import { getEnv } from '@/lib/env';
 // Public (unauthenticated) server functions powering the applicant portal.
 // - requestPortalLink: applicant supplies email + optional application ref,
 //   we email a one-time link. Always returns success (do not leak existence).
@@ -66,7 +67,7 @@ export const requestPortalLink = createServerFn({ method: "POST" })
       const portalLink = origin ? `${origin}/status/${token}` : `/status/${token}`;
 
       const { Resend } = await import("resend");
-      const apiKey = process.env.RESEND_API_KEY;
+      const apiKey = getEnv("RESEND_API_KEY");
       if (apiKey) {
         const resend = new Resend(apiKey);
         const html = `<!doctype html><html><body style="margin:0;background:#fff;font-family:Inter,Arial,sans-serif;">

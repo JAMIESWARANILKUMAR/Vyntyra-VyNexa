@@ -1,3 +1,4 @@
+import { getEnv } from '@/lib/env';
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -10,7 +11,7 @@ const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as a
 const SITE_NAME = "VyNexa Connect";
 const FROM_DOMAIN = "vyntyraconsultancyservices.in";
 const DEFAULT_LOGO_URL = "https://raw.githubusercontent.com/JAMIESWARANILKUMAR/Vyntyra-VyNexa/main/public/icon-512.png";
-const BASE_APP_URL = process.env.VITE_APP_URL || "https://careers.vyntyraconsultancyservices.in";
+const BASE_APP_URL = getEnv("VITE_APP_URL") || "https://careers.vyntyraconsultancyservices.in";
 
 async function checkIsAdmin(userId: string): Promise<boolean> {
   const { data, error } = await supabase
@@ -168,7 +169,7 @@ export const sendPaymentReminderEmail = createServerFn({ method: "POST" })
     let errorMessage: string | null = null;
 
     try {
-      const apiKey = process.env.RESEND_API_KEY;
+      const apiKey = getEnv("RESEND_API_KEY");
       if (apiKey) {
         const resend = new Resend(apiKey);
         const res = await resend.emails.send({
@@ -517,7 +518,7 @@ export const sendTaskNotificationEmail = createServerFn({ method: "POST" })
     let errorMessage: string | null = null;
 
     try {
-      const apiKey = process.env.RESEND_API_KEY;
+      const apiKey = getEnv("RESEND_API_KEY");
       if (apiKey) {
         const resend = new Resend(apiKey);
         const res = await resend.emails.send({
@@ -719,7 +720,7 @@ _All attendees are requested to join 5 minutes prior to the scheduled start time
 
     // 3. Dispatch professional HTML email
     let emailsSent = 0;
-    const resendApiKey = process.env.RESEND_API_KEY;
+    const resendApiKey = getEnv("RESEND_API_KEY");
     if (resendApiKey) {
       const resend = new Resend(resendApiKey);
 
@@ -1068,7 +1069,7 @@ export const sendMeetingReminderEmail = createServerFn({ method: "POST" })
 
     // 3. Dispatch reminder email via Resend
     let emailsSent = 0;
-    const resendApiKey = process.env.RESEND_API_KEY;
+    const resendApiKey = getEnv("RESEND_API_KEY");
     if (resendApiKey) {
       const resend = new Resend(resendApiKey);
 

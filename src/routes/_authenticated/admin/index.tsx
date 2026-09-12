@@ -510,7 +510,7 @@ function AdminDashboard() {
   return (
     <div className="min-h-screen bg-surface">
       <header className="border-b border-border bg-card sticky top-0 z-40">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-4">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 min-h-[56px] sm:h-16 py-2 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0 shrink-0">
             <img src="/icon-512.png" alt="Vyntyra" className="h-8 sm:h-10 w-auto shrink-0" />
             <div className="border-l border-border pl-3 min-w-0 hidden md:block">
@@ -520,7 +520,7 @@ function AdminDashboard() {
               <div className="text-sm font-semibold text-primary truncate">Vyntyra Careers</div>
             </div>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+          <div className="flex items-center flex-wrap gap-1 sm:gap-2 pb-1 sm:pb-0 w-full sm:w-auto">
             <InstallPwaButton />
             <Link
               to="/admin/b2b-playbook"

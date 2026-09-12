@@ -1,3 +1,4 @@
+import { getEnv } from '@/lib/env';
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import QRCode from "qrcode";
@@ -3949,8 +3950,8 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
       const resendCountToday = monthLogs?.filter((l: any) => (l.provider === "resend" || !l.provider) && l.sent_at?.startsWith(startOfToday)).length || 0;
       const brevoCountThisMonth = monthLogs?.filter((l: any) => l.provider === "brevo").length || 0;
 
-      const hasResend = !!process.env.RESEND_API_KEY;
-      const hasBrevo = !!process.env.BREVO_API_KEY;
+      const hasResend = !!getEnv("RESEND_API_KEY");
+      const hasBrevo = !!getEnv("BREVO_API_KEY");
 
       // Select primary provider (Auto-switch to Brevo if Resend reaches 100 emails/day limit)
       let primaryProvider: "resend" | "brevo" = "resend";
@@ -3977,7 +3978,7 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
             console.warn("[email-balancer] Brevo primary failed, falling back to Resend:", bErr.message);
             if (hasResend) {
               const { Resend } = await import("resend");
-              const resend = new Resend(process.env.RESEND_API_KEY!);
+              const resend = new Resend(getEnv("RESEND_API_KEY")!);
               let resp = await resend.emails.send({
                 from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
                 to: recipientEmail,
@@ -3996,7 +3997,7 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
           // Resend Primary
           try {
             const { Resend } = await import("resend");
-            const apiKey = process.env.RESEND_API_KEY;
+            const apiKey = getEnv("RESEND_API_KEY");
             if (!apiKey) throw new Error("RESEND_API_KEY is not configured");
             const resend = new Resend(apiKey);
             let resp = await resend.emails.send({
@@ -4117,13 +4118,13 @@ export const sendB2bPitchEmail = createServerFn({ method: "POST" })
 
     let resendId: string | null = null;
     let providerUsed: "resend" | "brevo" = "resend";
-    const hasResend = !!process.env.RESEND_API_KEY;
-    const hasBrevo = !!process.env.BREVO_API_KEY;
+    const hasResend = !!getEnv("RESEND_API_KEY");
+    const hasBrevo = !!getEnv("BREVO_API_KEY");
 
     if (hasResend) {
       try {
         const { Resend } = await import("resend");
-        const resend = new Resend(process.env.RESEND_API_KEY!);
+        const resend = new Resend(getEnv("RESEND_API_KEY")!);
         const resp = await resend.emails.send({
           from: "Vyntyra Outreach <outreach@vyntyraconsultancyservices.in>",
           to: recipientEmail,
@@ -4171,7 +4172,7 @@ export const sendB2bPitchEmail = createServerFn({ method: "POST" })
 
 // Secondary Email Service Helper for Brevo API
 async function sendViaBrevo({ recipientEmail, recipientName, subject, htmlContent }: { recipientEmail: string; recipientName?: string; subject: string; htmlContent: string }) {
-  const apiKey = process.env.BREVO_API_KEY;
+  const apiKey = getEnv("BREVO_API_KEY");
   if (!apiKey) throw new Error("BREVO_API_KEY environment variable is not configured");
 
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -4231,8 +4232,8 @@ export const getEmailQuotaStats = createServerFn({ method: "GET" })
       brevoSentThisMonth,
       brevoAvailable: Math.max(0, brevoQuota - brevoSentThisMonth),
       brevoQuota,
-      hasResendKey: !!process.env.RESEND_API_KEY,
-      hasBrevoKey: !!process.env.BREVO_API_KEY,
+      hasResendKey: !!getEnv("RESEND_API_KEY"),
+      hasBrevoKey: !!getEnv("BREVO_API_KEY"),
     };
   });
 
@@ -4453,9 +4454,9 @@ export const sendSmsNotification = createServerFn({ method: "POST" })
     const httpsmsMonthCount = monthSms?.filter((s: any) => s.provider === 'httpsms').length || 0;
     const textbeeTodayCount = monthSms?.filter((s: any) => s.provider === 'textbee' && s.sent_at?.startsWith(startOfToday)).length || 0;
 
-    const hasTextBee = !!(process.env.TEXTBEE_API_KEY && process.env.TEXTBEE_DEVICE_ID);
-    const hasHttpSms = !!(process.env.HTTPSMS_API_KEY && process.env.HTTPSMS_PHONE_NUMBER);
-    const hasTwilio = !!(process.env.TWILIO_ACCOUNT_SID && (process.env.TWILIO_AUTH_TOKEN || (process.env.TWILIO_API_KEY && process.env.TWILIO_API_SECRET)));
+    const hasTextBee = !!(getEnv("TEXTBEE_API_KEY") && getEnv("TEXTBEE_DEVICE_ID"));
+    const hasHttpSms = !!(getEnv("HTTPSMS_API_KEY") && getEnv("HTTPSMS_PHONE_NUMBER"));
+    const hasTwilio = !!(getEnv("TWILIO_ACCOUNT_SID") && (getEnv("TWILIO_AUTH_TOKEN") || (getEnv("TWILIO_API_KEY") && getEnv("TWILIO_API_SECRET"))));
 
     // Multi-Gateway Selection Strategy: Twilio -> TextBee -> HttpSMS -> Fast2SMS
     let selectedProvider: 'twilio' | 'textbee' | 'httpsms' = 'twilio';
@@ -4546,11 +4547,11 @@ export const sendSmsNotification = createServerFn({ method: "POST" })
   });
 
 async function sendViaTwilio({ recipientPhone, message }: { recipientPhone: string; message: string }) {
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const apiKey = process.env.TWILIO_API_KEY;
-  const apiSecret = process.env.TWILIO_API_SECRET;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const fromPhone = process.env.TWILIO_PHONE_NUMBER || process.env.TWILIO_FROM_NUMBER;
+  const accountSid = getEnv("TWILIO_ACCOUNT_SID");
+  const apiKey = getEnv("TWILIO_API_KEY");
+  const apiSecret = getEnv("TWILIO_API_SECRET");
+  const authToken = getEnv("TWILIO_AUTH_TOKEN");
+  const fromPhone = getEnv("TWILIO_PHONE_NUMBER") || getEnv("TWILIO_FROM_NUMBER");
 
   if (!accountSid) {
     throw new Error('TWILIO_ACCOUNT_SID is not set in environment');
@@ -4616,8 +4617,8 @@ async function sendViaTwilio({ recipientPhone, message }: { recipientPhone: stri
 }
 
 async function sendViaTextBee({ recipientPhone, message }: { recipientPhone: string; message: string }) {
-  const apiKey = process.env.TEXTBEE_API_KEY;
-  const deviceId = process.env.TEXTBEE_DEVICE_ID;
+  const apiKey = getEnv("TEXTBEE_API_KEY");
+  const deviceId = getEnv("TEXTBEE_DEVICE_ID");
   if (!apiKey || !deviceId) throw new Error('TextBee credentials (TEXTBEE_API_KEY / TEXTBEE_DEVICE_ID) not set');
 
   const res = await fetch(`https://api.textbee.dev/api/v1/gateway/devices/${deviceId}/sendSMS`, {
@@ -4640,8 +4641,8 @@ async function sendViaTextBee({ recipientPhone, message }: { recipientPhone: str
 }
 
 async function sendViaHttpSms({ recipientPhone, message }: { recipientPhone: string; message: string }) {
-  const apiKey = process.env.HTTPSMS_API_KEY;
-  const fromNumber = process.env.HTTPSMS_PHONE_NUMBER;
+  const apiKey = getEnv("HTTPSMS_API_KEY");
+  const fromNumber = getEnv("HTTPSMS_PHONE_NUMBER");
   if (!apiKey || !fromNumber) throw new Error('HttpSMS credentials (HTTPSMS_API_KEY / HTTPSMS_PHONE_NUMBER) not set');
 
   const res = await fetch('https://api.httpsms.com/v1/messages/send', {
@@ -4665,7 +4666,7 @@ async function sendViaHttpSms({ recipientPhone, message }: { recipientPhone: str
 }
 
 async function sendViaFast2SMS({ recipientPhone, message }: { recipientPhone: string; message: string }) {
-  const apiKey = process.env.FAST2SMS_API_KEY;
+  const apiKey = getEnv("FAST2SMS_API_KEY");
   if (!apiKey) throw new Error('Fast2SMS API key (FAST2SMS_API_KEY) not set');
 
   const cleanPhone = recipientPhone.replace(/[^\d]/g, '').slice(-10);
@@ -4715,10 +4716,10 @@ export const getSmsQuotaStats = createServerFn({ method: "GET" })
       textbeeAvailableToday: Math.max(0, textbeeDayQuota - textbeeSentToday),
       httpsmsSentThisMonth,
       httpsmsAvailableMonth: Math.max(0, httpsmsQuota - httpsmsSentThisMonth),
-      hasTwilio: !!(process.env.TWILIO_ACCOUNT_SID && (process.env.TWILIO_AUTH_TOKEN || (process.env.TWILIO_API_KEY && process.env.TWILIO_API_SECRET))),
-      twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || null,
-      hasTextBee: !!(process.env.TEXTBEE_API_KEY && process.env.TEXTBEE_DEVICE_ID),
-      hasHttpSms: !!(process.env.HTTPSMS_API_KEY && process.env.HTTPSMS_PHONE_NUMBER),
+      hasTwilio: !!(getEnv("TWILIO_ACCOUNT_SID") && (getEnv("TWILIO_AUTH_TOKEN") || (getEnv("TWILIO_API_KEY") && getEnv("TWILIO_API_SECRET")))),
+      twilioAccountSid: getEnv("TWILIO_ACCOUNT_SID") || null,
+      hasTextBee: !!(getEnv("TEXTBEE_API_KEY") && getEnv("TEXTBEE_DEVICE_ID")),
+      hasHttpSms: !!(getEnv("HTTPSMS_API_KEY") && getEnv("HTTPSMS_PHONE_NUMBER")),
     };
   });
 
@@ -5086,7 +5087,7 @@ export const submitTaskUrl = createServerFn({ method: "POST" })
     // Send email notifications
     try {
       const { Resend } = await import("resend");
-      const resend = new Resend(process.env.RESEND_API_KEY);
+      const resend = new Resend(getEnv("RESEND_API_KEY"));
       
       const { data: internProfile } = await adminClient
         .from("profiles")

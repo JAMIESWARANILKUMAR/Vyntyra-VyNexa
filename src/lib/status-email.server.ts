@@ -1,3 +1,4 @@
+import { getEnv } from '@/lib/env';
 // Server-only helper: sends a status-change email using the admin-editable
 // template stored in the database. Content HTML comes from the admins, so we
 // substitute {{variables}} then wrap in the branded shell.
@@ -111,8 +112,8 @@ export function shell(innerHtml: string) {
 }
 
 export async function sendStatusChangeEmail(input: StatusEmailInput) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const brevoKey = process.env.BREVO_API_KEY;
+  const apiKey = getEnv("RESEND_API_KEY");
+  const brevoKey = getEnv("BREVO_API_KEY");
 
   const vars = {
     full_name: input.fullName,
@@ -155,7 +156,7 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
     }
   }
 
-  const fromAddr = process.env.RESEND_FROM || FROM_ADDR;
+  const fromAddr = getEnv("RESEND_FROM") || FROM_ADDR;
   let sent = false;
   let lastError = "";
 

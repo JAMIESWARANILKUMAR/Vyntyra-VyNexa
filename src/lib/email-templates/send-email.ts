@@ -1,3 +1,4 @@
+import { getEnv } from '@/lib/env';
 import * as React from 'react'
 import { render } from '@react-email/render'
 import { Resend } from 'resend'
@@ -27,7 +28,7 @@ export async function sendTemplateEmail(
   to: string,
   options: SendTemplateEmailOptions = {}
 ): Promise<SendTemplateEmailResult> {
-  const apiKey = process.env.RESEND_API_KEY
+  const apiKey = getEnv("RESEND_API_KEY")
   if (!apiKey) {
     throw new Error('RESEND_API_KEY is not configured')
   }
