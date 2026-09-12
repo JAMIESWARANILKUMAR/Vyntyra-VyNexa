@@ -35,7 +35,7 @@ function stripHtml(h: string) {
 
 const LOGO_URL = 'https://careers.vyntyraconsultancyservices.in/icon-512.png';
 
-function shell(innerHtml: string) {
+export function shell(innerHtml: string) {
   return `<!doctype html>
 <html lang="en">
 <head>

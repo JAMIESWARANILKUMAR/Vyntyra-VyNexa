@@ -3923,11 +3923,14 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
         subject = templateData.subject || subject;
       }
       
-      htmlContent = templateData.html_body
+      let innerHtml = templateData.html_body
         .replace(/\{\{\s*recipientName\s*\}\}/g, recipientName)
         .replace(/\{\{\s*universityName\s*\}\}/g, universityName)
         .replace(/\{\{\s*domain\s*\}\}/g, domain)
         .replace(/\{\{\s*subDomain\s*\}\}/g, subDomain);
+        
+      const { shell } = await import("./status-email.server");
+      htmlContent = shell(innerHtml);
     } else {
       throw new Error("Promotional email template not found in database. Please configure it in CMS Templates.");
     }
