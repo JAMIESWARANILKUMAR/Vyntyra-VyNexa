@@ -674,6 +674,39 @@ function AdminDashboard() {
           </div>
         </div>
 
+        {/* 📢 Promotional Campaign Settings Card 📢 */}
+        <div className="rounded-lg border border-emerald-500/20 bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 text-white shadow-xl p-5 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="h-10 w-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                <Mail className="h-5 w-5 text-emerald-400" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
+                    Campaign Engine
+                  </span>
+                  <span className="text-xs text-slate-400">Marketing & Outreach</span>
+                </div>
+                <h3 className="text-base font-bold text-white">
+                  Promotional Email Settings
+                </h3>
+                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                  Manage the promotional email content sent to candidates. You can update the fees, benefits, and domain lists directly from the CMS Templates interface.
+                </p>
+              </div>
+            </div>
+            <Button
+              asChild
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg flex items-center gap-2 shrink-0 border-0"
+            >
+              <Link to="/templates">
+                Edit Promotional Email <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+
         {/* ── B2B Cold Email & Pitch Script Playbook Preview Card ── */}
         <div className="rounded-lg border border-indigo-500/20 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl p-5 mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
