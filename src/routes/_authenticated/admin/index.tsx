@@ -546,12 +546,7 @@ function AdminDashboard() {
             >
               <Settings2 className="h-4 w-4" /> <span className="hidden sm:inline">CMS</span>
             </Link>
-            <Link
-              to="/templates"
-              className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
-            >
-              <Settings2 className="h-4 w-4" /> <span className="hidden sm:inline">Templates</span>
-            </Link>
+            <Link to="/templates" className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-bold border border-emerald-200 shadow-sm bg-white"><Mail className="h-4 w-4" /> <span className="hidden sm:inline">Promotional Email Details</span></Link><Link to="/templates" className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"><Settings2 className="h-4 w-4" /> <span className="hidden sm:inline">All Templates</span></Link>
             <Link
               to="/admin/security"
               className="inline-flex items-center gap-1.5 rounded-sm px-2 sm:px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface"
