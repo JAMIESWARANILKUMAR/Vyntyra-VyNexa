@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { getEnv, syncProcessEnv } from '@/lib/env';
 
-const FALLBACK_URL = "https://nitjxrrzcibpxlftndeh.supabase.co";
-const FALLBACK_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pdGp4cnJ6Y2licHhsZnRuZGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MTM1ODUsImV4cCI6MjA5OTE4OTU4NX0.Kix5zsat69WbQp2sa3Z-PZ6nMdqlxggxfcJbZQ3e4CI";
+const FALLBACK_URL = "https://yvcocxnucmqxigrgkzha.supabase.co";
+const FALLBACK_KEY = "sb_publishable_tPu7MwjyM1jh0TLGDr7-CA_biaOnQp8";
 
 export function getAdminClient() {
   syncProcessEnv();
