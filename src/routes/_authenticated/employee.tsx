@@ -1,4 +1,4 @@
-import { DashboardHeader } from '@/components/dashboard-header';
+﻿import { DashboardHeader } from '@/components/dashboard-header';
 import { listAssignedInterviews, submitInterviewFeedback } from "@/lib/applications.functions";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -59,7 +59,7 @@ import {
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/employee")({
-  head: () => ({ meta: [{ title: "Employee Dashboard — Vyntyra" }] }),
+  head: () => ({ meta: [{ title: "Employee Dashboard â€” Vyntyra" }] }),
   component: EmployeeDashboard,
 });
 
@@ -327,7 +327,7 @@ function BankAdsSection() {
           accountType="Zero-Balance Corporate Salary Account"
           branches={["Visakhapatnam (Dwaraka Nagar, MVP Colony)", "Hyderabad (Hitec City, Gachibowli)", "Bengaluru (Indiranagar, Koramangala)", "Chennai (T. Nagar)"]}
           bankSupport="1860 266 2666 / 24x7 Corporate Helpline"
-          vyntyraManager="Anil Kumar (Fin-Desk) · Ext: 402"
+          vyntyraManager="Anil Kumar (Fin-Desk) Â· Ext: 402"
           ads={[
             { videoId: "/videos/kotak/kotak_ad_2.mp4", title: "Zero Balance Savings Account", slogan: "Open Kotak811 Zero Balance Account from anywhere digitally using Video KYC.", feature: "100% Digital Banking" },
             { videoId: "/videos/kotak/kotak_ad_1.mp4", title: "FD Wala Savings with ActivMoney", slogan: "Earn FD-like interest up to 7% p.a. on your standard savings account balance.", feature: "Up to 7% Interest Rate" },
@@ -345,7 +345,7 @@ function BankAdsSection() {
           accountType="Monthly Interest Credit Salary Account"
           branches={["Visakhapatnam (Siripuram, Gajuwaka)", "Hyderabad (Banjara Hills, Madhapur)", "Bengaluru (MG Road, HSR Layout)", "Mumbai (BKC)"]}
           bankSupport="1800 108 8888 / 24x7 Support"
-          vyntyraManager="Vyntyra Partner Desk · Ext: 405"
+          vyntyraManager="Vyntyra Partner Desk Â· Ext: 405"
           ads={[
             { videoId: "/videos/idfc/idfc_ad_2.mp4", title: "Open Savings Account in 5 Mins", slogan: "Open your IDFC FIRST Bank Savings Account online in just 5 mins.", feature: "5-Minute Online Setup" },
             { videoId: "/videos/idfc/idfc_ad_1.mp4", title: "Lifetime Free Credit Cards", slogan: "Enjoy premium credit cards with zero annual fees and robust rewards.", feature: "No Annual Fee Cards" }
@@ -362,7 +362,7 @@ function BankAdsSection() {
           accountType="Axis Corporate Salary & Wealth Account"
           branches={["Visakhapatnam (VIP Road, Sampath Vinayaka Temple Rd)", "Hyderabad (Jubilee Hills)", "Bengaluru (Koramangala, Whitefield)"]}
           bankSupport="1860 419 5555 / 1860 500 5555"
-          vyntyraManager="Vyntyra Partner Desk · Ext: 408"
+          vyntyraManager="Vyntyra Partner Desk Â· Ext: 408"
           ads={[
             { videoId: "/videos/axis/axis_ad_2.mp4", title: "Digital Savings Account", slogan: "Make every moment special with an Axis Bank Digital Savings Account.", feature: "Open in 4 Easy Steps" },
             { videoId: "/videos/axis/axis_ad_3.mp4", title: "Open Account in 4 Steps", slogan: "Experience paperless account opening instantly using Video KYC.", feature: "100% Digital Setup" },
@@ -732,7 +732,7 @@ function EmployeeDashboard() {
       designation: "Software Engineer / Senior Associate",
       department: "Engineering & Technology",
       email: email,
-      bankDetails: profile?.bank_details || "Kotak Mahindra Bank · A/C 882101923 · IFSC: KKBK0001823",
+      bankDetails: profile?.bank_details || "Kotak Mahindra Bank Â· A/C 882101923 Â· IFSC: KKBK0001823",
       payPeriod: payout?.date ? new Date(payout.date).toLocaleDateString("en-IN", { month: "long", year: "numeric" }) : new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" }),
       paymentDate: payout?.date ? new Date(payout.date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }),
       basicSalary: basic,
@@ -927,7 +927,7 @@ function EmployeeDashboard() {
           message: kudosForm.message,
         }
       });
-      toast.success("Kudos sent successfully! 🎉");
+      toast.success("Kudos sent successfully! ðŸŽ‰");
       setKudosForm({ receiver_id: "", badge: "Star Performer", message: "" });
       qc.invalidateQueries({ queryKey: ["kudos-feed"] });
     } catch (err: any) {
@@ -1021,7 +1021,7 @@ function EmployeeDashboard() {
 
     const waText = `Hello ${intern.full_name},\n\nHope you are doing well. I am reaching out regarding your internship tasks and mentorship updates at Vyntyra Consultancy Services.\n\nWith regards,\n${empName}\n${empRole}\nContact: ${empPhone}\nEmail: ${empEmail}\n${company}`;
 
-    const emailSubject = `Internship Mentorship Update · ${company}`;
+    const emailSubject = `Internship Mentorship Update Â· ${company}`;
     const emailBody = `Hello ${intern.full_name},\n\nI hope this email finds you well.\n\nI am reaching out to check on your current sprint progress, task deliverables, and any guidance or assistance you may need with your project milestones.\n\nPlease feel free to reply to this email or connect directly if you have any questions or require review feedback.\n\nWith regards,\n${empName}\n${empRole}\nContact: ${empPhone}\nEmail: ${empEmail}\n${company}`;
 
     return {
@@ -1381,10 +1381,286 @@ function EmployeeDashboard() {
       </div>
 
       {/* Corporate Executive Top Header */}
-      <div className="relative z-50"><DashboardHeader panelName="Employee Portal" userProfileName={displayName} onSignOut={handleSignOut} links={[{ href: "/employee", label: "Dashboard Home", icon: Sparkles },{ href: "#", onClick: () => setActiveTab("notifications"), label: "Notifications & Tasks", icon: Bell },{ href: "#", onClick: () => setActiveTab("schedule"), label: "Meetings & Schedule", icon: Clock },{ href: "#", onClick: () => setActiveTab("resources"), label: "Knowledge Base", icon: BookOpen },{ href: "#", onClick: () => setActiveTab("leaves"), label: "Leave Management", icon: ClipboardList }]} /></div>
+      <header className={`sticky top-0 z-40 transition-all duration-300 relative ${scrolled ? "bg-[#090D16]/95 backdrop-blur-2xl border-b border-slate-800/80 shadow-2xl shadow-black/60" : "bg-[#090D16] border-b border-slate-800"}`}>
+        <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2 overflow-hidden">
+          <div className="flex items-center gap-2.5 sm:gap-4 min-w-0 shrink">
+            <div className="h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl shadow-lg shadow-indigo-950/60 border border-indigo-400/40 flex items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
+              V
+            </div>
+            <div className="hidden sm:flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-xs sm:text-sm font-bold text-white tracking-tight leading-tight truncate">Vyntyra Ops</span>
+                <span className="bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
+                  Executive
+                </span>
+              </div>
+              <span className="hidden md:block text-[10px] text-slate-400 font-medium truncate">Employee &amp; Mentorship Portal</span>
+            </div>
+          </div>
 
-      {/* ── EMPLOYEE MOBILE SLIDE-IN NAVIGATION DRAWER ── */}
-      
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            {/* Quick Shift Biometric Status Badge (Desktop) */}
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-700/80 text-xs shadow-inner">
+              <span className="relative flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${todayAttendance?.clock_out_time ? 'bg-amber-400' : todayAttendance ? 'bg-emerald-400' : 'bg-slate-400'}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${todayAttendance?.clock_out_time ? 'bg-amber-500' : todayAttendance ? 'bg-emerald-500' : 'bg-slate-500'}`}></span>
+              </span>
+              <span className="text-[11px] font-semibold text-slate-300">
+                {todayAttendance?.clock_out_time ? "Shift Ended" : todayAttendance ? "On Shift" : "Clocked Out"}
+              </span>
+              {!todayAttendance ? (
+                <button
+                  onClick={handleClockIn}
+                  className="ml-1 text-[10px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-2.5 py-0.5 rounded-full transition-all shadow-md flex items-center gap-1 cursor-pointer"
+                >
+                  <Fingerprint className="h-3 w-3" /> Fingerprint In
+                </button>
+              ) : !todayAttendance.clock_out_time ? (
+                <button
+                  onClick={handleClockOut}
+                  className="ml-1 text-[10px] bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-bold px-2.5 py-0.5 rounded-full transition-all shadow-md flex items-center gap-1 cursor-pointer"
+                >
+                  <Fingerprint className="h-3 w-3" /> Fingerprint Out
+                </button>
+              ) : null}
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+              <div className="hidden sm:flex flex-col text-right">
+                <span className="text-xs font-bold text-white max-w-[120px] truncate">{displayName}</span>
+                <span className="text-[10px] text-slate-400 font-mono max-w-[120px] truncate">{email}</span>
+              </div>
+              <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 sm:h-9 sm:w-9 ring-2 ring-indigo-500/40 shadow-sm shrink-0" />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setProfileModalOpen(true)}
+                className="h-8 px-2 sm:px-2.5 text-xs font-bold rounded-xl border-slate-700 bg-slate-900/90 text-slate-200 hover:bg-slate-800 hover:text-white gap-1 shadow-2xs shrink-0 cursor-pointer"
+                title="Edit Details"
+              >
+                <User className="h-3.5 w-3.5 text-indigo-400" />
+                <span className="hidden sm:inline">Settings</span>
+              </Button>
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="h-8 px-2 sm:px-3 text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-950/50 border border-rose-500/30 rounded-xl transition-colors text-xs font-bold shrink-0 flex items-center gap-1 cursor-pointer"
+              title="Sign Out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </Button>
+
+            {/* GöÇGöÇ HAMBURGER MENU BUTTON GöÇGöÇ */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="h-9 px-3 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-700 hover:to-purple-700 text-white border border-indigo-400/40 shadow-md shadow-indigo-950/60 flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shrink-0"
+              aria-label="Open Employee Navigation Menu"
+              title="Open Executive Operations Directory"
+            >
+              <Menu className="h-4.5 w-4.5 text-white stroke-[2.5]" />
+              <span className="text-xs font-black tracking-wider uppercase hidden sm:inline text-white">Menu</span>
+            </button>
+          </div>
+        </div>
+        
+        {/* Executive Animated Tabs Navigation */}
+        <div className="w-full px-4 sm:px-8 overflow-x-auto hide-scrollbar border-t border-slate-800/80 bg-[#050811]/90">
+          <div className="w-full max-w-[1800px] mx-auto flex items-center gap-1.5 py-2.5 relative">
+            {TABS.map((t) => {
+              const isActive = activeTab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setActiveTab(t.id)}
+                  className={`relative flex items-center shrink-0 px-3.5 py-1.5 text-[12px] font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                    isActive 
+                      ? "text-white bg-indigo-600 shadow-lg shadow-indigo-950/60 border border-indigo-400/30" 
+                      : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/60"
+                  }`}
+                >
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    {t.label}
+                    {('badge' in t && t.badge !== undefined) && (t as any).badge > 0 && (
+                      <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${
+                        isActive ? "bg-white/30 text-white" : "bg-slate-800 text-indigo-300 border border-slate-700"
+                      }`}>
+                        {t.badge}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </header>
+
+      {/* GöÇGöÇ EMPLOYEE MOBILE SLIDE-IN NAVIGATION DRAWER GöÇGöÇ */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          {/* Backdrop Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Slide-in Drawer Container */}
+          <div className="relative w-full max-w-sm sm:max-w-md bg-[#090D16] border-l border-slate-800 shadow-2xl h-full flex flex-col z-10 animate-in slide-in-from-right duration-300 text-white">
+            
+            {/* Drawer Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-800 bg-gradient-to-r from-indigo-950 via-[#0E131F] to-indigo-950 flex items-center justify-between shadow-md">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl shadow-lg border border-indigo-400/40 flex items-center justify-center text-white font-black text-sm">
+                  V
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-sm text-white">Vyntyra Ops</h3>
+                    <span className="bg-indigo-500/20 text-indigo-300 text-[8px] font-extrabold px-1.5 py-0.5 rounded-full border border-indigo-500/40 uppercase">
+                      Executive
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400">Employee &amp; Mentorship Directory</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="h-8 w-8 rounded-full bg-slate-900 border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Close Navigation Menu"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Employee Profile Card inside Drawer */}
+            <div className="p-4 bg-slate-900/90 border-b border-slate-800 space-y-3">
+              <div className="flex items-center gap-3">
+                <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-12 w-12 rounded-2xl ring-2 ring-indigo-500/40 shadow-md shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-extrabold text-sm text-white truncate">{displayName}</h4>
+                  <p className="text-xs text-slate-400 font-mono truncate">{email}</p>
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                    <span className="text-[9px] font-mono font-bold text-indigo-300 bg-indigo-950 border border-indigo-500/40 px-2 py-0.5 rounded-md">
+                      {profile?.position || "Executive Associate"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Shift Biometric Action */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+                {!todayAttendance ? (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      handleClockIn();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="h-9 text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white w-full rounded-xl gap-1.5 shadow-md cursor-pointer"
+                  >
+                    <Fingerprint className="h-3.5 w-3.5" /> Clock In
+                  </Button>
+                ) : !todayAttendance.clock_out_time ? (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      handleClockOut();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="h-9 text-xs font-bold border-rose-500/40 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 w-full rounded-xl gap-1.5 cursor-pointer"
+                  >
+                    <Fingerprint className="h-3.5 w-3.5 text-rose-400" /> Clock Out
+                  </Button>
+                ) : (
+                  <div className="px-2.5 py-2 rounded-xl bg-slate-900 text-center text-[10px] font-bold text-slate-400 border border-slate-800">
+                    G£ô Shift Ended
+                  </div>
+                )}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setProfileModalOpen(true);
+                  }}
+                  className="h-9 text-xs font-bold bg-slate-900 border-slate-700 text-slate-200 hover:bg-slate-800 rounded-xl gap-1.5 cursor-pointer"
+                >
+                  <User className="h-3.5 w-3.5 text-indigo-400" /> Settings
+                </Button>
+              </div>
+            </div>
+
+            {/* Categorized Executive Tab List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin">
+              <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-500 px-2 mb-2">
+                Executive Modules &amp; Directories
+              </h5>
+              <div className="space-y-1">
+                {TABS.map((tab: any) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(tab.id as any);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                        isActive
+                          ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white shadow-lg shadow-indigo-950/60 border border-indigo-400/40"
+                          : "bg-slate-900/60 text-slate-300 border border-slate-800/80 hover:bg-slate-800 hover:text-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="tracking-tight">{tab.label}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        {('badge' in tab && tab.badge !== undefined) && tab.badge > 0 && (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black ${
+                            isActive ? "bg-white/30 text-white" : "bg-slate-800 text-indigo-300 border border-slate-700"
+                          }`}>
+                            {tab.badge}
+                          </span>
+                        )}
+                        <ChevronRight className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="p-4 border-t border-slate-800 bg-[#060912] space-y-3">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleSignOut();
+                }}
+                className="w-full h-10 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-300 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
+              >
+                <LogOut className="h-4 w-4 text-rose-400" />
+                <span>Sign Out from Executive Portal</span>
+              </Button>
+              <p className="text-center text-[10px] text-slate-500 font-medium">
+                Vyntyra Ops -+ Project VyNexa Directorate
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Marquee Notifications (Corporate broadcast ticker) */}
       {announcements.length > 0 && (
@@ -1404,7 +1680,7 @@ function EmployeeDashboard() {
       <main className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 py-6 relative z-10">
         <AnimatePresence mode="wait">
           
-          {/* ─── OVERVIEW ─── */}
+          {/* â”€â”€â”€ OVERVIEW â”€â”€â”€ */}
           {activeTab === "overview" && (
             <motion.div key="overview" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-6">
               
@@ -1433,7 +1709,7 @@ function EmployeeDashboard() {
                         <CalendarDays className="h-4 w-4 text-indigo-400" />
                         {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
                       </span>
-                      <span className="text-slate-600">•</span>
+                      <span className="text-slate-600">â€¢</span>
                       <span className="text-slate-400">Sprint Velocity: <strong className="text-emerald-400">{progress}%</strong></span>
                     </p>
                   </div>
@@ -1560,7 +1836,7 @@ function EmployeeDashboard() {
                         <p className="text-xs text-slate-400 mt-0.5">High-priority milestones currently in progress or awaiting completion.</p>
                       </div>
                       <Button variant="outline" size="sm" className="text-xs font-bold text-indigo-300 border-indigo-500/40 bg-indigo-950/40 hover:bg-indigo-900/60" onClick={() => setActiveTab("tasks")}>
-                        View All Tasks ↗
+                        View All Tasks â†—
                       </Button>
                     </div>
 
@@ -1654,7 +1930,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── TASKS ─── */}
+          {/* â”€â”€â”€ TASKS â”€â”€â”€ */}
           {activeTab === "tasks" && (
             <motion.div key="tasks" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -1781,7 +2057,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── ATTENDANCE ─── */}
+          {/* â”€â”€â”€ ATTENDANCE â”€â”€â”€ */}
           {activeTab === "attendance" && (
             <motion.div key="attendance" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -1847,7 +2123,7 @@ function EmployeeDashboard() {
                       <div className="text-xs font-medium text-slate-400 space-y-2.5 mt-5 bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-inner">
                         <div className="flex justify-between items-center text-slate-400">
                           <span>Clock In Time:</span>
-                          <span className="font-bold text-white font-mono">{todayAttendance.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}</span>
+                          <span className="font-bold text-white font-mono">{todayAttendance.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "â€”"}</span>
                         </div>
                         <div className="flex justify-between items-center text-slate-400 border-t border-slate-800 pt-2">
                           <span>Clock Out Time:</span>
@@ -1881,7 +2157,7 @@ function EmployeeDashboard() {
                             </div>
                             <div className="text-xs font-mono font-bold bg-slate-900 border border-slate-700 text-slate-200 px-3 py-1 rounded-xl">
                               {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'} 
-                              <span className="mx-2 text-slate-500 font-normal">→</span> 
+                              <span className="mx-2 text-slate-500 font-normal">â†’</span> 
                               {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}
                             </div>
                           </div>
@@ -1894,7 +2170,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── LEAVES ─── */}
+          {/* â”€â”€â”€ LEAVES â”€â”€â”€ */}
           {activeTab === "leave" && (
             <motion.div key="leave" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -1970,7 +2246,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── PAYOUTS & EXPENSES ─── */}
+          {/* â”€â”€â”€ PAYOUTS & EXPENSES â”€â”€â”€ */}
           {activeTab === "payouts" && (
             <motion.div key="payouts" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -2014,8 +2290,8 @@ function EmployeeDashboard() {
                     </select>
                   </div>
                   <div>
-                    <Label className="text-xs font-bold text-slate-300">Amount (₹)</Label>
-                    <Input type="number" step="0.01" placeholder="₹ Amount" value={expenseForm.amount} onChange={e => setExpenseForm({...expenseForm, amount: e.target.value})} required className="bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500 rounded-xl text-xs mt-1 font-bold" />
+                    <Label className="text-xs font-bold text-slate-300">Amount (â‚¹)</Label>
+                    <Input type="number" step="0.01" placeholder="â‚¹ Amount" value={expenseForm.amount} onChange={e => setExpenseForm({...expenseForm, amount: e.target.value})} required className="bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500 rounded-xl text-xs mt-1 font-bold" />
                   </div>
                   <div>
                     <Label className="text-xs font-bold text-slate-300">Expense Incurred Date</Label>
@@ -2046,10 +2322,10 @@ function EmployeeDashboard() {
                         <div key={exp.id} className="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
                           <div>
                             <div className="font-bold text-white">{exp.title} <span className="text-slate-400 font-normal">({exp.category})</span></div>
-                            <div className="text-[11px] text-slate-400 font-light mt-0.5">{new Date(exp.date).toLocaleDateString("en-IN")} • {exp.notes || 'No notes'}</div>
+                            <div className="text-[11px] text-slate-400 font-light mt-0.5">{new Date(exp.date).toLocaleDateString("en-IN")} â€¢ {exp.notes || 'No notes'}</div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="font-black text-white font-mono text-sm">₹{exp.amount}</span>
+                            <span className="font-black text-white font-mono text-sm">â‚¹{exp.amount}</span>
                             <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${exp.status === 'approved' ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/30' : 'bg-amber-950/80 text-amber-300 border border-amber-500/30'}`}>{exp.status}</span>
                           </div>
                         </div>
@@ -2080,8 +2356,8 @@ function EmployeeDashboard() {
                           <IndianRupee className="h-5 w-5" />
                         </div>
                         <div>
-                          <div className="text-xl font-black text-white tracking-tight">₹{payout.amount}</div>
-                          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{payout.type} • {new Date(payout.date).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</div>
+                          <div className="text-xl font-black text-white tracking-tight">â‚¹{payout.amount}</div>
+                          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{payout.type} â€¢ {new Date(payout.date).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -2105,14 +2381,14 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── OFFICIAL PARTNER BANKING & PERKS TAB ─── */}
+          {/* â”€â”€â”€ OFFICIAL PARTNER BANKING & PERKS TAB â”€â”€â”€ */}
           {activeTab === "banking" && (
             <motion.div key="banking" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <BankAdsSection />
             </motion.div>
           )}
 
-          {/* ─── MY INTERNS & MENTORSHIP ─── */}
+          {/* â”€â”€â”€ MY INTERNS & MENTORSHIP â”€â”€â”€ */}
           {activeTab === "my_interns" && (
             <motion.div key="my_interns" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-6 max-w-7xl mx-auto">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -2221,7 +2497,7 @@ function EmployeeDashboard() {
                               <td className="px-5 py-4 space-y-1">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <span className="text-[11px] font-extrabold text-amber-300 bg-amber-950/90 px-2.5 py-1 rounded-lg border border-amber-500/40 tracking-tight shadow-xs">
-                                    🎯 {subDomainText}
+                                    ðŸŽ¯ {subDomainText}
                                   </span>
                                 </div>
                                 <div className="text-[10px] text-slate-400 font-medium">
@@ -2340,7 +2616,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── EMAIL & PROMOTIONAL CAMPAIGNS ─── */}
+          {/* â”€â”€â”€ EMAIL & PROMOTIONAL CAMPAIGNS â”€â”€â”€ */}
           {activeTab === "campaigns" && (
             <motion.div key="campaigns" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <EmailAutomationHub 
@@ -2352,7 +2628,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── TEAM & KUDOS ─── */}
+          {/* â”€â”€â”€ TEAM & KUDOS â”€â”€â”€ */}
           {activeTab === "team" && (
             <motion.div key="team" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-6 max-w-7xl mx-auto">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -2394,11 +2670,11 @@ function EmployeeDashboard() {
                   <div>
                     <Label className="text-xs font-bold text-slate-300">Merit Badge</Label>
                     <select value={kudosForm.badge} onChange={e => setKudosForm({...kudosForm, badge: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-[#131B2E] border border-slate-700 text-white rounded-xl text-xs font-medium">
-                      <option value="Star Performer" className="bg-[#0E131F]">⭐ Star Performer</option>
-                      <option value="Team Player" className="bg-[#0E131F]">🤝 Team Player</option>
-                      <option value="Problem Solver" className="bg-[#0E131F]">💡 Problem Solver</option>
-                      <option value="Innovation Champion" className="bg-[#0E131F]">🚀 Innovation Champion</option>
-                      <option value="Customer Delight" className="bg-[#0E131F]">❤️ Customer Delight</option>
+                      <option value="Star Performer" className="bg-[#0E131F]">â­ Star Performer</option>
+                      <option value="Team Player" className="bg-[#0E131F]">ðŸ¤ Team Player</option>
+                      <option value="Problem Solver" className="bg-[#0E131F]">ðŸ’¡ Problem Solver</option>
+                      <option value="Innovation Champion" className="bg-[#0E131F]">ðŸš€ Innovation Champion</option>
+                      <option value="Customer Delight" className="bg-[#0E131F]">â¤ï¸ Customer Delight</option>
                     </select>
                   </div>
                   <div className="sm:col-span-3">
@@ -2435,7 +2711,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── INTERVIEWS ─── */}
+          {/* â”€â”€â”€ INTERVIEWS â”€â”€â”€ */}
           {activeTab === "interviews" && (
             <motion.div {...pageVariants} className="space-y-6 max-w-7xl mx-auto">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -2484,17 +2760,17 @@ function EmployeeDashboard() {
                           <div>
                             <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Interview Time</span>
                             <span className="font-bold text-white mt-0.5 block">
-                              {app.meeting_time ? new Date(app.meeting_time).toLocaleString() : "—"}
+                              {app.meeting_time ? new Date(app.meeting_time).toLocaleString() : "â€”"}
                             </span>
                           </div>
                           <div>
                             <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Video Link</span>
                             {app.meet_link ? (
                               <a href={app.meet_link} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 font-bold mt-0.5 block truncate">
-                                Join Video Call ↗
+                                Join Video Call â†—
                               </a>
                             ) : (
-                              <span className="text-slate-400 mt-0.5 block">—</span>
+                              <span className="text-slate-400 mt-0.5 block">â€”</span>
                             )}
                           </div>
                           <div>
@@ -2578,7 +2854,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── ASSIGNED INTERN SUPPORT QUERIES ─── */}
+          {/* â”€â”€â”€ ASSIGNED INTERN SUPPORT QUERIES â”€â”€â”€ */}
           {activeTab === "resolver_support" && (
             <motion.div key="resolver_support" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -2620,7 +2896,7 @@ function EmployeeDashboard() {
                             
                             <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
                               <span>Intern: <strong className="text-white">{q.intern?.full_name || "Assigned Intern"}</strong> ({q.intern?.email || ""})</span>
-                              <span>•</span>
+                              <span>â€¢</span>
                               <span>Domain: <strong className="text-white capitalize">{q.intern?.department || "General"}</strong></span>
                             </div>
 
@@ -2664,7 +2940,7 @@ function EmployeeDashboard() {
                               </div>
                             ) : (
                               <div className="text-xs text-emerald-300 font-bold bg-emerald-950/80 px-2.5 py-1 rounded-xl border border-emerald-500/30">
-                                ✓ Resolved
+                                âœ“ Resolved
                               </div>
                             )}
                           </div>
@@ -2684,7 +2960,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── MEETINGS ─── */}
+          {/* â”€â”€â”€ MEETINGS â”€â”€â”€ */}
           {activeTab === "meetings" && (
             <motion.div key="meetings" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0E131F]/90 p-6 rounded-3xl border border-slate-800/80 shadow-xl backdrop-blur-xl">
@@ -2818,7 +3094,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
           
-          {/* ─── ANNOUNCEMENTS ─── */}
+          {/* â”€â”€â”€ ANNOUNCEMENTS â”€â”€â”€ */}
           {activeTab === "announcements" && (
             <motion.div key="announcements" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl">
@@ -2854,7 +3130,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── RESOURCES & LMS ─── */}
+          {/* â”€â”€â”€ RESOURCES & LMS â”€â”€â”€ */}
           {activeTab === "resources" && (
             <motion.div key="resources" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl">
@@ -2871,10 +3147,10 @@ function EmployeeDashboard() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    { title: "Information Security & Data Privacy 2026", cat: "Mandatory Compliance", progress: 100, status: "Certified", badge: "🛡️ Security Champion" },
-                    { title: "Workplace Ethics & Code of Conduct", cat: "HR Policy", progress: 100, status: "Certified", badge: "⚖️ Ethics Leader" },
-                    { title: "Enterprise Cloud Architecture & Governance", cat: "Technical Certification", progress: 75, status: "In Progress", badge: "☁️ Tech Explorer" },
-                    { title: "Agile Engineering & Development SOPs", cat: "Operations SOP", progress: 50, status: "In Progress", badge: "🚀 Agile Practitioner" },
+                    { title: "Information Security & Data Privacy 2026", cat: "Mandatory Compliance", progress: 100, status: "Certified", badge: "ðŸ›¡ï¸ Security Champion" },
+                    { title: "Workplace Ethics & Code of Conduct", cat: "HR Policy", progress: 100, status: "Certified", badge: "âš–ï¸ Ethics Leader" },
+                    { title: "Enterprise Cloud Architecture & Governance", cat: "Technical Certification", progress: 75, status: "In Progress", badge: "â˜ï¸ Tech Explorer" },
+                    { title: "Agile Engineering & Development SOPs", cat: "Operations SOP", progress: 50, status: "In Progress", badge: "ðŸš€ Agile Practitioner" },
                   ].map((c, i) => (
                     <div key={i} className="p-6 bg-[#0E131F]/90 border border-slate-800/80 rounded-3xl shadow-xl space-y-3">
                       <div className="flex items-start justify-between gap-3">
@@ -2898,7 +3174,7 @@ function EmployeeDashboard() {
                       <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
                         <span className="text-slate-400 font-medium">{c.badge}</span>
                         <Button variant="ghost" size="sm" className="h-7 text-xs text-indigo-400 hover:text-indigo-300 p-0 font-bold">
-                          {c.status === 'Certified' ? "View Certificate ↗" : "Continue Course →"}
+                          {c.status === 'Certified' ? "View Certificate â†—" : "Continue Course â†’"}
                         </Button>
                       </div>
                     </div>
@@ -2908,7 +3184,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── HELPDESK TICKETS ─── */}
+          {/* â”€â”€â”€ HELPDESK TICKETS â”€â”€â”€ */}
           {activeTab === "support" && (
             <motion.div key="support" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl">
@@ -2976,7 +3252,7 @@ function EmployeeDashboard() {
                             <span className="text-xs font-mono bg-slate-900 border border-slate-700 px-2 py-0.5 rounded-full text-slate-300">#{ticket.id.slice(0, 8).toUpperCase()}</span>
                             <h4 className="font-bold text-white text-xs">{ticket.subject}</h4>
                           </div>
-                          <div className="text-[11px] text-slate-400 mt-1">{ticket.category} • Priority: <span className="font-bold text-slate-200">{ticket.priority}</span> • Raised {new Date(ticket.created_at).toLocaleDateString()}</div>
+                          <div className="text-[11px] text-slate-400 mt-1">{ticket.category} â€¢ Priority: <span className="font-bold text-slate-200">{ticket.priority}</span> â€¢ Raised {new Date(ticket.created_at).toLocaleDateString()}</div>
                         </div>
                         <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${ticket.status === 'open' ? 'bg-amber-950/80 text-amber-300 border border-amber-500/30' : 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/30'}`}>{ticket.status}</span>
                       </div>
@@ -2988,7 +3264,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── DOCUMENT LOCKER ─── */}
+          {/* â”€â”€â”€ DOCUMENT LOCKER â”€â”€â”€ */}
           {activeTab === "locker" && (
             <motion.div key="locker" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl">
@@ -3013,7 +3289,7 @@ function EmployeeDashboard() {
                       </div>
                       <div>
                         <div className="font-bold text-white text-xs">{doc.name}</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">{doc.category} • {doc.date}</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">{doc.category} â€¢ {doc.date}</div>
                       </div>
                     </div>
                     <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/30">{doc.status}</span>
@@ -3023,7 +3299,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── PROFILE & ESS ─── */}
+          {/* â”€â”€â”€ PROFILE & ESS â”€â”€â”€ */}
           {activeTab === "contact" && (
             <motion.div key="contact" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl">
@@ -3099,7 +3375,7 @@ function EmployeeDashboard() {
                     </div>
                     <div>
                       <Label className="text-xs font-bold text-slate-300">Bank Account &amp; IFSC / UPI Details</Label>
-                      <Input placeholder="HDFC Bank · A/C ****8821 · IFSC: HDFC0001234" defaultValue={profile?.bank_details || "Kotak Mahindra Bank · A/C 882101923 · IFSC: KKBK0001823"} onChange={e => setProfileForm({...profileForm, bank_details: e.target.value})} className="bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500 rounded-xl mt-1 text-xs font-mono" />
+                      <Input placeholder="HDFC Bank Â· A/C ****8821 Â· IFSC: HDFC0001234" defaultValue={profile?.bank_details || "Kotak Mahindra Bank Â· A/C 882101923 Â· IFSC: KKBK0001823"} onChange={e => setProfileForm({...profileForm, bank_details: e.target.value})} className="bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500 rounded-xl mt-1 text-xs font-mono" />
                     </div>
                     <div className="flex justify-end pt-1">
                       <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl px-6 text-xs h-10 cursor-pointer">Save Profile Changes</Button>
@@ -3110,7 +3386,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* ─── SECURITY & OFFBOARDING ─── */}
+          {/* â”€â”€â”€ SECURITY & OFFBOARDING â”€â”€â”€ */}
           {activeTab === "security" && (
             <motion.div key="security" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl">
@@ -3176,7 +3452,7 @@ function EmployeeDashboard() {
         </AnimatePresence>
       </main>
 
-      {/* ─── BIOMETRIC FINGERPRINT AUTHENTICATION MODAL ─── */}
+      {/* â”€â”€â”€ BIOMETRIC FINGERPRINT AUTHENTICATION MODAL â”€â”€â”€ */}
       <AnimatePresence>
         {isBiometricModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -3208,7 +3484,7 @@ function EmployeeDashboard() {
                   onClick={() => setIsBiometricModalOpen(false)} 
                   className="text-slate-400 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-slate-800 transition-colors"
                 >
-                  ✕
+                  âœ•
                 </button>
               </div>
 
@@ -3347,7 +3623,7 @@ function EmployeeDashboard() {
                     >
                       {myInterns.map((i: any) => (
                         <option key={i.id} value={i.id} className="bg-[#0F172A]">
-                          {i.full_name} ({i.email}) {i.sub_domain ? `• Sub-domain: ${i.sub_domain}` : ""}
+                          {i.full_name} ({i.email}) {i.sub_domain ? `â€¢ Sub-domain: ${i.sub_domain}` : ""}
                         </option>
                       ))}
                     </select>
@@ -3469,7 +3745,7 @@ function EmployeeDashboard() {
         )}
       </AnimatePresence>
 
-      {/* ─── EDIT ASSIGNED TASK & DOC LINKS MODAL ─── */}
+      {/* â”€â”€â”€ EDIT ASSIGNED TASK & DOC LINKS MODAL â”€â”€â”€ */}
       <Dialog open={editTaskModalOpen} onOpenChange={setEditTaskModalOpen}>
         <DialogContent className="sm:max-w-lg bg-[#0F172A] border border-slate-700 text-white rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
@@ -3637,10 +3913,10 @@ function EmployeeDashboard() {
                         <tr key={log.id} className="hover:bg-slate-800/40 transition-colors">
                           <td className="px-6 py-4 font-bold text-white">{log.date}</td>
                           <td className="px-6 py-4 text-slate-300 font-mono">
-                            {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
+                            {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "â€”"}
                           </td>
                           <td className="px-6 py-4 text-slate-300 font-mono">
-                            {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
+                            {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "â€”"}
                           </td>
                           <td className="px-6 py-4 text-right">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
@@ -3664,7 +3940,7 @@ function EmployeeDashboard() {
         )}
       </AnimatePresence>
 
-      {/* ─── MENTEE DIRECT COMMUNICATION & CONTACT MODAL ─── */}
+      {/* â”€â”€â”€ MENTEE DIRECT COMMUNICATION & CONTACT MODAL â”€â”€â”€ */}
       <AnimatePresence>
         {isContactInternModalOpen && contactingIntern && (() => {
           const urls = getInternContactUrls(contactingIntern);
@@ -3692,7 +3968,7 @@ function EmployeeDashboard() {
                     onClick={() => setIsContactInternModalOpen(false)} 
                     className="text-slate-400 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-slate-800 transition-colors"
                   >
-                    ✕
+                    âœ•
                   </button>
                 </div>
 
@@ -3704,11 +3980,11 @@ function EmployeeDashboard() {
                     <div className="text-xs text-slate-400 font-mono truncate">{contactingIntern.email}</div>
                     <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1 flex-wrap">
                       <span>Department: <strong className="text-slate-200">{contactingIntern.department || "Technology & Software"}</strong></span>
-                      <span>•</span>
+                      <span>â€¢</span>
                       <span>Sub-Domain: <strong className="text-amber-300 font-bold">{contactingIntern.sub_domain || contactingIntern.subdomain || "Full Stack Web Development"}</strong></span>
                       {contactingIntern.phone && (
                         <>
-                          <span>•</span>
+                          <span>â€¢</span>
                           <span>Phone: <strong className="text-indigo-300 font-mono">{contactingIntern.phone}</strong></span>
                         </>
                       )}
@@ -3809,7 +4085,7 @@ function EmployeeDashboard() {
                       }}
                       className="h-7 text-[11px] text-indigo-400 hover:text-indigo-300 p-0 font-bold"
                     >
-                      Copy Full Message 📋
+                      Copy Full Message ðŸ“‹
                     </Button>
                   </div>
                   <div className="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 text-xs text-slate-300 leading-relaxed font-sans select-all whitespace-pre-wrap shadow-inner max-h-[160px] overflow-y-auto">
@@ -3854,7 +4130,7 @@ function EmployeeDashboard() {
         }} 
       />
       <FloatingAppsPanel />
-      {/* ── Support Query Resolver Modal ── */}
+      {/* â”€â”€ Support Query Resolver Modal â”€â”€ */}
       {selectedQueryToResolve && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
@@ -3863,7 +4139,7 @@ function EmployeeDashboard() {
                 <h3 className="font-bold text-sm text-slate-900">Resolve Intern Support Query</h3>
                 <p className="text-[10px] text-slate-400 mt-0.5">Intern: {selectedQueryToResolve.intern?.full_name}</p>
               </div>
-              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full" onClick={() => setSelectedQueryToResolve(null)}>✕</Button>
+              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full" onClick={() => setSelectedQueryToResolve(null)}>âœ•</Button>
             </div>
             
             <form 
@@ -3922,7 +4198,7 @@ function EmployeeDashboard() {
         </div>
       )}
 
-      {/* ── Intern Tasks Inspector Modal ── */}
+      {/* â”€â”€ Intern Tasks Inspector Modal â”€â”€ */}
       {selectedInternForTasks && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 flex flex-col max-h-[85vh]">
@@ -3931,10 +4207,10 @@ function EmployeeDashboard() {
                 <ProfileAvatar url={selectedInternForTasks.avatar_url} name={selectedInternForTasks.full_name} className="h-10 w-10 rounded-xl" />
                 <div>
                   <h3 className="font-bold text-sm text-slate-900">{selectedInternForTasks.full_name}'s Task Board</h3>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{selectedInternForTasks.email} • Domain: {selectedInternForTasks.department}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{selectedInternForTasks.email} â€¢ Domain: {selectedInternForTasks.department}</p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full" onClick={() => setSelectedInternForTasks(null)}>✕</Button>
+              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full" onClick={() => setSelectedInternForTasks(null)}>âœ•</Button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-4 pr-1">
@@ -3982,9 +4258,9 @@ function EmployeeDashboard() {
                                 : "bg-blue-100 text-blue-800 border-blue-200"
                             }`}>
                               {task.status === "completed" 
-                                ? "✓ Completed & Finalized by Admin" 
+                                ? "âœ“ Completed & Finalized by Admin" 
                                 : task.mentor_verification_status === "mentor_verified"
-                                ? "⭐ Mentor Verified (Awaiting Admin Points)"
+                                ? "â­ Mentor Verified (Awaiting Admin Points)"
                                 : "Deliverable Ready for Mentor Review"}
                             </Badge>
                           </div>
@@ -3998,7 +4274,7 @@ function EmployeeDashboard() {
                           {task.mentor_report && (
                             <div className="text-[11px] text-purple-900 bg-purple-50/80 p-2.5 rounded-lg border border-purple-200 space-y-1">
                               <div className="font-bold flex items-center justify-between">
-                                <span>⭐ Mentor Verification Report ({task.mentor_rating || 5}/5):</span>
+                                <span>â­ Mentor Verification Report ({task.mentor_rating || 5}/5):</span>
                                 <span className="text-[10px] text-purple-700 font-bold">Rec: +{task.mentor_recommended_credits || task.credits || 10} Credits</span>
                               </div>
                               <p className="italic">"{task.mentor_report}"</p>
@@ -4025,7 +4301,7 @@ function EmployeeDashboard() {
                                 }}
                               >
                                 <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                                🔍 Verify &amp; Submit Mentor Report
+                                ðŸ” Verify &amp; Submit Mentor Report
                               </Button>
 
                               <Button
@@ -4107,7 +4383,7 @@ function EmployeeDashboard() {
         </div>
       )}
 
-      {/* ── Mentor Verification Report Dialog ── */}
+      {/* â”€â”€ Mentor Verification Report Dialog â”€â”€ */}
       {mentorVerifyTask && (
         <Dialog open={!!mentorVerifyTask} onOpenChange={(open) => !open && setMentorVerifyTask(null)}>
           <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -4201,11 +4477,11 @@ function EmployeeDashboard() {
                     onChange={(e) => setMentorRating(Number(e.target.value))}
                     className="w-full rounded-xl border border-slate-200 bg-white p-2 text-xs font-bold text-slate-800"
                   >
-                    <option value={5}>⭐⭐⭐⭐⭐ (5/5 - Outstanding)</option>
-                    <option value={4}>⭐⭐⭐⭐ (4/5 - Exceeds Expectations)</option>
-                    <option value={3}>⭐⭐⭐ (3/5 - Meets Requirements)</option>
-                    <option value={2}>⭐⭐ (2/5 - Partial Completion)</option>
-                    <option value={1}>⭐ (1/5 - Unsatisfactory)</option>
+                    <option value={5}>â­â­â­â­â­ (5/5 - Outstanding)</option>
+                    <option value={4}>â­â­â­â­ (4/5 - Exceeds Expectations)</option>
+                    <option value={3}>â­â­â­ (3/5 - Meets Requirements)</option>
+                    <option value={2}>â­â­ (2/5 - Partial Completion)</option>
+                    <option value={1}>â­ (1/5 - Unsatisfactory)</option>
                   </select>
                 </div>
 
@@ -4256,7 +4532,7 @@ function EmployeeDashboard() {
         </Dialog>
       )}
 
-      {/* ── Schedule Mentee Meeting Modal ── */}
+      {/* â”€â”€ Schedule Mentee Meeting Modal â”€â”€ */}
       {menteeMeetingOpen && (
         <Dialog open={menteeMeetingOpen} onOpenChange={setMenteeMeetingOpen}>
           <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -4420,7 +4696,7 @@ function EmployeeDashboard() {
         </Dialog>
       )}
 
-      {/* ── Reusable Profile Change Request Modal ── */}
+      {/* â”€â”€ Reusable Profile Change Request Modal â”€â”€ */}
       <ProfileChangeRequestModal
         open={profileModalOpen}
         onOpenChange={setProfileModalOpen}
@@ -4446,3 +4722,4 @@ function EmployeeDashboard() {
     </div>
   );
 }
+
