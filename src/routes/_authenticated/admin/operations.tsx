@@ -34,6 +34,7 @@ import {
   sendSmsNotification, getSmsQuotaStats, listSmsLogs, deleteSmsLog,
   listAllSupportQueries, assignSupportQueryEmployee, approveSupportMeeting,
   deleteStoredOfferLetterAndRegenerate, deleteStoredNocAndRegenerate, deleteStoredOfferLetter, deleteStoredNoc,
+  bulkDeleteOfferLetters, bulkRegenerateOfferLetters,
   listHolidays, createHoliday, deleteHoliday, updateHoliday, type HolidayItem
 } from "@/lib/operations.functions";
 import { localDateTimeToIso, isoToLocalDateTimeInput, formatDateTimeDisplay, generateGoogleCalendarUrl, formatMeetingTimeRange } from "@/lib/date-utils";
