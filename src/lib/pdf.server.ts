@@ -245,29 +245,38 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
     ["Stipend / Compensation", details.salary     || "Not Applicable (Honorary / Academic)"],
   ];
 
-  const ROW_H = 8.5;
-  const COL1 = 62;
+  const ROW_H = 10;
+  const COL1 = 65;
+
+  // Draw the main card background and border
+  doc.setFillColor(mist[0], mist[1], mist[2]);
+  doc.setDrawColor(rule[0], rule[1], rule[2]);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(ML, curY, TW, rows.length * ROW_H, 2, 2, "FD");
 
   rows.forEach(([label, val], i) => {
     const y = curY + i * ROW_H;
-    if (i % 2 === 0) {
-      doc.setFillColor(mist[0], mist[1], mist[2]);
-      doc.rect(ML, y, TW, ROW_H, "F");
+    
+    // Horizontal divider for all rows except the first
+    if (i > 0) {
+      doc.setDrawColor(rule[0], rule[1], rule[2]);
+      doc.setLineWidth(0.2);
+      doc.line(ML + 3, y, MR - 3, y);
     }
+    
+    // Label (Left Column)
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(slate[0], slate[1], slate[2]);
+    doc.text(label.toUpperCase(), ML + 6, y + 6.5);
+    
+    // Value (Right Column)
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.setTextColor(ink[0], ink[1], ink[2]);
-    doc.text(label, ML + 3, y + 5.8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(slate[0], slate[1], slate[2]);
-    const wrapped = doc.splitTextToSize(val, TW - COL1 - 4);
-    doc.text(wrapped, ML + COL1, y + 5.8);
+    doc.setTextColor(navy[0], navy[1], navy[2]);
+    const wrapped = doc.splitTextToSize(val, TW - COL1 - 8);
+    doc.text(wrapped, ML + COL1, y + 6.5);
   });
-
-  doc.setDrawColor(rule[0], rule[1], rule[2]);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(ML, curY, TW, rows.length * ROW_H, 1.2, 1.2, "S");
-  doc.line(ML + COL1 - 2, curY, ML + COL1 - 2, curY + rows.length * ROW_H);
 
   curY += rows.length * ROW_H + 10;
 
