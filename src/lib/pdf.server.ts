@@ -66,8 +66,8 @@ async function fetchBase64Image(url: string): Promise<string | null> {
 }
 
 export async function generateOfferLetterPDF(details: IOfferDetails): Promise<string> {
-  const { createAdminClient } = await import("./supabase.server");
-  const supabase = await createAdminClient();
+  
+  const supabase = getAdminClient();
   const { jsPDF } = await import("jspdf");
 
   const doc = new jsPDF({ format: "a4", unit: "mm" });

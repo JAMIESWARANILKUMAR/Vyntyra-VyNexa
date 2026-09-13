@@ -8354,8 +8354,7 @@ export const scheduleMentorMeeting = createServerFn({ method: "POST" })
 
 
 export async function bulkDeleteNocs() {
-  const { createAdminClient } = await import("@/lib/supabase.server");
-  const adminClient = await createAdminClient();
+  const adminClient = getAdminClient();
   const { data: apps, error } = await adminClient.from("applications").select("id, noc_url").not("noc_url", "is", null);
   if (error) throw new Error("Failed to fetch applications");
 
@@ -8371,8 +8370,7 @@ export async function bulkDeleteNocs() {
 }
 
 export async function bulkRegenerateNocs() {
-  const { createAdminClient } = await import("@/lib/supabase.server");
-  const adminClient = await createAdminClient();
+  const adminClient = getAdminClient();
   const { data: interns, error } = await adminClient
     .from("profiles")
     .select("id, role, application_id")
