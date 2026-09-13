@@ -629,6 +629,49 @@ export const updateTaskExecution = createServerFn({ method: "POST" })
         .eq("id", data.id);
       if (errFallback) throw new Error(errFallback.message);
     }
+
+    if (data.status === "submitted") {
+      try {
+        const { data: taskData } = await adminClient.from("tasks").select("title, assigned_to").eq("id", data.id).single();
+        if (taskData?.assigned_to) {
+          const { data: profileData } = await adminClient.from("profiles").select("email, full_name, mentor_id").eq("id", taskData.assigned_to).single();
+          if (profileData?.email) {
+             const { Resend } = await import("resend");
+             const apiKey = process.env.RESEND_API_KEY;
+             if (apiKey) {
+               const resend = new Resend(apiKey);
+               
+               // Notify Intern
+               await resend.emails.send({
+                 from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
+                 to: profileData.email,
+                 subject: `Task Submitted Successfully: ${taskData.title}`,
+                 html: `<p>Hi ${profileData.full_name || "Intern"},</p><p>Your submission for the task "<strong>${taskData.title}</strong>" has been successfully received.</p><p>Our operations team will review it shortly.</p><p>Best,<br>Vyntyra Team</p>`
+               });
+               
+               let notifyEmails = ["hr@vyntyraconsultancyservices.in"];
+               if (profileData.mentor_id) {
+                 const { data: mentorData } = await adminClient.from("profiles").select("email").eq("id", profileData.mentor_id).single();
+                 if (mentorData?.email && mentorData.email !== "hr@vyntyraconsultancyservices.in") {
+                   notifyEmails.push(mentorData.email);
+                 }
+               }
+               
+               // Notify Admin/Mentor
+               await resend.emails.send({
+                 from: "Vyntyra System <careers@vyntyraconsultancyservices.in>",
+                 to: notifyEmails,
+                 subject: `New Task Submission from ${profileData.full_name}`,
+                 html: `<p>Admin,</p><p>Intern <strong>${profileData.full_name || "Unknown"}</strong> has submitted the task "<strong>${taskData.title}</strong>".</p><p>Please review it in the Admin portal.</p>`
+               });
+             }
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to send submission emails:", e);
+      }
+    }
+
     return { success: true };
   });
 

@@ -4172,7 +4172,11 @@ function InternDashboard() {
                 time_spent_hours: selectedTaskWorkspace.time_spent_hours ?? 0,
               }
             });
-            toast.success("Task workspace saved and updated!");
+            if (selectedTaskWorkspace.status === "submitted") {
+              toast.success("Task submitted successfully!");
+            } else {
+              toast.success("Task workspace saved and updated!");
+            }
             setSelectedTaskWorkspace(null);
             qc.invalidateQueries({ queryKey: ["my-tasks"] });
           } catch (err: any) { toast.error("Failed to save workspace: " + err.message); }
