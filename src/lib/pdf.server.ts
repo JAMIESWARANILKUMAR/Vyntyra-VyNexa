@@ -32,7 +32,6 @@ function getLocalAssetBase64(filename: string): string | null {
 
 async function fetchBase64Image(url: string): Promise<string | null> {
   try {
-    // Check local filesystem first to bypass any domain-level networking blocks
     if (url.includes("icon-512.png")) {
       const localLogo = getLocalAssetBase64("icon-512.png");
       if (localLogo) return localLogo;
@@ -44,15 +43,10 @@ async function fetchBase64Image(url: string): Promise<string | null> {
 
     const { resolveGooglePhotosUrl } = await import("./google-photos");
     const resolvedUrl = await resolveGooglePhotosUrl(url);
-    if (!resolvedUrl) {
-      console.warn(`[pdf.server] Could not resolve URL: ${url}`);
-      return null;
-    }
+    if (!resolvedUrl) return null;
 
     const res = await fetch(resolvedUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      }
+      headers: { "User-Agent": "Mozilla/5.0" }
     });
     if (res.ok) {
       const arrayBuffer = await res.arrayBuffer();
@@ -60,7 +54,7 @@ async function fetchBase64Image(url: string): Promise<string | null> {
       return `data:image/png;base64,${base64}`;
     }
   } catch (err) {
-    console.warn(`[pdf.server] Failed to fetch image from ${url}:`, err);
+    console.warn(`[pdf.server] Failed to fetch image:`, err);
   }
   return null;
 }
@@ -71,62 +65,116 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   const doc = new jsPDF({ format: "a4", unit: "mm" });
 
   // ── COLOUR PALETTE ─────────────────────────────────────────
-  const navy    = [15,  23,  42];   // Slate-900 – primary
-  const slate   = [71,  85, 105];   // Slate-500 – secondary text
-  const ink     = [30,  41,  59];   // Slate-800 – body text
-  const mist    = [248, 250, 252];  // Slate-50  – row bg
-  const rule    = [203, 213, 225];  // Slate-300 – dividers
+  const navy    = [15,  23,  42];
+  const slate   = [71,  85, 105];
+  const ink     = [30,  41,  59];
+  const mist    = [248, 250, 252];
+  const rule    = [203, 213, 225];
   const black   = [0,   0,   0];
   const gold    = [176, 136,  24];
+  const sigText = [148, 163, 184]; // #94A3B8
 
   const PW = 210, PH = 297;
-  const ML = 18, MR = PW - 18;     // page margins
-  const TW = MR - ML;               // text width
+  const ML = 18, MR = PW - 18;
+  const TW = MR - ML;
 
-  // ── LETTERHEAD TOP BAR ──────────────────────────────────────
-  doc.setFillColor(navy[0], navy[1], navy[2]);
-  doc.rect(0, 0, PW, 5, "F");
-  doc.setFillColor(gold[0], gold[1], gold[2]);
-  doc.rect(0, 5, PW, 0.8, "F");
+  let logoBase64: string | null = null;
+  let sigBase64: string | null = null;
+  try {
+    logoBase64 = await fetchBase64Image("https://careers.vyntyraconsultancyservices.in/icon-512.png");
+    sigBase64 = await fetchBase64Image("https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
+  } catch (e) {}
 
-  // ── LOGO (bigger, left-aligned) ─────────────────────────────
-  const logoBase64 = await fetchBase64Image("https://careers.vyntyraconsultancyservices.in/icon-512.png");
-  if (logoBase64) {
-    doc.addImage(logoBase64, "PNG", ML, 10, 22, 22);
-  }
+  // Helpers
+  const drawHeader = (isPage1: boolean) => {
+    doc.setFillColor(navy[0], navy[1], navy[2]);
+    doc.rect(0, 0, PW, 5, "F");
+    doc.setFillColor(gold[0], gold[1], gold[2]);
+    doc.rect(0, 5, PW, 0.8, "F");
 
-  // ── COMPANY NAME (all black, right of logo) ─────────────────
-  const logoRight = ML + 26;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(17);
-  doc.setTextColor(black[0], black[1], black[2]);
-  doc.text("VYNTYRA", logoRight, 18);
+    if (isPage1 && logoBase64) {
+      doc.addImage(logoBase64, "PNG", ML, 10, 22, 22);
+    }
+    if (isPage1) {
+      const logoRight = ML + 26;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(17);
+      doc.setTextColor(black[0], black[1], black[2]);
+      doc.text("VYNTYRA", logoRight, 18);
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  doc.setTextColor(black[0], black[1], black[2]);
-  doc.text("CONSULTANCY SERVICES", logoRight, 24);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(black[0], black[1], black[2]);
+      doc.text("CONSULTANCY SERVICES", logoRight, 24);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(slate[0], slate[1], slate[2]);
-  doc.text("Empowering Careers. Delivering Excellence.", logoRight, 29);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(slate[0], slate[1], slate[2]);
+      doc.text("Empowering Careers. Delivering Excellence.", logoRight, 29);
 
-  // ── ADDRESS BLOCK (right-aligned) ───────────────────────────
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(slate[0], slate[1], slate[2]);
-  doc.text("Dwaraka Nagar, Dwaraka Plaza, Visakhapatnam", MR, 14, { align: "right" });
-  doc.text("Andhra Pradesh, India – 530016", MR, 19, { align: "right" });
-  doc.text("Web: careers.vyntyraconsultancyservices.in", MR, 24, { align: "right" });
-  doc.text("Email: careers@vyntyraconsultancyservices.in", MR, 29, { align: "right" });
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(slate[0], slate[1], slate[2]);
+      doc.text("Dwaraka Nagar, Dwaraka Plaza, Visakhapatnam", MR, 14, { align: "right" });
+      doc.text("Andhra Pradesh, India – 530016", MR, 19, { align: "right" });
+      doc.text("Web: careers.vyntyraconsultancyservices.in", MR, 24, { align: "right" });
+      doc.text("Email: careers@vyntyraconsultancyservices.in", MR, 29, { align: "right" });
+    }
 
-  // ── HORIZONTAL RULE below header ────────────────────────────
-  doc.setDrawColor(rule[0], rule[1], rule[2]);
-  doc.setLineWidth(0.4);
-  doc.line(ML, 36, MR, 36);
+    doc.setDrawColor(rule[0], rule[1], rule[2]);
+    doc.setLineWidth(0.4);
+    doc.line(ML, isPage1 ? 36 : 15, MR, isPage1 ? 36 : 15);
+  };
 
-  // ── REF / DATE METADATA ROW ─────────────────────────────────
+  const drawFooter = () => {
+    doc.setDrawColor(rule[0], rule[1], rule[2]);
+    doc.setLineWidth(0.3);
+    doc.line(ML, PH - 15, MR, PH - 15);
+    doc.setFillColor(navy[0], navy[1], navy[2]);
+    doc.rect(0, PH - 14, PW, 14, "F");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(203, 213, 225);
+    doc.text("Vyntyra Consultancy Services  |  Dwaraka Nagar, Dwaraka Plaza, Visakhapatnam – 530016  |  careers@vyntyraconsultancyservices.in", PW / 2, PH - 8, { align: "center" });
+    doc.text("This document is confidential and intended solely for the named recipient. Unauthorised disclosure is strictly prohibited.", PW / 2, PH - 4, { align: "center" });
+  };
+
+  const drawInternSignatureBox = (y: number) => {
+    const boxW = 80;
+    const boxH = 26;
+    const boxX = MR - boxW;
+    
+    doc.setDrawColor(rule[0], rule[1], rule[2]);
+    doc.setLineWidth(0.3);
+    doc.setLineDash([1, 1], 0);
+    doc.roundedRect(boxX, y, boxW, boxH, 1.5, 1.5, "S");
+    doc.setLineDash([], 0);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(slate[0], slate[1], slate[2]);
+    doc.text("Candidate Signature", boxX + 3, y + 5);
+    doc.text("Date:", boxX + boxW - 25, y + 5);
+
+    // Line for sig
+    doc.setDrawColor(slate[0], slate[1], slate[2]);
+    doc.setLineWidth(0.2);
+    doc.line(boxX + 3, y + 16, boxX + boxW - 3, y + 16);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(navy[0], navy[1], navy[2]);
+    doc.text(details.fullName, boxX + 3, y + 20);
+
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(7);
+    doc.setTextColor(sigText[0], sigText[1], sigText[2]);
+    doc.text("(Sign using any online sign tool)", boxX + 3, y + 24);
+  };
+
+  // ── PAGE 1 ──────────────────────────────────────────────────
+  drawHeader(true);
+
   const refNo  = `Ref: VCS/OL/${new Date().getFullYear()}/${details.applicationId.slice(0, 10).toUpperCase()}`;
   const dateStr = `Date: ${new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })}`;
 
@@ -138,7 +186,6 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   doc.setTextColor(slate[0], slate[1], slate[2]);
   doc.text(dateStr, MR, 42, { align: "right" });
 
-  // ── SUBJECT / TITLE ─────────────────────────────────────────
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.setTextColor(navy[0], navy[1], navy[2]);
@@ -146,10 +193,8 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
 
   doc.setDrawColor(gold[0], gold[1], gold[2]);
   doc.setLineWidth(0.6);
-  const titleW = 94;
-  doc.line((PW - titleW) / 2, 56, (PW + titleW) / 2, 56);
+  doc.line((PW - 94) / 2, 56, (PW + 94) / 2, 56);
 
-  // ── SALUTATION ───────────────────────────────────────────────
   const startDate  = details.joiningDate ? new Date(details.joiningDate)  : null;
   const endDate    = details.endDate     ? new Date(details.endDate)       : null;
   const fmtDate    = (d: Date | null) => d ? d.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "To Be Confirmed";
@@ -166,7 +211,6 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   doc.text(details.fullName, ML, curY);
   curY += 10;
 
-  // ── OPENING PARAGRAPH ────────────────────────────────────────
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
   doc.setTextColor(ink[0], ink[1], ink[2]);
@@ -175,7 +219,6 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   doc.text(splitP1, ML, curY);
   curY += splitP1.length * 4.8 + 5;
 
-  // ── SECTION HEADING helper ────────────────────────────────────
   const sectionHead = (label: string, y: number) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
@@ -187,7 +230,6 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
     return y + 6;
   };
 
-  // ── SECTION 1 – APPOINTMENT DETAILS TABLE ────────────────────
   curY = sectionHead("1.  Appointment Details", curY);
 
   const rows: [string, string][] = [
@@ -222,16 +264,41 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
     doc.text(wrapped, ML + COL1, y + 5.8);
   });
 
-  // Table border
   doc.setDrawColor(rule[0], rule[1], rule[2]);
   doc.setLineWidth(0.3);
   doc.roundedRect(ML, curY, TW, rows.length * ROW_H, 1.2, 1.2, "S");
-  // Vertical divider
   doc.line(ML + COL1 - 2, curY, ML + COL1 - 2, curY + rows.length * ROW_H);
 
-  curY += rows.length * ROW_H + 8;
+  curY += rows.length * ROW_H + 10;
 
-  // ── SECTION 2 – DUTIES & RESPONSIBILITIES ────────────────────
+  // Founder Sign-off Block on Page 1
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(ink[0], ink[1], ink[2]);
+  doc.text("Warm regards,", ML, curY);
+  curY += 5;
+  doc.text("For Vyntyra Consultancy Services,", ML, curY);
+  if (sigBase64) {
+    doc.addImage(sigBase64, "PNG", ML, curY + 2, 40, 13);
+  }
+  curY += 18;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.text("Jami Eswar Anil Kumar", ML, curY);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(slate[0], slate[1], slate[2]);
+  doc.text("Founder & Managing Director", ML, curY + 5);
+
+  drawInternSignatureBox(PH - 45);
+  drawFooter();
+
+  // ── PAGE 2 ──────────────────────────────────────────────────
+  doc.addPage();
+  drawHeader(false);
+  curY = 25;
+
   curY = sectionHead("2.  Roles & Responsibilities", curY);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
@@ -253,7 +320,6 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
 
   curY += 4;
 
-  // ── SECTION 3 – TERMS & CONDITIONS ──────────────────────────
   curY = sectionHead("3.  Terms & Conditions", curY);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
@@ -273,75 +339,21 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
     curY += lines.length * 4.6 + 1.5;
   });
 
-  curY += 6;
+  curY += 8;
 
-  // ── CLOSING PARAGRAPH ────────────────────────────────────────
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  doc.setTextColor(ink[0], ink[1], ink[2]);
-  const closing = "We extend our warmest congratulations and sincerely look forward to your contribution to Vyntyra Consultancy Services. Should you have any queries regarding this offer, please do not hesitate to reach out to us at careers@vyntyraconsultancyservices.in.";
-  const splitClose = doc.splitTextToSize(closing, TW);
-  doc.text(splitClose, ML, curY);
-  curY += splitClose.length * 4.8 + 10;
-
-  // ── SIGNATURE BLOCK ──────────────────────────────────────────
-  const sigBase64 = await fetchBase64Image("https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
-  const sigBoxH = 38;
-
-  // Left column – Company signatory
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(ink[0], ink[1], ink[2]);
-  doc.text("For Vyntyra Consultancy Services,", ML, curY);
-
-  if (sigBase64) {
-    doc.addImage(sigBase64, "PNG", ML, curY + 3, 40, 13);
-  }
-
-  const nameY = curY + 18;
+  // Acceptance block
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.text("Jami Eswar Anil Kumar", ML, nameY);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(slate[0], slate[1], slate[2]);
-  doc.text("Founder & Managing Director", ML, nameY + 5);
-  doc.text("Vyntyra Consultancy Services", ML, nameY + 10);
-  doc.setDrawColor(rule[0], rule[1], rule[2]);
-  doc.setLineWidth(0.3);
-  doc.line(ML, curY + sigBoxH, ML + 72, curY + sigBoxH);
-  doc.setFontSize(8);
-  doc.text("Authorised Signatory & Seal", ML, curY + sigBoxH + 5);
-
-  // Right column – Candidate acceptance
-  const acceptX = PW / 2 + 10;
-  doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(ink[0], ink[1], ink[2]);
-  doc.text("Accepted and agreed by:", acceptX, curY);
-  doc.setDrawColor(rule[0], rule[1], rule[2]);
-  doc.line(acceptX, curY + sigBoxH, MR, curY + sigBoxH);
-  doc.setFontSize(8);
-  doc.setTextColor(slate[0], slate[1], slate[2]);
-  doc.text("Candidate Signature & Date", acceptX, curY + sigBoxH + 5);
-  doc.text("Name: _______________________________", acceptX, curY + sigBoxH + 11);
-
-  curY += sigBoxH + 18;
-
-  // ── FOOTER ──────────────────────────────────────────────────
-  doc.setDrawColor(rule[0], rule[1], rule[2]);
-  doc.setLineWidth(0.3);
-  doc.line(ML, PH - 15, MR, PH - 15);
-
-  doc.setFillColor(navy[0], navy[1], navy[2]);
-  doc.rect(0, PH - 14, PW, 14, "F");
-
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.text("ACCEPTANCE", ML, curY);
+  curY += 5;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(203, 213, 225);
-  doc.text("Vyntyra Consultancy Services  |  Dwaraka Nagar, Dwaraka Plaza, Visakhapatnam – 530016  |  careers@vyntyraconsultancyservices.in", PW / 2, PH - 8, { align: "center" });
-  doc.text("This document is confidential and intended solely for the named recipient. Unauthorised disclosure is strictly prohibited.", PW / 2, PH - 4, { align: "center" });
+  doc.setTextColor(ink[0], ink[1], ink[2]);
+  const acceptText = doc.splitTextToSize("I accept the terms and conditions outlined above and confirm my intention to join Vyntyra Consultancy Services as per the details provided.", TW);
+  doc.text(acceptText, ML, curY);
+  
+  drawInternSignatureBox(PH - 45);
+  drawFooter();
 
   // ── UPLOAD TO SUPABASE ───────────────────────────────────────
   const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
