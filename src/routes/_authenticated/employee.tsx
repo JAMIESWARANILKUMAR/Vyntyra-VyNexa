@@ -2442,7 +2442,7 @@ function EmployeeDashboard() {
 
               <div className="bg-[#0E131F]/90 border border-slate-800/80 rounded-3xl shadow-xl backdrop-blur-xl overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left">
+                  <table className="w-full text-xs text-left min-w-[400px]">
                     <thead className="bg-slate-900/90 text-slate-300 font-bold border-b border-slate-800 uppercase text-[11px] tracking-wider">
                       <tr>
                         <th className="px-5 py-4 w-10">
@@ -3897,7 +3897,7 @@ function EmployeeDashboard() {
                     No attendance records found for this intern.
                   </div>
                 ) : (
-                  <table className="w-full text-xs text-left">
+                  <table className="w-full text-xs text-left min-w-[400px]">
                     <thead className="bg-slate-900 text-slate-400 font-bold sticky top-0 uppercase text-[10px] tracking-wider border-b border-slate-800">
                       <tr>
                         <th className="px-6 py-4">Date</th>
