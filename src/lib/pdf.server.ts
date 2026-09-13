@@ -11,6 +11,8 @@ export interface IOfferDetails {
   joiningDate?: string;
   endDate?: string;
   jobLocation?: string;
+  domain?: string;
+  subDomain?: string;
 }
 
 function getLocalAssetBase64(filename: string): string | null {
@@ -168,11 +170,11 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   doc.text(splitIntro, 20, 97);
 
   // ─── JOB DETAILS CARD (Structured Premium Table Layout) ───
-  const cardY = 120;
+  const cardY = 110;
   doc.setFillColor(lightGrey[0], lightGrey[1], lightGrey[2]);
-  doc.rect(20, cardY, 170, 60, "F");
+  doc.rect(20, cardY, 170, 84, "F");
   doc.setDrawColor(borderGrey[0], borderGrey[1], borderGrey[2]);
-  doc.rect(20, cardY, 170, 60, "S");
+  doc.rect(20, cardY, 170, 84, "S");
 
   // Table Headers / Lines
   doc.setDrawColor(235, 235, 235);
@@ -180,6 +182,8 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   doc.line(20, cardY + 24, 190, cardY + 24);
   doc.line(20, cardY + 36, 190, cardY + 36);
   doc.line(20, cardY + 48, 190, cardY + 48);
+  doc.line(20, cardY + 60, 190, cardY + 60);
+  doc.line(20, cardY + 72, 190, cardY + 72);
 
   // Table content
   doc.setFont("helvetica", "bold");
@@ -188,27 +192,37 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   doc.text(details.roleApplied, 75, cardY + 8);
 
   doc.setFont("helvetica", "bold");
-  doc.text("Total Compensation (CTC):", 25, cardY + 20);
+  doc.text("Domain:", 25, cardY + 20);
   doc.setFont("helvetica", "normal");
-  doc.text(details.salary || "As mutually agreed", 75, cardY + 20);
+  doc.text(details.domain || "N/A", 75, cardY + 20);
 
   doc.setFont("helvetica", "bold");
-  doc.text("Start Date:", 25, cardY + 32);
+  doc.text("Sub-domain:", 25, cardY + 32);
   doc.setFont("helvetica", "normal");
-  doc.text(details.joiningDate ? new Date(details.joiningDate).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "To be confirmed", 75, cardY + 32);
+  doc.text(details.subDomain || "N/A", 75, cardY + 32);
 
   doc.setFont("helvetica", "bold");
-  doc.text("End Date:", 25, cardY + 44);
+  doc.text("Total Compensation (CTC):", 25, cardY + 44);
   doc.setFont("helvetica", "normal");
-  doc.text(details.endDate ? new Date(details.endDate).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "To be confirmed", 75, cardY + 44);
+  doc.text(details.salary || "As mutually agreed", 75, cardY + 44);
 
   doc.setFont("helvetica", "bold");
-  doc.text("Job Location:", 25, cardY + 56);
+  doc.text("Start Date:", 25, cardY + 56);
   doc.setFont("helvetica", "normal");
-  doc.text(details.jobLocation || "Visakhapatnam / Remote", 75, cardY + 56);
+  doc.text(details.joiningDate ? new Date(details.joiningDate).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "To be confirmed", 75, cardY + 56);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("End Date:", 25, cardY + 68);
+  doc.setFont("helvetica", "normal");
+  doc.text(details.endDate ? new Date(details.endDate).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "To be confirmed", 75, cardY + 68);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Job Location:", 25, cardY + 80);
+  doc.setFont("helvetica", "normal");
+  doc.text(details.jobLocation || "Visakhapatnam / Remote", 75, cardY + 80);
 
   // ─── SECONDARY TEXT (TERMS) ───
-  const termsY = 190;
+  const termsY = 205;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);

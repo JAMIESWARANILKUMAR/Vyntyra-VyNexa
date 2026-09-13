@@ -2478,6 +2478,8 @@ export const getMyDocuments = createServerFn({ method: "GET" })
           joiningDate: startDateVal,
           endDate: endDateVal,
           jobLocation: app.job_location || "Remote Work-from-Home",
+          domain: app.domain,
+          subDomain: app.sub_domain,
         });
         
         if (offerLetterUrl) {
@@ -2747,6 +2749,8 @@ export const deleteStoredOfferLetterAndRegenerate = createServerFn({ method: "PO
       joiningDate: startDateVal,
       endDate: endDateVal,
       jobLocation: app.job_location || "Remote Work-from-Home",
+      domain: app.domain,
+      subDomain: app.sub_domain,
     });
 
     // 4. Update both applications and profiles
