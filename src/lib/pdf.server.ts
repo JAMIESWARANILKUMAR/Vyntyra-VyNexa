@@ -84,9 +84,9 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   const TW = MR - ML;               // text width
 
   // ── LETTERHEAD TOP BAR ──────────────────────────────────────
-  doc.setFillColor(...navy as [number,number,number]);
+  doc.setFillColor(navy[0], navy[1], navy[2]);
   doc.rect(0, 0, PW, 5, "F");
-  doc.setFillColor(...gold as [number,number,number]);
+  doc.setFillColor(gold[0], gold[1], gold[2]);
   doc.rect(0, 5, PW, 0.8, "F");
 
   // ── LOGO (bigger, left-aligned) ─────────────────────────────
@@ -99,30 +99,30 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   const logoRight = ML + 26;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(17);
-  doc.setTextColor(...black as [number,number,number]);
+  doc.setTextColor(black[0], black[1], black[2]);
   doc.text("VYNTYRA", logoRight, 18);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.setTextColor(...black as [number,number,number]);
+  doc.setTextColor(black[0], black[1], black[2]);
   doc.text("CONSULTANCY SERVICES", logoRight, 24);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
-  doc.setTextColor(...slate as [number,number,number]);
+  doc.setTextColor(slate[0], slate[1], slate[2]);
   doc.text("Empowering Careers. Delivering Excellence.", logoRight, 29);
 
   // ── ADDRESS BLOCK (right-aligned) ───────────────────────────
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  doc.setTextColor(...slate as [number,number,number]);
+  doc.setTextColor(slate[0], slate[1], slate[2]);
   doc.text("Dwaraka Nagar, Dwaraka Plaza, Visakhapatnam", MR, 14, { align: "right" });
   doc.text("Andhra Pradesh, India – 530016", MR, 19, { align: "right" });
   doc.text("Web: careers.vyntyraconsultancyservices.in", MR, 24, { align: "right" });
   doc.text("Email: careers@vyntyraconsultancyservices.in", MR, 29, { align: "right" });
 
   // ── HORIZONTAL RULE below header ────────────────────────────
-  doc.setDrawColor(...rule as [number,number,number]);
+  doc.setDrawColor(rule[0], rule[1], rule[2]);
   doc.setLineWidth(0.4);
   doc.line(ML, 36, MR, 36);
 
@@ -132,19 +132,19 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
-  doc.setTextColor(...ink as [number,number,number]);
+  doc.setTextColor(ink[0], ink[1], ink[2]);
   doc.text(refNo, ML, 42);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(...slate as [number,number,number]);
+  doc.setTextColor(slate[0], slate[1], slate[2]);
   doc.text(dateStr, MR, 42, { align: "right" });
 
   // ── SUBJECT / TITLE ─────────────────────────────────────────
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
-  doc.setTextColor(...navy as [number,number,number]);
+  doc.setTextColor(navy[0], navy[1], navy[2]);
   doc.text("LETTER OF OFFER & APPOINTMENT", PW / 2, 53, { align: "center" });
 
-  doc.setDrawColor(...gold as [number,number,number]);
+  doc.setDrawColor(gold[0], gold[1], gold[2]);
   doc.setLineWidth(0.6);
   const titleW = 94;
   doc.line((PW - titleW) / 2, 56, (PW + titleW) / 2, 56);
@@ -159,7 +159,7 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   let curY = 65;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.setTextColor(...ink as [number,number,number]);
+  doc.setTextColor(ink[0], ink[1], ink[2]);
   doc.text(`To,`, ML, curY);
   curY += 5;
   doc.setFont("helvetica", "bold");
@@ -169,7 +169,7 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   // ── OPENING PARAGRAPH ────────────────────────────────────────
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
-  doc.setTextColor(...ink as [number,number,number]);
+  doc.setTextColor(ink[0], ink[1], ink[2]);
   const para1 = `Dear ${details.fullName.split(" ")[0]},\n\nWe are pleased to inform you that following a thorough review of your application and successful completion of our selection process, Vyntyra Consultancy Services is delighted to extend this formal offer of appointment for the role of ${details.roleApplied}. We believe your skills, dedication, and outlook align well with the vision and values of our organisation, and we look forward to welcoming you to our team.`;
   const splitP1 = doc.splitTextToSize(para1, TW);
   doc.text(splitP1, ML, curY);
@@ -179,9 +179,9 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   const sectionHead = (label: string, y: number) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.setTextColor(...navy as [number,number,number]);
+    doc.setTextColor(navy[0], navy[1], navy[2]);
     doc.text(label.toUpperCase(), ML, y);
-    doc.setDrawColor(...navy as [number,number,number]);
+    doc.setDrawColor(navy[0], navy[1], navy[2]);
     doc.setLineWidth(0.3);
     doc.line(ML, y + 1.5, MR, y + 1.5);
     return y + 6;
@@ -209,21 +209,21 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   rows.forEach(([label, val], i) => {
     const y = curY + i * ROW_H;
     if (i % 2 === 0) {
-      doc.setFillColor(...mist as [number,number,number]);
+      doc.setFillColor(mist[0], mist[1], mist[2]);
       doc.rect(ML, y, TW, ROW_H, "F");
     }
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.setTextColor(...ink as [number,number,number]);
+    doc.setTextColor(ink[0], ink[1], ink[2]);
     doc.text(label, ML + 3, y + 5.8);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(...slate as [number,number,number]);
+    doc.setTextColor(slate[0], slate[1], slate[2]);
     const wrapped = doc.splitTextToSize(val, TW - COL1 - 4);
     doc.text(wrapped, ML + COL1, y + 5.8);
   });
 
   // Table border
-  doc.setDrawColor(...rule as [number,number,number]);
+  doc.setDrawColor(rule[0], rule[1], rule[2]);
   doc.setLineWidth(0.3);
   doc.roundedRect(ML, curY, TW, rows.length * ROW_H, 1.2, 1.2, "S");
   // Vertical divider
@@ -235,7 +235,7 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   curY = sectionHead("2.  Roles & Responsibilities", curY);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(...ink as [number,number,number]);
+  doc.setTextColor(ink[0], ink[1], ink[2]);
 
   const duties = [
     "Execute assigned tasks and projects within the designated domain with diligence and within stipulated timelines.",
@@ -257,7 +257,7 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   curY = sectionHead("3.  Terms & Conditions", curY);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(...ink as [number,number,number]);
+  doc.setTextColor(ink[0], ink[1], ink[2]);
 
   const terms = [
     "This offer is contingent upon satisfactory verification of all academic, professional credentials, and any other background information provided during the selection process.",
@@ -278,7 +278,7 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   // ── CLOSING PARAGRAPH ────────────────────────────────────────
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
-  doc.setTextColor(...ink as [number,number,number]);
+  doc.setTextColor(ink[0], ink[1], ink[2]);
   const closing = "We extend our warmest congratulations and sincerely look forward to your contribution to Vyntyra Consultancy Services. Should you have any queries regarding this offer, please do not hesitate to reach out to us at careers@vyntyraconsultancyservices.in.";
   const splitClose = doc.splitTextToSize(closing, TW);
   doc.text(splitClose, ML, curY);
@@ -291,7 +291,7 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   // Left column – Company signatory
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(...ink as [number,number,number]);
+  doc.setTextColor(ink[0], ink[1], ink[2]);
   doc.text("For Vyntyra Consultancy Services,", ML, curY);
 
   if (sigBase64) {
@@ -301,14 +301,14 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   const nameY = curY + 18;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
-  doc.setTextColor(...navy as [number,number,number]);
+  doc.setTextColor(navy[0], navy[1], navy[2]);
   doc.text("Jami Eswar Anil Kumar", ML, nameY);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.setTextColor(...slate as [number,number,number]);
+  doc.setTextColor(slate[0], slate[1], slate[2]);
   doc.text("Founder & Managing Director", ML, nameY + 5);
   doc.text("Vyntyra Consultancy Services", ML, nameY + 10);
-  doc.setDrawColor(...rule as [number,number,number]);
+  doc.setDrawColor(rule[0], rule[1], rule[2]);
   doc.setLineWidth(0.3);
   doc.line(ML, curY + sigBoxH, ML + 72, curY + sigBoxH);
   doc.setFontSize(8);
@@ -318,23 +318,23 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   const acceptX = PW / 2 + 10;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(...ink as [number,number,number]);
+  doc.setTextColor(ink[0], ink[1], ink[2]);
   doc.text("Accepted and agreed by:", acceptX, curY);
-  doc.setDrawColor(...rule as [number,number,number]);
+  doc.setDrawColor(rule[0], rule[1], rule[2]);
   doc.line(acceptX, curY + sigBoxH, MR, curY + sigBoxH);
   doc.setFontSize(8);
-  doc.setTextColor(...slate as [number,number,number]);
+  doc.setTextColor(slate[0], slate[1], slate[2]);
   doc.text("Candidate Signature & Date", acceptX, curY + sigBoxH + 5);
   doc.text("Name: _______________________________", acceptX, curY + sigBoxH + 11);
 
   curY += sigBoxH + 18;
 
   // ── FOOTER ──────────────────────────────────────────────────
-  doc.setDrawColor(...rule as [number,number,number]);
+  doc.setDrawColor(rule[0], rule[1], rule[2]);
   doc.setLineWidth(0.3);
   doc.line(ML, PH - 15, MR, PH - 15);
 
-  doc.setFillColor(...navy as [number,number,number]);
+  doc.setFillColor(navy[0], navy[1], navy[2]);
   doc.rect(0, PH - 14, PW, 14, "F");
 
   doc.setFont("helvetica", "normal");
