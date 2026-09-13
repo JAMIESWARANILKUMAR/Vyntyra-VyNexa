@@ -170,59 +170,55 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   doc.text(splitIntro, 20, 97);
 
   // ─── JOB DETAILS CARD (Structured Premium Table Layout) ───
-  const cardY = 110;
-  doc.setFillColor(lightGrey[0], lightGrey[1], lightGrey[2]);
-  doc.rect(20, cardY, 170, 84, "F");
-  doc.setDrawColor(borderGrey[0], borderGrey[1], borderGrey[2]);
-  doc.rect(20, cardY, 170, 84, "S");
+  const cardY = 115;
+  
+  // Top thick border
+  doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setLineWidth(0.8);
+  doc.line(20, cardY - 4, 190, cardY - 4);
 
-  // Table Headers / Lines
-  doc.setDrawColor(235, 235, 235);
-  doc.line(20, cardY + 12, 190, cardY + 12);
-  doc.line(20, cardY + 24, 190, cardY + 24);
-  doc.line(20, cardY + 36, 190, cardY + 36);
-  doc.line(20, cardY + 48, 190, cardY + 48);
-  doc.line(20, cardY + 60, 190, cardY + 60);
-  doc.line(20, cardY + 72, 190, cardY + 72);
+  // Thin separators between rows
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.2);
+  doc.line(20, cardY + 10, 190, cardY + 10);
+  doc.line(20, cardY + 22, 190, cardY + 22);
+  doc.line(20, cardY + 34, 190, cardY + 34);
+  doc.line(20, cardY + 46, 190, cardY + 46);
+  doc.line(20, cardY + 58, 190, cardY + 58);
+  doc.line(20, cardY + 70, 190, cardY + 70);
 
-  // Table content
+  // Bottom thick border
+  doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setLineWidth(0.8);
+  doc.line(20, cardY + 82, 190, cardY + 82);
+
+  // Table content labels
   doc.setFont("helvetica", "bold");
-  doc.text("Position / Title:", 25, cardY + 8);
-  doc.setFont("helvetica", "normal");
-  doc.text(details.roleApplied, 75, cardY + 8);
+  doc.setTextColor(30, 30, 30);
+  doc.setFontSize(9.5);
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Domain:", 25, cardY + 20);
-  doc.setFont("helvetica", "normal");
-  doc.text(details.domain || "N/A", 75, cardY + 20);
+  doc.text("Position / Title", 22, cardY + 4);
+  doc.text("Domain", 22, cardY + 16);
+  doc.text("Sub-domain", 22, cardY + 28);
+  doc.text("Total Compensation (CTC)", 22, cardY + 40);
+  doc.text("Start Date", 22, cardY + 52);
+  doc.text("End Date", 22, cardY + 64);
+  doc.text("Job Location", 22, cardY + 76);
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Sub-domain:", 25, cardY + 32);
+  // Table content values
   doc.setFont("helvetica", "normal");
-  doc.text(details.subDomain || "N/A", 75, cardY + 32);
+  doc.setTextColor(60, 60, 60);
+  
+  doc.text(details.roleApplied, 80, cardY + 4);
+  doc.text(details.domain || "N/A", 80, cardY + 16);
+  doc.text(details.subDomain || "N/A", 80, cardY + 28);
+  doc.text(details.salary || "As mutually agreed", 80, cardY + 40);
+  doc.text(details.joiningDate ? new Date(details.joiningDate).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "To be confirmed", 80, cardY + 52);
+  doc.text(details.endDate ? new Date(details.endDate).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "To be confirmed", 80, cardY + 64);
+  doc.text(details.jobLocation || "Visakhapatnam / Remote", 80, cardY + 76);
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Total Compensation (CTC):", 25, cardY + 44);
-  doc.setFont("helvetica", "normal");
-  doc.text(details.salary || "As mutually agreed", 75, cardY + 44);
-
-  doc.setFont("helvetica", "bold");
-  doc.text("Start Date:", 25, cardY + 56);
-  doc.setFont("helvetica", "normal");
-  doc.text(details.joiningDate ? new Date(details.joiningDate).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "To be confirmed", 75, cardY + 56);
-
-  doc.setFont("helvetica", "bold");
-  doc.text("End Date:", 25, cardY + 68);
-  doc.setFont("helvetica", "normal");
-  doc.text(details.endDate ? new Date(details.endDate).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "To be confirmed", 75, cardY + 68);
-
-  doc.setFont("helvetica", "bold");
-  doc.text("Job Location:", 25, cardY + 80);
-  doc.setFont("helvetica", "normal");
-  doc.text(details.jobLocation || "Visakhapatnam / Remote", 75, cardY + 80);
-
-  // ─── SECONDARY TEXT (TERMS) ───
-  const termsY = 205;
+  // SECONDARY TEXT (TERMS)
+  const termsY = 208;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
@@ -230,13 +226,17 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   const body2 = "This offer is subject to verification of your professional credentials and references. On your day of joining, please submit self-attested copies of your academic records, experience certificates, identity proof, and address proof for administrative filing.\n\nPlease note that the code of conduct, non-disclosure policies, and terms of service of the company will be detailed in your employment contract, which will be executed on your joining date.";
   const splitBody2 = doc.splitTextToSize(body2, 170);
   doc.text(splitBody2, 20, termsY);
+  
+  const body2Height = splitBody2.length * 4.5;
 
   const signInfo = "Kindly confirm your acceptance by signing this letter and returning a scanned copy within 7 business days, failing which this offer shall automatically expire.";
   const splitSignInfo = doc.splitTextToSize(signInfo, 170);
-  doc.text(splitSignInfo, 20, termsY + 30);
+  doc.text(splitSignInfo, 20, termsY + body2Height + 5);
 
-  // ─── SIGNATURE BLOCK ───
-  const signY = 248;
+  const signInfoHeight = splitSignInfo.length * 4.5;
+
+  // SIGNATURE BLOCK
+  const signY = termsY + body2Height + 5 + signInfoHeight + 7;
   
   // Vyntyra Signatory
   doc.setFont("helvetica", "bold");
@@ -273,6 +273,7 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   doc.line(120, signY + 16, 185, signY + 16);
   doc.text("Candidate Signature & Date", 120, signY + 21);
 
+  
   // ─── FOOTER ───
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.rect(0, 287, 210, 10, "F");
