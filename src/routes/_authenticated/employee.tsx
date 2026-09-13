@@ -1,4 +1,3 @@
-import { DashboardHeader } from '@/components/dashboard-header';
 import { listAssignedInterviews, submitInterviewFeedback } from "@/lib/applications.functions";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -59,7 +58,7 @@ import {
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/employee")({
-  head: () => ({ meta: [{ title: "Employee Dashboard â€” Vyntyra" }] }),
+  head: () => ({ meta: [{ title: "Employee Dashboard — Vyntyra" }] }),
   component: EmployeeDashboard,
 });
 
@@ -327,7 +326,7 @@ function BankAdsSection() {
           accountType="Zero-Balance Corporate Salary Account"
           branches={["Visakhapatnam (Dwaraka Nagar, MVP Colony)", "Hyderabad (Hitec City, Gachibowli)", "Bengaluru (Indiranagar, Koramangala)", "Chennai (T. Nagar)"]}
           bankSupport="1860 266 2666 / 24x7 Corporate Helpline"
-          vyntyraManager="Anil Kumar (Fin-Desk) Â· Ext: 402"
+          vyntyraManager="Anil Kumar (Fin-Desk) · Ext: 402"
           ads={[
             { videoId: "/videos/kotak/kotak_ad_2.mp4", title: "Zero Balance Savings Account", slogan: "Open Kotak811 Zero Balance Account from anywhere digitally using Video KYC.", feature: "100% Digital Banking" },
             { videoId: "/videos/kotak/kotak_ad_1.mp4", title: "FD Wala Savings with ActivMoney", slogan: "Earn FD-like interest up to 7% p.a. on your standard savings account balance.", feature: "Up to 7% Interest Rate" },
@@ -345,7 +344,7 @@ function BankAdsSection() {
           accountType="Monthly Interest Credit Salary Account"
           branches={["Visakhapatnam (Siripuram, Gajuwaka)", "Hyderabad (Banjara Hills, Madhapur)", "Bengaluru (MG Road, HSR Layout)", "Mumbai (BKC)"]}
           bankSupport="1800 108 8888 / 24x7 Support"
-          vyntyraManager="Vyntyra Partner Desk Â· Ext: 405"
+          vyntyraManager="Vyntyra Partner Desk · Ext: 405"
           ads={[
             { videoId: "/videos/idfc/idfc_ad_2.mp4", title: "Open Savings Account in 5 Mins", slogan: "Open your IDFC FIRST Bank Savings Account online in just 5 mins.", feature: "5-Minute Online Setup" },
             { videoId: "/videos/idfc/idfc_ad_1.mp4", title: "Lifetime Free Credit Cards", slogan: "Enjoy premium credit cards with zero annual fees and robust rewards.", feature: "No Annual Fee Cards" }
@@ -362,7 +361,7 @@ function BankAdsSection() {
           accountType="Axis Corporate Salary & Wealth Account"
           branches={["Visakhapatnam (VIP Road, Sampath Vinayaka Temple Rd)", "Hyderabad (Jubilee Hills)", "Bengaluru (Koramangala, Whitefield)"]}
           bankSupport="1860 419 5555 / 1860 500 5555"
-          vyntyraManager="Vyntyra Partner Desk Â· Ext: 408"
+          vyntyraManager="Vyntyra Partner Desk · Ext: 408"
           ads={[
             { videoId: "/videos/axis/axis_ad_2.mp4", title: "Digital Savings Account", slogan: "Make every moment special with an Axis Bank Digital Savings Account.", feature: "Open in 4 Easy Steps" },
             { videoId: "/videos/axis/axis_ad_3.mp4", title: "Open Account in 4 Steps", slogan: "Experience paperless account opening instantly using Video KYC.", feature: "100% Digital Setup" },
@@ -732,7 +731,7 @@ function EmployeeDashboard() {
       designation: "Software Engineer / Senior Associate",
       department: "Engineering & Technology",
       email: email,
-      bankDetails: profile?.bank_details || "Kotak Mahindra Bank Â· A/C 882101923 Â· IFSC: KKBK0001823",
+      bankDetails: profile?.bank_details || "Kotak Mahindra Bank · A/C 882101923 · IFSC: KKBK0001823",
       payPeriod: payout?.date ? new Date(payout.date).toLocaleDateString("en-IN", { month: "long", year: "numeric" }) : new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" }),
       paymentDate: payout?.date ? new Date(payout.date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }),
       basicSalary: basic,
@@ -927,7 +926,7 @@ function EmployeeDashboard() {
           message: kudosForm.message,
         }
       });
-      toast.success("Kudos sent successfully! ðŸŽ‰");
+      toast.success("Kudos sent successfully! 🎉");
       setKudosForm({ receiver_id: "", badge: "Star Performer", message: "" });
       qc.invalidateQueries({ queryKey: ["kudos-feed"] });
     } catch (err: any) {
@@ -1021,7 +1020,7 @@ function EmployeeDashboard() {
 
     const waText = `Hello ${intern.full_name},\n\nHope you are doing well. I am reaching out regarding your internship tasks and mentorship updates at Vyntyra Consultancy Services.\n\nWith regards,\n${empName}\n${empRole}\nContact: ${empPhone}\nEmail: ${empEmail}\n${company}`;
 
-    const emailSubject = `Internship Mentorship Update Â· ${company}`;
+    const emailSubject = `Internship Mentorship Update · ${company}`;
     const emailBody = `Hello ${intern.full_name},\n\nI hope this email finds you well.\n\nI am reaching out to check on your current sprint progress, task deliverables, and any guidance or assistance you may need with your project milestones.\n\nPlease feel free to reply to this email or connect directly if you have any questions or require review feedback.\n\nWith regards,\n${empName}\n${empRole}\nContact: ${empPhone}\nEmail: ${empEmail}\n${company}`;
 
     return {
@@ -1454,7 +1453,7 @@ function EmployeeDashboard() {
               <span className="hidden sm:inline">Sign Out</span>
             </Button>
 
-            {/* GöÇGöÇ HAMBURGER MENU BUTTON GöÇGöÇ */}
+            {/* ── HAMBURGER MENU BUTTON ── */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
@@ -1500,7 +1499,7 @@ function EmployeeDashboard() {
         </div>
       </header>
 
-      {/* GöÇGöÇ EMPLOYEE MOBILE SLIDE-IN NAVIGATION DRAWER GöÇGöÇ */}
+      {/* ── EMPLOYEE MOBILE SLIDE-IN NAVIGATION DRAWER ── */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end">
           {/* Backdrop Overlay */}
@@ -1580,7 +1579,7 @@ function EmployeeDashboard() {
                   </Button>
                 ) : (
                   <div className="px-2.5 py-2 rounded-xl bg-slate-900 text-center text-[10px] font-bold text-slate-400 border border-slate-800">
-                    G£ô Shift Ended
+                    ✓ Shift Ended
                   </div>
                 )}
 
@@ -1654,13 +1653,12 @@ function EmployeeDashboard() {
                 <span>Sign Out from Executive Portal</span>
               </Button>
               <p className="text-center text-[10px] text-slate-500 font-medium">
-                Vyntyra Ops -+ Project VyNexa Directorate
+                Vyntyra Ops · Project VyNexa Directorate
               </p>
             </div>
           </div>
         </div>
       )}
-
 
       {/* Marquee Notifications (Corporate broadcast ticker) */}
       {announcements.length > 0 && (
@@ -1680,7 +1678,7 @@ function EmployeeDashboard() {
       <main className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 py-6 relative z-10">
         <AnimatePresence mode="wait">
           
-          {/* â”€â”€â”€ OVERVIEW â”€â”€â”€ */}
+          {/* ─── OVERVIEW ─── */}
           {activeTab === "overview" && (
             <motion.div key="overview" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-6">
               
@@ -1709,7 +1707,7 @@ function EmployeeDashboard() {
                         <CalendarDays className="h-4 w-4 text-indigo-400" />
                         {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
                       </span>
-                      <span className="text-slate-600">â€¢</span>
+                      <span className="text-slate-600">•</span>
                       <span className="text-slate-400">Sprint Velocity: <strong className="text-emerald-400">{progress}%</strong></span>
                     </p>
                   </div>
@@ -1836,7 +1834,7 @@ function EmployeeDashboard() {
                         <p className="text-xs text-slate-400 mt-0.5">High-priority milestones currently in progress or awaiting completion.</p>
                       </div>
                       <Button variant="outline" size="sm" className="text-xs font-bold text-indigo-300 border-indigo-500/40 bg-indigo-950/40 hover:bg-indigo-900/60" onClick={() => setActiveTab("tasks")}>
-                        View All Tasks â†—
+                        View All Tasks ↗
                       </Button>
                     </div>
 
@@ -1930,7 +1928,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ TASKS â”€â”€â”€ */}
+          {/* ─── TASKS ─── */}
           {activeTab === "tasks" && (
             <motion.div key="tasks" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -2057,7 +2055,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ ATTENDANCE â”€â”€â”€ */}
+          {/* ─── ATTENDANCE ─── */}
           {activeTab === "attendance" && (
             <motion.div key="attendance" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -2123,7 +2121,7 @@ function EmployeeDashboard() {
                       <div className="text-xs font-medium text-slate-400 space-y-2.5 mt-5 bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-inner">
                         <div className="flex justify-between items-center text-slate-400">
                           <span>Clock In Time:</span>
-                          <span className="font-bold text-white font-mono">{todayAttendance.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "â€”"}</span>
+                          <span className="font-bold text-white font-mono">{todayAttendance.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}</span>
                         </div>
                         <div className="flex justify-between items-center text-slate-400 border-t border-slate-800 pt-2">
                           <span>Clock Out Time:</span>
@@ -2157,7 +2155,7 @@ function EmployeeDashboard() {
                             </div>
                             <div className="text-xs font-mono font-bold bg-slate-900 border border-slate-700 text-slate-200 px-3 py-1 rounded-xl">
                               {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'} 
-                              <span className="mx-2 text-slate-500 font-normal">â†’</span> 
+                              <span className="mx-2 text-slate-500 font-normal">→</span> 
                               {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}
                             </div>
                           </div>
@@ -2170,7 +2168,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ LEAVES â”€â”€â”€ */}
+          {/* ─── LEAVES ─── */}
           {activeTab === "leave" && (
             <motion.div key="leave" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -2246,7 +2244,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ PAYOUTS & EXPENSES â”€â”€â”€ */}
+          {/* ─── PAYOUTS & EXPENSES ─── */}
           {activeTab === "payouts" && (
             <motion.div key="payouts" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -2290,8 +2288,8 @@ function EmployeeDashboard() {
                     </select>
                   </div>
                   <div>
-                    <Label className="text-xs font-bold text-slate-300">Amount (â‚¹)</Label>
-                    <Input type="number" step="0.01" placeholder="â‚¹ Amount" value={expenseForm.amount} onChange={e => setExpenseForm({...expenseForm, amount: e.target.value})} required className="bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500 rounded-xl text-xs mt-1 font-bold" />
+                    <Label className="text-xs font-bold text-slate-300">Amount (₹)</Label>
+                    <Input type="number" step="0.01" placeholder="₹ Amount" value={expenseForm.amount} onChange={e => setExpenseForm({...expenseForm, amount: e.target.value})} required className="bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500 rounded-xl text-xs mt-1 font-bold" />
                   </div>
                   <div>
                     <Label className="text-xs font-bold text-slate-300">Expense Incurred Date</Label>
@@ -2322,10 +2320,10 @@ function EmployeeDashboard() {
                         <div key={exp.id} className="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
                           <div>
                             <div className="font-bold text-white">{exp.title} <span className="text-slate-400 font-normal">({exp.category})</span></div>
-                            <div className="text-[11px] text-slate-400 font-light mt-0.5">{new Date(exp.date).toLocaleDateString("en-IN")} â€¢ {exp.notes || 'No notes'}</div>
+                            <div className="text-[11px] text-slate-400 font-light mt-0.5">{new Date(exp.date).toLocaleDateString("en-IN")} • {exp.notes || 'No notes'}</div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="font-black text-white font-mono text-sm">â‚¹{exp.amount}</span>
+                            <span className="font-black text-white font-mono text-sm">₹{exp.amount}</span>
                             <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${exp.status === 'approved' ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/30' : 'bg-amber-950/80 text-amber-300 border border-amber-500/30'}`}>{exp.status}</span>
                           </div>
                         </div>
@@ -2356,8 +2354,8 @@ function EmployeeDashboard() {
                           <IndianRupee className="h-5 w-5" />
                         </div>
                         <div>
-                          <div className="text-xl font-black text-white tracking-tight">â‚¹{payout.amount}</div>
-                          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{payout.type} â€¢ {new Date(payout.date).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</div>
+                          <div className="text-xl font-black text-white tracking-tight">₹{payout.amount}</div>
+                          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{payout.type} • {new Date(payout.date).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -2381,14 +2379,14 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ OFFICIAL PARTNER BANKING & PERKS TAB â”€â”€â”€ */}
+          {/* ─── OFFICIAL PARTNER BANKING & PERKS TAB ─── */}
           {activeTab === "banking" && (
             <motion.div key="banking" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <BankAdsSection />
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ MY INTERNS & MENTORSHIP â”€â”€â”€ */}
+          {/* ─── MY INTERNS & MENTORSHIP ─── */}
           {activeTab === "my_interns" && (
             <motion.div key="my_interns" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-6 max-w-7xl mx-auto">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -2497,7 +2495,7 @@ function EmployeeDashboard() {
                               <td className="px-5 py-4 space-y-1">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <span className="text-[11px] font-extrabold text-amber-300 bg-amber-950/90 px-2.5 py-1 rounded-lg border border-amber-500/40 tracking-tight shadow-xs">
-                                    ðŸŽ¯ {subDomainText}
+                                    🎯 {subDomainText}
                                   </span>
                                 </div>
                                 <div className="text-[10px] text-slate-400 font-medium">
@@ -2616,7 +2614,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ EMAIL & PROMOTIONAL CAMPAIGNS â”€â”€â”€ */}
+          {/* ─── EMAIL & PROMOTIONAL CAMPAIGNS ─── */}
           {activeTab === "campaigns" && (
             <motion.div key="campaigns" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <EmailAutomationHub 
@@ -2628,7 +2626,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ TEAM & KUDOS â”€â”€â”€ */}
+          {/* ─── TEAM & KUDOS ─── */}
           {activeTab === "team" && (
             <motion.div key="team" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-6 max-w-7xl mx-auto">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -2670,11 +2668,11 @@ function EmployeeDashboard() {
                   <div>
                     <Label className="text-xs font-bold text-slate-300">Merit Badge</Label>
                     <select value={kudosForm.badge} onChange={e => setKudosForm({...kudosForm, badge: e.target.value as any})} className="w-full h-10 px-3 mt-1 bg-[#131B2E] border border-slate-700 text-white rounded-xl text-xs font-medium">
-                      <option value="Star Performer" className="bg-[#0E131F]">â­ Star Performer</option>
-                      <option value="Team Player" className="bg-[#0E131F]">ðŸ¤ Team Player</option>
-                      <option value="Problem Solver" className="bg-[#0E131F]">ðŸ’¡ Problem Solver</option>
-                      <option value="Innovation Champion" className="bg-[#0E131F]">ðŸš€ Innovation Champion</option>
-                      <option value="Customer Delight" className="bg-[#0E131F]">â¤ï¸ Customer Delight</option>
+                      <option value="Star Performer" className="bg-[#0E131F]">⭐ Star Performer</option>
+                      <option value="Team Player" className="bg-[#0E131F]">🤝 Team Player</option>
+                      <option value="Problem Solver" className="bg-[#0E131F]">💡 Problem Solver</option>
+                      <option value="Innovation Champion" className="bg-[#0E131F]">🚀 Innovation Champion</option>
+                      <option value="Customer Delight" className="bg-[#0E131F]">❤️ Customer Delight</option>
                     </select>
                   </div>
                   <div className="sm:col-span-3">
@@ -2711,7 +2709,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ INTERVIEWS â”€â”€â”€ */}
+          {/* ─── INTERVIEWS ─── */}
           {activeTab === "interviews" && (
             <motion.div {...pageVariants} className="space-y-6 max-w-7xl mx-auto">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -2760,17 +2758,17 @@ function EmployeeDashboard() {
                           <div>
                             <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Interview Time</span>
                             <span className="font-bold text-white mt-0.5 block">
-                              {app.meeting_time ? new Date(app.meeting_time).toLocaleString() : "â€”"}
+                              {app.meeting_time ? new Date(app.meeting_time).toLocaleString() : "—"}
                             </span>
                           </div>
                           <div>
                             <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Video Link</span>
                             {app.meet_link ? (
                               <a href={app.meet_link} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 font-bold mt-0.5 block truncate">
-                                Join Video Call â†—
+                                Join Video Call ↗
                               </a>
                             ) : (
-                              <span className="text-slate-400 mt-0.5 block">â€”</span>
+                              <span className="text-slate-400 mt-0.5 block">—</span>
                             )}
                           </div>
                           <div>
@@ -2854,7 +2852,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ ASSIGNED INTERN SUPPORT QUERIES â”€â”€â”€ */}
+          {/* ─── ASSIGNED INTERN SUPPORT QUERIES ─── */}
           {activeTab === "resolver_support" && (
             <motion.div key="resolver_support" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -2896,14 +2894,14 @@ function EmployeeDashboard() {
                             
                             <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
                               <span>Intern: <strong className="text-white">{q.intern?.full_name || "Assigned Intern"}</strong> ({q.intern?.email || ""})</span>
-                              <span>â€¢</span>
+                              <span>•</span>
                               <span>Domain: <strong className="text-white capitalize">{q.intern?.department || "General"}</strong></span>
                             </div>
 
                             <p className="text-slate-300 text-xs leading-relaxed bg-slate-900/80 p-3 rounded-2xl border border-slate-800 mt-2">{q.description}</p>
                           </div>
                           
-                          <div className="shrink-0 flex flex-col items-start sm:items-end gap-2">
+                          <div className="shrink-0 flex flex-col items-end gap-2">
                             <span className="text-[11px] text-slate-400 font-mono">{new Date(q.created_at).toLocaleDateString()}</span>
                             
                             {q.status !== "resolved" ? (
@@ -2940,7 +2938,7 @@ function EmployeeDashboard() {
                               </div>
                             ) : (
                               <div className="text-xs text-emerald-300 font-bold bg-emerald-950/80 px-2.5 py-1 rounded-xl border border-emerald-500/30">
-                                âœ“ Resolved
+                                ✓ Resolved
                               </div>
                             )}
                           </div>
@@ -2960,7 +2958,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ MEETINGS â”€â”€â”€ */}
+          {/* ─── MEETINGS ─── */}
           {activeTab === "meetings" && (
             <motion.div key="meetings" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0E131F]/90 p-6 rounded-3xl border border-slate-800/80 shadow-xl backdrop-blur-xl">
@@ -3094,7 +3092,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
           
-          {/* â”€â”€â”€ ANNOUNCEMENTS â”€â”€â”€ */}
+          {/* ─── ANNOUNCEMENTS ─── */}
           {activeTab === "announcements" && (
             <motion.div key="announcements" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl">
@@ -3130,7 +3128,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ RESOURCES & LMS â”€â”€â”€ */}
+          {/* ─── RESOURCES & LMS ─── */}
           {activeTab === "resources" && (
             <motion.div key="resources" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl">
@@ -3147,10 +3145,10 @@ function EmployeeDashboard() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    { title: "Information Security & Data Privacy 2026", cat: "Mandatory Compliance", progress: 100, status: "Certified", badge: "ðŸ›¡ï¸ Security Champion" },
-                    { title: "Workplace Ethics & Code of Conduct", cat: "HR Policy", progress: 100, status: "Certified", badge: "âš–ï¸ Ethics Leader" },
-                    { title: "Enterprise Cloud Architecture & Governance", cat: "Technical Certification", progress: 75, status: "In Progress", badge: "â˜ï¸ Tech Explorer" },
-                    { title: "Agile Engineering & Development SOPs", cat: "Operations SOP", progress: 50, status: "In Progress", badge: "ðŸš€ Agile Practitioner" },
+                    { title: "Information Security & Data Privacy 2026", cat: "Mandatory Compliance", progress: 100, status: "Certified", badge: "🛡️ Security Champion" },
+                    { title: "Workplace Ethics & Code of Conduct", cat: "HR Policy", progress: 100, status: "Certified", badge: "⚖️ Ethics Leader" },
+                    { title: "Enterprise Cloud Architecture & Governance", cat: "Technical Certification", progress: 75, status: "In Progress", badge: "☁️ Tech Explorer" },
+                    { title: "Agile Engineering & Development SOPs", cat: "Operations SOP", progress: 50, status: "In Progress", badge: "🚀 Agile Practitioner" },
                   ].map((c, i) => (
                     <div key={i} className="p-6 bg-[#0E131F]/90 border border-slate-800/80 rounded-3xl shadow-xl space-y-3">
                       <div className="flex items-start justify-between gap-3">
@@ -3174,7 +3172,7 @@ function EmployeeDashboard() {
                       <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
                         <span className="text-slate-400 font-medium">{c.badge}</span>
                         <Button variant="ghost" size="sm" className="h-7 text-xs text-indigo-400 hover:text-indigo-300 p-0 font-bold">
-                          {c.status === 'Certified' ? "View Certificate â†—" : "Continue Course â†’"}
+                          {c.status === 'Certified' ? "View Certificate ↗" : "Continue Course →"}
                         </Button>
                       </div>
                     </div>
@@ -3184,7 +3182,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ HELPDESK TICKETS â”€â”€â”€ */}
+          {/* ─── HELPDESK TICKETS ─── */}
           {activeTab === "support" && (
             <motion.div key="support" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl">
@@ -3252,7 +3250,7 @@ function EmployeeDashboard() {
                             <span className="text-xs font-mono bg-slate-900 border border-slate-700 px-2 py-0.5 rounded-full text-slate-300">#{ticket.id.slice(0, 8).toUpperCase()}</span>
                             <h4 className="font-bold text-white text-xs">{ticket.subject}</h4>
                           </div>
-                          <div className="text-[11px] text-slate-400 mt-1">{ticket.category} â€¢ Priority: <span className="font-bold text-slate-200">{ticket.priority}</span> â€¢ Raised {new Date(ticket.created_at).toLocaleDateString()}</div>
+                          <div className="text-[11px] text-slate-400 mt-1">{ticket.category} • Priority: <span className="font-bold text-slate-200">{ticket.priority}</span> • Raised {new Date(ticket.created_at).toLocaleDateString()}</div>
                         </div>
                         <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${ticket.status === 'open' ? 'bg-amber-950/80 text-amber-300 border border-amber-500/30' : 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/30'}`}>{ticket.status}</span>
                       </div>
@@ -3264,7 +3262,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ DOCUMENT LOCKER â”€â”€â”€ */}
+          {/* ─── DOCUMENT LOCKER ─── */}
           {activeTab === "locker" && (
             <motion.div key="locker" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl">
@@ -3289,7 +3287,7 @@ function EmployeeDashboard() {
                       </div>
                       <div>
                         <div className="font-bold text-white text-xs">{doc.name}</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">{doc.category} â€¢ {doc.date}</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">{doc.category} • {doc.date}</div>
                       </div>
                     </div>
                     <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/30">{doc.status}</span>
@@ -3299,7 +3297,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ PROFILE & ESS â”€â”€â”€ */}
+          {/* ─── PROFILE & ESS ─── */}
           {activeTab === "contact" && (
             <motion.div key="contact" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl">
@@ -3375,7 +3373,7 @@ function EmployeeDashboard() {
                     </div>
                     <div>
                       <Label className="text-xs font-bold text-slate-300">Bank Account &amp; IFSC / UPI Details</Label>
-                      <Input placeholder="HDFC Bank Â· A/C ****8821 Â· IFSC: HDFC0001234" defaultValue={profile?.bank_details || "Kotak Mahindra Bank Â· A/C 882101923 Â· IFSC: KKBK0001823"} onChange={e => setProfileForm({...profileForm, bank_details: e.target.value})} className="bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500 rounded-xl mt-1 text-xs font-mono" />
+                      <Input placeholder="HDFC Bank · A/C ****8821 · IFSC: HDFC0001234" defaultValue={profile?.bank_details || "Kotak Mahindra Bank · A/C 882101923 · IFSC: KKBK0001823"} onChange={e => setProfileForm({...profileForm, bank_details: e.target.value})} className="bg-[#131B2E] border-slate-700 text-white placeholder:text-slate-500 rounded-xl mt-1 text-xs font-mono" />
                     </div>
                     <div className="flex justify-end pt-1">
                       <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl px-6 text-xs h-10 cursor-pointer">Save Profile Changes</Button>
@@ -3386,7 +3384,7 @@ function EmployeeDashboard() {
             </motion.div>
           )}
 
-          {/* â”€â”€â”€ SECURITY & OFFBOARDING â”€â”€â”€ */}
+          {/* ─── SECURITY & OFFBOARDING ─── */}
           {activeTab === "security" && (
             <motion.div key="security" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl">
@@ -3452,7 +3450,7 @@ function EmployeeDashboard() {
         </AnimatePresence>
       </main>
 
-      {/* â”€â”€â”€ BIOMETRIC FINGERPRINT AUTHENTICATION MODAL â”€â”€â”€ */}
+      {/* ─── BIOMETRIC FINGERPRINT AUTHENTICATION MODAL ─── */}
       <AnimatePresence>
         {isBiometricModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -3484,7 +3482,7 @@ function EmployeeDashboard() {
                   onClick={() => setIsBiometricModalOpen(false)} 
                   className="text-slate-400 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-slate-800 transition-colors"
                 >
-                  âœ•
+                  ✕
                 </button>
               </div>
 
@@ -3623,7 +3621,7 @@ function EmployeeDashboard() {
                     >
                       {myInterns.map((i: any) => (
                         <option key={i.id} value={i.id} className="bg-[#0F172A]">
-                          {i.full_name} ({i.email}) {i.sub_domain ? `â€¢ Sub-domain: ${i.sub_domain}` : ""}
+                          {i.full_name} ({i.email}) {i.sub_domain ? `• Sub-domain: ${i.sub_domain}` : ""}
                         </option>
                       ))}
                     </select>
@@ -3745,7 +3743,7 @@ function EmployeeDashboard() {
         )}
       </AnimatePresence>
 
-      {/* â”€â”€â”€ EDIT ASSIGNED TASK & DOC LINKS MODAL â”€â”€â”€ */}
+      {/* ─── EDIT ASSIGNED TASK & DOC LINKS MODAL ─── */}
       <Dialog open={editTaskModalOpen} onOpenChange={setEditTaskModalOpen}>
         <DialogContent className="sm:max-w-lg bg-[#0F172A] border border-slate-700 text-white rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
@@ -3889,7 +3887,7 @@ function EmployeeDashboard() {
                 </div>
               </div>
               
-              <div className="flex-1 overflow-auto min-h-[300px] border border-slate-800 rounded-2xl bg-slate-900/60">
+              <div className="flex-1 overflow-y-auto min-h-[300px] border border-slate-800 rounded-2xl bg-slate-900/60">
                 {isLoadingMenteeAttendance ? (
                   <div className="h-full flex items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
@@ -3899,7 +3897,7 @@ function EmployeeDashboard() {
                     No attendance records found for this intern.
                   </div>
                 ) : (
-                  <table className="w-full text-xs text-left min-w-[500px]">
+                  <table className="w-full text-xs text-left">
                     <thead className="bg-slate-900 text-slate-400 font-bold sticky top-0 uppercase text-[10px] tracking-wider border-b border-slate-800">
                       <tr>
                         <th className="px-6 py-4">Date</th>
@@ -3913,10 +3911,10 @@ function EmployeeDashboard() {
                         <tr key={log.id} className="hover:bg-slate-800/40 transition-colors">
                           <td className="px-6 py-4 font-bold text-white">{log.date}</td>
                           <td className="px-6 py-4 text-slate-300 font-mono">
-                            {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "â€”"}
+                            {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                           </td>
                           <td className="px-6 py-4 text-slate-300 font-mono">
-                            {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "â€”"}
+                            {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                           </td>
                           <td className="px-6 py-4 text-right">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
@@ -3940,7 +3938,7 @@ function EmployeeDashboard() {
         )}
       </AnimatePresence>
 
-      {/* â”€â”€â”€ MENTEE DIRECT COMMUNICATION & CONTACT MODAL â”€â”€â”€ */}
+      {/* ─── MENTEE DIRECT COMMUNICATION & CONTACT MODAL ─── */}
       <AnimatePresence>
         {isContactInternModalOpen && contactingIntern && (() => {
           const urls = getInternContactUrls(contactingIntern);
@@ -3968,7 +3966,7 @@ function EmployeeDashboard() {
                     onClick={() => setIsContactInternModalOpen(false)} 
                     className="text-slate-400 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-slate-800 transition-colors"
                   >
-                    âœ•
+                    ✕
                   </button>
                 </div>
 
@@ -3980,11 +3978,11 @@ function EmployeeDashboard() {
                     <div className="text-xs text-slate-400 font-mono truncate">{contactingIntern.email}</div>
                     <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1 flex-wrap">
                       <span>Department: <strong className="text-slate-200">{contactingIntern.department || "Technology & Software"}</strong></span>
-                      <span>â€¢</span>
+                      <span>•</span>
                       <span>Sub-Domain: <strong className="text-amber-300 font-bold">{contactingIntern.sub_domain || contactingIntern.subdomain || "Full Stack Web Development"}</strong></span>
                       {contactingIntern.phone && (
                         <>
-                          <span>â€¢</span>
+                          <span>•</span>
                           <span>Phone: <strong className="text-indigo-300 font-mono">{contactingIntern.phone}</strong></span>
                         </>
                       )}
@@ -4085,7 +4083,7 @@ function EmployeeDashboard() {
                       }}
                       className="h-7 text-[11px] text-indigo-400 hover:text-indigo-300 p-0 font-bold"
                     >
-                      Copy Full Message ðŸ“‹
+                      Copy Full Message 📋
                     </Button>
                   </div>
                   <div className="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 text-xs text-slate-300 leading-relaxed font-sans select-all whitespace-pre-wrap shadow-inner max-h-[160px] overflow-y-auto">
@@ -4130,7 +4128,7 @@ function EmployeeDashboard() {
         }} 
       />
       <FloatingAppsPanel />
-      {/* â”€â”€ Support Query Resolver Modal â”€â”€ */}
+      {/* ── Support Query Resolver Modal ── */}
       {selectedQueryToResolve && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
@@ -4139,7 +4137,7 @@ function EmployeeDashboard() {
                 <h3 className="font-bold text-sm text-slate-900">Resolve Intern Support Query</h3>
                 <p className="text-[10px] text-slate-400 mt-0.5">Intern: {selectedQueryToResolve.intern?.full_name}</p>
               </div>
-              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full" onClick={() => setSelectedQueryToResolve(null)}>âœ•</Button>
+              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full" onClick={() => setSelectedQueryToResolve(null)}>✕</Button>
             </div>
             
             <form 
@@ -4198,7 +4196,7 @@ function EmployeeDashboard() {
         </div>
       )}
 
-      {/* â”€â”€ Intern Tasks Inspector Modal â”€â”€ */}
+      {/* ── Intern Tasks Inspector Modal ── */}
       {selectedInternForTasks && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 flex flex-col max-h-[85vh]">
@@ -4207,10 +4205,10 @@ function EmployeeDashboard() {
                 <ProfileAvatar url={selectedInternForTasks.avatar_url} name={selectedInternForTasks.full_name} className="h-10 w-10 rounded-xl" />
                 <div>
                   <h3 className="font-bold text-sm text-slate-900">{selectedInternForTasks.full_name}'s Task Board</h3>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{selectedInternForTasks.email} â€¢ Domain: {selectedInternForTasks.department}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{selectedInternForTasks.email} • Domain: {selectedInternForTasks.department}</p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full" onClick={() => setSelectedInternForTasks(null)}>âœ•</Button>
+              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full" onClick={() => setSelectedInternForTasks(null)}>✕</Button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-4 pr-1">
@@ -4258,9 +4256,9 @@ function EmployeeDashboard() {
                                 : "bg-blue-100 text-blue-800 border-blue-200"
                             }`}>
                               {task.status === "completed" 
-                                ? "âœ“ Completed & Finalized by Admin" 
+                                ? "✓ Completed & Finalized by Admin" 
                                 : task.mentor_verification_status === "mentor_verified"
-                                ? "â­ Mentor Verified (Awaiting Admin Points)"
+                                ? "⭐ Mentor Verified (Awaiting Admin Points)"
                                 : "Deliverable Ready for Mentor Review"}
                             </Badge>
                           </div>
@@ -4274,7 +4272,7 @@ function EmployeeDashboard() {
                           {task.mentor_report && (
                             <div className="text-[11px] text-purple-900 bg-purple-50/80 p-2.5 rounded-lg border border-purple-200 space-y-1">
                               <div className="font-bold flex items-center justify-between">
-                                <span>â­ Mentor Verification Report ({task.mentor_rating || 5}/5):</span>
+                                <span>⭐ Mentor Verification Report ({task.mentor_rating || 5}/5):</span>
                                 <span className="text-[10px] text-purple-700 font-bold">Rec: +{task.mentor_recommended_credits || task.credits || 10} Credits</span>
                               </div>
                               <p className="italic">"{task.mentor_report}"</p>
@@ -4301,7 +4299,7 @@ function EmployeeDashboard() {
                                 }}
                               >
                                 <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                                ðŸ” Verify &amp; Submit Mentor Report
+                                🔍 Verify &amp; Submit Mentor Report
                               </Button>
 
                               <Button
@@ -4383,7 +4381,7 @@ function EmployeeDashboard() {
         </div>
       )}
 
-      {/* â”€â”€ Mentor Verification Report Dialog â”€â”€ */}
+      {/* ── Mentor Verification Report Dialog ── */}
       {mentorVerifyTask && (
         <Dialog open={!!mentorVerifyTask} onOpenChange={(open) => !open && setMentorVerifyTask(null)}>
           <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -4477,11 +4475,11 @@ function EmployeeDashboard() {
                     onChange={(e) => setMentorRating(Number(e.target.value))}
                     className="w-full rounded-xl border border-slate-200 bg-white p-2 text-xs font-bold text-slate-800"
                   >
-                    <option value={5}>â­â­â­â­â­ (5/5 - Outstanding)</option>
-                    <option value={4}>â­â­â­â­ (4/5 - Exceeds Expectations)</option>
-                    <option value={3}>â­â­â­ (3/5 - Meets Requirements)</option>
-                    <option value={2}>â­â­ (2/5 - Partial Completion)</option>
-                    <option value={1}>â­ (1/5 - Unsatisfactory)</option>
+                    <option value={5}>⭐⭐⭐⭐⭐ (5/5 - Outstanding)</option>
+                    <option value={4}>⭐⭐⭐⭐ (4/5 - Exceeds Expectations)</option>
+                    <option value={3}>⭐⭐⭐ (3/5 - Meets Requirements)</option>
+                    <option value={2}>⭐⭐ (2/5 - Partial Completion)</option>
+                    <option value={1}>⭐ (1/5 - Unsatisfactory)</option>
                   </select>
                 </div>
 
@@ -4532,7 +4530,7 @@ function EmployeeDashboard() {
         </Dialog>
       )}
 
-      {/* â”€â”€ Schedule Mentee Meeting Modal â”€â”€ */}
+      {/* ── Schedule Mentee Meeting Modal ── */}
       {menteeMeetingOpen && (
         <Dialog open={menteeMeetingOpen} onOpenChange={setMenteeMeetingOpen}>
           <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -4696,7 +4694,7 @@ function EmployeeDashboard() {
         </Dialog>
       )}
 
-      {/* â”€â”€ Reusable Profile Change Request Modal â”€â”€ */}
+      {/* ── Reusable Profile Change Request Modal ── */}
       <ProfileChangeRequestModal
         open={profileModalOpen}
         onOpenChange={setProfileModalOpen}
@@ -4722,4 +4720,3 @@ function EmployeeDashboard() {
     </div>
   );
 }
-

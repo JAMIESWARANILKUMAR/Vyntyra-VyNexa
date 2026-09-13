@@ -1,4 +1,3 @@
-import { DashboardHeader } from '@/components/dashboard-header';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -53,7 +52,7 @@ import { listMyNotifications, markUserNotificationRead } from "@/lib/notificatio
 import { generatePayuCheckout, confirmInternPayment, generateKotakCheckout, confirmKotakPayment } from "@/lib/payu.functions";
 
 export const Route = createFileRoute("/_authenticated/intern")({
-  head: () => ({ meta: [{ title: "Intern Dashboard â€” Vyntyra" }] }),
+  head: () => ({ meta: [{ title: "Intern Dashboard — Vyntyra" }] }),
   component: InternDashboard,
 });
 
@@ -134,7 +133,7 @@ function FeeCountdownTimer({ deadline }: { deadline?: string | null }) {
   if (timeLeft.isExpired) {
     return (
       <div className="inline-flex items-center gap-2 text-xs font-bold text-red-700 bg-red-100/90 px-3 py-1.5 rounded-xl border border-red-300 animate-pulse">
-        <span>âš ï¸ Payment Deadline Expired â€” Pay immediately to activate dashboard</span>
+        <span>⚠️ Payment Deadline Expired — Pay immediately to activate dashboard</span>
       </div>
     );
   }
@@ -180,17 +179,17 @@ function InternDashboard() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
-  // â”€â”€ Multilingual Welcome Greeting Rotator (5 second delay) â”€â”€
+  // ── Multilingual Welcome Greeting Rotator (5 second delay) ──
   const MULTILINGUAL_GREETINGS = [
     { lang: "English", text: "Welcome Back" },
-    { lang: "Telugu", text: "à°¸à±à°¸à±à°µà°¾à°—à°¤à°‚" },
-    { lang: "Kannada", text: "à²¸à³à²¸à³à²µà²¾à²—à²¤" },
-    { lang: "Hindi", text: "à¤ªà¥à¤¨à¤ƒ à¤¸à¥à¤µà¤¾à¤—à¤¤ à¤¹à¥ˆ" },
-    { lang: "Bengali", text: "à¦¸à§à¦¬à¦¾à¦—à¦¤à¦®" },
-    { lang: "Tamil", text: "à®®à¯€à®£à¯à®Ÿà¯à®®à¯ à®µà®°à¯à®•" },
-    { lang: "Malayalam", text: "à´µàµ€à´£àµà´Ÿàµà´‚ à´¸àµà´µà´¾à´—à´¤à´‚" },
-    { lang: "Marathi", text: "à¤ªà¥à¤¨à¤¶à¥à¤š à¤¸à¥à¤µà¤¾à¤—à¤¤" },
-    { lang: "Gujarati", text: "àª¸àª¾àª¦àª° àª¸à«àªµàª¾àª—àª¤ àª›à«‡" },
+    { lang: "Telugu", text: "సుస్వాగతం" },
+    { lang: "Kannada", text: "ಸುಸ್ವಾಗತ" },
+    { lang: "Hindi", text: "पुनः स्वागत है" },
+    { lang: "Bengali", text: "স্বাগতম" },
+    { lang: "Tamil", text: "மீண்டும் வருக" },
+    { lang: "Malayalam", text: "വീണ്ടും സ്വാഗതം" },
+    { lang: "Marathi", text: "पुनश्च स्वागत" },
+    { lang: "Gujarati", text: "સાદર સ્વાગત છે" },
   ];
   const [greetingIndex, setGreetingIndex] = useState(0);
   const [greetingFade, setGreetingFade] = useState(true);
@@ -994,7 +993,7 @@ function InternDashboard() {
     }
   }, [TABS, activeTab]);
 
-  // â”€â”€ Construct Unified Real-Time Live Marquee Updates (Holidays, Tasks, Meetings, Announcements, Alerts) â”€â”€
+  // ── Construct Unified Real-Time Live Marquee Updates (Holidays, Tasks, Meetings, Announcements, Alerts) ──
   const holidays: any[] = holidaysQ.data || [];
   const nowMs = Date.now();
   const thirtyDaysAhead = nowMs + 30 * 24 * 60 * 60 * 1000;
@@ -1025,7 +1024,7 @@ function InternDashboard() {
       type: "LIVE MEETING",
       typeColor: "text-indigo-300 bg-indigo-950/80 border-indigo-500/40 shadow-xs",
       icon: <Video className="h-3 w-3 text-indigo-400 shrink-0" />,
-      title: `Scheduled Video Sync: "${m.title}" Â· ${meetDate} at ${meetTime}`,
+      title: `Scheduled Video Sync: "${m.title}" · ${meetDate} at ${meetTime}`,
     });
   });
 
@@ -1109,7 +1108,7 @@ function InternDashboard() {
                 </span>
               </div>
               <span className="hidden sm:block text-[10px] text-slate-400 font-medium truncate capitalize">
-                {displayName} -+ {profile?.intern_id || "Portal"}
+                {displayName} · {profile?.intern_id || "Portal"}
               </span>
             </div>
           </div>
@@ -1282,7 +1281,7 @@ function InternDashboard() {
               <span>Sign Out</span>
             </Button>
 
-            {/* GöÇGöÇ HAMBURGER MENU BUTTON GöÇGöÇ */}
+            {/* ── HAMBURGER MENU BUTTON ── */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
@@ -1296,7 +1295,7 @@ function InternDashboard() {
           </div>
         </div>
 
-        {/* GöÇGöÇ Live Updates & Notifications Marquee Sub-Bar GöÇGöÇ */}
+        {/* ── Live Updates & Notifications Marquee Sub-Bar ── */}
         {marqueeItems.length > 0 ? (
           <div 
             className="bg-white/95 text-slate-900 text-xs py-2 overflow-hidden flex whitespace-nowrap border-t border-b border-orange-200/80 relative z-10 backdrop-blur-xl group cursor-pointer shadow-xs" 
@@ -1312,7 +1311,7 @@ function InternDashboard() {
                 LIVE TICKER
               </span>
               <span className="hidden group-hover:inline text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded border border-amber-300">
-                GÅ+ PAUSED
+                ⏸ PAUSED
               </span>
             </div>
 
@@ -1330,7 +1329,7 @@ function InternDashboard() {
                     </span>
                     {item.subtitle && (
                       <span className="text-slate-600 text-[11px] font-medium hidden md:inline truncate max-w-sm">
-                        GÇö {item.subtitle}
+                        — {item.subtitle}
                       </span>
                     )}
                   </div>
@@ -1348,7 +1347,7 @@ function InternDashboard() {
                     </span>
                     {item.subtitle && (
                       <span className="text-slate-600 text-[11px] font-medium hidden md:inline truncate max-w-sm">
-                        GÇö {item.subtitle}
+                        — {item.subtitle}
                       </span>
                     )}
                   </div>
@@ -1361,7 +1360,7 @@ function InternDashboard() {
             <div className="inline-flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shadow-xs" />
               <span className="font-bold text-slate-900">Live Workspace Active</span>
-              <span>-+</span>
+              <span>·</span>
               <span className="text-slate-600 font-medium">All services operational</span>
             </div>
             <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">VCS Directorate Live Feed</span>
@@ -1369,7 +1368,7 @@ function InternDashboard() {
         )}
       </header>
 
-      {/* GöÇGöÇ LUXURY SLIDEOVER HAMBURGER NAVIGATION DRAWER GöÇGöÇ */}
+      {/* ── LUXURY SLIDEOVER HAMBURGER NAVIGATION DRAWER ── */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end">
           {/* Backdrop */}
@@ -1432,7 +1431,7 @@ function InternDashboard() {
                 {todayAttendance ? (
                   todayAttendance.clock_out ? (
                     <div className="px-2.5 py-2 rounded-xl bg-amber-100/70 text-center text-[10px] font-bold text-amber-950 border border-amber-200">
-                      G£ô Shift Completed
+                      ✓ Shift Completed
                     </div>
                   ) : (
                     <Button
@@ -1560,13 +1559,12 @@ function InternDashboard() {
                 <span>Sign Out from Portal</span>
               </Button>
               <p className="text-center text-[10px] text-amber-900/70 font-medium">
-                Vyntyra Consultancy Services -+ Project VyNexa Directorate
+                Vyntyra Consultancy Services · Project VyNexa Directorate
               </p>
             </div>
           </div>
         </div>
       )}
-
 
       <main className="max-w-[1800px] mx-auto px-3 sm:px-8 py-6 space-y-6 relative z-10">
 
@@ -1583,10 +1581,10 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ OVERVIEW â”€â”€â”€ */}
+        {/* ─── OVERVIEW ─── */}
         {activeTab === "overview" && (
           <>
-            {/* â”€â”€â”€ ELEGANT SUNSET ORANGE HERO BANNER & PERFORMANCE MATRIX â”€â”€â”€ */}
+            {/* ─── ELEGANT SUNSET ORANGE HERO BANNER & PERFORMANCE MATRIX ─── */}
             <div className="relative overflow-hidden rounded-3xl border border-orange-200/80 bg-gradient-to-r from-white via-[#FFF7F4] to-[#FFF1EC] p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-2xl">
               {/* Background ambient glow accents */}
               <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-orange-300/20 blur-3xl" />
@@ -1608,7 +1606,7 @@ function InternDashboard() {
                       </span>
                     </span>
                     <span className="text-slate-800">,</span>
-                    <span className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 bg-clip-text text-transparent">{profile?.full_name || displayName}</span> ðŸ‘‹
+                    <span className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 bg-clip-text text-transparent">{profile?.full_name || displayName}</span> 👋
                   </h1>
                   <p className="text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">
                     Track your daily shift timecard, sprint task milestones, assigned mentor syncs, and official credential documents in one unified portal.
@@ -1634,7 +1632,7 @@ function InternDashboard() {
                 </div>
               </div>
 
-              {/* â”€â”€ REAL-TIME STAT MATRIX GRID â”€â”€ */}
+              {/* ── REAL-TIME STAT MATRIX GRID ── */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-7 pt-6 border-t border-orange-200/70">
                 {/* Stat 1: Sprint Progress */}
                 <div className="p-4 rounded-2xl bg-white/90 border border-orange-200/80 backdrop-blur-md space-y-2 shadow-md shadow-orange-950/5">
@@ -1677,7 +1675,7 @@ function InternDashboard() {
                       Work Streak
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 font-black text-[10px] border border-orange-300">
-                      ðŸ”¥ Active
+                      🔥 Active
                     </span>
                   </div>
                   <div className="text-xl font-black text-slate-900 font-mono">{dayStreak} <span className="text-xs text-slate-500 font-sans font-medium">Days Streak</span></div>
@@ -1705,7 +1703,7 @@ function InternDashboard() {
               </div>
             </div>
 
-            {/* â”€â”€â”€ INTERN PROFILE CARD â”€â”€â”€ */}
+            {/* ─── INTERN PROFILE CARD ─── */}
             <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl overflow-hidden">
               {/* Card header */}
               <div className="bg-gradient-to-r from-[#FFF8F5] via-[#FFF3EE] to-white px-6 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-5 border-b border-orange-200/80">
@@ -1744,10 +1742,10 @@ function InternDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-amber-200/70 p-0 text-xs bg-white/80">
                 {[
                   { icon: <Mail className="h-4 w-4 text-emerald-600" />, label: "Email", value: email },
-                  { icon: <Phone className="h-4 w-4 text-blue-600" />, label: "Contact", value: profile?.phone || "â€”" },
-                  { icon: <MapPin className="h-4 w-4 text-rose-600" />, label: "Address", value: profile?.address || "â€”" },
-                  { icon: <Briefcase className="h-4 w-4 text-purple-600" />, label: "Domain", value: profile?.department || "â€”" },
-                  { icon: <CalendarDays className="h-4 w-4 text-amber-600" />, label: "Internship Start", value: profile?.start_date ? new Date(profile.start_date).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "â€”" },
+                  { icon: <Phone className="h-4 w-4 text-blue-600" />, label: "Contact", value: profile?.phone || "—" },
+                  { icon: <MapPin className="h-4 w-4 text-rose-600" />, label: "Address", value: profile?.address || "—" },
+                  { icon: <Briefcase className="h-4 w-4 text-purple-600" />, label: "Domain", value: profile?.department || "—" },
+                  { icon: <CalendarDays className="h-4 w-4 text-amber-600" />, label: "Internship Start", value: profile?.start_date ? new Date(profile.start_date).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "—" },
                   {
                     icon: <Clock className="h-4 w-4 text-teal-600" />,
                     label: "End Date / Remaining",
@@ -1755,9 +1753,9 @@ function InternDashboard() {
                       ? (() => {
                           const end = new Date(profile.end_date);
                           const remaining = Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                          return `${end.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} Â· ${remaining > 0 ? `${remaining} days left` : "Completed"}`;
+                          return `${end.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} · ${remaining > 0 ? `${remaining} days left` : "Completed"}`;
                         })()
-                      : "â€”",
+                      : "—",
                   },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3.5 px-6 py-4 hover:bg-amber-50/50 transition-colors">
@@ -1813,7 +1811,7 @@ function InternDashboard() {
                       {profile?.exam_fee_paid && (
                         <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-100/80 text-emerald-900 border border-emerald-300 shadow-xs">
                           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                          <span>Fee Paid Â· Ref: <strong className="font-mono text-emerald-950">{profile.payment_reference_no || `TXN-${(profile.id || "").slice(0, 6).toUpperCase()}`}</strong> ({profile.payment_mode || "Online"})</span>
+                          <span>Fee Paid · Ref: <strong className="font-mono text-emerald-950">{profile.payment_reference_no || `TXN-${(profile.id || "").slice(0, 6).toUpperCase()}`}</strong> ({profile.payment_mode || "Online"})</span>
                         </div>
                       )}
                     </>
@@ -1831,8 +1829,8 @@ function InternDashboard() {
               </div>
             </div>
 
-            {/* â”€â”€â”€ QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER â”€â”€â”€ */}
-            {/* â”€â”€â”€ QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER â”€â”€â”€ */}
+            {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
+            {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
             <div className="bg-gradient-to-r from-white via-[#FFF7F4] to-[#FFF1EC] rounded-3xl p-6 text-slate-900 shadow-xl shadow-orange-950/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-orange-200/80 relative overflow-hidden backdrop-blur-2xl">
               <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-orange-300/20 blur-2xl" />
               <div className="flex items-center gap-4 relative z-10">
@@ -1871,7 +1869,7 @@ function InternDashboard() {
               </div>
             </div>
 
-            {/* â”€â”€â”€ ATTENDANCE TIMECARD WIDGET â”€â”€â”€ */}
+            {/* ─── ATTENDANCE TIMECARD WIDGET ─── */}
             <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-orange-200/70 pb-5">
                 <div className="flex items-center gap-3.5">
@@ -1927,7 +1925,7 @@ function InternDashboard() {
                   <div>
                     <div className="text-slate-500 font-bold mb-0.5">Today Clock In</div>
                     <div className="text-base font-black text-slate-900 font-mono">
-                      {todayAttendance?.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "â€”"}
+                      {todayAttendance?.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                     </div>
                   </div>
                   <div className="h-9 w-9 rounded-xl bg-orange-100 border border-orange-300 text-orange-600 flex items-center justify-center">
@@ -1939,7 +1937,7 @@ function InternDashboard() {
                   <div>
                     <div className="text-slate-500 font-bold mb-0.5">Today Clock Out</div>
                     <div className="text-base font-black text-slate-900 font-mono">
-                      {todayAttendance?.clock_out ? new Date(todayAttendance.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "â€”"}
+                      {todayAttendance?.clock_out ? new Date(todayAttendance.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                     </div>
                   </div>
                   <div className="h-9 w-9 rounded-xl bg-amber-100 border border-amber-300 text-amber-600 flex items-center justify-center">
@@ -2187,7 +2185,7 @@ function InternDashboard() {
           </>
         )}
 
-        {/* â”€â”€â”€ ATTENDANCE TAB â”€â”€â”€ */}
+        {/* ─── ATTENDANCE TAB ─── */}
         {activeTab === "attendance" && (
           <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-orange-200/80 pb-5">
@@ -2242,7 +2240,7 @@ function InternDashboard() {
                 <div>
                   <div className="text-slate-600 font-bold mb-0.5">Today Clock In</div>
                   <div className="text-base font-black text-slate-900 font-mono">
-                    {todayAttendance?.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "â€”"}
+                    {todayAttendance?.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                   </div>
                 </div>
                 <div className="h-9 w-9 rounded-xl bg-orange-100 border border-orange-300 text-orange-600 flex items-center justify-center">
@@ -2254,7 +2252,7 @@ function InternDashboard() {
                 <div>
                   <div className="text-slate-600 font-bold mb-0.5">Today Clock Out</div>
                   <div className="text-base font-black text-slate-900 font-mono">
-                    {todayAttendance?.clock_out ? new Date(todayAttendance.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "â€”"}
+                    {todayAttendance?.clock_out ? new Date(todayAttendance.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                   </div>
                 </div>
                 <div className="h-9 w-9 rounded-xl bg-amber-100 border border-amber-300 text-amber-600 flex items-center justify-center">
@@ -2301,10 +2299,10 @@ function InternDashboard() {
                             {new Date(log.date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
                           </td>
                           <td className="p-3 font-mono">
-                            {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "â€”"}
+                            {log.clock_in ? new Date(log.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                           </td>
                           <td className="p-3 font-mono">
-                            {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "â€”"}
+                            {log.clock_out ? new Date(log.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                           </td>
                           <td className="p-3 font-mono">
                             {log.clock_in && log.clock_out ? `${Math.round((new Date(log.clock_out).getTime() - new Date(log.clock_in).getTime()) / (1000 * 60 * 60))} hrs` : "In Progress"}
@@ -2328,7 +2326,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ ONBOARDING & PRE-BOARDING HUB â”€â”€â”€ */}
+        {/* ─── ONBOARDING & PRE-BOARDING HUB ─── */}
         {activeTab === "onboarding" && (
           <div className="space-y-6">
             <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-xl">
@@ -2402,7 +2400,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ LEARNING & SKILL PATH (LMS) â”€â”€â”€ */}
+        {/* ─── LEARNING & SKILL PATH (LMS) ─── */}
         {activeTab === "lms" && (
           <div className="space-y-6">
             <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-xl">
@@ -2556,7 +2554,7 @@ function InternDashboard() {
                                 rel="noreferrer"
                                 className="flex-1 text-center px-2 py-1 rounded-xl bg-white hover:bg-orange-50 text-[11px] font-black text-slate-800 inline-flex items-center justify-center gap-0.5 cursor-pointer border border-orange-200 shadow-xs"
                               >
-                                Open Course â†—
+                                Open Course ↗
                               </a>
                             </div>
                           </div>
@@ -2570,14 +2568,14 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ INTEGRATED CHROME BROWSER TAB â”€â”€â”€ */}
+        {/* ─── INTEGRATED CHROME BROWSER TAB ─── */}
         {activeTab === "browser" && (
           <div className="space-y-4">
             <IntegratedChromeBrowser />
           </div>
         )}
 
-        {/* â”€â”€â”€ SPRINT KANBAN BOARD â”€â”€â”€ */}
+        {/* ─── SPRINT KANBAN BOARD ─── */}
         {activeTab === "kanban" && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -2609,9 +2607,9 @@ function InternDashboard() {
                           <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 text-[10px]">
                             <span className="font-black text-slate-600 uppercase tracking-wider">{t.priority || "Medium"}</span>
                             <div className="flex gap-1.5">
-                              {col.status !== 'pending' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-600 hover:text-slate-900 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'pending')}>â†</Button>}
-                              {col.status !== 'in_progress' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-orange-600 hover:bg-orange-100 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'in_progress')}>â†’</Button>}
-                              {col.status !== 'completed' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-emerald-600 hover:bg-emerald-100 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'completed')}>âœ“</Button>}
+                              {col.status !== 'pending' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-600 hover:text-slate-900 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'pending')}>←</Button>}
+                              {col.status !== 'in_progress' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-orange-600 hover:bg-orange-100 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'in_progress')}>→</Button>}
+                              {col.status !== 'completed' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-emerald-600 hover:bg-emerald-100 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'completed')}>✓</Button>}
                             </div>
                           </div>
                         </div>
@@ -2624,7 +2622,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ DAILY STANDUPS â”€â”€â”€ */}
+        {/* ─── DAILY STANDUPS ─── */}
         {activeTab === "standups" && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -2697,7 +2695,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ DELIVERABLES & CODE SUBMISSIONS â”€â”€â”€ */}
+        {/* ─── DELIVERABLES & CODE SUBMISSIONS ─── */}
         {activeTab === "deliverables" && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -2822,7 +2820,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ PPO & CERTIFICATES â”€â”€â”€ */}
+        {/* ─── PPO & CERTIFICATES ─── */}
         {activeTab === "ppo" && (
           <div className="space-y-6">
             <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-xl">
@@ -2844,9 +2842,9 @@ function InternDashboard() {
                     <div className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full" style={{ width: `${Math.min(100, Math.round(progress * 0.8 + Math.min(20, dayStreak * 2)))}%` }} />
                   </div>
                   <div className="text-xs text-slate-800 font-semibold space-y-1.5">
-                    <div>{progress >= 85 ? "âœ“" : "â—‹"} Task Credits Progress ({progress}%)</div>
-                    <div>{dayStreak >= 5 ? "âœ“" : "â—‹"} Day Clock-In Streak ({dayStreak} Days)</div>
-                    <div>âœ“ Mid-Term Appraisal Grade: Exceeds Expectations</div>
+                    <div>{progress >= 85 ? "✓" : "○"} Task Credits Progress ({progress}%)</div>
+                    <div>{dayStreak >= 5 ? "✓" : "○"} Day Clock-In Streak ({dayStreak} Days)</div>
+                    <div>✓ Mid-Term Appraisal Grade: Exceeds Expectations</div>
                   </div>
                 </div>
 
@@ -2972,8 +2970,8 @@ function InternDashboard() {
                           <div className="flex items-start gap-1.5">
                             <CreditCard className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
                             <span>
-                              <strong>Exam Fee:</strong> <strong>{profile?.is_fee_exempted ? "FEE exemption provided by VYNTYRA" : `â‚¹${profile?.exam_fee_amount} (Inclusive of all GST)`}</strong>
-                              {!profile?.is_fee_exempted && " â€” Mandatory skilling & credential verification fee."}
+                              <strong>Exam Fee:</strong> <strong>{profile?.is_fee_exempted ? "FEE exemption provided by VYNTYRA" : `₹${profile?.exam_fee_amount} (Inclusive of all GST)`}</strong>
+                              {!profile?.is_fee_exempted && " — Mandatory skilling & credential verification fee."}
                             </span>
                           </div>
                           <div className="flex items-start gap-1.5">
@@ -3002,7 +3000,7 @@ function InternDashboard() {
                                   </span>
                                 </div>
                                 <p className="text-xs text-slate-700 mt-1 font-medium leading-relaxed">
-                                  Please pay the mandatory exam fee of <strong>â‚¹{profile?.exam_fee_amount || 199}</strong> on or before{" "}
+                                  Please pay the mandatory exam fee of <strong>₹{profile?.exam_fee_amount || 199}</strong> on or before{" "}
                                   <strong>
                                     {formatDeadlineDisplay(profile?.fee_payment_deadline)}
                                   </strong>{" "}
@@ -3012,7 +3010,7 @@ function InternDashboard() {
                             </div>
 
                             <Button size="lg" className="bg-rose-600 hover:bg-rose-700 text-white font-black px-6 shadow-md shadow-rose-500/20 h-12 shrink-0 rounded-xl cursor-pointer" onClick={() => setShowPaymentModal(true)}>
-                              Pay â‚¹{profile?.exam_fee_amount || 199} Now
+                              Pay ₹{profile?.exam_fee_amount || 199} Now
                             </Button>
                           </div>
 
@@ -3032,7 +3030,7 @@ function InternDashboard() {
                           </div>
 
                           <div className="p-3.5 bg-amber-100/70 border border-amber-300 rounded-2xl text-xs text-amber-900 font-semibold leading-relaxed">
-                            <strong>Note / Information:</strong> Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to â‚¹5,000 to â‚¹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
+                            <strong>Note / Information:</strong> Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
                           </div>
                         </div>
                       )}
@@ -3044,7 +3042,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ TASKS â”€â”€â”€ */}
+        {/* ─── TASKS ─── */}
         {activeTab === "tasks" && (
           <div className="space-y-6">
             {poolTasks.length > 0 && (
@@ -3115,13 +3113,13 @@ function InternDashboard() {
                       </div>
                       <div className="text-slate-700 text-xs mt-1 flex items-center gap-3 flex-wrap font-medium">
                         <span className="font-extrabold text-orange-700">{mentor.position || mentor.department || "Lead Technical Director"}</span>
-                        <span className="text-amber-300">â€¢</span>
+                        <span className="text-amber-300">•</span>
                         <a href={`mailto:${mentor.email}`} className="text-blue-700 hover:text-blue-900 font-bold underline decoration-blue-300 flex items-center gap-1">
                           <Mail className="h-3.5 w-3.5 text-blue-600" /> {mentor.email}
                         </a>
                         {mentor.phone_number && (
                           <>
-                            <span className="text-amber-300">â€¢</span>
+                            <span className="text-amber-300">•</span>
                             <a href={`tel:${mentor.phone_number}`} className="text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1">
                               <Phone className="h-3.5 w-3.5 text-emerald-600" /> {mentor.phone_number}
                             </a>
@@ -3266,7 +3264,7 @@ function InternDashboard() {
                                   rel="noreferrer" 
                                   className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer"
                                 >
-                                  <Video className="h-3.5 w-3.5" /> ðŸ“¹ Join Task Meet
+                                  <Video className="h-3.5 w-3.5" /> 📹 Join Task Meet
                                 </a>
                               )}
                               {(task.task_file_url || task.project_requirements) && (
@@ -3406,13 +3404,13 @@ function InternDashboard() {
                           <div className="mt-2 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm">
                             <div className="flex-1 space-y-1">
                               <div className="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
-                                <Lock className="h-4 w-4 text-amber-600 shrink-0" /> Task Submission Locked â€” Exam Fee Payment Required
+                                <Lock className="h-4 w-4 text-amber-600 shrink-0" /> Task Submission Locked — Exam Fee Payment Required
                               </div>
                               <p className="text-[11px] text-amber-800 leading-relaxed font-medium">
-                                Please pay the mandatory exam fee of <strong>â‚¹{profile?.exam_fee_amount || 199}</strong> to enable task deliverable submissions and activate your verified certificate upon completion.
+                                Please pay the mandatory exam fee of <strong>₹{profile?.exam_fee_amount || 199}</strong> to enable task deliverable submissions and activate your verified certificate upon completion.
                               </p>
                               <p className="text-[10px] text-amber-700 italic">
-                                Note: Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to â‚¹5,000 to â‚¹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
+                                Note: Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
                               </p>
                             </div>
                             <Button 
@@ -3420,7 +3418,7 @@ function InternDashboard() {
                               className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-4 shrink-0 rounded-lg cursor-pointer"
                               onClick={() => setShowPaymentModal(true)}
                             >
-                              Pay â‚¹{profile?.exam_fee_amount || 199} to Unlock
+                              Pay ₹{profile?.exam_fee_amount || 199} to Unlock
                             </Button>
                           </div>
                         ) : (
@@ -3505,7 +3503,7 @@ function InternDashboard() {
                                   {task.deliverable_url ? (
                                     <div className="text-xs text-slate-300 flex items-center gap-2 flex-wrap">
                                       <span className="font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-2.5 py-0.5 rounded-full flex items-center gap-1 text-[10px]">
-                                        âœ“ Submitted for Review:
+                                        ✓ Submitted for Review:
                                       </span>
                                       <a 
                                         href={task.deliverable_url} 
@@ -3575,7 +3573,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ MEETINGS â”€â”€â”€ */}
+        {/* ─── MEETINGS ─── */}
         {activeTab === "meetings" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1 space-y-3">
@@ -3593,7 +3591,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ RESOURCES â”€â”€â”€ */}
+        {/* ─── RESOURCES ─── */}
         {activeTab === "resources" && (
           <div className="space-y-5">
             <div className="flex items-center justify-between">
@@ -3632,7 +3630,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ ANNOUNCEMENTS â”€â”€â”€ */}
+        {/* ─── ANNOUNCEMENTS ─── */}
         {activeTab === "announcements" && (
           <div className="space-y-4">
             {announcementsQ.isLoading ? (
@@ -3658,7 +3656,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ NOTES â”€â”€â”€ */}
+        {/* ─── NOTES ─── */}
         {activeTab === "notes" && (
           <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl p-6 sm:p-8 space-y-6">
             <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><FileText className="h-5 w-5 text-orange-600" />My Notes</h2>
@@ -3708,7 +3706,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ FEEDBACK â”€â”€â”€ */}
+        {/* ─── FEEDBACK ─── */}
         {activeTab === "feedback" && (
           <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl p-6 sm:p-8 max-w-2xl mx-auto space-y-6">
             <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><Mail className="h-5 w-5 text-orange-600" />Submit Feedback</h2>
@@ -3733,7 +3731,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ LEAVES REQUESTS â”€â”€â”€ */}
+        {/* ─── LEAVES REQUESTS ─── */}
         {activeTab === "leaves" && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -3822,7 +3820,7 @@ function InternDashboard() {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-black text-xs text-slate-900">
-                              {new Date(l.start_date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })} â€” {new Date(l.end_date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+                              {new Date(l.start_date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })} — {new Date(l.end_date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
                             </span>
                             <span className={`text-[9px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-full border ${
                               l.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
@@ -3843,7 +3841,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ SUPPORT TICKETS â”€â”€â”€ */}
+        {/* ─── SUPPORT TICKETS ─── */}
         {activeTab === "support" && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -4005,7 +4003,7 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* â”€â”€â”€ REFER & EARN â”€â”€â”€ */}
+        {/* ─── REFER & EARN ─── */}
         {activeTab === "refer" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Custom Animations Style Sheet Injection */}
@@ -4051,7 +4049,7 @@ function InternDashboard() {
       </main>
 
       
-{/* â”€â”€ Task Execution Workspace Dialog â”€â”€ */}
+{/* ── Task Execution Workspace Dialog ── */}
 {selectedTaskWorkspace && (
   <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
     <div className="bg-white/95 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto border border-orange-200/80 text-slate-900">
@@ -4060,10 +4058,10 @@ function InternDashboard() {
           <span className="text-[10px] font-mono font-black uppercase bg-orange-100 text-orange-900 border border-orange-300 px-2.5 py-0.5 rounded-full">Task Workspace</span>
           <h2 className="text-lg font-black text-slate-900 mt-1.5">{selectedTaskWorkspace.title}</h2>
           {selectedTaskWorkspace.accepted_at && (
-            <p className="text-xs text-emerald-700 font-bold mt-1">âœ“ You accepted this task on {new Date(selectedTaskWorkspace.accepted_at).toLocaleString()}</p>
+            <p className="text-xs text-emerald-700 font-bold mt-1">✓ You accepted this task on {new Date(selectedTaskWorkspace.accepted_at).toLocaleString()}</p>
           )}
         </div>
-        <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-900 hover:bg-orange-100 rounded-full cursor-pointer font-bold" onClick={() => setSelectedTaskWorkspace(null)}>âœ•</Button>
+        <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-900 hover:bg-orange-100 rounded-full cursor-pointer font-bold" onClick={() => setSelectedTaskWorkspace(null)}>✕</Button>
       </div>
 
       {/* Mentor Review Feedback if present */}
@@ -4116,13 +4114,13 @@ function InternDashboard() {
         {isFeePaymentPending ? (
           <div className="p-4 bg-amber-950/30 border border-amber-500/40 rounded-2xl space-y-2 text-xs">
             <div className="flex items-center gap-2 font-bold text-amber-300">
-              <Lock className="h-4 w-4 text-amber-400 shrink-0" /> Deliverable Submission Locked â€” Exam Fee Payment Required
+              <Lock className="h-4 w-4 text-amber-400 shrink-0" /> Deliverable Submission Locked — Exam Fee Payment Required
             </div>
             <p className="text-amber-200 leading-relaxed font-medium">
-              Please pay the exam fee of <strong>â‚¹{profile?.exam_fee_amount || 199}</strong> to enable task deliverable submissions and receive your certificate.
+              Please pay the exam fee of <strong>₹{profile?.exam_fee_amount || 199}</strong> to enable task deliverable submissions and receive your certificate.
             </p>
             <p className="text-[10px] text-amber-400/80 italic">
-              Note: Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to â‚¹5,000 to â‚¹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
+              Note: Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
             </p>
             <Button 
               size="sm" 
@@ -4184,7 +4182,7 @@ function InternDashboard() {
   </div>
 )}
 
-      {/* â”€â”€ Deadline Extension Request Modal â”€â”€ */}
+      {/* ── Deadline Extension Request Modal ── */}
       {showExtensionModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-[#0E131F] rounded-3xl max-w-md w-full p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-800/80 text-white">
@@ -4193,7 +4191,7 @@ function InternDashboard() {
                 <h3 className="font-bold text-sm text-white">Request Deadline Extension</h3>
                 <p className="text-[10px] text-slate-400 mt-0.5">For task: {showExtensionModal.title}</p>
               </div>
-              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full text-slate-400 hover:text-white cursor-pointer" onClick={() => setShowExtensionModal(null)}>âœ•</Button>
+              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full text-slate-400 hover:text-white cursor-pointer" onClick={() => setShowExtensionModal(null)}>✕</Button>
             </div>
             
             <form 
@@ -4260,7 +4258,7 @@ function InternDashboard() {
         </div>
       )}
 
-      {/* â”€â”€ Google Docs / Sheets & Spreadsheet Viewer Modal â”€â”€ */}
+      {/* ── Google Docs / Sheets & Spreadsheet Viewer Modal ── */}
       {viewingDoc && (
         <GoogleDocViewerModal
           url={viewingDoc.url}
@@ -4273,10 +4271,10 @@ function InternDashboard() {
       {/* Floating Apps Panel */}
       <FloatingAppsPanel />
 
-      {/* â”€â”€ First-Time Login Animated Welcome Modal â”€â”€ */}
+      {/* ── First-Time Login Animated Welcome Modal ── */}
       <FirstLoginWelcomeModal user={profile} mustChangePassword={!!session?.user?.user_metadata?.must_change_password} />
 
-      {/* â”€â”€ Corporate Standard & Executive Secure Checkout Modal System â”€â”€ */}
+      {/* ── Corporate Standard & Executive Secure Checkout Modal System ── */}
       {showPaymentModal && (
         <div className="fixed inset-0 z-[200] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 lg:p-8 overflow-y-auto">
           <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full min-w-0 p-0 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-300 my-auto">
@@ -4299,7 +4297,7 @@ function InternDashboard() {
                       </span>
                     </div>
                     <p className="text-xs text-slate-300 mt-0.5 truncate">
-                      Vyntyra Consultancy Services Â· Project VyNexa Directorate
+                      Vyntyra Consultancy Services · Project VyNexa Directorate
                     </p>
                   </div>
                 </div>
@@ -4358,14 +4356,14 @@ function InternDashboard() {
                         {profile?.full_name || displayName}
                       </h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        ID: {profile?.intern_id || "VCS-INT-2026"} Â· Track: {profile?.position || "Full Stack Engineering"}
+                        ID: {profile?.intern_id || "VCS-INT-2026"} · Track: {profile?.position || "Full Stack Engineering"}
                       </p>
                     </div>
 
                     <div className="text-left sm:text-right shrink-0 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                      <div className="text-[11px] text-slate-400 line-through">Standard: â‚¹999</div>
+                      <div className="text-[11px] text-slate-400 line-through">Standard: ₹999</div>
                       <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono leading-tight">
-                        â‚¹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))}
+                        ₹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))}
                       </div>
                       <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-extrabold uppercase">
                         Incl. 18% GST (CGST+SGST)
@@ -4385,11 +4383,11 @@ function InternDashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-                      <span>Top 10% Stipend (â‚¹5,000â€“â‚¹15,000)</span>
+                      <span>Top 10% Stipend (₹5,000–₹15,000)</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-                      <span>25%â€“50% Referral Cashbacks</span>
+                      <span>25%–50% Referral Cashbacks</span>
                     </div>
                   </div>
 
@@ -4400,7 +4398,7 @@ function InternDashboard() {
                         <div className="flex items-center gap-2">
                           <Tag className="h-4 w-4 text-emerald-600" />
                           <span className="font-bold text-emerald-900 dark:text-emerald-200">
-                            Code <strong>{appliedPromo.code}</strong> Applied: Saved â‚¹{appliedPromo.discount}!
+                            Code <strong>{appliedPromo.code}</strong> Applied: Saved ₹{appliedPromo.discount}!
                           </span>
                         </div>
                         <button
@@ -4434,11 +4432,11 @@ function InternDashboard() {
                               setIsApplyingPromo(false);
                               if (code === "SCHOLAR50" || code === "VYNTYRA50") {
                                 setAppliedPromo({ code, discount: 50 });
-                                toast.success(`Voucher ${code} applied! â‚¹50 discount activated.`);
+                                toast.success(`Voucher ${code} applied! ₹50 discount activated.`);
                                 setPromoCodeInput("");
                               } else if (code === "SCHOLAR100" || code === "VYNTYRA100") {
                                 setAppliedPromo({ code, discount: 100 });
-                                toast.success(`Voucher ${code} applied! â‚¹100 discount activated.`);
+                                toast.success(`Voucher ${code} applied! ₹100 discount activated.`);
                                 setPromoCodeInput("");
                               } else {
                                 toast.info(`Promo code "${code}" registered for cohort evaluation.`);
@@ -4530,7 +4528,7 @@ function InternDashboard() {
                               </span>
                             </div>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                              Direct Kotak 811, NetBanking, Instant UPI &amp; Cards â€” Integration in Progress
+                              Direct Kotak 811, NetBanking, Instant UPI &amp; Cards — Integration in Progress
                             </p>
                           </div>
                         </div>
@@ -4730,13 +4728,13 @@ function InternDashboard() {
                         : "bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-600/25"
                     }`}
                   >
-                    <Lock className="h-4 w-4" /> Pay â‚¹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))} Securely with {paymentGatewaySelected === "kotak" ? "Kotak Mahindra Bank" : paymentGatewaySelected === "payu" ? "PayU Enterprise" : "Secure Gateway"}
+                    <Lock className="h-4 w-4" /> Pay ₹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))} Securely with {paymentGatewaySelected === "kotak" ? "Kotak Mahindra Bank" : paymentGatewaySelected === "payu" ? "PayU Enterprise" : "Secure Gateway"}
                   </Button>
                   
                   {/* Legal and Management Footer */}
                   <div className="text-center space-y-1.5 pt-2">
                     <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
-                      Maintained &amp; Governed by JAMI ESWAR ANIL KUMAR Â· Founder &amp; Director
+                      Maintained &amp; Governed by JAMI ESWAR ANIL KUMAR · Founder &amp; Director
                     </p>
                     <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
                       <button 
@@ -4746,7 +4744,7 @@ function InternDashboard() {
                       >
                         View Proforma Invoice
                       </button>
-                      <span>â€¢</span>
+                      <span>•</span>
                       <button 
                         type="button"
                         onClick={() => setPaymentModalTab("privacy")} 
@@ -4754,7 +4752,7 @@ function InternDashboard() {
                       >
                         Privacy Policy (DPDPA 2023)
                       </button>
-                      <span>â€¢</span>
+                      <span>•</span>
                       <button 
                         type="button"
                         onClick={() => setPaymentModalTab("refunds")} 
@@ -4821,7 +4819,7 @@ function InternDashboard() {
                           <tr>
                             <th className="p-2.5">Item Description</th>
                             <th className="p-2.5 text-center">SAC Code</th>
-                            <th className="p-2.5 text-right">Amount (â‚¹)</th>
+                            <th className="p-2.5 text-right">Amount (₹)</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -4832,25 +4830,25 @@ function InternDashboard() {
                             </td>
                             <td className="p-2.5 text-center font-mono text-[11px]">999293</td>
                             <td className="p-2.5 text-right font-mono font-bold">
-                              â‚¹{(Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0)) / 1.18).toFixed(2)}
+                              ₹{(Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0)) / 1.18).toFixed(2)}
                             </td>
                           </tr>
                           <tr>
                             <td colSpan={2} className="p-2 text-right text-[11px] text-slate-500">CGST (9%)</td>
                             <td className="p-2 text-right font-mono text-[11px]">
-                              â‚¹{((Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0)) / 1.18) * 0.09).toFixed(2)}
+                              ₹{((Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0)) / 1.18) * 0.09).toFixed(2)}
                             </td>
                           </tr>
                           <tr>
                             <td colSpan={2} className="p-2 text-right text-[11px] text-slate-500">SGST (9%)</td>
                             <td className="p-2 text-right font-mono text-[11px]">
-                              â‚¹{((Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0)) / 1.18) * 0.09).toFixed(2)}
+                              ₹{((Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0)) / 1.18) * 0.09).toFixed(2)}
                             </td>
                           </tr>
                           <tr className="bg-emerald-50/60 dark:bg-emerald-950/30 font-bold">
                             <td colSpan={2} className="p-2.5 text-right text-emerald-900 dark:text-emerald-200">Total Net Amount Payable (INR):</td>
                             <td className="p-2.5 text-right font-mono text-sm text-emerald-900 dark:text-emerald-200">
-                              â‚¹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))}
+                              ₹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))}
                             </td>
                           </tr>
                         </tbody>
@@ -4869,7 +4867,7 @@ function InternDashboard() {
                   </Button>
 
                   <Button onClick={() => setPaymentModalTab("checkout")} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">
-                    Proceed to Pay â‚¹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))}
+                    Proceed to Pay ₹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))}
                   </Button>
                 </div>
               </div>
@@ -4912,7 +4910,7 @@ function InternDashboard() {
 
                   <div className="p-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
                     <div className="text-[11px] font-bold text-slate-900 dark:text-white">Grievance Officer: JAMI ESWAR ANIL KUMAR</div>
-                    <div className="text-[11px] text-slate-600 dark:text-slate-300">Designation: Founder &amp; Director Â· Vyntyra Consultancy Services</div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-300">Designation: Founder &amp; Director · Vyntyra Consultancy Services</div>
                     <div className="text-[11px] text-slate-600 dark:text-slate-300">Email: jamieswaranilkumar@vyntyraconsultancyservices.in</div>
                     <div className="text-[11px] text-slate-600 dark:text-slate-300">Address: Dwaraka Nagar, Visakhapatnam - 530016, AP, India</div>
                   </div>
@@ -4988,7 +4986,7 @@ function InternDashboard() {
         </div>
       )}
 
-      {/* â”€â”€ Force Password Reset Modal â”€â”€ */}
+      {/* ── Force Password Reset Modal ── */}
       {showForcePasswordModal && (
         <div className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4" style={{ pointerEvents: 'all' }}>
           <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-slate-100 space-y-6 animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
@@ -5077,7 +5075,7 @@ function InternDashboard() {
         installLabel="Install Intern App"
       />
 
-      {/* â”€â”€ Meeting Reminder Popup Modal â”€â”€ */}
+      {/* ── Meeting Reminder Popup Modal ── */}
       {meetingAlert && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
@@ -5086,7 +5084,7 @@ function InternDashboard() {
                 <Video className="h-5 w-5 animate-bounce" />
                 <h2 className="text-base font-bold">Meeting Reminder</h2>
               </div>
-              <button className="text-slate-400 hover:text-slate-600 text-sm font-semibold" onClick={() => setMeetingAlert(null)}>âœ•</button>
+              <button className="text-slate-400 hover:text-slate-600 text-sm font-semibold" onClick={() => setMeetingAlert(null)}>✕</button>
             </div>
 
             <p className="text-xs text-slate-500 font-medium">You have a scheduled video meeting starting today. Please click join below to enter the meeting room.</p>
@@ -5150,7 +5148,7 @@ function InternDashboard() {
         </div>
       )}
 
-      {/* â”€â”€ Referral Announcement Floating Popup â”€â”€ */}
+      {/* ── Referral Announcement Floating Popup ── */}
       {showReferralPopup && (
         <div className="fixed bottom-4 right-4 z-[90] max-w-sm bg-white rounded-2xl border border-indigo-100 p-5 shadow-2xl animate-in slide-in-from-bottom-5 fade-in duration-500 hover:shadow-indigo-500/5">
           <div className="flex items-start justify-between gap-4">
@@ -5204,13 +5202,13 @@ function InternDashboard() {
               }}
               className="text-slate-400 hover:text-slate-600 transition-colors"
             >
-              âœ•
+              ✕
             </button>
           </div>
         </div>
       )}
 
-      {/* â”€â”€â”€ URGENT ONSCREEN POPUP NOTIFICATION MODAL â”€â”€â”€ */}
+      {/* ─── URGENT ONSCREEN POPUP NOTIFICATION MODAL ─── */}
       {profile?.urgent_popup_active && isFeePaymentPending && (
         <div className="fixed inset-0 z-[150] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl border-2 border-rose-300 animate-in fade-in zoom-in-95 duration-200 text-slate-900">
@@ -5231,7 +5229,7 @@ function InternDashboard() {
             </div>
 
             <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-slate-800 leading-relaxed font-medium">
-              {profile?.urgent_popup_message || "Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to â‚¹5,000 to â‚¹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional."}
+              {profile?.urgent_popup_message || "Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional."}
             </div>
 
             {/* Countdown timer in modal */}
@@ -5277,14 +5275,14 @@ function InternDashboard() {
                   setShowPaymentModal(true);
                 }}
               >
-                <DollarSign className="h-4 w-4" /> Pay â‚¹{profile?.exam_fee_amount || 199} Now
+                <DollarSign className="h-4 w-4" /> Pay ₹{profile?.exam_fee_amount || 199} Now
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* â”€â”€â”€ REQUEST DOUBT SOLVING SESSION DIALOG â”€â”€â”€ */}
+      {/* ─── REQUEST DOUBT SOLVING SESSION DIALOG ─── */}
       <Dialog open={doubtModalOpen} onOpenChange={setDoubtModalOpen}>
         <DialogContent className="sm:max-w-md bg-white border border-orange-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
@@ -5387,7 +5385,7 @@ function InternDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* â”€â”€â”€ REQUEST RESOURCES DIALOG â”€â”€â”€ */}
+      {/* ─── REQUEST RESOURCES DIALOG ─── */}
       <Dialog open={resourceModalOpen} onOpenChange={setResourceModalOpen}>
         <DialogContent className="sm:max-w-md bg-white border border-orange-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
@@ -5487,7 +5485,7 @@ function InternDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* â”€â”€â”€ LMS VIDEO PLAYER MODAL â”€â”€â”€ */}
+      {/* ─── LMS VIDEO PLAYER MODAL ─── */}
       <Dialog open={!!lmsVideoModalId} onOpenChange={(open) => !open && setLmsVideoModalId(null)}>
         <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-black border-slate-800">
           <div className="relative aspect-video w-full">
@@ -5504,7 +5502,7 @@ function InternDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* â”€â”€â”€ PROFILE DETAIL CHANGE REQUEST MODAL â”€â”€â”€ */}
+      {/* ─── PROFILE DETAIL CHANGE REQUEST MODAL ─── */}
       <ProfileChangeRequestModal
         open={profileModalOpen}
         onOpenChange={setProfileModalOpen}
@@ -5521,4 +5519,3 @@ function InternDashboard() {
     </div>
   );
 }
-
