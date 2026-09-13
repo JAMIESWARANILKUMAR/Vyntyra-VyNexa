@@ -100,6 +100,23 @@ export const listTeamMembers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     // Fetch user roles
     const { data: roles } = await adminClient
@@ -567,6 +584,23 @@ export const updateTaskExecution = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     const updatePayload: any = {
       status: data.status,
       updated_at: new Date().toISOString(),
@@ -1401,6 +1435,23 @@ export const getLmsCourses = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     const user = context.user;
     
     let courses: LmsCourseItem[] = [];
@@ -1501,6 +1552,23 @@ export const saveLmsCourse = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     const courseId = data.id || `course-${Date.now()}`;
 
     let ytId = data.youtube_video_id || null;
@@ -1566,6 +1634,23 @@ export const deleteLmsCourse = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     
     let courses: LmsCourseItem[] = DEFAULT_LMS_CATALOG;
     try {
@@ -1607,6 +1692,23 @@ export const requestDoubtSolvingSession = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     const now = new Date().toISOString();
 
     const { data: profile } = await adminClient
@@ -1681,6 +1783,23 @@ export const requestTaskResources = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     const now = new Date().toISOString();
 
     const { data: profile } = await adminClient
@@ -1781,6 +1900,23 @@ export const reviewInternTaskByAdmin = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     
     // Normalise status for Postgres check constraint if needed
     // standard check constraint allows: 'pending', 'in_progress', 'completed', 'blocked', 'rejected'
@@ -1963,6 +2099,23 @@ export const createMeeting = createServerFn({ method: 'POST' })
   .inputValidator((d: unknown) => meetingSchema.parse(d))
   .handler(async ({ data, context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     const scheduledAt = data.scheduled_at || data.start_time || new Date().toISOString();
     const startDate = new Date(scheduledAt);
     const durationMins = data.duration_minutes || 30;
@@ -2060,6 +2213,23 @@ export const updateMeeting = createServerFn({ method: 'POST' })
   .inputValidator((d: unknown) => updateMeetingSchema.parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     const updatePayload: any = {};
     if (data.title !== undefined) updatePayload.title = data.title;
@@ -2211,6 +2381,23 @@ export const getMyDocuments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     // Get the intern's profile to find their application id
     const { data: profile } = await adminClient
       .from("profiles")
@@ -2232,7 +2419,7 @@ export const getMyDocuments = createServerFn({ method: "GET" })
     if (!app) return { nocUrl: null, offerLetterUrl: null };
 
     // 1. Resolve or Generate Offer Letter
-    let offerLetterUrl = app.offer_letter_url || null;
+    let offerLetterUrl = await getValidUrl(app.offer_letter_url || null, adminClient);
     if (!offerLetterUrl) {
       try {
         const startDateVal = profile.start_date || app.joining_date || app.internship_start_date || new Date().toISOString();
@@ -2296,7 +2483,7 @@ export const getMyDocuments = createServerFn({ method: "GET" })
 
     let nocUrl: string | null = null;
     if (isNocDownloadEnabled) {
-      nocUrl = profile.noc_url || app.noc_url || null;
+      nocUrl = await getValidUrl(profile.noc_url || app.noc_url || null, adminClient);
       if (!nocUrl) {
         const nocPath = `nocs/${app.id}_NOC.pdf`;
         const { data: signedData } = await adminClient.storage
@@ -2457,6 +2644,23 @@ export const deleteStoredOfferLetterAndRegenerate = createServerFn({ method: "PO
   }).parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     // 1. Resolve Application & Profile
     let app: any = null;
@@ -2520,6 +2724,23 @@ export const deleteStoredNocAndRegenerate = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     // 1. Resolve Application & Profile
     let app: any = null;
@@ -2624,6 +2845,23 @@ export const deleteStoredOfferLetter = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     if (data.applicationId) {
       await adminClient.storage.from("default").remove([`offer_letters/${data.applicationId}_OfferLetter.pdf`]);
       await adminClient.from("applications").update({ offer_letter_url: null }).eq("id", data.applicationId);
@@ -2642,6 +2880,23 @@ export const deleteStoredNoc = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     if (data.applicationId) {
       await adminClient.storage.from("default").remove([`nocs/${data.applicationId}_NOC.pdf`]);
       await adminClient.from("applications").update({ noc_url: null }).eq("id", data.applicationId);
@@ -2656,6 +2911,23 @@ export const getInternMentorDetails = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     // 1. Fetch the intern's own profile
     const { data: profile } = await adminClient
@@ -2768,6 +3040,23 @@ export const updateUserProfile = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => profileUpdateSchema.parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     const { id, ...updates } = data;
 
     // 1. Prepare clean primary updates payload
@@ -3082,6 +3371,23 @@ export const clockIn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     const today = new Date().toISOString().split('T')[0];
     const todayDateStr = new Date().toDateString();
     
@@ -3140,6 +3446,23 @@ export const clockOut = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     const today = new Date().toISOString().split('T')[0];
     const todayDateStr = new Date().toDateString();
     
@@ -3194,6 +3517,23 @@ export const getMyAttendance = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     const { data, error } = await adminClient
       .from("attendance")
       .select("*")
@@ -3210,6 +3550,23 @@ export const getMenteeAttendance = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ internId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     
     // Verify the requester is the mentor of the requested intern
     const { data: profile, error: profileErr } = await adminClient
@@ -3263,6 +3620,23 @@ export const listAllLeaves = createServerFn({ method: 'GET' })
   .handler(async ({ context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     const { data: leaveData, error } = await adminClient
       .from('leave_requests')
@@ -3313,6 +3687,23 @@ export const listAllAttendance = createServerFn({ method: 'GET' })
   .handler(async ({ context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     const { data: attData, error } = await adminClient
       .from('attendance')
@@ -3344,6 +3735,23 @@ export const listAllPayouts = createServerFn({ method: 'GET' })
   .handler(async ({ context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     const { data: payoutData, error } = await adminClient
       .from('payouts')
@@ -3369,6 +3777,23 @@ export const createPayout = createServerFn({ method: 'POST' })
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     const { error } = await adminClient.from('payouts').insert({
       user_id: data.user_id,
@@ -3387,6 +3812,23 @@ export const updatePayoutStatus = createServerFn({ method: 'POST' })
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     const { error } = await adminClient.from('payouts').update({ status: data.status }).eq('id', data.id);
     if (error) throw new Error(error.message);
@@ -3401,6 +3843,23 @@ export const assignIntern = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     const { error } = await adminClient.from("profiles").update({ mentor_id: data.employeeId }).eq("id", data.internId);
     if (error) throw new Error(error.message);
@@ -3423,6 +3882,23 @@ export const removeIntern = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     const { error } = await adminClient.from("profiles").update({ mentor_id: null }).eq("id", data.internId);
     if (error) throw new Error(error.message);
@@ -3447,6 +3923,23 @@ export const adminResetPassword = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     const { error } = await adminClient.auth.admin.updateUserById(data.userId, { password: data.newPassword });
     if (error) throw new Error(error.message);
@@ -3565,6 +4058,23 @@ export const listAllExpenses = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     const { data: expData, error } = await adminClient
       .from("expense_claims")
@@ -3590,6 +4100,23 @@ export const updateExpenseStatus = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     const { error } = await adminClient.from("expense_claims").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -3601,6 +4128,23 @@ export const listAllSupportTickets = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     const { data: ticketData, error } = await adminClient
       .from("support_tickets")
@@ -3626,6 +4170,23 @@ export const updateSupportTicketStatus = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Unauthorized");
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     const { error } = await adminClient.from("support_tickets").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -3702,6 +4263,23 @@ export const createDeliverable = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     let url = data.submission_url.trim();
     if (!/^https?:\/\//i.test(url) && !url.startsWith("data:")) {
       url = `https://${url}`;
@@ -3935,6 +4513,23 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
     const domain = data.domain?.trim() || "";
     const subDomain = data.sub_domain?.trim() || "";
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     let subject = data.custom_subject?.trim() || "Invitation: 2026 Official Internship Program — Vyntyra Consultancy Services";
 
     let resendId: string | null = null;
@@ -4183,6 +4778,23 @@ export const sendB2bPitchEmail = createServerFn({ method: "POST" })
     // Record log in automated_emails_log
     try {
       const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
       const now = new Date();
       await adminClient.from("automated_emails_log").insert({
         recipient_email: recipientEmail,
@@ -4234,6 +4846,23 @@ export const getEmailQuotaStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     const startOfToday = new Date().toISOString().split('T')[0];
 
     const { data: logs } = await adminClient
@@ -4272,6 +4901,23 @@ export const listAutomatedEmailLogs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
 
     // 1. Promotional emails (automated_emails_log)
     const { data: promoLogs, error: promoError } = await adminClient
@@ -4375,6 +5021,23 @@ export const deleteAutomatedEmailLog = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     const { error } = await adminClient.from("automated_emails_log").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { success: true };
@@ -4384,6 +5047,23 @@ export const getPromotionalEmailConversionStats = createServerFn({ method: "GET"
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     // 1. Fetch promotional email logs
     const { data: emailLogs } = await adminClient
       .from("automated_emails_log")
@@ -5057,6 +5737,23 @@ export const submitTaskUrl = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const adminClient = getAdminClient();
+    async function getValidUrl(url: string | null, client: any) {
+      if (!url) return null;
+      if (url.includes("/storage/v1/object/")) {
+        try {
+          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+          if (match) {
+            const bucket = match[2];
+            const filePath = decodeURIComponent(match[3]).split("?")[0];
+            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+            if (signedData?.signedUrl) return signedData.signedUrl;
+          }
+        } catch (e) {
+          console.warn("Failed to re-sign URL", e);
+        }
+      }
+      return url;
+    }
     let url = data.submissionUrl.trim();
     if (!/^https?:\/\//i.test(url) && !url.startsWith("data:")) {
       url = `https://${url}`;
