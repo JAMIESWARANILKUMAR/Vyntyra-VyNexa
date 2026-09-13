@@ -735,16 +735,7 @@ export function AdminInternTasksView() {
           </span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveViewTab("stored_bank")}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-            activeViewTab === "stored_bank"
-              ? "bg-white dark:bg-slate-950 text-emerald-600 dark:text-emerald-400 shadow-sm border"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-          }`}
-        >
-          <Button
+        <Button
           type="button"
           variant="ghost"
           onClick={() => setActiveViewTab("submissions")}
