@@ -1115,7 +1115,7 @@ function InternDashboard() {
           </div>
 
           {/* Desktop Tab Navigation (Clean White & Orange Pill Bar for 2xl Screens) */}
-          <nav className="hidden 2xl:flex items-center gap-1 overflow-x-auto py-1 scrollbar-none max-w-[50%] bg-orange-50/90 border border-orange-200/80 rounded-2xl px-2">
+          <nav className="hidden 2xl:flex items-center gap-1 overflow-x-auto py-1 scrollbar-none max-w-[50%] flex-1 min-w-0 bg-orange-50/90 border border-orange-200/80 rounded-2xl px-2">
             {TABS.slice(0, 8).map((t: any) => {
               const isActive = activeTab === t.id;
               const TabIcon = t.icon;
@@ -1144,7 +1144,7 @@ function InternDashboard() {
           </nav>
 
           {/* User Actions Cluster */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+          <div className="flex items-center justify-end gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar shrink min-w-0 pb-1 sm:pb-0">
             {/* Quick Link to Tasks */}
             <Button
               size="sm"
