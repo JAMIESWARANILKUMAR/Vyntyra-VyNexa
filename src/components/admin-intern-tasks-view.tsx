@@ -48,7 +48,8 @@ export function AdminInternTasksView() {
   const doAssignStoredTasks = useServerFn(assignStoredTasksToInterns);
 
   // Tab State: "active" (Assigned to Interns) vs "stored_bank" (Repository for Future)
-  const [activeViewTab, setActiveViewTab] = useState<"active" | "stored_bank">("active");
+  const [activeViewTab, setActiveViewTab] = useState<"active" | "submissions" | "stored_bank">("active");
+  const [previewTask, setPreviewTask] = useState<any>(null);
 
   const [manageTeamTask, setManageTeamTask] = useState<any>(null);
   const [editingDeadlineTaskId, setEditingDeadlineTaskId] = useState<string | null>(null);
@@ -314,7 +315,8 @@ export function AdminInternTasksView() {
   const tasks: any[] = tasksQ.data || [];
 
   // Split tasks into Active Assigned vs Stored Future Repository
-  const activeAssignedTasks = tasks.filter((t) => t && t.assigned_to && !t.is_pool_task);
+  const activeAssignedTasks = tasks.filter((t) => t && (t.assigned_to || t.team_id || t.assignment_mode === 'team') && !t.is_pool_task);
+  const pendingSubmissions = tasks.filter((t) => t && t.status === "submitted");
   const storedBankTasks = tasks.filter((t) => t && (!t.assigned_to || t.is_pool_task));
 
   // Filter Active Assigned Tasks
@@ -337,6 +339,14 @@ export function AdminInternTasksView() {
   });
 
   // Filter Stored Bank Tasks
+  const filteredSubmissions = pendingSubmissions.filter((t) => {
+    if (!t) return false;
+    const internName = t.assigned_profile?.full_name || t.assigned_profile?.email || "";
+    const title = t.title || "";
+    const searchLower = (searchQuery || "").toLowerCase();
+    return !searchLower || title.toLowerCase().includes(searchLower) || internName.toLowerCase().includes(searchLower);
+  });
+
   const filteredStoredTasks = storedBankTasks.filter((t) => {
     if (!t) return false;
     const title = t.title || "";
@@ -495,6 +505,17 @@ export function AdminInternTasksView() {
       toast.error(err.message || "Failed to update tasks");
     }
   };
+
+  
+  // Helper to safely render drive links or standard links in an iframe
+  const getPreviewUrl = (url: string) => {
+    if (!url) return "";
+    if (url.includes("drive.google.com/file/d/")) {
+      return url.replace(/\/view.*$/, "/preview");
+    }
+    return url;
+  };
+
 
   const handleInlineDeadlineUpdate = async (taskId: string) => {
     if (!inlineDueDate) return;
@@ -722,6 +743,24 @@ export function AdminInternTasksView() {
               ? "bg-white dark:bg-slate-950 text-emerald-600 dark:text-emerald-400 shadow-sm border"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
           }`}
+        >
+          <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setActiveViewTab("submissions")}
+          className={lex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer h-auto }
+        >
+          <CheckCheck className="h-4 w-4 text-rose-600" />
+          <span>Pending Submissions</span>
+          <span className={px-2 py-0.5 rounded-full text-[10px] font-bold }>
+            {pendingSubmissions.length}
+          </span>
+        </Button>
+
+        <button
+          type="button"
+          onClick={() => setActiveViewTab("stored_bank")}
+          className={lex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer }
         >
           <FolderArchive className="h-4 w-4 text-emerald-600" />
           <span>Stored Task Bank (Future Repository)</span>
@@ -1015,14 +1054,12 @@ export function AdminInternTasksView() {
                         )}
 
                         {taskFile && (
-                          <a
-                            href={taskFile}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium"
+                          <button
+                            onClick={() => setPreviewTask({...t, _previewUrl: taskFile})}
+                            className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
                           >
                             <FileText className="h-3.5 w-3.5" /> View Task File
-                          </a>
+                          </button>
                         )}
 
                         {t.task_meet_link && (
@@ -1352,14 +1389,12 @@ export function AdminInternTasksView() {
                         )}
 
                         {taskFile && (
-                          <a
-                            href={taskFile}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium"
+                          <button
+                            onClick={() => setPreviewTask({...t, _previewUrl: taskFile})}
+                            className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
                           >
                             <FileText className="h-3.5 w-3.5" /> View Task File
-                          </a>
+                          </button>
                         )}
 
                         {rep.task_meet_link && (
@@ -1488,7 +1523,64 @@ export function AdminInternTasksView() {
       )}
 
       {/* ── STORED TASK BANK / FUTURE REPOSITORY VIEW ── */}
+      
+      {/* PENDING SUBMISSIONS QUEUE VIEW */}
+      {activeViewTab === "submissions" && (
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-slate-950 p-5 rounded-2xl border shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2"><CheckCheck className="h-5 w-5 text-rose-600" /> Pending Submissions Review Queue</h2>
+              <Input
+                placeholder="Search submissions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full sm:w-[250px] h-9 text-xs"
+              />
+            </div>
+            
+            <div className="space-y-3">
+              {filteredSubmissions.length === 0 ? (
+                <div className="p-8 text-center bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-200">
+                  <p className="text-slate-500 font-medium">No pending submissions to review. You're all caught up!</p>
+                </div>
+              ) : (
+                filteredSubmissions.map((t: any) => (
+                  <div key={t.id} className="p-4 bg-slate-50 hover:bg-slate-100 transition-colors rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-sm">{t.title}</span>
+                        <Badge className="bg-indigo-100 text-indigo-800 text-[10px]">Submitted</Badge>
+                      </div>
+                      <div className="text-xs text-slate-600 flex items-center gap-2">
+                        <User className="h-3 w-3" /> 
+                        <span className="font-medium">{t.assigned_profile?.full_name || "Unknown Intern"}</span>
+                        {t.assigned_profile?.email && <span>({t.assigned_profile.email})</span>}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 h-8 text-xs cursor-pointer"
+                        onClick={() => {
+                          setSelectedTaskForReview(t);
+                          setAdminRemarks(t.progress_notes || "");
+                        }}
+                      >
+                        <Eye className="h-3.5 w-3.5 mr-1.5" /> View Deliverable & Grade
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeViewTab === "stored_bank" && (
+
         <div className="space-y-6">
           {/* Stored Bank Banner */}
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white dark:bg-slate-950 p-6 rounded-2xl border shadow-sm">
@@ -1726,20 +1818,30 @@ export function AdminInternTasksView() {
             </DialogHeader>
 
             <div className="space-y-4 py-2">
+              
               {selectedTaskForReview.deliverable_url && (
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
-                  <span className="text-[11px] font-bold text-slate-700 block">Submitted Deliverable URL:</span>
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
+                  <span className="text-[11px] font-bold text-slate-700 block">Submitted Deliverable:</span>
                   <a
                     href={selectedTaskForReview.deliverable_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs text-blue-600 hover:underline flex items-center gap-1 font-mono break-all"
+                    className="text-xs text-blue-600 hover:underline flex items-center gap-1 font-mono break-all mb-2"
                   >
                     <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                     {selectedTaskForReview.deliverable_url}
                   </a>
+                  <div className="w-full h-[40vh] sm:h-[50vh] border border-slate-300 rounded-lg overflow-hidden bg-white relative">
+                    <iframe 
+                      src={getPreviewUrl(selectedTaskForReview.deliverable_url)} 
+                      className="w-full h-full border-0" 
+                      title="Deliverable Preview"
+                      allow="autoplay"
+                    />
+                  </div>
                 </div>
               )}
+
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
