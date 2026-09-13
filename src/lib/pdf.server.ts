@@ -233,10 +233,10 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
 
   const signInfo = "Kindly confirm your acceptance by signing this letter and returning a scanned copy within 7 business days, failing which this offer shall automatically expire.";
   const splitSignInfo = doc.splitTextToSize(signInfo, 170);
-  doc.text(splitSignInfo, 20, termsY + 28);
+  doc.text(splitSignInfo, 20, termsY + 30);
 
   // ─── SIGNATURE BLOCK ───
-  const signY = 238;
+  const signY = 248;
   
   // Vyntyra Signatory
   doc.setFont("helvetica", "bold");
