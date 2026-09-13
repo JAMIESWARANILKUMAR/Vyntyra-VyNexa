@@ -237,7 +237,9 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
     ["Position / Role",      details.roleApplied],
     ["Department / Domain",  details.domain       || "As Assigned"],
     ["Specialisation",       details.subDomain    || "As Assigned"],
+    ["Reporting Manager",    "Assigned Technical Mentor / Lead Developer"],
     ["Nature of Engagement", "Internship / Project-Based Engagement"],
+    ["Working Hours",        "Flexible (Subject to project requirements)"],
     ["Duration",             durationMonths ? `${durationMonths} Month(s)` : "As Per Agreement"],
     ["Date of Commencement", fmtDate(startDate)],
     ["Date of Conclusion",   fmtDate(endDate)],
@@ -300,7 +302,6 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   doc.setTextColor(slate[0], slate[1], slate[2]);
   doc.text("Founder & Managing Director", ML, curY + 5);
 
-  drawInternSignatureBox(PH - 45);
   drawFooter();
 
   // ── PAGE 2 ──────────────────────────────────────────────────
@@ -337,6 +338,10 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   const terms = [
     "This offer is contingent upon satisfactory verification of all academic, professional credentials, and any other background information provided during the selection process.",
     "The intern/appointee shall not disclose any proprietary, technical, financial, or operational information of Vyntyra Consultancy Services to any third party, during or after the period of engagement.",
+    "Intellectual Property: All code, documentation, designs, and work product developed during the course of the internship shall remain the exclusive intellectual property (IP) of Vyntyra Consultancy Services.",
+    "Equipment & Resources: The engagement operates on a Bring Your Own Device (BYOD) model. Interns are expected to use their own hardware unless explicitly specified otherwise.",
+    "Termination: Either party may terminate this engagement by providing 7 days' written notice. The company reserves the right to terminate the agreement immediately in the event of misconduct or breach of policies.",
+    "Certificate Eligibility: Issuance of an internship completion certificate is strictly subject to the successful submission of all assigned project milestones, deliverables, and satisfactory performance.",
     "This offer does not constitute a permanent employment contract. Continuation beyond the stated engagement period is subject to mutual agreement and organisational requirements.",
     "The appointee is required to adhere to all company policies, including the Code of Conduct, IT Usage Policy, and any departmental SOPs communicated upon joining.",
     "Please sign and return a copy of this letter within 7 (seven) calendar days to confirm your acceptance. Failure to do so shall render this offer null and void.",
