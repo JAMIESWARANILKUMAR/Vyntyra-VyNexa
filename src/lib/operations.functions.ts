@@ -2545,8 +2545,8 @@ export const getMyDocuments = createServerFn({ method: "GET" })
             const { getBrandingSettings } = await import("./settings.functions");
             const branding = await getBrandingSettings();
 
-            const signatureBase64 = await urlToBase64(branding.founder_signature_url || "/signature.png");
-            const logoBase64 = await urlToBase64(branding.vyntyra_logo_url || "/icon-512.png");
+            const signatureBase64 = await urlToBase64(branding.founder_signature_url || "https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
+            const logoBase64 = await urlToBase64(branding.vyntyra_logo_url || "https://careers.vyntyraconsultancyservices.in/icon-512.png");
 
             let photoBase64 = null;
             const url = profile.avatar_url || app.profile_photo_url;
@@ -2822,8 +2822,8 @@ export const deleteStoredNocAndRegenerate = createServerFn({ method: "POST" })
     const { getBrandingSettings } = await import("./settings.functions");
     const branding = await getBrandingSettings();
 
-    const logoBase64 = await urlToBase64(branding.vyntyra_logo_url || "/icon-512.png");
-    const signatureBase64 = await urlToBase64(branding.founder_signature_url || "/signature.png");
+    const logoBase64 = await urlToBase64(branding.vyntyra_logo_url || "https://careers.vyntyraconsultancyservices.in/icon-512.png");
+    const signatureBase64 = await urlToBase64(branding.founder_signature_url || "https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
 
     let photoBase64: string | null = null;
     if (app.profile_photo_url) {
@@ -8351,3 +8351,45 @@ export const scheduleMentorMeeting = createServerFn({ method: "POST" })
 
 
 
+
+
+export async function bulkDeleteNocs() {
+  const { createAdminClient } = await import("@/lib/supabase.server");
+  const adminClient = await createAdminClient();
+  const { data: apps, error } = await adminClient.from("applications").select("id, noc_url").not("noc_url", "is", null);
+  if (error) throw new Error("Failed to fetch applications");
+
+  const filesToDelete = apps.map(app => `noc_documents/${app.id}_NOC.pdf`);
+  if (filesToDelete.length > 0) {
+    await adminClient.storage.from("default").remove(filesToDelete);
+  }
+
+  await adminClient.from("applications").update({ noc_url: null }).not("noc_url", "is", null);
+  await adminClient.from("profiles").update({ noc_url: null }).not("noc_url", "is", null);
+
+  return { message: "All NOCs deleted successfully" };
+}
+
+export async function bulkRegenerateNocs() {
+  const { createAdminClient } = await import("@/lib/supabase.server");
+  const adminClient = await createAdminClient();
+  const { data: interns, error } = await adminClient
+    .from("profiles")
+    .select("id, role, application_id")
+    .eq("role", "intern");
+  if (error) throw new Error("Failed to fetch interns");
+
+  let count = 0;
+  for (const intern of interns) {
+    if (intern.application_id) {
+      try {
+        await deleteStoredNocAndRegenerate(intern.application_id);
+        count++;
+      } catch (err) {
+        console.error("Failed to regenerate NOC for", intern.id, err);
+      }
+    }
+  }
+
+  return { message: `Successfully regenerated ${count} NOCs.` };
+}

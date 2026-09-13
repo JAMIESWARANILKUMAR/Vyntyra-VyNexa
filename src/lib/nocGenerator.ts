@@ -43,8 +43,12 @@ export async function urlToBase64(
     if (trimmed.startsWith("data:image")) return trimmed;
 
     let targetUrl = trimmed;
-    if (targetUrl.startsWith("/") && typeof window !== "undefined") {
-      targetUrl = window.location.origin + targetUrl;
+    if (targetUrl.startsWith("/")) {
+      if (typeof window !== "undefined") {
+        targetUrl = window.location.origin + targetUrl;
+      } else {
+        targetUrl = "https://careers.vyntyraconsultancyservices.in" + targetUrl;
+      }
     }
 
     const resolvedUrl = (await resolveGooglePhotosUrl(targetUrl)) || targetUrl;

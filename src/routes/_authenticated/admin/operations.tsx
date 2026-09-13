@@ -34,7 +34,7 @@ import {
   sendSmsNotification, getSmsQuotaStats, listSmsLogs, deleteSmsLog,
   listAllSupportQueries, assignSupportQueryEmployee, approveSupportMeeting,
   deleteStoredOfferLetterAndRegenerate, deleteStoredNocAndRegenerate, deleteStoredOfferLetter, deleteStoredNoc,
-  bulkDeleteOfferLetters, bulkRegenerateOfferLetters,
+  bulkDeleteOfferLetters, bulkRegenerateOfferLetters, bulkDeleteNocs, bulkRegenerateNocs,
   listHolidays, createHoliday, deleteHoliday, updateHoliday, type HolidayItem
 } from "@/lib/operations.functions";
 import { localDateTimeToIso, isoToLocalDateTimeInput, formatDateTimeDisplay, generateGoogleCalendarUrl, formatMeetingTimeRange } from "@/lib/date-utils";
@@ -1418,6 +1418,38 @@ function OperationsDashboard() {
                     }
                   }} className="gap-1.5 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50 flex">
                     <RefreshCw className="h-3.5 w-3.5" /> Regenerate All Offer Letters
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={async () => {
+                    if (confirm("Are you sure you want to completely delete all NOCs from the database and storage?")) {
+                      const lToast = toast.loading("Deleting all NOCs...");
+                      try {
+                        await bulkDeleteNocs();
+                        toast.dismiss(lToast);
+                        toast.success("All NOCs deleted successfully!");
+                        teamQ.refetch();
+                      } catch (e) {
+                        toast.dismiss(lToast);
+                        toast.error("Failed to delete NOCs.");
+                      }
+                    }
+                  }} className="gap-1.5 text-xs border-red-200 text-red-700 hover:bg-red-50 hidden xl:flex">
+                    <Trash2 className="h-3.5 w-3.5" /> Delete All NOCs
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={async () => {
+                    if (confirm("Are you sure you want to regenerate NOCs for all interns? This may take some time.")) {
+                      const lToast = toast.loading("Regenerating all NOCs...");
+                      try {
+                        const res = await bulkRegenerateNocs();
+                        toast.dismiss(lToast);
+                        toast.success(res.message);
+                        teamQ.refetch();
+                      } catch (e) {
+                        toast.dismiss(lToast);
+                        toast.error("Failed to regenerate NOCs.");
+                      }
+                    }
+                  }} className="gap-1.5 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50 hidden xl:flex">
+                    <RefreshCw className="h-3.5 w-3.5" /> Regenerate All NOCs
                   </Button>
                   <Button size="sm" onClick={() => setProvisionOpen(true)} className="gap-2 text-xs shadow-sm">
                   <Plus className="h-4 w-4" /> Add Team Member
