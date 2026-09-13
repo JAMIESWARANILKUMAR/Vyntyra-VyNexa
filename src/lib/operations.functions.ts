@@ -646,7 +646,7 @@ export const updateTaskExecution = createServerFn({ method: "POST" })
                  from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
                  to: profileData.email,
                  subject: `Task Submitted Successfully: ${taskData.title}`,
-                 html: `<p>Hi ${profileData.full_name || "Intern"},</p><p>Your submission for the task "<strong>${taskData.title}</strong>" has been successfully received.</p><p>Our operations team will review it shortly.</p><p>Best,<br>Vyntyra Team</p>`
+                 html: `<p>Hi ${profileData.full_name || "Intern"},</p><p>Your submission for the task "<strong>${taskData.title}</strong>" has been successfully received.</p><p>Our operations team will review it shortly.</p><p>Best,</p><p><strong>Jamieswaran Ilkumar</strong><br>Founder & CEO<br>Vyntyra Consultancy Services</p><p><img src="${process.env.VITE_APP_URL || "https://portal.vyntyraconsultancyservices.in"}/signature.png" alt="Founder Signature" style="max-width: 150px;" /></p>`
                });
                
                let notifyEmails = ["hr@vyntyraconsultancyservices.in"];
@@ -5889,7 +5889,7 @@ export const submitTaskUrl = createServerFn({ method: "POST" })
           html: `<p>Hi ${internProfile.full_name || 'Intern'},</p>
           <p>Your task deliverable for <strong>${updatedTaskTitle}</strong> has been submitted successfully.</p>
           <p>Deliverable URL: <a href="${url}">${url}</a></p>
-          <p>It is now queued for mentor review.</p>`
+          <p>It is now queued for mentor review.</p>\n          <br><p>Best,</p><p><strong>Jamieswaran Ilkumar</strong><br>Founder & CEO<br>Vyntyra Consultancy Services</p><p><img src="/signature.png" alt="Founder Signature" style="max-width: 150px;" /></p>`
         });
       }
 
