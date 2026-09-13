@@ -748,11 +748,11 @@ export function AdminInternTasksView() {
           type="button"
           variant="ghost"
           onClick={() => setActiveViewTab("submissions")}
-          className={lex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer h-auto }
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer h-auto ${activeViewTab === "submissions" ? "bg-white dark:bg-slate-950 text-rose-600 dark:text-rose-400 shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
         >
           <CheckCheck className="h-4 w-4 text-rose-600" />
           <span>Pending Submissions</span>
-          <span className={px-2 py-0.5 rounded-full text-[10px] font-bold }>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "submissions" ? "bg-rose-100 text-rose-700" : "bg-slate-200 text-slate-700"}`}>
             {pendingSubmissions.length}
           </span>
         </Button>
@@ -760,7 +760,7 @@ export function AdminInternTasksView() {
         <button
           type="button"
           onClick={() => setActiveViewTab("stored_bank")}
-          className={lex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer }
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeViewTab === "stored_bank" ? "bg-white dark:bg-slate-950 text-emerald-600 dark:text-emerald-400 shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
         >
           <FolderArchive className="h-4 w-4 text-emerald-600" />
           <span>Stored Task Bank (Future Repository)</span>
