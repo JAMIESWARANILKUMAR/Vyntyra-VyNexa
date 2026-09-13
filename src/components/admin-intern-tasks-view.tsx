@@ -51,6 +51,8 @@ export function AdminInternTasksView() {
   const [activeViewTab, setActiveViewTab] = useState<"active" | "stored_bank">("active");
 
   const [manageTeamTask, setManageTeamTask] = useState<any>(null);
+  const [editingDeadlineTaskId, setEditingDeadlineTaskId] = useState<string | null>(null);
+  const [inlineDueDate, setInlineDueDate] = useState("");
   const [isManageTeamOpen, setIsManageTeamOpen] = useState(false);
 
   const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -491,6 +493,20 @@ export function AdminInternTasksView() {
       qc.invalidateQueries({ queryKey: ["my-tasks"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to update tasks");
+    }
+  };
+
+  const handleInlineDeadlineUpdate = async (taskId: string) => {
+    if (!inlineDueDate) return;
+    try {
+      await doBulkUpdateTasks({ data: { taskIds: [taskId], due_date: inlineDueDate } });
+      toast.success("Deadline updated successfully!");
+      setEditingDeadlineTaskId(null);
+      setInlineDueDate("");
+      qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+      qc.invalidateQueries({ queryKey: ["my-tasks"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update deadline");
     }
   };
 
@@ -1122,6 +1138,27 @@ export function AdminInternTasksView() {
                     >
                       <RotateCcw className="h-3.5 w-3.5 mr-1" /> Review
                     </Button>
+
+                    {editingDeadlineTaskId === t.id ? (
+                      <div className="flex items-center gap-1">
+                        <Input type="date" autoFocus value={inlineDueDate} onChange={e => setInlineDueDate(e.target.value)} className="h-8 text-xs w-[130px]" />
+                        <Button size="sm" className="h-8 bg-blue-600 hover:bg-blue-700 text-white px-2 cursor-pointer" onClick={() => handleInlineDeadlineUpdate(t.id)}>Save</Button>
+                        <Button size="sm" variant="ghost" className="h-8 px-2 cursor-pointer" onClick={() => setEditingDeadlineTaskId(null)}>Cancel</Button>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs font-bold text-slate-700 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1.5 shadow-2xs cursor-pointer"
+                        onClick={() => {
+                          setEditingDeadlineTaskId(t.id);
+                          setInlineDueDate(t.due_date ? t.due_date.split('T')[0] : "");
+                        }}
+                        title="Modify Task Deadline"
+                      >
+                        <Calendar className="h-3.5 w-3.5" /> Deadline
+                      </Button>
+                    )}
 
                     <Button
                       size="sm"
