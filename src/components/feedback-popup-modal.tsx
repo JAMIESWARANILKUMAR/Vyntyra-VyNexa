@@ -59,8 +59,28 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
   const [returnInterest, setReturnInterest] = useState("");
   const [biggestBottleneck, setBiggestBottleneck] = useState("");
   const [programChange, setProgramChange] = useState("");
+  const [isFormExpanded, setIsFormExpanded] = useState(false);
 
   if (!profile?.feedback_popup_active) return null;
+
+  if (!isFormExpanded) {
+    return (
+      <div className="fixed inset-0 z-[200] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-slate-200 text-center animate-in zoom-in-95 duration-200">
+          <div className="mx-auto w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-6">
+            <ClipboardList className="h-8 w-8" />
+          </div>
+          <h3 className="font-extrabold text-slate-900 text-2xl mb-3">Feedback Required</h3>
+          <p className="text-sm text-slate-500 mb-8 leading-relaxed">
+            You have a mandatory master feedback form waiting for you. Your honest feedback helps us improve the Vyntyra experience.
+          </p>
+          <Button onClick={() => setIsFormExpanded(true)} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-14 rounded-xl shadow-lg shadow-indigo-600/20 text-lg">
+            Start Feedback Form
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,10 +174,11 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
   );
 
   return (
-    <div className="fixed inset-0 z-[200] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto py-12">
-      <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-10 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200 text-slate-900 mt-20 sm:mt-10">
+    <div className="fixed inset-0 z-[200] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[95vh] flex flex-col shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200 text-slate-900">
         
-        <div className="flex items-center gap-4 border-b pb-6 mb-8">
+        {/* Fixed Header */}
+        <div className="flex items-center gap-4 border-b p-6 sm:px-10 shrink-0">
           <div className="p-3 bg-indigo-100 border border-indigo-200 rounded-2xl text-indigo-700 shadow-sm">
             <ClipboardList className="h-8 w-8" />
           </div>
@@ -169,7 +190,7 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-12">
+        <form onSubmit={handleSubmit} className="overflow-y-auto p-6 sm:p-10 space-y-12">
           
           {/* Section 1 */}
           <div className="space-y-6">
@@ -371,7 +392,7 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
 
           </div>
 
-          <div className="pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="sticky bottom-0 bg-white p-6 sm:px-10 border-t flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
             <p className="text-xs text-slate-500 flex items-center gap-1">
               <CheckCircle2 className="h-4 w-4 text-emerald-500" /> All required fields must be answered to submit.
             </p>

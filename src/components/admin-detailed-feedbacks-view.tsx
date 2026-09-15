@@ -28,6 +28,7 @@ export function AdminDetailedFeedbacksView() {
   const [targetType, setTargetType] = useState<"all" | "interns" | "employees">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewingFeedback, setViewingFeedback] = useState<any>(null);
+  const [showPreviewForm, setShowPreviewForm] = useState(false);
 
   const handleDispatch = async () => {
     setIsDispatching(true);
@@ -77,6 +78,13 @@ export function AdminDetailedFeedbacksView() {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <Button
+            onClick={() => setShowPreviewForm(true)}
+            variant="outline"
+            className="border-indigo-500 text-indigo-400 hover:bg-indigo-900/50 hover:text-white font-bold h-10"
+          >
+            <Eye className="h-4 w-4 mr-2" /> Preview Questions
+          </Button>
           <Button
             onClick={() => setShowDispatchModal(true)}
             className="bg-indigo-500 hover:bg-indigo-400 text-white font-bold shadow-md h-10"
@@ -273,6 +281,80 @@ export function AdminDetailedFeedbacksView() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Master Form Questions */}
+      <Dialog open={showPreviewForm} onOpenChange={setShowPreviewForm}>
+        <DialogContent className="max-w-3xl p-0 overflow-hidden bg-slate-50">
+          <div className="bg-indigo-950 p-6 text-white border-b border-indigo-900 flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-xl">Master Form Preview</DialogTitle>
+              <p className="text-sm text-indigo-300 mt-1">This is exactly what members will see when dispatched.</p>
+            </div>
+          </div>
+          <ScrollArea className="max-h-[70vh] p-6 space-y-8 bg-white">
+            <div className="space-y-6">
+              <h4 className="font-bold text-indigo-700">Section 1: Demographics & Context (Optional)</h4>
+              <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
+                <li>Full Name & Intern ID</li>
+                <li>Domain / Track (Dropdown)</li>
+                <li>Internship Duration</li>
+              </ul>
+              <h4 className="font-bold text-indigo-700 pt-4 border-t">Section 2: Mentorship & Guidance</h4>
+              <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
+                <li>Mentor Accessibility & Responsiveness (1-5 Stars)</li>
+                <li>Regular 1-on-1s / Check-ins? (Dropdown)</li>
+                <li>Constructive & Detailed Feedback (1-5 Stars)</li>
+                <li>Timely Resolution of Technical Blockers (1-5 Stars)</li>
+                <li>Felt Valued as an Active Contributor (1-5 Stars)</li>
+                <li>What is one specific thing your mentor/lead could have done differently? (Text)</li>
+              </ul>
+              <h4 className="font-bold text-indigo-700 pt-4 border-t">Section 3: Tasks, Projects & Learning Curve</h4>
+              <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
+                <li>Clarity of Assigned Tasks & Briefs (1-5 Stars)</li>
+                <li>Did task complexity scale reasonably? (Dropdown)</li>
+                <li>Creative Autonomy & Ownership (1-5 Stars)</li>
+                <li>Which skills did you improve the most? (Text)</li>
+                <li>Which specific project delivered the most real-world learning value? (Text)</li>
+              </ul>
+              <h4 className="font-bold text-indigo-700 pt-4 border-t">Section 4: Resources, Tools & Documentation</h4>
+              <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
+                <li>Onboarding & Setup Documentation (1-5 Stars)</li>
+                <li>Delays receiving access, APIs, or repo permissions? (Dropdown)</li>
+                <li>What tools or references were missing that could have boosted productivity? (Text)</li>
+              </ul>
+              <h4 className="font-bold text-indigo-700 pt-4 border-t">Section 5: Portal & Platform Experience</h4>
+              <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
+                <li>Portal Usability & Speed (1-5 Stars)</li>
+                <li>Did you encounter downtime, session errors, or bugs? (Dropdown)</li>
+                <li>Which feature/improvement would make the portal significantly better? (Text)</li>
+              </ul>
+              <h4 className="font-bold text-indigo-700 pt-4 border-t">Section 6: Working Hours, Workload & Flexibility</h4>
+              <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
+                <li>Daily Workload Manageability (1-5 Stars)</li>
+                <li>Realistic Deadlines & Sprints (1-5 Stars)</li>
+                <li>Respect for Personal Boundaries (1-5 Stars)</li>
+              </ul>
+              <h4 className="font-bold text-indigo-700 pt-4 border-t">Section 7: Team Collaboration & Culture</h4>
+              <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
+                <li>Communication Channels Organization (1-5 Stars)</li>
+                <li>Collaboration with Team (1-5 Stars)</li>
+                <li>Safe Environment for Questions (1-5 Stars)</li>
+                <li>How would you describe the overall culture and team spirit in 3 words? (Text)</li>
+              </ul>
+              <h4 className="font-bold text-indigo-700 pt-4 border-t">Section 8: Career Impact, NPS & Honest Feedback</h4>
+              <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
+                <li>Net Promoter Score (1-10 Scale)</li>
+                <li>If offered, would you be interested in returning for an advanced or full-time role? (Dropdown)</li>
+                <li>What was the single biggest bottleneck or frustration you faced? (Text)</li>
+                <li>If you were running the internship program next cohort, what is the #1 thing you would change? (Text)</li>
+              </ul>
+            </div>
+          </ScrollArea>
+          <div className="p-4 border-t bg-slate-50 flex justify-end">
+            <Button onClick={() => setShowPreviewForm(false)}>Close Preview</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
