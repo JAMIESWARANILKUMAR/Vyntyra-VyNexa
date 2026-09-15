@@ -35,6 +35,7 @@ import { PayslipModal } from "@/components/payslip-modal";
 import { IdCardModal } from "@/components/id-card-modal";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { EmployeeReferEarn } from "@/components/employee-refer-earn";
+import { FeedbackPopupModal } from "@/components/feedback-popup-modal";
 import { ProfileChangeRequestModal } from "@/components/profile-change-request-modal";
 import EmailAutomationHub from "@/components/email-automation-hub";
 import { Input } from "@/components/ui/input";
@@ -4710,6 +4711,7 @@ function EmployeeDashboard() {
       />
 
       <FirstLoginWelcomeModal user={profile} />
+      <FeedbackPopupModal profile={profile} />
       <PwaInstallBanner 
         title="Install Employee Portal"
         subtitle="Get the official Employee App for offline access"

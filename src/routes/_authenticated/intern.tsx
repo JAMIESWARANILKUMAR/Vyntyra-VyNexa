@@ -33,6 +33,7 @@ import { ManagementDomainWorkspace } from "@/components/management-domain-worksp
 import { IntegratedChromeBrowser } from "@/components/integrated-chrome-browser";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { EmployeeReferEarn } from "@/components/employee-refer-earn";
+import { FeedbackPopupModal } from "@/components/feedback-popup-modal";
 import { 
   listTasks, listMeetings, listSchedules, listAnnouncements, listResources, 
   listNotes, createNote, deleteNote, createFeedback, claimPoolTask,
@@ -4277,6 +4278,7 @@ function InternDashboard() {
 
       {/* ── First-Time Login Animated Welcome Modal ── */}
       <FirstLoginWelcomeModal user={profile} mustChangePassword={!!session?.user?.user_metadata?.must_change_password} />
+      <FeedbackPopupModal profile={profile} />
 
       {/* ── Corporate Standard & Executive Secure Checkout Modal System ── */}
       {showPaymentModal && (

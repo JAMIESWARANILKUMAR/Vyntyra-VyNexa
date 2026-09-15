@@ -8458,3 +8458,108 @@ export const bulkRegenerateNocs = createServerFn({ method: "POST" })
     return { message: `Successfully regenerated ${count} NOCs.` };
   });
 
+
+// --- DETAILED FEEDBACK CAMPAIGN FUNCTIONS ---
+
+export const dispatchFeedbackForm = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    targetType: z.enum(["all", "interns", "employees", "selected"]),
+    targetIds: z.array(z.string().uuid()).optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    let userIds: string[] = [];
+
+    if (data.targetType === "selected" && data.targetIds) {
+      userIds = data.targetIds;
+    } else {
+      let query = admin.from("profiles").select("id").eq("is_active", true);
+      if (data.targetType === "interns") query = query.eq("role", "intern");
+      if (data.targetType === "employees") query = query.in("role", ["employee", "hr", "manager"]);
+      
+      const { data: profiles, error } = await query;
+      if (error) throw new Error(error.message);
+      userIds = (profiles || []).map((p: any) => p.id);
+    }
+
+    if (userIds.length === 0) return { count: 0, message: "No target users found." };
+
+    // Set popup flag
+    const { error: updateErr } = await admin
+      .from("profiles")
+      .update({ feedback_popup_active: true, updated_at: new Date().toISOString() })
+      .in("id", userIds);
+
+    if (updateErr) throw new Error(updateErr.message);
+
+    // Send in-app notification
+    const notifications = userIds.map(uid => ({
+      user_id: uid,
+      title: "Feedback Required",
+      message: "Please share your VyNexa experience! A mandatory feedback form is waiting for you. This helps us improve our mentorship and resources.",
+      type: "feedback_request",
+      is_read: false,
+      created_at: new Date().toISOString(),
+    }));
+
+    try {
+      await admin.from("user_notifications").insert(notifications);
+    } catch (e) {
+      console.warn("Feedback notification insert failed:", e);
+    }
+
+    return { count: userIds.length, message: "Feedback form dispatched to  users." };
+  });
+
+export const submitDetailedFeedback = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    company_rating: z.number().min(1).max(5),
+    resources_rating: z.number().min(1).max(5),
+    task_level_rating: z.number().min(1).max(5),
+    mentorship_rating: z.number().min(1).max(5),
+    nature_of_internship_rating: z.number().min(1).max(5),
+    experience_text: z.string().min(1, "Please describe your experience in Vyntyra."),
+    trouble_faced_text: z.string().optional(),
+    mentor_feedback_text: z.string().optional(),
+    suggestions_text: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const admin = getAdminClient();
+    
+    const insertPayload = {
+      user_id: context.userId,
+      company_rating: data.company_rating,
+      resources_rating: data.resources_rating,
+      task_level_rating: data.task_level_rating,
+      mentorship_rating: data.mentorship_rating,
+      nature_of_internship_rating: data.nature_of_internship_rating,
+      experience_text: data.experience_text,
+      trouble_faced_text: data.trouble_faced_text,
+      mentor_feedback_text: data.mentor_feedback_text,
+      suggestions_text: data.suggestions_text,
+      created_at: new Date().toISOString(),
+    };
+
+    const { error: insertErr } = await admin.from("detailed_feedbacks").insert(insertPayload);
+    if (insertErr) throw new Error(insertErr.message);
+
+    // Disable popup for user
+    await admin.from("profiles").update({ feedback_popup_active: false }).eq("id", context.userId);
+
+    return { success: true, message: "Thank you for your valuable feedback!" };
+  });
+
+export const listDetailedFeedbacks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const admin = getAdminClient();
+    const { data, error } = await admin
+      .from("detailed_feedbacks")
+      .select("*, profiles(full_name, email, role)")
+      .order("created_at", { ascending: false });
+      
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
