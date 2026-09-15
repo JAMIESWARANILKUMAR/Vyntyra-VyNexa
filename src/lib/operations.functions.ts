@@ -8520,25 +8520,25 @@ export const submitDetailedFeedback = createServerFn({ method: "POST" })
     internship_duration: z.string().optional(),
 
     mentor_accessibility: z.number().min(1).max(5),
-    mentor_checkins: z.string(),
+    mentor_checkins: z.string().min(1),
     feedback_quality: z.number().min(1).max(5),
     doubts_resolved: z.number().min(1).max(5),
     leadership_valued: z.number().min(1).max(5),
-    mentor_improvement: z.string().optional(),
+    mentor_improvement: z.string().min(1),
 
     tasks_clarity: z.number().min(1).max(5),
-    tasks_complexity: z.string(),
+    tasks_complexity: z.string().min(1),
     tasks_autonomy: z.number().min(1).max(5),
-    skills_improved: z.string().optional(),
-    best_project: z.string().optional(),
+    skills_improved: z.string().min(1),
+    best_project: z.string().min(1),
 
     docs_completeness: z.number().min(1).max(5),
-    access_delays: z.string(),
-    missing_tools: z.string().optional(),
+    access_delays: z.string().min(1),
+    missing_tools: z.string().min(1),
 
     portal_usability: z.number().min(1).max(5),
-    portal_bugs: z.string(),
-    portal_improvement: z.string().optional(),
+    portal_bugs: z.string().min(1),
+    portal_improvement: z.string().min(1),
 
     workload_manageability: z.number().min(1).max(5),
     deadlines_realistic: z.number().min(1).max(5),
@@ -8547,12 +8547,12 @@ export const submitDetailedFeedback = createServerFn({ method: "POST" })
     comm_channels: z.number().min(1).max(5),
     collaboration: z.number().min(1).max(5),
     safe_environment: z.number().min(1).max(5),
-    culture_3_words: z.string().optional(),
+    culture_3_words: z.string().min(1),
 
     nps_score: z.number().min(1).max(10),
-    return_interest: z.string(),
-    biggest_bottleneck: z.string().optional(),
-    program_change: z.string().optional(),
+    return_interest: z.string().min(1),
+    biggest_bottleneck: z.string().min(1),
+    program_change: z.string().min(1),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const admin = getAdminClient();

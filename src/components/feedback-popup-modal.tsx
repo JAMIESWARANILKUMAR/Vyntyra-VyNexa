@@ -79,8 +79,16 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
     const requiredSelects = [
       mentorCheckins, tasksComplexity, accessDelays, portalBugs, returnInterest
     ];
-    if (requiredSelects.some(s => s === "")) {
+    if (requiredSelects.some(s => !s.trim())) {
       return toast.error("Please answer all the multiple choice dropdown questions.");
+    }
+
+    const requiredTexts = [
+      mentorImprovement, skillsImproved, bestProject, missingTools, 
+      portalImprovement, culture3Words, biggestBottleneck, programChange
+    ];
+    if (requiredTexts.some(t => !t.trim())) {
+      return toast.error("Please fill out all the text feedback questions. Every question is mandatory.");
     }
     
     setIsSubmitting(true);
