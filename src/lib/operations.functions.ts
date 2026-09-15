@@ -4716,7 +4716,10 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
         domain: domain || null,
         sub_domain: subDomain || null,
         email_template_id: subject, // Temporarily using subject as the template ID since we don't have a template ID
+        status: status,
         delivery_status: status,
+        provider: providerUsed,
+        error_message: errorMessage,
         sent_date: now.toISOString().split('T')[0],
         sent_time: now.toISOString().split('T')[1].substring(0, 8)
       });
@@ -4911,10 +4914,12 @@ export const getEmailQuotaStats = createServerFn({ method: "GET" })
       return url;
     }
     const startOfToday = new Date().toISOString().split('T')[0];
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
     const { data: logs } = await adminClient
       .from("automated_emails_log")
       .select("provider, status, sent_at")
+      .gte("sent_at", startOfMonth)
       .neq("status", "failed");
 
     const totalSentThisMonth = logs?.length || 0;
@@ -5111,10 +5116,12 @@ export const getPromotionalEmailConversionStats = createServerFn({ method: "GET"
       }
       return url;
     }
-    // 1. Fetch promotional email logs
+    // 1. Fetch promotional email logs for this month
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const { data: emailLogs } = await adminClient
       .from("automated_emails_log")
       .select("*")
+      .gte("sent_at", startOfMonth)
       .order("sent_at", { ascending: false });
 
     // 2. Fetch all internship applications
