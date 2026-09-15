@@ -4613,7 +4613,7 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
       const startOfToday = new Date().toISOString().split('T')[0];
 
-      const { data: monthLogs } = await supabase
+      const { data: monthLogs } = await adminClient
         .from("automated_emails_log")
         .select("provider, sent_at")
         .gte("sent_at", startOfMonth)
