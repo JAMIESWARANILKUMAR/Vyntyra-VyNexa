@@ -8474,7 +8474,7 @@ export const dispatchFeedbackForm = createServerFn({ method: "POST" })
     if (data.targetType === "selected" && data.targetIds) {
       userIds = data.targetIds;
     } else {
-      let query = admin.from("profiles").select("id").eq("is_active", true);
+      let query = admin.from("profiles").select("id");
       if (data.targetType === "interns") query = query.eq("role", "intern");
       if (data.targetType === "employees") query = query.in("role", ["employee", "hr", "manager"]);
       
