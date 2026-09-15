@@ -8515,30 +8515,51 @@ export const dispatchFeedbackForm = createServerFn({ method: "POST" })
 export const submitDetailedFeedback = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
-    company_rating: z.number().min(1).max(5),
-    resources_rating: z.number().min(1).max(5),
-    task_level_rating: z.number().min(1).max(5),
-    mentorship_rating: z.number().min(1).max(5),
-    nature_of_internship_rating: z.number().min(1).max(5),
-    experience_text: z.string().min(1, "Please describe your experience in Vyntyra."),
-    trouble_faced_text: z.string().optional(),
-    mentor_feedback_text: z.string().optional(),
-    suggestions_text: z.string().optional(),
+    intern_name: z.string().optional(),
+    domain_track: z.string().optional(),
+    internship_duration: z.string().optional(),
+
+    mentor_accessibility: z.number().min(1).max(5),
+    mentor_checkins: z.string(),
+    feedback_quality: z.number().min(1).max(5),
+    doubts_resolved: z.number().min(1).max(5),
+    leadership_valued: z.number().min(1).max(5),
+    mentor_improvement: z.string().optional(),
+
+    tasks_clarity: z.number().min(1).max(5),
+    tasks_complexity: z.string(),
+    tasks_autonomy: z.number().min(1).max(5),
+    skills_improved: z.string().optional(),
+    best_project: z.string().optional(),
+
+    docs_completeness: z.number().min(1).max(5),
+    access_delays: z.string(),
+    missing_tools: z.string().optional(),
+
+    portal_usability: z.number().min(1).max(5),
+    portal_bugs: z.string(),
+    portal_improvement: z.string().optional(),
+
+    workload_manageability: z.number().min(1).max(5),
+    deadlines_realistic: z.number().min(1).max(5),
+    boundaries_respected: z.number().min(1).max(5),
+
+    comm_channels: z.number().min(1).max(5),
+    collaboration: z.number().min(1).max(5),
+    safe_environment: z.number().min(1).max(5),
+    culture_3_words: z.string().optional(),
+
+    nps_score: z.number().min(1).max(10),
+    return_interest: z.string(),
+    biggest_bottleneck: z.string().optional(),
+    program_change: z.string().optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const admin = getAdminClient();
     
     const insertPayload = {
       user_id: context.userId,
-      company_rating: data.company_rating,
-      resources_rating: data.resources_rating,
-      task_level_rating: data.task_level_rating,
-      mentorship_rating: data.mentorship_rating,
-      nature_of_internship_rating: data.nature_of_internship_rating,
-      experience_text: data.experience_text,
-      trouble_faced_text: data.trouble_faced_text,
-      mentor_feedback_text: data.mentor_feedback_text,
-      suggestions_text: data.suggestions_text,
+      ...data,
       created_at: new Date().toISOString(),
     };
 
