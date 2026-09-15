@@ -317,6 +317,7 @@ export function AdminInternTasksView() {
   // Split tasks into Active Assigned vs Stored Future Repository
   const activeAssignedTasks = tasks.filter((t) => t && (t.assigned_to || t.team_id || t.assignment_mode === 'team') && !t.is_pool_task);
   const pendingSubmissions = tasks.filter((t) => t && t.status === "submitted");
+  const reviewedTasks = tasks.filter((t) => t && (t.status === "completed" || t.status === "under_review" || t.status === "rejected" || t.is_verified === true));
   const storedBankTasks = tasks.filter((t) => t && (!t.assigned_to || t.is_pool_task));
 
   // Filter Active Assigned Tasks
@@ -718,7 +719,7 @@ export function AdminInternTasksView() {
   return (
     <div className="w-full max-w-full overflow-x-hidden space-y-6">
       {/* ── Top View Navigation Tabs ── */}
-      <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl w-fit border shadow-xs">
+      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl w-full sm:w-fit border shadow-xs">
         <button
           type="button"
           onClick={() => setActiveViewTab("active")}
@@ -729,24 +730,35 @@ export function AdminInternTasksView() {
           }`}
         >
           <ClipboardList className="h-4 w-4" />
-          <span>Active Assigned Tasks</span>
+          <span className="hidden sm:inline">Active Assigned Tasks</span>
+          <span className="sm:hidden">Active</span>
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "active" ? "bg-indigo-100 text-indigo-700" : "bg-slate-200 text-slate-700"}`}>
             {activeAssignedTasks.length}
           </span>
         </button>
 
-        <Button
+        <button
           type="button"
-          variant="ghost"
           onClick={() => setActiveViewTab("submissions")}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer h-auto ${activeViewTab === "submissions" ? "bg-white dark:bg-slate-950 text-rose-600 dark:text-rose-400 shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
         >
           <CheckCheck className="h-4 w-4 text-rose-600" />
-          <span>Pending Submissions</span>
+          <span className="hidden sm:inline">Pending Submissions</span>
+          <span className="sm:hidden">Submissions</span>
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "submissions" ? "bg-rose-100 text-rose-700" : "bg-slate-200 text-slate-700"}`}>
             {pendingSubmissions.length}
           </span>
-        </Button>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveViewTab("reviewed")}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer h-auto ${activeViewTab === "reviewed" ? "bg-white dark:bg-slate-950 text-blue-600 dark:text-blue-400 shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
+        >
+          <CheckCircle2 className="h-4 w-4 text-blue-600" />
+          <span className="hidden sm:inline">Reviewed & Completed</span>
+          <span className="sm:hidden">Reviewed</span>
+        </button>
 
         <button
           type="button"
@@ -754,7 +766,8 @@ export function AdminInternTasksView() {
           className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeViewTab === "stored_bank" ? "bg-white dark:bg-slate-950 text-emerald-600 dark:text-emerald-400 shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
         >
           <FolderArchive className="h-4 w-4 text-emerald-600" />
-          <span>Stored Task Bank (Future Repository)</span>
+          <span className="hidden sm:inline">Stored Task Bank</span>
+          <span className="sm:hidden">Task Bank</span>
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "stored_bank" ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-700"}`}>
             {storedBankTasks.length}
           </span>
@@ -1557,6 +1570,62 @@ export function AdminInternTasksView() {
                         onClick={() => {
                           setSelectedTaskForReview(t);
                           setAdminRemarks(t.progress_notes || "");
+                        }}
+                      >
+                        <Eye className="h-3.5 w-3.5 mr-1.5" /> View Deliverable & Grade
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeViewTab === "reviewed" && (
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-slate-950 p-5 rounded-2xl border shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-blue-600" /> Reviewed & Completed Tasks</h2>
+              <Input
+                placeholder="Search reviewed tasks..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full sm:w-[250px] h-9 text-xs"
+              />
+            </div>
+            
+            <div className="space-y-3">
+              {reviewedTasks.length === 0 ? (
+                <div className="p-8 text-center bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-200">
+                  <p className="text-slate-500 font-medium">No tasks have been reviewed yet.</p>
+                </div>
+              ) : (
+                reviewedTasks.filter(t => (t.title || "").toLowerCase().includes(searchQuery.toLowerCase())).map((t: any) => (
+                  <div key={t.id} className="p-4 bg-slate-50 hover:bg-slate-100 transition-colors rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-sm">{t.title}</span>
+                        <Badge className={`text-[10px] ${t.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : t.status === 'under_review' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>
+                          {(t.status || "").replace("_", " ")}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-slate-600 flex items-center gap-2">
+                        <User className="h-3 w-3" /> 
+                        <span className="font-medium">{t.assigned_profile?.full_name || "Unknown Intern"}</span>
+                        {t.assigned_profile?.email && <span>({t.assigned_profile.email})</span>}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 h-8 text-xs cursor-pointer"
+                        onClick={() => {
+                          setSelectedTaskForReview(t);
+                          setAdminRemarks(t.progress_notes || t.admin_remarks || "");
                         }}
                       >
                         <Eye className="h-3.5 w-3.5 mr-1.5" /> View Deliverable & Grade

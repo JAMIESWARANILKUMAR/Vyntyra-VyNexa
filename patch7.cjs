@@ -1,0 +1,42 @@
+﻿const fs = require('fs');
+const path = './src/routes/_authenticated/admin/operations.tsx';
+let code = fs.readFileSync(path, 'utf8');
+
+const replacement = \                  <Button variant="outline" size="sm" onClick={async () => {
+                    if (confirm("Are you sure you want to completely delete all Offer Letters from the database and storage?")) {
+                      const lToast = toast.loading("Deleting all Offer Letters...");
+                      try {
+                        await bulkDeleteOfferLetters();
+                        toast.dismiss(lToast);
+                        toast.success("All Offer Letters deleted successfully!");
+                        teamQ.refetch();
+                      } catch (e) {
+                        toast.dismiss(lToast);
+                        toast.error("Failed to delete offer letters.");
+                      }
+                    }
+                  }} className="gap-1.5 text-xs border-red-200 text-red-700 hover:bg-red-50 flex">
+                    <Trash2 className="h-3.5 w-3.5" /> Delete All Offer Letters
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={async () => {
+                    if (confirm("Are you sure you want to regenerate offer letters for all interns? This may take some time.")) {
+                      const lToast = toast.loading("Regenerating all Offer Letters...");
+                      try {
+                        const res = await bulkRegenerateOfferLetters();
+                        toast.dismiss(lToast);
+                        toast.success(res.message);
+                        teamQ.refetch();
+                      } catch (e) {
+                        toast.dismiss(lToast);
+                        toast.error("Failed to regenerate offer letters.");
+                      }
+                    }
+                  }} className="gap-1.5 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50 flex">
+                    <RefreshCw className="h-3.5 w-3.5" /> Regenerate All Offer Letters
+                  </Button>
+                  <Button size="sm" onClick={() => setProvisionOpen(true)} className="gap-2 text-xs shadow-sm">\;
+
+code = code.replace(/\\s*<Button size="sm" onClick=\{\(\) => setProvisionOpen\\(true\\)\} className="gap-2 text-xs shadow-sm">/, replacement);
+
+fs.writeFileSync(path, code);
+console.log('Fixed button injection again!');

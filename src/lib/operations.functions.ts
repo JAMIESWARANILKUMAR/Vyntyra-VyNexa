@@ -1961,12 +1961,8 @@ export const reviewInternTaskByAdmin = createServerFn({ method: "POST" })
       return url;
     }
     
-    // Normalise status for Postgres check constraint if needed
-    // standard check constraint allows: 'pending', 'in_progress', 'completed', 'blocked', 'rejected'
+    // Database check constraint now supports 'submitted' and 'under_review' natively.
     let targetStatus = data.status;
-    if (targetStatus === "submitted" || targetStatus === "under_review") {
-      targetStatus = "in_progress";
-    }
 
     const updatePayload: any = {
       status: targetStatus,
