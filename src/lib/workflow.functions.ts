@@ -325,7 +325,7 @@ export const listStatusTemplates = createServerFn({ method: "GET" })
   });
 
 const updateTplSchema = z.object({
-  status: z.enum(["new", "reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected", "hired"]),
+  status: z.enum(["new", "reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected", "hired", "promotional"]),
   subject: z.string().trim().min(3).max(200),
   html_body: z.string().trim().min(10).max(20000),
   enabled: z.boolean(),
