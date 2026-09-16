@@ -1,8 +1,9 @@
-import { BrainCircuit,  createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  BrainCircuit,
   GraduationCap, ClipboardList, Clock, Mail, Bell, LogOut, Loader2,
   CheckCircle2, Video, CalendarDays, User, BookOpen, Link2, FileText,
   Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
