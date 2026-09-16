@@ -1,5 +1,6 @@
 import { getEnv } from '@/lib/env';
 import { createServerFn } from "@tanstack/react-start";
+import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 import QRCode from "qrcode";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -8550,6 +8551,70 @@ export const updateFeedbackRequest = createServerFn({ method: "POST" })
       return { success: true, message: "Feedback request extended." };
     }
     return { success: false, message: "Invalid action." };
+  });
+
+export const cancelBulkFeedbackRequests = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    targetType: z.enum(["all", "interns", "employees"]),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    
+    let query = admin.from("profiles").update({ feedback_popup_active: false, feedback_popup_expiry: null }).eq("feedback_popup_active", true);
+    if (data.targetType === "interns") query = query.eq("role", "intern");
+    if (data.targetType === "employees") query = query.in("role", ["employee", "hr", "manager"]);
+    
+    const { error } = await query;
+    if (error) throw new Error(error.message);
+    
+    return { success: true, message: `Bulk cancellation for ${data.targetType} completed.` };
+  });
+
+
+export const generateAiFeedbackReport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const admin = getAdminClient();
+    const { data: feedbacks, error } = await admin.from("detailed_feedbacks").select("*").order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    if (!feedbacks || feedbacks.length === 0) throw new Error("No feedback data available for analysis.");
+
+    // Initialize Google Gen AI
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    
+    const feedbackSummary = feedbacks.map((f: any) => `
+    Role: ${f.domain_track}
+    NPS: ${f.nps_score}
+    Mentor Rating: ${f.mentor_accessibility}/5
+    Tasks Clarity: ${f.tasks_clarity}/5
+    Workload: ${f.workload_manageability}/5
+    Culture: ${f.culture_3_words}
+    Bottleneck: ${f.biggest_bottleneck}
+    Suggestion: ${f.program_change}
+    `).join("\n---\n");
+
+    const prompt = `You are an expert HR Analyst for VyNexa Connect. Analyze the following raw feedback submitted by interns and employees. 
+    Provide a detailed, pin-to-pin report that includes:
+    1. Overall Sentiment & NPS Analysis
+    2. Key Strengths (What are we doing well?)
+    3. Major Bottlenecks & Areas of Concern (Grouped by theme)
+    4. Actionable Recommendations for the Superadmin to improve the program in the next cohort.
+    Format your response beautifully using Markdown with clear headings and bullet points.
+    
+    Raw Feedback Data:
+    ${feedbackSummary}`;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+      });
+      return { success: true, report: response.text };
+    } catch (e: any) {
+      console.error("AI Generation Error:", e);
+      throw new Error("Failed to generate AI report: " + e.message);
+    }
   });
 
 export const submitDetailedFeedback = createServerFn({ method: "POST" })

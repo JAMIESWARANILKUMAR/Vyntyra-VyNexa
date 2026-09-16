@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { 
@@ -11,7 +12,7 @@ import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
 
-import { listDetailedFeedbacks, dispatchFeedbackForm, listActiveFeedbackRequests, updateFeedbackRequest } from "@/lib/operations.functions";
+import { listDetailedFeedbacks, dispatchFeedbackForm, listActiveFeedbackRequests, updateFeedbackRequest, cancelBulkFeedbackRequests, generateAiFeedbackReport } from "@/lib/operations.functions";
 
 export function AdminDetailedFeedbacksView() {
   const qc = useQueryClient();
@@ -25,6 +26,8 @@ export function AdminDetailedFeedbacksView() {
 
   const fetchActiveRequests = useServerFn(listActiveFeedbackRequests);
   const updateRequestFn = useServerFn(updateFeedbackRequest);
+  const cancelBulkFn = useServerFn(cancelBulkFeedbackRequests);
+  const generateAiReportFn = useServerFn(generateAiFeedbackReport);
   
   const { data: activeRequests = [], refetch: refetchActive } = useQuery({
     queryKey: ["active-feedback-requests"],
@@ -38,6 +41,34 @@ export function AdminDetailedFeedbacksView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewingFeedback, setViewingFeedback] = useState<any>(null);
   const [showPreviewForm, setShowPreviewForm] = useState(false);
+  
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [aiReport, setAiReport] = useState<string | null>(null);
+  const [showAiModal, setShowAiModal] = useState(false);
+
+  const handleBulkCancel = async (type: "all" | "interns" | "employees") => {
+    try {
+      await cancelBulkFn({ data: { targetType: type } });
+      toast.success(`Cancelled all active feedback requests for ${type}.`);
+      refetchActive();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to cancel requests.");
+    }
+  };
+
+  const handleGenerateAiReport = async () => {
+    setIsGeneratingAi(true);
+    try {
+      const res = await generateAiReportFn();
+      setAiReport(res.report);
+      setShowAiModal(true);
+      toast.success("AI Report generated successfully!");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate AI report.");
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
 
   const handleDispatch = async () => {
     setIsDispatching(true);
@@ -89,6 +120,15 @@ export function AdminDetailedFeedbacksView() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button
+            onClick={handleGenerateAiReport}
+            disabled={isGeneratingAi}
+            variant="outline"
+            className="border-fuchsia-500 text-fuchsia-600 hover:bg-fuchsia-50 hover:text-fuchsia-700 font-bold h-10"
+          >
+            {isGeneratingAi ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <TrendingUp className="h-4 w-4 mr-2" />}
+            AI Analysis
+          </Button>
+          <Button
             onClick={() => setShowPreviewForm(true)}
             variant="outline"
             className="border-indigo-500 text-indigo-400 hover:bg-indigo-900/50 hover:text-white font-bold h-10"
@@ -106,11 +146,17 @@ export function AdminDetailedFeedbacksView() {
 
       {activeRequests.length > 0 && (
         <div className="bg-white dark:bg-slate-950 border border-amber-200 rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b bg-amber-50/50 flex justify-between items-center">
+          <div className="p-4 border-b bg-amber-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h3 className="font-semibold text-amber-900 flex items-center gap-2">
               Active Feedback Requests
               <Badge className="bg-amber-200 text-amber-900">{activeRequests.length}</Badge>
             </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+               <span className="text-xs font-bold text-amber-700 mr-2">Bulk Cancel:</span>
+               <Button onClick={() => handleBulkCancel("interns")} variant="outline" size="sm" className="h-7 text-xs border-rose-200 text-rose-700 hover:bg-rose-50">Interns</Button>
+               <Button onClick={() => handleBulkCancel("employees")} variant="outline" size="sm" className="h-7 text-xs border-rose-200 text-rose-700 hover:bg-rose-50">Employees</Button>
+               <Button onClick={() => handleBulkCancel("all")} variant="outline" size="sm" className="h-7 text-xs bg-rose-100 border-rose-300 text-rose-800 hover:bg-rose-200 font-bold">Cancel All</Button>
+            </div>
           </div>
           <div className="divide-y max-h-[300px] overflow-y-auto">
             {activeRequests.map((r: any) => (
@@ -424,6 +470,27 @@ export function AdminDetailedFeedbacksView() {
           </ScrollArea>
           <div className="p-4 border-t bg-slate-50 flex justify-end">
             <Button onClick={() => setShowPreviewForm(false)}>Close Preview</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* AI Analysis Report Modal */}
+      <Dialog open={showAiModal} onOpenChange={setShowAiModal}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-slate-50">
+          <div className="bg-fuchsia-950 p-6 text-white border-b border-fuchsia-900 flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-xl flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-fuchsia-400" /> AI Master Feedback Analysis
+              </DialogTitle>
+              <p className="text-sm text-fuchsia-300 mt-1">Detailed pin-to-pin report generated by Gemini AI.</p>
+            </div>
+          </div>
+          <ScrollArea className="max-h-[70vh] p-8 bg-white">
+            <div className="prose prose-sm sm:prose-base max-w-none text-slate-800">
+              <ReactMarkdown>{aiReport || "No report generated."}</ReactMarkdown>
+            </div>
+          </ScrollArea>
+          <div className="p-4 border-t bg-slate-50 flex justify-end">
+            <Button onClick={() => setShowAiModal(false)}>Close Report</Button>
           </div>
         </DialogContent>
       </Dialog>
