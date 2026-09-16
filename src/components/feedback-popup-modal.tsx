@@ -13,7 +13,7 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
   const submitFeedback = useServerFn(submitDetailedFeedback);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFormExpanded, setIsFormExpanded] = useState(false);
+  const [isFormExpanded, setIsFormExpanded] = useState(false);\n  const [isDismissed, setIsDismissed] = useState(false);
   const [step, setStep] = useState(1);
   const totalSteps = 8;
   
@@ -78,7 +78,7 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
   const [programChange, setProgramChange] = useState('');
 
   if (!profile?.feedback_popup_active) return null;
-  if (profile?.feedback_popup_expiry && new Date(profile.feedback_popup_expiry) < new Date()) return null;
+  if (isDismissed) return null;\n  if (profile?.feedback_popup_expiry && new Date(profile.feedback_popup_expiry) < new Date()) return null;
 
   const validateStep = (s: number) => {
     if (s === 1) return true;
@@ -178,8 +178,9 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
-          className="bg-white rounded-[2rem] max-w-md w-full p-10 shadow-2xl border border-slate-200 text-center"
+          className="bg-white rounded-[2rem] max-w-md w-full p-10 shadow-2xl border border-slate-200 text-center relative"
         >
+          <button onClick={() => setIsDismissed(true)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"><X className="h-5 w-5"/></button>
           <motion.div 
             animate={{ y: [0, -10, 0] }}
             transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
@@ -245,8 +246,11 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
                  <p className="text-sm text-slate-500 mt-1 font-medium">Your honest feedback shapes the future.</p>
                </div>
              </div>
-             <div className="hidden sm:flex items-center justify-center px-4 py-2 bg-slate-100 text-slate-600 rounded-full font-bold text-sm">
-                Step {step} of {totalSteps}
+             <div className="flex items-center gap-4">
+               <div className="hidden sm:flex items-center justify-center px-4 py-2 bg-slate-100 text-slate-600 rounded-full font-bold text-sm">
+                  Step {step} of {totalSteps}
+               </div>
+               <button onClick={() => setIsDismissed(true)} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"><X className="h-6 w-6"/></button>
              </div>
            </div>
         </div>
