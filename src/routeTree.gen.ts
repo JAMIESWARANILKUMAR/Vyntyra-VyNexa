@@ -9,70 +9,43 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VerifyRouteImport } from './routes/verify'
-import { Route as TrackRouteImport } from './routes/track'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as StatusRouteImport } from './routes/status'
-import { Route as SecurityCheckRouteImport } from './routes/security-check'
-import { Route as RefundsRouteImport } from './routes/refunds'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as CareersRouteImport } from './routes/careers'
-import { Route as AgreementRouteImport } from './routes/agreement'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as StatusTokenRouteImport } from './routes/status.$token'
-import { Route as AuthInternRouteImport } from './routes/auth/intern'
-import { Route as AuthEmployeeRouteImport } from './routes/auth/employee'
-import { Route as AuthAdminRouteImport } from './routes/auth/admin'
-import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
-import { Route as AuthenticatedInternRouteImport } from './routes/_authenticated/intern'
-import { Route as AuthenticatedEmployeeRouteImport } from './routes/_authenticated/employee'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AgreementRouteImport } from './routes/agreement'
+import { Route as CareersRouteImport } from './routes/careers'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RefundsRouteImport } from './routes/refunds'
+import { Route as SecurityCheckRouteImport } from './routes/security-check'
+import { Route as StatusRouteImport } from './routes/status'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TrackRouteImport } from './routes/track'
+import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as AuthenticatedCmsRouteImport } from './routes/_authenticated/cms'
+import { Route as AuthenticatedEmployeeRouteImport } from './routes/_authenticated/employee'
+import { Route as AuthenticatedInternRouteImport } from './routes/_authenticated/intern'
+import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
+import { Route as AuthAdminRouteImport } from './routes/auth/admin'
+import { Route as AuthEmployeeRouteImport } from './routes/auth/employee'
+import { Route as AuthInternRouteImport } from './routes/auth/intern'
+import { Route as StatusTokenRouteImport } from './routes/status.$token'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
-import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin/security'
-import { Route as AuthenticatedAdminOperationsRouteImport } from './routes/_authenticated/admin/operations'
-import { Route as AuthenticatedAdminEmailCampaignsRouteImport } from './routes/_authenticated/admin/email-campaigns'
 import { Route as AuthenticatedAdminB2bPlaybookRouteImport } from './routes/_authenticated/admin/b2b-playbook'
+import { Route as AuthenticatedAdminEmailCampaignsRouteImport } from './routes/_authenticated/admin/email-campaigns'
+import { Route as AuthenticatedAdminOperationsRouteImport } from './routes/_authenticated/admin/operations'
+import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin/security'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
+import { Route as AuthenticatedCbtTestIdRouteImport } from './routes/_authenticated/cbt/$testId'
+import { Route as AuthenticatedAdminCbtGenerateRouteImport } from './routes/_authenticated/admin/cbt/generate'
+import { Route as AuthenticatedAdminCbtSubmissionsRouteImport } from './routes/_authenticated/admin/cbt/submissions'
+import { Route as AuthenticatedCbtResultsTestIdRouteImport } from './routes/_authenticated/cbt/results/$testId'
 
-const VerifyRoute = VerifyRouteImport.update({
-  id: '/verify',
-  path: '/verify',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TrackRoute = TrackRouteImport.update({
-  id: '/track',
-  path: '/track',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StatusRoute = StatusRouteImport.update({
-  id: '/status',
-  path: '/status',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SecurityCheckRoute = SecurityCheckRouteImport.update({
-  id: '/security-check',
-  path: '/security-check',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RefundsRoute = RefundsRouteImport.update({
-  id: '/refunds',
-  path: '/refunds',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CareersRoute = CareersRouteImport.update({
-  id: '/careers',
-  path: '/careers',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AgreementRoute = AgreementRouteImport.update({
@@ -80,43 +53,49 @@ const AgreementRoute = AgreementRouteImport.update({
   path: '/agreement',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const CareersRoute = CareersRouteImport.update({
+  id: '/careers',
+  path: '/careers',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StatusTokenRoute = StatusTokenRouteImport.update({
-  id: '/$token',
-  path: '/$token',
-  getParentRoute: () => StatusRoute,
-} as any)
-const AuthInternRoute = AuthInternRouteImport.update({
-  id: '/auth/intern',
-  path: '/auth/intern',
+const RefundsRoute = RefundsRouteImport.update({
+  id: '/refunds',
+  path: '/refunds',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthEmployeeRoute = AuthEmployeeRouteImport.update({
-  id: '/auth/employee',
-  path: '/auth/employee',
+const SecurityCheckRoute = SecurityCheckRouteImport.update({
+  id: '/security-check',
+  path: '/security-check',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthAdminRoute = AuthAdminRouteImport.update({
-  id: '/auth/admin',
-  path: '/auth/admin',
+const StatusRoute = StatusRouteImport.update({
+  id: '/status',
+  path: '/status',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
-  id: '/templates',
-  path: '/templates',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedInternRoute = AuthenticatedInternRouteImport.update({
-  id: '/intern',
-  path: '/intern',
+const TrackRoute = TrackRouteImport.update({
+  id: '/track',
+  path: '/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyRoute = VerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCmsRoute = AuthenticatedCmsRouteImport.update({
+  id: '/cms',
+  path: '/cms',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedEmployeeRoute = AuthenticatedEmployeeRouteImport.update({
@@ -124,32 +103,45 @@ const AuthenticatedEmployeeRoute = AuthenticatedEmployeeRouteImport.update({
   path: '/employee',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCmsRoute = AuthenticatedCmsRouteImport.update({
-  id: '/cms',
-  path: '/cms',
+const AuthenticatedInternRoute = AuthenticatedInternRouteImport.update({
+  id: '/intern',
+  path: '/intern',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthAdminRoute = AuthAdminRouteImport.update({
+  id: '/auth/admin',
+  path: '/auth/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthEmployeeRoute = AuthEmployeeRouteImport.update({
+  id: '/auth/employee',
+  path: '/auth/employee',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthInternRoute = AuthInternRouteImport.update({
+  id: '/auth/intern',
+  path: '/auth/intern',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatusTokenRoute = StatusTokenRouteImport.update({
+  id: '/$token',
+  path: '/$token',
+  getParentRoute: () => StatusRoute,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminSettingsRoute =
-  AuthenticatedAdminSettingsRouteImport.update({
-    id: '/admin/settings',
-    path: '/admin/settings',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminSecurityRoute =
-  AuthenticatedAdminSecurityRouteImport.update({
-    id: '/admin/security',
-    path: '/admin/security',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminOperationsRoute =
-  AuthenticatedAdminOperationsRouteImport.update({
-    id: '/admin/operations',
-    path: '/admin/operations',
+const AuthenticatedAdminB2bPlaybookRoute =
+  AuthenticatedAdminB2bPlaybookRouteImport.update({
+    id: '/admin/b2b-playbook',
+    path: '/admin/b2b-playbook',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminEmailCampaignsRoute =
@@ -158,10 +150,45 @@ const AuthenticatedAdminEmailCampaignsRoute =
     path: '/admin/email-campaigns',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminB2bPlaybookRoute =
-  AuthenticatedAdminB2bPlaybookRouteImport.update({
-    id: '/admin/b2b-playbook',
-    path: '/admin/b2b-playbook',
+const AuthenticatedAdminOperationsRoute =
+  AuthenticatedAdminOperationsRouteImport.update({
+    id: '/admin/operations',
+    path: '/admin/operations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminSecurityRoute =
+  AuthenticatedAdminSecurityRouteImport.update({
+    id: '/admin/security',
+    path: '/admin/security',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/admin/settings',
+    path: '/admin/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCbtTestIdRoute = AuthenticatedCbtTestIdRouteImport.update({
+  id: '/cbt/$testId',
+  path: '/cbt/$testId',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminCbtGenerateRoute =
+  AuthenticatedAdminCbtGenerateRouteImport.update({
+    id: '/admin/cbt/generate',
+    path: '/admin/cbt/generate',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminCbtSubmissionsRoute =
+  AuthenticatedAdminCbtSubmissionsRouteImport.update({
+    id: '/admin/cbt/submissions',
+    path: '/admin/cbt/submissions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCbtResultsTestIdRoute =
+  AuthenticatedCbtResultsTestIdRouteImport.update({
+    id: '/cbt/results/$testId',
+    path: '/cbt/results/$testId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -189,7 +216,11 @@ export interface FileRoutesByFullPath {
   '/admin/operations': typeof AuthenticatedAdminOperationsRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/cbt/$testId': typeof AuthenticatedCbtTestIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/cbt/generate': typeof AuthenticatedAdminCbtGenerateRoute
+  '/admin/cbt/submissions': typeof AuthenticatedAdminCbtSubmissionsRoute
+  '/cbt/results/$testId': typeof AuthenticatedCbtResultsTestIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -215,7 +246,11 @@ export interface FileRoutesByTo {
   '/admin/operations': typeof AuthenticatedAdminOperationsRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/cbt/$testId': typeof AuthenticatedCbtTestIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/cbt/generate': typeof AuthenticatedAdminCbtGenerateRoute
+  '/admin/cbt/submissions': typeof AuthenticatedAdminCbtSubmissionsRoute
+  '/cbt/results/$testId': typeof AuthenticatedCbtResultsTestIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -243,7 +278,11 @@ export interface FileRoutesById {
   '/_authenticated/admin/operations': typeof AuthenticatedAdminOperationsRoute
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/cbt/$testId': typeof AuthenticatedCbtTestIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/cbt/generate': typeof AuthenticatedAdminCbtGenerateRoute
+  '/_authenticated/admin/cbt/submissions': typeof AuthenticatedAdminCbtSubmissionsRoute
+  '/_authenticated/cbt/results/$testId': typeof AuthenticatedCbtResultsTestIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -271,7 +310,11 @@ export interface FileRouteTypes {
     | '/admin/operations'
     | '/admin/security'
     | '/admin/settings'
+    | '/cbt/$testId'
     | '/admin/'
+    | '/admin/cbt/generate'
+    | '/admin/cbt/submissions'
+    | '/cbt/results/$testId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -297,7 +340,11 @@ export interface FileRouteTypes {
     | '/admin/operations'
     | '/admin/security'
     | '/admin/settings'
+    | '/cbt/$testId'
     | '/admin'
+    | '/admin/cbt/generate'
+    | '/admin/cbt/submissions'
+    | '/cbt/results/$testId'
   id:
     | '__root__'
     | '/'
@@ -324,7 +371,11 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/operations'
     | '/_authenticated/admin/security'
     | '/_authenticated/admin/settings'
+    | '/_authenticated/cbt/$testId'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/cbt/generate'
+    | '/_authenticated/admin/cbt/submissions'
+    | '/_authenticated/cbt/results/$testId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -346,67 +397,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/verify': {
-      id: '/verify'
-      path: '/verify'
-      fullPath: '/verify'
-      preLoaderRoute: typeof VerifyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/track': {
-      id: '/track'
-      path: '/track'
-      fullPath: '/track'
-      preLoaderRoute: typeof TrackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/status': {
-      id: '/status'
-      path: '/status'
-      fullPath: '/status'
-      preLoaderRoute: typeof StatusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/security-check': {
-      id: '/security-check'
-      path: '/security-check'
-      fullPath: '/security-check'
-      preLoaderRoute: typeof SecurityCheckRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/refunds': {
-      id: '/refunds'
-      path: '/refunds'
-      fullPath: '/refunds'
-      preLoaderRoute: typeof RefundsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/careers': {
-      id: '/careers'
-      path: '/careers'
-      fullPath: '/careers'
-      preLoaderRoute: typeof CareersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/agreement': {
-      id: '/agreement'
-      path: '/agreement'
-      fullPath: '/agreement'
-      preLoaderRoute: typeof AgreementRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -416,53 +411,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/agreement': {
+      id: '/agreement'
+      path: '/agreement'
+      fullPath: '/agreement'
+      preLoaderRoute: typeof AgreementRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/status/$token': {
-      id: '/status/$token'
-      path: '/$token'
-      fullPath: '/status/$token'
-      preLoaderRoute: typeof StatusTokenRouteImport
-      parentRoute: typeof StatusRoute
-    }
-    '/auth/intern': {
-      id: '/auth/intern'
-      path: '/auth/intern'
-      fullPath: '/auth/intern'
-      preLoaderRoute: typeof AuthInternRouteImport
+    '/careers': {
+      id: '/careers'
+      path: '/careers'
+      fullPath: '/careers'
+      preLoaderRoute: typeof CareersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/employee': {
-      id: '/auth/employee'
-      path: '/auth/employee'
-      fullPath: '/auth/employee'
-      preLoaderRoute: typeof AuthEmployeeRouteImport
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/admin': {
-      id: '/auth/admin'
-      path: '/auth/admin'
-      fullPath: '/auth/admin'
-      preLoaderRoute: typeof AuthAdminRouteImport
+    '/refunds': {
+      id: '/refunds'
+      path: '/refunds'
+      fullPath: '/refunds'
+      preLoaderRoute: typeof RefundsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/templates': {
-      id: '/_authenticated/templates'
-      path: '/templates'
-      fullPath: '/templates'
-      preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/security-check': {
+      id: '/security-check'
+      path: '/security-check'
+      fullPath: '/security-check'
+      preLoaderRoute: typeof SecurityCheckRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/intern': {
-      id: '/_authenticated/intern'
-      path: '/intern'
-      fullPath: '/intern'
-      preLoaderRoute: typeof AuthenticatedInternRouteImport
+    '/status': {
+      id: '/status'
+      path: '/status'
+      fullPath: '/status'
+      preLoaderRoute: typeof StatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/track': {
+      id: '/track'
+      path: '/track'
+      fullPath: '/track'
+      preLoaderRoute: typeof TrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify': {
+      id: '/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/cms': {
+      id: '/_authenticated/cms'
+      path: '/cms'
+      fullPath: '/cms'
+      preLoaderRoute: typeof AuthenticatedCmsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/employee': {
@@ -472,12 +488,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEmployeeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/cms': {
-      id: '/_authenticated/cms'
-      path: '/cms'
-      fullPath: '/cms'
-      preLoaderRoute: typeof AuthenticatedCmsRouteImport
+    '/_authenticated/intern': {
+      id: '/_authenticated/intern'
+      path: '/intern'
+      fullPath: '/intern'
+      preLoaderRoute: typeof AuthenticatedInternRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/templates': {
+      id: '/_authenticated/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth/admin': {
+      id: '/auth/admin'
+      path: '/auth/admin'
+      fullPath: '/auth/admin'
+      preLoaderRoute: typeof AuthAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/employee': {
+      id: '/auth/employee'
+      path: '/auth/employee'
+      fullPath: '/auth/employee'
+      preLoaderRoute: typeof AuthEmployeeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/intern': {
+      id: '/auth/intern'
+      path: '/auth/intern'
+      fullPath: '/auth/intern'
+      preLoaderRoute: typeof AuthInternRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/status/$token': {
+      id: '/status/$token'
+      path: '/$token'
+      fullPath: '/status/$token'
+      preLoaderRoute: typeof StatusTokenRouteImport
+      parentRoute: typeof StatusRoute
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
@@ -486,25 +537,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/settings': {
-      id: '/_authenticated/admin/settings'
-      path: '/admin/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/security': {
-      id: '/_authenticated/admin/security'
-      path: '/admin/security'
-      fullPath: '/admin/security'
-      preLoaderRoute: typeof AuthenticatedAdminSecurityRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/operations': {
-      id: '/_authenticated/admin/operations'
-      path: '/admin/operations'
-      fullPath: '/admin/operations'
-      preLoaderRoute: typeof AuthenticatedAdminOperationsRouteImport
+    '/_authenticated/admin/b2b-playbook': {
+      id: '/_authenticated/admin/b2b-playbook'
+      path: '/admin/b2b-playbook'
+      fullPath: '/admin/b2b-playbook'
+      preLoaderRoute: typeof AuthenticatedAdminB2bPlaybookRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/email-campaigns': {
@@ -514,11 +551,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminEmailCampaignsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/b2b-playbook': {
-      id: '/_authenticated/admin/b2b-playbook'
-      path: '/admin/b2b-playbook'
-      fullPath: '/admin/b2b-playbook'
-      preLoaderRoute: typeof AuthenticatedAdminB2bPlaybookRouteImport
+    '/_authenticated/admin/operations': {
+      id: '/_authenticated/admin/operations'
+      path: '/admin/operations'
+      fullPath: '/admin/operations'
+      preLoaderRoute: typeof AuthenticatedAdminOperationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/security': {
+      id: '/_authenticated/admin/security'
+      path: '/admin/security'
+      fullPath: '/admin/security'
+      preLoaderRoute: typeof AuthenticatedAdminSecurityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cbt/$testId': {
+      id: '/_authenticated/cbt/$testId'
+      path: '/cbt/$testId'
+      fullPath: '/cbt/$testId'
+      preLoaderRoute: typeof AuthenticatedCbtTestIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/cbt/generate': {
+      id: '/_authenticated/admin/cbt/generate'
+      path: '/admin/cbt/generate'
+      fullPath: '/admin/cbt/generate'
+      preLoaderRoute: typeof AuthenticatedAdminCbtGenerateRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/cbt/submissions': {
+      id: '/_authenticated/admin/cbt/submissions'
+      path: '/admin/cbt/submissions'
+      fullPath: '/admin/cbt/submissions'
+      preLoaderRoute: typeof AuthenticatedAdminCbtSubmissionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cbt/results/$testId': {
+      id: '/_authenticated/cbt/results/$testId'
+      path: '/cbt/results/$testId'
+      fullPath: '/cbt/results/$testId'
+      preLoaderRoute: typeof AuthenticatedCbtResultsTestIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
@@ -534,7 +613,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminOperationsRoute: typeof AuthenticatedAdminOperationsRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedCbtTestIdRoute: typeof AuthenticatedCbtTestIdRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminCbtGenerateRoute: typeof AuthenticatedAdminCbtGenerateRoute
+  AuthenticatedAdminCbtSubmissionsRoute: typeof AuthenticatedAdminCbtSubmissionsRoute
+  AuthenticatedCbtResultsTestIdRoute: typeof AuthenticatedCbtResultsTestIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -547,7 +630,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminOperationsRoute: AuthenticatedAdminOperationsRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+  AuthenticatedCbtTestIdRoute: AuthenticatedCbtTestIdRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminCbtGenerateRoute: AuthenticatedAdminCbtGenerateRoute,
+  AuthenticatedAdminCbtSubmissionsRoute: AuthenticatedAdminCbtSubmissionsRoute,
+  AuthenticatedCbtResultsTestIdRoute: AuthenticatedCbtResultsTestIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -583,13 +670,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -24,7 +24,7 @@ function CbtExamInterface() {
   const submitFn = useServerFn(submitCbtExamFn);
 
   useEffect(() => {
-    getSessionFn({ testId }).then(res => {
+    getSessionFn({ data: { testId } }).then(res => {
       setTest(res.test);
       setQuestions(res.questions);
     });
@@ -32,7 +32,7 @@ function CbtExamInterface() {
 
   const handleSubmit = async (isAuto = false) => {
     try {
-      await submitFn({ testId, answers, proctoringLogs: logs });
+      await submitFn({ data: { testId, answers, proctoringLogs: logs } });
       toast.success(isAuto ? "Test auto-submitted" : "Test submitted successfully");
       window.location.href = `/cbt/results/${testId}`; // simplified redirect
     } catch (e) {

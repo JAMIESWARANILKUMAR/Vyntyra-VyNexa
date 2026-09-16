@@ -25,7 +25,7 @@ function AdminCbtGenerate() {
 
   const handleGenerate = async () => {
     try {
-      const res = await generateFn({ taskContext, modules });
+      const res = await generateFn({ data: { taskContext, modules } });
       if (res.success) {
         setGenerated(res.data);
         toast.success("Test generated successfully");
@@ -37,10 +37,10 @@ function AdminCbtGenerate() {
 
   const handleSave = async () => {
     try {
-      const res = await saveFn({
+      const res = await saveFn({ data: {
         testMetadata: { title: "Generated Test", target_type: "intern", target_id: "00000000-0000-0000-0000-000000000000", modules },
         questions: generated.questions
-      });
+      } });
       if (res.success) toast.success("Saved successfully");
     } catch (e) {
       toast.error("Failed to save");

@@ -175,12 +175,12 @@ export function AdminInternTasksView() {
 
     setTaskEmailRecipients(recipients);
     setTaskEmailForm({
-      task_title: task.title || "Internship Project Milestone",
+      task_title: t.title || "Internship Project Milestone",
       task_status: defaultStatus || t.status || "assigned",
       mentor_remarks: t.progress_notes || t.mentor_report || "",
       custom_subject: "",
       due_date: t.due_date || "",
-      credits: task.credits || 10,
+      credits: t.credits || 10,
     });
     setTaskEmailModalOpen(true);
   }
@@ -317,15 +317,15 @@ export function AdminInternTasksView() {
   // Split tasks into Active Assigned vs Stored Future Repository
   const activeAssignedTasks = tasks.filter((t) => t && (t.assigned_to || t.team_id || t.assignment_mode === 'team') && !t.is_pool_task);
   const pendingSubmissions = tasks.filter((t) => t && t.status === "submitted");
-  const reviewedTasks = tasks.filter((t) => t && (t.status === "completed" || t.status === "under_review" || t.status === "rejected" || task.is_verified === true));
+  const reviewedTasks = tasks.filter((t) => t && (t.status === "completed" || t.status === "under_review" || t.status === "rejected" || t.is_verified === true));
   const storedBankTasks = tasks.filter((t) => t && (!t.assigned_to || t.is_pool_task));
 
   // Filter Active Assigned Tasks
   const filteredTasks = activeAssignedTasks.filter((t) => {
     if (!t) return false;
-    const internName = task.assigned_profile?.full_name || task.assigned_profile?.email || "";
-    const title = task.title || "";
-    const description = task.description || "";
+    const internName = t.assigned_profile?.full_name || t.assigned_profile?.email || "";
+    const title = t.title || "";
+    const description = t.description || "";
     const searchLower = (searchQuery || "").toLowerCase();
     
     const titleMatches = !searchLower || 
@@ -334,7 +334,7 @@ export function AdminInternTasksView() {
                          description.toLowerCase().includes(searchLower);
 
     const statusMatches = statusFilter === "all" || t.status === statusFilter;
-    const priorityMatches = priorityFilter === "all" || task.priority === priorityFilter;
+    const priorityMatches = priorityFilter === "all" || t.priority === priorityFilter;
 
     return titleMatches && statusMatches && priorityMatches;
   });
@@ -342,19 +342,19 @@ export function AdminInternTasksView() {
   // Filter Stored Bank Tasks
   const filteredSubmissions = pendingSubmissions.filter((t) => {
     if (!t) return false;
-    const internName = task.assigned_profile?.full_name || task.assigned_profile?.email || "";
-    const title = task.title || "";
+    const internName = t.assigned_profile?.full_name || t.assigned_profile?.email || "";
+    const title = t.title || "";
     const searchLower = (searchQuery || "").toLowerCase();
     return !searchLower || title.toLowerCase().includes(searchLower) || internName.toLowerCase().includes(searchLower);
   });
 
   const filteredStoredTasks = storedBankTasks.filter((t) => {
     if (!t) return false;
-    const title = task.title || "";
-    const description = task.description || "";
+    const title = t.title || "";
+    const description = t.description || "";
     const searchLower = (storedTaskSearchQuery || "").toLowerCase();
     const titleMatches = !searchLower || title.toLowerCase().includes(searchLower) || description.toLowerCase().includes(searchLower);
-    const domainMatches = storedTaskDomainFilter === "all" || (task.task_domain || "").toLowerCase() === storedTaskDomainFilter.toLowerCase();
+    const domainMatches = storedTaskDomainFilter === "all" || (t.task_domain || "").toLowerCase() === storedTaskDomainFilter.toLowerCase();
     return titleMatches && domainMatches;
   });
 
@@ -366,14 +366,14 @@ export function AdminInternTasksView() {
       t.assignment_mode === "team" || 
       t.team_name ||
       (Array.isArray(t.team_member_names) && t.team_member_names.length > 1) ||
-      (task.description && (task.description.includes("[👥 Team:") || task.description.includes("[TeamId:")))
+      (t.description && (t.description.includes("[👥 Team:") || t.description.includes("[TeamId:")))
     );
     // If team task, group all member rows into ONE entry by team_id or normalized title (without timestamp so all additions group together)
     const key = t.team_id 
       ? `team-${t.team_id}` 
       : isTeam 
-        ? `team-${(task.title || 'Untitled').trim().toLowerCase()}`
-        : `${task.title || 'Untitled'}-${t.created_at || 'date'}`;
+        ? `team-${(t.title || 'Untitled').trim().toLowerCase()}`
+        : `${t.title || 'Untitled'}-${t.created_at || 'date'}`;
 
     if (!acc[key]) acc[key] = [];
     acc[key].push(t);
@@ -476,7 +476,7 @@ export function AdminInternTasksView() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedTaskIds(filteredTasks.map(t => task.id));
+      setSelectedTaskIds(filteredTasks.map(t => t.id));
     } else {
       setSelectedTaskIds([]);
     }
@@ -561,7 +561,7 @@ export function AdminInternTasksView() {
 
   const handleExtractAll = () => {
     const tasksToExtract = selectedTaskIds.length > 0 
-      ? filteredTasks.filter(t => selectedTaskIds.includes(task.id)) 
+      ? filteredTasks.filter(t => selectedTaskIds.includes(t.id)) 
       : filteredTasks;
       
     if (tasksToExtract.length === 0) {
@@ -571,14 +571,14 @@ export function AdminInternTasksView() {
 
     const headers = ["Intern Name", "Intern Email", "Task Title", "Status", "Priority", "Assigned Date", "Deadline", "Task Description"];
     const rows = tasksToExtract.map(t => [
-      `"${task.assigned_profile?.full_name || ''}"`,
-      `"${task.assigned_profile?.email || ''}"`,
-      `"${(task.title || '').replace(/"/g, '""')}"`,
+      `"${t.assigned_profile?.full_name || ''}"`,
+      `"${t.assigned_profile?.email || ''}"`,
+      `"${(t.title || '').replace(/"/g, '""')}"`,
       `"${t.status || ''}"`,
-      `"${task.priority || ''}"`,
+      `"${t.priority || ''}"`,
       `"${new Date(t.created_at).toLocaleDateString()}"`,
       `"${t.due_date || 'N/A'}"`,
-      `"${(task.description || '').replace(/"/g, '""')}"`
+      `"${(t.description || '').replace(/"/g, '""')}"`
     ]);
     
     const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
@@ -691,16 +691,16 @@ export function AdminInternTasksView() {
   const allVerifiedTasks = tasks.filter((t) => {
     if (!t) return false;
     if (onlyVerifiedFilter) {
-      return t.status === "completed" || task.is_verified === true || t.status === "submitted";
+      return t.status === "completed" || t.is_verified === true || t.status === "submitted";
     }
     return true;
   });
 
   const filteredVerifiedTasks = allVerifiedTasks.filter((t) => {
     const titleMatch = !verifiedTaskSearchQuery || 
-      (task.title || "").toLowerCase().includes(verifiedTaskSearchQuery.toLowerCase()) ||
-      (task.description || "").toLowerCase().includes(verifiedTaskSearchQuery.toLowerCase());
-    const domainMatch = verifiedTaskDomainFilter === "all" || (task.task_domain || "").toLowerCase() === verifiedTaskDomainFilter.toLowerCase();
+      (t.title || "").toLowerCase().includes(verifiedTaskSearchQuery.toLowerCase()) ||
+      (t.description || "").toLowerCase().includes(verifiedTaskSearchQuery.toLowerCase());
+    const domainMatch = verifiedTaskDomainFilter === "all" || (t.task_domain || "").toLowerCase() === verifiedTaskDomainFilter.toLowerCase();
     return titleMatch && domainMatch;
   });
 
@@ -791,8 +791,8 @@ export function AdminInternTasksView() {
               <Button
                 onClick={async () => {
                   const completedIds = activeAssignedTasks
-                    .filter(t => t.status === 'completed' || task.is_verified)
-                    .map(t => task.id);
+                    .filter(t => t.status === 'completed' || t.is_verified)
+                    .map(t => t.id);
                   if (completedIds.length === 0) {
                     return toast.info("No completed tasks found in active list to move. You can also select specific tasks and click 'Move to Stored Bank'.");
                   }
@@ -942,7 +942,7 @@ export function AdminInternTasksView() {
                 t.assignment_mode === "team" || 
                 t.team_name ||
                 (Array.isArray(t.team_member_names) && t.team_member_names.length > 1) ||
-                (task.description && (task.description.includes("[👥 Team:") || task.description.includes("[TeamId:")))
+                (t.description && (t.description.includes("[👥 Team:") || t.description.includes("[TeamId:")))
               )
             );
             const isBatch = !isTeam && group.length > 1;
@@ -954,25 +954,25 @@ export function AdminInternTasksView() {
             const isExpanded = expandedGroups.includes(groupKey);
 
             const renderTask = (t: any) => {
-              const internProfile = task.assigned_profile;
+              const internProfile = t.assigned_profile;
               const internName = internProfile?.full_name || internProfile?.email || "Assigned Intern";
               const taskFile = t.project_requirements || t.task_file_url;
               const submissionFile = t.deliverable_url;
               return (
-                <div key={task.id} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0">
+                <div key={t.id} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0">
                   {/* Left: Bulk Checkbox & Intern & Task Info */}
                   <div className="flex items-start gap-3 flex-1 min-w-0 w-full">
                     <div className="mt-1 shrink-0">
                       <Checkbox 
-                        checked={selectedTaskIds.includes(task.id)} 
-                        onCheckedChange={(checked) => handleToggleSelect(task.id, checked as boolean)}
+                        checked={selectedTaskIds.includes(t.id)} 
+                        onCheckedChange={(checked) => handleToggleSelect(t.id, checked as boolean)}
                       />
                     </div>
 
                     {/* Intern & Task Info */}
                     <div className="space-y-1.5 flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-bold text-sm text-slate-900 dark:text-slate-100 break-words">{task.title}</span>
+                        <span className="font-bold text-sm text-slate-900 dark:text-slate-100 break-words">{t.title}</span>
 
                         {/* Status Badge */}
                         {t.status === "completed" && (
@@ -997,7 +997,7 @@ export function AdminInternTasksView() {
                         )}
 
                         <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-600">
-                          Priority: {task.priority || "medium"}
+                          Priority: {t.priority || "medium"}
                         </Badge>
 
                         <Badge variant="outline" className="text-[10px] uppercase font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
@@ -1005,7 +1005,7 @@ export function AdminInternTasksView() {
                         </Badge>
 
                         <Badge variant="outline" className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 border-amber-200 flex items-center gap-0.5">
-                          <CreditCard className="h-3 w-3 text-amber-600" /> {task.credits || 10} Credits
+                          <CreditCard className="h-3 w-3 text-amber-600" /> {t.credits || 10} Credits
                         </Badge>
 
                         {(t.team_name || t.team_id || t.assignment_mode === "team") ? (
@@ -1044,8 +1044,8 @@ export function AdminInternTasksView() {
                         ) : null}
                       </div>
 
-                      {task.description && (
-                        <TaskRichDescription description={task.description} teamMembers={t.team_members || t.team_member_names} />
+                      {t.description && (
+                        <TaskRichDescription description={t.description} teamMembers={t.team_members || t.team_member_names} />
                       )}
 
                       <div className="flex items-center gap-3 sm:gap-4 text-[11px] text-slate-500 flex-wrap pt-1">
@@ -1106,7 +1106,7 @@ export function AdminInternTasksView() {
                               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-6 px-2 text-[10px]"
                               onClick={async () => {
                                 try {
-                                  await doReviewDeadlineExtension({ data: { taskId: task.id, status: 'approved' } });
+                                  await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'approved' } });
                                   toast.success("Deadline extension approved!");
                                   qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
                                 } catch (e) {
@@ -1122,7 +1122,7 @@ export function AdminInternTasksView() {
                               className="border-slate-300 text-rose-600 hover:bg-rose-50 font-bold h-6 px-2 text-[10px]"
                               onClick={async () => {
                                 try {
-                                  await doReviewDeadlineExtension({ data: { taskId: task.id, status: 'rejected' } });
+                                  await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'rejected' } });
                                   toast.success("Deadline extension rejected!");
                                   qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
                                 } catch (e) {
@@ -1146,8 +1146,8 @@ export function AdminInternTasksView() {
                         className="h-8 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white gap-1 shadow-xs cursor-pointer"
                         onClick={async () => {
                           try {
-                            const pts = t.mentor_recommended_credits || task.credits || 10;
-                            await doAdminFinalize({ data: { taskId: task.id, awardedCredits: pts } });
+                            const pts = t.mentor_recommended_credits || t.credits || 10;
+                            await doAdminFinalize({ data: { taskId: t.id, awardedCredits: pts } });
                             toast.success(`Task finalized as Completed! Awarded +${pts} Credits to intern.`);
                             qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
                           } catch (err: any) {
@@ -1155,14 +1155,14 @@ export function AdminInternTasksView() {
                           }
                         }}
                       >
-                        <Award className="h-3.5 w-3.5 text-amber-300" /> Approve &amp; Award +{t.mentor_recommended_credits || task.credits || 10}
+                        <Award className="h-3.5 w-3.5 text-amber-300" /> Approve &amp; Award +{t.mentor_recommended_credits || t.credits || 10}
                       </Button>
                     ) : (
                       <Button
                         size="sm"
                         variant="outline"
                         className="h-8 text-xs font-bold bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 cursor-pointer"
-                        onClick={() => handleUpdateStatus(task.id, "completed")}
+                        onClick={() => handleUpdateStatus(t.id, "completed")}
                       >
                         <Check className="h-3.5 w-3.5 mr-1" /> Approve
                       </Button>
@@ -1180,10 +1180,10 @@ export function AdminInternTasksView() {
                       <RotateCcw className="h-3.5 w-3.5 mr-1" /> Review
                     </Button>
 
-                    {editingDeadlineTaskId === task.id ? (
+                    {editingDeadlineTaskId === t.id ? (
                       <div className="flex items-center gap-1">
                         <Input type="date" autoFocus value={inlineDueDate} onChange={e => setInlineDueDate(e.target.value)} className="h-8 text-xs w-[130px]" />
-                        <Button size="sm" className="h-8 bg-blue-600 hover:bg-blue-700 text-white px-2 cursor-pointer" onClick={() => handleInlineDeadlineUpdate(task.id)}>Save</Button>
+                        <Button size="sm" className="h-8 bg-blue-600 hover:bg-blue-700 text-white px-2 cursor-pointer" onClick={() => handleInlineDeadlineUpdate(t.id)}>Save</Button>
                         <Button size="sm" variant="ghost" className="h-8 px-2 cursor-pointer" onClick={() => setEditingDeadlineTaskId(null)}>Cancel</Button>
                       </div>
                     ) : (
@@ -1192,7 +1192,7 @@ export function AdminInternTasksView() {
                         variant="outline"
                         className="h-8 text-xs font-bold text-slate-700 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1.5 shadow-2xs cursor-pointer"
                         onClick={() => {
-                          setEditingDeadlineTaskId(task.id);
+                          setEditingDeadlineTaskId(t.id);
                           setInlineDueDate(t.due_date ? t.due_date.split('T')[0] : "");
                         }}
                         title="Modify Task Deadline"
@@ -1225,7 +1225,7 @@ export function AdminInternTasksView() {
                       size="sm"
                       variant="outline"
                       className="h-8 text-xs font-bold text-amber-700 bg-amber-50/80 border-amber-200 hover:bg-amber-100 gap-1 shadow-2xs cursor-pointer"
-                      onClick={() => handleMoveToStoredBank([task.id])}
+                      onClick={() => handleMoveToStoredBank([t.id])}
                       title="Move task to Stored Bank (Unassigns from current intern and saves for future cohorts)"
                     >
                       <FolderArchive className="h-3.5 w-3.5 text-amber-600" /> Store for Future
@@ -1235,7 +1235,7 @@ export function AdminInternTasksView() {
                       size="sm"
                       variant="ghost"
                       className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 cursor-pointer"
-                      onClick={() => handleDeleteTask(task.id)}
+                      onClick={() => handleDeleteTask(t.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -1245,10 +1245,10 @@ export function AdminInternTasksView() {
             };
 
             if (isTeam) {
-              const allGroupIds = group.map(t => task.id);
+              const allGroupIds = group.map(t => t.id);
               const isGroupAllSelected = allGroupIds.every(id => selectedTaskIds.includes(id));
               const taskFile = rep.project_requirements || rep.task_file_url;
-              const allCompleted = group.every(t => t.status === "completed" || task.is_verified);
+              const allCompleted = group.every(t => t.status === "completed" || t.is_verified);
               const anySubmitted = group.some(t => t.status === "submitted" || t.deliverable_url);
               const anyInProgress = group.some(t => t.status === "in_progress");
               const teamStatus = allCompleted ? "completed" : anySubmitted ? "submitted" : anyInProgress ? "in_progress" : (rep.status || "pending");
@@ -1332,7 +1332,7 @@ export function AdminInternTasksView() {
                       {rep.description && (
                         <TaskRichDescription 
                           description={rep.description} 
-                          teamMembers={group.map((t: any) => task.assigned_profile || { full_name: t.assigned_name || task.title })}
+                          teamMembers={group.map((t: any) => t.assigned_profile || { full_name: t.assigned_name || t.title })}
                           teamId={rep.team_id}
                         />
                       )}
@@ -1343,11 +1343,11 @@ export function AdminInternTasksView() {
                           <Users className="h-3 w-3 text-purple-600" /> Team Members:
                         </span>
                         {group.map((t: any) => {
-                          const p = task.assigned_profile;
+                          const p = t.assigned_profile;
                           const internName = p?.full_name || p?.email || "Assigned Intern";
                           return (
                             <div 
-                              key={task.id} 
+                              key={t.id} 
                               className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md px-2 py-0.5 text-xs text-slate-800 dark:text-slate-200"
                             >
                               <User className="h-3 w-3 text-purple-600 shrink-0" />
@@ -1549,16 +1549,16 @@ export function AdminInternTasksView() {
                 </div>
               ) : (
                 filteredSubmissions.map((t: any) => (
-                  <div key={task.id} className="p-4 bg-slate-50 hover:bg-slate-100 transition-colors rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div key={t.id} className="p-4 bg-slate-50 hover:bg-slate-100 transition-colors rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="space-y-1.5 flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-sm">{task.title}</span>
+                        <span className="font-bold text-sm">{t.title}</span>
                         <Badge className="bg-indigo-100 text-indigo-800 text-[10px]">Submitted</Badge>
                       </div>
                       <div className="text-xs text-slate-600 flex items-center gap-2">
                         <User className="h-3 w-3" /> 
-                        <span className="font-medium">{task.assigned_profile?.full_name || "Unknown Intern"}</span>
-                        {task.assigned_profile?.email && <span>({task.assigned_profile.email})</span>}
+                        <span className="font-medium">{t.assigned_profile?.full_name || "Unknown Intern"}</span>
+                        {t.assigned_profile?.email && <span>({t.assigned_profile.email})</span>}
                       </div>
                     </div>
                     
@@ -1602,19 +1602,19 @@ export function AdminInternTasksView() {
                   <p className="text-slate-500 font-medium">No tasks have been reviewed yet.</p>
                 </div>
               ) : (
-                reviewedTasks.filter(t => (task.title || "").toLowerCase().includes(searchQuery.toLowerCase())).map((t: any) => (
-                  <div key={task.id} className="p-4 bg-slate-50 hover:bg-slate-100 transition-colors rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                reviewedTasks.filter(t => (t.title || "").toLowerCase().includes(searchQuery.toLowerCase())).map((t: any) => (
+                  <div key={t.id} className="p-4 bg-slate-50 hover:bg-slate-100 transition-colors rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="space-y-1.5 flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-sm">{task.title}</span>
+                        <span className="font-bold text-sm">{t.title}</span>
                         <Badge className={`text-[10px] ${t.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : t.status === 'under_review' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>
                           {(t.status || "").replace("_", " ")}
                         </Badge>
                       </div>
                       <div className="text-xs text-slate-600 flex items-center gap-2">
                         <User className="h-3 w-3" /> 
-                        <span className="font-medium">{task.assigned_profile?.full_name || "Unknown Intern"}</span>
-                        {task.assigned_profile?.email && <span>({task.assigned_profile.email})</span>}
+                        <span className="font-medium">{t.assigned_profile?.full_name || "Unknown Intern"}</span>
+                        {t.assigned_profile?.email && <span>({t.assigned_profile.email})</span>}
                       </div>
                     </div>
                     
@@ -1710,7 +1710,7 @@ export function AdminInternTasksView() {
                 checked={filteredStoredTasks.length > 0 && selectedStoredTaskIds.length === filteredStoredTasks.length} 
                 onCheckedChange={(checked) => {
                   if (checked) {
-                    setSelectedStoredTaskIds(filteredStoredTasks.map(t => task.id));
+                    setSelectedStoredTaskIds(filteredStoredTasks.map(t => t.id));
                   } else {
                     setSelectedStoredTaskIds([]);
                   }
@@ -1764,43 +1764,43 @@ export function AdminInternTasksView() {
               </div>
             ) : (
               filteredStoredTasks.map((t) => {
-                const isSelected = selectedStoredTaskIds.includes(task.id);
+                const isSelected = selectedStoredTaskIds.includes(t.id);
                 return (
-                  <div key={task.id} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0">
+                  <div key={t.id} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0">
                     <div className="flex items-start gap-3 flex-1 min-w-0 w-full">
                       <div className="mt-1 shrink-0">
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={(checked) => {
                             if (checked) {
-                              setSelectedStoredTaskIds(prev => [...prev, task.id]);
+                              setSelectedStoredTaskIds(prev => [...prev, t.id]);
                             } else {
-                              setSelectedStoredTaskIds(prev => prev.filter(id => id !== task.id));
+                              setSelectedStoredTaskIds(prev => prev.filter(id => id !== t.id));
                             }
                           }}
                         />
                       </div>
                       <div className="space-y-1.5 flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-bold text-sm text-slate-900 dark:text-slate-100 break-words">{task.title}</span>
+                          <span className="font-bold text-sm text-slate-900 dark:text-slate-100 break-words">{t.title}</span>
                           <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] flex items-center gap-1 font-bold">
                             <FolderArchive className="h-3 w-3 text-emerald-700" /> Stored in Repository
                           </Badge>
                           <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-600">
-                            Priority: {task.priority || "medium"}
+                            Priority: {t.priority || "medium"}
                           </Badge>
                           <Badge variant="outline" className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 border-amber-200">
-                            <CreditCard className="h-3 w-3 text-amber-600 inline mr-1" /> {task.credits || 10} Credits
+                            <CreditCard className="h-3 w-3 text-amber-600 inline mr-1" /> {t.credits || 10} Credits
                           </Badge>
-                          {task.task_domain && (
+                          {t.task_domain && (
                             <Badge variant="outline" className="text-[10px] uppercase font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
-                              Domain: {task.task_domain}
+                              Domain: {t.task_domain}
                             </Badge>
                           )}
                         </div>
 
-                        {task.description && (
-                          <TaskRichDescription description={task.description} teamMembers={t.team_members || t.team_member_names} />
+                        {t.description && (
+                          <TaskRichDescription description={t.description} teamMembers={t.team_members || t.team_member_names} />
                         )}
 
                         <div className="flex items-center gap-3 sm:gap-4 text-[11px] text-slate-400 flex-wrap pt-1">
@@ -1838,7 +1838,7 @@ export function AdminInternTasksView() {
                       <Button
                         size="sm"
                         onClick={() => {
-                          setSelectedStoredTaskIds([task.id]);
+                          setSelectedStoredTaskIds([t.id]);
                           setAssignStoredModalOpen(true);
                         }}
                         className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-xs cursor-pointer"
@@ -1849,7 +1849,7 @@ export function AdminInternTasksView() {
                         size="sm"
                         variant="ghost"
                         className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 cursor-pointer"
-                        onClick={() => handleDeleteTask(task.id)}
+                        onClick={() => handleDeleteTask(t.id)}
                         title="Delete from Repository"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -2333,7 +2333,7 @@ export function AdminInternTasksView() {
                         if (selectedVerifiedTaskIds.length === filteredVerifiedTasks.length) {
                           setSelectedVerifiedTaskIds([]);
                         } else {
-                          setSelectedVerifiedTaskIds(filteredVerifiedTasks.map(t => task.id));
+                          setSelectedVerifiedTaskIds(filteredVerifiedTasks.map(t => t.id));
                         }
                       }}
                       className="text-xs font-bold shrink-0"
@@ -2351,13 +2351,13 @@ export function AdminInternTasksView() {
                     </div>
                   ) : (
                     filteredVerifiedTasks.map((t) => {
-                      const isSelected = selectedVerifiedTaskIds.includes(task.id);
+                      const isSelected = selectedVerifiedTaskIds.includes(t.id);
                       return (
                         <div
-                          key={task.id}
+                          key={t.id}
                           onClick={() => {
                             setSelectedVerifiedTaskIds(prev => 
-                              prev.includes(task.id) ? prev.filter(id => id !== task.id) : [...prev, task.id]
+                              prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id]
                             );
                           }}
                           className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex items-start gap-3.5 ${
@@ -2370,7 +2370,7 @@ export function AdminInternTasksView() {
                             checked={isSelected}
                             onCheckedChange={() => {
                               setSelectedVerifiedTaskIds(prev => 
-                                prev.includes(task.id) ? prev.filter(id => id !== task.id) : [...prev, task.id]
+                                prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id]
                               );
                             }}
                             className="mt-1 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
@@ -2378,8 +2378,8 @@ export function AdminInternTasksView() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2 flex-wrap">
                               <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                                {task.title}
-                                {task.is_verified && (
+                                {t.title}
+                                {t.is_verified && (
                                   <Badge className="bg-emerald-100 text-emerald-800 text-[10px] font-bold border-0">
                                     Verified
                                   </Badge>
@@ -2387,21 +2387,21 @@ export function AdminInternTasksView() {
                               </h4>
                               <div className="flex items-center gap-1.5 shrink-0">
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase">
-                                  {task.priority || "Medium"}
+                                  {t.priority || "Medium"}
                                 </span>
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
-                                  {task.credits || 10} Credits
+                                  {t.credits || 10} Credits
                                 </span>
                               </div>
                             </div>
                             <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                              {task.description || "No description provided."}
+                              {t.description || "No description provided."}
                             </p>
                             <div className="flex items-center gap-4 mt-2 text-[11px] text-slate-400">
-                              {task.assigned_profile && (
-                                <span>Previous Assignee: <strong>{task.assigned_profile.full_name || task.assigned_profile.email}</strong></span>
+                              {t.assigned_profile && (
+                                <span>Previous Assignee: <strong>{t.assigned_profile.full_name || t.assigned_profile.email}</strong></span>
                               )}
-                              {task.task_domain && <span>Domain: <strong>{task.task_domain}</strong></span>}
+                              {t.task_domain && <span>Domain: <strong>{t.task_domain}</strong></span>}
                             </div>
                           </div>
                         </div>
