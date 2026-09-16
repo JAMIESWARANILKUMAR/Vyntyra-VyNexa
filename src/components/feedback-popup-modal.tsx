@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { useQueryClient } from '@tanstack/react-query';
-import { Star, Send, Loader2, ClipboardList, ChevronRight, ChevronLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { X, Star, Send, Loader2, ClipboardList, ChevronRight, ChevronLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,7 +13,8 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
   const submitFeedback = useServerFn(submitDetailedFeedback);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFormExpanded, setIsFormExpanded] = useState(false);\n  const [isDismissed, setIsDismissed] = useState(false);
+  const [isFormExpanded, setIsFormExpanded] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
   const [step, setStep] = useState(1);
   const totalSteps = 8;
   
@@ -78,7 +79,8 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
   const [programChange, setProgramChange] = useState('');
 
   if (!profile?.feedback_popup_active) return null;
-  if (isDismissed) return null;\n  if (profile?.feedback_popup_expiry && new Date(profile.feedback_popup_expiry) < new Date()) return null;
+  if (isDismissed) return null;
+  if (profile?.feedback_popup_expiry && new Date(profile.feedback_popup_expiry) < new Date()) return null;
 
   const validateStep = (s: number) => {
     if (s === 1) return true;
