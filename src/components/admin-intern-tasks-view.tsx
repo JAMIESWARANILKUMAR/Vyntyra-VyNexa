@@ -1059,7 +1059,7 @@ export function AdminInternTasksView() {
 
                         {taskFile && (
                           <button
-                            onClick={() => setPreviewTask({...task, _previewUrl: taskFile})}
+                            onClick={() => setPreviewTask({...t, _previewUrl: taskFile})}
                             className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
                           >
                             <FileText className="h-3.5 w-3.5" /> View Task File
@@ -1394,7 +1394,7 @@ export function AdminInternTasksView() {
 
                         {taskFile && (
                           <button
-                            onClick={() => setPreviewTask({...task, _previewUrl: taskFile})}
+                            onClick={() => setPreviewTask({...t, _previewUrl: taskFile})}
                             className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
                           >
                             <FileText className="h-3.5 w-3.5" /> View Task File
