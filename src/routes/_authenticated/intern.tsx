@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { BrainCircuit,  createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,7 @@ import {
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
   Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, ArrowLeft, Zap, ChevronRight, X, Trophy, Flame, AlertCircle,
   Printer, Receipt, Tag, Building2, CheckCheck, Menu, Globe
-} from "lucide-react";
+ } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -166,7 +166,7 @@ function FeeCountdownTimer({ deadline }: { deadline?: string | null }) {
 
 function InternDashboard() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "browser" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements" | "leaves" | "support" | "refer">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "browser" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements" | "leaves" | "support" | "refer" | "cbt">("overview");
   const [newNote, setNewNote] = useState("");
   const [feedback, setFeedback] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
@@ -983,6 +983,7 @@ function InternDashboard() {
     { id: "leaves",         label: `Leaves (${myLeaves.length})`, shortLabel: "Leaves", icon: CalendarDays, category: "Connect & Support", enabled: isModuleEnabled("leaves") },
     { id: "support",        label: `Support (${supportQueries.length})`, shortLabel: "Support", icon: HelpCircle, category: "Connect & Support", enabled: isModuleEnabled("support") },
     { id: "refer",          label: "Refer & Earn", shortLabel: "Refer", icon: DollarSign, category: "Connect & Support", enabled: isModuleEnabled("refer") },
+    { id: "cbt",            label: "AI CBT Exams", shortLabel: "CBT", icon: BrainCircuit, category: "Connect & Support", enabled: true },
     { id: "notes",          label: "Notes", shortLabel: "Notes", icon: FileText, category: "Connect & Support", enabled: isModuleEnabled("notes") },
     { id: "feedback",       label: "Feedback", shortLabel: "Feedback", icon: MessageCircle, category: "Connect & Support", enabled: isModuleEnabled("feedback") },
   ].filter(t => t.enabled);
@@ -4047,6 +4048,30 @@ function InternDashboard() {
             <EmployeeReferEarn />
           </div>
         )}
+          {activeTab === "cbt" && (
+            <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500 pb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+                  <BrainCircuit className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">AI CBT Exams</h2>
+                  <p className="text-slate-500 text-sm">Take your assigned proctored exams.</p>
+                </div>
+              </div>
+              <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-200">
+                <p className="text-slate-600 mb-4">Please contact your administrator to get the link to your assigned CBT exam, or click below if you have a Test ID.</p>
+                <div className="flex gap-4">
+                  <input type="text" id="cbtTestId" placeholder="Enter Test ID" className="border rounded-md px-4 py-2 w-64" />
+                  <Button onClick={() => {
+                    const id = (document.getElementById("cbtTestId") as HTMLInputElement).value;
+                    if(id) window.location.href = "/cbt/" + id;
+                  }} className="bg-emerald-600">Start Exam</Button>
+                </div>
+              </div>
+            </div>
+          )}
+
       </main>
 
       
