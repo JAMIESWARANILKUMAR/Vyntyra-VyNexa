@@ -1068,43 +1068,43 @@ function InternDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FFF9F7] via-[#FFF3EF] to-[#FFEDE7] text-slate-900 font-sans selection:bg-orange-500 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#FFF9F7] via-[#FFF3EF] to-[#FFEDE7] text-slate-900 font-sans selection:bg-emerald-500 selection:text-white relative overflow-x-hidden">
       
       {/* Soft Warm Orange Ambient Glow Mesh */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-[700px] h-[700px] bg-orange-300/20 rounded-full blur-[160px]" />
+        <div className="absolute -top-32 -left-32 w-[700px] h-[700px] bg-emerald-300/20 rounded-full blur-[160px]" />
         <div className="absolute top-1/3 -right-32 w-[700px] h-[700px] bg-amber-300/20 rounded-full blur-[160px]" />
         <div className="absolute -bottom-40 left-1/4 w-[800px] h-[800px] bg-rose-200/20 rounded-full blur-[180px]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#f973160a_1px,transparent_1px),linear-gradient(to_bottom,#f973160a_1px,transparent_1px)] bg-[size:4rem_4rem]" />
       </div>
 
       {/* Luxury Warm White Top Header */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-2xl border-b border-orange-200/70 shadow-sm shadow-orange-950/5 relative">
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-2xl border-b border-emerald-200/70 shadow-sm shadow-emerald-950/5 relative">
         <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Logo & Portal Badge */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0 min-w-0">
             <div className="relative group shrink-0">
-              <div className="absolute -inset-1 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl blur-xs opacity-60 group-hover:opacity-100 transition duration-300" />
+              <div className="absolute -inset-1 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl blur-xs opacity-60 group-hover:opacity-100 transition duration-300" />
               <img 
                 src="/favicon.png" 
                 alt="VyNexa / Vyntyra Logo" 
-                className="relative h-9 w-9 sm:h-10 sm:w-10 object-contain rounded-xl bg-white p-1 border border-orange-300/80 shadow-md shadow-orange-500/10 shrink-0"
+                className="relative h-9 w-9 sm:h-10 sm:w-10 object-contain rounded-xl bg-white p-1 border border-emerald-300/80 shadow-md shadow-emerald-500/10 shrink-0"
                 onError={(e) => {
                   (e.currentTarget as HTMLElement).style.display = "none";
                   const fallback = e.currentTarget.nextElementSibling as HTMLElement;
                   if (fallback) fallback.style.display = "flex";
                 }}
               />
-              <div className="hidden relative h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl shadow-md shadow-orange-500/20 border border-orange-300/60 items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
+              <div className="hidden relative h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-md shadow-emerald-500/20 border border-emerald-300/60 items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
                 V
               </div>
             </div>
             <div className="hidden sm:flex flex-col min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-xs sm:text-sm font-black text-slate-900 tracking-tight leading-tight truncate">Vyntyra Connect</span>
-                <span className="bg-orange-100 border border-orange-300/80 text-orange-800 text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-xs">
-                  <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+                <span className="bg-emerald-100 border border-emerald-300/80 text-emerald-800 text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Intern Associate
                 </span>
               </div>
@@ -1115,7 +1115,7 @@ function InternDashboard() {
           </div>
 
           {/* Desktop Tab Navigation (Clean White & Orange Pill Bar for 2xl Screens) */}
-          <nav className="hidden 2xl:flex items-center gap-1 overflow-x-auto py-1 scrollbar-none max-w-[50%] flex-1 min-w-0 bg-orange-50/90 border border-orange-200/80 rounded-2xl px-2">
+          <nav className="hidden 2xl:flex items-center gap-1 overflow-x-auto py-1 scrollbar-none max-w-[50%] flex-1 min-w-0 bg-transparent rounded-2xl px-2">
             {TABS.slice(0, 8).map((t: any) => {
               const isActive = activeTab === t.id;
               const TabIcon = t.icon;
@@ -1125,16 +1125,16 @@ function InternDashboard() {
                   onClick={() => setActiveTab(t.id as any)}
                   className={`shrink-0 px-3 py-1.5 text-xs font-bold rounded-xl transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
                     isActive 
-                      ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20 border border-orange-400/40" 
+                      ? "bg-emerald-600 text-white shadow-sm" 
                       : t.isPrimary
-                      ? "text-orange-900 bg-orange-100/90 hover:bg-orange-200/80 border border-orange-300/80"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-orange-100/50"
+                      ? "text-slate-600 hover:text-slate-900 bg-transparent"
+                      : "text-slate-600 hover:text-slate-900 bg-transparent hover:bg-slate-100"
                   }`}
                 >
-                  {TabIcon && <TabIcon className={`h-3.5 w-3.5 ${isActive ? "text-white" : t.isPrimary ? "text-orange-600" : "text-slate-500"}`} />}
+                  {TabIcon && <TabIcon className={`h-3.5 w-3.5 ${isActive ? "text-white" : t.isPrimary ? "text-emerald-600" : "text-slate-500"}`} />}
                   <span>{t.label}</span>
                   {t.isPrimary && t.count > 0 && !isActive && (
-                    <span className="px-1.5 py-0.2 text-[9px] font-extrabold rounded-full bg-orange-500 text-white shadow-xs">
+                    <span className="px-1.5 py-0.2 text-[9px] font-extrabold rounded-full bg-emerald-500 text-white shadow-xs">
                       {t.count}
                     </span>
                   )}
@@ -1151,8 +1151,8 @@ function InternDashboard() {
               onClick={() => setActiveTab("tasks")}
               className={`h-8 px-2 sm:px-3 text-xs font-bold transition-all shadow-md gap-1 sm:gap-1.5 cursor-pointer ${
                 activeTab === "tasks"
-                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white border border-orange-400/40 shadow-orange-500/20"
-                  : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border border-orange-300 shadow-orange-500/20"
+                  ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border border-emerald-400/40 shadow-emerald-500/20"
+                  : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white border border-emerald-300 shadow-emerald-500/20"
               }`}
               title="Tasks & Assignments"
             >
@@ -1168,7 +1168,7 @@ function InternDashboard() {
             {/* Quick Shift Clock In / Out */}
             {todayAttendance ? (
               todayAttendance.clock_out ? (
-                <span className="hidden sm:inline-flex text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-xl bg-orange-100 text-orange-800 border border-orange-300">
+                <span className="hidden sm:inline-flex text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-300">
                   Shift Ended
                 </span>
               ) : (
@@ -1180,7 +1180,7 @@ function InternDashboard() {
                   className="h-8 px-2 sm:px-2.5 text-xs font-bold border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 transition-all gap-1 cursor-pointer"
                   title="Shift Clock Out"
                 >
-                  {isClocking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5 text-rose-600" />}
+                  {isClocking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5 text-slate-600" />}
                   <span className="hidden sm:inline">Clock Out</span>
                 </Button>
               )
@@ -1189,7 +1189,7 @@ function InternDashboard() {
                 size="sm" 
                 onClick={handleClockIn} 
                 disabled={isClocking}
-                className="h-8 px-2 sm:px-2.5 text-xs font-bold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md shadow-orange-500/20 gap-1 cursor-pointer"
+                className="h-8 px-2 sm:px-2.5 text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-md shadow-emerald-500/20 gap-1 cursor-pointer"
                 title="Shift Clock In"
               >
                 {isClocking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5 text-white" />}
@@ -1215,19 +1215,19 @@ function InternDashboard() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative h-8 w-8 text-slate-700 hover:text-orange-600 rounded-xl hover:bg-orange-100/60 cursor-pointer border border-orange-200 bg-white shadow-xs"
+                className="relative h-8 w-8 text-slate-700 hover:text-emerald-600 rounded-xl hover:bg-emerald-100/60 cursor-pointer border border-emerald-200 bg-white shadow-xs"
                 title="Notifications"
               >
                 <Bell className="h-4 w-4 text-slate-700" />
                 {unreadNotificationsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[9px] font-bold text-white leading-none animate-pulse">
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[9px] font-bold text-white leading-none animate-pulse">
                     {unreadNotificationsCount}
                   </span>
                 )}
               </Button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-orange-200 py-3 z-50 overflow-hidden divide-y divide-orange-100 max-h-96 overflow-y-auto backdrop-blur-xl">
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-emerald-200 py-3 z-50 overflow-hidden divide-y divide-emerald-100 max-h-96 overflow-y-auto backdrop-blur-xl">
                   <div className="px-4 pb-2 flex items-center justify-between">
                     <span className="font-extrabold text-xs text-slate-900">In-App Notifications</span>
                     <span className="text-[10px] text-slate-500 font-medium">Click to mark as read</span>
@@ -1245,11 +1245,11 @@ function InternDashboard() {
                               qc.invalidateQueries({ queryKey: ["my-user-notifications", session?.user?.id] });
                             } catch (e) {}
                           }}
-                          className={`px-4 py-2.5 text-left transition-colors cursor-pointer hover:bg-orange-50/80 flex flex-col gap-0.5 ${!n.is_read ? 'bg-orange-50/50' : ''}`}
+                          className={`px-4 py-2.5 text-left transition-colors cursor-pointer hover:bg-emerald-50/80 flex flex-col gap-0.5 ${!n.is_read ? 'bg-emerald-50/50' : ''}`}
                         >
                           <div className="flex items-center justify-between gap-1.5">
                             <span className="font-extrabold text-xs text-slate-900 leading-snug">{n.title}</span>
-                            {!n.is_read && <span className="h-1.5 w-1.5 rounded-full bg-orange-500 shrink-0" />}
+                            {!n.is_read && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />}
                           </div>
                           <p className="text-slate-700 text-[11px] leading-relaxed">{n.message}</p>
                           <span className="text-[9px] text-slate-500 font-mono mt-1">{new Date(n.created_at).toLocaleDateString()} at {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -1264,10 +1264,10 @@ function InternDashboard() {
             {/* Profile Avatar & Quick Details Modal */}
             <button
               onClick={() => setProfileModalOpen(true)}
-              className="flex items-center gap-1.5 p-0.5 rounded-xl hover:bg-orange-100/60 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 p-0.5 rounded-xl hover:bg-emerald-100/60 transition-colors cursor-pointer"
               title="Profile & Settings"
             >
-              <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 sm:h-8.5 sm:w-8.5 ring-2 ring-orange-400/60 shadow-sm shrink-0" />
+              <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-8 w-8 sm:h-8.5 sm:w-8.5 ring-2 ring-emerald-400/60 shadow-sm shrink-0" />
             </button>
 
             {/* Desktop Direct Sign Out Button */}
@@ -1275,7 +1275,7 @@ function InternDashboard() {
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="hidden xl:inline-flex h-8 px-2.5 text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-colors text-xs font-extrabold shrink-0 items-center gap-1 cursor-pointer"
+              className="hidden xl:inline-flex h-8 px-2.5 text-slate-600 hover:text-slate-900 bg-transparent hover:bg-slate-100 border-transparent rounded-xl transition-colors text-xs font-extrabold shrink-0 items-center gap-1 cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="h-3.5 w-3.5 text-rose-600" />
@@ -1286,7 +1286,7 @@ function InternDashboard() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="h-9 sm:h-10 px-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white border border-amber-400/50 shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shrink-0"
+              className="h-9 sm:h-10 px-3.5 rounded-2xl bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 hover:from-teal-600 hover:to-emerald-600 text-white border border-amber-400/50 shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shrink-0"
               aria-label="Open Navigation Menu"
               title="Open Navigation Directory"
             >
@@ -1299,16 +1299,16 @@ function InternDashboard() {
         {/* ── Live Updates & Notifications Marquee Sub-Bar ── */}
         {marqueeItems.length > 0 ? (
           <div 
-            className="bg-white/95 text-slate-900 text-xs py-2 overflow-hidden flex whitespace-nowrap border-t border-b border-orange-200/80 relative z-10 backdrop-blur-xl group cursor-pointer shadow-xs" 
+            className="bg-white/95 text-slate-900 text-xs py-2 overflow-hidden flex whitespace-nowrap border-t border-b border-emerald-200/80 relative z-10 backdrop-blur-xl group cursor-pointer shadow-xs" 
             title="Hover to pause live ticker"
           >
             {/* Left Fixed Ticker Badge */}
-            <div className="shrink-0 bg-orange-100/90 border-r border-orange-200 px-3 py-1 flex items-center gap-2 z-20 shadow-xs">
+            <div className="shrink-0 bg-emerald-100/90 border-r border-emerald-200 px-3 py-1 flex items-center gap-2 z-20 shadow-xs">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
-              <span className="text-[10px] font-black uppercase tracking-wider text-orange-600">
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600">
                 LIVE TICKER
               </span>
               <span className="hidden group-hover:inline text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded border border-amber-300">
@@ -1320,7 +1320,7 @@ function InternDashboard() {
             <div className="flex overflow-hidden relative flex-1 min-w-0">
               <div className="animate-marquee-slow flex items-center gap-10 sm:gap-14 shrink-0 min-w-full group-hover:[animation-play-state:paused] pl-4">
                 {marqueeItems.map((item) => (
-                  <div key={item.id} className="inline-flex items-center gap-2.5 px-3 py-1 rounded-xl bg-orange-50/70 border border-orange-200/80 hover:bg-orange-100/80 transition-all shadow-2xs">
+                  <div key={item.id} className="inline-flex items-center gap-2.5 px-3 py-1 rounded-xl bg-emerald-50/70 border border-emerald-200/80 hover:bg-emerald-100/80 transition-all shadow-2xs">
                     {item.icon}
                     <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.typeColor} shrink-0`}>
                       {item.type}
@@ -1338,7 +1338,7 @@ function InternDashboard() {
               </div>
               <div className="animate-marquee-slow flex items-center gap-10 sm:gap-14 shrink-0 min-w-full ml-10 sm:ml-14 group-hover:[animation-play-state:paused]">
                 {marqueeItems.map((item) => (
-                  <div key={`dup-${item.id}`} className="inline-flex items-center gap-2.5 px-3 py-1 rounded-xl bg-orange-50/70 border border-orange-200/80 hover:bg-orange-100/80 transition-all shadow-2xs">
+                  <div key={`dup-${item.id}`} className="inline-flex items-center gap-2.5 px-3 py-1 rounded-xl bg-emerald-50/70 border border-emerald-200/80 hover:bg-emerald-100/80 transition-all shadow-2xs">
                     {item.icon}
                     <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.typeColor} shrink-0`}>
                       {item.type}
@@ -1357,9 +1357,9 @@ function InternDashboard() {
             </div>
           </div>
         ) : (
-          <div className="bg-white/95 text-slate-700 text-[11px] py-2 px-4 flex items-center justify-between border-t border-orange-200/80 relative z-10 backdrop-blur-md">
+          <div className="bg-white/95 text-slate-700 text-[11px] py-2 px-4 flex items-center justify-between border-t border-emerald-200/80 relative z-10 backdrop-blur-md">
             <div className="inline-flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shadow-xs" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-xs" />
               <span className="font-bold text-slate-900">Live Workspace Active</span>
               <span>·</span>
               <span className="text-slate-600 font-medium">All services operational</span>
@@ -1382,7 +1382,7 @@ function InternDashboard() {
           <div className="relative w-full max-w-sm sm:max-w-md bg-[#FAF6F0] border-l border-amber-200/90 shadow-2xl h-full flex flex-col z-10 animate-in slide-in-from-right duration-300 text-slate-900">
             
             {/* Drawer Header */}
-            <div className="p-4 sm:p-5 border-b border-amber-200/80 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 flex items-center justify-between shadow-md">
+            <div className="p-4 sm:p-5 border-b border-amber-200/80 bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 flex items-center justify-between shadow-md">
               <div className="flex items-center gap-2.5">
                 <div className="h-9 w-9 bg-white/20 rounded-xl shadow-inner border border-white/30 flex items-center justify-center text-white font-black text-sm">
                   V
@@ -1416,7 +1416,7 @@ function InternDashboard() {
                   <h4 className="font-extrabold text-sm text-slate-950 truncate">{displayName}</h4>
                   <p className="text-xs text-slate-600 font-medium truncate">{email}</p>
                   <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                    <span className="text-[9px] font-mono font-bold text-orange-700 bg-orange-100/90 border border-orange-300 px-2 py-0.5 rounded-md">
+                    <span className="text-[9px] font-mono font-bold text-emerald-700 bg-emerald-100/90 border border-emerald-300 px-2 py-0.5 rounded-md">
                       {profile?.intern_id || "VCS-INT-2026"}
                     </span>
                     <span className="text-[9px] text-amber-950 bg-amber-100/70 border border-amber-300 px-2 py-0.5 rounded-md font-bold truncate max-w-[140px]">
@@ -1472,7 +1472,7 @@ function InternDashboard() {
                   }}
                   className="h-9 text-xs font-bold bg-amber-50/80 border-amber-300 text-amber-950 hover:bg-amber-100 rounded-xl gap-1.5 cursor-pointer"
                 >
-                  <User className="h-3.5 w-3.5 text-orange-600" /> Settings
+                  <User className="h-3.5 w-3.5 text-emerald-600" /> Settings
                 </Button>
               </div>
 
@@ -1516,22 +1516,22 @@ function InternDashboard() {
                             }}
                             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                               isActive
-                                ? "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20 border border-amber-400/50"
+                                ? "bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20 border border-amber-400/50"
                                 : tab.isPrimary
                                 ? "bg-amber-100/80 text-amber-950 border border-amber-300 hover:bg-amber-200/80"
-                                : "bg-white text-slate-800 border border-amber-200/80 hover:bg-amber-50 hover:text-orange-700 shadow-xs"
+                                : "bg-white text-slate-800 border border-amber-200/80 hover:bg-amber-50 hover:text-emerald-700 shadow-xs"
                             }`}
                           >
                             <div className="flex items-center gap-2.5">
                               <div className={`p-1.5 rounded-lg ${isActive ? "bg-white/20" : "bg-amber-100/70 text-amber-900 border border-amber-200"}`}>
-                                <TabIcon className={`h-4 w-4 ${isActive ? "text-white" : tab.isPrimary ? "text-orange-600" : "text-amber-900"}`} />
+                                <TabIcon className={`h-4 w-4 ${isActive ? "text-white" : tab.isPrimary ? "text-emerald-600" : "text-amber-900"}`} />
                               </div>
                               <span className="tracking-tight">{tab.label}</span>
                             </div>
 
                             <div className="flex items-center gap-1.5">
                               {tab.isPrimary && tab.count > 0 && (
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black ${isActive ? "bg-white text-orange-600" : "bg-orange-500 text-white"}`}>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black ${isActive ? "bg-white text-emerald-600" : "bg-emerald-500 text-white"}`}>
                                   {tab.count}
                                 </span>
                               )}
@@ -1585,31 +1585,31 @@ function InternDashboard() {
         {/* ─── OVERVIEW ─── */}
         {activeTab === "overview" && (
           <>
-            {/* ─── ELEGANT SUNSET ORANGE HERO BANNER & PERFORMANCE MATRIX ─── */}
-            <div className="relative overflow-hidden rounded-3xl border border-orange-200/80 bg-gradient-to-r from-white via-[#FFF7F4] to-[#FFF1EC] p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-2xl">
+            {/* ─── HERO BANNER & PERFORMANCE MATRIX ─── */}
+            <div className="relative overflow-hidden rounded-3xl bg-emerald-700 p-6 sm:p-8 shadow-xl shadow-emerald-950/5 backdrop-blur-2xl text-white">
               {/* Background ambient glow accents */}
-              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-orange-300/20 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-20 left-10 h-64 w-64 rounded-full bg-amber-300/20 blur-3xl" />
+              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-600/50 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-20 left-10 h-64 w-64 rounded-full bg-emerald-800/50 blur-3xl" />
               
               <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                 <div className="space-y-2 max-w-2xl">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/80 bg-orange-100/90 px-3 py-1 text-[11px] font-bold text-orange-900 shadow-xs">
-                    <span className="h-2 w-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
+                  <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500 bg-emerald-600/50 px-3 py-1 text-[11px] font-bold text-white shadow-xs">
+                    <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
                     <span>Active Internship Sprint Workspace</span>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex flex-wrap items-center gap-2">
                     <span className={`inline-flex items-center gap-2 transition-all duration-500 ease-out transform ${greetingFade ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-2 scale-95"}`}>
-                      <span className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 bg-clip-text text-transparent font-extrabold">
+                      <span className="text-white font-extrabold">
                         {MULTILINGUAL_GREETINGS[greetingIndex].text}
                       </span>
-                      <span className="text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-950 border border-amber-300 shadow-xs">
+                      <span className="text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-600 text-white border border-emerald-500 shadow-xs">
                         {MULTILINGUAL_GREETINGS[greetingIndex].lang}
                       </span>
                     </span>
-                    <span className="text-slate-800">,</span>
-                    <span className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 bg-clip-text text-transparent">{profile?.full_name || displayName}</span> 👋
+                    <span className="text-white">,</span>
+                    <span className="text-white">{profile?.full_name || displayName}</span> 👋
                   </h1>
-                  <p className="text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">
+                  <p className="text-xs sm:text-sm font-medium text-emerald-100 leading-relaxed">
                     Track your daily shift timecard, sprint task milestones, assigned mentor syncs, and official credential documents in one unified portal.
                   </p>
                 </div>
@@ -1618,47 +1618,47 @@ function InternDashboard() {
                 <div className="flex items-center gap-3 flex-wrap shrink-0 w-full lg:w-auto">
                   <Button
                     onClick={() => setActiveTab("tasks")}
-                    className="flex-1 lg:flex-none bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs h-11 px-5 rounded-2xl shadow-lg shadow-orange-500/25 gap-2 cursor-pointer border border-orange-400/30 transition-all hover:scale-[1.02]"
+                    className="flex-1 lg:flex-none bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs h-11 px-5 rounded-2xl shadow-lg shadow-emerald-500/25 gap-2 cursor-pointer border border-emerald-400/30 transition-all hover:scale-[1.02]"
                   >
                     <ClipboardList className="h-4 w-4" />
                     My Tasks ({myTasks.length})
                   </Button>
                   <Button
                     onClick={() => setActiveTab("lms")}
-                    className="flex-1 lg:flex-none bg-white hover:bg-orange-50 text-slate-800 font-extrabold text-xs h-11 px-5 rounded-2xl border border-orange-200 shadow-sm gap-2 cursor-pointer"
+                    className="flex-1 lg:flex-none bg-white hover:bg-emerald-50 text-slate-800 font-extrabold text-xs h-11 px-5 rounded-2xl border border-emerald-200 shadow-sm gap-2 cursor-pointer"
                   >
-                    <BookOpen className="h-4 w-4 text-orange-500" />
+                    <BookOpen className="h-4 w-4 text-emerald-500" />
                     LMS Learning
                   </Button>
                 </div>
               </div>
 
               {/* ── REAL-TIME STAT MATRIX GRID ── */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-7 pt-6 border-t border-orange-200/70">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-7 pt-6 border-t border-emerald-200/70">
                 {/* Stat 1: Sprint Progress */}
-                <div className="p-4 rounded-2xl bg-white/90 border border-orange-200/80 backdrop-blur-md space-y-2 shadow-md shadow-orange-950/5">
+                <div className="p-4 rounded-2xl bg-white/90 border border-emerald-200/80 backdrop-blur-md space-y-2 shadow-md shadow-emerald-950/5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                      <Target className="h-3.5 w-3.5 text-orange-500" />
+                      <Target className="h-3.5 w-3.5 text-emerald-500" />
                       Sprint Progress
                     </span>
-                    <span className="font-mono font-black text-orange-600 text-xs">{progress}%</span>
+                    <span className="font-mono font-black text-emerald-600 text-xs">{progress}%</span>
                   </div>
                   <div className="text-xl font-black text-slate-900 font-mono">{earnedCredits} / {totalAssignedCredits} <span className="text-xs text-slate-500 font-sans font-medium">Credits</span></div>
                   {/* Progress Bar */}
-                  <div className="w-full bg-orange-100 h-2 rounded-full overflow-hidden border border-orange-200/70">
-                    <div className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-400 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]" style={{ width: `${Math.max(5, progress)}%` }} />
+                  <div className="w-full bg-emerald-100 h-2 rounded-full overflow-hidden border border-emerald-200/70">
+                    <div className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-400 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]" style={{ width: `${Math.max(5, progress)}%` }} />
                   </div>
                 </div>
 
                 {/* Stat 2: Active Pending Tasks */}
-                <div className="p-4 rounded-2xl bg-white/90 border border-orange-200/80 backdrop-blur-md space-y-2 shadow-md shadow-orange-950/5">
+                <div className="p-4 rounded-2xl bg-white/90 border border-emerald-200/80 backdrop-blur-md space-y-2 shadow-md shadow-emerald-950/5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                       <ClipboardList className="h-3.5 w-3.5 text-amber-500" />
                       Pending Tasks
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 font-black text-[10px] border border-orange-300">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-black text-[10px] border border-emerald-300">
                       {pendingTasks.length} Active
                     </span>
                   </div>
@@ -1669,13 +1669,13 @@ function InternDashboard() {
                 </div>
 
                 {/* Stat 3: Attendance Streak */}
-                <div className="p-4 rounded-2xl bg-white/90 border border-orange-200/80 backdrop-blur-md space-y-2 shadow-md shadow-orange-950/5">
+                <div className="p-4 rounded-2xl bg-white/90 border border-emerald-200/80 backdrop-blur-md space-y-2 shadow-md shadow-emerald-950/5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                      <Flame className="h-3.5 w-3.5 text-orange-500" />
+                      <Flame className="h-3.5 w-3.5 text-emerald-500" />
                       Work Streak
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 font-black text-[10px] border border-orange-300">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-black text-[10px] border border-emerald-300">
                       🔥 Active
                     </span>
                   </div>
@@ -1686,18 +1686,18 @@ function InternDashboard() {
                 </div>
 
                 {/* Stat 4: Mentor & Domain */}
-                <div className="p-4 rounded-2xl bg-white/90 border border-orange-200/80 backdrop-blur-md space-y-2 shadow-md shadow-orange-950/5">
+                <div className="p-4 rounded-2xl bg-white/90 border border-emerald-200/80 backdrop-blur-md space-y-2 shadow-md shadow-emerald-950/5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                       <Award className="h-3.5 w-3.5 text-amber-500" />
                       Mentor Lead
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 font-black text-[10px] border border-orange-300">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-black text-[10px] border border-emerald-300">
                       Assigned
                     </span>
                   </div>
                   <div className="text-sm font-extrabold text-slate-900 truncate">{mentor?.full_name || "Technical Team Lead"}</div>
-                  <div className="text-[11px] text-orange-600 font-bold truncate">
+                  <div className="text-[11px] text-emerald-600 font-bold truncate">
                     {profile?.department || "Software Engineering"}
                   </div>
                 </div>
@@ -1705,21 +1705,21 @@ function InternDashboard() {
             </div>
 
             {/* ─── INTERN PROFILE CARD ─── */}
-            <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl overflow-hidden">
+            <div className="rounded-3xl border border-emerald-200/80 bg-white/95 shadow-xl shadow-emerald-950/5 backdrop-blur-xl overflow-hidden">
               {/* Card header */}
-              <div className="bg-gradient-to-r from-[#FFF8F5] via-[#FFF3EE] to-white px-6 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-5 border-b border-orange-200/80">
+              <div className="bg-gradient-to-r from-[#FFF8F5] via-[#FFF3EE] to-white px-6 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-5 border-b border-emerald-200/80">
                 <div className="flex items-center gap-5 min-w-0">
                   <div className="relative shrink-0 group">
-                    <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 rounded-2xl ring-2 ring-orange-400/60 shadow-xl text-2xl" />
+                    <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 rounded-2xl ring-2 ring-emerald-400/60 shadow-xl text-2xl" />
                     <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl cursor-pointer text-white">
                       <span className="text-[10px] font-bold uppercase tracking-wider">Upload</span>
                       <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.webp" onChange={handleImageUpload} />
                     </label>
-                    <span className="absolute -bottom-1 -right-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-white shadow-md">INTERN</span>
+                    <span className="absolute -bottom-1 -right-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-white shadow-md">INTERN</span>
                   </div>
                   <div className="min-w-0">
                     <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">{profile?.full_name || displayName}</div>
-                    <div className="text-orange-600 text-xs font-mono font-black mt-0.5 flex items-center gap-2">
+                    <div className="text-emerald-600 text-xs font-mono font-black mt-0.5 flex items-center gap-2">
                       <span>{profile?.intern_id || "VYN-INT-PRO"}</span>
                       <span className="h-1 w-1 rounded-full bg-slate-300" />
                       <span className="text-slate-600 font-sans font-medium">{profile?.department || "Associate Intern"}</span>
@@ -1729,8 +1729,8 @@ function InternDashboard() {
                 </div>
 
                 {mentor && (
-                  <div className="shrink-0 text-left sm:text-right bg-orange-50/90 rounded-2xl p-3.5 border border-orange-200/80 backdrop-blur-md w-full sm:w-auto shadow-xs">
-                    <div className="text-[10px] text-orange-600 font-black uppercase tracking-wider mb-0.5 flex items-center sm:justify-end gap-1.5">
+                  <div className="shrink-0 text-left sm:text-right bg-emerald-50/90 rounded-2xl p-3.5 border border-emerald-200/80 backdrop-blur-md w-full sm:w-auto shadow-xs">
+                    <div className="text-[10px] text-emerald-600 font-black uppercase tracking-wider mb-0.5 flex items-center sm:justify-end gap-1.5">
                       <Sparkles className="h-3 w-3" /> Assigned Mentor
                     </div>
                     <div className="text-sm font-extrabold text-slate-900">{mentor.full_name}</div>
@@ -1774,7 +1774,7 @@ function InternDashboard() {
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="text-[11px] font-black uppercase tracking-wider text-amber-950 mr-1">Your Documents:</span>
                   {docsQ.isLoading ? (
-                    <span className="text-xs text-amber-900 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin text-orange-600" /> Loading...</span>
+                    <span className="text-xs text-amber-900 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin text-emerald-600" /> Loading...</span>
                   ) : (
                     <>
                       <a
@@ -1783,7 +1783,7 @@ function InternDashboard() {
                         rel="noopener noreferrer"
                         className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
                           docsQ.data?.offerLetterUrl
-                            ? "bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white border border-amber-500 shadow-md shadow-orange-500/10"
+                            ? "bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white border border-amber-500 shadow-md shadow-emerald-500/10"
                             : "bg-amber-100/60 text-slate-400 border border-amber-200 cursor-not-allowed pointer-events-none"
                         }`}
                         onClick={(e) => { if (!docsQ.data?.offerLetterUrl) e.preventDefault(); }}
@@ -1821,10 +1821,10 @@ function InternDashboard() {
 
                 <button
                   onClick={() => docsQ.refetch()}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-amber-900 hover:text-orange-600 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-amber-900 hover:text-emerald-600 transition-colors cursor-pointer"
                   title="Refresh document links"
                 >
-                  <RefreshCw className="h-3 w-3 text-orange-500" />
+                  <RefreshCw className="h-3 w-3 text-emerald-500" />
                   Refresh
                 </button>
               </div>
@@ -1832,19 +1832,19 @@ function InternDashboard() {
 
             {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
             {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
-            <div className="bg-gradient-to-r from-white via-[#FFF7F4] to-[#FFF1EC] rounded-3xl p-6 text-slate-900 shadow-xl shadow-orange-950/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-orange-200/80 relative overflow-hidden backdrop-blur-2xl">
-              <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-orange-300/20 blur-2xl" />
+            <div className="bg-gradient-to-r from-white via-[#FFF7F4] to-[#FFF1EC] rounded-3xl p-6 text-slate-900 shadow-xl shadow-emerald-950/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-emerald-200/80 relative overflow-hidden backdrop-blur-2xl">
+              <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-emerald-300/20 blur-2xl" />
               <div className="flex items-center gap-4 relative z-10">
-                <div className="h-12 w-12 rounded-2xl bg-orange-100 border border-orange-300 backdrop-blur-md flex items-center justify-center text-orange-600 shrink-0 shadow-sm">
+                <div className="h-12 w-12 rounded-2xl bg-emerald-100 border border-emerald-300 backdrop-blur-md flex items-center justify-center text-emerald-600 shrink-0 shadow-sm">
                   <ClipboardList className="h-6 w-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900 flex items-center gap-2">
                       My Tasks &amp; Sprint Deliverables Hub
-                      <Sparkles className="h-4 w-4 text-orange-500 animate-pulse" />
+                      <Sparkles className="h-4 w-4 text-emerald-500 animate-pulse" />
                     </h3>
-                    <span className="px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800 border border-orange-300 text-[10px] font-black uppercase tracking-wide">
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-black uppercase tracking-wide">
                       {pendingTasks.length} Pending
                     </span>
                     {inProgressTasks.length > 0 && (
@@ -1862,7 +1862,7 @@ function InternDashboard() {
               <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0 relative z-10">
                 <Button
                   onClick={() => setActiveTab("tasks")}
-                  className="w-full md:w-auto bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs h-10 px-6 rounded-2xl shadow-lg shadow-orange-500/25 gap-2 cursor-pointer border border-orange-400/30 transition-all hover:scale-[1.02]"
+                  className="w-full md:w-auto bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs h-10 px-6 rounded-2xl shadow-lg shadow-emerald-500/25 gap-2 cursor-pointer border border-emerald-400/30 transition-all hover:scale-[1.02]"
                 >
                   <CheckCircle2 className="h-4 w-4 text-white" />
                   Open Tasks Workspace &rarr;
@@ -1871,10 +1871,10 @@ function InternDashboard() {
             </div>
 
             {/* ─── ATTENDANCE TIMECARD WIDGET ─── */}
-            <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-orange-200/70 pb-5">
+            <div className="rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-emerald-950/5 backdrop-blur-xl space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-emerald-200/70 pb-5">
                 <div className="flex items-center gap-3.5">
-                  <div className="h-11 w-11 rounded-2xl bg-orange-100 text-orange-600 border border-orange-300 flex items-center justify-center shadow-xs">
+                  <div className="h-11 w-11 rounded-2xl bg-emerald-100 text-emerald-600 border border-emerald-300 flex items-center justify-center shadow-xs">
                     <Clock className="h-5 w-5" />
                   </div>
                   <div>
@@ -1888,7 +1888,7 @@ function InternDashboard() {
                     todayAttendance
                       ? todayAttendance.clock_out
                         ? "bg-slate-100 text-slate-700 border border-slate-300"
-                        : "bg-orange-100 text-orange-800 border border-orange-300 animate-pulse"
+                        : "bg-emerald-100 text-emerald-800 border border-emerald-300 animate-pulse"
                       : "bg-amber-100 text-amber-800 border border-amber-300"
                   }`}>
                     Status: {todayAttendance ? (todayAttendance.clock_out ? "Completed" : "Active Shift") : "Offline"}
@@ -1911,7 +1911,7 @@ function InternDashboard() {
                       onClick={handleClockIn}
                       disabled={isClocking || isClockingDisabled}
                       title={clockingDisabledReason}
-                      className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs gap-2 px-6 h-10 rounded-xl shadow-lg shadow-orange-500/25 disabled:opacity-50 cursor-pointer"
+                      className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs gap-2 px-6 h-10 rounded-xl shadow-lg shadow-emerald-500/25 disabled:opacity-50 cursor-pointer"
                     >
                       {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
                       Clock In Now
@@ -1922,19 +1922,19 @@ function InternDashboard() {
 
               {/* Timecard Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                <div className="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/80 flex items-center justify-between shadow-xs">
+                <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200/80 flex items-center justify-between shadow-xs">
                   <div>
                     <div className="text-slate-500 font-bold mb-0.5">Today Clock In</div>
                     <div className="text-base font-black text-slate-900 font-mono">
                       {todayAttendance?.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                     </div>
                   </div>
-                  <div className="h-9 w-9 rounded-xl bg-orange-100 border border-orange-300 text-orange-600 flex items-center justify-center">
+                  <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-600 flex items-center justify-center">
                     <Clock className="h-4 w-4" />
                   </div>
                 </div>
 
-                <div className="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/80 flex items-center justify-between shadow-xs">
+                <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200/80 flex items-center justify-between shadow-xs">
                   <div>
                     <div className="text-slate-500 font-bold mb-0.5">Today Clock Out</div>
                     <div className="text-base font-black text-slate-900 font-mono">
@@ -1946,14 +1946,14 @@ function InternDashboard() {
                   </div>
                 </div>
 
-                <div className="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/80 flex items-center justify-between shadow-xs">
+                <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200/80 flex items-center justify-between shadow-xs">
                   <div>
                     <div className="text-slate-500 font-bold mb-0.5">Total Days Present</div>
                     <div className="text-base font-black text-slate-900 font-mono">
                       {attendanceLogs.length} Days
                     </div>
                   </div>
-                  <div className="h-9 w-9 rounded-xl bg-orange-100 border border-orange-300 text-orange-600 flex items-center justify-center">
+                  <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-600 flex items-center justify-center">
                     <CalendarDays className="h-4 w-4" />
                   </div>
                 </div>
@@ -1961,13 +1961,13 @@ function InternDashboard() {
             </div>
 
             {/* Domain Workspace Auto-Detected Header Strip */}
-            <div className="rounded-2xl border border-orange-200/80 bg-white/95 p-4 flex items-center justify-between gap-4 shadow-xl shadow-orange-950/5 backdrop-blur-xl flex-wrap">
+            <div className="rounded-2xl border border-emerald-200/80 bg-white/95 p-4 flex items-center justify-between gap-4 shadow-xl shadow-emerald-950/5 backdrop-blur-xl flex-wrap">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-orange-100 border border-orange-300 text-orange-800 flex items-center justify-center font-black text-xs shadow-xs">
+                <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-black text-xs shadow-xs">
                   {selectedDomain === "management" ? "MBA" : selectedDomain === "non_tech" ? "CRM" : "DEV"}
                 </div>
                 <div>
-                  <div className="text-[10px] font-black uppercase tracking-wider text-orange-600">Assigned Domain Workspace</div>
+                  <div className="text-[10px] font-black uppercase tracking-wider text-emerald-600">Assigned Domain Workspace</div>
                   <div className="text-xs font-black text-slate-900">
                     {selectedDomain === "management" 
                       ? "MBA / BBA Business Management & Corporate Operations" 
@@ -1984,7 +1984,7 @@ function InternDashboard() {
                 <select
                   value={selectedDomain}
                   onChange={(e: any) => setSelectedDomain(e.target.value)}
-                  className="rounded-xl border border-orange-200 bg-white px-3 py-1.5 text-xs font-black text-slate-900 outline-none focus:border-orange-500 shadow-xs"
+                  className="rounded-xl border border-emerald-200 bg-white px-3 py-1.5 text-xs font-black text-slate-900 outline-none focus:border-emerald-500 shadow-xs"
                 >
                   <option value="management">MBA / BBA Management & Operations</option>
                   <option value="tech">Tech & Software Engineering</option>
@@ -2042,17 +2042,17 @@ function InternDashboard() {
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {[
-                { icon: <ClipboardList className="h-5 w-5 text-orange-600" />, label: "Pending Tasks", value: pendingTasks.length, border: "border-orange-200/80", bg: "bg-white" },
-                { icon: <CheckCircle2 className="h-5 w-5 text-emerald-600" />, label: "Completed", value: completedTasks.length, border: "border-orange-200/80", bg: "bg-white" },
-                { icon: <CreditCard className="h-5 w-5 text-orange-600" />, label: "Credits Score", value: `${earnedCredits} / ${totalAssignedCredits}`, border: "border-orange-200/80", bg: "bg-white" },
-                { icon: <Flame className="h-5 w-5 text-amber-500 animate-pulse" />, label: "Day Streak", value: `${dayStreak} Days`, border: "border-orange-200/80", bg: "bg-white" },
-                { icon: <Video className="h-5 w-5 text-orange-600" />, label: "Meetings", value: meetings.filter(m => new Date(m.scheduled_at) >= new Date()).length, border: "border-orange-200/80", bg: "bg-white" },
-                { icon: <BookOpen className="h-5 w-5 text-orange-600" />, label: "Resources", value: resources.length, border: "border-orange-200/80", bg: "bg-white" },
+                { icon: <ClipboardList className="h-5 w-5 text-emerald-600" />, label: "Pending Tasks", value: pendingTasks.length, border: "border-emerald-200/80", bg: "bg-white" },
+                { icon: <CheckCircle2 className="h-5 w-5 text-emerald-600" />, label: "Completed", value: completedTasks.length, border: "border-emerald-200/80", bg: "bg-white" },
+                { icon: <CreditCard className="h-5 w-5 text-emerald-600" />, label: "Credits Score", value: `${earnedCredits} / ${totalAssignedCredits}`, border: "border-emerald-200/80", bg: "bg-white" },
+                { icon: <Flame className="h-5 w-5 text-amber-500 animate-pulse" />, label: "Day Streak", value: `${dayStreak} Days`, border: "border-emerald-200/80", bg: "bg-white" },
+                { icon: <Video className="h-5 w-5 text-emerald-600" />, label: "Meetings", value: meetings.filter(m => new Date(m.scheduled_at) >= new Date()).length, border: "border-emerald-200/80", bg: "bg-white" },
+                { icon: <BookOpen className="h-5 w-5 text-emerald-600" />, label: "Resources", value: resources.length, border: "border-emerald-200/80", bg: "bg-white" },
               ].map((s, i) => (
-                <div key={i} className={`rounded-3xl border ${s.border} ${s.bg} p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-md shadow-orange-950/5 backdrop-blur-2xl transition-all duration-300 hover:scale-[1.02]`}>
+                <div key={i} className={`rounded-3xl border ${s.border} ${s.bg} p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-md shadow-emerald-950/5 backdrop-blur-2xl transition-all duration-300 hover:scale-[1.02]`}>
                   <div className="flex items-center justify-between">
-                    <div className="h-10 w-10 rounded-2xl bg-orange-50 border border-orange-200 flex items-center justify-center shadow-xs shrink-0">{s.icon}</div>
-                    <span className="text-[9px] font-black uppercase tracking-wider text-orange-800 bg-orange-100 px-2 py-0.5 rounded-full border border-orange-300">SYNC</span>
+                    <div className="h-10 w-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shadow-xs shrink-0">{s.icon}</div>
+                    <span className="text-[9px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">SYNC</span>
                   </div>
                   <div>
                     <div className="text-2xl font-black text-slate-900 font-mono tracking-tight">{s.value}</div>
@@ -2065,7 +2065,7 @@ function InternDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Calendar */}
               <div className="lg:col-span-1">
-                <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 mb-3 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-orange-600" />Calendar</h2>
+                <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 mb-3 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-emerald-600" />Calendar</h2>
                 <MonthlyCalendar events={[...schedules, ...meetings]} holidays={holidaysQ.data || []} />
               </div>
 
@@ -2074,20 +2074,20 @@ function InternDashboard() {
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2">
-                      <ClipboardList className="h-4 w-4 text-orange-600" />
+                      <ClipboardList className="h-4 w-4 text-emerald-600" />
                       My Assignments ({myTasks.length})
                     </h2>
                     <Button 
                       variant="link" 
                       onClick={() => setActiveTab("tasks")} 
-                      className="text-xs font-bold text-orange-600 hover:text-orange-700 p-0 h-auto gap-1 cursor-pointer"
+                      className="text-xs font-bold text-emerald-600 hover:text-emerald-700 p-0 h-auto gap-1 cursor-pointer"
                     >
                       View All &amp; Task Pool &rarr;
                     </Button>
                   </div>
-                  <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl overflow-hidden">
+                  <div className="rounded-3xl border border-emerald-200/80 bg-white/95 shadow-xl shadow-emerald-950/5 backdrop-blur-xl overflow-hidden">
                     {tasksQ.isLoading ? (
-                      <div className="p-8 flex items-center justify-center gap-2 text-slate-600 text-sm font-medium"><Loader2 className="h-4 w-4 animate-spin text-orange-500" />Loading...</div>
+                      <div className="p-8 flex items-center justify-center gap-2 text-slate-600 text-sm font-medium"><Loader2 className="h-4 w-4 animate-spin text-emerald-500" />Loading...</div>
                     ) : tasks.length === 0 ? (
                       <div className="p-8 text-center text-slate-600 text-sm space-y-2 font-medium">
                         <p>No tasks assigned yet.</p>
@@ -2095,41 +2095,41 @@ function InternDashboard() {
                           size="sm" 
                           variant="outline" 
                           onClick={() => setActiveTab("tasks")}
-                          className="text-xs font-black text-orange-900 bg-orange-100 border-orange-300 cursor-pointer shadow-xs"
+                          className="text-xs font-black text-emerald-900 bg-emerald-100 border-emerald-300 cursor-pointer shadow-xs"
                         >
                           Check Open Task Pool
                         </Button>
                       </div>
                     ) : (
-                      <div className="divide-y divide-orange-200/60">
+                      <div className="divide-y divide-emerald-200/60">
                         {myTasks.slice(0, 4).map((task: any) => {
                           const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
                           return (
                             <div 
                               key={task.id} 
                               onClick={() => setActiveTab("tasks")}
-                              className="p-4 flex items-center justify-between gap-4 hover:bg-orange-50/50 transition-colors cursor-pointer"
+                              className="p-4 flex items-center justify-between gap-4 hover:bg-emerald-50/50 transition-colors cursor-pointer"
                               title="Click to view full details and submit deliverable"
                             >
                               <div className="flex items-center gap-3 min-w-0">
                                 <span className={`h-2 w-2 rounded-full shrink-0 ${s.dot}`} />
                                 <div className="min-w-0">
                                   <div className="font-extrabold text-sm truncate text-slate-900">{task.title}</div>
-                                  {task.due_date && <div className="text-xs text-slate-600 mt-0.5 flex items-center gap-1 font-semibold"><Clock className="h-3 w-3 text-orange-500" />Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</div>}
+                                  {task.due_date && <div className="text-xs text-slate-600 mt-0.5 flex items-center gap-1 font-semibold"><Clock className="h-3 w-3 text-emerald-500" />Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</div>}
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 <span className={`text-[10px] px-2.5 py-0.5 rounded-full border font-black uppercase ${s.badge}`}>{s.label}</span>
-                                <span className="text-xs text-orange-600 font-black hidden sm:inline">&rarr;</span>
+                                <span className="text-xs text-emerald-600 font-black hidden sm:inline">&rarr;</span>
                               </div>
                             </div>
                           );
                         })}
                         {myTasks.length > 4 && (
-                          <div className="p-3 bg-orange-50/60 text-center">
+                          <div className="p-3 bg-emerald-50/60 text-center">
                             <button
                               onClick={() => setActiveTab("tasks")}
-                              className="text-xs font-black text-orange-600 hover:text-orange-700 cursor-pointer hover:underline"
+                              className="text-xs font-black text-emerald-600 hover:text-emerald-700 cursor-pointer hover:underline"
                             >
                               + {myTasks.length - 4} more assigned tasks. Click to view all &rarr;
                             </button>
@@ -2142,23 +2142,23 @@ function InternDashboard() {
 
                 {/* Featured Resources */}
                 <div>
-                  <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 mb-3 flex items-center gap-2"><BookOpen className="h-4 w-4 text-orange-600" />Quick Resources</h2>
-                  <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl overflow-hidden">
+                  <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 mb-3 flex items-center gap-2"><BookOpen className="h-4 w-4 text-emerald-600" />Quick Resources</h2>
+                  <div className="rounded-3xl border border-emerald-200/80 bg-white/95 shadow-xl shadow-emerald-950/5 backdrop-blur-xl overflow-hidden">
                     {resourcesQ.isLoading ? (
-                      <div className="p-6 text-center text-slate-600 text-sm flex justify-center gap-2 items-center font-medium"><Loader2 className="h-4 w-4 animate-spin text-orange-500" />Loading...</div>
+                      <div className="p-6 text-center text-slate-600 text-sm flex justify-center gap-2 items-center font-medium"><Loader2 className="h-4 w-4 animate-spin text-emerald-500" />Loading...</div>
                     ) : resources.length === 0 ? (
                       <div className="p-6 text-center text-slate-600 text-sm font-medium">No resources posted yet</div>
                     ) : (
-                      <div className="divide-y divide-orange-200/60">
+                      <div className="divide-y divide-emerald-200/60">
                         {resources.slice(0, 3).map((r: any) => {
                           const ri = RESOURCE_ICONS[r.type] || RESOURCE_ICONS.link;
                           const isDocOrSheet = r.url?.includes("docs.google.com") || r.url?.includes(".xls") || r.url?.includes(".csv") || r.type === "document";
                           return (
-                            <div key={r.id} className="flex items-center justify-between gap-3 p-4 hover:bg-orange-50/50 transition-colors group">
+                            <div key={r.id} className="flex items-center justify-between gap-3 p-4 hover:bg-emerald-50/50 transition-colors group">
                               <a href={r.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 flex-1 min-w-0">
                                 <div className={`h-9 w-9 rounded-xl border flex items-center justify-center shrink-0 ${ri.color}`}>{ri.icon}</div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="font-extrabold text-sm text-slate-900 group-hover:text-orange-600 transition-colors truncate">{r.title}</div>
+                                  <div className="font-extrabold text-sm text-slate-900 group-hover:text-emerald-600 transition-colors truncate">{r.title}</div>
                                   {r.description && <div className="text-xs text-slate-600 truncate font-medium">{r.description}</div>}
                                 </div>
                               </a>
@@ -2188,10 +2188,10 @@ function InternDashboard() {
 
         {/* ─── ATTENDANCE TAB ─── */}
         {activeTab === "attendance" && (
-          <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-orange-200/80 pb-5">
+          <div className="rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-emerald-950/5 backdrop-blur-xl space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-emerald-200/80 pb-5">
               <div className="flex items-center gap-3.5">
-                <div className="h-11 w-11 rounded-2xl bg-orange-100 text-orange-600 border border-orange-300 flex items-center justify-center shadow-xs">
+                <div className="h-11 w-11 rounded-2xl bg-emerald-100 text-emerald-600 border border-emerald-300 flex items-center justify-center shadow-xs">
                   <Clock className="h-5 w-5" />
                 </div>
                 <div>
@@ -2205,7 +2205,7 @@ function InternDashboard() {
                   todayAttendance
                     ? todayAttendance.clock_out
                       ? "bg-slate-100 text-slate-700 border border-slate-300"
-                      : "bg-orange-100 text-orange-800 border border-orange-300 animate-pulse"
+                      : "bg-emerald-100 text-emerald-800 border border-emerald-300 animate-pulse"
                     : "bg-amber-100 text-amber-800 border border-amber-300"
                 }`}>
                   Status: {todayAttendance ? (todayAttendance.clock_out ? "Completed" : "Active Shift") : "Offline"}
@@ -2226,7 +2226,7 @@ function InternDashboard() {
                   <Button
                     onClick={handleClockIn}
                     disabled={isClocking}
-                    className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs gap-2 px-6 h-10 rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer border border-orange-400/30"
+                    className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs gap-2 px-6 h-10 rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer border border-emerald-400/30"
                   >
                     {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
                     Clock In Now
@@ -2237,19 +2237,19 @@ function InternDashboard() {
 
             {/* Timecard Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              <div className="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/80 flex items-center justify-between shadow-xs">
+              <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200/80 flex items-center justify-between shadow-xs">
                 <div>
                   <div className="text-slate-600 font-bold mb-0.5">Today Clock In</div>
                   <div className="text-base font-black text-slate-900 font-mono">
                     {todayAttendance?.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                   </div>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-orange-100 border border-orange-300 text-orange-600 flex items-center justify-center">
+                <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-600 flex items-center justify-center">
                   <Clock className="h-4 w-4" />
                 </div>
               </div>
 
-              <div className="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/80 flex items-center justify-between shadow-xs">
+              <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200/80 flex items-center justify-between shadow-xs">
                 <div>
                   <div className="text-slate-600 font-bold mb-0.5">Today Clock Out</div>
                   <div className="text-base font-black text-slate-900 font-mono">
@@ -2261,14 +2261,14 @@ function InternDashboard() {
                 </div>
               </div>
 
-              <div className="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/80 flex items-center justify-between shadow-xs">
+              <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200/80 flex items-center justify-between shadow-xs">
                 <div>
                   <div className="text-slate-600 font-bold mb-0.5">Total Days Present</div>
                   <div className="text-base font-black text-slate-900 font-mono">
                     {attendanceLogs.length} Days
                   </div>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-orange-100 border border-orange-300 text-orange-600 flex items-center justify-center">
+                <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-600 flex items-center justify-center">
                   <CalendarDays className="h-4 w-4" />
                 </div>
               </div>
@@ -2277,10 +2277,10 @@ function InternDashboard() {
             {/* Attendance History Table */}
             <div className="space-y-3">
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-600">Shift History Log</h3>
-              <div className="rounded-2xl border border-orange-200/80 overflow-x-auto shadow-xs">
+              <div className="rounded-2xl border border-emerald-200/80 overflow-x-auto shadow-xs">
                 <table className="w-full text-left border-collapse text-xs min-w-[500px]">
                   <thead>
-                    <tr className="bg-orange-50/80 border-b border-orange-200/80 text-slate-700 font-black uppercase tracking-wider text-[10px]">
+                    <tr className="bg-emerald-50/80 border-b border-emerald-200/80 text-slate-700 font-black uppercase tracking-wider text-[10px]">
                       <th className="p-3">Date</th>
                       <th className="p-3">Clock In</th>
                       <th className="p-3">Clock Out</th>
@@ -2288,14 +2288,14 @@ function InternDashboard() {
                       <th className="p-3 text-right">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-orange-200/60 text-slate-800 bg-white">
+                  <tbody className="divide-y divide-emerald-200/60 text-slate-800 bg-white">
                     {attendanceLogs.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="p-6 text-center text-slate-500 italic">No historical shift logs recorded yet.</td>
                       </tr>
                     ) : (
                       attendanceLogs.map((log: any) => (
-                        <tr key={log.id} className="hover:bg-orange-50/50 transition-colors">
+                        <tr key={log.id} className="hover:bg-emerald-50/50 transition-colors">
                           <td className="p-3 font-mono font-bold text-slate-900">
                             {new Date(log.date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
                           </td>
@@ -2311,7 +2311,7 @@ function InternDashboard() {
                           <td className="p-3 text-right">
                             <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
                               log.clock_in && !log.clock_out 
-                                ? "bg-orange-100 text-orange-800 border-orange-300" 
+                                ? "bg-emerald-100 text-emerald-800 border-emerald-300" 
                                 : "bg-emerald-100 text-emerald-800 border-emerald-300"
                             }`}>
                               {log.clock_in && !log.clock_out ? "Active Shift" : "Completed"}
@@ -2330,9 +2330,9 @@ function InternDashboard() {
         {/* ─── ONBOARDING & PRE-BOARDING HUB ─── */}
         {activeTab === "onboarding" && (
           <div className="space-y-6">
-            <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-xl">
+            <div className="rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-emerald-950/5 backdrop-blur-xl">
               <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
-                <Compass className="h-5 w-5 text-orange-600" /> Welcome &amp; Orientation Roadmap (Week 1 to Week 8)
+                <Compass className="h-5 w-5 text-emerald-600" /> Welcome &amp; Orientation Roadmap (Week 1 to Week 8)
               </h2>
               <p className="text-xs text-slate-600 mb-6 font-medium">Follow your structured orientation kit and weekly milestones for a seamless onboarding journey.</p>
               
@@ -2343,10 +2343,10 @@ function InternDashboard() {
                   { week: "Week 4", title: "Mid-Term Sprint & Review", desc: "Mid-term appraisal scorecard & project demo.", done: false },
                   { week: "Week 8", title: "Final Showcase & PPO", desc: "Deliverable showcase, exit survey & verifiable certificate.", done: false }
                 ].map((w, idx) => (
-                  <div key={idx} className={`p-5 rounded-2xl border ${w.done ? 'bg-emerald-50 border-emerald-300' : 'bg-orange-50/60 border-orange-200'} shadow-xs`}>
+                  <div key={idx} className={`p-5 rounded-2xl border ${w.done ? 'bg-emerald-50 border-emerald-300' : 'bg-emerald-50/60 border-emerald-200'} shadow-xs`}>
                     <div className="flex items-center justify-between mb-2.5">
-                      <span className={`text-[10px] uppercase font-mono font-black px-2.5 py-0.5 rounded-full border ${w.done ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-orange-100 text-orange-800 border-orange-300'}`}>{w.week}</span>
-                      {w.done ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Clock className="h-4 w-4 text-orange-500" />}
+                      <span className={`text-[10px] uppercase font-mono font-black px-2.5 py-0.5 rounded-full border ${w.done ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'}`}>{w.week}</span>
+                      {w.done ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Clock className="h-4 w-4 text-emerald-500" />}
                     </div>
                     <div className="font-black text-sm text-slate-900">{w.title}</div>
                     <div className="text-xs text-slate-600 mt-1 font-medium">{w.desc}</div>
@@ -2357,8 +2357,8 @@ function InternDashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Compliance & Legal Uploads */}
-              <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-4">
-                <h3 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><FileCheck className="h-4 w-4 text-orange-600" /> Compliance &amp; Legal Uploads</h3>
+              <div className="rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-emerald-950/5 backdrop-blur-xl space-y-4">
+                <h3 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><FileCheck className="h-4 w-4 text-emerald-600" /> Compliance &amp; Legal Uploads</h3>
                 <p className="text-xs text-slate-600 font-medium">Upload your NOC, Student ID proof, signed NDA, and bank passbook proof.</p>
                 <div className="space-y-3">
                   {[
@@ -2367,7 +2367,7 @@ function InternDashboard() {
                     { label: "Signed NDA & Code of Conduct", status: "Pending Upload" },
                     { label: "Bank Account Passbook / Cancelled Cheque", status: "Uploaded" }
                   ].map((doc, i) => (
-                    <div key={i} className="flex items-center justify-between p-3.5 rounded-2xl border border-orange-200 bg-orange-50/60 text-xs shadow-xs">
+                    <div key={i} className="flex items-center justify-between p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/60 text-xs shadow-xs">
                       <span className="font-extrabold text-slate-900">{doc.label}</span>
                       <span className={`font-black px-2.5 py-0.5 rounded-full border ${doc.status === 'Uploaded' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>{doc.status}</span>
                     </div>
@@ -2376,10 +2376,10 @@ function InternDashboard() {
               </div>
 
               {/* Tooling & Credentials Tracker */}
-              <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-4">
+              <div className="rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-emerald-950/5 backdrop-blur-xl space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><ShieldCheck className="h-4 w-4 text-orange-600" /> Tooling &amp; Access Tracker</h3>
-                  <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-orange-200 bg-white text-slate-800 hover:bg-orange-50 cursor-pointer shadow-xs" onClick={() => {
+                  <h3 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><ShieldCheck className="h-4 w-4 text-emerald-600" /> Tooling &amp; Access Tracker</h3>
+                  <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-emerald-200 bg-white text-slate-800 hover:bg-emerald-50 cursor-pointer shadow-xs" onClick={() => {
                     const tool = prompt("Enter requested software/tool name (e.g. Figma, GitHub, AWS):");
                     if (tool) doCreateAccessRequest({ data: { tool_name: tool } }).then(() => { toast.success("Access requested!"); qc.invalidateQueries({ queryKey: ["my-access-requests"] }); });
                   }}>Request Access</Button>
@@ -2389,9 +2389,9 @@ function InternDashboard() {
                     <div className="text-xs text-slate-500 p-4 text-center">No active access requests. Click above to request software credentials.</div>
                   ) : (
                     accessRequests.map((req: any) => (
-                      <div key={req.id} className="flex items-center justify-between p-3 rounded-2xl border border-orange-200 bg-orange-50/60 text-xs shadow-xs">
+                      <div key={req.id} className="flex items-center justify-between p-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 text-xs shadow-xs">
                         <span className="font-extrabold text-slate-900">{req.tool_name}</span>
-                        <span className={`font-black uppercase text-[10px] px-2.5 py-0.5 rounded-full border ${req.status === 'provisioned' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : req.status === 'approved' ? 'bg-orange-100 text-orange-800 border-orange-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>{req.status}</span>
+                        <span className={`font-black uppercase text-[10px] px-2.5 py-0.5 rounded-full border ${req.status === 'provisioned' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : req.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>{req.status}</span>
                       </div>
                     ))
                   )}
@@ -2404,18 +2404,18 @@ function InternDashboard() {
         {/* ─── LEARNING & SKILL PATH (LMS) ─── */}
         {activeTab === "lms" && (
           <div className="space-y-6">
-            <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-xl">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-orange-200/80 pb-5 mb-6">
+            <div className="rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-emerald-950/5 backdrop-blur-xl">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-emerald-200/80 pb-5 mb-6">
                 <div>
                   <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1">
-                    <BookMarked className="h-5 w-5 text-orange-600" /> Structured Curriculum &amp; Skill Badges
+                    <BookMarked className="h-5 w-5 text-emerald-600" /> Structured Curriculum &amp; Skill Badges
                   </h2>
-                  <p className="text-xs text-slate-600 font-medium">Official certified training modules, video masterclasses, and skilling paths for: <span className="font-extrabold text-orange-600 capitalize">{selectedDomain}</span></p>
+                  <p className="text-xs text-slate-600 font-medium">Official certified training modules, video masterclasses, and skilling paths for: <span className="font-extrabold text-emerald-600 capitalize">{selectedDomain}</span></p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-slate-600 font-bold">Filter Domain:</span>
                   <select 
-                    className="rounded-xl border border-orange-200 bg-white p-1.5 text-xs font-black text-slate-900 outline-none focus:border-orange-500 shadow-xs"
+                    className="rounded-xl border border-emerald-200 bg-white p-1.5 text-xs font-black text-slate-900 outline-none focus:border-emerald-500 shadow-xs"
                     value={selectedDomain}
                     onChange={(e) => setSelectedDomain(e.target.value as any)}
                   >
@@ -2428,7 +2428,7 @@ function InternDashboard() {
 
               {lmsCoursesQ.isLoading ? (
                 <div className="p-12 flex items-center justify-center gap-2 text-slate-600 text-sm font-medium">
-                  <Loader2 className="h-5 w-5 animate-spin text-orange-500" /> Loading curated courses...
+                  <Loader2 className="h-5 w-5 animate-spin text-emerald-500" /> Loading curated courses...
                 </div>
               ) : (() => {
                 const availableCourses: LmsCourseItem[] = (lmsCoursesQ.data || []).filter((c: LmsCourseItem) => {
@@ -2445,7 +2445,7 @@ function InternDashboard() {
                 if (availableCourses.length === 0) {
                   return (
                     <div className="p-12 text-center text-slate-600 text-sm space-y-2 font-medium">
-                      <BookOpen className="h-8 w-8 mx-auto text-orange-400" />
+                      <BookOpen className="h-8 w-8 mx-auto text-emerald-400" />
                       <p>No courses assigned to your profile in this domain currently.</p>
                     </div>
                   );
@@ -2459,10 +2459,10 @@ function InternDashboard() {
                       const completed = dbRecord?.completed ?? false;
 
                       return (
-                        <div key={m.id || idx} className="rounded-2xl border border-orange-200/80 p-5 bg-orange-50/60 hover:bg-orange-100/40 transition-all flex flex-col justify-between shadow-xs">
+                        <div key={m.id || idx} className="rounded-2xl border border-emerald-200/80 p-5 bg-emerald-50/60 hover:bg-emerald-100/40 transition-all flex flex-col justify-between shadow-xs">
                           <div>
                             <div className="flex justify-between items-start">
-                              <span className="text-[9px] uppercase font-mono bg-orange-100 text-orange-900 px-2 py-0.5 rounded font-black border border-orange-300">{m.source}</span>
+                              <span className="text-[9px] uppercase font-mono bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded font-black border border-emerald-300">{m.source}</span>
                               {completed && <span className="text-[9px] uppercase font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-black border border-emerald-300">Completed</span>}
                             </div>
                             <h3 className="font-extrabold text-xs text-slate-900 mt-3 line-clamp-2 min-h-[32px]">{m.title}</h3>
@@ -2476,25 +2476,25 @@ function InternDashboard() {
                                 <span>Track Progress</span>
                                 <span className="font-black text-slate-900">{progress}%</span>
                               </div>
-                              <div className="h-2 bg-orange-100 rounded-full overflow-hidden border border-orange-200/60">
-                                <div className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-350" style={{ width: `${progress}%` }} />
+                              <div className="h-2 bg-emerald-100 rounded-full overflow-hidden border border-emerald-200/60">
+                                <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-350" style={{ width: `${progress}%` }} />
                               </div>
                             </div>
 
                             {updatingCourseIdx === idx ? (
-                              <div className="mt-4 p-2.5 bg-white rounded-xl border border-orange-200 flex items-center gap-2 shadow-xs">
+                              <div className="mt-4 p-2.5 bg-white rounded-xl border border-emerald-200 flex items-center gap-2 shadow-xs">
                                 <input 
                                   type="range" 
                                   min="0" 
                                   max="100" 
                                   value={courseProgressInput}
                                   onChange={(e) => setCourseProgressInput(parseInt(e.target.value))}
-                                  className="w-full h-1 bg-orange-100 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                                  className="w-full h-1 bg-emerald-100 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                                 />
                                 <span className="text-xs font-mono font-black w-8 text-right text-slate-900">{courseProgressInput}%</span>
                                 <Button 
                                   size="sm"
-                                  className="bg-orange-500 hover:bg-orange-600 text-white text-[10px] h-6 px-2 cursor-pointer font-black"
+                                  className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] h-6 px-2 cursor-pointer font-black"
                                   onClick={async () => {
                                     try {
                                       await doUpdateLmsProgress({
@@ -2520,18 +2520,18 @@ function InternDashboard() {
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                className="mt-3 text-slate-600 hover:text-orange-600 text-[10px] h-6 px-1.5 gap-1 cursor-pointer font-bold"
+                                className="mt-3 text-slate-600 hover:text-emerald-600 text-[10px] h-6 px-1.5 gap-1 cursor-pointer font-bold"
                                 onClick={() => {
                                   setUpdatingCourseIdx(idx);
                                   setCourseProgressInput(progress);
                                 }}
                               >
-                                <RefreshCw className="h-3 w-3 text-orange-500" /> Update Progress
+                                <RefreshCw className="h-3 w-3 text-emerald-500" /> Update Progress
                               </Button>
                             )}
                           </div>
 
-                          <div className="mt-5 pt-3 border-t border-orange-200/60 space-y-2">
+                          <div className="mt-5 pt-3 border-t border-emerald-200/60 space-y-2">
                             <div className="flex items-center justify-between text-xs">
                               <span className="text-amber-800 font-extrabold flex items-center gap-1"><Award className="h-3.5 w-3.5 text-amber-500" /> {m.badge || "Skilling Badge"}</span>
                               {m.estimated_hours && (
@@ -2553,7 +2553,7 @@ function InternDashboard() {
                                 href={m.url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="flex-1 text-center px-2 py-1 rounded-xl bg-white hover:bg-orange-50 text-[11px] font-black text-slate-800 inline-flex items-center justify-center gap-0.5 cursor-pointer border border-orange-200 shadow-xs"
+                                className="flex-1 text-center px-2 py-1 rounded-xl bg-white hover:bg-emerald-50 text-[11px] font-black text-slate-800 inline-flex items-center justify-center gap-0.5 cursor-pointer border border-emerald-200 shadow-xs"
                               >
                                 Open Course ↗
                               </a>
@@ -2581,35 +2581,35 @@ function InternDashboard() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-                <Layers className="h-5 w-5 text-orange-600" /> Sprint Kanban Board
+                <Layers className="h-5 w-5 text-emerald-600" /> Sprint Kanban Board
               </h2>
               <div className="text-xs text-slate-600 font-medium">Click arrows to move tasks across sprint status columns</div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {[
-                { title: "To Do", status: "pending", bg: "bg-white border-orange-200/80" },
-                { title: "In Progress", status: "in_progress", bg: "bg-white border-orange-200/80" },
-                { title: "In Review", status: "blocked", bg: "bg-white border-orange-200/80" },
-                { title: "Completed", status: "completed", bg: "bg-white border-orange-200/80" }
+                { title: "To Do", status: "pending", bg: "bg-white border-emerald-200/80" },
+                { title: "In Progress", status: "in_progress", bg: "bg-white border-emerald-200/80" },
+                { title: "In Review", status: "blocked", bg: "bg-white border-emerald-200/80" },
+                { title: "Completed", status: "completed", bg: "bg-white border-emerald-200/80" }
               ].map((col) => {
                 const colTasks = myTasks.filter((t: any) => t.status === col.status);
                 return (
-                  <div key={col.status} className={`rounded-3xl border p-5 ${col.bg} min-h-[400px] flex flex-col shadow-xl shadow-orange-950/5 backdrop-blur-xl`}>
+                  <div key={col.status} className={`rounded-3xl border p-5 ${col.bg} min-h-[400px] flex flex-col shadow-xl shadow-emerald-950/5 backdrop-blur-xl`}>
                     <div className="font-black text-xs uppercase tracking-wider text-slate-800 mb-3.5 flex items-center justify-between">
                       <span>{col.title}</span>
-                      <span className="bg-orange-100 border border-orange-300 px-2.5 py-0.5 rounded-full text-orange-900 text-[10px] font-mono">{colTasks.length}</span>
+                      <span className="bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full text-emerald-900 text-[10px] font-mono">{colTasks.length}</span>
                     </div>
                     <div className="space-y-3 flex-1 overflow-y-auto">
                       {colTasks.map((t: any) => (
-                        <div key={t.id} className="p-4 bg-orange-50/60 rounded-2xl border border-orange-200/80 shadow-xs space-y-2.5">
+                        <div key={t.id} className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200/80 shadow-xs space-y-2.5">
                           <div className="font-extrabold text-xs text-slate-900">{t.title}</div>
                           {t.description && <p className="text-[11px] text-slate-600 font-medium line-clamp-2">{t.description}</p>}
-                          <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 text-[10px]">
+                          <div className="flex items-center justify-between pt-2 border-t border-emerald-200/60 text-[10px]">
                             <span className="font-black text-slate-600 uppercase tracking-wider">{t.priority || "Medium"}</span>
                             <div className="flex gap-1.5">
                               {col.status !== 'pending' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-600 hover:text-slate-900 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'pending')}>←</Button>}
-                              {col.status !== 'in_progress' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-orange-600 hover:bg-orange-100 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'in_progress')}>→</Button>}
+                              {col.status !== 'in_progress' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-emerald-600 hover:bg-emerald-100 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'in_progress')}>→</Button>}
                               {col.status !== 'completed' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-emerald-600 hover:bg-emerald-100 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'completed')}>✓</Button>}
                             </div>
                           </div>
@@ -2628,16 +2628,16 @@ function InternDashboard() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Standup Form */}
-              <div className="lg:col-span-1 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-4">
-                <h2 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><Send className="h-4 w-4 text-orange-600" /> Submit Daily Standup Log</h2>
+              <div className="lg:col-span-1 rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-emerald-950/5 backdrop-blur-xl space-y-4">
+                <h2 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><Send className="h-4 w-4 text-emerald-600" /> Submit Daily Standup Log</h2>
                 
                 {/* Clock-in Button */}
-                <div className="p-4 rounded-2xl border border-orange-200 bg-orange-50/60 flex items-center justify-between shadow-xs">
+                <div className="p-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 flex items-center justify-between shadow-xs">
                   <div>
                     <div className="text-xs font-black text-slate-900">Shift Clock-In</div>
                     <div className="text-[10px] text-slate-600 font-medium">{clockedIn ? `Clocked in at ${clockTime}` : 'Not clocked in today'}</div>
                   </div>
-                  <Button size="sm" className={clockedIn ? "bg-rose-600 hover:bg-rose-700 text-white font-black cursor-pointer" : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black cursor-pointer"} onClick={() => {
+                  <Button size="sm" className={clockedIn ? "bg-rose-600 hover:bg-rose-700 text-white font-black cursor-pointer" : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-black cursor-pointer"} onClick={() => {
                     setClockedIn(!clockedIn);
                     setClockTime(new Date().toLocaleTimeString());
                     toast.success(clockedIn ? "Clocked out!" : "Clocked in for today's shift!");
@@ -2649,17 +2649,17 @@ function InternDashboard() {
                 <div className="space-y-3.5 text-xs">
                   <div>
                     <label className="font-bold text-slate-700 mb-1.5 block">What I did today</label>
-                    <textarea className="w-full rounded-xl border border-orange-200 bg-white p-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs" rows={3} value={standupForm.did_today} onChange={e => setStandupForm({...standupForm, did_today: e.target.value})} placeholder="Tasks completed today..." />
+                    <textarea className="w-full rounded-xl border border-emerald-200 bg-white p-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs" rows={3} value={standupForm.did_today} onChange={e => setStandupForm({...standupForm, did_today: e.target.value})} placeholder="Tasks completed today..." />
                   </div>
                   <div>
                     <label className="font-bold text-slate-700 mb-1.5 block">What I'll do tomorrow</label>
-                    <textarea className="w-full rounded-xl border border-orange-200 bg-white p-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs" rows={2} value={standupForm.will_do_tomorrow} onChange={e => setStandupForm({...standupForm, will_do_tomorrow: e.target.value})} placeholder="Planned tasks for tomorrow..." />
+                    <textarea className="w-full rounded-xl border border-emerald-200 bg-white p-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs" rows={2} value={standupForm.will_do_tomorrow} onChange={e => setStandupForm({...standupForm, will_do_tomorrow: e.target.value})} placeholder="Planned tasks for tomorrow..." />
                   </div>
                   <div>
                     <label className="font-bold text-slate-700 mb-1.5 block">Blockers (optional)</label>
-                    <input className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs" value={standupForm.blockers} onChange={e => setStandupForm({...standupForm, blockers: e.target.value})} placeholder="Any roadblocks faced..." />
+                    <input className="w-full rounded-xl border border-emerald-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs" value={standupForm.blockers} onChange={e => setStandupForm({...standupForm, blockers: e.target.value})} placeholder="Any roadblocks faced..." />
                   </div>
-                  <Button className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer" onClick={async () => {
+                  <Button className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer" onClick={async () => {
                     if (!standupForm.did_today || !standupForm.will_do_tomorrow) { toast.error("Please fill required standup fields"); return; }
                     try {
                       await doCreateStandup({ data: standupForm });
@@ -2672,9 +2672,9 @@ function InternDashboard() {
               </div>
 
               {/* Standup History */}
-              <div className="lg:col-span-2 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-4">
+              <div className="lg:col-span-2 rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-emerald-950/5 backdrop-blur-xl space-y-4">
                 <h2 className="font-extrabold text-sm text-slate-900">My Standup Log History</h2>
-                <div className="divide-y divide-orange-200/60 max-h-[480px] overflow-y-auto">
+                <div className="divide-y divide-emerald-200/60 max-h-[480px] overflow-y-auto">
                   {standups.length === 0 ? (
                     <div className="p-8 text-center text-slate-500 text-xs font-medium">No daily standups submitted yet. Fill out the log on the left.</div>
                   ) : (
@@ -2701,14 +2701,14 @@ function InternDashboard() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Submission Form */}
-              <div className="lg:col-span-1 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-4">
-                <h2 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><Upload className="h-4 w-4 text-orange-600" /> Submit Assignment / Deliverable</h2>
+              <div className="lg:col-span-1 rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-emerald-950/5 backdrop-blur-xl space-y-4">
+                <h2 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><Upload className="h-4 w-4 text-emerald-600" /> Submit Assignment / Deliverable</h2>
                 <div className="space-y-3.5 text-xs">
                   {tasks && tasks.length > 0 && (
                     <div>
                       <label className="font-bold text-slate-700 mb-1.5 block">Link to Assigned Task (Optional)</label>
                       <select 
-                        className="w-full rounded-xl border border-orange-200 p-2.5 text-xs bg-white text-slate-900 outline-none focus:border-orange-500 shadow-xs"
+                        className="w-full rounded-xl border border-emerald-200 p-2.5 text-xs bg-white text-slate-900 outline-none focus:border-emerald-500 shadow-xs"
                         value={deliverableForm.task_id || ""}
                         onChange={(e) => {
                           const selectedTid = e.target.value;
@@ -2733,7 +2733,7 @@ function InternDashboard() {
                   <div>
                     <label className="font-bold text-slate-700 mb-1.5 block">Deliverable Title</label>
                     <input 
-                      className="w-full rounded-xl border border-orange-200 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs" 
+                      className="w-full rounded-xl border border-emerald-200 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs" 
                       value={deliverableForm.title} 
                       onChange={e => setDeliverableForm({...deliverableForm, title: e.target.value})} 
                       placeholder="e.g. Microservice Implementation & Test Suite" 
@@ -2743,7 +2743,7 @@ function InternDashboard() {
                   <div>
                     <label className="font-bold text-slate-700 mb-1.5 block">Submission URL (GitHub Repo / PR / Figma / Drive)</label>
                     <input 
-                      className="w-full rounded-xl border border-orange-200 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs" 
+                      className="w-full rounded-xl border border-emerald-200 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs" 
                       value={deliverableForm.submission_url} 
                       onChange={e => setDeliverableForm({...deliverableForm, submission_url: e.target.value})} 
                       placeholder="https://github.com/... or google drive link" 
@@ -2753,7 +2753,7 @@ function InternDashboard() {
                   <div>
                     <label className="font-bold text-slate-700 mb-1.5 block">Submission Notes / Highlights (Optional)</label>
                     <textarea 
-                      className="w-full rounded-xl border border-orange-200 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs" 
+                      className="w-full rounded-xl border border-emerald-200 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs" 
                       rows={3} 
                       value={deliverableForm.notes} 
                       onChange={e => setDeliverableForm({...deliverableForm, notes: e.target.value})} 
@@ -2762,7 +2762,7 @@ function InternDashboard() {
                   </div>
 
                   <Button 
-                    className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs h-10 rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer border border-orange-400/30" 
+                    className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs h-10 rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer border border-emerald-400/30" 
                     onClick={async () => {
                       if (!deliverableForm.title.trim() || !deliverableForm.submission_url.trim()) { 
                         toast.error("Please enter both Deliverable Title and Submission URL."); 
@@ -2797,9 +2797,9 @@ function InternDashboard() {
               </div>
 
               {/* Submissions Feed */}
-              <div className="lg:col-span-2 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl space-y-4">
+              <div className="lg:col-span-2 rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-emerald-950/5 backdrop-blur-xl space-y-4">
                 <h2 className="font-extrabold text-sm text-slate-900">Submitted Deliverables &amp; Mentor Feedback</h2>
-                <div className="divide-y divide-orange-200/60 max-h-[480px] overflow-y-auto">
+                <div className="divide-y divide-emerald-200/60 max-h-[480px] overflow-y-auto">
                   {deliverables.length === 0 ? (
                     <div className="p-8 text-center text-slate-500 text-xs">No deliverables submitted yet.</div>
                   ) : (
@@ -2807,9 +2807,9 @@ function InternDashboard() {
                       <div key={del.id} className="py-4 space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-extrabold text-slate-900">{del.title}</span>
-                          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${del.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : del.status === 'under_review' ? 'bg-orange-100 text-orange-800 border-orange-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>{del.status}</span>
+                          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${del.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : del.status === 'under_review' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>{del.status}</span>
                         </div>
-                        <a href={del.submission_url} target="_blank" rel="noreferrer" className="text-xs text-orange-600 hover:underline inline-flex items-center gap-1 font-bold"><ExternalLink className="h-3 w-3" /> {del.submission_url}</a>
+                        <a href={del.submission_url} target="_blank" rel="noreferrer" className="text-xs text-emerald-600 hover:underline inline-flex items-center gap-1 font-bold"><ExternalLink className="h-3 w-3" /> {del.submission_url}</a>
                         {del.notes && <p className="text-xs text-slate-600">{del.notes}</p>}
                         {del.feedback && <p className="text-xs text-emerald-950 bg-emerald-50 p-2.5 rounded-xl border border-emerald-300 mt-2 font-medium"><strong>Mentor Feedback:</strong> {del.feedback}</p>}
                       </div>
@@ -2824,7 +2824,7 @@ function InternDashboard() {
         {/* ─── PPO & CERTIFICATES ─── */}
         {activeTab === "ppo" && (
           <div className="space-y-6">
-            <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-orange-950/5 backdrop-blur-xl">
+            <div className="rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-emerald-950/5 backdrop-blur-xl">
               <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
                 <Sparkles className="h-5 w-5 text-amber-500" /> Pre-Employment Offer (PPO) &amp; Automated Certificates
               </h2>
@@ -2832,15 +2832,15 @@ function InternDashboard() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* PPO Status */}
-                <div className="p-6 rounded-2xl border border-orange-200 bg-orange-50/60 space-y-4 shadow-xs">
+                <div className="p-6 rounded-2xl border border-emerald-200 bg-emerald-50/60 space-y-4 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <span className="font-black text-xs uppercase text-orange-900 tracking-wider">PPO Conversion Score</span>
-                    <span className="font-mono font-black text-lg text-orange-600">
+                    <span className="font-black text-xs uppercase text-emerald-900 tracking-wider">PPO Conversion Score</span>
+                    <span className="font-mono font-black text-lg text-emerald-600">
                       {Math.min(100, Math.round(progress * 0.8 + Math.min(20, dayStreak * 2)))} / 100
                     </span>
                   </div>
-                  <div className="h-3 bg-orange-100 rounded-full overflow-hidden border border-orange-200">
-                    <div className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full" style={{ width: `${Math.min(100, Math.round(progress * 0.8 + Math.min(20, dayStreak * 2)))}%` }} />
+                  <div className="h-3 bg-emerald-100 rounded-full overflow-hidden border border-emerald-200">
+                    <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full" style={{ width: `${Math.min(100, Math.round(progress * 0.8 + Math.min(20, dayStreak * 2)))}%` }} />
                   </div>
                   <div className="text-xs text-slate-800 font-semibold space-y-1.5">
                     <div>{progress >= 85 ? "✓" : "○"} Task Credits Progress ({progress}%)</div>
@@ -2879,7 +2879,7 @@ function InternDashboard() {
                           { name: "Letter of Recommendation (LOR)", code: "VY-LOR-2026-92" },
                           { name: "Official Experience Certificate", code: "VY-EXP-2026-04" }
                         ].map((c, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-orange-200/80 text-xs shadow-xs hover:border-orange-300 transition-colors">
+                          <div key={idx} className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-emerald-200/80 text-xs shadow-xs hover:border-emerald-300 transition-colors">
                             <div className="flex items-center gap-2.5">
                               {!isCredUnlocked ? (
                                 <div className="h-8 w-8 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0 relative">
@@ -3016,9 +3016,9 @@ function InternDashboard() {
                           </div>
 
                           {/* Live Animated Countdown Timer */}
-                          <div className="p-4 bg-white text-slate-900 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-orange-200 shadow-xs">
+                          <div className="p-4 bg-white text-slate-900 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-emerald-200 shadow-xs">
                             <div className="flex items-center gap-2.5">
-                              <Clock className="h-5 w-5 text-orange-600 shrink-0 animate-spin duration-1000" />
+                              <Clock className="h-5 w-5 text-emerald-600 shrink-0 animate-spin duration-1000" />
                               <div>
                                 <span className="text-xs font-black text-slate-900 block">Time Remaining to Complete Payment:</span>
                                 <span className="text-[10px] text-slate-600 font-medium">
@@ -3047,18 +3047,18 @@ function InternDashboard() {
         {activeTab === "tasks" && (
           <div className="space-y-6">
             {poolTasks.length > 0 && (
-              <div className="rounded-3xl border border-orange-300 bg-orange-50/90 shadow-xl shadow-orange-950/5 overflow-hidden">
-                <div className="px-6 py-4.5 border-b border-orange-200 flex items-center justify-between bg-orange-100/60">
-                  <h2 className="font-extrabold flex items-center gap-2 text-orange-900"><ClipboardList className="h-5 w-5 text-orange-600" />Available Pool Tasks</h2>
+              <div className="rounded-3xl border border-emerald-300 bg-emerald-50/90 shadow-xl shadow-emerald-950/5 overflow-hidden">
+                <div className="px-6 py-4.5 border-b border-emerald-200 flex items-center justify-between bg-emerald-100/60">
+                  <h2 className="font-extrabold flex items-center gap-2 text-emerald-900"><ClipboardList className="h-5 w-5 text-emerald-600" />Available Pool Tasks</h2>
                 </div>
-                <div className="divide-y divide-orange-200/60">
+                <div className="divide-y divide-emerald-200/60">
                   {poolTasks.map((task: any) => (
-                    <div key={task.id} className="p-6 hover:bg-orange-100/40 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div key={task.id} className="p-6 hover:bg-emerald-100/40 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-extrabold text-sm text-slate-900">{task.title}</h3>
                         {task.description && <p className="text-xs text-slate-600 mt-1 line-clamp-2">{task.description}</p>}
                       </div>
-                      <Button size="sm" className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-xl shadow-md cursor-pointer" onClick={async () => {
+                      <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-black rounded-xl shadow-md cursor-pointer" onClick={async () => {
                         try {
                           await doClaimPoolTask({ data: { id: task.id } });
                           toast.success("Task claimed!");
@@ -3073,11 +3073,11 @@ function InternDashboard() {
               </div>
             )}
 
-            <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 overflow-hidden">
-              <div className="px-6 py-5 border-b border-orange-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-orange-50/60">
+            <div className="rounded-3xl border border-emerald-200/80 bg-white/95 shadow-xl shadow-emerald-950/5 overflow-hidden">
+              <div className="px-6 py-5 border-b border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-emerald-50/60">
                 <div>
                   <h2 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
-                    <ClipboardList className="h-5 w-5 text-orange-600" />
+                    <ClipboardList className="h-5 w-5 text-emerald-600" />
                     My Assigned Tasks &amp; Project Deliverables
                   </h2>
                   <p className="text-xs text-slate-600 mt-0.5">Submit your deliverables for mentor review, grading, and completion verification.</p>
@@ -3092,7 +3092,7 @@ function InternDashboard() {
                   >
                     <MessageCircle className="h-3.5 w-3.5" /> Join Official WhatsApp Group
                   </a>
-                  <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-tasks"] })} className="gap-1.5 text-xs text-slate-700 hover:text-slate-900 hover:bg-orange-100/60 cursor-pointer border border-orange-200 bg-white">
+                  <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-tasks"] })} className="gap-1.5 text-xs text-slate-700 hover:text-slate-900 hover:bg-emerald-100/60 cursor-pointer border border-emerald-200 bg-white">
                     <RefreshCw className={`h-3.5 w-3.5 ${tasksQ.isFetching ? "animate-spin" : ""}`} /> Refresh
                   </Button>
                 </div>
@@ -3102,7 +3102,7 @@ function InternDashboard() {
               {mentor && (
                 <div className="p-5 bg-gradient-to-r from-[#FFFDF9] via-[#FAF5EC] to-[#FFFDF9] border-b border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs shadow-inner">
                   <div className="flex items-center gap-3.5">
-                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-md shadow-orange-500/20 border border-amber-400/50">
+                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-teal-500 via-emerald-500 to-teal-600 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-md shadow-emerald-500/20 border border-amber-400/50">
                       {mentor.full_name?.slice(0, 2).toUpperCase() || "VM"}
                     </div>
                     <div>
@@ -3113,7 +3113,7 @@ function InternDashboard() {
                         </span>
                       </div>
                       <div className="text-slate-700 text-xs mt-1 flex items-center gap-3 flex-wrap font-medium">
-                        <span className="font-extrabold text-orange-700">{mentor.position || mentor.department || "Lead Technical Director"}</span>
+                        <span className="font-extrabold text-emerald-700">{mentor.position || mentor.department || "Lead Technical Director"}</span>
                         <span className="text-amber-300">•</span>
                         <a href={`mailto:${mentor.email}`} className="text-blue-700 hover:text-blue-900 font-bold underline decoration-blue-300 flex items-center gap-1">
                           <Mail className="h-3.5 w-3.5 text-blue-600" /> {mentor.email}
@@ -3149,13 +3149,13 @@ function InternDashboard() {
               )}
 
               {/* Task Status Filters Bar */}
-              <div className="px-6 py-3.5 bg-orange-50/80 border-b border-orange-200/80 flex flex-wrap items-center justify-between gap-3">
+              <div className="px-6 py-3.5 bg-emerald-50/80 border-b border-emerald-200/80 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => setTaskFilterTab("all")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                      taskFilterTab === "all" ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20" : "bg-white border border-orange-200 text-slate-700 hover:bg-orange-100/60"
+                      taskFilterTab === "all" ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/20" : "bg-white border border-emerald-200 text-slate-700 hover:bg-emerald-100/60"
                     }`}
                   >
                     All Tasks ({myTasks.length})
@@ -3164,7 +3164,7 @@ function InternDashboard() {
                     type="button"
                     onClick={() => setTaskFilterTab("in_progress")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                      taskFilterTab === "in_progress" ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20" : "bg-white border border-orange-200 text-slate-700 hover:bg-orange-100/60"
+                      taskFilterTab === "in_progress" ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/20" : "bg-white border border-emerald-200 text-slate-700 hover:bg-emerald-100/60"
                     }`}
                   >
                     In Progress ({inProgressTasks.length})
@@ -3173,7 +3173,7 @@ function InternDashboard() {
                     type="button"
                     onClick={() => setTaskFilterTab("submitted")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                      taskFilterTab === "submitted" ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20" : "bg-white border border-orange-200 text-slate-700 hover:bg-orange-100/60"
+                      taskFilterTab === "submitted" ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/20" : "bg-white border border-emerald-200 text-slate-700 hover:bg-emerald-100/60"
                     }`}
                   >
                     Submitted / Under Review ({submittedTasks.length})
@@ -3182,7 +3182,7 @@ function InternDashboard() {
                     type="button"
                     onClick={() => setTaskFilterTab("completed")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                      taskFilterTab === "completed" ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20" : "bg-white border border-orange-200 text-orange-800 hover:bg-orange-100/60"
+                      taskFilterTab === "completed" ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/20" : "bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-100/60"
                     }`}
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -3190,17 +3190,17 @@ function InternDashboard() {
                   </button>
                 </div>
                 {taskFilterTab === "completed" && (
-                  <span className="text-[11px] font-black text-orange-900 bg-orange-100 border border-orange-300 px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-xs">
-                    <ShieldCheck className="h-3.5 w-3.5 text-orange-600" /> Permanent Deliverables Archive
+                  <span className="text-[11px] font-black text-emerald-900 bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-xs">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Permanent Deliverables Archive
                   </span>
                 )}
               </div>
 
               {tasksQ.isLoading ? (
-                <div className="p-12 flex items-center justify-center gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-orange-500" />Loading tasks...</div>
+                <div className="p-12 flex items-center justify-center gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-emerald-500" />Loading tasks...</div>
               ) : (taskFilterTab === "all" ? myTasks : taskFilterTab === "in_progress" ? inProgressTasks : taskFilterTab === "submitted" ? submittedTasks : verifiedTasks).length === 0 ? (
                 <div className="p-12 text-center text-slate-600 font-medium">
-                  <ClipboardList className="h-10 w-10 mx-auto mb-3 text-orange-300" />
+                  <ClipboardList className="h-10 w-10 mx-auto mb-3 text-emerald-300" />
                   {taskFilterTab === "completed" 
                     ? "No verified tasks stored in your repository yet. Once submitted deliverables are reviewed and verified by mentors, they will be archived here permanently."
                     : taskFilterTab === "submitted"
@@ -3210,14 +3210,14 @@ function InternDashboard() {
                     : "No tasks assigned yet."}
                 </div>
               ) : (
-                <div className="divide-y divide-orange-200/60">
+                <div className="divide-y divide-emerald-200/60">
                   {(taskFilterTab === "all" ? myTasks : taskFilterTab === "in_progress" ? inProgressTasks : taskFilterTab === "submitted" ? submittedTasks : verifiedTasks).map((task: any) => {
                     const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
                     const reportTemplate = task.report_template_url || "https://docs.google.com/document/d/1vA5W0h8Z7_Sample_Report_Template/edit?usp=sharing";
                     const pptTemplate = task.ppt_template_url || "https://docs.google.com/presentation/d/1tB6X0h8Z7_Sample_PPT_Template/edit?usp=sharing";
 
                     return (
-                      <div key={task.id} className="p-6 hover:bg-orange-50/40 transition-all border-b border-orange-200/60 last:border-0 flex flex-col gap-4">
+                      <div key={task.id} className="p-6 hover:bg-emerald-50/40 transition-all border-b border-emerald-200/60 last:border-0 flex flex-col gap-4">
                         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                           <div className="flex-1 min-w-0 space-y-2.5">
                             {/* Title & Badges */}
@@ -3242,8 +3242,8 @@ function InternDashboard() {
                               </span>
 
                               {/* Credits Badge */}
-                              <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-orange-100 text-orange-900 border border-orange-300 flex items-center gap-0.5">
-                                <CreditCard className="h-3 w-3 text-orange-600" /> {task.credits || 10} Credits
+                              <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center gap-0.5">
+                                <CreditCard className="h-3 w-3 text-emerald-600" /> {task.credits || 10} Credits
                               </span>
 
                               {/* Collaborative Team Badge */}
@@ -3263,13 +3263,13 @@ function InternDashboard() {
                                   href={task.task_meet_link} 
                                   target="_blank" 
                                   rel="noreferrer" 
-                                  className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer"
+                                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer"
                                 >
                                   <Video className="h-3.5 w-3.5" /> 📹 Join Task Meet
                                 </a>
                               )}
                               {(task.task_file_url || task.project_requirements) && (
-                                <a href={task.task_file_url || task.project_requirements} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer">
+                                <a href={task.task_file_url || task.project_requirements} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer">
                                   <FolderOpen className="h-3.5 w-3.5" /> Project Files
                                 </a>
                               )}
@@ -3279,20 +3279,20 @@ function InternDashboard() {
                                 </a>
                               )}
                               {reportTemplate && (
-                                <a href={reportTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white border border-orange-200 text-slate-800 hover:bg-orange-50 text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer">
-                                  <FileText className="h-3.5 w-3.5 text-orange-500" /> Report Template
+                                <a href={reportTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white border border-emerald-200 text-slate-800 hover:bg-emerald-50 text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer">
+                                  <FileText className="h-3.5 w-3.5 text-emerald-500" /> Report Template
                                 </a>
                               )}
                               {pptTemplate && (
-                                <a href={pptTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white border border-orange-200 text-slate-800 hover:bg-orange-50 text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer">
+                                <a href={pptTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white border border-emerald-200 text-slate-800 hover:bg-emerald-50 text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer">
                                   <Play className="h-3.5 w-3.5 text-amber-500" /> PPT Template
                                 </a>
                               )}
                             </div>
                             
                             {task.due_date && (
-                              <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-orange-200/60 text-[11px] font-bold text-slate-600">
-                                <Clock className="h-3.5 w-3.5 text-orange-500" /> Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                              <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-emerald-200/60 text-[11px] font-bold text-slate-600">
+                                <Clock className="h-3.5 w-3.5 text-emerald-500" /> Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                               </div>
                             )}
 
@@ -3552,7 +3552,7 @@ function InternDashboard() {
                                 <Button 
                                   size="sm" 
                                   variant="outline" 
-                                  className="h-8 text-xs text-orange-900 border-orange-200 bg-white hover:bg-orange-50 font-bold rounded-xl cursor-pointer shadow-xs"
+                                  className="h-8 text-xs text-emerald-900 border-emerald-200 bg-white hover:bg-emerald-50 font-bold rounded-xl cursor-pointer shadow-xs"
                                   onClick={() => {
                                     setShowExtensionModal(task);
                                     setExtensionReason("");
@@ -3578,14 +3578,14 @@ function InternDashboard() {
         {activeTab === "meetings" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1 space-y-3">
-              <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-orange-600" />Calendar</h2>
-              <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-5 shadow-xl shadow-orange-950/5 backdrop-blur-xl">
+              <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-emerald-600" />Calendar</h2>
+              <div className="rounded-3xl border border-emerald-200/80 bg-white/95 p-5 shadow-xl shadow-emerald-950/5 backdrop-blur-xl">
                 <MonthlyCalendar events={[...schedules, ...meetings]} holidays={holidaysQ.data || []} />
               </div>
             </div>
             <div className="lg:col-span-2 space-y-3">
-              <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2"><Video className="h-4 w-4 text-orange-600" />Meetings</h2>
-              <div className="rounded-3xl border border-orange-200/80 bg-white/95 p-6 shadow-xl shadow-orange-950/5 backdrop-blur-xl">
+              <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2"><Video className="h-4 w-4 text-emerald-600" />Meetings</h2>
+              <div className="rounded-3xl border border-emerald-200/80 bg-white/95 p-6 shadow-xl shadow-emerald-950/5 backdrop-blur-xl">
                 <MeetingsSection meetings={meetings} isLoading={meetingsQ.isLoading} isError={meetingsQ.isError} />
               </div>
             </div>
@@ -3596,16 +3596,16 @@ function InternDashboard() {
         {activeTab === "resources" && (
           <div className="space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><BookOpen className="h-5 w-5 text-orange-600" />Learning Resources</h2>
-              <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-resources"] })} className="gap-1.5 text-slate-700 hover:text-orange-600 hover:bg-orange-50 cursor-pointer font-bold">
+              <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><BookOpen className="h-5 w-5 text-emerald-600" />Learning Resources</h2>
+              <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-resources"] })} className="gap-1.5 text-slate-700 hover:text-emerald-600 hover:bg-emerald-50 cursor-pointer font-bold">
                 <RefreshCw className={`h-3.5 w-3.5 ${resourcesQ.isFetching ? "animate-spin" : ""}`} />Refresh
               </Button>
             </div>
             {resourcesQ.isLoading ? (
-              <div className="flex items-center justify-center py-12 gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-orange-500" />Loading...</div>
+              <div className="flex items-center justify-center py-12 gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-emerald-500" />Loading...</div>
             ) : resources.length === 0 ? (
-              <div className="text-center py-12 text-slate-600 font-medium rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5">
-                <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-20 text-orange-600" />
+              <div className="text-center py-12 text-slate-600 font-medium rounded-3xl border border-emerald-200/80 bg-white/95 shadow-xl shadow-emerald-950/5">
+                <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-20 text-emerald-600" />
                 <p className="font-extrabold text-slate-900">No resources posted yet</p>
                 <p className="text-xs mt-1 text-slate-600">Your mentor and admin will post guides and documents here</p>
               </div>
@@ -3615,13 +3615,13 @@ function InternDashboard() {
                   const ri = RESOURCE_ICONS[r.type] || RESOURCE_ICONS.link;
                   return (
                     <a key={r.id} href={r.url} target="_blank" rel="noreferrer"
-                      className="block rounded-3xl border border-orange-200/80 bg-white/95 p-6 hover:border-orange-300 transition-all hover:-translate-y-0.5 group shadow-xl shadow-orange-950/5 backdrop-blur-xl">
+                      className="block rounded-3xl border border-emerald-200/80 bg-white/95 p-6 hover:border-emerald-300 transition-all hover:-translate-y-0.5 group shadow-xl shadow-emerald-950/5 backdrop-blur-xl">
                       <div className={`h-12 w-12 rounded-2xl border flex items-center justify-center mb-4 ${ri.color}`}>{ri.icon}</div>
-                      <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-orange-600 transition-colors">{r.title}</h3>
+                      <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-emerald-600 transition-colors">{r.title}</h3>
                       {r.description && <p className="text-xs text-slate-600 font-medium mt-1.5 line-clamp-2">{r.description}</p>}
-                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-orange-200/60">
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-emerald-200/60">
                         <span className="text-[10px] uppercase tracking-wider font-black text-slate-600 capitalize">{r.type}</span>
-                        <ExternalLink className="h-3.5 w-3.5 text-slate-500 group-hover:text-orange-600 transition-colors" />
+                        <ExternalLink className="h-3.5 w-3.5 text-slate-500 group-hover:text-emerald-600 transition-colors" />
                       </div>
                     </a>
                   );
@@ -3635,18 +3635,18 @@ function InternDashboard() {
         {activeTab === "announcements" && (
           <div className="space-y-4">
             {announcementsQ.isLoading ? (
-              <div className="flex items-center justify-center py-12 gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-orange-500" />Loading...</div>
+              <div className="flex items-center justify-center py-12 gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-emerald-500" />Loading...</div>
             ) : announcements.length === 0 ? (
-              <div className="text-center py-12 text-slate-600 font-medium rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5"><Bell className="h-10 w-10 mx-auto mb-3 opacity-20 text-orange-600" />No announcements yet</div>
+              <div className="text-center py-12 text-slate-600 font-medium rounded-3xl border border-emerald-200/80 bg-white/95 shadow-xl shadow-emerald-950/5"><Bell className="h-10 w-10 mx-auto mb-3 opacity-20 text-emerald-600" />No announcements yet</div>
             ) : (
               announcements.map((a: any) => (
-                <div key={a.id} className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl p-6 space-y-3">
+                <div key={a.id} className="rounded-3xl border border-emerald-200/80 bg-white/95 shadow-xl shadow-emerald-950/5 backdrop-blur-xl p-6 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="font-extrabold text-slate-900">{a.title}</h3>
                       <div className="text-xs text-slate-600 font-semibold mt-0.5">{new Date(a.created_at).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</div>
                     </div>
-                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-900 border border-orange-300 font-black uppercase tracking-wide shrink-0">
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 font-black uppercase tracking-wide shrink-0">
                       {a.source === "news" ? "News" : a.target_role === "all" ? "Everyone" : a.target_role}
                     </span>
                   </div>
@@ -3659,18 +3659,18 @@ function InternDashboard() {
 
         {/* ─── NOTES ─── */}
         {activeTab === "notes" && (
-          <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl p-6 sm:p-8 space-y-6">
-            <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><FileText className="h-5 w-5 text-orange-600" />My Notes</h2>
+          <div className="rounded-3xl border border-emerald-200/80 bg-white/95 shadow-xl shadow-emerald-950/5 backdrop-blur-xl p-6 sm:p-8 space-y-6">
+            <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><FileText className="h-5 w-5 text-emerald-600" />My Notes</h2>
             <div className="flex gap-2">
               <textarea 
-                className="flex-1 rounded-2xl border border-orange-200 bg-white p-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
+                className="flex-1 rounded-2xl border border-emerald-200 bg-white p-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs"
                 placeholder="Write a note..." 
                 value={newNote} 
                 onChange={(e) => setNewNote(e.target.value)}
                 rows={3}
               />
             </div>
-            <Button className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer" onClick={async () => {
+            <Button className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer" onClick={async () => {
               if (!newNote.trim()) return;
               try {
                 await doCreateNote({ data: { content: newNote } });
@@ -3689,7 +3689,7 @@ function InternDashboard() {
                 <div className="text-slate-500 font-medium text-sm">No notes yet.</div>
               ) : (
                 notes.map((note: any) => (
-                  <div key={note.id} className="p-4 rounded-2xl bg-orange-50/60 border border-orange-200/80 flex justify-between gap-4 shadow-xs">
+                  <div key={note.id} className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 flex justify-between gap-4 shadow-xs">
                     <p className="text-sm text-slate-900 font-medium whitespace-pre-wrap">{note.content}</p>
                     <Button variant="ghost" size="sm" className="text-rose-600 hover:text-rose-700 hover:bg-rose-100 shrink-0 cursor-pointer font-bold" onClick={async () => {
                       try {
@@ -3709,17 +3709,17 @@ function InternDashboard() {
 
         {/* ─── FEEDBACK ─── */}
         {activeTab === "feedback" && (
-          <div className="rounded-3xl border border-orange-200/80 bg-white/95 shadow-xl shadow-orange-950/5 backdrop-blur-xl p-6 sm:p-8 max-w-2xl mx-auto space-y-6">
-            <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><Mail className="h-5 w-5 text-orange-600" />Submit Feedback</h2>
+          <div className="rounded-3xl border border-emerald-200/80 bg-white/95 shadow-xl shadow-emerald-950/5 backdrop-blur-xl p-6 sm:p-8 max-w-2xl mx-auto space-y-6">
+            <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><Mail className="h-5 w-5 text-emerald-600" />Submit Feedback</h2>
             <p className="text-xs text-slate-600 font-medium">We value your thoughts! Let us know how we can improve your intern experience.</p>
             <textarea 
-              className="w-full rounded-2xl border border-orange-200 bg-white p-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
+              className="w-full rounded-2xl border border-emerald-200 bg-white p-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs"
               placeholder="Your feedback..." 
               value={feedback} 
               onChange={(e) => setFeedback(e.target.value)}
               rows={5}
             />
-            <Button className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer" onClick={async () => {
+            <Button className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer" onClick={async () => {
               if (!feedback.trim()) return;
               try {
                 await doCreateFeedback({ data: { content: feedback } });
@@ -3737,9 +3737,9 @@ function InternDashboard() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Raise Leave Form */}
-              <div className="lg:col-span-1 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl h-fit">
+              <div className="lg:col-span-1 rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-emerald-950/5 backdrop-blur-xl h-fit">
                 <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
-                  <CalendarDays className="h-5 w-5 text-orange-600" /> Request Leave
+                  <CalendarDays className="h-5 w-5 text-emerald-600" /> Request Leave
                 </h2>
                 <p className="text-xs text-slate-600 font-medium mb-4">Request authorization for upcoming absence. Please coordinate tasks first.</p>
                 
@@ -3771,7 +3771,7 @@ function InternDashboard() {
                       required
                       value={leaveForm.start_date}
                       onChange={(e) => setLeaveForm({ ...leaveForm, start_date: e.target.value })}
-                      className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 outline-none focus:border-orange-500 shadow-xs"
+                      className="w-full rounded-xl border border-emerald-200 bg-white p-2.5 text-xs text-slate-900 outline-none focus:border-emerald-500 shadow-xs"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -3781,7 +3781,7 @@ function InternDashboard() {
                       required
                       value={leaveForm.end_date}
                       onChange={(e) => setLeaveForm({ ...leaveForm, end_date: e.target.value })}
-                      className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 outline-none focus:border-orange-500 shadow-xs"
+                      className="w-full rounded-xl border border-emerald-200 bg-white p-2.5 text-xs text-slate-900 outline-none focus:border-emerald-500 shadow-xs"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -3792,13 +3792,13 @@ function InternDashboard() {
                       placeholder="Explain reason for absence, emergency contact details..."
                       value={leaveForm.reason}
                       onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
-                      className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
+                      className="w-full rounded-xl border border-emerald-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs"
                     />
                   </div>
                   <Button 
                     type="submit"
                     disabled={isSubmittingLeave}
-                    className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer"
+                    className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer"
                   >
                     {isSubmittingLeave ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Submit Request
@@ -3807,12 +3807,12 @@ function InternDashboard() {
               </div>
 
               {/* Leave History List */}
-              <div className="lg:col-span-2 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl overflow-hidden">
+              <div className="lg:col-span-2 rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-emerald-950/5 backdrop-blur-xl overflow-hidden">
                 <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-4">
-                  <Clock className="h-5 w-5 text-orange-600" /> Leave History Requests
+                  <Clock className="h-5 w-5 text-emerald-600" /> Leave History Requests
                 </h2>
                 
-                <div className="divide-y divide-orange-200/60 max-h-[500px] overflow-y-auto">
+                <div className="divide-y divide-emerald-200/60 max-h-[500px] overflow-y-auto">
                   {myLeaves.length === 0 ? (
                     <div className="py-12 text-center text-slate-500 text-xs font-medium">No leave requests found.</div>
                   ) : (
@@ -3847,9 +3847,9 @@ function InternDashboard() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Raise Support Ticket Form */}
-              <div className="lg:col-span-1 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl h-fit">
+              <div className="lg:col-span-1 rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-emerald-950/5 backdrop-blur-xl h-fit">
                 <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
-                  <HelpCircle className="h-5 w-5 text-orange-600" /> Raise Support Query
+                  <HelpCircle className="h-5 w-5 text-emerald-600" /> Raise Support Query
                 </h2>
                 <p className="text-xs text-slate-600 font-medium mb-4">Need help? Open a query and a mentor/supervisor will assist you.</p>
                 
@@ -3879,7 +3879,7 @@ function InternDashboard() {
                     <select 
                       value={supportForm.category}
                       onChange={(e) => setSupportForm({ ...supportForm, category: e.target.value })}
-                      className="w-full rounded-xl border border-orange-200 p-2.5 text-xs bg-white text-slate-900 outline-none focus:border-orange-500 shadow-xs"
+                      className="w-full rounded-xl border border-emerald-200 p-2.5 text-xs bg-white text-slate-900 outline-none focus:border-emerald-500 shadow-xs"
                     >
                       <option value="Technical">Technical Issue</option>
                       <option value="LMS">LMS &amp; Skills</option>
@@ -3896,7 +3896,7 @@ function InternDashboard() {
                       placeholder="Short subject description..."
                       value={supportForm.subject}
                       onChange={(e) => setSupportForm({ ...supportForm, subject: e.target.value })}
-                      className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
+                      className="w-full rounded-xl border border-emerald-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -3907,13 +3907,13 @@ function InternDashboard() {
                       placeholder="Provide detailed description of your issue..."
                       value={supportForm.description}
                       onChange={(e) => setSupportForm({ ...supportForm, description: e.target.value })}
-                      className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
+                      className="w-full rounded-xl border border-emerald-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs"
                     />
                   </div>
                   <Button 
                     type="submit"
                     disabled={isSubmittingSupport}
-                    className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer"
+                    className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer"
                   >
                     {isSubmittingSupport ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Raise Ticket
@@ -3922,12 +3922,12 @@ function InternDashboard() {
               </div>
 
               {/* Support History & Meeting Sync */}
-              <div className="lg:col-span-2 rounded-3xl border border-orange-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-orange-950/5 backdrop-blur-xl overflow-hidden">
+              <div className="lg:col-span-2 rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-7 shadow-xl shadow-emerald-950/5 backdrop-blur-xl overflow-hidden">
                 <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-4">
-                  <MessageCircle className="h-5 w-5 text-orange-600" /> Support Query Tickets
+                  <MessageCircle className="h-5 w-5 text-emerald-600" /> Support Query Tickets
                 </h2>
                 
-                <div className="divide-y divide-orange-200/60 max-h-[550px] overflow-y-auto space-y-4">
+                <div className="divide-y divide-emerald-200/60 max-h-[550px] overflow-y-auto space-y-4">
                   {supportQueries.length === 0 ? (
                     <div className="py-12 text-center text-slate-500 text-xs font-medium">No support queries raised yet.</div>
                   ) : (
@@ -3939,10 +3939,10 @@ function InternDashboard() {
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-black text-sm text-slate-900">{q.subject}</span>
-                                <span className="text-[10px] bg-orange-100 text-orange-900 px-2.5 py-0.5 rounded-full font-black border border-orange-300">{q.category}</span>
+                                <span className="text-[10px] bg-emerald-100 text-emerald-900 px-2.5 py-0.5 rounded-full font-black border border-emerald-300">{q.category}</span>
                                 <span className={`text-[9px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-full border ${
                                   q.status === 'resolved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
-                                  q.status === 'assigned' ? 'bg-orange-100 text-orange-800 border-orange-300' :
+                                  q.status === 'assigned' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
                                   'bg-amber-100 text-amber-800 border-amber-300'
                                 }`}>
                                   {q.status.replace("_", " ")}
@@ -4053,16 +4053,16 @@ function InternDashboard() {
 {/* ── Task Execution Workspace Dialog ── */}
 {selectedTaskWorkspace && (
   <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
-    <div className="bg-white/95 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto border border-orange-200/80 text-slate-900">
-      <div className="flex items-start justify-between border-b border-orange-200/80 pb-4">
+    <div className="bg-white/95 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto border border-emerald-200/80 text-slate-900">
+      <div className="flex items-start justify-between border-b border-emerald-200/80 pb-4">
         <div>
-          <span className="text-[10px] font-mono font-black uppercase bg-orange-100 text-orange-900 border border-orange-300 px-2.5 py-0.5 rounded-full">Task Workspace</span>
+          <span className="text-[10px] font-mono font-black uppercase bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-0.5 rounded-full">Task Workspace</span>
           <h2 className="text-lg font-black text-slate-900 mt-1.5">{selectedTaskWorkspace.title}</h2>
           {selectedTaskWorkspace.accepted_at && (
             <p className="text-xs text-emerald-700 font-bold mt-1">✓ You accepted this task on {new Date(selectedTaskWorkspace.accepted_at).toLocaleString()}</p>
           )}
         </div>
-        <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-900 hover:bg-orange-100 rounded-full cursor-pointer font-bold" onClick={() => setSelectedTaskWorkspace(null)}>✕</Button>
+        <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-900 hover:bg-emerald-100 rounded-full cursor-pointer font-bold" onClick={() => setSelectedTaskWorkspace(null)}>✕</Button>
       </div>
 
       {/* Mentor Review Feedback if present */}
@@ -4078,14 +4078,14 @@ function InternDashboard() {
       <div className="space-y-4 text-xs">
         <div>
           <label className="font-extrabold text-slate-700 mb-1.5 block">Task Description</label>
-          <p className="text-slate-800 font-medium bg-orange-50/60 p-3.5 rounded-xl border border-orange-200/80 leading-relaxed">{selectedTaskWorkspace.description || "No description provided."}</p>
+          <p className="text-slate-800 font-medium bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-200/80 leading-relaxed">{selectedTaskWorkspace.description || "No description provided."}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="font-extrabold text-slate-700 mb-1.5 block">Task Status</label>
             <select 
-              className="w-full rounded-xl border border-orange-200 p-2.5 text-xs bg-white text-slate-900 outline-none focus:border-orange-500 font-extrabold shadow-xs" 
+              className="w-full rounded-xl border border-emerald-200 p-2.5 text-xs bg-white text-slate-900 outline-none focus:border-emerald-500 font-extrabold shadow-xs" 
               value={selectedTaskWorkspace.status || "in_progress"} 
               onChange={e => setSelectedTaskWorkspace({...selectedTaskWorkspace, status: e.target.value})}
             >
@@ -5239,7 +5239,7 @@ function InternDashboard() {
             </div>
 
             {/* Countdown timer in modal */}
-            <div className="p-4 bg-orange-50/70 text-slate-900 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs border border-orange-200">
+            <div className="p-4 bg-emerald-50/70 text-slate-900 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs border border-emerald-200">
               <div>
                 <span className="text-xs font-black text-slate-900 block">Payment Due Deadline:</span>
                 <span className="text-[10px] text-slate-600 font-medium">
@@ -5253,7 +5253,7 @@ function InternDashboard() {
               <strong>Dashboard Restriction:</strong> Deliverable submissions and final verified certification remain locked until payment is verified.
             </div>
 
-            <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-orange-200/80">
+            <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-emerald-200/80">
               <button 
                 type="button" 
                 disabled={isDismissingPopup}
@@ -5290,10 +5290,10 @@ function InternDashboard() {
 
       {/* ─── REQUEST DOUBT SOLVING SESSION DIALOG ─── */}
       <Dialog open={doubtModalOpen} onOpenChange={setDoubtModalOpen}>
-        <DialogContent className="sm:max-w-md bg-white border border-orange-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
+        <DialogContent className="sm:max-w-md bg-white border border-emerald-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-900">
-              <HelpCircle className="h-5 w-5 text-orange-600" />
+              <HelpCircle className="h-5 w-5 text-emerald-600" />
               Request Doubt Solving Session
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-600 font-medium">
@@ -5339,7 +5339,7 @@ function InternDashboard() {
                 placeholder="e.g. Supabase RLS policy syntax error on deliverables query"
                 value={doubtTopic}
                 onChange={(e) => setDoubtTopic(e.target.value)}
-                className="text-xs bg-white border-orange-200 text-slate-900 placeholder:text-slate-400 rounded-xl outline-none focus:border-orange-500 shadow-xs"
+                className="text-xs bg-white border-emerald-200 text-slate-900 placeholder:text-slate-400 rounded-xl outline-none focus:border-emerald-500 shadow-xs"
               />
             </div>
 
@@ -5350,7 +5350,7 @@ function InternDashboard() {
                 placeholder="What error are you seeing? What steps have you tried so far?"
                 value={doubtBlockers}
                 onChange={(e) => setDoubtBlockers(e.target.value)}
-                className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
+                className="w-full rounded-xl border border-emerald-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs"
               />
             </div>
 
@@ -5360,7 +5360,7 @@ function InternDashboard() {
                 <select
                   value={doubtType}
                   onChange={(e) => setDoubtType(e.target.value as any)}
-                  className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-orange-500 shadow-xs"
+                  className="w-full rounded-xl border border-emerald-200 bg-white p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500 shadow-xs"
                 >
                   <option value="one_on_one">1-on-1 Mentorship Sync</option>
                   <option value="group_sync">Group Team Sync</option>
@@ -5373,16 +5373,16 @@ function InternDashboard() {
                   placeholder="e.g. Today 5:00 PM or Tomorrow Morning"
                   value={doubtSlot}
                   onChange={(e) => setDoubtSlot(e.target.value)}
-                  className="text-xs bg-white border-orange-200 text-slate-900 placeholder:text-slate-400 rounded-xl outline-none focus:border-orange-500 shadow-xs"
+                  className="text-xs bg-white border-emerald-200 text-slate-900 placeholder:text-slate-400 rounded-xl outline-none focus:border-emerald-500 shadow-xs"
                 />
               </div>
             </div>
 
-            <div className="pt-3 flex justify-end gap-2.5 border-t border-orange-200/80">
+            <div className="pt-3 flex justify-end gap-2.5 border-t border-emerald-200/80">
               <Button type="button" variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 cursor-pointer font-bold" onClick={() => setDoubtModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmittingDoubt} size="sm" className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black gap-1.5 rounded-xl shadow-md cursor-pointer">
+              <Button type="submit" disabled={isSubmittingDoubt} size="sm" className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black gap-1.5 rounded-xl shadow-md cursor-pointer">
                 {isSubmittingDoubt ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                 Dispatch Doubt Request
               </Button>
@@ -5393,10 +5393,10 @@ function InternDashboard() {
 
       {/* ─── REQUEST RESOURCES DIALOG ─── */}
       <Dialog open={resourceModalOpen} onOpenChange={setResourceModalOpen}>
-        <DialogContent className="sm:max-w-md bg-white border border-orange-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
+        <DialogContent className="sm:max-w-md bg-white border border-emerald-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-900">
-              <FolderOpen className="h-5 w-5 text-orange-600" />
+              <FolderOpen className="h-5 w-5 text-emerald-600" />
               Request Project Resources
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-600 font-medium">
@@ -5440,7 +5440,7 @@ function InternDashboard() {
                 <select
                   value={resourceType}
                   onChange={(e) => setResourceType(e.target.value)}
-                  className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-orange-500 shadow-xs"
+                  className="w-full rounded-xl border border-emerald-200 bg-white p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500 shadow-xs"
                 >
                   <option value="API Credentials & Access Keys">API Keys / Secrets</option>
                   <option value="Cloud Sandbox Access (AWS/GCP/Azure)">Cloud Sandbox Access</option>
@@ -5457,7 +5457,7 @@ function InternDashboard() {
                 <select
                   value={resourceUrgency}
                   onChange={(e) => setResourceUrgency(e.target.value as any)}
-                  className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-orange-500 shadow-xs"
+                  className="w-full rounded-xl border border-emerald-200 bg-white p-2.5 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500 shadow-xs"
                 >
                   <option value="normal">Normal (Within 24h)</option>
                   <option value="urgent">Urgent (Blocked Milestone)</option>
@@ -5474,15 +5474,15 @@ function InternDashboard() {
                 placeholder="Specify exact repo name, API scope, service account email, or dataset file needed..."
                 value={resourceDetails}
                 onChange={(e) => setResourceDetails(e.target.value)}
-                className="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-xs"
+                className="w-full rounded-xl border border-emerald-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs"
               />
             </div>
 
-            <div className="pt-3 flex justify-end gap-2.5 border-t border-orange-200/80">
+            <div className="pt-3 flex justify-end gap-2.5 border-t border-emerald-200/80">
               <Button type="button" variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 cursor-pointer font-bold" onClick={() => setResourceModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmittingResource} size="sm" className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black gap-1.5 rounded-xl shadow-lg shadow-orange-500/25 cursor-pointer">
+              <Button type="submit" disabled={isSubmittingResource} size="sm" className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black gap-1.5 rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer">
                 {isSubmittingResource ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                 Submit Resource Request
               </Button>
