@@ -752,8 +752,8 @@ export function AdminInternTasksView() {
 
         <button
           type="button"
-          onClick={() => setActiveViewTab("reviewed")}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer h-auto ${activeViewTab === "reviewed" ? "bg-white dark:bg-slate-950 text-blue-600 dark:text-blue-400 shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
+          onClick={() => setActiveViewTab("submissions")}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer h-auto ${activeViewTab === "submissions" ? "bg-white dark:bg-slate-950 text-blue-600 dark:text-blue-400 shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
         >
           <CheckCircle2 className="h-4 w-4 text-blue-600" />
           <span className="hidden sm:inline">Reviewed & Completed</span>
@@ -1059,7 +1059,7 @@ export function AdminInternTasksView() {
 
                         {taskFile && (
                           <button
-                            onClick={() => setPreviewTask({...t, _previewUrl: taskFile})}
+                            onClick={() => setPreviewTask({...task, _previewUrl: taskFile})}
                             className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
                           >
                             <FileText className="h-3.5 w-3.5" /> View Task File
@@ -1394,7 +1394,7 @@ export function AdminInternTasksView() {
 
                         {taskFile && (
                           <button
-                            onClick={() => setPreviewTask({...t, _previewUrl: taskFile})}
+                            onClick={() => setPreviewTask({...task, _previewUrl: taskFile})}
                             className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
                           >
                             <FileText className="h-3.5 w-3.5" /> View Task File
@@ -1583,7 +1583,7 @@ export function AdminInternTasksView() {
         </div>
       )}
 
-      {activeViewTab === "reviewed" && (
+      {activeViewTab === "submissions" && (
         <div className="space-y-6">
           <div className="bg-white dark:bg-slate-950 p-5 rounded-2xl border shadow-sm">
             <div className="flex items-center justify-between mb-4">
