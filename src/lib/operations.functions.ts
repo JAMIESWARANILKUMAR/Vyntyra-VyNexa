@@ -8466,6 +8466,7 @@ export const dispatchFeedbackForm = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({
     targetType: z.enum(["all", "interns", "employees", "selected"]),
     targetIds: z.array(z.string().uuid()).optional(),
+    expiryDays: z.number().min(1).default(7),
   }).parse(d))
   .handler(async ({ data }) => {
     const admin = getAdminClient();
@@ -8485,10 +8486,17 @@ export const dispatchFeedbackForm = createServerFn({ method: "POST" })
 
     if (userIds.length === 0) return { count: 0, message: "No target users found." };
 
-    // Set popup flag
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + data.expiryDays);
+
+    // Set popup flag and expiry
     const { error: updateErr } = await admin
       .from("profiles")
-      .update({ feedback_popup_active: true, updated_at: new Date().toISOString() })
+      .update({ 
+        feedback_popup_active: true, 
+        feedback_popup_expiry: expiryDate.toISOString(),
+        updated_at: new Date().toISOString() 
+      })
       .in("id", userIds);
 
     if (updateErr) throw new Error(updateErr.message);
@@ -8498,18 +8506,50 @@ export const dispatchFeedbackForm = createServerFn({ method: "POST" })
       user_id: uid,
       title: "Feedback Required",
       message: "Please share your VyNexa experience! A mandatory feedback form is waiting for you. This helps us improve our mentorship and resources.",
-      type: "feedback_request",
-      is_read: false,
-      created_at: new Date().toISOString(),
+      type: "alert",
+      read: false,
+      created_at: new Date().toISOString()
     }));
+    await admin.from("notifications").insert(notifications);
 
-    try {
-      await admin.from("user_notifications").insert(notifications);
-    } catch (e) {
-      console.warn("Feedback notification insert failed:", e);
+    return { count: userIds.length };
+  });
+
+export const listActiveFeedbackRequests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const admin = getAdminClient();
+    const { data, error } = await admin
+      .from("profiles")
+      .select("id, full_name, email, role, feedback_popup_active, feedback_popup_expiry")
+      .eq("feedback_popup_active", true);
+      
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const updateFeedbackRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    userId: z.string().uuid(),
+    action: z.enum(["cancel", "extend"]),
+    expiryDays: z.number().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    
+    if (data.action === "cancel") {
+      const { error } = await admin.from("profiles").update({ feedback_popup_active: false, feedback_popup_expiry: null }).eq("id", data.userId);
+      if (error) throw new Error(error.message);
+      return { success: true, message: "Feedback request cancelled." };
+    } else if (data.action === "extend" && data.expiryDays) {
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + data.expiryDays);
+      const { error } = await admin.from("profiles").update({ feedback_popup_expiry: expiryDate.toISOString() }).eq("id", data.userId);
+      if (error) throw new Error(error.message);
+      return { success: true, message: "Feedback request extended." };
     }
-
-    return { count: userIds.length, message: "Feedback form dispatched to  users." };
+    return { success: false, message: "Invalid action." };
   });
 
 export const submitDetailedFeedback = createServerFn({ method: "POST" })

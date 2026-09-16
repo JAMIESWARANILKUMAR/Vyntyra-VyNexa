@@ -11,7 +11,7 @@ import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
 
-import { listDetailedFeedbacks, dispatchFeedbackForm } from "@/lib/operations.functions";
+import { listDetailedFeedbacks, dispatchFeedbackForm, listActiveFeedbackRequests, updateFeedbackRequest } from "@/lib/operations.functions";
 
 export function AdminDetailedFeedbacksView() {
   const qc = useQueryClient();
@@ -23,9 +23,18 @@ export function AdminDetailedFeedbacksView() {
     queryFn: () => fetchFeedbacks(),
   });
 
+  const fetchActiveRequests = useServerFn(listActiveFeedbackRequests);
+  const updateRequestFn = useServerFn(updateFeedbackRequest);
+  
+  const { data: activeRequests = [], refetch: refetchActive } = useQuery({
+    queryKey: ["active-feedback-requests"],
+    queryFn: () => fetchActiveRequests(),
+  });
+
   const [isDispatching, setIsDispatching] = useState(false);
   const [showDispatchModal, setShowDispatchModal] = useState(false);
   const [targetType, setTargetType] = useState<"all" | "interns" | "employees">("all");
+  const [expiryDays, setExpiryDays] = useState(7);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewingFeedback, setViewingFeedback] = useState<any>(null);
   const [showPreviewForm, setShowPreviewForm] = useState(false);
@@ -33,10 +42,11 @@ export function AdminDetailedFeedbacksView() {
   const handleDispatch = async () => {
     setIsDispatching(true);
     try {
-      const res = await triggerCampaign({ data: { targetType } });
+      const res = await triggerCampaign({ data: { targetType, expiryDays } });
       toast.success(`Dispatched master feedback form to ${res.count} members.`);
       setShowDispatchModal(false);
       qc.invalidateQueries({ queryKey: ["detailed-feedbacks"] });
+      qc.invalidateQueries({ queryKey: ["active-feedback-requests"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to dispatch feedback form.");
     } finally {
@@ -93,6 +103,48 @@ export function AdminDetailedFeedbacksView() {
           </Button>
         </div>
       </div>
+
+      {activeRequests.length > 0 && (
+        <div className="bg-white dark:bg-slate-950 border border-amber-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b bg-amber-50/50 flex justify-between items-center">
+            <h3 className="font-semibold text-amber-900 flex items-center gap-2">
+              Active Feedback Requests
+              <Badge className="bg-amber-200 text-amber-900">{activeRequests.length}</Badge>
+            </h3>
+          </div>
+          <div className="divide-y max-h-[300px] overflow-y-auto">
+            {activeRequests.map((r: any) => (
+              <div key={r.id} className="p-4 hover:bg-slate-50 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                    <User className="h-4 w-4 text-slate-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-900">{r.full_name || "Unknown"}</h4>
+                    <p className="text-xs text-slate-500">Expires: {r.feedback_popup_expiry ? new Date(r.feedback_popup_expiry).toLocaleDateString() : "Never"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={async () => {
+                    await updateRequestFn({ data: { userId: r.id, action: "extend", expiryDays: 7 } });
+                    toast.success("Extended by 7 days.");
+                    refetchActive();
+                  }} className="h-8 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                    +7 Days
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={async () => {
+                    await updateRequestFn({ data: { userId: r.id, action: "cancel" } });
+                    toast.success("Request cancelled.");
+                    refetchActive();
+                  }} className="h-8 text-xs border-rose-200 text-rose-700 hover:bg-rose-50">
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-slate-950 border rounded-2xl shadow-sm overflow-hidden">
         <div className="p-4 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-50/50">
@@ -178,6 +230,24 @@ export function AdminDetailedFeedbacksView() {
                 <option value="interns">Interns Only</option>
                 <option value="employees">Employees Only</option>
               </select>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700">Display Duration (Days)</label>
+              <select
+                className="w-full h-10 px-3 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                value={expiryDays}
+                onChange={(e) => setExpiryDays(parseInt(e.target.value))}
+              >
+                <option value={1}>1 Day (Urgent)</option>
+                <option value={3}>3 Days</option>
+                <option value={7}>7 Days (Standard)</option>
+                <option value={14}>14 Days</option>
+                <option value={30}>30 Days</option>
+              </select>
+              <p className="text-[10px] text-slate-500 mt-1">
+                The form will disappear from their dashboard if not completed within this timeframe.
+              </p>
             </div>
             <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-start gap-2">
               <CheckCircle2 className="h-4 w-4 text-indigo-600 mt-0.5 shrink-0" />
