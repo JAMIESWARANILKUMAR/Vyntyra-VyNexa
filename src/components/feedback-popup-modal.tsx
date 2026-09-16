@@ -202,7 +202,7 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
     );
   }
 
-  const slideVariants = {
+  const slideVariants: any = {
     enter: (direction: number) => ({
       x: direction > 0 ? 50 : -50,
       opacity: 0,

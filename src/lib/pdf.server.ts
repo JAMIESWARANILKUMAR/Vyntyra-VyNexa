@@ -146,9 +146,9 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
     
     doc.setDrawColor(rule[0], rule[1], rule[2]);
     doc.setLineWidth(0.3);
-    doc.setLineDash([1, 1], 0);
+    doc.setLineDashPattern([1, 1], 0);
     doc.roundedRect(boxX, y, boxW, boxH, 1.5, 1.5, "S");
-    doc.setLineDash([], 0);
+    doc.setLineDashPattern([], 0);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);

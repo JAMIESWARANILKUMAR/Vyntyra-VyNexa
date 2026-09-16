@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { 
-  ClipboardList, Send, Loader2, Search, User, Eye, HeartHandshake, CheckCircle2, TrendingUp
+  ClipboardList, Send, Loader2, Search, User, Eye, HeartHandshake, CheckCircle2, TrendingUp, Printer
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
@@ -103,7 +103,7 @@ export function AdminDetailedFeedbacksView() {
     setIsGeneratingAi(true);
     try {
       const res = await generateAiReportFn();
-      setAiReport(res.report);
+      setAiReport(res.report || null);
       setShowAiModal(true);
       toast.success("AI Report generated successfully!");
     } catch (e: any) {
