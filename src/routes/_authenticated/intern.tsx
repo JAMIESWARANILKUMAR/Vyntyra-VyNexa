@@ -58,10 +58,10 @@ export const Route = createFileRoute("/_authenticated/intern")({
 });
 
 const TASK_STATUS_STYLES: Record<string, { dot: string; badge: string; label: string }> = {
-  pending:      { dot: "bg-amber-400",   badge: "bg-amber-950/70 text-amber-300 border-amber-500/40 shadow-xs",    label: "Pending" },
-  in_progress:  { dot: "bg-blue-400",    badge: "bg-blue-950/70 text-blue-300 border-blue-500/40 shadow-xs",        label: "In Progress" },
-  submitted:    { dot: "bg-purple-400",  badge: "bg-purple-950/70 text-purple-300 border-purple-500/40 shadow-xs",  label: "Submitted (Under Review)" },
-  under_review: { dot: "bg-indigo-400",  badge: "bg-indigo-950/70 text-indigo-300 border-indigo-500/40 shadow-xs",  label: "Under Mentor Review" },
+  pending:      { dot: "bg-emerald-400",   badge: "bg-emerald-950/70 text-emerald-300 border-emerald-500/40 shadow-xs",    label: "Pending" },
+  in_progress:  { dot: "bg-emerald-400",    badge: "bg-emerald-950/70 text-emerald-300 border-emerald-500/40 shadow-xs",        label: "In Progress" },
+  submitted:    { dot: "bg-emerald-400",  badge: "bg-emerald-950/70 text-emerald-300 border-emerald-500/40 shadow-xs",  label: "Submitted (Under Review)" },
+  under_review: { dot: "bg-emerald-400",  badge: "bg-emerald-950/70 text-emerald-300 border-emerald-500/40 shadow-xs",  label: "Under Mentor Review" },
   completed:    { dot: "bg-emerald-400", badge: "bg-emerald-950/70 text-emerald-300 border-emerald-500/40 shadow-xs", label: "Verified & Completed" },
   verified:     { dot: "bg-emerald-400", badge: "bg-emerald-950/70 text-emerald-300 border-emerald-500/40 shadow-xs", label: "Verified & Completed" },
   approved:     { dot: "bg-emerald-400", badge: "bg-emerald-950/70 text-emerald-300 border-emerald-500/40 shadow-xs", label: "Approved & Verified" },
@@ -73,10 +73,10 @@ const TASK_STATUS_STYLES: Record<string, { dot: string; badge: string; label: st
 };
 
 const RESOURCE_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
-  document: { icon: <FileText className="h-5 w-5" />,  color: "bg-blue-950/60 text-blue-400 border-blue-800/60" },
+  document: { icon: <FileText className="h-5 w-5" />,  color: "bg-emerald-950/60 text-emerald-400 border-emerald-800/60" },
   video:    { icon: <Play className="h-5 w-5" />,       color: "bg-red-950/60 text-red-400 border-red-800/60" },
-  link:     { icon: <Link2 className="h-5 w-5" />,      color: "bg-purple-950/60 text-purple-400 border-purple-800/60" },
-  template: { icon: <FolderOpen className="h-5 w-5" />, color: "bg-amber-950/60 text-amber-400 border-amber-800/60" },
+  link:     { icon: <Link2 className="h-5 w-5" />,      color: "bg-emerald-950/60 text-emerald-400 border-emerald-800/60" },
+  template: { icon: <FolderOpen className="h-5 w-5" />, color: "bg-emerald-950/60 text-emerald-400 border-emerald-800/60" },
   guide:    { icon: <BookOpen className="h-5 w-5" />,   color: "bg-emerald-950/60 text-emerald-400 border-emerald-800/60" },
 };
 
@@ -1023,8 +1023,8 @@ function InternDashboard() {
     marqueeItems.push({
       id: `meet-${m.id}`,
       type: "LIVE MEETING",
-      typeColor: "text-indigo-300 bg-indigo-950/80 border-indigo-500/40 shadow-xs",
-      icon: <Video className="h-3 w-3 text-indigo-400 shrink-0" />,
+      typeColor: "text-emerald-300 bg-emerald-950/80 border-emerald-500/40 shadow-xs",
+      icon: <Video className="h-3 w-3 text-emerald-400 shrink-0" />,
       title: `Scheduled Video Sync: "${m.title}" · ${meetDate} at ${meetTime}`,
     });
   });
@@ -1035,8 +1035,8 @@ function InternDashboard() {
     marqueeItems.push({
       id: `task-${t.id}`,
       type: "ASSIGNMENT",
-      typeColor: "text-amber-300 bg-amber-950/80 border-amber-500/40 shadow-xs",
-      icon: <ClipboardList className="h-3 w-3 text-amber-400 shrink-0" />,
+      typeColor: "text-emerald-300 bg-emerald-950/80 border-emerald-500/40 shadow-xs",
+      icon: <ClipboardList className="h-3 w-3 text-emerald-400 shrink-0" />,
       title: `Task Pending Review: "${t.title}" (${dueText})`,
     });
   });
@@ -1050,8 +1050,8 @@ function InternDashboard() {
     marqueeItems.push({
       id: `holiday-${h.id || h.date}`,
       type: "HOLIDAY",
-      typeColor: "text-teal-300 bg-teal-950/80 border-teal-500/40 shadow-xs",
-      icon: <CalendarDays className="h-3 w-3 text-teal-400 shrink-0" />,
+      typeColor: "text-emerald-300 bg-emerald-950/80 border-emerald-500/40 shadow-xs",
+      icon: <CalendarDays className="h-3 w-3 text-emerald-400 shrink-0" />,
       title: `Company Holiday: ${h.name} (${hDate})`,
     });
   });
@@ -1068,12 +1068,12 @@ function InternDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FFF9F7] via-[#FFF3EF] to-[#FFEDE7] text-slate-900 font-sans selection:bg-emerald-500 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-white text-slate-900 font-sans selection:bg-emerald-500 selection:text-white relative overflow-x-hidden">
       
       {/* Soft Warm Orange Ambient Glow Mesh */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute -top-32 -left-32 w-[700px] h-[700px] bg-emerald-300/20 rounded-full blur-[160px]" />
-        <div className="absolute top-1/3 -right-32 w-[700px] h-[700px] bg-amber-300/20 rounded-full blur-[160px]" />
+        <div className="absolute top-1/3 -right-32 w-[700px] h-[700px] bg-emerald-300/20 rounded-full blur-[160px]" />
         <div className="absolute -bottom-40 left-1/4 w-[800px] h-[800px] bg-rose-200/20 rounded-full blur-[180px]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#f973160a_1px,transparent_1px),linear-gradient(to_bottom,#f973160a_1px,transparent_1px)] bg-[size:4rem_4rem]" />
       </div>
@@ -1085,7 +1085,7 @@ function InternDashboard() {
           {/* Logo & Portal Badge */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0 min-w-0">
             <div className="relative group shrink-0">
-              <div className="absolute -inset-1 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl blur-xs opacity-60 group-hover:opacity-100 transition duration-300" />
+              <div className="absolute -inset-1 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-xl blur-xs opacity-60 group-hover:opacity-100 transition duration-300" />
               <img 
                 src="/favicon.png" 
                 alt="VyNexa / Vyntyra Logo" 
@@ -1096,7 +1096,7 @@ function InternDashboard() {
                   if (fallback) fallback.style.display = "flex";
                 }}
               />
-              <div className="hidden relative h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-md shadow-emerald-500/20 border border-emerald-300/60 items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
+              <div className="hidden relative h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-md shadow-emerald-500/20 border border-emerald-300/60 items-center justify-center text-white font-black tracking-wider text-sm sm:text-base shrink-0">
                 V
               </div>
             </div>
@@ -1151,15 +1151,15 @@ function InternDashboard() {
               onClick={() => setActiveTab("tasks")}
               className={`h-8 px-2 sm:px-3 text-xs font-bold transition-all shadow-md gap-1 sm:gap-1.5 cursor-pointer ${
                 activeTab === "tasks"
-                  ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border border-emerald-400/40 shadow-emerald-500/20"
-                  : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white border border-emerald-300 shadow-emerald-500/20"
+                  ? "bg-gradient-to-r from-emerald-500 to-emerald-500 text-white border border-emerald-400/40 shadow-emerald-500/20"
+                  : "bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-600 hover:to-emerald-600 text-white border border-emerald-300 shadow-emerald-500/20"
               }`}
               title="Tasks & Assignments"
             >
               <ClipboardList className="h-3.5 w-3.5 text-slate-950" />
               <span className="hidden sm:inline">Tasks</span>
               {pendingTasks.length > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-slate-950 text-amber-400 text-[10px] font-mono font-black">
+                <span className="px-1.5 py-0.2 rounded-full bg-slate-950 text-emerald-400 text-[10px] font-mono font-black">
                   {pendingTasks.length}
                 </span>
               )}
@@ -1189,7 +1189,7 @@ function InternDashboard() {
                 size="sm" 
                 onClick={handleClockIn} 
                 disabled={isClocking}
-                className="h-8 px-2 sm:px-2.5 text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-md shadow-emerald-500/20 gap-1 cursor-pointer"
+                className="h-8 px-2 sm:px-2.5 text-xs font-bold bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-600 hover:to-emerald-600 text-white shadow-md shadow-emerald-500/20 gap-1 cursor-pointer"
                 title="Shift Clock In"
               >
                 {isClocking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5 text-white" />}
@@ -1286,7 +1286,7 @@ function InternDashboard() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="h-9 sm:h-10 px-3.5 rounded-2xl bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 hover:from-teal-600 hover:to-emerald-600 text-white border border-amber-400/50 shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shrink-0"
+              className="h-9 sm:h-10 px-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white border border-emerald-400/50 shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shrink-0"
               aria-label="Open Navigation Menu"
               title="Open Navigation Directory"
             >
@@ -1311,7 +1311,7 @@ function InternDashboard() {
               <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600">
                 LIVE TICKER
               </span>
-              <span className="hidden group-hover:inline text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded border border-amber-300">
+              <span className="hidden group-hover:inline text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">
                 ⏸ PAUSED
               </span>
             </div>
@@ -1379,10 +1379,10 @@ function InternDashboard() {
           />
 
           {/* Slide-in Drawer Container */}
-          <div className="relative w-full max-w-sm sm:max-w-md bg-[#FAF6F0] border-l border-amber-200/90 shadow-2xl h-full flex flex-col z-10 animate-in slide-in-from-right duration-300 text-slate-900">
+          <div className="relative w-full max-w-sm sm:max-w-md bg-white border-l border-emerald-200/90 shadow-2xl h-full flex flex-col z-10 animate-in slide-in-from-right duration-300 text-slate-900">
             
             {/* Drawer Header */}
-            <div className="p-4 sm:p-5 border-b border-amber-200/80 bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 flex items-center justify-between shadow-md">
+            <div className="p-4 sm:p-5 border-b border-emerald-200/80 bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-700 flex items-center justify-between shadow-md">
               <div className="flex items-center gap-2.5">
                 <div className="h-9 w-9 bg-white/20 rounded-xl shadow-inner border border-white/30 flex items-center justify-center text-white font-black text-sm">
                   V
@@ -1394,7 +1394,7 @@ function InternDashboard() {
                       Intern
                     </span>
                   </div>
-                  <p className="text-[10px] text-amber-100/90">Vyntyra Connect Associate Workspace</p>
+                  <p className="text-[10px] text-emerald-100/90">Vyntyra Connect Associate Workspace</p>
                 </div>
               </div>
 
@@ -1409,9 +1409,9 @@ function InternDashboard() {
             </div>
 
             {/* Intern Profile Card inside Drawer */}
-            <div className="p-4 bg-white/95 border border-amber-200/90 shadow-lg shadow-amber-950/5 space-y-3">
+            <div className="p-4 bg-white/95 border border-emerald-200/90 shadow-lg shadow-emerald-950/5 space-y-3">
               <div className="flex items-center gap-3">
-                <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-12 w-12 ring-2 ring-amber-400/60 shadow-md shrink-0 text-slate-900" />
+                <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-12 w-12 ring-2 ring-emerald-400/60 shadow-md shrink-0 text-slate-900" />
                 <div className="min-w-0 flex-1">
                   <h4 className="font-extrabold text-sm text-slate-950 truncate">{displayName}</h4>
                   <p className="text-xs text-slate-600 font-medium truncate">{email}</p>
@@ -1419,7 +1419,7 @@ function InternDashboard() {
                     <span className="text-[9px] font-mono font-bold text-emerald-700 bg-emerald-100/90 border border-emerald-300 px-2 py-0.5 rounded-md">
                       {profile?.intern_id || "VCS-INT-2026"}
                     </span>
-                    <span className="text-[9px] text-amber-950 bg-amber-100/70 border border-amber-300 px-2 py-0.5 rounded-md font-bold truncate max-w-[140px]">
+                    <span className="text-[9px] text-emerald-950 bg-emerald-100/70 border border-emerald-300 px-2 py-0.5 rounded-md font-bold truncate max-w-[140px]">
                       {profile?.position || "Intern Associate"}
                     </span>
                   </div>
@@ -1427,11 +1427,11 @@ function InternDashboard() {
               </div>
 
               {/* Quick Actions Strip */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-amber-200/80">
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-emerald-200/80">
                 {/* Clock In / Out */}
                 {todayAttendance ? (
                   todayAttendance.clock_out ? (
-                    <div className="px-2.5 py-2 rounded-xl bg-amber-100/70 text-center text-[10px] font-bold text-amber-950 border border-amber-200">
+                    <div className="px-2.5 py-2 rounded-xl bg-emerald-100/70 text-center text-[10px] font-bold text-emerald-950 border border-emerald-200">
                       ✓ Shift Completed
                     </div>
                   ) : (
@@ -1456,7 +1456,7 @@ function InternDashboard() {
                       setMobileMenuOpen(false);
                     }}
                     disabled={isClocking}
-                    className="h-9 text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white w-full rounded-xl gap-1.5 shadow-md cursor-pointer"
+                    className="h-9 text-xs font-black bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-700 hover:to-emerald-700 text-white w-full rounded-xl gap-1.5 shadow-md cursor-pointer"
                   >
                     <Clock className="h-3.5 w-3.5" /> Clock In
                   </Button>
@@ -1470,7 +1470,7 @@ function InternDashboard() {
                     setMobileMenuOpen(false);
                     setProfileModalOpen(true);
                   }}
-                  className="h-9 text-xs font-bold bg-amber-50/80 border-amber-300 text-amber-950 hover:bg-amber-100 rounded-xl gap-1.5 cursor-pointer"
+                  className="h-9 text-xs font-bold bg-emerald-50/80 border-emerald-300 text-emerald-950 hover:bg-emerald-100 rounded-xl gap-1.5 cursor-pointer"
                 >
                   <User className="h-3.5 w-3.5 text-emerald-600" /> Settings
                 </Button>
@@ -1499,7 +1499,7 @@ function InternDashboard() {
 
                 return (
                   <div key={categoryName} className="space-y-1.5">
-                    <h5 className="text-[10px] font-black uppercase tracking-wider text-amber-950 px-2">
+                    <h5 className="text-[10px] font-black uppercase tracking-wider text-emerald-950 px-2">
                       {categoryName}
                     </h5>
                     <div className="space-y-1">
@@ -1516,15 +1516,15 @@ function InternDashboard() {
                             }}
                             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                               isActive
-                                ? "bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20 border border-amber-400/50"
+                                ? "bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/20 border border-emerald-400/50"
                                 : tab.isPrimary
-                                ? "bg-amber-100/80 text-amber-950 border border-amber-300 hover:bg-amber-200/80"
-                                : "bg-white text-slate-800 border border-amber-200/80 hover:bg-amber-50 hover:text-emerald-700 shadow-xs"
+                                ? "bg-emerald-100/80 text-emerald-950 border border-emerald-300 hover:bg-emerald-200/80"
+                                : "bg-white text-slate-800 border border-emerald-200/80 hover:bg-emerald-50 hover:text-emerald-700 shadow-xs"
                             }`}
                           >
                             <div className="flex items-center gap-2.5">
-                              <div className={`p-1.5 rounded-lg ${isActive ? "bg-white/20" : "bg-amber-100/70 text-amber-900 border border-amber-200"}`}>
-                                <TabIcon className={`h-4 w-4 ${isActive ? "text-white" : tab.isPrimary ? "text-emerald-600" : "text-amber-900"}`} />
+                              <div className={`p-1.5 rounded-lg ${isActive ? "bg-white/20" : "bg-emerald-100/70 text-emerald-900 border border-emerald-200"}`}>
+                                <TabIcon className={`h-4 w-4 ${isActive ? "text-white" : tab.isPrimary ? "text-emerald-600" : "text-emerald-900"}`} />
                               </div>
                               <span className="tracking-tight">{tab.label}</span>
                             </div>
@@ -1535,7 +1535,7 @@ function InternDashboard() {
                                   {tab.count}
                                 </span>
                               )}
-                              <ChevronRight className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-amber-800"}`} />
+                              <ChevronRight className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-emerald-800"}`} />
                             </div>
                           </button>
                         );
@@ -1547,7 +1547,7 @@ function InternDashboard() {
             </div>
 
             {/* Drawer Footer */}
-            <div className="p-4 border-t border-amber-200/80 bg-[#FAF5EC] space-y-3">
+            <div className="p-4 border-t border-emerald-200/80 bg-white space-y-3">
               <Button
                 variant="ghost"
                 onClick={() => {
@@ -1559,7 +1559,7 @@ function InternDashboard() {
                 <LogOut className="h-4 w-4 text-rose-600" />
                 <span>Sign Out from Portal</span>
               </Button>
-              <p className="text-center text-[10px] text-amber-900/70 font-medium">
+              <p className="text-center text-[10px] text-emerald-900/70 font-medium">
                 Vyntyra Consultancy Services · Project VyNexa Directorate
               </p>
             </div>
@@ -1571,8 +1571,8 @@ function InternDashboard() {
 
         {/* When all modules are disabled by admin */}
         {TABS.length === 0 && (
-          <div className="rounded-3xl border border-slate-800/80 bg-[#0E131F]/90 p-12 text-center max-w-xl mx-auto space-y-4 shadow-2xl mt-8 backdrop-blur-xl">
-            <div className="mx-auto w-16 h-16 bg-amber-950/60 text-amber-400 border border-amber-500/40 rounded-2xl flex items-center justify-center shadow-inner">
+          <div className="rounded-3xl border border-slate-800/80 bg-white/90 p-12 text-center max-w-xl mx-auto space-y-4 shadow-2xl mt-8 backdrop-blur-xl">
+            <div className="mx-auto w-16 h-16 bg-emerald-950/60 text-emerald-400 border border-emerald-500/40 rounded-2xl flex items-center justify-center shadow-inner">
               <Lock className="h-8 w-8" />
             </div>
             <h3 className="text-xl font-bold text-white">Intern Dashboard Temporarily Restricted</h3>
@@ -1618,7 +1618,7 @@ function InternDashboard() {
                 <div className="flex items-center gap-3 flex-wrap shrink-0 w-full lg:w-auto">
                   <Button
                     onClick={() => setActiveTab("tasks")}
-                    className="flex-1 lg:flex-none bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs h-11 px-5 rounded-2xl shadow-lg shadow-emerald-500/25 gap-2 cursor-pointer border border-emerald-400/30 transition-all hover:scale-[1.02]"
+                    className="flex-1 lg:flex-none bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black text-xs h-11 px-5 rounded-2xl shadow-lg shadow-emerald-500/25 gap-2 cursor-pointer border border-emerald-400/30 transition-all hover:scale-[1.02]"
                   >
                     <ClipboardList className="h-4 w-4" />
                     My Tasks ({myTasks.length})
@@ -1655,7 +1655,7 @@ function InternDashboard() {
                 <div className="p-4 rounded-2xl bg-white/90 border border-emerald-200/80 backdrop-blur-md space-y-2 shadow-md shadow-emerald-950/5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                      <ClipboardList className="h-3.5 w-3.5 text-amber-500" />
+                      <ClipboardList className="h-3.5 w-3.5 text-emerald-500" />
                       Pending Tasks
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-black text-[10px] border border-emerald-300">
@@ -1689,7 +1689,7 @@ function InternDashboard() {
                 <div className="p-4 rounded-2xl bg-white/90 border border-emerald-200/80 backdrop-blur-md space-y-2 shadow-md shadow-emerald-950/5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                      <Award className="h-3.5 w-3.5 text-amber-500" />
+                      <Award className="h-3.5 w-3.5 text-emerald-500" />
                       Mentor Lead
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-black text-[10px] border border-emerald-300">
@@ -1707,7 +1707,7 @@ function InternDashboard() {
             {/* ─── INTERN PROFILE CARD ─── */}
             <div className="rounded-3xl border border-emerald-200/80 bg-white/95 shadow-xl shadow-emerald-950/5 backdrop-blur-xl overflow-hidden">
               {/* Card header */}
-              <div className="bg-gradient-to-r from-[#FFF8F5] via-[#FFF3EE] to-white px-6 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-5 border-b border-emerald-200/80">
+              <div className="bg-gradient-to-r from-slate-50 via-white to-white px-6 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-5 border-b border-emerald-200/80">
                 <div className="flex items-center gap-5 min-w-0">
                   <div className="relative shrink-0 group">
                     <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 rounded-2xl ring-2 ring-emerald-400/60 shadow-xl text-2xl" />
@@ -1715,7 +1715,7 @@ function InternDashboard() {
                       <span className="text-[10px] font-bold uppercase tracking-wider">Upload</span>
                       <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.webp" onChange={handleImageUpload} />
                     </label>
-                    <span className="absolute -bottom-1 -right-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-white shadow-md">INTERN</span>
+                    <span className="absolute -bottom-1 -right-1 bg-gradient-to-r from-emerald-500 to-emerald-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-white shadow-md">INTERN</span>
                   </div>
                   <div className="min-w-0">
                     <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">{profile?.full_name || displayName}</div>
@@ -1743,12 +1743,12 @@ function InternDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-amber-200/70 p-0 text-xs bg-white/80">
                 {[
                   { icon: <Mail className="h-4 w-4 text-emerald-600" />, label: "Email", value: email },
-                  { icon: <Phone className="h-4 w-4 text-blue-600" />, label: "Contact", value: profile?.phone || "—" },
+                  { icon: <Phone className="h-4 w-4 text-emerald-600" />, label: "Contact", value: profile?.phone || "—" },
                   { icon: <MapPin className="h-4 w-4 text-rose-600" />, label: "Address", value: profile?.address || "—" },
-                  { icon: <Briefcase className="h-4 w-4 text-purple-600" />, label: "Domain", value: profile?.department || "—" },
-                  { icon: <CalendarDays className="h-4 w-4 text-amber-600" />, label: "Internship Start", value: profile?.start_date ? new Date(profile.start_date).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "—" },
+                  { icon: <Briefcase className="h-4 w-4 text-emerald-600" />, label: "Domain", value: profile?.department || "—" },
+                  { icon: <CalendarDays className="h-4 w-4 text-emerald-600" />, label: "Internship Start", value: profile?.start_date ? new Date(profile.start_date).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "—" },
                   {
-                    icon: <Clock className="h-4 w-4 text-teal-600" />,
+                    icon: <Clock className="h-4 w-4 text-emerald-600" />,
                     label: "End Date / Remaining",
                     value: profile?.end_date
                       ? (() => {
@@ -1759,10 +1759,10 @@ function InternDashboard() {
                       : "—",
                   },
                 ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3.5 px-6 py-4 hover:bg-amber-50/50 transition-colors">
-                    <div className="h-9 w-9 rounded-2xl bg-amber-100/70 border border-amber-200 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">{item.icon}</div>
+                  <div key={i} className="flex items-start gap-3.5 px-6 py-4 hover:bg-emerald-50/50 transition-colors">
+                    <div className="h-9 w-9 rounded-2xl bg-emerald-100/70 border border-emerald-200 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">{item.icon}</div>
                     <div className="min-w-0">
-                      <div className="text-[10px] font-black uppercase tracking-wider text-amber-900/80">{item.label}</div>
+                      <div className="text-[10px] font-black uppercase tracking-wider text-emerald-900/80">{item.label}</div>
                       <div className="text-sm font-black text-slate-900 mt-0.5 break-words">{item.value}</div>
                     </div>
                   </div>
@@ -1770,11 +1770,11 @@ function InternDashboard() {
               </div>
 
               {/* Document downloads */}
-              <div className="border-t border-amber-200/80 px-6 py-4 bg-gradient-to-r from-[#FAF5EC] via-[#FFFDF9] to-[#FAF5EC] flex flex-wrap gap-3 items-center justify-between shadow-inner">
+              <div className="border-t border-emerald-200/80 px-6 py-4 bg-gradient-to-r from-white via-white to-white flex flex-wrap gap-3 items-center justify-between shadow-inner">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-amber-950 mr-1">Your Documents:</span>
+                  <span className="text-[11px] font-black uppercase tracking-wider text-emerald-950 mr-1">Your Documents:</span>
                   {docsQ.isLoading ? (
-                    <span className="text-xs text-amber-900 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin text-emerald-600" /> Loading...</span>
+                    <span className="text-xs text-emerald-900 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin text-emerald-600" /> Loading...</span>
                   ) : (
                     <>
                       <a
@@ -1783,12 +1783,12 @@ function InternDashboard() {
                         rel="noopener noreferrer"
                         className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
                           docsQ.data?.offerLetterUrl
-                            ? "bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white border border-amber-500 shadow-md shadow-emerald-500/10"
-                            : "bg-amber-100/60 text-slate-400 border border-amber-200 cursor-not-allowed pointer-events-none"
+                            ? "bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-700 hover:to-emerald-700 text-white border border-emerald-500 shadow-md shadow-emerald-500/10"
+                            : "bg-emerald-100/60 text-slate-400 border border-emerald-200 cursor-not-allowed pointer-events-none"
                         }`}
                         onClick={(e) => { if (!docsQ.data?.offerLetterUrl) e.preventDefault(); }}
                       >
-                        <FileText className="h-3.5 w-3.5 text-amber-100" />
+                        <FileText className="h-3.5 w-3.5 text-emerald-100" />
                         Download Offer Letter
                       </a>
                       {docsQ.data?.nocDownloadEnabled && (
@@ -1798,12 +1798,12 @@ function InternDashboard() {
                           rel="noopener noreferrer"
                           className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
                             docsQ.data?.nocUrl
-                              ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/10"
-                              : "bg-amber-100/60 text-slate-400 border border-amber-200 cursor-not-allowed pointer-events-none"
+                              ? "bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-700 hover:to-emerald-700 text-white shadow-md shadow-emerald-500/10"
+                              : "bg-emerald-100/60 text-slate-400 border border-emerald-200 cursor-not-allowed pointer-events-none"
                           }`}
                           onClick={(e) => { if (!docsQ.data?.nocUrl) e.preventDefault(); }}
                         >
-                          <Award className="h-3.5 w-3.5 text-blue-100" />
+                          <Award className="h-3.5 w-3.5 text-emerald-100" />
                           Download NOC Certificate
                           {!docsQ.data?.nocUrl && <span className="ml-1 opacity-70">(Not Ready)</span>}
                         </a>
@@ -1821,7 +1821,7 @@ function InternDashboard() {
 
                 <button
                   onClick={() => docsQ.refetch()}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-amber-900 hover:text-emerald-600 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-900 hover:text-emerald-600 transition-colors cursor-pointer"
                   title="Refresh document links"
                 >
                   <RefreshCw className="h-3 w-3 text-emerald-500" />
@@ -1832,7 +1832,7 @@ function InternDashboard() {
 
             {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
             {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
-            <div className="bg-gradient-to-r from-white via-[#FFF7F4] to-[#FFF1EC] rounded-3xl p-6 text-slate-900 shadow-xl shadow-emerald-950/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-emerald-200/80 relative overflow-hidden backdrop-blur-2xl">
+            <div className="bg-gradient-to-r from-white via-white to-slate-50 rounded-3xl p-6 text-slate-900 shadow-xl shadow-emerald-950/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-emerald-200/80 relative overflow-hidden backdrop-blur-2xl">
               <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-emerald-300/20 blur-2xl" />
               <div className="flex items-center gap-4 relative z-10">
                 <div className="h-12 w-12 rounded-2xl bg-emerald-100 border border-emerald-300 backdrop-blur-md flex items-center justify-center text-emerald-600 shrink-0 shadow-sm">
@@ -1848,7 +1848,7 @@ function InternDashboard() {
                       {pendingTasks.length} Pending
                     </span>
                     {inProgressTasks.length > 0 && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-black uppercase tracking-wide">
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-black uppercase tracking-wide">
                         {inProgressTasks.length} In Progress
                       </span>
                     )}
@@ -1862,7 +1862,7 @@ function InternDashboard() {
               <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0 relative z-10">
                 <Button
                   onClick={() => setActiveTab("tasks")}
-                  className="w-full md:w-auto bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs h-10 px-6 rounded-2xl shadow-lg shadow-emerald-500/25 gap-2 cursor-pointer border border-emerald-400/30 transition-all hover:scale-[1.02]"
+                  className="w-full md:w-auto bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black text-xs h-10 px-6 rounded-2xl shadow-lg shadow-emerald-500/25 gap-2 cursor-pointer border border-emerald-400/30 transition-all hover:scale-[1.02]"
                 >
                   <CheckCircle2 className="h-4 w-4 text-white" />
                   Open Tasks Workspace &rarr;
@@ -1889,7 +1889,7 @@ function InternDashboard() {
                       ? todayAttendance.clock_out
                         ? "bg-slate-100 text-slate-700 border border-slate-300"
                         : "bg-emerald-100 text-emerald-800 border border-emerald-300 animate-pulse"
-                      : "bg-amber-100 text-amber-800 border border-amber-300"
+                      : "bg-emerald-100 text-emerald-800 border border-emerald-300"
                   }`}>
                     Status: {todayAttendance ? (todayAttendance.clock_out ? "Completed" : "Active Shift") : "Offline"}
                   </span>
@@ -1911,7 +1911,7 @@ function InternDashboard() {
                       onClick={handleClockIn}
                       disabled={isClocking || isClockingDisabled}
                       title={clockingDisabledReason}
-                      className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs gap-2 px-6 h-10 rounded-xl shadow-lg shadow-emerald-500/25 disabled:opacity-50 cursor-pointer"
+                      className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black text-xs gap-2 px-6 h-10 rounded-xl shadow-lg shadow-emerald-500/25 disabled:opacity-50 cursor-pointer"
                     >
                       {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
                       Clock In Now
@@ -1941,7 +1941,7 @@ function InternDashboard() {
                       {todayAttendance?.clock_out ? new Date(todayAttendance.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                     </div>
                   </div>
-                  <div className="h-9 w-9 rounded-xl bg-amber-100 border border-amber-300 text-amber-600 flex items-center justify-center">
+                  <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-600 flex items-center justify-center">
                     <CheckCircle2 className="h-4 w-4" />
                   </div>
                 </div>
@@ -2045,7 +2045,7 @@ function InternDashboard() {
                 { icon: <ClipboardList className="h-5 w-5 text-emerald-600" />, label: "Pending Tasks", value: pendingTasks.length, border: "border-emerald-200/80", bg: "bg-white" },
                 { icon: <CheckCircle2 className="h-5 w-5 text-emerald-600" />, label: "Completed", value: completedTasks.length, border: "border-emerald-200/80", bg: "bg-white" },
                 { icon: <CreditCard className="h-5 w-5 text-emerald-600" />, label: "Credits Score", value: `${earnedCredits} / ${totalAssignedCredits}`, border: "border-emerald-200/80", bg: "bg-white" },
-                { icon: <Flame className="h-5 w-5 text-amber-500 animate-pulse" />, label: "Day Streak", value: `${dayStreak} Days`, border: "border-emerald-200/80", bg: "bg-white" },
+                { icon: <Flame className="h-5 w-5 text-emerald-500 animate-pulse" />, label: "Day Streak", value: `${dayStreak} Days`, border: "border-emerald-200/80", bg: "bg-white" },
                 { icon: <Video className="h-5 w-5 text-emerald-600" />, label: "Meetings", value: meetings.filter(m => new Date(m.scheduled_at) >= new Date()).length, border: "border-emerald-200/80", bg: "bg-white" },
                 { icon: <BookOpen className="h-5 w-5 text-emerald-600" />, label: "Resources", value: resources.length, border: "border-emerald-200/80", bg: "bg-white" },
               ].map((s, i) => (
@@ -2206,7 +2206,7 @@ function InternDashboard() {
                     ? todayAttendance.clock_out
                       ? "bg-slate-100 text-slate-700 border border-slate-300"
                       : "bg-emerald-100 text-emerald-800 border border-emerald-300 animate-pulse"
-                    : "bg-amber-100 text-amber-800 border border-amber-300"
+                    : "bg-emerald-100 text-emerald-800 border border-emerald-300"
                 }`}>
                   Status: {todayAttendance ? (todayAttendance.clock_out ? "Completed" : "Active Shift") : "Offline"}
                 </span>
@@ -2226,7 +2226,7 @@ function InternDashboard() {
                   <Button
                     onClick={handleClockIn}
                     disabled={isClocking}
-                    className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs gap-2 px-6 h-10 rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer border border-emerald-400/30"
+                    className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black text-xs gap-2 px-6 h-10 rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer border border-emerald-400/30"
                   >
                     {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
                     Clock In Now
@@ -2256,7 +2256,7 @@ function InternDashboard() {
                     {todayAttendance?.clock_out ? new Date(todayAttendance.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                   </div>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-amber-100 border border-amber-300 text-amber-600 flex items-center justify-center">
+                <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-600 flex items-center justify-center">
                   <CheckCircle2 className="h-4 w-4" />
                 </div>
               </div>
@@ -2369,7 +2369,7 @@ function InternDashboard() {
                   ].map((doc, i) => (
                     <div key={i} className="flex items-center justify-between p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/60 text-xs shadow-xs">
                       <span className="font-extrabold text-slate-900">{doc.label}</span>
-                      <span className={`font-black px-2.5 py-0.5 rounded-full border ${doc.status === 'Uploaded' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>{doc.status}</span>
+                      <span className={`font-black px-2.5 py-0.5 rounded-full border ${doc.status === 'Uploaded' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'}`}>{doc.status}</span>
                     </div>
                   ))}
                 </div>
@@ -2391,7 +2391,7 @@ function InternDashboard() {
                     accessRequests.map((req: any) => (
                       <div key={req.id} className="flex items-center justify-between p-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 text-xs shadow-xs">
                         <span className="font-extrabold text-slate-900">{req.tool_name}</span>
-                        <span className={`font-black uppercase text-[10px] px-2.5 py-0.5 rounded-full border ${req.status === 'provisioned' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : req.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>{req.status}</span>
+                        <span className={`font-black uppercase text-[10px] px-2.5 py-0.5 rounded-full border ${req.status === 'provisioned' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : req.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'}`}>{req.status}</span>
                       </div>
                     ))
                   )}
@@ -2477,7 +2477,7 @@ function InternDashboard() {
                                 <span className="font-black text-slate-900">{progress}%</span>
                               </div>
                               <div className="h-2 bg-emerald-100 rounded-full overflow-hidden border border-emerald-200/60">
-                                <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-350" style={{ width: `${progress}%` }} />
+                                <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-500 rounded-full transition-all duration-350" style={{ width: `${progress}%` }} />
                               </div>
                             </div>
 
@@ -2533,7 +2533,7 @@ function InternDashboard() {
 
                           <div className="mt-5 pt-3 border-t border-emerald-200/60 space-y-2">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-amber-800 font-extrabold flex items-center gap-1"><Award className="h-3.5 w-3.5 text-amber-500" /> {m.badge || "Skilling Badge"}</span>
+                              <span className="text-emerald-800 font-extrabold flex items-center gap-1"><Award className="h-3.5 w-3.5 text-emerald-500" /> {m.badge || "Skilling Badge"}</span>
                               {m.estimated_hours && (
                                 <span className="text-[10px] text-slate-500 font-mono font-bold">{m.estimated_hours}h</span>
                               )}
@@ -2637,7 +2637,7 @@ function InternDashboard() {
                     <div className="text-xs font-black text-slate-900">Shift Clock-In</div>
                     <div className="text-[10px] text-slate-600 font-medium">{clockedIn ? `Clocked in at ${clockTime}` : 'Not clocked in today'}</div>
                   </div>
-                  <Button size="sm" className={clockedIn ? "bg-rose-600 hover:bg-rose-700 text-white font-black cursor-pointer" : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-black cursor-pointer"} onClick={() => {
+                  <Button size="sm" className={clockedIn ? "bg-rose-600 hover:bg-rose-700 text-white font-black cursor-pointer" : "bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-600 hover:to-emerald-600 text-white font-black cursor-pointer"} onClick={() => {
                     setClockedIn(!clockedIn);
                     setClockTime(new Date().toLocaleTimeString());
                     toast.success(clockedIn ? "Clocked out!" : "Clocked in for today's shift!");
@@ -2659,7 +2659,7 @@ function InternDashboard() {
                     <label className="font-bold text-slate-700 mb-1.5 block">Blockers (optional)</label>
                     <input className="w-full rounded-xl border border-emerald-200 bg-white p-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 shadow-xs" value={standupForm.blockers} onChange={e => setStandupForm({...standupForm, blockers: e.target.value})} placeholder="Any roadblocks faced..." />
                   </div>
-                  <Button className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer" onClick={async () => {
+                  <Button className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer" onClick={async () => {
                     if (!standupForm.did_today || !standupForm.will_do_tomorrow) { toast.error("Please fill required standup fields"); return; }
                     try {
                       await doCreateStandup({ data: standupForm });
@@ -2682,7 +2682,7 @@ function InternDashboard() {
                       <div key={st.id} className="py-3.5 space-y-1">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-black text-slate-900">{st.date}</span>
-                          <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-black uppercase border ${st.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>{st.status}</span>
+                          <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-black uppercase border ${st.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'}`}>{st.status}</span>
                         </div>
                         <p className="text-xs text-slate-800 font-medium"><strong>Did Today:</strong> {st.did_today}</p>
                         <p className="text-xs text-slate-600 font-medium"><strong>Tomorrow:</strong> {st.will_do_tomorrow}</p>
@@ -2762,7 +2762,7 @@ function InternDashboard() {
                   </div>
 
                   <Button 
-                    className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs h-10 rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer border border-emerald-400/30" 
+                    className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black text-xs h-10 rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer border border-emerald-400/30" 
                     onClick={async () => {
                       if (!deliverableForm.title.trim() || !deliverableForm.submission_url.trim()) { 
                         toast.error("Please enter both Deliverable Title and Submission URL."); 
@@ -2807,7 +2807,7 @@ function InternDashboard() {
                       <div key={del.id} className="py-4 space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-extrabold text-slate-900">{del.title}</span>
-                          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${del.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : del.status === 'under_review' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}>{del.status}</span>
+                          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${del.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : del.status === 'under_review' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'}`}>{del.status}</span>
                         </div>
                         <a href={del.submission_url} target="_blank" rel="noreferrer" className="text-xs text-emerald-600 hover:underline inline-flex items-center gap-1 font-bold"><ExternalLink className="h-3 w-3" /> {del.submission_url}</a>
                         {del.notes && <p className="text-xs text-slate-600">{del.notes}</p>}
@@ -2826,7 +2826,7 @@ function InternDashboard() {
           <div className="space-y-6">
             <div className="rounded-3xl border border-emerald-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-emerald-950/5 backdrop-blur-xl">
               <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
-                <Sparkles className="h-5 w-5 text-amber-500" /> Pre-Employment Offer (PPO) &amp; Automated Certificates
+                <Sparkles className="h-5 w-5 text-emerald-500" /> Pre-Employment Offer (PPO) &amp; Automated Certificates
               </h2>
               <p className="text-xs text-slate-600 font-medium mb-6">Track your PPO conversion metrics and download official verifiable internship certificates upon offboarding.</p>
 
@@ -2840,7 +2840,7 @@ function InternDashboard() {
                     </span>
                   </div>
                   <div className="h-3 bg-emerald-100 rounded-full overflow-hidden border border-emerald-200">
-                    <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full" style={{ width: `${Math.min(100, Math.round(progress * 0.8 + Math.min(20, dayStreak * 2)))}%` }} />
+                    <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-500 rounded-full" style={{ width: `${Math.min(100, Math.round(progress * 0.8 + Math.min(20, dayStreak * 2)))}%` }} />
                   </div>
                   <div className="text-xs text-slate-800 font-semibold space-y-1.5">
                     <div>{progress >= 85 ? "✓" : "○"} Task Credits Progress ({progress}%)</div>
@@ -2867,7 +2867,7 @@ function InternDashboard() {
                             <Unlock className="h-3 w-3" /> Unlocked for Download
                           </span>
                         ) : (
-                          <span className="text-[10px] font-black text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
+                          <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
                             <Lock className="h-3 w-3" /> Unlocks 1 Day Before Completion
                           </span>
                         )}
@@ -2882,9 +2882,9 @@ function InternDashboard() {
                           <div key={idx} className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-emerald-200/80 text-xs shadow-xs hover:border-emerald-300 transition-colors">
                             <div className="flex items-center gap-2.5">
                               {!isCredUnlocked ? (
-                                <div className="h-8 w-8 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0 relative">
-                                  <Lock className="h-4 w-4 text-amber-600 animate-bounce" />
-                                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-amber-500 rounded-full animate-ping" />
+                                <div className="h-8 w-8 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center shrink-0 relative">
+                                  <Lock className="h-4 w-4 text-emerald-600 animate-bounce" />
+                                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full animate-ping" />
                                 </div>
                               ) : (
                                 <div className="h-8 w-8 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center shrink-0">
@@ -2948,9 +2948,9 @@ function InternDashboard() {
                                 size="sm" 
                                 variant="outline" 
                                 disabled
-                                className="h-8 text-xs text-amber-900 border-amber-300 bg-amber-100 cursor-not-allowed font-bold opacity-80"
+                                className="h-8 text-xs text-emerald-900 border-emerald-300 bg-emerald-100 cursor-not-allowed font-bold opacity-80"
                               >
-                                <Lock className="h-3.5 w-3.5 mr-1 text-amber-600" /> Locked
+                                <Lock className="h-3.5 w-3.5 mr-1 text-emerald-600" /> Locked
                               </Button>
                             )}
                           </div>
@@ -2958,29 +2958,29 @@ function InternDashboard() {
                       </div>
 
                       {/* Mandatory Final Certification Exam & Fee Guidelines Notice */}
-                      <div className="p-4 rounded-2xl border border-amber-300 bg-amber-50/70 text-xs text-slate-800 space-y-2">
-                        <div className="font-extrabold text-amber-900 flex items-center gap-1.5 text-xs">
-                          <Sparkles className="h-4 w-4 text-amber-600" /> Mandatory Final Certification Exam &amp; Credential Guidelines
+                      <div className="p-4 rounded-2xl border border-emerald-300 bg-emerald-50/70 text-xs text-slate-800 space-y-2">
+                        <div className="font-extrabold text-emerald-900 flex items-center gap-1.5 text-xs">
+                          <Sparkles className="h-4 w-4 text-emerald-600" /> Mandatory Final Certification Exam &amp; Credential Guidelines
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[11px] text-slate-700 font-medium pt-1">
                           <div className="flex items-start gap-1.5">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
                             <span><strong>Exam Link:</strong> Shared by your Administrator upon completing your final module project.</span>
                           </div>
                           <div className="flex items-start gap-1.5">
-                            <CreditCard className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+                            <CreditCard className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
                             <span>
                               <strong>Exam Fee:</strong> <strong>{profile?.is_fee_exempted ? "FEE exemption provided by VYNTYRA" : `₹${profile?.exam_fee_amount} (Inclusive of all GST)`}</strong>
                               {!profile?.is_fee_exempted && " — Mandatory skilling & credential verification fee."}
                             </span>
                           </div>
                           <div className="flex items-start gap-1.5">
-                            <RefreshCw className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+                            <RefreshCw className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
                             <span><strong>Attempts Allowed:</strong> Maximum <strong>3 attempts</strong> permitted to achieve passing grade (70%).</span>
                           </div>
                           <div className="flex items-start gap-1.5">
-                            <Clock className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+                            <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
                             <span><strong>Unlock Date:</strong> Credentials unlock automatically <strong>1 day prior</strong> ({unlockDateObj.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}) to completion.</span>
                           </div>
                         </div>
@@ -3030,7 +3030,7 @@ function InternDashboard() {
                             <FeeCountdownTimer deadline={profile?.fee_payment_deadline} />
                           </div>
 
-                          <div className="p-3.5 bg-amber-100/70 border border-amber-300 rounded-2xl text-xs text-amber-900 font-semibold leading-relaxed">
+                          <div className="p-3.5 bg-emerald-100/70 border border-emerald-300 rounded-2xl text-xs text-emerald-900 font-semibold leading-relaxed">
                             <strong>Note / Information:</strong> Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
                           </div>
                         </div>
@@ -3058,7 +3058,7 @@ function InternDashboard() {
                         <h3 className="font-extrabold text-sm text-slate-900">{task.title}</h3>
                         {task.description && <p className="text-xs text-slate-600 mt-1 line-clamp-2">{task.description}</p>}
                       </div>
-                      <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-black rounded-xl shadow-md cursor-pointer" onClick={async () => {
+                      <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-600 hover:to-emerald-600 text-white font-black rounded-xl shadow-md cursor-pointer" onClick={async () => {
                         try {
                           await doClaimPoolTask({ data: { id: task.id } });
                           toast.success("Task claimed!");
@@ -3100,27 +3100,27 @@ function InternDashboard() {
 
               {/* Official Mentor Banner */}
               {mentor && (
-                <div className="p-5 bg-gradient-to-r from-[#FFFDF9] via-[#FAF5EC] to-[#FFFDF9] border-b border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs shadow-inner">
+                <div className="p-5 bg-gradient-to-r from-slate-50 via-slate-50 to-slate-50 border-b border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs shadow-inner">
                   <div className="flex items-center gap-3.5">
-                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-teal-500 via-emerald-500 to-teal-600 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-md shadow-emerald-500/20 border border-amber-400/50">
+                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-500 to-emerald-600 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-md shadow-emerald-500/20 border border-emerald-400/50">
                       {mentor.full_name?.slice(0, 2).toUpperCase() || "VM"}
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-black text-slate-950 text-base">{mentor.full_name}</span>
-                        <span className="text-[10px] uppercase font-black tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100/90 border border-amber-300 text-amber-950 shadow-xs">
+                        <span className="text-[10px] uppercase font-black tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-100/90 border border-emerald-300 text-emerald-950 shadow-xs">
                           {mentor.is_lead ? "Official Lead Mentor" : "Assigned Mentor"}
                         </span>
                       </div>
                       <div className="text-slate-700 text-xs mt-1 flex items-center gap-3 flex-wrap font-medium">
                         <span className="font-extrabold text-emerald-700">{mentor.position || mentor.department || "Lead Technical Director"}</span>
-                        <span className="text-amber-300">•</span>
-                        <a href={`mailto:${mentor.email}`} className="text-blue-700 hover:text-blue-900 font-bold underline decoration-blue-300 flex items-center gap-1">
-                          <Mail className="h-3.5 w-3.5 text-blue-600" /> {mentor.email}
+                        <span className="text-emerald-300">•</span>
+                        <a href={`mailto:${mentor.email}`} className="text-emerald-700 hover:text-emerald-900 font-bold underline decoration-blue-300 flex items-center gap-1">
+                          <Mail className="h-3.5 w-3.5 text-emerald-600" /> {mentor.email}
                         </a>
                         {mentor.phone_number && (
                           <>
-                            <span className="text-amber-300">•</span>
+                            <span className="text-emerald-300">•</span>
                             <a href={`tel:${mentor.phone_number}`} className="text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1">
                               <Phone className="h-3.5 w-3.5 text-emerald-600" /> {mentor.phone_number}
                             </a>
@@ -3155,7 +3155,7 @@ function InternDashboard() {
                     type="button"
                     onClick={() => setTaskFilterTab("all")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                      taskFilterTab === "all" ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/20" : "bg-white border border-emerald-200 text-slate-700 hover:bg-emerald-100/60"
+                      taskFilterTab === "all" ? "bg-gradient-to-r from-emerald-500 to-emerald-500 text-white shadow-md shadow-emerald-500/20" : "bg-white border border-emerald-200 text-slate-700 hover:bg-emerald-100/60"
                     }`}
                   >
                     All Tasks ({myTasks.length})
@@ -3164,7 +3164,7 @@ function InternDashboard() {
                     type="button"
                     onClick={() => setTaskFilterTab("in_progress")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                      taskFilterTab === "in_progress" ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/20" : "bg-white border border-emerald-200 text-slate-700 hover:bg-emerald-100/60"
+                      taskFilterTab === "in_progress" ? "bg-gradient-to-r from-emerald-500 to-emerald-500 text-white shadow-md shadow-emerald-500/20" : "bg-white border border-emerald-200 text-slate-700 hover:bg-emerald-100/60"
                     }`}
                   >
                     In Progress ({inProgressTasks.length})
@@ -3173,7 +3173,7 @@ function InternDashboard() {
                     type="button"
                     onClick={() => setTaskFilterTab("submitted")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                      taskFilterTab === "submitted" ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/20" : "bg-white border border-emerald-200 text-slate-700 hover:bg-emerald-100/60"
+                      taskFilterTab === "submitted" ? "bg-gradient-to-r from-emerald-500 to-emerald-500 text-white shadow-md shadow-emerald-500/20" : "bg-white border border-emerald-200 text-slate-700 hover:bg-emerald-100/60"
                     }`}
                   >
                     Submitted / Under Review ({submittedTasks.length})
@@ -3182,7 +3182,7 @@ function InternDashboard() {
                     type="button"
                     onClick={() => setTaskFilterTab("completed")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                      taskFilterTab === "completed" ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/20" : "bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-100/60"
+                      taskFilterTab === "completed" ? "bg-gradient-to-r from-emerald-500 to-emerald-500 text-white shadow-md shadow-emerald-500/20" : "bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-100/60"
                     }`}
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -3229,7 +3229,7 @@ function InternDashboard() {
                               {task.priority && (
                                 <span className={`text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold ${
                                   task.priority === "high" ? "bg-rose-100 text-rose-800 border border-rose-300" :
-                                  task.priority === "medium" ? "bg-amber-100 text-amber-900 border border-amber-300" :
+                                  task.priority === "medium" ? "bg-emerald-100 text-emerald-900 border border-emerald-300" :
                                   "bg-slate-100 text-slate-800 border border-slate-300"
                                 }`}>
                                   {task.priority} Priority
@@ -3237,7 +3237,7 @@ function InternDashboard() {
                               )}
                               
                               {/* Level Badge */}
-                              <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-indigo-100 text-indigo-900 border border-indigo-300">
+                              <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300">
                                 {task.level || "Beginner"}
                               </span>
 
@@ -3248,8 +3248,8 @@ function InternDashboard() {
 
                               {/* Collaborative Team Badge */}
                               {(task.team_name || task.team_id || task.assignment_mode === "team") && (
-                                <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-purple-100 text-purple-900 border border-purple-300 flex items-center gap-1">
-                                  <Users className="h-3 w-3 text-purple-600" /> {task.team_name || `Collaborative Team (${task.team_size || 2})`}
+                                <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center gap-1">
+                                  <Users className="h-3 w-3 text-emerald-600" /> {task.team_name || `Collaborative Team (${task.team_size || 2})`}
                                 </span>
                               )}
                             </div>
@@ -3263,18 +3263,18 @@ function InternDashboard() {
                                   href={task.task_meet_link} 
                                   target="_blank" 
                                   rel="noreferrer" 
-                                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer"
+                                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-600 hover:to-emerald-600 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer"
                                 >
                                   <Video className="h-3.5 w-3.5" /> 📹 Join Task Meet
                                 </a>
                               )}
                               {(task.task_file_url || task.project_requirements) && (
-                                <a href={task.task_file_url || task.project_requirements} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer">
+                                <a href={task.task_file_url || task.project_requirements} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-600 hover:to-emerald-600 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer">
                                   <FolderOpen className="h-3.5 w-3.5" /> Project Files
                                 </a>
                               )}
                               {task.task_doc_url && (
-                                <a href={task.task_doc_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer">
+                                <a href={task.task_doc_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-500 hover:to-emerald-500 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer">
                                   <BookOpen className="h-3.5 w-3.5" /> Handbook Guide
                                 </a>
                               )}
@@ -3285,7 +3285,7 @@ function InternDashboard() {
                               )}
                               {pptTemplate && (
                                 <a href={pptTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white border border-emerald-200 text-slate-800 hover:bg-emerald-50 text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer">
-                                  <Play className="h-3.5 w-3.5 text-amber-500" /> PPT Template
+                                  <Play className="h-3.5 w-3.5 text-emerald-500" /> PPT Template
                                 </a>
                               )}
                             </div>
@@ -3303,11 +3303,11 @@ function InternDashboard() {
                                   ? "bg-emerald-50 border-emerald-300 text-emerald-950 font-medium" 
                                   : task.status === "blocked" || task.status === "rejected"
                                   ? "bg-rose-950/40 border-rose-500/40 text-rose-200"
-                                  : "bg-indigo-950/40 border-indigo-500/40 text-indigo-200"
+                                  : "bg-emerald-950/40 border-emerald-500/40 text-emerald-200"
                               }`}>
                                 <div className="flex items-center justify-between font-bold">
                                   <span className="flex items-center gap-1.5">
-                                    {task.status === "completed" ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <Sparkles className="h-4 w-4 text-indigo-400" />}
+                                    {task.status === "completed" ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <Sparkles className="h-4 w-4 text-emerald-400" />}
                                     Mentor Review &amp; Feedback
                                   </span>
                                   <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-black/40 border border-white/10">
@@ -3326,7 +3326,7 @@ function InternDashboard() {
                                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Accepted on {new Date(task.accepted_at).toLocaleDateString()}
                               </div>
                             ) : (
-                              <Button size="sm" className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/60 rounded-xl cursor-pointer" onClick={async () => {
+                              <Button size="sm" className="bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-500 hover:to-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/60 rounded-xl cursor-pointer" onClick={async () => {
                                 try {
                                   await doAcceptTask({ data: { id: task.id } });
                                   toast.success("Task accepted!");
@@ -3342,7 +3342,7 @@ function InternDashboard() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 text-xs gap-1 border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-lg cursor-pointer"
+                                className="h-8 text-xs gap-1 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-lg cursor-pointer"
                                 onClick={() => {
                                   setDoubtTaskId(task.id);
                                   setDoubtTaskTitle(task.title);
@@ -3353,14 +3353,14 @@ function InternDashboard() {
                                   setDoubtModalOpen(true);
                                 }}
                               >
-                                <HelpCircle className="h-3.5 w-3.5 text-amber-500" /> Request Doubt Session
+                                <HelpCircle className="h-3.5 w-3.5 text-emerald-500" /> Request Doubt Session
                               </Button>
 
                               {/* Request Resources */}
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 text-xs gap-1 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg cursor-pointer"
+                                className="h-8 text-xs gap-1 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-lg cursor-pointer"
                                 onClick={() => {
                                   setResourceTaskId(task.id);
                                   setResourceTaskTitle(task.title);
@@ -3370,7 +3370,7 @@ function InternDashboard() {
                                   setResourceModalOpen(true);
                                 }}
                               >
-                                <FolderOpen className="h-3.5 w-3.5 text-indigo-500" /> Request Resources
+                                <FolderOpen className="h-3.5 w-3.5 text-emerald-500" /> Request Resources
                               </Button>
 
                               {/* Contact Mentor */}
@@ -3394,7 +3394,7 @@ function InternDashboard() {
                               </Button>
 
                               <Button size="sm" variant="outline" className="h-8 text-xs border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-lg cursor-pointer" onClick={() => setSelectedTaskWorkspace(task)}>
-                                <Layers className="h-3.5 w-3.5 mr-1 text-blue-500" /> Open Workspace
+                                <Layers className="h-3.5 w-3.5 mr-1 text-emerald-500" /> Open Workspace
                               </Button>
                             </div>
                           </div>
@@ -3402,21 +3402,21 @@ function InternDashboard() {
 
                         {/* Submission Link & Deadline Extension request section */}
                         {isFeePaymentPending ? (
-                          <div className="mt-2 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm">
+                          <div className="mt-2 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm">
                             <div className="flex-1 space-y-1">
-                              <div className="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
-                                <Lock className="h-4 w-4 text-amber-600 shrink-0" /> Task Submission Locked — Exam Fee Payment Required
+                              <div className="flex items-center gap-1.5 font-bold text-emerald-900 text-xs">
+                                <Lock className="h-4 w-4 text-emerald-600 shrink-0" /> Task Submission Locked — Exam Fee Payment Required
                               </div>
-                              <p className="text-[11px] text-amber-800 leading-relaxed font-medium">
+                              <p className="text-[11px] text-emerald-800 leading-relaxed font-medium">
                                 Please pay the mandatory exam fee of <strong>₹{profile?.exam_fee_amount || 199}</strong> to enable task deliverable submissions and activate your verified certificate upon completion.
                               </p>
-                              <p className="text-[10px] text-amber-700 italic">
+                              <p className="text-[10px] text-emerald-700 italic">
                                 Note: Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
                               </p>
                             </div>
                             <Button 
                               size="sm" 
-                              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-4 shrink-0 rounded-lg cursor-pointer"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-4 shrink-0 rounded-lg cursor-pointer"
                               onClick={() => setShowPaymentModal(true)}
                             >
                               Pay ₹{profile?.exam_fee_amount || 199} to Unlock
@@ -3437,14 +3437,14 @@ function InternDashboard() {
                                       placeholder="https://github.com/your-username/project or drive link"
                                       value={submissionUrl}
                                       onChange={(e) => setSubmissionUrl(e.target.value)}
-                                      className="flex-1 rounded-lg border border-slate-300 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                      className="flex-1 rounded-lg border border-slate-300 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                                     />
                                     <input 
                                       type="text"
                                       placeholder="Optional submission notes / version..."
                                       value={submissionNotes}
                                       onChange={(e) => setSubmissionNotes(e.target.value)}
-                                      className="flex-1 sm:max-w-xs rounded-lg border border-slate-300 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                      className="flex-1 sm:max-w-xs rounded-lg border border-slate-300 p-2.5 text-xs bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                                     />
                                     <div className="flex items-center gap-2">
                                       <Button 
@@ -3510,7 +3510,7 @@ function InternDashboard() {
                                         href={task.deliverable_url} 
                                         target="_blank" 
                                         rel="noreferrer" 
-                                        className="text-indigo-400 hover:underline max-w-[220px] sm:max-w-md truncate font-mono text-xs"
+                                        className="text-emerald-400 hover:underline max-w-[220px] sm:max-w-md truncate font-mono text-xs"
                                       >
                                         {task.deliverable_url}
                                       </a>
@@ -3537,8 +3537,8 @@ function InternDashboard() {
                             {/* Deadline Extension requested state */}
                             <div className="shrink-0 flex items-center gap-2">
                               {task.extension_status === "requested" ? (
-                                <div className="text-[10px] font-bold text-amber-300 bg-amber-950/80 border border-amber-500/40 px-3 py-1.5 rounded-full flex items-center gap-1">
-                                  <Clock className="h-3.5 w-3.5 text-amber-400" /> Extension Pending Approve
+                                <div className="text-[10px] font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-3 py-1.5 rounded-full flex items-center gap-1">
+                                  <Clock className="h-3.5 w-3.5 text-emerald-400" /> Extension Pending Approve
                                 </div>
                               ) : task.extension_status === "approved" ? (
                                 <div className="text-[10px] font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-3 py-1.5 rounded-full flex items-center gap-1">
@@ -3670,7 +3670,7 @@ function InternDashboard() {
                 rows={3}
               />
             </div>
-            <Button className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer" onClick={async () => {
+            <Button className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer" onClick={async () => {
               if (!newNote.trim()) return;
               try {
                 await doCreateNote({ data: { content: newNote } });
@@ -3719,7 +3719,7 @@ function InternDashboard() {
               onChange={(e) => setFeedback(e.target.value)}
               rows={5}
             />
-            <Button className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer" onClick={async () => {
+            <Button className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer" onClick={async () => {
               if (!feedback.trim()) return;
               try {
                 await doCreateFeedback({ data: { content: feedback } });
@@ -3798,7 +3798,7 @@ function InternDashboard() {
                   <Button 
                     type="submit"
                     disabled={isSubmittingLeave}
-                    className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer"
+                    className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer"
                   >
                     {isSubmittingLeave ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Submit Request
@@ -3826,7 +3826,7 @@ function InternDashboard() {
                             <span className={`text-[9px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-full border ${
                               l.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
                               l.status === 'rejected' ? 'bg-rose-100 text-rose-800 border-rose-300' :
-                              'bg-amber-100 text-amber-800 border-amber-300'
+                              'bg-emerald-100 text-emerald-800 border-emerald-300'
                             }`}>
                               {l.status}
                             </span>
@@ -3913,7 +3913,7 @@ function InternDashboard() {
                   <Button 
                     type="submit"
                     disabled={isSubmittingSupport}
-                    className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer"
+                    className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer"
                   >
                     {isSubmittingSupport ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Raise Ticket
@@ -3943,7 +3943,7 @@ function InternDashboard() {
                                 <span className={`text-[9px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-full border ${
                                   q.status === 'resolved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
                                   q.status === 'assigned' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
-                                  'bg-amber-100 text-amber-800 border-amber-300'
+                                  'bg-emerald-100 text-emerald-800 border-emerald-300'
                                 }`}>
                                   {q.status.replace("_", " ")}
                                 </span>
@@ -3954,7 +3954,7 @@ function InternDashboard() {
                           </div>
 
                           {/* Resolution / Assigee progress details */}
-                          <div className="bg-[#131B2E]/90 border border-slate-800 p-3.5 rounded-2xl flex flex-col gap-2 text-xs">
+                          <div className="bg-white/90 border border-slate-800 p-3.5 rounded-2xl flex flex-col gap-2 text-xs">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-400">
                               <div><strong className="text-slate-200">Assigned Resolver:</strong> {q.assigned_employee?.full_name || "Pending Super Admin assignment..."}</div>
                               <div><strong className="text-slate-200">Intern Mentor:</strong> {q.mentor?.full_name || "Official Mentor"}</div>
@@ -3969,7 +3969,7 @@ function InternDashboard() {
 
                           {/* Scheduled Meeting sync inside Support Query tab */}
                           {q.meeting_status === "requested" && (
-                            <div className="bg-amber-950/40 border border-amber-500/40 text-amber-300 rounded-2xl p-3.5 text-xs font-semibold flex items-center justify-between">
+                            <div className="bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 rounded-2xl p-3.5 text-xs font-semibold flex items-center justify-between">
                               <span>Meeting schedule requested by Employee/Mentor. Awaiting Super Admin/Admin permission approval.</span>
                             </div>
                           )}
@@ -4113,19 +4113,19 @@ function InternDashboard() {
         </div>
 
         {isFeePaymentPending ? (
-          <div className="p-4 bg-amber-950/30 border border-amber-500/40 rounded-2xl space-y-2 text-xs">
-            <div className="flex items-center gap-2 font-bold text-amber-300">
-              <Lock className="h-4 w-4 text-amber-400 shrink-0" /> Deliverable Submission Locked — Exam Fee Payment Required
+          <div className="p-4 bg-emerald-950/30 border border-emerald-500/40 rounded-2xl space-y-2 text-xs">
+            <div className="flex items-center gap-2 font-bold text-emerald-300">
+              <Lock className="h-4 w-4 text-emerald-400 shrink-0" /> Deliverable Submission Locked — Exam Fee Payment Required
             </div>
-            <p className="text-amber-200 leading-relaxed font-medium">
+            <p className="text-emerald-200 leading-relaxed font-medium">
               Please pay the exam fee of <strong>₹{profile?.exam_fee_amount || 199}</strong> to enable task deliverable submissions and receive your certificate.
             </p>
-            <p className="text-[10px] text-amber-400/80 italic">
+            <p className="text-[10px] text-emerald-400/80 italic">
               Note: Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
             </p>
             <Button 
               size="sm" 
-              className="bg-amber-600 hover:bg-amber-700 text-white font-bold h-9 text-xs px-4 rounded-xl cursor-pointer" 
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 text-xs px-4 rounded-xl cursor-pointer" 
               onClick={() => {
                 setSelectedTaskWorkspace(null);
                 setShowPaymentModal(true);
@@ -4155,7 +4155,7 @@ function InternDashboard() {
 
       <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-800/80">
         <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white cursor-pointer" onClick={() => setSelectedTaskWorkspace(null)}>Cancel</Button>
-        <Button size="sm" className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-950/60 cursor-pointer" onClick={async () => {
+        <Button size="sm" className="bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-500 hover:to-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-950/60 cursor-pointer" onClick={async () => {
           try {
             let finalUrl = (selectedTaskWorkspace.deliverable_url || "").trim();
             if (finalUrl && !/^https?:\/\//i.test(finalUrl) && !finalUrl.startsWith("data:")) {
@@ -4190,7 +4190,7 @@ function InternDashboard() {
       {/* ── Deadline Extension Request Modal ── */}
       {showExtensionModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#0E131F] rounded-3xl max-w-md w-full p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-800/80 text-white">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-800/80 text-white">
             <div className="flex items-start justify-between border-b border-slate-800/80 pb-3.5">
               <div>
                 <h3 className="font-bold text-sm text-white">Request Deadline Extension</h3>
@@ -4233,7 +4233,7 @@ function InternDashboard() {
                   required
                   value={extensionDate}
                   onChange={(e) => setExtensionDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs text-slate-200 outline-none focus:border-indigo-500"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs text-slate-200 outline-none focus:border-emerald-500"
                 />
               </div>
               <div className="space-y-1.5">
@@ -4244,7 +4244,7 @@ function InternDashboard() {
                   placeholder="Explain why you need more time, current progress status, and estimated date of completion..."
                   value={extensionReason}
                   onChange={(e) => setExtensionReason(e.target.value)}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-indigo-500"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-emerald-500"
                 />
               </div>
               <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-800/80">
@@ -4252,7 +4252,7 @@ function InternDashboard() {
                 <Button 
                   type="submit"
                   disabled={isSubmittingExtension}
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-950/60 cursor-pointer"
+                  className="bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-500 hover:to-emerald-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/60 cursor-pointer"
                 >
                   {isSubmittingExtension ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
                   Submit Request
@@ -4522,7 +4522,7 @@ function InternDashboard() {
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3.5">
-                          <div className="h-12 w-14 rounded-xl bg-gradient-to-br from-rose-700/80 via-red-700/80 to-indigo-950 text-white flex flex-col items-center justify-center font-black tracking-tight shadow-sm shrink-0">
+                          <div className="h-12 w-14 rounded-xl bg-gradient-to-br from-rose-700/80 via-red-700/80 to-emerald-950 text-white flex flex-col items-center justify-center font-black tracking-tight shadow-sm shrink-0">
                             <span className="text-[9px] uppercase font-bold tracking-widest text-rose-200">Bank</span>
                             <span className="text-xs font-black tracking-tighter">KOTAK</span>
                           </div>
@@ -4563,7 +4563,7 @@ function InternDashboard() {
                         <div>
                           <div className="flex items-center gap-2">
                             <h5 className="font-bold text-slate-600 dark:text-slate-400 text-sm">RazorPay Corporate Gateway</h5>
-                            <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full uppercase">Enabled Shortly</span>
+                            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full uppercase">Enabled Shortly</span>
                           </div>
                           <p className="text-[11px] text-slate-400">Secondary gateway backup</p>
                         </div>
@@ -4730,8 +4730,8 @@ function InternDashboard() {
                     }}
                     className={`w-full text-base font-extrabold h-14 text-white rounded-2xl shadow-lg gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer ${
                       paymentGatewaySelected === "kotak"
-                        ? "bg-gradient-to-r from-rose-600 via-red-600 to-indigo-700 hover:from-rose-700 hover:to-indigo-800 shadow-rose-600/25"
-                        : "bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-600/25"
+                        ? "bg-gradient-to-r from-rose-600 via-red-600 to-emerald-700 hover:from-rose-700 hover:to-emerald-800 shadow-rose-600/25"
+                        : "bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-700 hover:to-emerald-700 shadow-emerald-600/25"
                     }`}
                   >
                     <Lock className="h-4 w-4" /> Pay ₹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))} Securely with {paymentGatewaySelected === "kotak" ? "Kotak Mahindra Bank" : paymentGatewaySelected === "payu" ? "PayU Enterprise" : "Secure Gateway"}
@@ -4997,7 +4997,7 @@ function InternDashboard() {
         <div className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4" style={{ pointerEvents: 'all' }}>
           <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-slate-100 space-y-6 animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
             <div className="text-center space-y-2">
-              <div className="inline-flex p-3 rounded-full bg-amber-50 text-amber-600 mb-2">
+              <div className="inline-flex p-3 rounded-full bg-emerald-50 text-emerald-600 mb-2">
                 <ShieldCheck className="h-8 w-8" />
               </div>
               <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
@@ -5086,7 +5086,7 @@ function InternDashboard() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
             <div className="flex items-start justify-between border-b pb-3">
-              <div className="flex items-center gap-2 text-indigo-600">
+              <div className="flex items-center gap-2 text-emerald-600">
                 <Video className="h-5 w-5 animate-bounce" />
                 <h2 className="text-base font-bold">Meeting Reminder</h2>
               </div>
@@ -5115,7 +5115,7 @@ function InternDashboard() {
                 </div>
                 <div>
                   <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Countdown</div>
-                  <div className="text-xs font-bold text-indigo-600">
+                  <div className="text-xs font-bold text-emerald-600">
                     <MeetingCountdown targetDate={meetingAlert.scheduled_at} />
                   </div>
                 </div>
@@ -5134,7 +5134,7 @@ function InternDashboard() {
                     <Button 
                       size="sm"
                       disabled={!state.enabled}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
                       onClick={() => {
                         const countKey = `meeting-join-count-${meetingAlert.id}`;
                         const currentCount = parseInt(localStorage.getItem(countKey) || "0", 10);
@@ -5156,15 +5156,15 @@ function InternDashboard() {
 
       {/* ── Referral Announcement Floating Popup ── */}
       {showReferralPopup && (
-        <div className="fixed bottom-4 right-4 z-[90] max-w-sm bg-white rounded-2xl border border-indigo-100 p-5 shadow-2xl animate-in slide-in-from-bottom-5 fade-in duration-500 hover:shadow-indigo-500/5">
+        <div className="fixed bottom-4 right-4 z-[90] max-w-sm bg-white rounded-2xl border border-emerald-100 p-5 shadow-2xl animate-in slide-in-from-bottom-5 fade-in duration-500 hover:shadow-emerald-500/5">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
                   New in Portal: REFER & EARN
                 </span>
               </div>
@@ -5178,7 +5178,7 @@ function InternDashboard() {
               <div className="pt-2 flex items-center gap-3">
                 <Button 
                   size="sm"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] h-8 px-4 rounded-xl flex items-center gap-1.5 transition-all active:scale-[0.98]"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] h-8 px-4 rounded-xl flex items-center gap-1.5 transition-all active:scale-[0.98]"
                   onClick={() => {
                     setActiveTab("refer");
                     setShowReferralPopup(false);
@@ -5249,7 +5249,7 @@ function InternDashboard() {
               <FeeCountdownTimer deadline={profile?.fee_payment_deadline} />
             </div>
 
-            <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-2xl text-[11px] text-amber-900 leading-relaxed font-semibold">
+            <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-2xl text-[11px] text-emerald-900 leading-relaxed font-semibold">
               <strong>Dashboard Restriction:</strong> Deliverable submissions and final verified certification remain locked until payment is verified.
             </div>
 
@@ -5382,7 +5382,7 @@ function InternDashboard() {
               <Button type="button" variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 cursor-pointer font-bold" onClick={() => setDoubtModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmittingDoubt} size="sm" className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black gap-1.5 rounded-xl shadow-md cursor-pointer">
+              <Button type="submit" disabled={isSubmittingDoubt} size="sm" className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black gap-1.5 rounded-xl shadow-md cursor-pointer">
                 {isSubmittingDoubt ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                 Dispatch Doubt Request
               </Button>
@@ -5482,7 +5482,7 @@ function InternDashboard() {
               <Button type="button" variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 cursor-pointer font-bold" onClick={() => setResourceModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmittingResource} size="sm" className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-black gap-1.5 rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer">
+              <Button type="submit" disabled={isSubmittingResource} size="sm" className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black gap-1.5 rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer">
                 {isSubmittingResource ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                 Submit Resource Request
               </Button>
