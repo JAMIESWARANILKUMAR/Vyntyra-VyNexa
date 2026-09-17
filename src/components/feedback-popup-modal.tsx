@@ -159,7 +159,7 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
   };
 
   const StarRating = ({ value, onChange, label, sublabel }: { value: number, onChange: (val: number) => void, label: string, sublabel?: string }) => (
-    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:border-indigo-100 hover:shadow-[0_4px_20px_rgba(79,70,229,0.06)] transition-all duration-300">
+    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:border-emerald-200/60 hover:bg-white/80 transition-all duration-300">
       <span className="text-[15px] font-bold text-slate-800">{label} <span className="text-rose-500">*</span></span>
       {sublabel && <span className="text-[11px] text-slate-500 font-medium mb-2">{sublabel}</span>}
       <div className="flex items-center gap-2 cursor-pointer">
@@ -176,13 +176,13 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
 
   if (!isFormExpanded) {
     return (
-      <div className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
-          className="bg-white rounded-[2rem] max-w-md w-full p-10 shadow-2xl border border-slate-200 text-center relative"
+          className="bg-white/90 backdrop-blur-2xl rounded-[2rem] max-w-md w-full p-10 shadow-2xl border border-emerald-200/80 text-center relative"
         >
-          <button onClick={() => setIsDismissed(true)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"><X className="h-5 w-5"/></button>
+          <button onClick={() => setIsDismissed(true)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100/50 rounded-full transition-colors"><X className="h-5 w-5"/></button>
           <motion.div 
             animate={{ y: [0, -10, 0] }}
             transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
@@ -223,12 +223,12 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-slate-50 rounded-[2.5rem] max-w-4xl w-full max-h-[95vh] flex flex-col shadow-2xl overflow-hidden text-slate-900 relative">
+    <div className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white/90 backdrop-blur-2xl border border-emerald-200/80 rounded-[2.5rem] max-w-4xl w-full max-h-[95vh] flex flex-col shadow-2xl overflow-hidden text-slate-900 relative">
         
         {/* Dynamic Header */}
-        <div className="bg-white p-8 shrink-0 relative overflow-hidden border-b border-slate-100 z-10">
-           <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-100">
+        <div className="bg-white/50 backdrop-blur-md p-8 shrink-0 relative overflow-hidden border-b border-emerald-200/50 z-10">
+           <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-200/50">
              <motion.div 
                className="h-full bg-gradient-to-r from-indigo-600 to-purple-600"
                initial={{ width: 0 }}
@@ -238,21 +238,21 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
            </div>
            <div className="flex items-center justify-between relative z-10 pt-2">
              <div className="flex items-center gap-5">
-               <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl text-indigo-600 shadow-sm">
+               <div className="p-4 bg-white/80 border border-emerald-100/50 rounded-2xl text-indigo-600 shadow-sm backdrop-blur-sm">
                  <ClipboardList className="h-8 w-8" />
                </div>
                <div>
                  <h3 className="font-black text-slate-900 text-2xl leading-tight">
                    Master Feedback Form
                  </h3>
-                 <p className="text-sm text-slate-500 mt-1 font-medium">Your honest feedback shapes the future.</p>
+                 <p className="text-sm text-slate-600 mt-1 font-medium">Your honest feedback shapes the future.</p>
                </div>
              </div>
              <div className="flex items-center gap-4">
-               <div className="hidden sm:flex items-center justify-center px-4 py-2 bg-slate-100 text-slate-600 rounded-full font-bold text-sm">
+               <div className="hidden sm:flex items-center justify-center px-4 py-2 bg-white/80 border border-emerald-100/50 text-slate-700 rounded-full font-bold text-sm backdrop-blur-sm">
                   Step {step} of {totalSteps}
                </div>
-               <button onClick={() => setIsDismissed(true)} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"><X className="h-6 w-6"/></button>
+               <button onClick={() => setIsDismissed(true)} className="p-2 text-slate-500 hover:text-slate-800 hover:bg-white/50 rounded-full transition-colors"><X className="h-6 w-6"/></button>
              </div>
            </div>
         </div>
@@ -311,9 +311,9 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <StarRating label="Mentor Accessibility & Responsiveness" sublabel="1 = Never available, 5 = Highly responsive" value={mentorAccessibility} onChange={setMentorAccessibility} />
                     
-                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                       <label className="text-[15px] font-bold text-slate-800">Regular 1-on-1s / Check-ins? <span className="text-rose-500">*</span></label>
-                      <select className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all" value={mentorCheckins} onChange={e => setMentorCheckins(e.target.value)} required>
+                      <select className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-white/40 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 transition-all" value={mentorCheckins} onChange={e => setMentorCheckins(e.target.value)} required>
                         <option value="">Select...</option>
                         <option value="Daily">Daily</option>
                         <option value="Weekly">Weekly</option>
@@ -327,9 +327,9 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
                     <StarRating label="Timely Resolution of Technical Blockers" sublabel="1 = Never, 5 = Always" value={doubtsResolved} onChange={setDoubtsResolved} />
                     <StarRating label="Felt Valued as an Active Contributor" sublabel="1 = Strongly disagree, 5 = Strongly agree" value={leadershipValued} onChange={setLeadershipValued} />
                     
-                    <div className="md:col-span-2 flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="md:col-span-2 flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                       <label className="text-[15px] font-bold text-slate-800">What is one specific thing your mentor/lead could have done differently? <span className="text-rose-500">*</span></label>
-                      <input type="text" className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all" placeholder="Your specific feedback..." value={mentorImprovement} onChange={e => setMentorImprovement(e.target.value)} required />
+                      <input type="text" className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-white/40 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 transition-all" placeholder="Your specific feedback..." value={mentorImprovement} onChange={e => setMentorImprovement(e.target.value)} required />
                     </div>
                   </div>
                 </div>
@@ -344,9 +344,9 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <StarRating label="Clarity of Assigned Tasks & Briefs" sublabel="1 = Very confusing, 5 = Crystal clear" value={tasksClarity} onChange={setTasksClarity} />
                     
-                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                       <label className="text-[15px] font-bold text-slate-800">Did task complexity scale reasonably? <span className="text-rose-500">*</span></label>
-                      <select className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all" value={tasksComplexity} onChange={e => setTasksComplexity(e.target.value)} required>
+                      <select className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-white/40 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 transition-all" value={tasksComplexity} onChange={e => setTasksComplexity(e.target.value)} required>
                         <option value="">Select...</option>
                         <option value="Scaled too fast">Scaled too fast</option>
                         <option value="Just right">Just right</option>
@@ -357,13 +357,13 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
 
                     <StarRating label="Creative Autonomy & Ownership" sublabel="1 = Micromanaged, 5 = High autonomy" value={tasksAutonomy} onChange={setTasksAutonomy} />
                     
-                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                       <label className="text-[15px] font-bold text-slate-800">Which skills did you improve the most? <span className="text-rose-500">*</span></label>
-                      <input type="text" className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all" placeholder="E.g., React, Communication, Git..." value={skillsImproved} onChange={e => setSkillsImproved(e.target.value)} required />
+                      <input type="text" className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-white/40 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 transition-all" placeholder="E.g., React, Communication, Git..." value={skillsImproved} onChange={e => setSkillsImproved(e.target.value)} required />
                     </div>
-                    <div className="md:col-span-2 flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="md:col-span-2 flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                       <label className="text-[15px] font-bold text-slate-800">Which specific project delivered the most real-world learning value? <span className="text-rose-500">*</span></label>
-                      <input type="text" className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all" placeholder="Name of project or task..." value={bestProject} onChange={e => setBestProject(e.target.value)} required />
+                      <input type="text" className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-white/40 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 transition-all" placeholder="Name of project or task..." value={bestProject} onChange={e => setBestProject(e.target.value)} required />
                     </div>
                   </div>
                 </div>
@@ -378,9 +378,9 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <StarRating label="Onboarding & Setup Documentation" sublabel="1 = Incomplete/Outdated, 5 = Clear & comprehensive" value={docsCompleteness} onChange={setDocsCompleteness} />
                     
-                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                       <label className="text-[15px] font-bold text-slate-800">Delays receiving access, APIs, or repo permissions? <span className="text-rose-500">*</span></label>
-                      <select className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all" value={accessDelays} onChange={e => setAccessDelays(e.target.value)} required>
+                      <select className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-white/40 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 transition-all" value={accessDelays} onChange={e => setAccessDelays(e.target.value)} required>
                         <option value="">Select...</option>
                         <option value="No delays">No delays</option>
                         <option value="Minor delay (<1 day)">Minor delay (&lt;1 day)</option>
@@ -388,9 +388,9 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
                       </select>
                     </div>
 
-                    <div className="md:col-span-2 flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="md:col-span-2 flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                       <label className="text-[15px] font-bold text-slate-800">What tools or references were missing that could have boosted productivity? <span className="text-rose-500">*</span></label>
-                      <input type="text" className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all" placeholder="e.g. Figma Pro, better API docs..." value={missingTools} onChange={e => setMissingTools(e.target.value)} required />
+                      <input type="text" className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-white/40 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 transition-all" placeholder="e.g. Figma Pro, better API docs..." value={missingTools} onChange={e => setMissingTools(e.target.value)} required />
                     </div>
                   </div>
                 </div>
@@ -405,9 +405,9 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <StarRating label="Portal Usability & Speed" sublabel="1 = Clunky/Slow, 5 = Seamless & intuitive" value={portalUsability} onChange={setPortalUsability} />
                     
-                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                       <label className="text-[15px] font-bold text-slate-800">Did you encounter downtime, session errors, or bugs? <span className="text-rose-500">*</span></label>
-                      <select className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all" value={portalBugs} onChange={e => setPortalBugs(e.target.value)} required>
+                      <select className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-white/40 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 transition-all" value={portalBugs} onChange={e => setPortalBugs(e.target.value)} required>
                         <option value="">Select...</option>
                         <option value="Frequently">Frequently</option>
                         <option value="Occasionally">Occasionally</option>
@@ -415,9 +415,9 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
                       </select>
                     </div>
 
-                    <div className="md:col-span-2 flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="md:col-span-2 flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                       <label className="text-[15px] font-bold text-slate-800">Which feature/improvement would make the portal significantly better? <span className="text-rose-500">*</span></label>
-                      <input type="text" className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all" placeholder="Your suggestion..." value={portalImprovement} onChange={e => setPortalImprovement(e.target.value)} required />
+                      <input type="text" className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-white/40 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 transition-all" placeholder="Your suggestion..." value={portalImprovement} onChange={e => setPortalImprovement(e.target.value)} required />
                     </div>
                   </div>
                 </div>
@@ -448,9 +448,9 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
                     <StarRating label="Collaboration with Team" sublabel="1 = Disconnected, 5 = Highly collaborative" value={collaboration} onChange={setCollaboration} />
                     <StarRating label="Safe Environment for Questions" sublabel="1 = Discouraging, 5 = Highly encouraging" value={safeEnvironment} onChange={setSafeEnvironment} />
                     
-                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                       <label className="text-[15px] font-bold text-slate-800">How would you describe the overall culture and team spirit in 3 words? <span className="text-rose-500">*</span></label>
-                      <input type="text" className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all" placeholder="e.g. Fast, Collaborative, Fun" value={culture3Words} onChange={e => setCulture3Words(e.target.value)} required />
+                      <input type="text" className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-white/40 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 transition-all" placeholder="e.g. Fast, Collaborative, Fun" value={culture3Words} onChange={e => setCulture3Words(e.target.value)} required />
                     </div>
                   </div>
                 </div>
@@ -471,7 +471,7 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
                           key={num}
                           type="button"
                           onClick={() => setNpsScore(num)}
-                          className={`h-12 w-12 sm:h-14 sm:w-14 rounded-2xl font-black text-lg transition-all border shadow-sm ${npsScore === num ? 'bg-indigo-600 text-white border-indigo-600 scale-110 shadow-indigo-600/30' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-indigo-300'}`}
+                          className={`h-12 w-12 sm:h-14 sm:w-14 rounded-2xl font-black text-lg transition-all border shadow-sm ${npsScore === num ? 'bg-indigo-600 text-white border-indigo-600 scale-110 shadow-indigo-600/30' : 'bg-white/40 border-slate-200 text-slate-600 hover:bg-white/80 hover:border-indigo-300 backdrop-blur-sm'}`}
                         >
                           {num}
                         </button>
@@ -480,9 +480,9 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
                   </div>
 
                   <div className="space-y-6">
-                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                       <label className="text-[15px] font-bold text-slate-800">If offered, would you be interested in returning for an advanced or full-time role? <span className="text-rose-500">*</span></label>
-                      <select className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 transition-all" value={returnInterest} onChange={e => setReturnInterest(e.target.value)} required>
+                      <select className="w-full h-12 mt-2 px-4 text-sm rounded-xl border border-slate-200 bg-white/40 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 transition-all" value={returnInterest} onChange={e => setReturnInterest(e.target.value)} required>
                         <option value="">Select...</option>
                         <option value="Definitely yes">Definitely yes</option>
                         <option value="Maybe">Maybe</option>
@@ -491,14 +491,14 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
                       </select>
                     </div>
 
-                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                       <label className="text-[15px] font-bold text-slate-800">What was the single biggest bottleneck or frustration you faced? <span className="text-rose-500">*</span></label>
-                      <textarea className="w-full h-32 p-4 mt-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 text-sm resize-none transition-all" placeholder="Be honest, we want to improve..." value={biggestBottleneck} onChange={e => setBiggestBottleneck(e.target.value)} required />
+                      <textarea className="w-full h-32 p-4 mt-2 rounded-xl border border-slate-200 bg-white/40 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 text-sm resize-none transition-all" placeholder="Be honest, we want to improve..." value={biggestBottleneck} onChange={e => setBiggestBottleneck(e.target.value)} required />
                     </div>
 
-                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="flex flex-col gap-1.5 p-5 rounded-2xl border border-white/60 bg-white/60 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                       <label className="text-[15px] font-bold text-slate-800">If you were running the internship program next cohort, what is the #1 thing you would change? <span className="text-rose-500">*</span></label>
-                      <textarea className="w-full h-32 p-4 mt-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 text-sm resize-none transition-all" placeholder="Your top idea..." value={programChange} onChange={e => setProgramChange(e.target.value)} required />
+                      <textarea className="w-full h-32 p-4 mt-2 rounded-xl border border-slate-200 bg-white/40 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 text-sm resize-none transition-all" placeholder="Your top idea..." value={programChange} onChange={e => setProgramChange(e.target.value)} required />
                     </div>
                   </div>
                 </div>
@@ -508,7 +508,7 @@ export function FeedbackPopupModal({ profile }: { profile: any }) {
         </div>
 
         {/* Footer Navigation */}
-        <div className="bg-white p-6 sm:px-10 border-t border-slate-100 flex items-center justify-between gap-4 shrink-0 z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+        <div className="bg-white/50 backdrop-blur-md p-6 sm:px-10 border-t border-emerald-200/50 flex items-center justify-between gap-4 shrink-0 z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
           <div className="flex-1">
             {step > 1 ? (
               <Button type="button" variant="outline" onClick={handlePrev} className="h-14 px-6 rounded-2xl font-bold border-slate-200 hover:bg-slate-50 text-slate-600 transition-all">
