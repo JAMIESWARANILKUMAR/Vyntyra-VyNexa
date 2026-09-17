@@ -1,17 +1,21 @@
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
 export function useProctoringEnforcement(onTerminate: () => void) {
   const [strikes, setStrikes] = useState(0);
   const [logs, setLogs] = useState<any[]>([]);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   
   const addStrike = (reason: string) => {
-    const newStrikes = strikes + 1;
-    setStrikes(newStrikes);
-    setLogs(prev => [...prev, { time: new Date().toISOString(), reason }]);
-    toast.error(`Warning: ${reason}. Strike ${newStrikes}/2`);
-    if (newStrikes >= 2) onTerminate();
+    setStrikes(prev => {
+      const newStrikes = prev + 1;
+      setLogs(l => [...l, { time: new Date().toISOString(), reason }]);
+      toast.error(`Warning: ${reason}. Strike ${newStrikes}/2`);
+      if (newStrikes >= 2) {
+        onTerminate();
+      }
+      return newStrikes;
+    });
   };
 
   useEffect(() => {
@@ -25,35 +29,60 @@ export function useProctoringEnforcement(onTerminate: () => void) {
       if (document.hidden) addStrike("Switched Tabs/Lost Focus");
     };
     
+    const handleBlur = () => {
+      addStrike("Window Lost Focus");
+    };
+    
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "F12" || (e.ctrlKey && ["c", "v", "u"].includes(e.key.toLowerCase()))) {
+      const forbiddenKeys = ["F12", "Meta", "OS", "Alt", "AltGraph"];
+      const forbiddenCombos = e.ctrlKey || e.metaKey || e.altKey;
+      if (forbiddenKeys.includes(e.key) || forbiddenCombos) {
         e.preventDefault();
-        addStrike(`Restricted Key: ${e.key}`);
+        e.stopPropagation();
+        addStrike("Restricted Key Combo Detected");
       }
     };
     
-    const handleContextMenu = (e: MouseEvent) => {
+    const preventDefault = (e: Event) => {
       e.preventDefault();
-      addStrike("Right-Click Disabled");
+      addStrike("Clipboard/Menu Action Disabled");
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("contextmenu", handleContextMenu);
+    window.addEventListener("blur", handleBlur);
+    document.addEventListener("keydown", handleKeyDown, { capture: true });
+    document.addEventListener("contextmenu", preventDefault);
+    document.addEventListener("copy", preventDefault);
+    document.addEventListener("cut", preventDefault);
+    document.addEventListener("paste", preventDefault);
     
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("contextmenu", handleContextMenu);
+      window.removeEventListener("blur", handleBlur);
+      document.removeEventListener("keydown", handleKeyDown, { capture: true });
+      document.removeEventListener("contextmenu", preventDefault);
+      document.removeEventListener("copy", preventDefault);
+      document.removeEventListener("cut", preventDefault);
+      document.removeEventListener("paste", preventDefault);
     };
-  }, [strikes, onTerminate]);
+  }, []);
 
-  const requestFullscreen = () => {
-    document.documentElement.requestFullscreen().catch(() => toast.error("Please allow fullscreen mode."));
+  const requestFullscreen = async () => {
+    try {
+      await document.documentElement.requestFullscreen();
+      // Also request camera
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const ms = await navigator.mediaDevices.getUserMedia({ video: true });
+        setStream(ms);
+      }
+    } catch (e) {
+      toast.error("Fullscreen and Camera permissions are required to start the exam.");
+      throw e;
+    }
   };
 
-  return { requestFullscreen, strikes, logs };
+  return { requestFullscreen, strikes, logs, stream };
 }
 
