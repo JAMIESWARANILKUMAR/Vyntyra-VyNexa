@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { getInternTestSessionFn, submitCbtExamFn } from "@/lib/cbt.functions";
 import { useProctoringEnforcement } from "@/hooks/useProctoringEnforcement";
@@ -19,6 +20,7 @@ function CbtExamInterface() {
   const [activeQ, setActiveQ] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
   
+  const navigate = useNavigate();
   const getSessionFn = useServerFn(getInternTestSessionFn);
   const submitFn = useServerFn(submitCbtExamFn);
 
@@ -60,13 +62,13 @@ function CbtExamInterface() {
     localStorage.removeItem(`cbt_autosave_${testId}`); // clear autosave
     if (testId === "demo") {
       toast.success("Practice Demo Completed!");
-      window.location.href = "/intern";
+      navigate({ to: "/intern" });
       return;
     }
     try {
       await submitFn({ data: { testId, answers, proctoringLogs: logs } });
       toast.success(isAuto ? "Test auto-submitted" : "Test submitted successfully");
-      window.location.href = `/cbt/results/${testId}`;
+      navigate({ to: "/cbt/results/$testId", params: { testId } });
     } catch (e) {
       toast.error("Failed to submit");
     }

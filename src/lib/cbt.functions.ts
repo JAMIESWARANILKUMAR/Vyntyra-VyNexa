@@ -232,3 +232,22 @@ export const toggleAdminTestStatusFn = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { success: true };
   });
+
+export const getInternSubmissionResultFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ testId: z.string() }).parse(d))
+  .handler(async ({ data: args, context }) => {
+    const supabase = getAdminClient();
+    const userId = context.user.id;
+    
+    const { data, error } = await supabase.from("cbt_submissions")
+      .select("*, cbt_tests(title, modules, passing_score, time_limit_minutes)")
+      .eq("test_id", args.testId)
+      .eq("intern_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+      
+    if (error) throw new Error(error.message);
+    return data;
+  });
