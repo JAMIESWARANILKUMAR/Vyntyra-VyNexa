@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 export function useProctoringEnforcement(isActive: boolean, onTerminate: () => void) {
   const [strikes, setStrikes] = useState(0);
-  const [logs, setLogs] = useState<any[]>([isActive]);
+  const [logs, setLogs] = useState<any[]>([]);
   const [stream, setStream] = useState<MediaStream | null>(null);
   
   const addStrike = (reason: string) => {
@@ -68,7 +68,7 @@ export function useProctoringEnforcement(isActive: boolean, onTerminate: () => v
       document.removeEventListener("cut", preventDefault);
       document.removeEventListener("paste", preventDefault);
     };
-  }, []);
+  }, [isActive, onTerminate]);
 
   const requestFullscreen = async () => {
     try {
