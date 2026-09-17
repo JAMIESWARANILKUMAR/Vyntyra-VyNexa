@@ -5,7 +5,7 @@ import { getInternTestSessionFn, submitCbtExamFn } from "@/lib/cbt.functions";
 import { useProctoringEnforcement } from "@/hooks/useProctoringEnforcement";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { AlertTriangle, ShieldCheck, VideoOff, CheckCircle2, ChevronRight, ChevronLeft, ShieldAlert, AlertCircle, RefreshCcw } from "lucide-react";
+import { AlertTriangle, ShieldCheck, VideoOff, CheckCircle2, ChevronRight, ChevronLeft, ShieldAlert, AlertCircle, RefreshCcw, MonitorSmartphone } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/cbt/$testId")({
   component: CbtExamInterface,
@@ -14,6 +14,15 @@ export const Route = createFileRoute("/_authenticated/cbt/$testId")({
 function CbtExamInterface() {
   const { testId } = Route.useParams();
   const navigate = useNavigate();
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  useEffect(() => {
+    const checkSize = () => setIsDesktop(window.innerWidth >= 1024);
+    checkSize();
+    window.addEventListener("resize", checkSize);
+    return () => window.removeEventListener("resize", checkSize);
+  }, []);
+
   const [test, setTest] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [answers, setAnswers] = useState<any>({});
@@ -152,6 +161,21 @@ function CbtExamInterface() {
     return () => clearInterval(int);
   }, [activeWarning]);
 
+
+  if (!isDesktop) {
+    return (
+      <div className="h-screen w-full bg-slate-900 flex flex-col items-center justify-center p-8 text-center text-white">
+        <MonitorSmartphone className="h-16 w-16 text-rose-500 mb-6" />
+        <h1 className="text-3xl font-black mb-4">Desktop Required</h1>
+        <p className="text-slate-400 max-w-md mx-auto">
+          The AI CBT Engine and Proctoring environment is strictly restricted to desktop and larger screens (1024px or wider) to ensure test integrity and optimal experience.
+        </p>
+        <Button className="mt-8 bg-indigo-600 hover:bg-indigo-700 font-bold" onClick={() => navigate({ to: "/dashboard" })}>
+          Return to Dashboard
+        </Button>
+      </div>
+    );
+  }
 
   if (!test) return <div className="flex h-screen items-center justify-center text-slate-500 font-sans">Loading Secure Environment...</div>;
 
