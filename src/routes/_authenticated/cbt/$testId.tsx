@@ -5,7 +5,7 @@ import { getInternTestSessionFn, submitCbtExamFn } from "@/lib/cbt.functions";
 import { useProctoringEnforcement } from "@/hooks/useProctoringEnforcement";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Camera, AlertTriangle, ShieldCheck, User, VideoOff, CheckCircle2, Info, ChevronRight, ChevronLeft, Flag } from "lucide-react";
+import { Camera, AlertTriangle, ShieldCheck, User, VideoOff, CheckCircle2, Info, ChevronRight, ChevronLeft, Flag, BrainCircuit } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/cbt/$testId")({
   component: CbtExamInterface,
@@ -105,7 +105,9 @@ function CbtExamInterface() {
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
         <div className="bg-white p-12 rounded-[2rem] shadow-2xl max-w-2xl w-full text-center border border-slate-200/50 relative overflow-hidden z-10">
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
-          <ShieldCheck className="h-24 w-24 text-emerald-500 mx-auto mb-6 drop-shadow-md" />
+          <div className="mx-auto mb-6 bg-emerald-500 p-4 rounded-3xl w-24 h-24 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+            <BrainCircuit className="h-14 w-14 text-white" />
+          </div>
           <h1 className="text-4xl font-black mb-3 text-slate-900 tracking-tight">{test.title}</h1>
           <p className="text-slate-500 mb-8 text-lg font-medium">{test.description}</p>
           
@@ -141,8 +143,11 @@ function CbtExamInterface() {
         
         {/* Header Branding */}
         <div className="p-6 border-b border-slate-800 bg-slate-950 flex items-center justify-between">
-          <div className="font-black text-xl text-white tracking-wider flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-emerald-500" /> CBT ENGINE
+          <div className="font-black text-xl text-white tracking-wider flex items-center gap-3">
+            <div className="bg-emerald-500 p-1.5 rounded-lg">
+              <BrainCircuit className="h-5 w-5 text-slate-950" />
+            </div>
+            <span>Vyntyra<span className="text-emerald-500">CBT</span></span>
           </div>
         </div>
 
@@ -218,6 +223,14 @@ function CbtExamInterface() {
       {/* Right Main Panel (Active Question Area) */}
       <div className="flex-1 flex flex-col bg-slate-50 relative">
         
+        
+        {/* Diagonal Transparent Watermark */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden z-0 opacity-[0.03]">
+          <h1 className="text-[130px] font-black text-slate-900 -rotate-45 whitespace-nowrap select-none">
+            Vyntyra Consultancy Services
+          </h1>
+        </div>
+
         {/* Top Header */}
         <div className="h-24 bg-white border-b border-slate-200 flex items-center justify-between px-10 z-10 shadow-sm">
           <div className="flex items-center gap-4">
@@ -236,7 +249,7 @@ function CbtExamInterface() {
         </div>
 
         {/* Question Content */}
-        <div className="flex-1 overflow-y-auto p-12 pb-36 custom-scrollbar relative">
+        <div className="flex-1 overflow-y-auto p-12 pb-36 custom-scrollbar relative z-10">
           <div className="max-w-4xl mx-auto">
             
             <div className="mb-10">
