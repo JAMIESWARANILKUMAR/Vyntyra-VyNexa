@@ -72,7 +72,7 @@ function CbtExamInterface() {
     }
   };
 
-  const { requestFullscreen, strikes, logs, stream } = useProctoringEnforcement(() => {
+  const { requestFullscreen, strikes, logs, stream } = useProctoringEnforcement(hasStarted, () => {
     handleSubmit(true);
   });
 

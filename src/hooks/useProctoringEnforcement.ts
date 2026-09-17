@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
-export function useProctoringEnforcement(onTerminate: () => void) {
+export function useProctoringEnforcement(isActive: boolean, onTerminate: () => void) {
   const [strikes, setStrikes] = useState(0);
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([isActive]);
   const [stream, setStream] = useState<MediaStream | null>(null);
   
   const addStrike = (reason: string) => {
@@ -19,6 +19,7 @@ export function useProctoringEnforcement(onTerminate: () => void) {
   };
 
   useEffect(() => {
+    if (!isActive) return;
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement) {
         addStrike("Exited Fullscreen");
@@ -71,12 +72,12 @@ export function useProctoringEnforcement(onTerminate: () => void) {
 
   const requestFullscreen = async () => {
     try {
-      await document.documentElement.requestFullscreen();
-      // Also request camera
+      // Request camera first so the permission prompt doesn't break fullscreen
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const ms = await navigator.mediaDevices.getUserMedia({ video: true });
         setStream(ms);
       }
+      await document.documentElement.requestFullscreen();
     } catch (e) {
       toast.error("Fullscreen and Camera permissions are required to start the exam.");
       throw e;
