@@ -47,7 +47,7 @@ import { listJobPostings, createJobPosting, updateJobPosting, toggleJobPosting, 
 import { listAdminNotifications, markAllNotificationsRead } from "@/lib/notifications.functions";
 import { getVisitorCount } from "@/lib/visitor.functions";
 import { listAllLeaveRequests, listAllFeedbacks, updateLeaveStatus, deleteStoredOfferLetterAndRegenerate, deleteStoredNocAndRegenerate, deleteStoredOfferLetter, deleteStoredNoc } from "@/lib/operations.functions";
-import { Sparkles, RefreshCw, GraduationCap, FolderGit2, Link2, FileSpreadsheet, Award, MessageCircle } from "lucide-react";
+import { Sparkles, RefreshCw, GraduationCap, FolderGit2, Link2, FileSpreadsheet, Award, MessageCircle, BrainCircuit } from "lucide-react";
 import { WorldClocks } from "@/components/world-clocks";
 import { InstallPwaButton } from "@/components/install-pwa-button";
 import { Switch } from "@/components/ui/switch";
@@ -517,6 +517,8 @@ function AdminDashboard() {
             window.location.href = "/login";
           }}
           links={[
+            { href: "/admin/cbt/generate", label: "AI CBT Engine", icon: BrainCircuit, colorClass: "text-indigo-600 font-bold hover:bg-indigo-50" },
+            { href: "/admin/cbt/submissions", label: "CBT Submissions", icon: ClipboardList },
             { href: "/admin/b2b-playbook", label: "B2B Playbook", icon: BookOpen, colorClass: "text-gold hover:bg-gold/10" },
             { href: "/admin/operations", label: "Operations", icon: Users },
             { href: "/admin/email-campaigns", label: "Email Campaigns", icon: Mail },
@@ -558,6 +560,15 @@ function AdminDashboard() {
                   <div className="text-xs uppercase tracking-widest text-primary-foreground/60 mt-1">Total Applications</div>
                 </div>
                 <div className="flex items-center gap-2 mt-1">
+                  <Button
+                    asChild
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0"
+                  >
+                    <Link to="/admin/cbt/generate">
+                      <BrainCircuit className="h-4 w-4" /> AI CBT Engine
+                    </Link>
+                  </Button>
+
                   <Button
                     asChild
                     className="bg-gold hover:bg-gold/90 text-slate-950 font-bold text-xs shadow-lg flex items-center gap-1.5 border-0"
