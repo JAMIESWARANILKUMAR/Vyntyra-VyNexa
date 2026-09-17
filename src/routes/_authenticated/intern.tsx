@@ -4066,6 +4066,7 @@ function InternDashboard() {
         )}
           {activeTab === "cbt" && (
             <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500 pb-12">
+              
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
                   <BrainCircuit className="h-6 w-6" />
@@ -4075,16 +4076,29 @@ function InternDashboard() {
                   <p className="text-slate-500 text-sm">Take your assigned proctored exams.</p>
                 </div>
               </div>
-              <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-200">
-                <p className="text-slate-600 mb-4">Please contact your administrator to get the link to your assigned CBT exam, or click below if you have a Test ID.</p>
-                <div className="flex gap-4">
-                  <input type="text" id="cbtTestId" placeholder="Enter Test ID" className="border rounded-md px-4 py-2 w-64" />
-                  <Button onClick={() => {
-                    const id = (document.getElementById("cbtTestId") as HTMLInputElement).value;
-                    if(id) window.location.href = "/cbt/" + id;
-                  }} className="bg-emerald-600">Start Exam</Button>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-200">
+                  <h3 className="font-bold text-lg mb-2">Assigned Test</h3>
+                  <p className="text-slate-600 mb-6 text-sm">Please contact your administrator to get the link to your assigned CBT exam, or click below if you have a Test ID.</p>
+                  <div className="flex gap-4">
+                    <input type="text" id="cbtTestId" placeholder="Enter Test ID..." className="border rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-emerald-500 outline-none" />
+                    <Button onClick={() => {
+                      const id = (document.getElementById("cbtTestId") as HTMLInputElement).value;
+                      if(id) window.location.href = "/cbt/" + id;
+                    }} className="bg-emerald-600 hover:bg-emerald-700 whitespace-nowrap">Start Exam</Button>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-8 rounded-2xl shadow-xl border border-indigo-100">
+                  <h3 className="font-bold text-lg mb-2 text-indigo-900">Practice Demo</h3>
+                  <p className="text-indigo-700 mb-6 text-sm">Take a quick 5-question demo exam to familiarize yourself with the VyNexa Portal CBT Engine and proctoring rules.</p>
+                  <Button onClick={() => window.location.href = "/cbt/demo"} className="bg-indigo-600 hover:bg-indigo-700 w-full shadow-lg shadow-indigo-500/30">
+                    Launch Practice Demo
+                  </Button>
                 </div>
               </div>
+
             </div>
           )}
 

@@ -199,3 +199,34 @@ Return JSON { "score": number, "feedback": "reason" }`;
     return { success: true, score: totalScore, passed };
   });
 
+
+
+export const listAdminTestsFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: tests, error } = await supabase
+      .from("cbt_tests")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return tests;
+  });
+
+export const deleteAdminTestFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => ({ testId: String(d.testId) }))
+  .handler(async ({ data, context }) => {
+    // cascades to questions and submissions automatically if setup properly, else manually delete or just delete test
+    const { error } = await supabase.from("cbt_tests").delete().eq("id", data.testId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const toggleAdminTestStatusFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => ({ testId: String(d.testId), status: String(d.status) }))
+  .handler(async ({ data, context }) => {
+    const { error } = await supabase.from("cbt_tests").update({ status: data.status }).eq("id", data.testId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });

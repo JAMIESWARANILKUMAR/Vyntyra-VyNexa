@@ -23,22 +23,43 @@ function CbtExamInterface() {
   const getSessionFn = useServerFn(getInternTestSessionFn);
   const submitFn = useServerFn(submitCbtExamFn);
 
+  
   useEffect(() => {
+    if (testId === "demo") {
+      setTest({ title: "VyNexa Portal Familiarization Demo", description: "This is a 5-question demo to familiarize yourself with the VyNexa portal CBT engine." });
+      setQuestions([
+        { id: "demo-q1", question_type: "mcq", question_text: "What is the primary color of the VyNexa dashboard theme?", options: [{id: "opt1", text: "Emerald"}, {id: "opt2", text: "Crimson"}, {id: "opt3", text: "Indigo"}] },
+        { id: "demo-q2", question_type: "mcq", question_text: "Where can you find the AI CBT Exams tab?", options: [{id: "opt4", text: "Connect & Support"}, {id: "opt5", text: "My Profile"}, {id: "opt6", text: "Settings"}] },
+        { id: "demo-q3", question_type: "long_answer", question_text: "Describe the purpose of the Daily Standup log in a few words." },
+        { id: "demo-q4", question_type: "mcq", question_text: "What happens if you switch tabs during a proctored exam?", options: [{id: "opt7", text: "You get a strike (2 strikes = fail)"}, {id: "opt8", text: "Nothing"}, {id: "opt9", text: "You earn bonus points"}] },
+        { id: "demo-q5", question_type: "coding", question_text: "Write a simple function that returns 'VyNexa'." }
+      ]);
+      return;
+    }
+
     getSessionFn({ data: { testId } }).then(res => {
       setTest(res.test);
       setQuestions(res.questions);
     });
   }, [testId]);
 
+
+  
   const handleSubmit = async (isAuto = false) => {
+    if (testId === "demo") {
+      toast.success("Practice Demo Completed!");
+      window.location.href = "/intern";
+      return;
+    }
     try {
       await submitFn({ data: { testId, answers, proctoringLogs: logs } });
       toast.success(isAuto ? "Test auto-submitted" : "Test submitted successfully");
-      window.location.href = `/cbt/results/${testId}`; // simplified redirect
+      window.location.href = `/cbt/results/${testId}`;
     } catch (e) {
       toast.error("Failed to submit");
     }
   };
+
 
   const { requestFullscreen, strikes, logs } = useProctoringEnforcement(() => {
     handleSubmit(true);
