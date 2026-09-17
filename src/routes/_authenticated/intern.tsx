@@ -176,6 +176,20 @@ function InternDashboard() {
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  useEffect(() => {
+    if (localStorage.getItem("cbt-extension-notified") !== "true") {
+      setTimeout(() => {
+        toast("NEW EXTENSION ADDED", {
+          description: "AI CBT Exams is now available in your dashboard! Check the Connect & Support section.",
+          duration: 8000,
+          icon: <BrainCircuit className="h-5 w-5 text-indigo-500" />
+        });
+        localStorage.setItem("cbt-extension-notified", "true");
+      }, 1500);
+    }
+  }, []);
+
+
   const [showForcePasswordModal, setShowForcePasswordModal] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -984,7 +998,7 @@ function InternDashboard() {
     { id: "leaves",         label: `Leaves (${myLeaves.length})`, shortLabel: "Leaves", icon: CalendarDays, category: "Connect & Support", enabled: isModuleEnabled("leaves") },
     { id: "support",        label: `Support (${supportQueries.length})`, shortLabel: "Support", icon: HelpCircle, category: "Connect & Support", enabled: isModuleEnabled("support") },
     { id: "refer",          label: "Refer & Earn", shortLabel: "Refer", icon: DollarSign, category: "Connect & Support", enabled: isModuleEnabled("refer") },
-    { id: "cbt",            label: "AI CBT Exams", shortLabel: "CBT", icon: BrainCircuit, category: "Connect & Support", enabled: true },
+    { id: "cbt", label: "AI CBT Exams", shortLabel: "CBT", icon: BrainCircuit, category: "Connect & Support", enabled: true, isNew: true },
     { id: "notes",          label: "Notes", shortLabel: "Notes", icon: FileText, category: "Connect & Support", enabled: isModuleEnabled("notes") },
     { id: "feedback",       label: "Feedback", shortLabel: "Feedback", icon: MessageCircle, category: "Connect & Support", enabled: isModuleEnabled("feedback") },
   ].filter(t => t.enabled);
@@ -1529,6 +1543,7 @@ function InternDashboard() {
                                 <TabIcon className={`h-4 w-4 ${isActive ? "text-white" : tab.isPrimary ? "text-emerald-600" : "text-emerald-900"}`} />
                               </div>
                               <span className="tracking-tight">{tab.label}</span>
+                              {tab.isNew && <span className="bg-rose-500 text-white px-1.5 py-0.5 rounded text-[9px] font-bold uppercase animate-pulse shadow-sm shadow-rose-500/30">NEW</span>}
                             </div>
 
                             <div className="flex items-center gap-1.5">
