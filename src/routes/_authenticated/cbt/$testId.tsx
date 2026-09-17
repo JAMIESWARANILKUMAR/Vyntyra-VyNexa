@@ -20,11 +20,14 @@ function CbtExamInterface() {
   const [activeQ, setActiveQ] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [ipAddress, setIpAddress] = useState("Fetching IP...");
   
   const getSessionFn = useServerFn(getInternTestSessionFn);
   const submitFn = useServerFn(submitCbtExamFn);
 
   useEffect(() => {
+    fetch("https://api.ipify.org?format=json").then(r => r.json()).then(data => setIpAddress(data.ip)).catch(() => setIpAddress("Unknown"));
+
     // LocalStorage Autosave Restoration
     const saved = localStorage.getItem(`cbt_autosave_${testId}`);
     if (saved) {
@@ -115,13 +118,24 @@ function CbtExamInterface() {
             <h3 className="font-bold flex items-center gap-2 mb-4 text-slate-800 text-lg">
               <AlertTriangle className="h-5 w-5 text-amber-500"/> Pre-Exam Checklist & Rules
             </h3>
-            <ul className="space-y-3 font-medium text-slate-600 text-sm">
-              <li className="flex items-start gap-3"><CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" /> Fullscreen is strictly enforced. Exiting will trigger a strike.</li>
-              <li className="flex items-start gap-3"><CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" /> Camera access is required. A live recording will be monitored.</li>
-              <li className="flex items-start gap-3"><CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" /> Switching tabs (Alt+Tab), losing focus, or opening other applications is forbidden.</li>
-              <li className="flex items-start gap-3"><CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" /> Clipboard operations (Copy/Paste) and right-click are disabled.</li>
-              <li className="flex items-start gap-3"><AlertTriangle className="h-5 w-5 text-rose-500 shrink-0 text-rose-600" /> <span className="text-rose-700 font-bold">2 Strikes = Immediate Exam Termination and Failure.</span></li>
-            </ul>
+            <div className="grid grid-cols-2 gap-8 text-sm">
+              <ul className="space-y-3 font-medium text-slate-600">
+                <li className="flex items-start gap-3"><CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" /> <strong>Fullscreen Required:</strong> You cannot exit fullscreen mode.</li>
+                <li className="flex items-start gap-3"><CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" /> <strong>Webcam Monitoring:</strong> Live video is recorded and analyzed.</li>
+                <li className="flex items-start gap-3"><CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" /> <strong>No Tab Switching:</strong> (Alt+Tab) or losing window focus is tracked.</li>
+                <li className="flex items-start gap-3"><CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" /> <strong>Clipboard Blocked:</strong> Copy, Paste, and Right-click are disabled.</li>
+              </ul>
+              <ul className="space-y-3 font-medium text-slate-600 border-l border-slate-200 pl-8">
+                <li className="flex items-start gap-3"><span className="text-slate-400 font-mono">Time Limit:</span> <strong className="text-slate-900">{test.time_limit_minutes || 30} Minutes</strong></li>
+                <li className="flex items-start gap-3"><span className="text-slate-400 font-mono">Passing Criteria:</span> <strong className="text-slate-900">{test.passing_score || 60}% Minimum</strong></li>
+                <li className="flex items-start gap-3"><span className="text-slate-400 font-mono">Total Questions:</span> <strong className="text-slate-900">{questions.length} Modules</strong></li>
+                <li className="flex items-start gap-3"><span className="text-slate-400 font-mono">Your Network IP:</span> <strong className="text-slate-900 font-mono">{ipAddress}</strong></li>
+              </ul>
+            </div>
+            <div className="mt-6 bg-rose-50 border border-rose-200 p-4 rounded-xl text-rose-800 font-bold flex items-center gap-3">
+              <AlertTriangle className="h-6 w-6 text-rose-600 shrink-0" />
+              <span>WARNING: Any 2 violations will result in immediate auto-termination and test failure.</span>
+            </div>
           </div>
           <Button onClick={async () => { await requestFullscreen(); setHasStarted(true); }} className="w-full h-16 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-xl font-bold rounded-2xl shadow-xl text-white border border-slate-700 transition-transform active:scale-[0.98]">
             Grant Permissions & Begin Exam
@@ -163,6 +177,7 @@ function CbtExamInterface() {
                 <span className="text-xs font-bold uppercase tracking-widest">Feed Lost</span>
               </div>
             )}
+            <div className="absolute bottom-3 right-3 text-white/50 text-[9px] font-mono font-bold uppercase tracking-widest bg-black/50 px-2 py-1 rounded">IP: {ipAddress}</div>
             <div className="absolute top-3 left-3 flex items-center gap-2 text-rose-500 font-bold text-[10px] uppercase tracking-widest bg-black/70 px-2 py-1 rounded backdrop-blur-md border border-rose-500/30">
               <div className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" /> Live Proctoring
             </div>
@@ -263,7 +278,7 @@ function CbtExamInterface() {
                   {q.options.map((opt: any) => {
                     const checked = answers[q.id]?.id === opt.id;
                     return (
-                      <label key={opt.id} className={`group flex items-center gap-5 p-6 rounded-2xl cursor-pointer transition-all border-2 ${
+                      <label key={opt.id} onClick={() => setAnswers({...answers, [q.id]: opt})} className={`group flex items-center gap-5 p-6 rounded-2xl cursor-pointer transition-all border-2 ${
                         checked 
                           ? "border-emerald-500 bg-emerald-50/50 shadow-[0_4px_20px_rgba(16,185,129,0.15)] scale-[1.01]" 
                           : "border-slate-200 bg-white hover:border-emerald-300 hover:bg-slate-50 shadow-sm"

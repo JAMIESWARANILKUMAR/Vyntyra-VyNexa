@@ -12,7 +12,8 @@ export function useProctoringEnforcement(isActive: boolean, onTerminate: () => v
       setLogs(l => [...l, { time: new Date().toISOString(), reason }]);
       toast.error(`Warning: ${reason}. Strike ${newStrikes}/2`);
       if (newStrikes >= 2) {
-        onTerminate();
+        toast.error("FINAL STRIKE: Exam Automatically Terminated!", { duration: 5000 });
+        setTimeout(() => onTerminate(), 2500);
       }
       return newStrikes;
     });
