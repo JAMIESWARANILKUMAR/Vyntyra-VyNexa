@@ -1,23 +1,44 @@
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
-export function useProctoringEnforcement(isActive: boolean, onTerminate: () => void) {
+export function useProctoringEnforcement(isActive: boolean, onTerminate: (reason: string) => void) {
   const [strikes, setStrikes] = useState(0);
   const [logs, setLogs] = useState<any[]>([]);
   const [stream, setStream] = useState<MediaStream | null>(null);
   
+  const [activeWarning, setActiveWarning] = useState<{reason: string, expiresAt: number} | null>(null);
+  const activeWarningRef = useRef(activeWarning);
+  activeWarningRef.current = activeWarning;
+  
   const addStrike = (reason: string) => {
+    if (activeWarningRef.current) return; 
+
     setStrikes(prev => {
       const newStrikes = prev + 1;
       setLogs(l => [...l, { time: new Date().toISOString(), reason }]);
-      toast.error(`Warning: ${reason}. Strike ${newStrikes}/2`);
-      if (newStrikes >= 2) {
-        toast.error("FINAL STRIKE: Exam Automatically Terminated!", { duration: 5000 });
-        setTimeout(() => onTerminate(), 2500);
+      
+      if (newStrikes >= 3) {
+        toast.error("FINAL STRIKE: Exam Terminated due to malpractice!", { duration: 5000 });
+        onTerminate(reason);
+        return newStrikes;
       }
+      
+      toast.error(`Warning: ${reason}. Strike ${newStrikes}/2`);
+      setActiveWarning({ reason, expiresAt: Date.now() + 20000 }); // 20s timer
+      
       return newStrikes;
     });
   };
+
+  useEffect(() => {
+    if (!activeWarning) return;
+    const interval = setInterval(() => {
+      if (Date.now() >= activeWarning.expiresAt) {
+        setActiveWarning(null);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [activeWarning]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -69,11 +90,10 @@ export function useProctoringEnforcement(isActive: boolean, onTerminate: () => v
       document.removeEventListener("cut", preventDefault);
       document.removeEventListener("paste", preventDefault);
     };
-  }, [isActive, onTerminate]);
+  }, [isActive]);
 
   const requestFullscreen = async () => {
     try {
-      // Request camera first so the permission prompt doesn't break fullscreen
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const ms = await navigator.mediaDevices.getUserMedia({ video: true });
         setStream(ms);
@@ -85,6 +105,7 @@ export function useProctoringEnforcement(isActive: boolean, onTerminate: () => v
     }
   };
 
-  return { requestFullscreen, strikes, logs, stream };
-}
+  const clearWarning = () => setActiveWarning(null);
 
+  return { requestFullscreen, strikes, logs, stream, activeWarning, clearWarning };
+}

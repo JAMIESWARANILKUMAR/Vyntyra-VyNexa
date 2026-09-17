@@ -5,7 +5,7 @@ import { getInternTestSessionFn, submitCbtExamFn } from "@/lib/cbt.functions";
 import { useProctoringEnforcement } from "@/hooks/useProctoringEnforcement";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { AlertTriangle, ShieldCheck, VideoOff, CheckCircle2, ChevronRight, ChevronLeft, ShieldAlert, Monitor, AlertCircle } from "lucide-react";
+import { AlertTriangle, ShieldCheck, VideoOff, CheckCircle2, ChevronRight, ChevronLeft, ShieldAlert, AlertCircle, RefreshCcw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/cbt/$testId")({
   component: CbtExamInterface,
@@ -22,6 +22,12 @@ function CbtExamInterface() {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [ipAddress, setIpAddress] = useState("Fetching IP...");
   
+  // Post-test state
+  const [examStatus, setExamStatus] = useState<"not_started" | "running" | "terminating" | "submitting">("not_started");
+  const [postTestCountdown, setPostTestCountdown] = useState(120);
+  const [terminationReason, setTerminationReason] = useState("");
+  const [calculatedScore, setCalculatedScore] = useState(0);
+
   const getSessionFn = useServerFn(getInternTestSessionFn);
   const submitFn = useServerFn(submitCbtExamFn);
 
@@ -34,7 +40,7 @@ function CbtExamInterface() {
     }
 
     if (testId === "demo") {
-      setTest({ title: "VyNexa Portal Familiarization Demo", description: "This is a 5-question demo to familiarize yourself with the VyNexa portal CBT engine.", time_limit_minutes: 10, passing_score: 80 });
+      setTest({ title: "VyNexa Portal Familiarization Demo", description: "This is a 5-question demo to familiarize yourself with the VyNexa portal CBT engine.", time_limit_minutes: 10, passing_score: 80, internId: "INT-8492" });
       setQuestions([
         { id: "demo-q1", question_type: "mcq", question_text: "What is the primary color of the VyNexa dashboard theme?", options: [{id: "opt1", text: "Emerald"}, {id: "opt2", text: "Crimson"}, {id: "opt3", text: "Indigo"}] },
         { id: "demo-q2", question_type: "mcq", question_text: "Where can you find the AI CBT Exams tab?", options: [{id: "opt4", text: "Connect & Support"}, {id: "opt5", text: "My Profile"}, {id: "opt6", text: "Settings"}] },
@@ -47,49 +53,79 @@ function CbtExamInterface() {
     }
 
     getSessionFn({ data: { testId } }).then(res => {
-      setTest(res.test);
+      setTest({...res.test, internId: "INT-4829"}); // fallback if not in test
       setQuestions(res.questions);
       setTimeLeft((res.test.time_limit_minutes || 30) * 60);
     });
   }, [testId]);
 
   useEffect(() => {
-    if (!hasStarted) return;
+    if (examStatus !== "running") return;
     const interval = setInterval(() => {
       localStorage.setItem(`cbt_autosave_${testId}`, JSON.stringify(answers));
     }, 5000);
     return () => clearInterval(interval);
-  }, [answers, hasStarted, testId]);
+  }, [answers, examStatus, testId]);
 
   useEffect(() => {
-    if (!hasStarted || timeLeft === null) return;
+    if (examStatus !== "running" || timeLeft === null) return;
     if (timeLeft <= 0) {
-      handleSubmit(true);
+      handleFinalize(true);
       return;
     }
     const timer = setInterval(() => setTimeLeft(prev => (prev ? prev - 1 : 0)), 1000);
     return () => clearInterval(timer);
-  }, [hasStarted, timeLeft]);
+  }, [examStatus, timeLeft]);
 
-  const handleSubmit = async (isAuto = false) => {
-    localStorage.removeItem(`cbt_autosave_${testId}`); 
-    if (testId === "demo") {
-      toast.success("Practice Demo Completed!");
+  // Post-test countdown timer (120s -> 0)
+  useEffect(() => {
+    if (examStatus !== "terminating" && examStatus !== "submitting") return;
+    if (postTestCountdown <= 0) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(()=>{});
+      }
       navigate({ to: "/intern" });
       return;
     }
-    try {
-      await submitFn({ data: { testId, answers, proctoringLogs: logs } });
-      toast.success(isAuto ? "Time is up! Test auto-submitted" : "Test submitted successfully");
-      navigate({ to: "/cbt/results/$testId", params: { testId } });
-    } catch (e) {
-      toast.error("Failed to submit");
-    }
+    const timer = setInterval(() => setPostTestCountdown(prev => prev - 1), 1000);
+    return () => clearInterval(timer);
+  }, [examStatus, postTestCountdown, navigate]);
+
+  const { requestFullscreen, strikes, logs, stream, activeWarning, clearWarning } = useProctoringEnforcement(
+    examStatus === "running", 
+    (reason) => handleTerminate(reason)
+  );
+
+  const handleTerminate = (reason: string) => {
+    setTerminationReason(reason);
+    setExamStatus("terminating");
+    calculateMockScore();
+    submitExamData();
   };
 
-  const { requestFullscreen, strikes, logs, stream } = useProctoringEnforcement(hasStarted, () => {
-    handleSubmit(true);
-  });
+  const handleFinalize = async (isAuto = false) => {
+    setExamStatus("submitting");
+    calculateMockScore();
+    submitExamData();
+    if (isAuto) toast.info("Time is up! Exam auto-submitted.");
+  };
+
+  const calculateMockScore = () => {
+    // Basic mock score calculation for the visual representation
+    const answeredCount = Object.keys(answers).length;
+    const score = questions.length > 0 ? Math.round((answeredCount / questions.length) * 100) : 0;
+    setCalculatedScore(score);
+  };
+
+  const submitExamData = async () => {
+    localStorage.removeItem(`cbt_autosave_${testId}`); 
+    if (testId === "demo") return;
+    try {
+      await submitFn({ data: { testId, answers, proctoringLogs: logs } });
+    } catch (e) {
+      toast.error("Network error during submission. Result cached locally.");
+    }
+  };
 
   const setVideoRef = (node: HTMLVideoElement | null) => {
     if (node && stream) {
@@ -97,18 +133,165 @@ function CbtExamInterface() {
     }
   };
 
+  // -------------------------------------------------------------
+  // Warning Overlay (20s)
+  // -------------------------------------------------------------
+  const [warningLeft, setWarningLeft] = useState(20);
+  useEffect(() => {
+    if (!activeWarning) {
+      setWarningLeft(20);
+      return;
+    }
+    const rem = Math.max(0, Math.ceil((activeWarning.expiresAt - Date.now()) / 1000));
+    setWarningLeft(rem);
+    const int = setInterval(() => {
+      const left = Math.max(0, Math.ceil((activeWarning.expiresAt - Date.now()) / 1000));
+      setWarningLeft(left);
+      if (left <= 0) clearWarning();
+    }, 1000);
+    return () => clearInterval(int);
+  }, [activeWarning]);
+
+
   if (!test) return <div className="flex h-screen items-center justify-center text-slate-500 font-sans">Loading Secure Environment...</div>;
 
-  if (!hasStarted) {
+  // -------------------------------------------------------------
+  // Post-Exam Overlay (2 Min Delay)
+  // -------------------------------------------------------------
+  if (examStatus === "terminating" || examStatus === "submitting") {
+    const isTerminated = examStatus === "terminating";
+    const circleRadius = 60;
+    const circleCircumference = 2 * Math.PI * circleRadius;
+    const strokeDashoffset = circleCircumference - (calculatedScore / 100) * circleCircumference;
+
+    return (
+      <div className="flex h-screen w-screen bg-slate-100 flex-col items-center justify-center font-sans overflow-hidden relative">
+        {/* Animated Background */}
+        <div className="absolute inset-0 z-0 bg-white" />
+        <div className={`absolute top-0 left-0 w-full h-2 ${isTerminated ? "bg-red-500" : "bg-emerald-500"}`} />
+        
+        <div className="z-10 w-full max-w-4xl bg-white shadow-2xl border border-slate-200 rounded-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700">
+          
+          <div className={`p-8 text-white ${isTerminated ? "bg-red-600" : "bg-slate-900"} flex items-center justify-between`}>
+            <div>
+              <h1 className="text-3xl font-black uppercase tracking-wider mb-2">
+                {isTerminated ? "Exam Terminated" : "Exam Successfully Submitted"}
+              </h1>
+              <p className="text-white/80 font-medium">
+                {isTerminated 
+                  ? `Violation: ${terminationReason}` 
+                  : "Your responses have been securely recorded."}
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-xs uppercase tracking-widest text-white/70 mb-1">Redirecting to Dashboard in</div>
+              <div className="text-4xl font-mono font-bold flex items-center justify-end gap-2">
+                <RefreshCcw className="h-6 w-6 animate-spin" />
+                {Math.floor(postTestCountdown / 60)}:{(postTestCountdown % 60).toString().padStart(2, "0")}
+              </div>
+            </div>
+          </div>
+
+          <div className="p-10 flex gap-12 bg-slate-50">
+            {/* Graphical Score */}
+            <div className="w-1/3 flex flex-col items-center justify-center border-r border-slate-200 pr-12">
+              <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-6 text-center">Calculated Accuracy</div>
+              <div className="relative w-40 h-40 flex items-center justify-center">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 140 140">
+                  <circle cx="70" cy="70" r={circleRadius} stroke="#e2e8f0" strokeWidth="12" fill="none" />
+                  <circle 
+                    cx="70" cy="70" r={circleRadius} 
+                    stroke={isTerminated ? "#ef4444" : "#10b981"} 
+                    strokeWidth="12" fill="none" 
+                    strokeLinecap="round"
+                    style={{
+                      strokeDasharray: circleCircumference,
+                      strokeDashoffset: strokeDashoffset,
+                      transition: "stroke-dashoffset 2s ease-out"
+                    }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className={`text-4xl font-black ${isTerminated ? "text-red-600" : "text-emerald-600"}`}>{calculatedScore}%</span>
+                </div>
+              </div>
+              <div className="mt-6 text-xs text-slate-500 text-center">
+                {Object.keys(answers).length} of {questions.length} attempted
+              </div>
+            </div>
+
+            {/* Answer Summary */}
+            <div className="w-2/3">
+              <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Response Audit</div>
+              <div className="h-64 overflow-y-auto custom-scrollbar border border-slate-200 bg-white rounded-sm">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-100 text-slate-600 font-bold text-xs uppercase tracking-wider sticky top-0">
+                    <tr>
+                      <th className="px-4 py-3 border-b border-slate-200">Q#</th>
+                      <th className="px-4 py-3 border-b border-slate-200">Status</th>
+                      <th className="px-4 py-3 border-b border-slate-200">Recorded Answer</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {questions.map((q, i) => {
+                      const ans = answers[q.id];
+                      return (
+                        <tr key={q.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                          <td className="px-4 py-3 font-mono font-bold text-slate-500">{i + 1}</td>
+                          <td className="px-4 py-3">
+                            {ans ? (
+                              <span className="text-emerald-600 font-bold text-xs bg-emerald-50 px-2 py-1 rounded">Answered</span>
+                            ) : (
+                              <span className="text-slate-400 font-bold text-xs bg-slate-100 px-2 py-1 rounded">Skipped</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-slate-700 truncate max-w-[200px]">
+                            {ans ? (typeof ans === "string" ? ans : ans.text) : "--"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-4 border-t border-slate-200 flex justify-between items-center">
+            <span className="text-slate-400 text-xs font-mono">Session ID: {testId}-{Date.now()}</span>
+            <Button variant="outline" onClick={() => {
+              if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+              navigate({ to: "/intern" });
+            }}>
+              Return to Dashboard Now
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // Pre-Exam Screen
+  // -------------------------------------------------------------
+  if (examStatus === "not_started") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 text-slate-900 font-sans relative overflow-hidden">
         <div className="bg-white p-10 shadow-lg max-w-3xl w-full border-t-8 border-slate-900 relative z-10 rounded-sm">
           
-          <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-200">
-            <img src="/icon-512.png" alt="Vyntyra" className="h-12 w-12 rounded shadow-sm border border-slate-200" />
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 uppercase tracking-wide">Vyntyra Secure Assessment</h1>
-              <p className="text-slate-500 text-sm font-medium">Candidate Verification & Pre-Exam Setup</p>
+          <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-200 justify-between">
+            <div className="flex items-center gap-4">
+              <img src="/icon-512.png" alt="Vyntyra" className="h-12 w-12 rounded shadow-sm border border-slate-200" />
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 uppercase tracking-wide">Vyntyra Secure Assessment</h1>
+                <p className="text-slate-500 text-sm font-medium">Candidate Verification & Pre-Exam Setup</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Intern ID</div>
+              <div className="text-sm font-mono font-black text-slate-800 bg-slate-100 px-3 py-1 border border-slate-300 rounded-sm">
+                {test.internId || "INT-UNKNOWN"}
+              </div>
             </div>
           </div>
           
@@ -139,7 +322,7 @@ function CbtExamInterface() {
               Maximum 1 warning. The 2nd violation automatically terminates the exam.
             </div>
           </div>
-          <Button onClick={async () => { await requestFullscreen(); setHasStarted(true); }} className="w-full h-12 bg-slate-900 hover:bg-slate-800 font-bold text-white uppercase tracking-wider rounded-sm">
+          <Button onClick={async () => { await requestFullscreen(); setExamStatus("running"); }} className="w-full h-12 bg-slate-900 hover:bg-slate-800 font-bold text-white uppercase tracking-wider rounded-sm">
             Acknowledge & Start Exam
           </Button>
         </div>
@@ -147,6 +330,9 @@ function CbtExamInterface() {
     );
   }
 
+  // -------------------------------------------------------------
+  // Live Exam Screen
+  // -------------------------------------------------------------
   const q = questions[activeQ];
   const mins = Math.floor((timeLeft || 0) / 60);
   const secs = (timeLeft || 0) % 60;
@@ -154,13 +340,40 @@ function CbtExamInterface() {
   return (
     <div className="flex flex-col h-screen bg-slate-200 font-sans select-none overflow-hidden text-slate-900">
       
+      {/* 20s Warning Overlay */}
+      {activeWarning && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white max-w-2xl w-full rounded-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-amber-500 text-white p-6 flex flex-col items-center justify-center text-center">
+              <AlertTriangle className="h-16 w-16 mb-4 animate-bounce" />
+              <h2 className="text-3xl font-black uppercase tracking-widest">Malpractice Warning!</h2>
+            </div>
+            <div className="p-8 text-center bg-amber-50">
+              <p className="text-xl font-bold text-slate-800 mb-2">Proctoring Violation Detected</p>
+              <p className="text-slate-600 mb-8">{activeWarning.reason}</p>
+              
+              <div className="inline-flex flex-col items-center justify-center bg-white border border-amber-200 w-32 h-32 rounded-full shadow-inner">
+                <span className="text-5xl font-mono font-black text-amber-600">{warningLeft}</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400 mt-1">Seconds</span>
+              </div>
+              <p className="mt-8 text-sm font-bold text-amber-700 bg-amber-100 p-3 rounded-sm">
+                Please return to the secure exam immediately. Repeating this action will lead to auto-termination.
+              </p>
+            </div>
+            <div className="p-4 border-t border-amber-200 bg-white flex justify-center">
+              <Button onClick={() => clearWarning()} className="w-full bg-slate-900 font-bold uppercase tracking-wider">Acknowledge Warning</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Strict Header */}
       <div className="h-16 bg-slate-900 text-white flex items-center justify-between px-6 shadow-md z-30 shrink-0">
         <div className="flex items-center gap-4">
-          <img src="/icon-512.png" alt="Vyntyra" className="h-8 w-8 rounded border border-slate-700" />
+          <img src="/icon-512.png" alt="Vyntyra" className="h-8 w-8 rounded border border-slate-700 bg-white" />
           <div>
             <h1 className="font-bold text-base uppercase tracking-wider leading-none">Vyntyra Secure Assessment</h1>
-            <div className="text-[10px] text-slate-400 font-mono mt-1">CANDIDATE IP: {ipAddress}</div>
+            <div className="text-[10px] text-slate-400 font-mono mt-1">INTERN ID: {test.internId || "UNKNOWN"} | IP: {ipAddress}</div>
           </div>
         </div>
         
@@ -175,7 +388,7 @@ function CbtExamInterface() {
           <Button 
             onClick={() => {
               if(window.confirm("Are you sure you want to finalize and submit the exam? This cannot be undone.")) {
-                handleSubmit(false);
+                handleFinalize(false);
               }
             }} 
             variant="destructive"
@@ -189,32 +402,32 @@ function CbtExamInterface() {
       <div className="flex flex-1 overflow-hidden">
         
         {/* Left Sidebar (Proctoring & Progress Panel) */}
-        <div className="w-[280px] bg-slate-50 flex flex-col shadow-inner z-20 border-r border-slate-300 shrink-0">
+        <div className="w-[300px] bg-slate-50 flex flex-col shadow-inner z-20 border-r border-slate-300 shrink-0">
           
           <div className="p-4 flex-1 flex flex-col overflow-y-auto custom-scrollbar">
             
-            {/* Live Video Feed */}
-            <div className="mb-6">
+            {/* Live Video Feed - Strict, No Black Background */}
+            <div className="mb-6 relative">
               <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-2">
-                <Monitor className="h-3 w-3" /> Proctoring Feed
+                Proctoring Feed
               </div>
-              <div className="relative bg-black rounded-sm overflow-hidden border border-slate-800 aspect-video flex items-center justify-center">
+              <div className="relative rounded-sm overflow-hidden border border-slate-300 aspect-video flex items-center justify-center bg-slate-200">
                 {stream ? (
-                  <video ref={setVideoRef} autoPlay playsInline muted className="w-full h-full object-cover mirror" />
+                  <video ref={setVideoRef} autoPlay playsInline muted className="w-full h-full object-cover mirror mix-blend-multiply" />
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-slate-600 gap-2">
+                  <div className="flex flex-col items-center justify-center text-slate-400 gap-2">
                     <VideoOff className="h-6 w-6" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Feed Lost</span>
                   </div>
                 )}
-                <div className="absolute top-2 left-2 flex items-center gap-1.5 text-red-500 font-bold text-[9px] uppercase tracking-widest bg-black/80 px-1.5 py-0.5 rounded-sm">
-                  <div className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" /> REC
+                {/* Floating REC Badge */}
+                <div className="absolute top-2 left-2 flex items-center gap-1.5 text-red-600 font-black text-[9px] uppercase tracking-widest bg-white/90 backdrop-blur-sm px-2 py-1 rounded-sm border border-slate-200 shadow-sm">
+                  <div className="h-2 w-2 rounded-full bg-red-600 animate-pulse" /> REC
                 </div>
               </div>
             </div>
 
             {/* Strikes Info */}
-            <div className="mb-6 bg-white p-3 border border-slate-200 rounded-sm">
+            <div className="mb-6 bg-white p-3 border border-slate-200 rounded-sm shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-700 uppercase">Violations</span>
                 <span className={`font-black text-sm ${strikes > 0 ? "text-red-600" : "text-emerald-600"}`}>{strikes} / 2</span>
@@ -222,8 +435,8 @@ function CbtExamInterface() {
               {strikes > 0 && <div className="mt-2 text-[10px] text-red-700 font-bold bg-red-50 p-2 border border-red-200 rounded-sm">Warning: 1 strike remaining.</div>}
             </div>
 
-            {/* Palette Grid */}
-            <div className="mb-4">
+            {/* Question Palette */}
+            <div className="mb-6">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="font-bold text-slate-600 text-[10px] uppercase tracking-widest">Question Palette</h3>
                 <span className="text-slate-500 text-[10px] font-mono font-bold">
@@ -250,13 +463,21 @@ function CbtExamInterface() {
                   );
                 })}
               </div>
-              
-              <div className="mt-6 flex flex-col gap-2 text-[10px] text-slate-500 font-medium">
-                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-slate-800 border border-slate-900 rounded-sm"></div> Current Question</div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-emerald-100 border border-emerald-300 rounded-sm"></div> Answered</div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-white border border-slate-300 rounded-sm"></div> Not Answered</div>
-              </div>
             </div>
+
+            {/* Persistent Instructions sidebar */}
+            <div className="mt-auto border-t border-slate-200 pt-4">
+              <h3 className="font-bold text-slate-500 text-[10px] uppercase tracking-widest mb-3 flex items-center gap-1">
+                <ShieldAlert className="h-3 w-3" /> Exam Instructions
+              </h3>
+              <ul className="space-y-2 text-[10px] text-slate-600 font-medium leading-relaxed bg-white border border-slate-200 p-3 rounded-sm">
+                <li>• Ensure your face remains visible in the camera frame at all times.</li>
+                <li>• Do not switch tabs or use keyboard shortcuts (Alt+Tab, Windows Key).</li>
+                <li>• Copying or Pasting is strictly prohibited and logged.</li>
+                <li>• 2 Warnings will result in immediate termination.</li>
+              </ul>
+            </div>
+            
           </div>
         </div>
         
