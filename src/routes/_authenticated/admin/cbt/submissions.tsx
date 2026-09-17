@@ -19,10 +19,16 @@ function AdminCbtSubmissions() {
   const fetchTests = useServerFn(listAdminTestsFn);
   const doDelete = useServerFn(deleteAdminTestFn);
   const doToggle = useServerFn(toggleAdminTestStatusFn);
+  const fetchTargets = useServerFn(import("@/lib/cbt.functions").then(m => m.listCbtTargetsFn)); // dynamic to avoid top-level import issue if not imported
 
   const { data: tests = [], isLoading: isLoadingTests } = useQuery({
     queryKey: ["admin-cbt-tests"],
     queryFn: () => fetchTests(),
+  });
+  
+  const { data: targets } = useQuery({
+    queryKey: ["cbt-targets"],
+    queryFn: () => fetchTargets(),
   });
 
   const { data: submissions = [], isLoading: isLoadingSubmissions } = useQuery({
@@ -32,29 +38,40 @@ function AdminCbtSubmissions() {
       if (error) throw new Error(error.message);
       return data;
     },
-    enabled: activeTab === "submissions"
   });
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this test? All questions and submissions will be lost.")) return;
+    if (!window.confirm("Are you sure you want to permanently delete this test and its questions?")) return;
     try {
       await doDelete({ data: { testId: id } });
-      toast.success("Test deleted successfully");
+      toast.success("Test deleted successfully.");
       qc.invalidateQueries({ queryKey: ["admin-cbt-tests"] });
     } catch (e) {
-      toast.error("Failed to delete test");
+      toast.error("Failed to delete test.");
     }
   };
 
   const handleToggle = async (id: string, currentStatus: string) => {
-    const newStatus = currentStatus === "active" ? "draft" : "active";
     try {
+      const newStatus = currentStatus === "active" ? "inactive" : "active";
       await doToggle({ data: { testId: id, status: newStatus } });
-      toast.success(`Test is now ${newStatus}`);
+      toast.success(`Test marked as ${newStatus}`);
       qc.invalidateQueries({ queryKey: ["admin-cbt-tests"] });
     } catch (e) {
-      toast.error("Failed to update status");
+      toast.error("Failed to update status.");
     }
+  };
+  
+  const getTargetName = (type: string, id: string) => {
+    if (!targets) return id;
+    if (type === "intern") {
+      const intern = targets.interns.find((i: any) => i.id === id);
+      return intern ? `${intern.full_name} (${intern.email})` : id;
+    } else if (type === "team") {
+      const team = targets.teams.find((t: any) => t.id === id);
+      return team ? team.name : id;
+    }
+    return id;
   };
 
   return (
@@ -109,7 +126,10 @@ function AdminCbtSubmissions() {
                       <div className="font-bold text-slate-900">{t.title}</div>
                       <div className="text-xs font-mono text-slate-400 mt-1">{t.id}</div>
                     </td>
-                    <td className="p-4 text-sm font-medium text-slate-600 uppercase">{t.target_type}</td>
+                    <td className="p-4">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t.target_type}</span>
+                      <div className="text-sm font-medium text-slate-800 mt-1">{getTargetName(t.target_type, t.target_id)}</div>
+                    </td>
                     <td className="p-4 text-sm text-slate-500">{new Date(t.created_at).toLocaleDateString()}</td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${t.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>

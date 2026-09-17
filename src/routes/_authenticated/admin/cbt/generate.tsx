@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { generateAiTestFn, saveGeneratedTestFn } from "@/lib/cbt.functions";
+import { generateAiTestFn, saveGeneratedTestFn, listCbtTargetsFn } from "@/lib/cbt.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { BrainCircuit, Upload, Loader2, Save, Users, FileText, CheckCircle2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/cbt/generate")({
   component: AdminCbtGenerate,
@@ -18,8 +19,15 @@ function AdminCbtGenerate() {
   const [generated, setGenerated] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   
+  const [targets, setTargets] = useState<{interns: any[], teams: any[]}>({ interns: [], teams: [] });
+  
   const generateFn = useServerFn(generateAiTestFn);
   const saveFn = useServerFn(saveGeneratedTestFn);
+  const getTargetsFn = useServerFn(listCbtTargetsFn);
+
+  useEffect(() => {
+    getTargetsFn().then(res => setTargets(res)).catch(e => console.error(e));
+  }, []);
 
   const ALL_MODULES = [
     { id: "mcq", label: "Multiple Choice Questions" },
@@ -83,19 +91,42 @@ function AdminCbtGenerate() {
             <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><Users className="h-5 w-5 text-indigo-500"/> Target Selection</h3>
             <div className="flex gap-4 mb-4">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="target" checked={targetType === "intern"} onChange={() => setTargetType("intern")} /> Intern
+                <input type="radio" name="target" checked={targetType === "intern"} onChange={() => { setTargetType("intern"); setTargetId(""); }} /> Intern
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="target" checked={targetType === "team"} onChange={() => setTargetType("team")} /> Team
+                <input type="radio" name="target" checked={targetType === "team"} onChange={() => { setTargetType("team"); setTargetId(""); }} /> Team
               </label>
             </div>
-            <input 
-              type="text" 
-              placeholder={`Enter ${targetType === "intern" ? "Intern" : "Team"} ID UUID`} 
-              className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-              value={targetId}
-              onChange={e => setTargetId(e.target.value)}
-            />
+            
+            {targetType === "intern" ? (
+              <Select value={targetId} onValueChange={setTargetId}>
+                <SelectTrigger className="w-full bg-white border-slate-300">
+                  <SelectValue placeholder="Select an Intern..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {targets.interns.map(intern => (
+                    <SelectItem key={intern.id} value={intern.id}>
+                      {intern.full_name} ({intern.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Select value={targetId} onValueChange={setTargetId}>
+                <SelectTrigger className="w-full bg-white border-slate-300">
+                  <SelectValue placeholder="Select a Team..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {targets.teams.length === 0 && <SelectItem value="none" disabled>No active teams found</SelectItem>}
+                  {targets.teams.map(team => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            
           </div>
 
           <div>

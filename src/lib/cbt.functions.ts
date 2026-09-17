@@ -251,3 +251,26 @@ export const getInternSubmissionResultFn = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data;
   });
+
+export const listCbtTargetsFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const supabase = getAdminClient();
+    
+    // 1. Get Interns
+    const { data: interns } = await supabase.from("profiles").select("id, full_name, email").in("role", ["intern", "employee"]);
+    
+    // 2. Get Teams (distinct from tasks)
+    const { data: tasks } = await supabase.from("tasks").select("team_id, team_name").not("team_id", "is", null);
+    
+    const uniqueTeams: any[] = [];
+    const seenIds = new Set();
+    for (const t of (tasks || [])) {
+       if (!seenIds.has(t.team_id)) {
+          seenIds.add(t.team_id);
+          uniqueTeams.push({ id: t.team_id, name: t.team_name || t.team_id });
+       }
+    }
+    
+    return { interns: interns || [], teams: uniqueTeams };
+  });
