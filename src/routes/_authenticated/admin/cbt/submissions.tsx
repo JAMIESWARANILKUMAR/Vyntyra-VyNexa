@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listAdminTestsFn, deleteAdminTestFn, toggleAdminTestStatusFn } from "@/lib/cbt.functions";
+import { listAdminTestsFn, deleteAdminTestFn, toggleAdminTestStatusFn, listCbtTargetsFn } from "@/lib/cbt.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -19,7 +19,7 @@ function AdminCbtSubmissions() {
   const fetchTests = useServerFn(listAdminTestsFn);
   const doDelete = useServerFn(deleteAdminTestFn);
   const doToggle = useServerFn(toggleAdminTestStatusFn);
-  const fetchTargets = useServerFn(import("@/lib/cbt.functions").then(m => m.listCbtTargetsFn)); // dynamic to avoid top-level import issue if not imported
+  const fetchTargets = useServerFn(listCbtTargetsFn);
 
   const { data: tests = [], isLoading: isLoadingTests } = useQuery({
     queryKey: ["admin-cbt-tests"],
