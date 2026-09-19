@@ -68,23 +68,89 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
     const supabase = getAdminClient();
     const userId = context.user.id;
     
-    const { data: testData, error: testError } = await supabase
-      .from("cbt_tests")
-      .insert([{ ...args.testMetadata, created_by: userId }])
-      .select()
-      .single();
+    // Fisher-Yates Shuffle for Jumbling Array
+    const shuffleArray = (array: any[]) => {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    };
+
+    if (args.testMetadata.target_type === "team") {
+      const teamId = args.testMetadata.target_id;
       
-    if (testError) throw new Error(testError.message);
-    
-    const questionsToInsert = args.questions.map(q => ({
-      ...q,
-      test_id: testData.id
-    }));
-    
-    const { error: qError } = await supabase.from("cbt_questions").insert(questionsToInsert);
-    if (qError) throw new Error(qError.message);
-    
-    return { success: true, testId: testData.id };
+      // Look up all tasks to find team members
+      const { data: teamTasks } = await supabase.from("tasks").select("assigned_to, team_members").eq("team_id", teamId);
+      const memberIds = new Set<string>();
+      if (teamTasks) {
+        teamTasks.forEach((t: any) => {
+          if (t.assigned_to) memberIds.add(t.assigned_to);
+          if (Array.isArray(t.team_members)) {
+            t.team_members.forEach((m: any) => memberIds.add(String(m)));
+          }
+        });
+      }
+
+      const members = Array.from(memberIds);
+      if (members.length === 0) {
+        throw new Error("No members found in this team to assign tests to. Please assign members to the team tasks first.");
+      }
+
+      const createdTestIds = [];
+      for (const memberId of members) {
+        // Individual test metadata for the team member
+        const individualMeta = { 
+          ...args.testMetadata, 
+          target_type: "intern", 
+          target_id: memberId,
+          title: `${args.testMetadata.title} (Team Allocation)`
+        };
+
+        const { data: testData, error: testError } = await supabase
+          .from("cbt_tests")
+          .insert([{ ...individualMeta, created_by: userId }])
+          .select()
+          .single();
+          
+        if (testError) throw new Error(testError.message);
+
+        // Array Jumbling logic for unique question ordering per team member
+        const jumbledQuestions = shuffleArray(args.questions);
+        const questionsToInsert = jumbledQuestions.map(q => ({
+          ...q,
+          test_id: testData.id
+        }));
+
+        const { error: qError } = await supabase.from("cbt_questions").insert(questionsToInsert);
+        if (qError) throw new Error(qError.message);
+
+        createdTestIds.push(testData.id);
+      }
+
+      return { success: true, testIds: createdTestIds, message: `Allocated ${createdTestIds.length} jumbled tests for team.` };
+
+    } else {
+      // Normal Individual Flow
+      const { data: testData, error: testError } = await supabase
+        .from("cbt_tests")
+        .insert([{ ...args.testMetadata, created_by: userId }])
+        .select()
+        .single();
+        
+      if (testError) throw new Error(testError.message);
+      
+      const questionsToInsert = args.questions.map(q => ({
+        ...q,
+        test_id: testData.id
+      }));
+      
+      const { error: qError } = await supabase.from("cbt_questions").insert(questionsToInsert);
+      if (qError) throw new Error(qError.message);
+      
+      return { success: true, testId: testData.id };
+    }
   });
 
 export const getInternTestSessionFn = createServerFn({ method: "GET" })

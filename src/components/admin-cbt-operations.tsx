@@ -66,6 +66,7 @@ function AdminCbtGenerateView() {
   const [modules, setModules] = useState<string[]>(["mcq"]);
   const [generated, setGenerated] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [timerPerQuestion, setTimerPerQuestion] = useState(60); // default 60s
   
   const [targets, setTargets] = useState<{interns: any[], teams: any[]}>({ interns: [], teams: [] });
   
@@ -83,6 +84,35 @@ function AdminCbtGenerateView() {
       setModules(modules.filter(m => m !== id));
     } else {
       setModules([...modules, id]);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsGenerating(true);
+    try {
+      const pdfjsLib = await import('pdfjs-dist');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let text = "";
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map((item: any) => item.str).join(" ");
+        text += pageText + "\n";
+      }
+      setTaskContext(prev => prev + (prev ? "\n\n" : "") + "--- PDF EXTRACTED CONTEXT ---\n" + text);
+      toast.success("PDF parsed and appended to context!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to parse PDF.");
+    } finally {
+      setIsGenerating(false);
+      e.target.value = "";
     }
   };
 
@@ -113,12 +143,20 @@ function AdminCbtGenerateView() {
 
   const handleSave = async () => {
     try {
+      const totalTime = Math.ceil((generated.questions.length * timerPerQuestion) / 60);
       const res = await saveFn({ data: {
-        testMetadata: { title: `Assigned CBT - ${targetType.toUpperCase()}`, target_type: targetType, target_id: targetId, modules },
+        testMetadata: { 
+          title: `Assigned CBT - ${targetType.toUpperCase()}`, 
+          target_type: targetType, 
+          target_id: targetId, 
+          modules,
+          time_limit_minutes: totalTime,
+          description: JSON.stringify({ per_question_timer: timerPerQuestion })
+        },
         questions: generated.questions
       } });
       if (res.success) {
-        toast.success("Test Approved & Published successfully!");
+        toast.success(res.message || "Test Approved & Published successfully!");
         setGenerated(null);
         setTargetId("");
         setTaskContext("");
@@ -183,16 +221,34 @@ function AdminCbtGenerateView() {
               value={taskContext}
               onChange={e => setTaskContext(e.target.value)}
             />
-            <div className="mt-3 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 text-center cursor-pointer hover:bg-slate-100 transition-colors">
+            <label className="mt-3 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 text-center cursor-pointer hover:bg-slate-100 transition-colors block">
+              <input type="file" accept="application/pdf" className="hidden" onChange={handleFileUpload} />
               <Upload className="h-6 w-6 text-slate-400 mx-auto mb-2" />
               <div className="text-sm font-bold text-slate-700">Upload PDF / Word Report</div>
-              <div className="text-xs text-slate-500 mt-1">Upload to R2 bucket for AI Parsing (Coming Soon)</div>
-            </div>
+              <div className="text-xs text-slate-500 mt-1">Parses directly into context box</div>
+            </label>
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><BrainCircuit className="h-5 w-5 text-emerald-500"/> Exam Modules</h3>
+          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><BrainCircuit className="h-5 w-5 text-emerald-500"/> Exam Config & Modules</h3>
+          
+          <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <label className="block text-sm font-bold text-slate-800 mb-2">Timer Configuration</label>
+            <div className="flex items-center gap-3">
+              <input 
+                type="number" 
+                min={10} 
+                max={300}
+                value={timerPerQuestion} 
+                onChange={(e) => setTimerPerQuestion(Number(e.target.value))}
+                className="w-24 p-2 border rounded-lg text-sm" 
+              />
+              <span className="text-sm text-slate-600">Seconds per question</span>
+            </div>
+            <p className="text-xs text-slate-500 mt-2">Calculates total exam time based on generated question count.</p>
+          </div>
+
           <p className="text-sm text-slate-500 mb-4">Select the specific modules to generate for this CBT run. The AI will mix and match questions accordingly.</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
             {ALL_MODULES.map(m => {
