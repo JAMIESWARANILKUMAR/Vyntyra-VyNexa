@@ -28,6 +28,7 @@ import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProfileChangeRequestModal } from "@/components/profile-change-request-modal";
 import { FirstLoginWelcomeModal } from "@/components/first-login-welcome-modal";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
+import { listInternSubmissionsFn } from "@/lib/cbt.functions";
 import { TechDomainWorkspace } from "@/components/tech-domain-workspace";
 import { NonTechDomainWorkspace } from "@/components/non-tech-domain-workspace";
 import { ManagementDomainWorkspace } from "@/components/management-domain-workspace";
@@ -161,6 +162,66 @@ function FeeCountdownTimer({ deadline }: { deadline?: string | null }) {
         <span className="text-base sm:text-lg font-black font-mono leading-none">{String(timeLeft.seconds).padStart(2, "0")}</span>
         <span className="text-[9px] uppercase font-bold text-red-200 mt-0.5">Secs</span>
       </div>
+    </div>
+  );
+}
+
+function CbtResultsSection() {
+  const getSubmissionsFn = useServerFn(listInternSubmissionsFn);
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getSubmissionsFn().then(res => {
+      setSubmissions(res);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  return (
+    <div className="bg-white/80 backdrop-blur-2xl p-8 rounded-2xl shadow-xl border border-slate-200/60 mt-6">
+      <h3 className="font-bold text-lg mb-6 flex items-center gap-2"><Award className="h-5 w-5 text-indigo-500" /> My CBT Results</h3>
+      {loading ? (
+        <div className="flex items-center gap-2 text-slate-500">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading results...
+        </div>
+      ) : submissions.length === 0 ? (
+        <div className="text-center p-6 text-slate-500 bg-white rounded-xl border border-dashed border-slate-300">No exam results yet.</div>
+      ) : (
+        <div className="space-y-4">
+          {submissions.map(sub => (
+            <div key={sub.id} className="p-4 border border-slate-200 rounded-xl bg-white/60 shadow-sm flex flex-col gap-3">
+              <div className="flex justify-between items-center">
+                <div className="font-bold text-slate-800">{sub.test_title}</div>
+                <div className={`px-2 py-1 rounded text-xs font-bold ${sub.passed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                  {sub.passed ? 'PASSED' : 'FAILED'}
+                </div>
+              </div>
+              <div className="flex justify-between text-sm text-slate-600">
+                <div>Score: <span className="font-bold">{sub.score} / {sub.max_score}</span></div>
+                <div>{new Date(sub.submitted_at).toLocaleDateString()}</div>
+              </div>
+              {sub.ai_feedback && (
+                <div className="mt-2 text-xs bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  <div className="font-bold text-indigo-600 mb-2 flex items-center gap-1"><BrainCircuit className="h-3 w-3" /> AI Feedback Overview</div>
+                  <div className="space-y-2">
+                  {
+                    Object.entries(typeof sub.ai_feedback === 'string' ? JSON.parse(sub.ai_feedback) : sub.ai_feedback).map(([k,v]: any) => (
+                      <div key={k} className="flex gap-2 items-start border-b border-slate-100 last:border-0 pb-1 last:pb-0">
+                        <div className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold ${v.score === v.max ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                          {v.score}/{v.max}
+                        </div>
+                        <div className="text-slate-600 leading-tight">{v.feedback}</div>
+                      </div>
+                    ))
+                  }
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -4098,6 +4159,8 @@ function InternDashboard() {
                   </Button>
                 </div>
               </div>
+
+              <CbtResultsSection />
 
             </div>
           )}

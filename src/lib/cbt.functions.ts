@@ -1,10 +1,11 @@
-
 import { getEnv } from "@/lib/env";
 import { createServerFn } from "@tanstack/react-start";
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 import { getAdminClient } from "@/integrations/supabase/admin";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getD1Database } from "@/lib/cloudflare-d1";
+import crypto from 'crypto';
 
 export const generateAiTestFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -24,38 +25,28 @@ export const generateAiTestFn = createServerFn({ method: "POST" })
     ${args.documentText || "None"}
     
     REQUESTED MODULES:
-    ${args.modules.join(", ")}
+    ${args.modules.join(', ')}
     
     Output the result STRICTLY as JSON with the following schema:
     {
       "questions": [
         {
-          "difficulty": "easy" | "medium" | "hard",
-          "question_type": "mcq" | "coding" | "long_answer" | "aptitude" | "communication",
-          "question_text": "The question prompt",
-          "options": [{"id": "a", "text": "Option 1"}, ...],
-          "correct_answer": {"id": "a"},
-          "code_template": "...",
-          "test_cases": [{"input": "...", "expected": "..."}],
+          "question_type": "mcq" | "coding" | "aptitude" | "long_answer",
+          "question_text": "...",
+          "options": [{ "id": "...", "text": "..." }],
+          "correct_answer": { "id": "..." } | "...",
           "max_points": 10
         }
       ]
-    }
-    `;
-
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: prompt,
-        config: { responseMimeType: "application/json" }
-      });
-      let text = response.text || "{}";
-      if (text.startsWith("```json")) text = text.replace(/```json\\n/g, "").replace(/```/g, "");
-      return { success: true, data: JSON.parse(text) };
-    } catch (error: any) {
-      console.error("AI Gen Error:", error);
-      return { success: false, error: error.message };
-    }
+    }`;
+    
+    const response = await ai.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: prompt,
+      config: { responseMimeType: 'application/json' }
+    });
+    
+    return JSON.parse(response.text || '{}');
   });
 
 export const saveGeneratedTestFn = createServerFn({ method: "POST" })
@@ -66,9 +57,10 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data: args, context }) => {
     const supabase = getAdminClient();
+    const d1 = getD1Database(context);
+    if (!d1) throw new Error("Cloudflare D1 is not available");
     const userId = context.user.id;
     
-    // Fisher-Yates Shuffle for Jumbling Array
     const shuffleArray = (array: any[]) => {
       const arr = [...array];
       for (let i = arr.length - 1; i > 0; i--) {
@@ -80,8 +72,6 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
 
     if (args.testMetadata.target_type === "team") {
       const teamId = args.testMetadata.target_id;
-      
-      // Look up all tasks to find team members
       const { data: teamTasks } = await supabase.from("tasks").select("assigned_to, team_members").eq("team_id", teamId);
       const memberIds = new Set<string>();
       if (teamTasks) {
@@ -94,13 +84,13 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       }
 
       const members = Array.from(memberIds);
-      if (members.length === 0) {
-        throw new Error("No members found in this team to assign tests to. Please assign members to the team tasks first.");
-      }
+      if (members.length === 0) throw new Error("No members found in this team to assign tests to.");
 
       const createdTestIds = [];
+      const stmts = [];
+
       for (const memberId of members) {
-        // Individual test metadata for the team member
+        const testId = crypto.randomUUID();
         const individualMeta = { 
           ...args.testMetadata, 
           target_type: "intern", 
@@ -108,66 +98,72 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
           title: `${args.testMetadata.title} (Team Allocation)`
         };
 
-        const { data: testData, error: testError } = await supabase
-          .from("cbt_tests")
-          .insert([{ ...individualMeta, created_by: userId }])
-          .select()
-          .single();
-          
-        if (testError) throw new Error(testError.message);
+        stmts.push(
+          d1.prepare('INSERT INTO cbt_tests (id, title, description, target_type, target_id, modules, time_limit_minutes, passing_score, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            .bind(testId, individualMeta.title, individualMeta.description, individualMeta.target_type, individualMeta.target_id, JSON.stringify(individualMeta.modules), individualMeta.time_limit_minutes || 30, individualMeta.passing_score || 60, userId)
+        );
 
-        // Array Jumbling logic for unique question ordering per team member
         const jumbledQuestions = shuffleArray(args.questions);
-        const questionsToInsert = jumbledQuestions.map(q => ({
-          ...q,
-          test_id: testData.id
-        }));
-
-        const { error: qError } = await supabase.from("cbt_questions").insert(questionsToInsert);
-        if (qError) throw new Error(qError.message);
-
-        createdTestIds.push(testData.id);
+        for (const q of jumbledQuestions) {
+          stmts.push(
+            d1.prepare('INSERT INTO cbt_questions (id, test_id, question_type, question_text, options, correct_answer, max_points) VALUES (?, ?, ?, ?, ?, ?, ?)')
+              .bind(crypto.randomUUID(), testId, q.question_type, q.question_text, JSON.stringify(q.options), JSON.stringify(q.correct_answer), q.max_points || 10)
+          );
+        }
+        createdTestIds.push(testId);
       }
+
+      const res = await d1.batch(stmts);
+      if (!res.every(r => r.success)) throw new Error("Failed to batch insert tests to D1");
 
       return { success: true, testIds: createdTestIds, message: `Allocated ${createdTestIds.length} jumbled tests for team.` };
 
     } else {
-      // Normal Individual Flow
-      const { data: testData, error: testError } = await supabase
-        .from("cbt_tests")
-        .insert([{ ...args.testMetadata, created_by: userId }])
-        .select()
-        .single();
-        
-      if (testError) throw new Error(testError.message);
+      const testId = crypto.randomUUID();
+      const stmts = [];
       
-      const questionsToInsert = args.questions.map(q => ({
-        ...q,
-        test_id: testData.id
-      }));
+      stmts.push(
+        d1.prepare('INSERT INTO cbt_tests (id, title, description, target_type, target_id, modules, time_limit_minutes, passing_score, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+          .bind(testId, args.testMetadata.title, args.testMetadata.description, args.testMetadata.target_type, args.testMetadata.target_id, JSON.stringify(args.testMetadata.modules), args.testMetadata.time_limit_minutes || 30, args.testMetadata.passing_score || 60, userId)
+      );
+
+      for (const q of args.questions) {
+        stmts.push(
+          d1.prepare('INSERT INTO cbt_questions (id, test_id, question_type, question_text, options, correct_answer, max_points) VALUES (?, ?, ?, ?, ?, ?, ?)')
+            .bind(crypto.randomUUID(), testId, q.question_type, q.question_text, JSON.stringify(q.options), JSON.stringify(q.correct_answer), q.max_points || 10)
+        );
+      }
+
+      const res = await d1.batch(stmts);
+      if (!res.every((r: any) => r.success)) throw new Error("Failed to insert test to D1");
       
-      const { error: qError } = await supabase.from("cbt_questions").insert(questionsToInsert);
-      if (qError) throw new Error(qError.message);
-      
-      return { success: true, testId: testData.id };
+      return { success: true, testId: testId };
     }
   });
 
 export const getInternTestSessionFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ testId: z.string() }).parse(d))
-  .handler(async ({ data: args }) => {
-    const supabase = getAdminClient();
+  .handler(async ({ data: args, context }) => {
+    const d1 = getD1Database(context);
+    if (!d1) throw new Error("Cloudflare D1 is not available");
     
-    const { data: test, error } = await supabase.from("cbt_tests").select("*").eq("id", args.testId).single();
-    if (error) throw new Error(error.message);
+    const test = await d1.prepare('SELECT * FROM cbt_tests WHERE id = ?').bind(args.testId).first();
+    if (!test) throw new Error("Test not found");
     
-    const { data: questions, error: qError } = await supabase.from("cbt_questions").select("*").eq("test_id", args.testId);
-    if (qError) throw new Error(qError.message);
+    const qResult = await d1.prepare('SELECT * FROM cbt_questions WHERE test_id = ?').bind(args.testId).all();
+    const questions = qResult.results || [];
     
-    const safeQuestions = questions.map(q => {
-      const { correct_answer, ...safeQ } = q;
-      return safeQ;
+    const safeQuestions = questions.map((q: any) => {
+      let options = q.options;
+      try { options = JSON.parse(q.options); } catch (e) {}
+      return {
+        id: q.id,
+        question_type: q.question_type,
+        question_text: q.question_text,
+        options: options,
+        max_points: q.max_points
+      };
     });
     
     return { test, questions: safeQuestions };
@@ -181,121 +177,102 @@ export const submitCbtExamFn = createServerFn({ method: "POST" })
     proctoringLogs: z.any()
   }).parse(d))
   .handler(async ({ data: args, context }) => {
-    const supabase = getAdminClient();
+    const d1 = getD1Database(context);
+    if (!d1) throw new Error("Cloudflare D1 is not available");
     const userId = context.user.id;
+    const subId = crypto.randomUUID();
     
-    const { data: submission, error } = await supabase.from("cbt_submissions").insert([{
-      test_id: args.testId,
-      intern_id: userId,
-      answers: args.answers,
-      proctoring_logs: args.proctoringLogs,
-      status: "submitted",
-      submitted_at: new Date().toISOString()
-    }]).select().single();
-    
-    if (error) throw new Error(error.message);
-    
-    return { success: true, submissionId: submission.id };
-  });
+    const res = await d1.prepare('INSERT INTO cbt_submissions (id, test_id, intern_id, answers, proctoring_logs, status) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(subId, args.testId, userId, JSON.stringify(args.answers), JSON.stringify(args.proctoringLogs), "submitted").run();
+      
+    if (!res.success) throw new Error("Failed to save submission");
 
-export const gradeCbtExamFn = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ submissionId: z.string() }).parse(d))
-  .handler(async ({ data: args }) => {
-    const supabase = getAdminClient();
+    // Trigger grading via Gemini 1.5 Flash immediately
+    const qResult = await d1.prepare('SELECT * FROM cbt_questions WHERE test_id = ?').bind(args.testId).all();
+    const questions = qResult.results || [];
     
-    const { data: sub, error } = await supabase.from("cbt_submissions").select("*, cbt_tests(*)").eq("id", args.submissionId).single();
-    if (error || !sub) throw new Error("Submission not found");
-    
-    const { data: questions } = await supabase.from("cbt_questions").select("*").eq("test_id", sub.test_id);
-    if (!questions) throw new Error("Questions not found");
+    const test = await d1.prepare('SELECT * FROM cbt_tests WHERE id = ?').bind(args.testId).first<any>();
     
     let totalScore = 0;
     let maxScore = 0;
     let aiFeedback: any = {};
-    
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     
+    let answersObj = args.answers;
+    try { if (typeof answersObj === 'string') answersObj = JSON.parse(answersObj); } catch (e) {}
+
     for (const q of questions) {
       maxScore += (q.max_points || 10);
-      const internAnswer = sub.answers[q.id];
+      const internAnswer = answersObj ? answersObj[q.id] : null;
+      let correctAnswer = q.correct_answer;
+      try { if (typeof correctAnswer === 'string') correctAnswer = JSON.parse(correctAnswer); } catch(e) {}
       
-      if (q.question_type === "mcq") {
-        const isCorrect = internAnswer?.id === q.correct_answer?.id || internAnswer === q.correct_answer?.id;
+      if (q.question_type === 'mcq') {
+        const isCorrect = internAnswer?.id === correctAnswer?.id || internAnswer === correctAnswer?.id;
         const pts = isCorrect ? (q.max_points || 10) : 0;
         totalScore += pts;
-        aiFeedback[q.id] = { score: pts, max: q.max_points, feedback: isCorrect ? "Correct." : "Incorrect." };
+        aiFeedback[q.id] = { score: pts, max: q.max_points, feedback: isCorrect ? 'Correct.' : 'Incorrect.' };
       } else {
         if (!internAnswer) {
-          aiFeedback[q.id] = { score: 0, max: q.max_points, feedback: "No answer provided." };
+          aiFeedback[q.id] = { score: 0, max: q.max_points, feedback: 'No answer provided.' };
           continue;
         }
-        
         try {
-          const prompt = `Evaluate this student answer.
+          const prompt = `Evaluate this student answer strictly for technical correctness and provide constructive feedback.
 Question: ${q.question_text}
-Expected/Sample Answer: ${JSON.stringify(q.correct_answer)}
+Expected Answer Context: ${JSON.stringify(correctAnswer)}
 Student Answer: ${JSON.stringify(internAnswer)}
-Max Points: ${q.max_points || 10}
+Max Points Possible: ${q.max_points || 10}
 
-Return JSON { "score": number, "feedback": "reason" }`;
+Return JSON with exactly this schema: { "score": number, "feedback": "reasoning" }`;
           const response = await ai.models.generateContent({
-            model: "gemini-3.6-flash",
+            model: 'gemini-1.5-flash',
             contents: prompt,
-            config: { responseMimeType: "application/json" }
+            config: { responseMimeType: 'application/json' }
           });
-          const resJson = JSON.parse(response.text || "{}");
+          const resJson = JSON.parse(response.text || '{}');
           totalScore += (resJson.score || 0);
           aiFeedback[q.id] = { score: resJson.score || 0, max: q.max_points, feedback: resJson.feedback };
         } catch (e) {
-          aiFeedback[q.id] = { score: 0, max: q.max_points, feedback: "Error grading." };
+          aiFeedback[q.id] = { score: 0, max: q.max_points, feedback: 'Error grading with AI.' };
         }
       }
     }
     
-    const passed = totalScore >= (sub.cbt_tests.passing_score || 60);
+    const passed = totalScore >= (test.passing_score || 60);
     
-    await supabase.from("cbt_submissions").update({
-      score: totalScore,
-      max_score: maxScore,
-      passed,
-      ai_feedback: aiFeedback
-    }).eq("id", args.submissionId);
+    await d1.prepare('UPDATE cbt_submissions SET score = ?, max_score = ?, passed = ?, ai_feedback = ?, status = ? WHERE id = ?')
+      .bind(totalScore, maxScore, passed ? 1 : 0, JSON.stringify(aiFeedback), "graded", subId).run();
     
-    return { success: true, score: totalScore, passed };
+    return { success: true, submissionId: subId, score: totalScore, passed };
   });
-
-
 
 export const listAdminTestsFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const supabase = getAdminClient();
-    const { data: tests, error } = await supabase.from("cbt_tests")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return tests;
+    const d1 = getD1Database(context);
+    if (!d1) throw new Error("Cloudflare D1 is not available");
+    const res = await d1.prepare('SELECT * FROM cbt_tests ORDER BY created_at DESC').all();
+    return res.results || [];
   });
 
 export const deleteAdminTestFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: any) => ({ testId: String(d.testId) }))
+  .inputValidator((d: any) => z.object({ testId: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
-    // cascades to questions and submissions automatically if setup properly, else manually delete or just delete test
-    const supabase = getAdminClient();
-    const { error } = await supabase.from("cbt_tests").delete().eq("id", data.testId);
-    if (error) throw new Error(error.message);
+    const d1 = getD1Database(context);
+    if (!d1) throw new Error("Cloudflare D1 is not available");
+    await d1.prepare('DELETE FROM cbt_tests WHERE id = ?').bind(data.testId).run();
     return { success: true };
   });
 
 export const toggleAdminTestStatusFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: any) => ({ testId: String(d.testId), status: String(d.status) }))
+  .inputValidator((d: any) => z.object({ testId: z.string(), status: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
-    const supabase = getAdminClient();
-    const { error } = await supabase.from("cbt_tests").update({ status: data.status }).eq("id", data.testId);
-    if (error) throw new Error(error.message);
+    const d1 = getD1Database(context);
+    if (!d1) throw new Error("Cloudflare D1 is not available");
+    await d1.prepare('UPDATE cbt_tests SET status = ? WHERE id = ?').bind(data.status, data.testId).run();
     return { success: true };
   });
 
@@ -303,19 +280,28 @@ export const getInternSubmissionResultFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ testId: z.string() }).parse(d))
   .handler(async ({ data: args, context }) => {
-    const supabase = getAdminClient();
+    const d1 = getD1Database(context);
+    if (!d1) throw new Error("Cloudflare D1 is not available");
     const userId = context.user.id;
     
-    const { data, error } = await supabase.from("cbt_submissions")
-      .select("*, cbt_tests(title, modules, passing_score, time_limit_minutes)")
-      .eq("test_id", args.testId)
-      .eq("intern_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-      
-    if (error) throw new Error(error.message);
-    return data;
+    const sub = await d1.prepare('SELECT * FROM cbt_submissions WHERE test_id = ? AND intern_id = ? ORDER BY created_at DESC LIMIT 1').bind(args.testId, userId).first<any>();
+    if (!sub) return null;
+    
+    const test = await d1.prepare('SELECT title, modules, passing_score, time_limit_minutes FROM cbt_tests WHERE id = ?').bind(args.testId).first<any>();
+    sub.cbt_tests = test;
+    
+    return sub;
+  });
+
+export const listInternSubmissionsFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const d1 = getD1Database(context);
+    if (!d1) throw new Error("Cloudflare D1 is not available");
+    const userId = context.user.id;
+    
+    const res = await d1.prepare('SELECT s.*, t.title as test_title, t.passing_score FROM cbt_submissions s JOIN cbt_tests t ON s.test_id = t.id WHERE s.intern_id = ? ORDER BY s.created_at DESC').bind(userId).all();
+    return res.results || [];
   });
 
 export const listCbtTargetsFn = createServerFn({ method: "GET" })
@@ -323,10 +309,7 @@ export const listCbtTargetsFn = createServerFn({ method: "GET" })
   .handler(async () => {
     const supabase = getAdminClient();
     
-    // 1. Get Interns
     const { data: interns } = await supabase.from("profiles").select("id, full_name, email").in("role", ["intern", "employee"]);
-    
-    // 2. Get Teams (distinct from tasks)
     const { data: tasks } = await supabase.from("tasks").select("team_id, team_name").not("team_id", "is", null);
     
     const uniqueTeams: any[] = [];
