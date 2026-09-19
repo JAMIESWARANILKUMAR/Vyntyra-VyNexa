@@ -64,7 +64,7 @@ function CbtExamInterface() {
     getSessionFn({ data: { testId } }).then(res => {
       setTest({...res.test, internId: "INT-4829"}); // fallback if not in test
       setQuestions(res.questions);
-      setTimeLeft((res.test.time_limit_minutes || 30) * 60);
+      setTimeLeft(((res.test as any).time_limit_minutes || 30) * 60);
     });
   }, [testId]);
 
