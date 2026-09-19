@@ -6,7 +6,7 @@ import {
   Shield, GraduationCap, Briefcase, CalendarDays, RefreshCw,
   Video, FileText, UploadCloud, MessageSquare, CreditCard, LifeBuoy, Award,
   Play, Pause, Square, Search, ExternalLink, ShieldCheck, Download, Send, MessageCircle, Key,
-  PartyPopper, LayoutDashboard, Layers, FolderOpen, Megaphone, DollarSign,
+  PartyPopper, LayoutDashboard, BrainCircuit, Layers, FolderOpen, Megaphone, DollarSign,
   CalendarPlus, Share2, Copy, Check, Pencil, Edit, Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,7 @@ import { AdminDetailedFeedbacksView } from "@/components/admin-detailed-feedback
 import { ManageTeamModal } from "@/components/manage-team-modal";
 import { AdminLmsManager } from "@/components/admin-lms-manager";
 import { AdminProfileChangeApprovals } from "@/components/admin-profile-change-approvals";
+import { CbtOperationsTab } from "@/components/admin-cbt-operations";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { toast } from "sonner";
 import { TaskRichDescription } from "@/components/task-rich-description";
@@ -1256,7 +1257,8 @@ function OperationsDashboard() {
             { id: "leaves", label: "Leaves & Requests", icon: FileText, count: (leavesQ.data || []).filter((l: any) => l.status === "pending").length || null },
             { id: "meetings", label: "Meetings & Standups", icon: Video, count: null },
             { id: "announcements", label: "Communication & Promos", icon: Megaphone, count: null },
-            { id: "finances", label: "Finances & Payouts", icon: DollarSign, count: null },
+              { id: "finances", label: "Finances & Payouts", icon: DollarSign, count: null },
+              { id: "cbt", label: "AI CBT Engine", icon: BrainCircuit, count: null },
             { id: "support", label: "Support & Feedback", icon: LifeBuoy, count: (supportQueries || []).filter((q: any) => q.status === "open").length || null },
             { id: "profile_approvals", label: "Profile Approvals", icon: UserCheck, count: null },
           ].map((tab) => {
@@ -1310,6 +1312,7 @@ function OperationsDashboard() {
                   { id: "meetings", title: "Meetings & Daily Standups", desc: "Schedule Google Meet syncs, 1-on-1 reviews, and track daily standup blockers.", icon: Video, color: "text-indigo-600 bg-indigo-50 border-indigo-200", badge: `${(meetingsQ.data || []).length} Meetings` },
                   { id: "announcements", title: "Communication, Email & SMS Hub", desc: "Broadcast company notices, kudos recognition, and promotional email & SMS campaigns.", icon: Megaphone, color: "text-purple-600 bg-purple-50 border-purple-200", badge: "Omni-Hub" },
                   { id: "finances", title: "Finances & Payouts Engine", desc: "Approve stipend payouts, review expense claims, and track compensation records.", icon: DollarSign, color: "text-emerald-700 bg-emerald-50 border-emerald-200", badge: `${(payoutsQ.data || []).length} Payouts` },
+                  { id: "cbt", title: "AI CBT Engine V2", desc: "Generate and monitor proctored AI tests and candidate exams.", icon: BrainCircuit, color: "text-indigo-600 bg-indigo-50 border-indigo-200", badge: "Proctored" },
                   { id: "support", title: "Helpdesk & Resolution Hub", desc: "Assign customer and intern support tickets to employee resolvers and approve syncs.", icon: LifeBuoy, color: "text-cyan-600 bg-cyan-50 border-cyan-200", badge: `${(supportQueries || []).filter((q: any) => q.status === "open").length} Open` },
                   { id: "profile_approvals", title: "Profile Change Approvals", desc: "Review and approve/reject sensitive profile updates (Email, Phone, Photo, Address) requested by interns and employees.", icon: UserCheck, color: "text-indigo-600 bg-indigo-50 border-indigo-200", badge: "Identity Approval" },
                 ].map((item) => {
@@ -3468,6 +3471,13 @@ function OperationsDashboard() {
         {activeTab === "profile_approvals" && (
           <section id="profile-approvals-section">
             <AdminProfileChangeApprovals />
+          </section>
+        )}
+
+        {/* 🧠 TAB: AI CBT ENGINE */}
+        {activeTab === "cbt" && (
+          <section id="cbt-section">
+            <CbtOperationsTab />
           </section>
         )}
       </main>
