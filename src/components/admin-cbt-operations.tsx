@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { BrainCircuit, Upload, Loader2, Save, Users, FileText, CheckCircle2, Trash2, CheckCircle, XCircle, RefreshCw, AlertTriangle, Search, Activity } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ActiveStreamsSection } from "./cbt-streams";
 
 const ALL_MODULES = [
   { id: "mcq", label: "Multiple Choice (MCQ)" },
@@ -348,6 +349,7 @@ function AdminCbtSubmissionsView() {
 
   return (
     <div className="space-y-6">
+      <ActiveStreamsSection />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
           <div className="h-12 w-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Activity className="h-6 w-6" /></div>

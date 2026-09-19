@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getInternTestSessionFn, submitCbtExamFn } from "@/lib/cbt.functions";
 import { useProctoringEnforcement } from "@/hooks/useProctoringEnforcement";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { AlertTriangle, ShieldCheck, VideoOff, CheckCircle2, ChevronRight, ChevronLeft, ShieldAlert, AlertCircle, RefreshCcw, MonitorSmartphone } from "lucide-react";
@@ -36,6 +37,82 @@ function CbtExamInterface() {
   const [postTestCountdown, setPostTestCountdown] = useState(120);
   const [terminationReason, setTerminationReason] = useState("");
   const [calculatedScore, setCalculatedScore] = useState(0);
+
+  // WebRTC / Live Streaming hook
+  const rtcConnection = useRef<RTCPeerConnection | null>(null);
+
+  useEffect(() => {
+    if (examStatus !== "running" || !test) return;
+
+    const channelName = `cbt-exam-${testId}-${test.internId || 'UNKNOWN'}`;
+    const channel = supabase.channel(channelName, { config: { presence: { key: test.internId } } });
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        console.log('Presence sync', channel.presenceState());
+      })
+      .on('broadcast', { event: 'request_stream' }, async () => {
+        try {
+          if (rtcConnection.current) {
+            rtcConnection.current.close();
+          }
+          const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+          rtcConnection.current = pc;
+
+          // Get media (assume permissions granted by proctoring)
+          const webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }).catch(() => null);
+          const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true }).catch(() => null);
+
+          if (webcamStream) webcamStream.getTracks().forEach(track => pc.addTrack(track, webcamStream));
+          if (screenStream) screenStream.getTracks().forEach(track => pc.addTrack(track, screenStream));
+
+          pc.onicecandidate = (event) => {
+            if (event.candidate) {
+              channel.send({ type: 'broadcast', event: 'ice_candidate', payload: { candidate: event.candidate, target: 'admin' } });
+            }
+          };
+
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+
+          channel.send({ type: 'broadcast', event: 'sdp_offer', payload: { offer } });
+        } catch (err) {
+          console.error("WebRTC Error:", err);
+        }
+      })
+      .on('broadcast', { event: 'sdp_answer' }, async ({ payload }) => {
+        if (rtcConnection.current) {
+          await rtcConnection.current.setRemoteDescription(new RTCSessionDescription(payload.answer));
+        }
+      })
+      .on('broadcast', { event: 'ice_candidate' }, async ({ payload }) => {
+        if (payload.target === 'intern' && rtcConnection.current) {
+          await rtcConnection.current.addIceCandidate(new RTCIceCandidate(payload.candidate));
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+           // Track in specific channel for WebRTC signaling
+           await channel.track({ testId, internId: test.internId, startedAt: Date.now(), ip: ipAddress });
+        }
+      });
+
+    const globalChannel = supabase.channel('cbt-active-exams', { config: { presence: { key: test.internId } } });
+    globalChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+         await globalChannel.track({ testId, internId: test.internId, startedAt: Date.now(), ip: ipAddress, status: 'running' });
+      }
+    });
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(globalChannel);
+      if (rtcConnection.current) {
+        rtcConnection.current.close();
+        rtcConnection.current = null;
+      }
+    };
+  }, [examStatus, test, testId, ipAddress]);
 
   const getSessionFn = useServerFn(getInternTestSessionFn);
   const submitFn = useServerFn(submitCbtExamFn);
