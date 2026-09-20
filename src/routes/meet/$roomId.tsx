@@ -55,7 +55,7 @@ function MeetingRoom() {
       <div className="min-h-screen bg-[#1a1a1a] flex flex-col items-center justify-center text-white relative overflow-hidden">
         <div className="relative z-10 flex flex-col items-center">
           <Loader2 className="h-8 w-8 animate-spin text-white mb-4" />
-          <h2 className="text-xl font-medium tracking-tight">Connecting to Zoom...</h2>
+          <h2 className="text-xl font-medium tracking-tight">Connecting to Vyntyra Connect...</h2>
         </div>
       </div>
     );
@@ -245,8 +245,8 @@ function MeetingRoom() {
       <header className="h-[48px] bg-[#f8f9fb] border-b border-[#e6e6e6] flex items-center justify-between px-4 shrink-0">
         <div className="flex items-center gap-6">
           <div className="flex items-center text-[#0b5cff] font-semibold tracking-tight text-lg">
-            <span className="font-bold">zoom</span>
-            <span className="text-gray-800 ml-1 font-normal text-[15px] mt-0.5">Workplace</span>
+            <span className="font-bold">Vyntyra</span>
+            <span className="text-gray-800 ml-1 font-normal text-[15px] mt-0.5">Connect</span>
           </div>
           
           <div className="hidden md:flex items-center gap-1 text-gray-400">
@@ -439,7 +439,7 @@ function MeetingRoom() {
                          <Globe className="h-5 w-5" />
                          <span className="absolute -top-1 -right-1 text-[8px] text-blue-400">✨</span>
                       </div>
-                      <span className="text-[10px] pointer-events-none">Zoom AI</span>
+                      <span className="text-[10px] pointer-events-none">Vyntyra AI</span>
                     </Button>
                     
                     <Button 
