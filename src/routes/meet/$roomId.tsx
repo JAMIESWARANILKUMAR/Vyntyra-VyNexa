@@ -151,199 +151,155 @@ function MeetingRoom() {
   }
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-slate-100 flex flex-col font-sans selection:bg-emerald-500/30 overflow-hidden relative">
-      {/* Dynamic CSS Overrides for RTK SDK - Vyntyra Classic Theme */}
+    <div className="min-h-screen bg-black text-slate-100 flex flex-col font-sans overflow-hidden relative">
+      
+      {/* Zoom-style CSS Overrides */}
       <style dangerouslySetInnerHTML={{__html: `
-        /* Video Grid & Tiles */
+        /* Main Video Grid */
         .rtk-video-grid {
-          padding: 24px !important;
-          gap: 16px !important;
+          padding: 0 !important;
+          gap: 2px !important;
           height: 100% !important;
-        }
-        .rtk-video-tile {
-          border-radius: 12px !important;
-          border: 1px solid rgba(51, 65, 85, 0.5) !important; /* border-slate-700/50 */
-          background: #0f172a !important; /* bg-slate-900 */
-          overflow: hidden;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-          transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+          background-color: #000 !important;
         }
         
-        /* Active Speaker (Vyntyra Emerald Accent) */
+        .rtk-video-tile {
+          border-radius: 0 !important;
+          border: 2px solid transparent !important;
+          background: #111 !important;
+          overflow: hidden;
+          transition: border-color 0.1s ease !important;
+          box-shadow: none !important;
+        }
+        
+        /* Zoom Active Speaker Green */
         .rtk-active-speaker {
-          border: 2px solid #10b981 !important; /* emerald-500 */
-          box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2), 0 8px 24px rgba(16, 185, 129, 0.15) !important;
+          border: 2px solid #58B020 !important;
+          box-shadow: none !important;
         }
 
-        /* Participant Names (Bottom Left) */
+        /* Participant Names (Zoom style: bottom left, black box, small font) */
         .rtk-participant-label {
           position: absolute;
-          bottom: 12px;
-          left: 12px;
-          background: rgba(15, 23, 42, 0.85) !important;
-          backdrop-filter: blur(8px) !important;
-          color: #f8fafc !important;
-          border: 1px solid rgba(51, 65, 85, 0.6) !important;
-          border-radius: 6px !important;
-          padding: 4px 10px !important;
-          font-size: 13px !important;
-          font-weight: 600 !important;
+          bottom: 0;
+          left: 0;
+          background: rgba(0, 0, 0, 0.7) !important;
+          color: #fff !important;
+          border-radius: 0 4px 0 0 !important;
+          padding: 4px 8px !important;
+          font-size: 12px !important;
+          font-weight: 400 !important;
+          border: none !important;
           display: flex;
           align-items: center;
           gap: 6px;
+          backdrop-filter: none !important;
         }
 
-        /* Live Audio Indicator */
         .rtk-participant-label::before {
           content: '';
           display: inline-block;
           width: 6px;
           height: 6px;
           border-radius: 50%;
-          background-color: #10b981; /* emerald-500 */
+          background-color: #58B020;
         }
         .rtk-participant-label[data-muted="true"]::before {
-          background-color: #ef4444; /* red-500 */
+          background-color: #ff3b30;
         }
 
         /* Avatar styling */
         .rtk-video-avatar {
-          background: linear-gradient(135deg, #312e81, #064e3b) !important; /* Indigo to Emerald dark gradient */
-          color: #10b981 !important; /* emerald-500 text */
-          font-weight: 600 !important;
+          background: #333 !important;
+          color: #fff !important;
+          font-weight: 500 !important;
           border-radius: 50% !important;
-          border: 1px solid rgba(16, 185, 129, 0.3) !important;
+          border: none !important;
         }
 
-        /* Control Dock (Classic Bottom Bar) */
+        /* Zoom Bottom Control Bar */
         .rtk-control-bar {
-          background: #0f172a !important; /* slate-900 */
-          border-top: 1px solid rgba(51, 65, 85, 0.5) !important; /* border-slate-700/50 */
-          padding: 12px 24px !important;
+          background: #1a1a1a !important;
+          border-top: 1px solid #2d2d2d !important;
+          border-radius: 0 !important;
+          padding: 0 16px !important;
+          height: 64px !important;
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
-          gap: 16px !important;
+          gap: 4px !important;
+          width: 100% !important;
+          margin: 0 !important;
           position: relative;
           z-index: 50;
         }
         
-        /* Control Buttons */
+        /* Zoom Transparent Control Buttons */
         .rtk-btn {
-          border-radius: 50% !important;
-          width: 48px !important;
-          height: 48px !important;
-          background-color: rgba(30, 41, 59, 0.8) !important; /* slate-800 */
-          border: 1px solid rgba(51, 65, 85, 0.5) !important; /* border-slate-700/50 */
-          color: #f1f5f9 !important; /* slate-100 */
-          transition: background-color 0.2s ease, transform 0.1s ease !important;
+          border-radius: 8px !important;
+          width: 60px !important;
+          height: 52px !important;
+          background-color: transparent !important;
+          border: none !important;
+          color: #b3b3b3 !important;
+          transition: background-color 0.1s ease !important;
+          transform: none !important;
         }
         .rtk-btn:hover {
-          background-color: rgba(51, 65, 85, 0.8) !important; /* slate-700 */
-          transform: scale(1.05);
+          background-color: #333 !important;
+          color: #fff !important;
         }
         
-        /* Muted State */
+        /* Muted State - Zoom usually just strikes through, but we can make it red text or standard */
         .rtk-btn-muted {
-          background-color: rgba(225, 29, 72, 0.15) !important; /* rose-600/15 */
-          border-color: rgba(225, 29, 72, 0.3) !important;
-          color: #f43f5e !important; /* rose-400 */
+          background-color: transparent !important;
+          color: #ff3b30 !important;
         }
         .rtk-btn-muted:hover {
-          background-color: rgba(225, 29, 72, 0.25) !important;
+          background-color: #333 !important;
         }
         
-        /* Leave Button */
+        /* Leave Button - Zoom style small red rectangle on the far right */
         .rtk-btn-danger {
-          background-color: #e11d48 !important; /* rose-600 */
+          background-color: #e02828 !important;
           color: white !important;
-          width: 64px !important;
-          border-radius: 24px !important;
+          width: 72px !important;
+          height: 32px !important;
+          border-radius: 4px !important;
+          font-size: 12px !important;
+          font-weight: 600 !important;
           border: none !important;
+          position: absolute !important;
+          right: 16px !important;
         }
         .rtk-btn-danger:hover {
-          background-color: #be123c !important; /* rose-700 */
+          background-color: #b81c1c !important;
         }
       `}} />
 
-      {/* Vyntyra Classic Header */}
-      <header className="h-[64px] bg-[#0A0D14] border-b border-slate-800/60 px-6 flex items-center justify-between z-50 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 cursor-default">
-            <Layers className="h-5 w-5 text-indigo-500" />
-            <span className="font-bold text-lg tracking-tight text-slate-100">Vyntyra</span>
-          </div>
-          
-          <div className="h-5 w-px bg-slate-700/50 mx-2"></div>
-          
-          <div className="flex items-center gap-3">
-            <h1 className="font-semibold text-slate-200 text-sm truncate max-w-[200px] md:max-w-md">
-              {data.title}
-            </h1>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                <Shield className="h-3 w-3 text-emerald-500" />
-                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">E2EE</span>
+      {/* Minimal Top-Left Info Overlay (Zoom Style) */}
+      <div className="absolute top-4 left-4 z-50 flex items-center gap-3">
+        <div className="flex items-center gap-2 bg-black/60 px-2 py-1 rounded shadow-sm border border-white/10">
+          <Shield className="h-4 w-4 text-green-500" />
+          {isRecording && (
+            <>
+              <div className="w-px h-3 bg-white/20 mx-1"></div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></div>
+                <span className="text-[11px] font-medium text-white tracking-wide">Recording</span>
               </div>
-              {isRecording && (
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 animate-pulse">
-                  <div className="h-2 w-2 rounded-full bg-rose-500"></div>
-                  <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">REC</span>
-                </div>
-              )}
-            </div>
-          </div>
+            </>
+          )}
         </div>
-
-        <div className="flex items-center gap-5">
-          <div className="hidden md:flex items-center gap-2 bg-slate-900/50 p-1 rounded-md border border-slate-700/50">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setTranslationEnabled(!translationEnabled)}
-              className={`h-7 px-3 gap-2 rounded-sm transition-colors ${translationEnabled ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
-            >
-              <Globe className="h-3.5 w-3.5" />
-              <span className="text-xs font-semibold">Translate</span>
-            </Button>
-            
-            {translationEnabled && (
-              <Select value={targetLang} onValueChange={setTargetLang}>
-                <SelectTrigger className="w-[110px] h-7 bg-slate-900 border-slate-700 text-xs text-white rounded-sm focus:ring-1 focus:ring-indigo-500">
-                  <SelectValue placeholder="Language" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700 text-slate-200">
-                  <SelectItem value="Spanish">Spanish</SelectItem>
-                  <SelectItem value="Hindi">Hindi</SelectItem>
-                  <SelectItem value="Telugu">Telugu</SelectItem>
-                  <SelectItem value="Kannada">Kannada</SelectItem>
-                  <SelectItem value="French">French</SelectItem>
-                  <SelectItem value="German">German</SelectItem>
-                  <SelectItem value="Japanese">Japanese</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          <div className="flex items-center gap-4 text-sm font-medium text-slate-300">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-slate-400" />
-              <RtkParticipantCount />
-            </div>
-            <div className="h-4 w-px bg-slate-700/50"></div>
-            <div className="font-mono text-slate-200 font-semibold">
-              <RtkClock />
-            </div>
-          </div>
+        <div className="bg-black/60 px-3 py-1 rounded shadow-sm border border-white/10 text-xs font-semibold text-white/90">
+          <RtkClock />
         </div>
-      </header>
+      </div>
 
       {/* Main Meeting Area */}
-      <main className="flex-1 relative flex overflow-hidden bg-transparent z-10">
+      <main className="flex-1 relative flex overflow-hidden bg-black z-10">
         <RtkUiProvider meeting={meeting}>
-          
-          {/* Left Side: Video Grid & Controls */}
-          <div className="flex-1 relative flex flex-col min-w-0">
+          <div className="flex-1 relative flex flex-col min-w-0 h-full">
             <RtkMeeting />
             
             {/* Overlay for translation */}
@@ -351,118 +307,108 @@ function MeetingRoom() {
               <TranslationOverlay isEnabled={translationEnabled} targetLanguage={targetLang} />
             </div>
 
-            {/* Corporate Floating Features Dock */}
-            <div className="absolute bottom-6 right-6 flex items-center gap-2 z-[60]">
-              <Button 
-                variant="outline" 
-                className={`h-12 w-12 rounded-full border-slate-700/50 shadow-xl transition-all ${isHandRaised ? 'bg-amber-500/20 text-amber-500 border-amber-500/50' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800'}`}
-                onClick={() => setIsHandRaised(!isHandRaised)}
-                title="Raise Hand"
-              >
-                <Hand className={`h-5 w-5 ${isHandRaised ? 'animate-bounce' : ''}`} />
-              </Button>
+            {/* Custom Zoom-style Buttons overlaid on the bottom bar */}
+            {/* Since RtkMeeting renders its own .rtk-control-bar full width at the bottom, 
+                we absolute-position our custom buttons over it in the center-right. */}
+            <div className="absolute bottom-1.5 right-[120px] flex items-center gap-1 z-[60] h-[52px]">
               
               <Button 
-                variant="outline" 
-                className={`h-12 w-12 rounded-full border-slate-700/50 shadow-xl transition-all ${isRecording ? 'bg-rose-500/20 text-rose-500 border-rose-500/50' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800'}`}
-                onClick={() => setIsRecording(!isRecording)}
-                title="Record Meeting"
-              >
-                <Circle className={`h-5 w-5 ${isRecording ? 'fill-rose-500 animate-pulse' : ''}`} />
-              </Button>
-
-              <Button 
-                variant="outline" 
-                className={`h-12 w-12 rounded-full border-slate-700/50 shadow-xl transition-all ${activeSidebar === 'participants' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800'}`}
+                variant="ghost" 
+                className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-none ${activeSidebar === 'participants' ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
                 onClick={() => setActiveSidebar(activeSidebar === 'participants' ? null : 'participants')}
-                title="Participants"
               >
-                <Users className="h-5 w-5" />
+                <div className="relative">
+                  <Users className="h-5 w-5" />
+                  <div className="absolute -top-1 -right-2 bg-[#333] border border-[#1a1a1a] text-[9px] font-bold px-1 rounded">
+                    <RtkParticipantCount />
+                  </div>
+                </div>
+                <span className="text-[10px]">Participants</span>
               </Button>
               
               <Button 
-                variant="outline" 
-                className={`h-12 w-12 rounded-full border-slate-700/50 shadow-xl transition-all ${activeSidebar === 'chat' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800'}`}
+                variant="ghost" 
+                className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-none ${activeSidebar === 'chat' ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
                 onClick={() => setActiveSidebar(activeSidebar === 'chat' ? null : 'chat')}
-                title="Chat"
               >
                 <MessageSquare className="h-5 w-5" />
+                <span className="text-[10px]">Chat</span>
               </Button>
 
               <Button 
-                variant="outline" 
-                className={`h-12 w-12 rounded-full border-slate-700/50 shadow-xl transition-all ${activeSidebar === 'info' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800'}`}
-                onClick={() => setActiveSidebar(activeSidebar === 'info' ? null : 'info')}
-                title="Meeting Info"
+                variant="ghost" 
+                className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-[#b3b3b3] hover:text-white transition-none"
+                onClick={() => setIsRecording(!isRecording)}
               >
-                <Info className="h-5 w-5" />
+                <Circle className={`h-5 w-5 ${isRecording ? 'text-red-500 fill-red-500' : ''}`} />
+                <span className="text-[10px]">{isRecording ? 'Stop Rec' : 'Record'}</span>
               </Button>
+
+              <Button 
+                variant="ghost" 
+                className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-[#b3b3b3] hover:text-white transition-none"
+                onClick={() => setIsHandRaised(!isHandRaised)}
+              >
+                <Hand className={`h-5 w-5 ${isHandRaised ? 'text-yellow-400' : ''}`} />
+                <span className="text-[10px]">Reactions</span>
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-none ${translationEnabled ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
+                onClick={() => setTranslationEnabled(!translationEnabled)}
+              >
+                <Globe className="h-5 w-5" />
+                <span className="text-[10px]">Translate</span>
+              </Button>
+
             </div>
           </div>
 
-          {/* Right Side: Corporate Sidebar */}
+          {/* Zoom-style Sidebar Overlay (White/Light theme typically for Zoom chat) */}
           {activeSidebar && (
-            <aside className="w-[340px] shrink-0 bg-[#0A0D14] border-l border-slate-800/60 flex flex-col shadow-2xl relative z-50">
-              <div className="h-[60px] px-4 border-b border-slate-800/60 flex items-center justify-between shrink-0">
-                <h3 className="font-semibold text-slate-200">
-                  {activeSidebar === 'chat' && 'Meeting Chat'}
-                  {activeSidebar === 'participants' && 'Participants'}
-                  {activeSidebar === 'info' && 'Meeting Details'}
-                </h3>
-                <Button variant="ghost" size="sm" onClick={() => setActiveSidebar(null)} className="h-8 w-8 p-0 text-slate-400 hover:text-white rounded-full">
+            <aside className="w-[320px] shrink-0 bg-white border-l border-gray-200 flex flex-col shadow-2xl relative z-50 transition-all">
+              <div className="h-[52px] px-4 flex items-center justify-between shrink-0 shadow-sm z-10">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-gray-800 text-sm">
+                    {activeSidebar === 'chat' && 'Meeting Chat'}
+                    {activeSidebar === 'participants' && 'Participants'}
+                  </h3>
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-gray-100 border border-gray-200">
+                     <Shield className="h-3 w-3 text-green-600" />
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setActiveSidebar(null)} className="h-8 w-8 p-0 text-gray-500 hover:text-gray-800 rounded">
                   <X className="h-4 w-4" />
                 </Button>
               </div>
               
-              <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden relative bg-[#f7f7f7]">
                 {activeSidebar === 'chat' && (
-                  <div className="absolute inset-0 flex flex-col bg-slate-950/50">
+                  <div className="absolute inset-0 flex flex-col bg-white">
                     <RtkChat />
                   </div>
                 )}
                 
                 {activeSidebar === 'participants' && (
-                  <div className="p-4 flex flex-col gap-4">
-                    <div className="flex items-center justify-between px-3 py-2 bg-slate-900 rounded-lg border border-slate-800">
+                  <div className="flex flex-col bg-white h-full">
+                    <div className="p-3 text-xs font-semibold text-gray-500 uppercase">In Meeting</div>
+                    <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50">
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-xs">Me</div>
-                        <span className="text-sm font-medium text-slate-200">You</span>
+                        <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-xs">M</div>
+                        <span className="text-sm font-medium text-gray-800">Me (Host)</span>
                       </div>
-                      <div className="flex items-center gap-2 text-emerald-500">
-                        <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                      <div className="flex items-center gap-3 text-gray-400">
+                         <div className="h-3 w-3 rounded-full bg-green-500"></div>
                       </div>
                     </div>
-                    
-                    <div className="px-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">In Meeting</div>
-                    {/* Mock other participants */}
-                    <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-900 transition-colors">
+                    <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50">
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-300 text-xs border border-slate-700">G</div>
-                        <span className="text-sm font-medium text-slate-300">Guest User</span>
+                        <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center font-bold text-gray-600 text-xs">G</div>
+                        <span className="text-sm font-medium text-gray-800">Guest User</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-rose-500"></div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {activeSidebar === 'info' && (
-                  <div className="p-5 flex flex-col gap-6">
-                    <div>
-                      <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Joining Info</h4>
-                      <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 flex items-center justify-between">
-                        <span className="text-sm font-mono text-slate-300 truncate">meet.vyntyra.com/{roomId}</span>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-400 hover:text-white" title="Copy Link">
-                          <Copy className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Encryption</h4>
-                      <div className="flex items-start gap-3 bg-emerald-500/5 p-3 rounded-lg border border-emerald-500/10">
-                        <Shield className="h-5 w-5 text-emerald-500 shrink-0" />
-                        <p className="text-xs text-slate-400 leading-relaxed">This meeting is secured with end-to-end encryption. Your audio, video, and screen sharing are private.</p>
+                      <div className="flex items-center gap-3 text-gray-400">
+                         <div className="h-3 w-3 rounded-full bg-red-500"></div>
                       </div>
                     </div>
                   </div>
