@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { getMeetingTokenFn } from '@/lib/meetings.functions';
-import { useServerFn } from '@tanstack/start';
+import { useServerFn } from '@tanstack/react-start';
 import { RtkUiProvider, RtkMeeting, RtkChat, RtkParticipantCount, RealtimeKitClient } from '@rtk-sdk/react';
 import { Shield, Settings, Globe, Loader2, AlertCircle, Lock, User, Layers, Hand, Circle, X, Info, MessageSquare, Users, Copy, Link2, ChevronLeft, ChevronRight, RotateCw, Search, Home, Calendar, MoreHorizontal, Maximize, ArrowUpSquare, LayoutGrid, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
