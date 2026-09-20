@@ -30,5 +30,19 @@ export default defineConfig({
       preset: process.env.NITRO_PRESET || (isVercel ? "vercel" : "cloudflare-module"),
     }),
     viteReact(),
+    {
+      name: 'mock-mediapipe',
+      enforce: 'pre',
+      resolveId(id) {
+        if (id === '@mediapipe/face_detection') {
+          return '\0mock-mediapipe';
+        }
+      },
+      load(id) {
+        if (id === '\0mock-mediapipe') {
+          return `export const FaceDetection = class {}; export const VERSION = '';`;
+        }
+      }
+    }
   ],
 });
