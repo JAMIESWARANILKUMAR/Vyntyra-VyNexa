@@ -313,10 +313,10 @@ export function VyntyraMeetAdmin() {
                 >
                   Start
                 </Button>
-                <Button variant="outline" className="text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 bg-transparent rounded-md gap-2" onClick={() => copyToClipboard('Invitation copied')}>
+                <Button variant="outline" className="text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 bg-transparent rounded-md gap-2" onClick={() => copyToClipboard(personalRoom ? `https://vyntyra.com/meet/${personalRoom.id}` : 'https://us05web.zoom.us/j/2338284128?pwd=uJuDVWgHJARgDw4nQKaNcu9uAyccz1.1')}>
                   <Copy className="h-4 w-4" /> Copy Invitation
                 </Button>
-                <Button variant="outline" className="text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 bg-transparent rounded-md">
+                <Button variant="outline" className="text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 bg-transparent rounded-md" onClick={() => setIsCreateOpen(true)}>
                   Edit
                 </Button>
               </div>

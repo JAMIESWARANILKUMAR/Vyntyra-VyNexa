@@ -296,126 +296,125 @@ function MeetingRoom() {
         </div>
       </div>
 
-      {/* Main Meeting Area */}
       <main className="flex-1 relative flex overflow-hidden bg-black z-10">
         <RtkUiProvider meeting={meeting}>
-          <div className="flex-1 relative flex flex-col min-w-0 h-full">
-            <RtkMeeting />
-            
-            {/* Overlay for translation */}
-            <div className="absolute inset-0 pointer-events-none z-40">
-              <TranslationOverlay isEnabled={translationEnabled} targetLanguage={targetLang} />
-            </div>
-
-            {/* Custom Zoom-style Buttons overlaid on the bottom bar */}
-            {/* Since RtkMeeting renders its own .rtk-control-bar full width at the bottom, 
-                we absolute-position our custom buttons over it in the center-right. */}
-            <div className="absolute bottom-1.5 right-[120px] flex items-center gap-1 z-[60] h-[52px]">
+          <div className="flex-1 w-full h-full flex relative overflow-hidden">
+            <div className="flex-1 relative flex flex-col min-w-0 h-full">
+              <RtkMeeting />
               
-              <Button 
-                variant="ghost" 
-                className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-none ${activeSidebar === 'participants' ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
-                onClick={() => setActiveSidebar(activeSidebar === 'participants' ? null : 'participants')}
-              >
-                <div className="relative">
-                  <Users className="h-5 w-5" />
-                  <div className="absolute -top-1 -right-2 bg-[#333] border border-[#1a1a1a] text-[9px] font-bold px-1 rounded">
-                    <RtkParticipantCount />
-                  </div>
-                </div>
-                <span className="text-[10px]">Participants</span>
-              </Button>
-              
-              <Button 
-                variant="ghost" 
-                className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-none ${activeSidebar === 'chat' ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
-                onClick={() => setActiveSidebar(activeSidebar === 'chat' ? null : 'chat')}
-              >
-                <MessageSquare className="h-5 w-5" />
-                <span className="text-[10px]">Chat</span>
-              </Button>
-
-              <Button 
-                variant="ghost" 
-                className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-[#b3b3b3] hover:text-white transition-none"
-                onClick={() => setIsRecording(!isRecording)}
-              >
-                <Circle className={`h-5 w-5 ${isRecording ? 'text-red-500 fill-red-500' : ''}`} />
-                <span className="text-[10px]">{isRecording ? 'Stop Rec' : 'Record'}</span>
-              </Button>
-
-              <Button 
-                variant="ghost" 
-                className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-[#b3b3b3] hover:text-white transition-none"
-                onClick={() => setIsHandRaised(!isHandRaised)}
-              >
-                <Hand className={`h-5 w-5 ${isHandRaised ? 'text-yellow-400' : ''}`} />
-                <span className="text-[10px]">Reactions</span>
-              </Button>
-              
-              <Button 
-                variant="ghost" 
-                className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-none ${translationEnabled ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
-                onClick={() => setTranslationEnabled(!translationEnabled)}
-              >
-                <Globe className="h-5 w-5" />
-                <span className="text-[10px]">Translate</span>
-              </Button>
-
-            </div>
-          </div>
-
-          {/* Zoom-style Sidebar Overlay (White/Light theme typically for Zoom chat) */}
-          {activeSidebar && (
-            <aside className="w-[320px] shrink-0 bg-white border-l border-gray-200 flex flex-col shadow-2xl relative z-50 transition-all">
-              <div className="h-[52px] px-4 flex items-center justify-between shrink-0 shadow-sm z-10">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-gray-800 text-sm">
-                    {activeSidebar === 'chat' && 'Meeting Chat'}
-                    {activeSidebar === 'participants' && 'Participants'}
-                  </h3>
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-gray-100 border border-gray-200">
-                     <Shield className="h-3 w-3 text-green-600" />
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => setActiveSidebar(null)} className="h-8 w-8 p-0 text-gray-500 hover:text-gray-800 rounded">
-                  <X className="h-4 w-4" />
-                </Button>
+              {/* Overlay for translation */}
+              <div className="absolute inset-0 pointer-events-none z-40">
+                <TranslationOverlay isEnabled={translationEnabled} targetLanguage={targetLang} />
               </div>
-              
-              <div className="flex-1 overflow-y-auto overflow-x-hidden relative bg-[#f7f7f7]">
-                {activeSidebar === 'chat' && (
-                  <div className="absolute inset-0 flex flex-col bg-white">
-                    <RtkChat />
-                  </div>
-                )}
+
+              {/* Custom Zoom-style Buttons overlaid on the bottom bar */}
+              <div className="absolute bottom-1.5 right-[120px] flex items-center gap-1 z-[60] h-[52px]">
                 
-                {activeSidebar === 'participants' && (
-                  <div className="flex flex-col bg-white h-full">
-                    <div className="p-3 text-xs font-semibold text-gray-500 uppercase">In Meeting</div>
-                    <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-xs">M</div>
-                        <span className="text-sm font-medium text-gray-800">Me (Host)</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-gray-400">
-                         <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center font-bold text-gray-600 text-xs">G</div>
-                        <span className="text-sm font-medium text-gray-800">Guest User</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-gray-400">
-                         <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                      </div>
+                <Button 
+                  variant="ghost" 
+                  className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-none ${activeSidebar === 'participants' ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
+                  onClick={() => setActiveSidebar(activeSidebar === 'participants' ? null : 'participants')}
+                >
+                  <div className="relative pointer-events-none">
+                    <Users className="h-5 w-5" />
+                    <div className="absolute -top-1 -right-2 bg-[#333] border border-[#1a1a1a] text-[9px] font-bold px-1 rounded">
+                      <RtkParticipantCount />
                     </div>
                   </div>
-                )}
+                  <span className="text-[10px] pointer-events-none">Participants</span>
+                </Button>
+                
+                <Button 
+                  variant="ghost" 
+                  className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-none ${activeSidebar === 'chat' ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
+                  onClick={() => setActiveSidebar(activeSidebar === 'chat' ? null : 'chat')}
+                >
+                  <MessageSquare className="h-5 w-5 pointer-events-none" />
+                  <span className="text-[10px] pointer-events-none">Chat</span>
+                </Button>
+
+                <Button 
+                  variant="ghost" 
+                  className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-[#b3b3b3] hover:text-white transition-none"
+                  onClick={() => setIsRecording(!isRecording)}
+                >
+                  <Circle className={`h-5 w-5 pointer-events-none ${isRecording ? 'text-red-500 fill-red-500' : ''}`} />
+                  <span className="text-[10px] pointer-events-none">{isRecording ? 'Stop Rec' : 'Record'}</span>
+                </Button>
+
+                <Button 
+                  variant="ghost" 
+                  className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-[#b3b3b3] hover:text-white transition-none"
+                  onClick={() => setIsHandRaised(!isHandRaised)}
+                >
+                  <Hand className={`h-5 w-5 pointer-events-none ${isHandRaised ? 'text-yellow-400' : ''}`} />
+                  <span className="text-[10px] pointer-events-none">Reactions</span>
+                </Button>
+                
+                <Button 
+                  variant="ghost" 
+                  className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-none ${translationEnabled ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
+                  onClick={() => setTranslationEnabled(!translationEnabled)}
+                >
+                  <Globe className="h-5 w-5 pointer-events-none" />
+                  <span className="text-[10px] pointer-events-none">Translate</span>
+                </Button>
+
               </div>
-            </aside>
-          )}
+            </div>
+
+            {/* Zoom-style Sidebar Overlay (White/Light theme typically for Zoom chat) */}
+            {activeSidebar && (
+              <aside className="w-[320px] shrink-0 bg-white border-l border-gray-200 flex flex-col shadow-2xl relative z-50 transition-all">
+                <div className="h-[52px] px-4 flex items-center justify-between shrink-0 shadow-sm z-10">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-gray-800 text-sm">
+                      {activeSidebar === 'chat' && 'Meeting Chat'}
+                      {activeSidebar === 'participants' && 'Participants'}
+                    </h3>
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-gray-100 border border-gray-200">
+                      <Shield className="h-3 w-3 text-green-600" />
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setActiveSidebar(null)} className="h-8 w-8 p-0 text-gray-500 hover:text-gray-800 rounded">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto overflow-x-hidden relative bg-[#f7f7f7]">
+                  {activeSidebar === 'chat' && (
+                    <div className="absolute inset-0 flex flex-col bg-white">
+                      <RtkChat />
+                    </div>
+                  )}
+                  
+                  {activeSidebar === 'participants' && (
+                    <div className="flex flex-col bg-white h-full">
+                      <div className="p-3 text-xs font-semibold text-gray-500 uppercase">In Meeting</div>
+                      <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-xs">M</div>
+                          <span className="text-sm font-medium text-gray-800">Me (Host)</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-gray-400">
+                          <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center font-bold text-gray-600 text-xs">G</div>
+                          <span className="text-sm font-medium text-gray-800">Guest User</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-gray-400">
+                          <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </aside>
+            )}
+          </div>
         </RtkUiProvider>
       </main>
     </div>
