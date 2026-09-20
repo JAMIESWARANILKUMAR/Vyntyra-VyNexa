@@ -48,6 +48,7 @@ import { AdminDetailedFeedbacksView } from "@/components/admin-detailed-feedback
 import { ManageTeamModal } from "@/components/manage-team-modal";
 import { AdminLmsManager } from "@/components/admin-lms-manager";
 import { AdminProfileChangeApprovals } from "@/components/admin-profile-change-approvals";
+import { VyntyraMeetAdmin } from "@/components/ui/vyntyra-meet-admin";
 import { CbtOperationsTab } from "@/components/admin-cbt-operations";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { toast } from "sonner";
@@ -1259,6 +1260,7 @@ function OperationsDashboard() {
             { id: "announcements", label: "Communication & Promos", icon: Megaphone, count: null },
               { id: "finances", label: "Finances & Payouts", icon: DollarSign, count: null },
               { id: "cbt", label: "AI CBT Engine", icon: BrainCircuit, count: null },
+              { id: "vyntyra-meet", label: "Vyntyra Meet", icon: ShieldCheck, count: null },
             { id: "support", label: "Support & Feedback", icon: LifeBuoy, count: (supportQueries || []).filter((q: any) => q.status === "open").length || null },
             { id: "profile_approvals", label: "Profile Approvals", icon: UserCheck, count: null },
           ].map((tab) => {
@@ -1313,6 +1315,7 @@ function OperationsDashboard() {
                   { id: "announcements", title: "Communication, Email & SMS Hub", desc: "Broadcast company notices, kudos recognition, and promotional email & SMS campaigns.", icon: Megaphone, color: "text-purple-600 bg-purple-50 border-purple-200", badge: "Omni-Hub" },
                   { id: "finances", title: "Finances & Payouts Engine", desc: "Approve stipend payouts, review expense claims, and track compensation records.", icon: DollarSign, color: "text-emerald-700 bg-emerald-50 border-emerald-200", badge: `${(payoutsQ.data || []).length} Payouts` },
                   { id: "cbt", title: "AI CBT Engine V2", desc: "Generate and monitor proctored AI tests and candidate exams.", icon: BrainCircuit, color: "text-indigo-600 bg-indigo-50 border-indigo-200", badge: "Proctored" },
+                  { id: "vyntyra-meet", title: "Vyntyra Meet", desc: "Enterprise-grade, E2EE secure video meeting rooms and controls.", icon: ShieldCheck, color: "text-blue-600 bg-blue-50 border-blue-200", badge: "Secure" },
                   { id: "support", title: "Helpdesk & Resolution Hub", desc: "Assign customer and intern support tickets to employee resolvers and approve syncs.", icon: LifeBuoy, color: "text-cyan-600 bg-cyan-50 border-cyan-200", badge: `${(supportQueries || []).filter((q: any) => q.status === "open").length} Open` },
                   { id: "profile_approvals", title: "Profile Change Approvals", desc: "Review and approve/reject sensitive profile updates (Email, Phone, Photo, Address) requested by interns and employees.", icon: UserCheck, color: "text-indigo-600 bg-indigo-50 border-indigo-200", badge: "Identity Approval" },
                 ].map((item) => {
@@ -3478,6 +3481,12 @@ function OperationsDashboard() {
         {activeTab === "cbt" && (
           <section id="cbt-section">
             <CbtOperationsTab />
+          </section>
+        )}
+
+        {activeTab === "vyntyra-meet" && (
+          <section id="vyntyra-meet-section">
+            <VyntyraMeetAdmin />
           </section>
         )}
       </main>
