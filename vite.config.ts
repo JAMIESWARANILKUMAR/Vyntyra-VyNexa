@@ -37,10 +37,16 @@ export default defineConfig({
         if (id === '@mediapipe/face_detection') {
           return '\0mock-mediapipe';
         }
+        if (id === 'canvas') {
+          return '\0mock-canvas';
+        }
       },
       load(id) {
         if (id === '\0mock-mediapipe') {
           return `export const FaceDetection = class {}; export const VERSION = '';`;
+        }
+        if (id === '\0mock-canvas') {
+          return `export default {};`;
         }
       }
     }
