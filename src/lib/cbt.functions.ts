@@ -189,7 +189,7 @@ export const submitCbtExamFn = createServerFn({ method: "POST" })
 
     // Trigger grading via Gemini 1.5 Flash immediately
     const qResult = await d1.prepare('SELECT * FROM cbt_questions WHERE test_id = ?').bind(args.testId).all();
-    const questions = qResult.results || [];
+    const questions = (qResult.results || []) as any[];
     
     const test = await d1.prepare('SELECT * FROM cbt_tests WHERE id = ?').bind(args.testId).first<any>();
     
@@ -249,11 +249,11 @@ Return JSON with exactly this schema: { "score": number, "feedback": "reasoning"
 
 export const listAdminTestsFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }): Promise<any[]> => {
     const d1 = getD1Database(context);
     if (!d1) throw new Error("Cloudflare D1 is not available");
     const res = await d1.prepare('SELECT * FROM cbt_tests ORDER BY created_at DESC').all();
-    return res.results || [];
+    return (res.results || []) as any[];
   });
 
 export const deleteAdminTestFn = createServerFn({ method: "POST" })
@@ -290,18 +290,18 @@ export const getInternSubmissionResultFn = createServerFn({ method: "GET" })
     const test = await d1.prepare('SELECT title, modules, passing_score, time_limit_minutes FROM cbt_tests WHERE id = ?').bind(args.testId).first<any>();
     sub.cbt_tests = test;
     
-    return sub;
+    return sub as any;
   });
 
 export const listInternSubmissionsFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }): Promise<any[]> => {
     const d1 = getD1Database(context);
     if (!d1) throw new Error("Cloudflare D1 is not available");
     const userId = context.user.id;
     
     const res = await d1.prepare('SELECT s.*, t.title as test_title, t.passing_score FROM cbt_submissions s JOIN cbt_tests t ON s.test_id = t.id WHERE s.intern_id = ? ORDER BY s.created_at DESC').bind(userId).all();
-    return res.results || [];
+    return (res.results || []) as any[];
   });
 
 export const listCbtTargetsFn = createServerFn({ method: "GET" })
