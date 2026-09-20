@@ -146,28 +146,28 @@ function MeetingRoom() {
   }
 
   return (
-    <div className="min-h-screen bg-[#111111] text-slate-100 flex flex-col font-sans selection:bg-blue-500/30 overflow-hidden">
-      {/* Enterprise CSS Overrides for RTK SDK */}
+    <div className="min-h-screen bg-[#07090E] text-slate-100 flex flex-col font-sans selection:bg-emerald-500/30 overflow-hidden relative">
+      {/* Dynamic CSS Overrides for RTK SDK - Vyntyra Classic Theme */}
       <style dangerouslySetInnerHTML={{__html: `
         /* Video Grid & Tiles */
         .rtk-video-grid {
-          padding: 16px !important;
-          gap: 12px !important;
+          padding: 24px !important;
+          gap: 16px !important;
           height: 100% !important;
         }
         .rtk-video-tile {
-          border-radius: 8px !important;
-          border: 1px solid #333 !important;
-          background: #1f1f1f !important;
+          border-radius: 12px !important;
+          border: 1px solid rgba(51, 65, 85, 0.5) !important; /* border-slate-700/50 */
+          background: #0f172a !important; /* bg-slate-900 */
           overflow: hidden;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
-          transition: border-color 0.2s ease !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
         
-        /* Active Speaker (Teams/Meet style solid ring) */
+        /* Active Speaker (Vyntyra Emerald Accent) */
         .rtk-active-speaker {
-          border: 2px solid #60a5fa !important; /* Professional Blue */
-          box-shadow: 0 0 0 1px #60a5fa !important;
+          border: 2px solid #10b981 !important; /* emerald-500 */
+          box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2), 0 8px 24px rgba(16, 185, 129, 0.15) !important;
         }
 
         /* Participant Names (Bottom Left) */
@@ -175,13 +175,14 @@ function MeetingRoom() {
           position: absolute;
           bottom: 12px;
           left: 12px;
-          background: rgba(0, 0, 0, 0.6) !important;
-          color: #fff !important;
-          border-radius: 4px !important;
-          padding: 4px 8px !important;
+          background: rgba(15, 23, 42, 0.85) !important;
+          backdrop-filter: blur(8px) !important;
+          color: #f8fafc !important;
+          border: 1px solid rgba(51, 65, 85, 0.6) !important;
+          border-radius: 6px !important;
+          padding: 4px 10px !important;
           font-size: 13px !important;
-          font-weight: 500 !important;
-          border: none !important;
+          font-weight: 600 !important;
           display: flex;
           align-items: center;
           gap: 6px;
@@ -194,7 +195,7 @@ function MeetingRoom() {
           width: 6px;
           height: 6px;
           border-radius: 50%;
-          background-color: #34d399; /* emerald-400 */
+          background-color: #10b981; /* emerald-500 */
         }
         .rtk-participant-label[data-muted="true"]::before {
           background-color: #ef4444; /* red-500 */
@@ -202,22 +203,22 @@ function MeetingRoom() {
 
         /* Avatar styling */
         .rtk-video-avatar {
-          background: #3c4043 !important;
-          color: white !important;
-          font-weight: 400 !important;
+          background: linear-gradient(135deg, #312e81, #064e3b) !important; /* Indigo to Emerald dark gradient */
+          color: #10b981 !important; /* emerald-500 text */
+          font-weight: 600 !important;
           border-radius: 50% !important;
-          border: 1px solid #555 !important;
+          border: 1px solid rgba(16, 185, 129, 0.3) !important;
         }
 
-        /* Floating Control Dock (Meet Style) */
+        /* Control Dock (Classic Bottom Bar) */
         .rtk-control-bar {
-          background: #202124 !important;
-          border: 1px solid #3c4043 !important;
-          border-radius: 100px !important;
-          padding: 10px 24px !important;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
-          margin-bottom: 24px !important;
-          gap: 12px !important;
+          background: #0f172a !important; /* slate-900 */
+          border-top: 1px solid rgba(51, 65, 85, 0.5) !important; /* border-slate-700/50 */
+          padding: 12px 24px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 16px !important;
           position: relative;
           z-index: 50;
         }
@@ -225,78 +226,80 @@ function MeetingRoom() {
         /* Control Buttons */
         .rtk-btn {
           border-radius: 50% !important;
-          width: 44px !important;
-          height: 44px !important;
-          background-color: #3c4043 !important;
-          border: none !important;
-          color: #e8eaed !important;
-          transition: background-color 0.2s ease !important;
+          width: 48px !important;
+          height: 48px !important;
+          background-color: rgba(30, 41, 59, 0.8) !important; /* slate-800 */
+          border: 1px solid rgba(51, 65, 85, 0.5) !important; /* border-slate-700/50 */
+          color: #f1f5f9 !important; /* slate-100 */
+          transition: background-color 0.2s ease, transform 0.1s ease !important;
         }
         .rtk-btn:hover {
-          background-color: #5f6368 !important;
+          background-color: rgba(51, 65, 85, 0.8) !important; /* slate-700 */
+          transform: scale(1.05);
         }
         
         /* Muted State */
         .rtk-btn-muted {
-          background-color: #ea4335 !important;
-          color: white !important;
+          background-color: rgba(225, 29, 72, 0.15) !important; /* rose-600/15 */
+          border-color: rgba(225, 29, 72, 0.3) !important;
+          color: #f43f5e !important; /* rose-400 */
         }
         .rtk-btn-muted:hover {
-          background-color: #d93025 !important;
+          background-color: rgba(225, 29, 72, 0.25) !important;
         }
         
         /* Leave Button */
         .rtk-btn-danger {
-          background-color: #ea4335 !important;
+          background-color: #e11d48 !important; /* rose-600 */
           color: white !important;
-          width: 60px !important;
-          border-radius: 100px !important;
+          width: 64px !important;
+          border-radius: 24px !important;
           border: none !important;
         }
         .rtk-btn-danger:hover {
-          background-color: #d93025 !important;
+          background-color: #be123c !important; /* rose-700 */
         }
       `}} />
 
-      {/* Enterprise Header (Teams/Meet Inspired) */}
-      <header className="h-[60px] bg-[#202124] border-b border-[#3c4043] px-6 flex items-center justify-between z-50 shrink-0">
+      {/* Vyntyra Classic Header */}
+      <header className="h-[64px] bg-[#0A0D14] border-b border-slate-800/60 px-6 flex items-center justify-between z-50 shrink-0">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 cursor-default text-white">
-            <Layers className="h-5 w-5 text-blue-400" />
-            <span className="font-semibold text-lg tracking-tight">Vyntyra</span>
+          <div className="flex items-center gap-2 cursor-default">
+            <Layers className="h-5 w-5 text-indigo-500" />
+            <span className="font-bold text-lg tracking-tight text-slate-100">Vyntyra</span>
           </div>
           
-          <div className="h-5 w-px bg-gray-600 mx-2"></div>
+          <div className="h-5 w-px bg-slate-700/50 mx-2"></div>
           
           <div className="flex items-center gap-3">
-            <h1 className="font-medium text-gray-200 text-sm truncate max-w-[200px] md:max-w-md">
+            <h1 className="font-semibold text-slate-200 text-sm truncate max-w-[200px] md:max-w-md">
               {data.title}
             </h1>
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-900/30 border border-green-800/50">
-              <Shield className="h-3 w-3 text-green-400" />
-              <span className="text-[10px] font-semibold text-green-400 uppercase tracking-wider">E2EE</span>
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+              <Shield className="h-3 w-3 text-emerald-500" />
+              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">E2EE</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-2 bg-[#303134] p-1 rounded-md border border-[#3c4043]">
+        <div className="flex items-center gap-5">
+          <div className="hidden md:flex items-center gap-2 bg-slate-900/50 p-1 rounded-md border border-slate-700/50">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={() => setTranslationEnabled(!translationEnabled)}
-              className={`h-7 px-3 gap-2 rounded-sm transition-colors ${translationEnabled ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'text-gray-300 hover:text-white hover:bg-[#3c4043]'}`}
+              className={`h-7 px-3 gap-2 rounded-sm transition-colors ${translationEnabled ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
             >
               <Globe className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">Translate</span>
+              <span className="text-xs font-semibold">Translate</span>
             </Button>
             
             {translationEnabled && (
               <Select value={targetLang} onValueChange={setTargetLang}>
-                <SelectTrigger className="w-[110px] h-7 bg-[#202124] border-[#3c4043] text-xs text-white rounded-sm focus:ring-1 focus:ring-blue-500">
+                <SelectTrigger className="w-[110px] h-7 bg-slate-900 border-slate-700 text-xs text-white rounded-sm focus:ring-1 focus:ring-indigo-500">
                   <SelectValue placeholder="Language" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#202124] border-[#3c4043] text-gray-200">
+                <SelectContent className="bg-slate-900 border-slate-700 text-slate-200">
                   <SelectItem value="Spanish">Spanish</SelectItem>
                   <SelectItem value="Hindi">Hindi</SelectItem>
                   <SelectItem value="Telugu">Telugu</SelectItem>
@@ -309,13 +312,13 @@ function MeetingRoom() {
             )}
           </div>
 
-          <div className="flex items-center gap-3 text-sm font-medium text-gray-300">
+          <div className="flex items-center gap-4 text-sm font-medium text-slate-300">
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4" />
+              <User className="h-4 w-4 text-slate-400" />
               <RtkParticipantCount />
             </div>
-            <div className="h-4 w-px bg-gray-600"></div>
-            <div className="font-mono text-gray-200">
+            <div className="h-4 w-px bg-slate-700/50"></div>
+            <div className="font-mono text-slate-200 font-semibold">
               <RtkClock />
             </div>
           </div>
