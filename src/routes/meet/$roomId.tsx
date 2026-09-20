@@ -13,7 +13,7 @@ import {
   RtkParticipantCount,
   RtkScreenShareToggle 
 } from '@cloudflare/realtimekit-react-ui';
-import { Shield, Settings, Globe, Loader2, AlertCircle, Lock, User, Layers, Video } from 'lucide-react';
+import { Shield, Settings, Globe, Loader2, AlertCircle, Lock, User, Layers, Video, Hand, Circle, X, Info, MessageSquare, Users, MoreVertical, Copy, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TranslationOverlay } from '@/components/meet/TranslationOverlay';
@@ -31,6 +31,11 @@ function MeetingRoom() {
   const [translationEnabled, setTranslationEnabled] = useState(false);
   const [targetLang, setTargetLang] = useState('Spanish');
   const [meeting, setMeeting] = useState<any>(null);
+
+  // Corporate Meeting Features State
+  const [activeSidebar, setActiveSidebar] = useState<'chat' | 'participants' | 'info' | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isHandRaised, setIsHandRaised] = useState(false);
 
   // Auth States for External Guests
   const [submittedPassword, setSubmittedPassword] = useState<string | undefined>(undefined);
@@ -275,9 +280,17 @@ function MeetingRoom() {
             <h1 className="font-semibold text-slate-200 text-sm truncate max-w-[200px] md:max-w-md">
               {data.title}
             </h1>
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-              <Shield className="h-3 w-3 text-emerald-500" />
-              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">E2EE</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                <Shield className="h-3 w-3 text-emerald-500" />
+                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">E2EE</span>
+              </div>
+              {isRecording && (
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 animate-pulse">
+                  <div className="h-2 w-2 rounded-full bg-rose-500"></div>
+                  <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">REC</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -326,13 +339,138 @@ function MeetingRoom() {
       </header>
 
       {/* Main Meeting Area */}
-      <main className="flex-1 relative flex flex-col overflow-hidden bg-transparent z-10">
+      <main className="flex-1 relative flex overflow-hidden bg-transparent z-10">
         <RtkUiProvider meeting={meeting}>
-          <RtkMeeting />
+          
+          {/* Left Side: Video Grid & Controls */}
+          <div className="flex-1 relative flex flex-col min-w-0">
+            <RtkMeeting />
+            
+            {/* Overlay for translation */}
+            <div className="absolute inset-0 pointer-events-none z-40">
+              <TranslationOverlay isEnabled={translationEnabled} targetLanguage={targetLang} />
+            </div>
+
+            {/* Corporate Floating Features Dock */}
+            <div className="absolute bottom-6 right-6 flex items-center gap-2 z-[60]">
+              <Button 
+                variant="outline" 
+                className={`h-12 w-12 rounded-full border-slate-700/50 shadow-xl transition-all ${isHandRaised ? 'bg-amber-500/20 text-amber-500 border-amber-500/50' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800'}`}
+                onClick={() => setIsHandRaised(!isHandRaised)}
+                title="Raise Hand"
+              >
+                <Hand className={`h-5 w-5 ${isHandRaised ? 'animate-bounce' : ''}`} />
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className={`h-12 w-12 rounded-full border-slate-700/50 shadow-xl transition-all ${isRecording ? 'bg-rose-500/20 text-rose-500 border-rose-500/50' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800'}`}
+                onClick={() => setIsRecording(!isRecording)}
+                title="Record Meeting"
+              >
+                <Circle className={`h-5 w-5 ${isRecording ? 'fill-rose-500 animate-pulse' : ''}`} />
+              </Button>
+
+              <Button 
+                variant="outline" 
+                className={`h-12 w-12 rounded-full border-slate-700/50 shadow-xl transition-all ${activeSidebar === 'participants' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800'}`}
+                onClick={() => setActiveSidebar(activeSidebar === 'participants' ? null : 'participants')}
+                title="Participants"
+              >
+                <Users className="h-5 w-5" />
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className={`h-12 w-12 rounded-full border-slate-700/50 shadow-xl transition-all ${activeSidebar === 'chat' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800'}`}
+                onClick={() => setActiveSidebar(activeSidebar === 'chat' ? null : 'chat')}
+                title="Chat"
+              >
+                <MessageSquare className="h-5 w-5" />
+              </Button>
+
+              <Button 
+                variant="outline" 
+                className={`h-12 w-12 rounded-full border-slate-700/50 shadow-xl transition-all ${activeSidebar === 'info' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800'}`}
+                onClick={() => setActiveSidebar(activeSidebar === 'info' ? null : 'info')}
+                title="Meeting Info"
+              >
+                <Info className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Right Side: Corporate Sidebar */}
+          {activeSidebar && (
+            <aside className="w-[340px] shrink-0 bg-[#0A0D14] border-l border-slate-800/60 flex flex-col shadow-2xl relative z-50">
+              <div className="h-[60px] px-4 border-b border-slate-800/60 flex items-center justify-between shrink-0">
+                <h3 className="font-semibold text-slate-200">
+                  {activeSidebar === 'chat' && 'Meeting Chat'}
+                  {activeSidebar === 'participants' && 'Participants'}
+                  {activeSidebar === 'info' && 'Meeting Details'}
+                </h3>
+                <Button variant="ghost" size="sm" onClick={() => setActiveSidebar(null)} className="h-8 w-8 p-0 text-slate-400 hover:text-white rounded-full">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
+                {activeSidebar === 'chat' && (
+                  <div className="absolute inset-0 flex flex-col bg-slate-950/50">
+                    <RtkChat />
+                  </div>
+                )}
+                
+                {activeSidebar === 'participants' && (
+                  <div className="p-4 flex flex-col gap-4">
+                    <div className="flex items-center justify-between px-3 py-2 bg-slate-900 rounded-lg border border-slate-800">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-xs">Me</div>
+                        <span className="text-sm font-medium text-slate-200">You</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-emerald-500">
+                        <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                      </div>
+                    </div>
+                    
+                    <div className="px-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">In Meeting</div>
+                    {/* Mock other participants */}
+                    <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-900 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-300 text-xs border border-slate-700">G</div>
+                        <span className="text-sm font-medium text-slate-300">Guest User</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-rose-500"></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {activeSidebar === 'info' && (
+                  <div className="p-5 flex flex-col gap-6">
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Joining Info</h4>
+                      <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 flex items-center justify-between">
+                        <span className="text-sm font-mono text-slate-300 truncate">meet.vyntyra.com/{roomId}</span>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-400 hover:text-white" title="Copy Link">
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Encryption</h4>
+                      <div className="flex items-start gap-3 bg-emerald-500/5 p-3 rounded-lg border border-emerald-500/10">
+                        <Shield className="h-5 w-5 text-emerald-500 shrink-0" />
+                        <p className="text-xs text-slate-400 leading-relaxed">This meeting is secured with end-to-end encryption. Your audio, video, and screen sharing are private.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </aside>
+          )}
         </RtkUiProvider>
-        <div className="absolute inset-0 pointer-events-none z-50">
-          <TranslationOverlay isEnabled={translationEnabled} targetLanguage={targetLang} />
-        </div>
       </main>
     </div>
   );
