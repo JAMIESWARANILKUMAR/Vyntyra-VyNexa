@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import { getMeetingTokenFn } from '@/lib/meetings.functions';
+import RealtimeKitClient from '@cloudflare/realtimekit';
 import { 
+  RtkUiProvider,
   RtkMeeting, 
   RtkGrid, 
   RtkChat, 
@@ -27,6 +29,7 @@ function MeetingRoom() {
   
   const [translationEnabled, setTranslationEnabled] = useState(false);
   const [targetLang, setTargetLang] = useState('Spanish');
+  const [meeting, setMeeting] = useState<any>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['meet-token', roomId],
@@ -34,7 +37,18 @@ function MeetingRoom() {
     retry: false
   });
 
-  if (isLoading) {
+  useEffect(() => {
+    if (data?.token && !meeting) {
+      RealtimeKitClient.init({ authToken: data.token })
+        .then(m => {
+          setMeeting(m);
+          m.joinRoom?.();
+        })
+        .catch(err => console.error("RealtimeKit init error:", err));
+    }
+  }, [data?.token, meeting]);
+
+  if (isLoading || (data && !meeting)) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white">
         <Loader2 className="h-10 w-10 animate-spin text-indigo-500 mb-4" />
@@ -71,6 +85,32 @@ function MeetingRoom() {
         </div>
 
         <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg border border-slate-700">
+            <Button 
+              variant={translationEnabled ? "secondary" : "ghost"} 
+              size="sm"
+              onClick={() => setTranslationEnabled(!translationEnabled)}
+              className={`gap-2 ${translationEnabled ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'text-slate-400'}`}
+            >
+              <Globe className="h-4 w-4" />
+              Live Translation
+            </Button>
+            {translationEnabled && (
+              <Select value={targetLang} onValueChange={setTargetLang}>
+                <SelectTrigger className="w-[120px] h-8 bg-slate-900 border-slate-700 text-xs text-white">
+                  <SelectValue placeholder="Language" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                  <SelectItem value="Spanish">Spanish</SelectItem>
+                  <SelectItem value="Hindi">Hindi</SelectItem>
+                  <SelectItem value="Telugu">Telugu</SelectItem>
+                  <SelectItem value="Kannada">Kannada</SelectItem>
+                  <SelectItem value="French">French</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
           <div className="hidden sm:flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full text-xs font-semibold border border-emerald-500/20">
             <Shield className="h-3.5 w-3.5" />
             E2EE SECURE
@@ -85,62 +125,12 @@ function MeetingRoom() {
 
       {/* Main Meeting Area */}
       <main className="flex-1 relative flex flex-col overflow-hidden">
-        <RtkMeeting 
-          token={data.token} 
-          appId={data.appId}
-          roomId={data.roomId}
-          theme="dark"
-        >
-          {/* Dynamic Video Grid */}
-          <div className="flex-1 p-4 relative overflow-y-auto">
-            <RtkGrid 
-              className="h-full w-full rounded-xl overflow-hidden" 
-            />
-            
-            {/* Translation Overlay Middleware */}
-            <TranslationOverlay isEnabled={translationEnabled} targetLanguage={targetLang} />
-          </div>
-
-          {/* Bottom Control Bar */}
-          <div className="h-20 border-t border-slate-800 bg-slate-900/80 backdrop-blur-lg px-6 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2">
-              <RtkScreenShareToggle className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white border-0 shadow-lg" />
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg border border-slate-700">
-                <Button 
-                  variant={translationEnabled ? "secondary" : "ghost"} 
-                  size="sm"
-                  onClick={() => setTranslationEnabled(!translationEnabled)}
-                  className={`gap-2 ${translationEnabled ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'text-slate-400'}`}
-                >
-                  <Globe className="h-4 w-4" />
-                  Live Translation
-                </Button>
-                {translationEnabled && (
-                  <Select value={targetLang} onValueChange={setTargetLang}>
-                    <SelectTrigger className="w-[120px] h-8 bg-slate-900 border-slate-700 text-xs">
-                      <SelectValue placeholder="Language" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
-                      <SelectItem value="Spanish">Spanish</SelectItem>
-                      <SelectItem value="Hindi">Hindi</SelectItem>
-                      <SelectItem value="Telugu">Telugu</SelectItem>
-                      <SelectItem value="Kannada">Kannada</SelectItem>
-                      <SelectItem value="French">French</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* Note: In RealtimeKit, RtkChat usually renders the chat window or a toggle */}
-              <RtkChat className="rounded-lg border border-slate-700" />
-            </div>
-          </div>
-        </RtkMeeting>
+        <RtkUiProvider meeting={meeting}>
+          <RtkMeeting />
+        </RtkUiProvider>
+        <div className="absolute inset-0 pointer-events-none z-50">
+          <TranslationOverlay isEnabled={translationEnabled} targetLanguage={targetLang} />
+        </div>
       </main>
     </div>
   );
