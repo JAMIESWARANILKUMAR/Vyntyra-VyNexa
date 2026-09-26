@@ -27,7 +27,7 @@ export default defineConfig({
       ? [cloudflare({ viteEnvironment: { name: "ssr" } })]
       : []),
     nitro({
-      preset: process.env.NITRO_PRESET || (isVercel ? "vercel" : "cloudflare-module"),
+      preset: process.env.NITRO_PRESET || (isVercel ? "vercel" : (process.env.CF_PAGES ? "cloudflare-pages" : "cloudflare-module")),
     }),
     viteReact(),
     {
