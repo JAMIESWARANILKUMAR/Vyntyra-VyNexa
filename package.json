@@ -12,7 +12,8 @@
     "preview:cf": "wrangler dev",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "sync-env": "node sync-env.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1096.0",
