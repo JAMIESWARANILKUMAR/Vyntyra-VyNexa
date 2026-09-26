@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getD1Database } from "@/lib/cloudflare-d1";
-import { getAdminClient } from "@/integrations/supabase/server-client";
+import { getAdminClient } from "@/integrations/supabase/admin";
 import { getRequest } from "@tanstack/react-start/server";
 import { supabase } from "@/integrations/supabase/client";
 import crypto from 'crypto';
