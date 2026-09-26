@@ -638,7 +638,7 @@ export const updateTaskExecution = createServerFn({ method: "POST" })
           const { data: profileData } = await adminClient.from("profiles").select("email, full_name, mentor_id").eq("id", taskData.assigned_to).single();
           if (profileData?.email) {
              const { Resend } = await import("resend");
-             const apiKey = process.env.RESEND_API_KEY;
+             const apiKey = getEnv("RESEND_API_KEY");
              if (apiKey) {
                const resend = new Resend(apiKey);
                
@@ -8581,7 +8581,7 @@ export const generateAiFeedbackReport = createServerFn({ method: "POST" })
     if (!feedbacks || feedbacks.length === 0) throw new Error("No feedback data available for analysis.");
 
     // Initialize Google Gen AI
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: getEnv("GEMINI_API_KEY") });
     
     const feedbackSummary = feedbacks.map((f: any) => `
     Role: ${f.domain_track}

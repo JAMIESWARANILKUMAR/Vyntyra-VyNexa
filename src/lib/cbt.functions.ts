@@ -15,7 +15,7 @@ export const generateAiTestFn = createServerFn({ method: "POST" })
     modules: z.array(z.string())
   }).parse(d))
   .handler(async ({ data: args }) => {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: getEnv("GEMINI_API_KEY") });
     const prompt = `You are an expert technical evaluator. Generate a computer-based test (CBT) based on the following context.
     
     TASK CONTEXT:
@@ -196,7 +196,7 @@ export const submitCbtExamFn = createServerFn({ method: "POST" })
     let totalScore = 0;
     let maxScore = 0;
     let aiFeedback: any = {};
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: getEnv("GEMINI_API_KEY") });
     
     let answersObj = args.answers;
     try { if (typeof answersObj === 'string') answersObj = JSON.parse(answersObj); } catch (e) {}

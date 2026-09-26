@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getAdminClient } from "@/integrations/supabase/admin";
+import { getEnv } from "@/lib/env";
 
 const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
@@ -20,7 +21,7 @@ export const parseDocumentAndAssignTasks = createServerFn({ method: "POST" })
     }
 
     // 2. Call AI API
-    const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = getEnv("GEMINI_API_KEY") || getEnv("OPENAI_API_KEY");
     if (!apiKey) {
       throw new Error("No AI API Key configured. Please add GEMINI_API_KEY to your environment variables.");
     }
@@ -45,7 +46,7 @@ ${data.documentText.slice(0, 10000)}
 
     let aiTasks = [];
     try {
-      if (process.env.GEMINI_API_KEY) {
+      if (getEnv("GEMINI_API_KEY")) {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
