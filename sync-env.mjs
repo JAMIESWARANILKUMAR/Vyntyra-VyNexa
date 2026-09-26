@@ -40,7 +40,7 @@ try {
 
     console.log(`Syncing ${key}...`);
     try {
-      execSync(`node node_modules/wrangler/bin/wrangler.js pages secret put ${key} --project-name ${PROJECT_NAME}`, {
+      execSync(`node node_modules/wrangler/bin/wrangler.js secret put ${key} --name ${PROJECT_NAME}`, {
         input: value,
         stdio: ['pipe', 'inherit', 'inherit'],
         env: {
