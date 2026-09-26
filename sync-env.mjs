@@ -34,11 +34,19 @@ try {
     if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
     else if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
 
+    if (key === 'CLOUDFLARE_ACCOUNT_ID') {
+      process.env.CLOUDFLARE_ACCOUNT_ID = value;
+    }
+
     console.log(`Syncing ${key}...`);
     try {
       execSync(`node node_modules/wrangler/bin/wrangler.js pages secret put ${key} --project-name ${PROJECT_NAME}`, {
         input: value,
-        stdio: ['pipe', 'inherit', 'inherit']
+        stdio: ['pipe', 'inherit', 'inherit'],
+        env: {
+          ...process.env,
+          CLOUDFLARE_API_TOKEN: '', // Ensure it's not present
+        }
       });
       console.log(`✅ Successfully synced ${key}`);
     } catch (error) {
