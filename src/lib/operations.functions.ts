@@ -973,7 +973,7 @@ export const updateTeamTaskMembers = createServerFn({ method: "POST" })
     const cleanDesc = (sourceTask.description || "")
       .replace(/\[TeamId:\s*[^\]\s]+\]\s*/gi, "")
       .replace(/\[TeamName:\s*[^\]]+\]\s*/gi, "")
-      .replace(/\[👥 Team:\s*[^\]]+\]\s*/gi, "")
+      .replace(/\[(?:Collaborators|Team):\s*[^\]]+\]\s*/gi, "")
       .trim();
 
     let customTeamName = sourceTask.team_name;
@@ -986,7 +986,9 @@ export const updateTeamTaskMembers = createServerFn({ method: "POST" })
     const teamName = (customTeamName && !customTeamName.startsWith("Collaborative Team"))
       ? customTeamName
       : `Collaborative Team (${data.target_intern_ids.length})`;
-    const updatedDesc = `[TeamId: ${effectiveTeamId}] [TeamName: ${teamName}] [👥 Team: ${teamMemberNames.join(", ")}]\n\n${cleanDesc}`;
+    const updatedDesc = `[TeamId: ${effectiveTeamId}] [TeamName: ${teamName}] [Collaborators: ${teamMemberNames.join(", ")}]
+
+${cleanDesc}`;
 
     // Case 1: Reduced to 1 intern (revert to individual task)
     if (data.target_intern_ids.length === 1) {
@@ -8689,3 +8691,4 @@ export const listDetailedFeedbacks = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data || [];
   });
+

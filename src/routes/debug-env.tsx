@@ -1,0 +1,2 @@
+import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-start'; import { createServerFn } from '@tanstack/react-start'; import { getEnv } from '@/lib/env'; const getDebugEnv = createServerFn({ method: 'GET' }).handler(async () => { const cfEnv = (globalThis as any).__env__ || {}; return Object.keys(cfEnv).concat(Object.keys(process.env)); }); export const Route = createFileRoute('/debug-env')({ component: () => { const envKeys = getDebugEnv(); return <div>Env Keys: {JSON.stringify(envKeys)}</div>; } });

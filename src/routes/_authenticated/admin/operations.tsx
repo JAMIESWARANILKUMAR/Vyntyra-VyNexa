@@ -1,3 +1,6 @@
+import MDEditor from '@uiw/react-md-editor';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Building2, Plus, Mail, ClipboardList, Calendar, Trash2, Users,
@@ -1573,7 +1576,7 @@ function OperationsDashboard() {
                       </div>
                       <div className="space-y-1.5">
                         <Label>Description <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                        <Textarea rows={3} value={taskForm.description} onChange={e => setTaskForm({ ...taskForm, description: e.target.value })} placeholder="Detailed instructions..." />
+                        <div data-color-mode="light"><MDEditor value={taskForm.description} onChange={(val) => setTaskForm({ ...taskForm, description: val || "" })} height={200} preview="edit" textareaProps={{ placeholder: "Detailed instructions..." }} /></div>
                       </div>
                       <div className="flex items-center space-x-2 pb-2">
                         <input type="checkbox" id="pool_task" checked={taskForm.is_pool_task} onChange={e => setTaskForm({...taskForm, is_pool_task: e.target.checked, assigned_to: e.target.checked ? "" : taskForm.assigned_to})} className="rounded border-gray-300 h-4 w-4" />

@@ -1,3 +1,4 @@
+import MDEditor from '@uiw/react-md-editor';
 import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -580,13 +581,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
 
             <div>
               <Label className="text-xs font-semibold text-slate-700">Document Text</Label>
-              <Textarea
-                placeholder="Paste the syllabus or project requirements here..."
-                rows={10}
-                value={documentText}
-                onChange={(e) => setDocumentText(e.target.value)}
-                className="font-mono text-xs mt-1 border-amber-200 focus-visible:ring-amber-500"
-              />
+              <div data-color-mode="light"><MDEditor value={documentText} onChange={(val) => setDocumentText(val || "")} height={300} preview="edit" textareaProps={{ placeholder: "Paste the syllabus or project requirements here..." }} /></div>
             </div>
 
             <Button
@@ -717,13 +712,7 @@ export function InternTaskAssignmentModal({ open, onClose }: { open: boolean; on
 
               <div>
                 <Label className="text-xs font-bold text-slate-700">Task Description & Requirements</Label>
-                <Textarea
-                  placeholder="Describe step-by-step requirements, expected deliverables, tech stack..."
-                  rows={3}
-                  value={manualDescription}
-                  onChange={(e) => setManualDescription(e.target.value)}
-                  className="mt-1"
-                />
+                <div data-color-mode="light"><MDEditor value={manualDescription} onChange={(val) => setManualDescription(val || "")} height={200} preview="edit" textareaProps={{ placeholder: "Describe step-by-step requirements, expected deliverables, tech stack..." }} /></div>
               </div>
 
               {/* Dedicated Task Communication Meet Link */}

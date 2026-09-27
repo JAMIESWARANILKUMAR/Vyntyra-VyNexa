@@ -16,6 +16,7 @@ import { Route as StatusRouteImport } from './routes/status'
 import { Route as SecurityCheckRouteImport } from './routes/security-check'
 import { Route as RefundsRouteImport } from './routes/refunds'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as DebugEnvRouteImport } from './routes/debug-env'
 import { Route as CareersRouteImport } from './routes/careers'
 import { Route as AgreementRouteImport } from './routes/agreement'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -71,6 +72,11 @@ const RefundsRoute = RefundsRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DebugEnvRoute = DebugEnvRouteImport.update({
+  id: '/debug-env',
+  path: '/debug-env',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CareersRoute = CareersRouteImport.update({
@@ -188,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agreement': typeof AgreementRoute
   '/careers': typeof CareersRoute
+  '/debug-env': typeof DebugEnvRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/security-check': typeof SecurityCheckRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agreement': typeof AgreementRoute
   '/careers': typeof CareersRoute
+  '/debug-env': typeof DebugEnvRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/security-check': typeof SecurityCheckRoute
@@ -248,6 +256,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/agreement': typeof AgreementRoute
   '/careers': typeof CareersRoute
+  '/debug-env': typeof DebugEnvRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/security-check': typeof SecurityCheckRoute
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/'
     | '/agreement'
     | '/careers'
+    | '/debug-env'
     | '/privacy'
     | '/refunds'
     | '/security-check'
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/'
     | '/agreement'
     | '/careers'
+    | '/debug-env'
     | '/privacy'
     | '/refunds'
     | '/security-check'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/agreement'
     | '/careers'
+    | '/debug-env'
     | '/privacy'
     | '/refunds'
     | '/security-check'
@@ -369,6 +381,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AgreementRoute: typeof AgreementRoute
   CareersRoute: typeof CareersRoute
+  DebugEnvRoute: typeof DebugEnvRoute
   PrivacyRoute: typeof PrivacyRoute
   RefundsRoute: typeof RefundsRoute
   SecurityCheckRoute: typeof SecurityCheckRoute
@@ -431,6 +444,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/debug-env': {
+      id: '/debug-env'
+      path: '/debug-env'
+      fullPath: '/debug-env'
+      preLoaderRoute: typeof DebugEnvRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/careers': {
@@ -632,6 +652,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AgreementRoute: AgreementRoute,
   CareersRoute: CareersRoute,
+  DebugEnvRoute: DebugEnvRoute,
   PrivacyRoute: PrivacyRoute,
   RefundsRoute: RefundsRoute,
   SecurityCheckRoute: SecurityCheckRoute,

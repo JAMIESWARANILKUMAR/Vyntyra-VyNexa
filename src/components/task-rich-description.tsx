@@ -58,14 +58,14 @@ export function formatTaskText(rawText: string): {
   }
 
   // 2. Extract [👥 Team: Name 1, Name 2, ...] or [Team: Name 1, Name 2, ...]
-  const teamMatch = text.match(/\[(?:👥\s*)?Team:\s*([^\]]+)\]/i);
+  const teamMatch = text.match(/\[(?:Collaborators|Team):\s*([^\]]+)\]/i);
   if (teamMatch) {
     const namesStr = teamMatch[1];
     namesStr.split(",").forEach(n => {
       const trimmed = n.trim();
       if (trimmed) parsedTeamNames.push(trimmed);
     });
-    text = text.replace(/\[(?:👥\s*)?Team:\s*[^\]]+\]/gi, "").trim();
+    text = text.replace(/\[(?:Collaborators|Team):\s*[^\]]+\]/gi, "").trim();
   }
 
   // 3. Replace LaTeX symbols with clean visual characters/arrows
