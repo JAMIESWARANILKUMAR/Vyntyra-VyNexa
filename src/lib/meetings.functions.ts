@@ -31,7 +31,7 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
     const appId = process.env.CLOUDFLARE_REALTIME_APP_ID;
-    const apiToken = process.env.CLOUDFLARE_REALTIME_API_TOKEN;
+    const apiToken = process.env.CLOUDFLARE_REALTIME_API_TOKEN || process.env.CLOUDFLARE_REALTIME_APP_SECRET;
 
     if (!accountId || !appId || !apiToken) {
       throw new Error("Missing Cloudflare RealtimeKit credentials in environment.");
@@ -173,7 +173,7 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
 
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
     const appId = process.env.CLOUDFLARE_REALTIME_APP_ID;
-    const apiToken = process.env.CLOUDFLARE_REALTIME_API_TOKEN;
+    const apiToken = process.env.CLOUDFLARE_REALTIME_API_TOKEN || process.env.CLOUDFLARE_REALTIME_APP_SECRET;
 
     if (!accountId || !appId || !apiToken) {
       throw new Error("Missing Cloudflare RealtimeKit credentials.");
