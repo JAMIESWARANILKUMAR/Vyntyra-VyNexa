@@ -41,12 +41,39 @@ export function ActiveStreamsSection() {
             {activeCandidates.map((c, i) => (
               <div key={i} className="p-4 border border-slate-200 rounded-xl flex flex-col justify-between bg-slate-50/50">
                  <div className="mb-4">
-                   <div className="font-bold text-sm text-slate-800">Intern ID: {c.internId}</div>
-                   <div className="text-[10px] text-slate-500 font-mono">Test ID: {c.testId}</div>
-                   <div className="text-[10px] text-slate-500 font-mono mt-1">IP: {c.ip}</div>
-                   <div className="text-xs text-emerald-600 font-bold mt-2 flex items-center gap-1"><span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span> LIVE</div>
+                   <div className="flex justify-between items-start mb-2">
+                     <div className="font-bold text-sm text-slate-800">Intern: {c.internId}</div>
+                     <div className="text-xs text-emerald-600 font-bold flex items-center gap-1"><span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span> LIVE</div>
+                   </div>
+                   <div className="text-[10px] text-slate-500 font-mono mb-2 truncate">Test: {c.testId}</div>
+                   
+                   {c.strikes > 0 && (
+                     <div className="mb-2 p-2 bg-rose-50 border border-rose-200 rounded text-xs text-rose-700 font-bold">
+                       ⚠️ {c.strikes} Strike{c.strikes > 1 ? 's' : ''}: {c.latestLog}
+                     </div>
+                   )}
+
+                   {c.totalQ ? (
+                     <div className="mt-3 bg-white p-2 rounded border border-slate-200 text-xs">
+                       <div className="flex justify-between font-medium text-slate-700 mb-1">
+                         <span>Q: {c.activeQ + 1} / {c.totalQ}</span>
+                         <span className={c.timeLeft < 10 ? 'text-rose-500 font-bold' : ''}>{Math.floor(c.timeLeft / 60)}:{(c.timeLeft % 60).toString().padStart(2, '0')}</span>
+                       </div>
+                       <div className="w-full bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden">
+                         <div className="bg-indigo-500 h-1.5 transition-all duration-300" style={{ width: `${((c.activeQ + 1) / c.totalQ) * 100}%` }}></div>
+                       </div>
+                     </div>
+                   ) : (
+                     <div className="text-[10px] text-slate-500 font-mono mt-1">IP: {c.ip}</div>
+                   )}
                  </div>
-                 <Button size="sm" onClick={() => setSelectedStream(c)} className="w-full bg-indigo-600 hover:bg-indigo-700 font-bold"><Video className="h-4 w-4 mr-2"/> Connect Stream</Button>
+                 <div className="flex gap-2">
+                   <Button size="sm" onClick={() => setSelectedStream(c)} className="flex-1 bg-indigo-600 hover:bg-indigo-700 font-bold"><Video className="h-4 w-4 mr-2"/> Stream</Button>
+                   <Button size="sm" variant="destructive" onClick={() => {
+                     const channel = supabase.channel('cbt-active-exams');
+                     channel.send({ type: 'broadcast', event: 'force_submit', payload: { internId: c.internId, testId: c.testId } });
+                   }} className="font-bold">Force Submit</Button>
+                 </div>
               </div>
             ))}
          </div>

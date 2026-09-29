@@ -22,6 +22,7 @@ import { RichContentRenderer } from "@/components/rich-content-renderer";
 import { TaskRichDescription } from "@/components/task-rich-description";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { MeetingsSection, MeetingCountdown, getJoinButtonState } from "@/components/meetings-section";
+import { VyntyraMeetAdmin } from "@/components/ui/vyntyra-meet-admin";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
 import { AnalogClock } from "@/components/analog-clock";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -192,14 +193,14 @@ function CbtResultsSection() {
           {submissions.map(sub => (
             <div key={sub.id} className="p-4 border border-slate-200 rounded-xl bg-white/60 shadow-sm flex flex-col gap-3">
               <div className="flex justify-between items-center">
-                <div className="font-bold text-slate-800">{sub.test_title}</div>
-                <div className={`px-2 py-1 rounded text-xs font-bold ${sub.passed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                  {sub.passed ? 'PASSED' : 'FAILED'}
+                <div className="font-bold text-slate-800">{sub.cbt_exams?.title || "Exam"}</div>
+                <div className={`px-2 py-1 rounded text-xs font-bold ${sub.total_score >= (sub.cbt_exams?.passing_score || 50) ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                  {sub.total_score >= (sub.cbt_exams?.passing_score || 50) ? 'PASSED' : 'FAILED'}
                 </div>
               </div>
               <div className="flex justify-between text-sm text-slate-600">
-                <div>Score: <span className="font-bold">{sub.score} / {sub.max_score}</span></div>
-                <div>{new Date(sub.submitted_at).toLocaleDateString()}</div>
+                <div>Score: <span className="font-bold">{sub.total_score} pts</span></div>
+                <div>{new Date(sub.submitted_at || sub.started_at).toLocaleDateString()}</div>
               </div>
               {sub.ai_feedback && (
                 <div className="mt-2 text-xs bg-slate-50 p-3 rounded-lg border border-slate-100">
@@ -3332,7 +3333,7 @@ function InternDashboard() {
                               )}
                             </div>
 
-                            <TaskRichDescription description={task.description} teamMembers={task.team_members || task.team_member_names} />
+                            <TaskRichDescription description={task.description} teamMembers={task.team_members || task.team_member_names} teamId={task.team_id} />
 
                             {/* Action links row & Resources */}
                             <div className="mt-4 flex flex-wrap gap-2">
@@ -3664,7 +3665,7 @@ function InternDashboard() {
             <div className="lg:col-span-2 space-y-3">
               <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2"><Video className="h-4 w-4 text-emerald-600" />Meetings</h2>
               <div className="rounded-3xl border border-emerald-200/80 bg-white/95 p-6 shadow-xl shadow-emerald-950/5 backdrop-blur-xl">
-                <MeetingsSection meetings={meetings} isLoading={meetingsQ.isLoading} isError={meetingsQ.isError} />
+                <MeetingsSection meetings={meetings} isLoading={meetingsQ.isLoading} isError={meetingsQ.isError} /><div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800"><VyntyraMeetAdmin role="intern" /></div>
               </div>
             </div>
           </div>

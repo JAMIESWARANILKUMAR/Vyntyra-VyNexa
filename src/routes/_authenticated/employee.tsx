@@ -27,6 +27,7 @@ import { RichContentRenderer } from "@/components/rich-content-renderer";
 import { TaskRichDescription } from "@/components/task-rich-description";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { MeetingsSection } from "@/components/meetings-section";
+import { VyntyraMeetAdmin } from "@/components/ui/vyntyra-meet-admin";
 import { FirstLoginWelcomeModal } from "@/components/first-login-welcome-modal";
 import { FloatingAppsPanel } from "@/components/floating-apps-panel";
 import { AnalogClock } from "@/components/analog-clock";
@@ -2962,134 +2963,9 @@ function EmployeeDashboard() {
           {/* ─── MEETINGS ─── */}
           {activeTab === "meetings" && (
             <motion.div key="meetings" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-7xl mx-auto space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0E131F]/90 p-6 rounded-3xl border border-slate-800/80 shadow-xl backdrop-blur-xl">
-                <div className="space-y-1">
-                  <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
-                    <Video className="h-5 w-5 text-indigo-400" /> Meetings &amp; Video Syncs
-                  </h2>
-                  <p className="text-xs text-slate-400">
-                    Host team syncs, 1-on-1 intern reviews, or sprint milestone discussions.
-                  </p>
-                </div>
-
-                <Dialog open={meetingModalOpen} onOpenChange={setMeetingModalOpen}>
-                  <Button 
-                    size="sm" 
-                    onClick={() => setMeetingModalOpen(true)}
-                    className="gap-1.5 text-xs h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-md cursor-pointer"
-                  >
-                    <Plus className="h-4 w-4" /> Schedule Meeting
-                  </Button>
-
-                  <DialogContent className="sm:max-w-lg bg-[#0F172A] border border-slate-700 text-white">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2 text-white">
-                        <Video className="h-5 w-5 text-indigo-400" /> Schedule Meeting
-                      </DialogTitle>
-                      <DialogDescription className="text-slate-400">
-                        Set up a live meeting with dedicated start/end times and Google Calendar sync.
-                      </DialogDescription>
-                    </DialogHeader>
-
-                    <form onSubmit={handleScheduleMeetingSubmit} className="space-y-3.5 py-2">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-bold text-slate-300">Meeting Title / Topic</Label>
-                        <Input 
-                          required 
-                          value={meetingForm.title} 
-                          onChange={e => setMeetingForm({ ...meetingForm, title: e.target.value })} 
-                          placeholder="e.g. Sprint Review & Code Walkthrough" 
-                          className="rounded-xl text-xs bg-[#131B2E] border-slate-700 text-white"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-bold text-slate-300">Agenda &amp; Discussion Details</Label>
-                        <Input 
-                          value={meetingForm.description} 
-                          onChange={e => setMeetingForm({ ...meetingForm, description: e.target.value })} 
-                          placeholder="e.g. Milestone progress and next deliverables." 
-                          className="rounded-xl text-xs bg-[#131B2E] border-slate-700 text-white"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-bold text-slate-300">Meeting Video Link (Google Meet)</Label>
-                        <Input 
-                          required 
-                          type="url" 
-                          value={meetingForm.meeting_link} 
-                          onChange={e => setMeetingForm({ ...meetingForm, meeting_link: e.target.value })} 
-                          placeholder="https://meet.google.com/xyz-abcd-efg" 
-                          className="rounded-xl text-xs font-mono bg-[#131B2E] border-slate-700 text-white"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-bold text-slate-300">Date</Label>
-                          <Input 
-                            required 
-                            type="date" 
-                            value={meetingForm.date} 
-                            onChange={e => setMeetingForm({ ...meetingForm, date: e.target.value })} 
-                            className="rounded-xl text-xs bg-[#131B2E] border-slate-700 text-white"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-bold text-slate-300">From Time</Label>
-                          <Input 
-                            required 
-                            type="time" 
-                            value={meetingForm.from_time} 
-                            onChange={e => setMeetingForm({ ...meetingForm, from_time: e.target.value })} 
-                            className="rounded-xl text-xs bg-[#131B2E] border-slate-700 text-white"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-bold text-slate-300">To Time</Label>
-                          <Input 
-                            required 
-                            type="time" 
-                            value={meetingForm.to_time} 
-                            onChange={e => setMeetingForm({ ...meetingForm, to_time: e.target.value })} 
-                            className="rounded-xl text-xs bg-[#131B2E] border-slate-700 text-white"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-bold text-slate-300">Target Audience</Label>
-                        <Select 
-                          value={meetingForm.target_role} 
-                          onValueChange={(v: any) => setMeetingForm({ ...meetingForm, target_role: v })}
-                        >
-                          <SelectTrigger className="rounded-xl text-xs bg-[#131B2E] border-slate-700 text-white"><SelectValue /></SelectTrigger>
-                          <SelectContent className="bg-[#0F172A] border-slate-700 text-white">
-                            <SelectItem value="all">Everyone (Employees &amp; Interns)</SelectItem>
-                            <SelectItem value="intern">Interns Only</SelectItem>
-                            <SelectItem value="employee">Employees Only</SelectItem>
-                            <SelectItem value="individual">Specific Person (Individual)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <DialogFooter className="pt-2">
-                        <Button type="button" variant="ghost" onClick={() => setMeetingModalOpen(false)} className="text-slate-400 hover:text-white">Cancel</Button>
-                        <Button 
-                          type="submit" 
-                          disabled={isSavingMeeting}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs"
-                        >
-                          {isSavingMeeting ? "Scheduling..." : "Schedule Meeting"}
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+              <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 shadow-xl backdrop-blur-xl overflow-hidden">
+                <VyntyraMeetAdmin role="employee" />
               </div>
-
-              <MeetingsSection meetings={meetings} isLoading={meetingsQ.isLoading} isError={meetingsQ.isError} />
             </motion.div>
           )}
           

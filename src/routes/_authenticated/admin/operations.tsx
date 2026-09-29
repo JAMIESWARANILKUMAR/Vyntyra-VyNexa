@@ -47,7 +47,7 @@ import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
 import EmailAutomationHub from "@/components/email-automation-hub";
 import { SmartAvatar } from "@/components/SmartAvatar";
 import { AdminInternTasksView } from "@/components/admin-intern-tasks-view";
-import { AdminDetailedFeedbacksView } from "@/components/admin-detailed-feedbacks-view";
+import { AdminDynamicFeedbacksView } from "@/components/admin-dynamic-feedbacks-view";
 import { ManageTeamModal } from "@/components/manage-team-modal";
 import { AdminLmsManager } from "@/components/admin-lms-manager";
 import { AdminProfileChangeApprovals } from "@/components/admin-profile-change-approvals";
@@ -3176,7 +3176,7 @@ function OperationsDashboard() {
             </section>
 
             {/* Detailed Feedback Campaigns */}
-            <AdminDetailedFeedbacksView />
+            <AdminDynamicFeedbacksView />
 
             {/* Feedback Inbox */}
             <section className="rounded-xl border bg-white shadow-sm overflow-hidden">

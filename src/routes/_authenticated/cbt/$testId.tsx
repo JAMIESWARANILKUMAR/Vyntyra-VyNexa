@@ -41,6 +41,8 @@ function CbtExamInterface() {
   // WebRTC / Live Streaming hook
   const rtcConnection = useRef<RTCPeerConnection | null>(null);
 
+  const globalChannelRef = useRef<any>(null);
+
   useEffect(() => {
     if (examStatus !== "running" || !test) return;
 
@@ -59,7 +61,6 @@ function CbtExamInterface() {
           const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
           rtcConnection.current = pc;
 
-          // Get media (assume permissions granted by proctoring)
           const webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }).catch(() => null);
           const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true }).catch(() => null);
 
@@ -92,27 +93,52 @@ function CbtExamInterface() {
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-           // Track in specific channel for WebRTC signaling
            await channel.track({ testId, internId: test.internId, startedAt: Date.now(), ip: ipAddress });
         }
       });
 
     const globalChannel = supabase.channel('cbt-active-exams', { config: { presence: { key: test.internId } } });
-    globalChannel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-         await globalChannel.track({ testId, internId: test.internId, startedAt: Date.now(), ip: ipAddress, status: 'running' });
-      }
-    });
+    globalChannelRef.current = globalChannel;
+    globalChannel
+      .on('broadcast', { event: 'force_submit' }, (payload: any) => {
+        if (payload.payload?.internId === test.internId && payload.payload?.testId === testId) {
+           toast.error("An Admin has forcefully submitted your exam!");
+           handleFinalize(true);
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+           await globalChannel.track({ testId, internId: test.internId, startedAt: Date.now(), ip: ipAddress, status: 'running' });
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(globalChannel);
+      globalChannelRef.current = null;
       if (rtcConnection.current) {
         rtcConnection.current.close();
         rtcConnection.current = null;
       }
     };
   }, [examStatus, test, testId, ipAddress]);
+
+  useEffect(() => {
+    if (globalChannelRef.current && test) {
+       const latestLog = logs.length > 0 ? logs[logs.length - 1].reason : null;
+       globalChannelRef.current.track({ 
+         testId, 
+         internId: test.internId, 
+         ip: ipAddress, 
+         status: 'running', 
+         activeQ, 
+         totalQ: questions.length, 
+         timeLeft,
+         strikes,
+         latestLog
+       });
+    }
+  }, [activeQ, timeLeft, questions.length, strikes, logs]);
 
   const getSessionFn = useServerFn(getInternTestSessionFn);
   const submitFn = useServerFn(submitCbtExamFn);
@@ -134,16 +160,23 @@ function CbtExamInterface() {
         { id: "demo-q4", question_type: "mcq", question_text: "What happens if you switch tabs during a proctored exam?", options: [{id: "opt7", text: "You get a strike (2 strikes = fail)"}, {id: "opt8", text: "Nothing"}, {id: "opt9", text: "You earn bonus points"}] },
         { id: "demo-q5", question_type: "coding", question_text: "Write a simple function that returns 'VyNexa'." }
       ]);
-      setTimeLeft(10 * 60);
+      setTimeLeft(60);
       return;
     }
 
     getSessionFn({ data: { testId } }).then(res => {
       setTest({...res.test, internId: "INT-4829"}); // fallback if not in test
       setQuestions(res.questions);
-      setTimeLeft(((res.test as any).time_limit_minutes || 30) * 60);
     });
   }, [testId]);
+
+  useEffect(() => {
+    if (examStatus !== "running" || questions.length === 0) return;
+    if (timeLeft === null) {
+      const currentQTime = questions[activeQ]?.time_limit_seconds || 60;
+      setTimeLeft(currentQTime);
+    }
+  }, [examStatus, activeQ, questions, timeLeft]);
 
   useEffect(() => {
     if (examStatus !== "running") return;
@@ -156,12 +189,19 @@ function CbtExamInterface() {
   useEffect(() => {
     if (examStatus !== "running" || timeLeft === null) return;
     if (timeLeft <= 0) {
-      handleFinalize(true);
+      if (activeQ < questions.length - 1) {
+        toast.error("Time is up for this question!");
+        setActiveQ(prev => prev + 1);
+        setTimeLeft(questions[activeQ + 1]?.time_limit_seconds || 60);
+      } else {
+        toast.error("Time is up for the exam!");
+        handleFinalize(true);
+      }
       return;
     }
-    const timer = setInterval(() => setTimeLeft(prev => (prev ? prev - 1 : 0)), 1000);
+    const timer = setInterval(() => setTimeLeft(prev => (prev !== null && prev > 0 ? prev - 1 : 0)), 1000);
     return () => clearInterval(timer);
-  }, [examStatus, timeLeft]);
+  }, [examStatus, timeLeft, activeQ, questions]);
 
   // Post-test countdown timer (120s -> 0)
   useEffect(() => {

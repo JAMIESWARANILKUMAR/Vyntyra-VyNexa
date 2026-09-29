@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { generateAiTestFn, saveGeneratedTestFn, listCbtTargetsFn, listAdminTestsFn, deleteAdminTestFn, toggleAdminTestStatusFn } from "@/lib/cbt.functions";
+import { generateAiTestFn, saveGeneratedTestFn, listCbtTargetsFn, listAdminTestsFn, deleteAdminTestFn, toggleAdminTestStatusFn, listAdminTestSubmissionsFn } from "@/lib/cbt.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { BrainCircuit, Upload, Loader2, Save, Users, FileText, CheckCircle2, Trash2, CheckCircle, XCircle, RefreshCw, AlertTriangle, Search, Activity } from "lucide-react";
+import { BrainCircuit, Upload, Loader2, Save, Users, FileText, CheckCircle2, Trash2, CheckCircle, XCircle, RefreshCw, AlertTriangle, Search, Activity, Clock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ActiveStreamsSection } from "./cbt-streams";
 
@@ -61,13 +61,15 @@ export function CbtOperationsTab() {
 }
 
 function AdminCbtGenerateView() {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [passingScore, setPassingScore] = useState(50);
   const [targetType, setTargetType] = useState("intern");
   const [targetId, setTargetId] = useState("");
   const [taskContext, setTaskContext] = useState("");
   const [modules, setModules] = useState<string[]>(["mcq"]);
   const [generated, setGenerated] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [timerPerQuestion, setTimerPerQuestion] = useState(60); // default 60s
   
   const [targets, setTargets] = useState<{interns: any[], teams: any[]}>({ interns: [], teams: [] });
   
@@ -118,22 +120,26 @@ function AdminCbtGenerateView() {
   };
 
   const handleGenerate = async () => {
+    if (!title.trim()) return toast.error("Please provide an Exam Title.");
     if (!targetId || targetId === "none") return toast.error("Please select a valid target Intern or Team.");
     if (!taskContext.trim()) return toast.error("Please provide Task Context.");
     
     setIsGenerating(true);
     try {
       const res = await generateFn({ data: { 
-        targetType, 
         taskContext, 
-        modules, 
-        difficulty: "mixed" 
+        modules
       } });
       
       if (res.error) {
         toast.error(res.error);
       } else {
-        setGenerated(res);
+        // Map questions to include a default manual timer of 60 seconds
+        const questionsWithTimers = res.questions.map((q: any) => ({
+          ...q,
+          time_limit_seconds: 60
+        }));
+        setGenerated({ ...res, questions: questionsWithTimers });
         toast.success("AI Test generated successfully!");
       }
     } catch (e) {
@@ -144,15 +150,14 @@ function AdminCbtGenerateView() {
 
   const handleSave = async () => {
     try {
-      const totalTime = Math.ceil((generated.questions.length * timerPerQuestion) / 60);
       const res = await saveFn({ data: {
         testMetadata: { 
-          title: `Assigned CBT - ${targetType.toUpperCase()}`, 
+          title: title, 
+          description: description,
           target_type: targetType, 
           target_id: targetId, 
-          modules,
-          time_limit_minutes: totalTime,
-          description: JSON.stringify({ per_question_timer: timerPerQuestion })
+          passing_score: passingScore,
+          modules
         },
         questions: generated.questions
       } });
@@ -161,6 +166,8 @@ function AdminCbtGenerateView() {
         setGenerated(null);
         setTargetId("");
         setTaskContext("");
+        setTitle("");
+        setDescription("");
       }
     } catch (e) {
       toast.error("Failed to save test.");
@@ -171,6 +178,41 @@ function AdminCbtGenerateView() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div>
+            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><FileText className="h-5 w-5 text-indigo-500"/> Exam Metadata</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-slate-700">Exam Title</label>
+                <input 
+                  type="text" 
+                  className="w-full p-2 border rounded-lg mt-1" 
+                  placeholder="e.g., Senior Frontend Evaluation"
+                  value={title} onChange={e => setTitle(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700">Description</label>
+                <textarea 
+                  className="w-full p-2 border rounded-lg mt-1 resize-none" 
+                  rows={2}
+                  placeholder="Brief description of the exam..."
+                  value={description} onChange={e => setDescription(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700">Passing Score (%)</label>
+                <input 
+                  type="number" 
+                  min={1} max={100}
+                  className="w-full p-2 border rounded-lg mt-1" 
+                  value={passingScore} onChange={e => setPassingScore(Number(e.target.value))}
+                />
+              </div>
+            </div>
+          </div>
+          
+          <hr className="border-slate-100" />
+          
           <div>
             <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><Users className="h-5 w-5 text-indigo-500"/> Target Selection</h3>
             <div className="flex gap-4 mb-4">
@@ -234,22 +276,6 @@ function AdminCbtGenerateView() {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
           <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><BrainCircuit className="h-5 w-5 text-emerald-500"/> Exam Config & Modules</h3>
           
-          <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <label className="block text-sm font-bold text-slate-800 mb-2">Timer Configuration</label>
-            <div className="flex items-center gap-3">
-              <input 
-                type="number" 
-                min={10} 
-                max={300}
-                value={timerPerQuestion} 
-                onChange={(e) => setTimerPerQuestion(Number(e.target.value))}
-                className="w-24 p-2 border rounded-lg text-sm" 
-              />
-              <span className="text-sm text-slate-600">Seconds per question</span>
-            </div>
-            <p className="text-xs text-slate-500 mt-2">Calculates total exam time based on generated question count.</p>
-          </div>
-
           <p className="text-sm text-slate-500 mb-4">Select the specific modules to generate for this CBT run. The AI will mix and match questions accordingly.</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
             {ALL_MODULES.map(m => {
@@ -272,22 +298,73 @@ function AdminCbtGenerateView() {
 
       {generated && (
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-200 animate-in fade-in slide-in-from-bottom-4">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <h2 className="text-xl font-black text-slate-900">Generated Exam Preview</h2>
-            <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700 font-bold px-6 shadow-md shadow-emerald-500/20">
-              <CheckCircle2 className="mr-2 h-5 w-5" /> Approve & Publish Test
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setGenerated({
+                    ...generated,
+                    questions: [
+                      ...generated.questions,
+                      {
+                        question_type: "mcq",
+                        question_text: "New Custom Question",
+                        options: [{ id: "A", text: "Option A" }, { id: "B", text: "Option B" }],
+                        correct_answer: "A",
+                        time_limit_seconds: 60,
+                        max_points: 10,
+                        difficulty: "medium"
+                      }
+                    ]
+                  })
+                }}
+              >
+                + Add Custom Question
+              </Button>
+              <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700 font-bold px-6 shadow-md shadow-emerald-500/20">
+                <CheckCircle2 className="mr-2 h-5 w-5" /> Approve & Publish Test
+              </Button>
+            </div>
           </div>
           <div className="grid grid-cols-1 gap-4">
             {generated.questions.map((q: any, i: number) => (
               <div key={i} className="p-5 bg-slate-50 border border-slate-200 rounded-xl">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="font-bold text-slate-800">Q{i+1}: {q.question_type.toUpperCase()}</div>
+                  <div className="flex items-center gap-4">
+                    <div className="font-bold text-slate-800">Q{i+1}: {q.question_type.toUpperCase()}</div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-slate-400" />
+                      <input 
+                        type="number" 
+                        min={10} max={600}
+                        className="w-16 p-1 text-xs border rounded-md text-center" 
+                        value={q.time_limit_seconds || 60}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          const newQ = [...generated.questions];
+                          newQ[i].time_limit_seconds = val;
+                          setGenerated({ ...generated, questions: newQ });
+                        }}
+                      />
+                      <span className="text-xs text-slate-500">secs</span>
+                    </div>
+                  </div>
                   <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${q.difficulty === "hard" ? "bg-rose-100 text-rose-700" : q.difficulty === "medium" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
                     {q.difficulty}
                   </div>
                 </div>
-                <div className="text-slate-700 mb-3 text-sm">{q.question_text}</div>
+                <textarea 
+                  className="w-full p-2 text-slate-700 mb-3 text-sm border rounded-lg resize-none focus:ring-1 focus:ring-emerald-500" 
+                  rows={2}
+                  value={q.question_text}
+                  onChange={(e) => {
+                    const newQ = [...generated.questions];
+                    newQ[i].question_text = e.target.value;
+                    setGenerated({ ...generated, questions: newQ });
+                  }}
+                />
                 {q.options && (
                   <ul className="space-y-1 pl-4 text-sm text-slate-600">
                     {q.options.map((o: any, idx: number) => (
@@ -307,109 +384,179 @@ function AdminCbtGenerateView() {
   );
 }
 
-function AdminCbtSubmissionsView() {
-  const qc = useQueryClient();
-  const fetchTests = useServerFn(listAdminTestsFn);
-  const doDelete = useServerFn(deleteAdminTestFn);
-  const doToggle = useServerFn(toggleAdminTestStatusFn);
-  const fetchTargets = useServerFn(listCbtTargetsFn);
-
-  const { data: tests = [], isLoading: isLoadingTests } = useQuery({
-    queryKey: ["admin-cbt-tests"],
-    queryFn: () => fetchTests(),
-  });
+  function AdminCbtSubmissionsView() {
+    const qc = useQueryClient();
+    const fetchTests = useServerFn(listAdminTestsFn);
+    const doDelete = useServerFn(deleteAdminTestFn);
+    const doToggle = useServerFn(toggleAdminTestStatusFn);
+    const fetchTargets = useServerFn(listCbtTargetsFn);
+    
+    const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
   
-  const { data: targets } = useQuery({
-    queryKey: ["cbt-targets"],
-    queryFn: () => fetchTargets(),
-  });
+    const { data: tests = [], isLoading: isLoadingTests } = useQuery({
+      queryKey: ["admin-cbt-tests"],
+      queryFn: () => fetchTests(),
+    });
+    
+    const { data: targets } = useQuery({
+      queryKey: ["cbt-targets"],
+      queryFn: () => fetchTargets(),
+    });
+  
+    const deleteMut = useMutation({
+      mutationFn: (id: string) => doDelete({ data: { testId: id } }),
+      onSuccess: () => { toast.success("Test deleted"); qc.invalidateQueries({ queryKey: ["admin-cbt-tests"] }); },
+      onError: () => toast.error("Failed to delete test")
+    });
+  
+    const toggleMut = useMutation({
+      mutationFn: ({ id, status }: { id: string, status: string }) => doToggle({ data: { testId: id, status } }),
+      onSuccess: () => { toast.success("Status updated"); qc.invalidateQueries({ queryKey: ["admin-cbt-tests"] }); },
+      onError: () => toast.error("Failed to update status")
+    });
+  
+    const getTargetName = (type: string, ids: string[]) => {
+      if (!targets) return "Loading...";
+      if (!ids || ids.length === 0) return "Global";
+      const id = ids[0];
+      if (type === "intern") {
+        const intern = targets.interns.find(i => i.id === id);
+        return intern ? intern.full_name : id;
+      } else {
+        const team = targets.teams.find(t => t.id === id);
+        return team ? team.name : id;
+      }
+    };
 
-  const deleteMut = useMutation({
-    mutationFn: (id: string) => doDelete({ data: { id } }),
-    onSuccess: () => { toast.success("Test deleted"); qc.invalidateQueries({ queryKey: ["admin-cbt-tests"] }); },
-    onError: () => toast.error("Failed to delete test")
-  });
-
-  const toggleMut = useMutation({
-    mutationFn: ({ id, status }: { id: string, status: string }) => doToggle({ data: { id, status } }),
-    onSuccess: () => { toast.success("Status updated"); qc.invalidateQueries({ queryKey: ["admin-cbt-tests"] }); },
-    onError: () => toast.error("Failed to update status")
-  });
-
-  const getTargetName = (type: string, id: string) => {
-    if (!targets) return id;
-    if (type === "intern") {
-      const intern = targets.interns.find(i => i.id === id);
-      return intern ? intern.full_name : id;
-    } else {
-      const team = targets.teams.find(t => t.id === id);
-      return team ? team.name : id;
+    if (selectedTestId) {
+      return <AdminCbtTestReviewView testId={selectedTestId} onBack={() => setSelectedTestId(null)} />;
     }
-  };
-
-  return (
-    <div className="space-y-6">
-      <ActiveStreamsSection />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Activity className="h-6 w-6" /></div>
-          <div><p className="text-sm font-bold text-slate-500">Active Exams</p><p className="text-2xl font-black text-slate-900">{tests.filter((t: any) => t.status === 'active').length}</p></div>
+  
+    return (
+      <div className="space-y-6">
+        <ActiveStreamsSection />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Activity className="h-6 w-6" /></div>
+            <div><p className="text-sm font-bold text-slate-500">Published Exams</p><p className="text-2xl font-black text-slate-900">{tests.filter((t: any) => t.status === 'published').length}</p></div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><CheckCircle className="h-6 w-6" /></div>
+            <div><p className="text-sm font-bold text-slate-500">Draft Exams</p><p className="text-2xl font-black text-slate-900">{tests.filter((t: any) => t.status === 'draft').length}</p></div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center"><FileText className="h-6 w-6" /></div>
+            <div><p className="text-sm font-bold text-slate-500">Total Exams</p><p className="text-2xl font-black text-slate-900">{tests.length}</p></div>
+          </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><CheckCircle className="h-6 w-6" /></div>
-          <div><p className="text-sm font-bold text-slate-500">Completed</p><p className="text-2xl font-black text-slate-900">{tests.filter((t: any) => t.status === 'completed').length}</p></div>
-        </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center"><FileText className="h-6 w-6" /></div>
-          <div><p className="text-sm font-bold text-slate-500">Total Exams</p><p className="text-2xl font-black text-slate-900">{tests.length}</p></div>
+  
+        <div className="bg-white border rounded-2xl overflow-hidden shadow-sm">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 border-b text-slate-600 font-bold uppercase text-xs">
+              <tr>
+                <th className="px-6 py-4">Title</th>
+                <th className="px-6 py-4">Target</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Created</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {isLoadingTests ? (
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">Loading exams...</td></tr>
+              ) : tests.length === 0 ? (
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">No exams found.</td></tr>
+              ) : (
+                tests.map((t: any) => (
+                  <tr key={t.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 font-bold text-slate-800">{t.title}</td>
+                    <td className="px-6 py-4">
+                      <span className="font-medium text-slate-600">{getTargetName(t.allocation_mode, t.allocation_mode === 'team' ? t.team_ids : t.intern_ids)}</span>
+                      <span className="ml-2 text-[10px] uppercase font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">{t.allocation_mode}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase flex w-fit items-center gap-1 ${t.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                        {t.status === 'published' ? <CheckCircle className="h-3 w-3"/> : <XCircle className="h-3 w-3"/>}
+                        {t.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-500">{new Date(t.created_at).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <Button variant="secondary" size="sm" onClick={() => setSelectedTestId(t.id)}>
+                        Review Submissions
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => toggleMut.mutate({ id: t.id, status: t.status === 'published' ? 'draft' : 'published' })}>
+                        <RefreshCw className="h-4 w-4 mr-1" /> {t.status === 'published' ? 'Unpublish' : 'Publish'}
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => { if(confirm("Delete this test?")) deleteMut.mutate(t.id); }}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
+    );
+  }
 
-      <div className="bg-white border rounded-2xl overflow-hidden shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 border-b text-slate-600 font-bold uppercase text-xs">
-            <tr>
-              <th className="px-6 py-4">Title</th>
-              <th className="px-6 py-4">Target (Intern/Team)</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4">Created</th>
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {isLoadingTests ? (
-              <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">Loading tests...</td></tr>
-            ) : tests.length === 0 ? (
-              <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">No tests found.</td></tr>
-            ) : (
-              tests.map((t: any) => (
-                <tr key={t.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 font-bold text-slate-800">{t.title}</td>
-                  <td className="px-6 py-4">
-                    <span className="font-medium text-slate-600">{getTargetName(t.target_type, t.target_id)}</span>
-                    <span className="ml-2 text-[10px] uppercase font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">{t.target_type}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase flex w-fit items-center gap-1 ${t.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                      {t.status === 'active' ? <CheckCircle className="h-3 w-3"/> : <XCircle className="h-3 w-3"/>}
-                      {t.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">{new Date(t.created_at).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => toggleMut.mutate({ id: t.id, status: t.status === 'active' ? 'inactive' : 'active' })}>
-                      <RefreshCw className="h-4 w-4 mr-1" /> {t.status === 'active' ? 'Deactivate' : 'Activate'}
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => { if(confirm("Delete this test?")) deleteMut.mutate(t.id); }}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+  function AdminCbtTestReviewView({ testId, onBack }: { testId: string, onBack: () => void }) {
+    const fetchSubmissions = useServerFn(listAdminTestSubmissionsFn);
+    
+    const { data: submissions = [], isLoading } = useQuery({
+      queryKey: ["admin-cbt-submissions", testId],
+      queryFn: () => fetchSubmissions({ data: { testId } }),
+    });
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={onBack}>&larr; Back to Exams</Button>
+          <h2 className="text-xl font-black text-slate-900">Exam Submissions Hub</h2>
+        </div>
+        <div className="bg-white border rounded-2xl overflow-hidden shadow-sm">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 border-b text-slate-600 font-bold uppercase text-xs">
+              <tr>
+                <th className="px-6 py-4">Intern Name</th>
+                <th className="px-6 py-4">Submitted At</th>
+                <th className="px-6 py-4">AI Score</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {isLoading ? (
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">Loading submissions...</td></tr>
+              ) : submissions.length === 0 ? (
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">No submissions yet.</td></tr>
+              ) : (
+                submissions.map((sub: any) => (
+                  <tr key={sub.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 font-bold text-slate-800">{sub.profiles?.full_name || sub.intern_id}</td>
+                    <td className="px-6 py-4 text-slate-500">{new Date(sub.submitted_at || sub.started_at).toLocaleString()}</td>
+                    <td className="px-6 py-4 font-black text-indigo-600">{sub.total_score} pts</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${sub.status === 'graded' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'}`}>
+                        {sub.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <Button variant="secondary" size="sm" onClick={() => toast.info("Review functionality goes here")}>
+                        View Details
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => toast.success("Score overridden!")}>
+                        Override
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }

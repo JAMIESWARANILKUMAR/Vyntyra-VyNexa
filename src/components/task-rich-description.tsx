@@ -297,6 +297,7 @@ function TaskRichDescriptionInner({
           dbProfiles.forEach(p => {
             const mappedP = { ...p, phone: p.phone || p.phone_number } as TeammateInfo;
             if (p.full_name) profileMap.set(p.full_name.toLowerCase().trim(), mappedP);
+              if (p.id) profileMap.set(p.id.toLowerCase().trim(), mappedP);
             if (p.email) profileMap.set(p.email.toLowerCase().trim(), mappedP);
           });
 

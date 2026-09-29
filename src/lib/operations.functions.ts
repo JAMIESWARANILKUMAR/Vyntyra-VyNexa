@@ -8692,3 +8692,94 @@ export const listDetailedFeedbacks = createServerFn({ method: "GET" })
     return data || [];
   });
 
+
+
+export const listFeedbackFormsFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const admin = getAdminClient();
+    const { data: roleData } = await admin.from("user_roles").select("role").eq("user_id", context.userId).single();
+    
+    let query = admin.from("feedback_forms").select("*").order("created_at", { ascending: false });
+    
+    // Only admins see inactive forms
+    if (roleData?.role !== 'admin' && roleData?.role !== 'super_admin') {
+      query = query.eq("is_active", true);
+    }
+    
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+export const createFeedbackFormFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    title: z.string().min(1),
+    description: z.string().optional(),
+    questions: z.array(z.any()),
+    is_active: z.boolean().default(false)
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const admin = getAdminClient();
+    const { error } = await admin.from("feedback_forms").insert({
+      title: data.title,
+      description: data.description,
+      questions: data.questions,
+      is_active: data.is_active,
+      created_by: context.userId
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const toggleFeedbackFormFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), is_active: z.boolean() }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    const { error } = await admin.from("feedback_forms").update({ is_active: data.is_active }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const deleteFeedbackFormFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    const { error } = await admin.from("feedback_forms").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const submitFeedbackResponseFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    form_id: z.string().uuid(),
+    answers: z.record(z.any())
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const admin = getAdminClient();
+    const { error } = await admin.from("feedback_responses").insert({
+      form_id: data.form_id,
+      user_id: context.userId,
+      answers: data.answers
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+export const listFeedbackResponsesFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ form_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    const { data: res, error } = await admin
+      .from("feedback_responses")
+      .select("*, profiles(full_name, email)")
+      .eq("form_id", data.form_id)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return res || [];
+  });

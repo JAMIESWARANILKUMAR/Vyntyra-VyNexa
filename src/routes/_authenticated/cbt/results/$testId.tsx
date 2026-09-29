@@ -35,7 +35,7 @@ function CbtResults() {
           </Button>
           <div>
             <h1 className="text-3xl font-black text-slate-900">Exam Results</h1>
-            <p className="text-slate-500 font-medium">{result.cbt_tests?.title || "AI CBT Exam"}</p>
+            <p className="text-slate-500 font-medium">{result.cbt_exams?.title || "AI CBT Exam"}</p>
           </div>
         </div>
 
@@ -69,7 +69,7 @@ function CbtResults() {
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><Clock className="h-5 w-5 text-indigo-500" /> Exam Details</h3>
                 <div className="space-y-3 text-sm">
-                  <div className="flex justify-between border-b pb-2"><span className="text-slate-500">Passing Score</span><span className="font-bold">{result.cbt_tests?.passing_score} / {result.max_score}</span></div>
+                  <div className="flex justify-between border-b pb-2"><span className="text-slate-500">Passing Score</span><span className="font-bold">{result.cbt_exams?.passing_score}</span></div>
                   <div className="flex justify-between border-b pb-2"><span className="text-slate-500">Submitted</span><span className="font-bold">{new Date(result.submitted_at || result.created_at).toLocaleDateString()}</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Proctoring</span><span className={`font-bold ${strikes > 0 ? "text-rose-600" : "text-emerald-600"}`}>{strikes} Strikes</span></div>
                 </div>

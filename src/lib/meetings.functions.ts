@@ -23,6 +23,9 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
       superHosts: z.string().optional(), // Comma separated
       hosts: z.string().optional(), // Comma separated
       scheduledFor: z.string().optional(), // ISO string
+      target_type: z.enum(['all', 'intern', 'team']).default('all'),
+      target_teams: z.array(z.string()).default([]),
+      target_interns: z.array(z.string()).default([]),
     }).optional()
   }).parse(d))
   .handler(async ({ data, context }) => {
@@ -214,15 +217,80 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
     };
   });
 
-// Fetches active meetings for the admin dashboard
+// Fetches active meetings for the dashboard with Role-Based Access Control
 export const getActiveMeetingsFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
     const d1 = getD1Database();
+    const adminClient = getAdminClient();
+    
+    // Fetch user role and email to enforce RBAC
+    const { data: roleData } = await adminClient.from('profiles').select('role, email, department').eq('id', context.user.id).single();
+    const role = roleData?.role || 'intern';
+    const email = roleData?.email?.toLowerCase() || '';
+    const department = roleData?.department?.toLowerCase() || '';
+
+    // Fetch user's teams by looking at tasks
+    const { data: userTasks } = await adminClient.from('tasks').select('team_id, team_members, target_user_id, assigned_to');
+    const userTeamIds = new Set<string>();
+    for (const t of (userTasks || [])) {
+      if (t.team_id) {
+        if (t.assigned_to === context.user.id || t.target_user_id === context.user.id) {
+          userTeamIds.add(t.team_id);
+        } else if (Array.isArray(t.team_members) && t.team_members.some((m: any) => String(m) === context.user.id || String(m) === email)) {
+          userTeamIds.add(t.team_id);
+        }
+      }
+    }
+
     const { results } = await d1!.prepare(`
       SELECT * FROM meet_rooms WHERE status = 'active' ORDER BY created_at DESC
     `).all();
-    return results as any[];
+
+    const filtered = results.filter((room: any) => {
+      // 1. Admins see all meetings
+      if (role === 'admin' || role === 'super_admin') return true;
+      
+      const settings = room.settings ? JSON.parse(room.settings) : {};
+      const targetType = settings.target_type || 'all';
+      const targetTeams = settings.target_teams || [];
+      const targetInterns = settings.target_interns || [];
+      const allowedEmails = settings.allowedEmails ? settings.allowedEmails.split(',').map((e: string) => e.trim().toLowerCase()) : [];
+      const superHosts = settings.superHosts ? settings.superHosts.split(',').map((e: string) => e.trim().toLowerCase()) : [];
+      const hosts = settings.hosts ? settings.hosts.split(',').map((e: string) => e.trim().toLowerCase()) : [];
+
+      // If user is explicit host, they can always see it
+      if (room.host_id === context.user.id) return true;
+      if (superHosts.includes(email) || hosts.includes(email)) return true;
+
+      // 2. Target Checks
+      if (targetType === 'intern') {
+        if (!targetInterns.includes(context.user.id)) return false;
+      } else if (targetType === 'team') {
+        if (!targetTeams.some((tid: string) => userTeamIds.has(tid))) return false;
+      }
+
+      // 3. Employees see meetings they host, or internal meetings (if targeted to 'all' and no allowedEmails)
+      if (role === 'employee') {
+        if (settings.type === 'external') return false; // Usually external meetings are by invite, but employees might not see it by default
+        return true;
+      }
+      
+      // 4. Interns see company-wide meetings (all), or meetings assigned specifically to them
+      if (role === 'intern') {
+        if (allowedEmails.length > 0) {
+          return allowedEmails.includes(email) || (department && allowedEmails.includes(department));
+        }
+        
+        if (settings.type !== 'external') return true;
+        
+        return false;
+      }
+
+      return false;
+    });
+
+    return filtered as any[];
   });
 
 // Ends a meeting
