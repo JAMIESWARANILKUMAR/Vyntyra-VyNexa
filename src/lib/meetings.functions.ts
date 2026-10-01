@@ -76,7 +76,7 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
       const adminClient = getAdminClient();
       await adminClient.from('meetings').insert({
         title: data.title,
-        meeting_link: `/meet/${roomId}`,
+        meeting_link: `https://vyntyraconsultancyservices.in/meet/${roomId}`,
         scheduled_at: data.settings?.scheduledFor || new Date().toISOString(),
         target_role: (data.settings?.allowedEmails && data.settings.allowedEmails.trim() !== '') ? 'individual' : 'intern',
         send_email_notification: false,

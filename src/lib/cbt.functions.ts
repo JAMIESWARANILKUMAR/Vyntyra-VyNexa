@@ -315,3 +315,30 @@ export const listAdminTestSubmissionsFn = createServerFn({ method: "POST" })
     const { data: subs } = await adminClient.from('cbt_submissions').select('*, profiles(full_name, email)').eq('exam_id', data.testId).order('submitted_at', { ascending: false });
     return subs || [];
   });
+export const listInternAvailableExamsFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const adminClient = getAdminClient();
+    const userId = context.user.id;
+    
+    // Get all published exams
+    const { data: exams } = await adminClient.from('cbt_exams').select('*').eq('status', 'published');
+    
+    // Get user's teams (via tasks assigned to them)
+    const { data: userTasks } = await adminClient.from('tasks').select('team_id').eq('assigned_to', userId).not('team_id', 'is', null);
+    const userTeams = Array.from(new Set((userTasks || []).map(t => t.team_id)));
+    
+    // Filter exams where intern_ids contains userId OR team_ids overlaps with userTeams
+    const availableExams = (exams || []).filter(exam => {
+      const isTargetedIntern = exam.intern_ids && exam.intern_ids.includes(userId);
+      const isTargetedTeam = exam.team_ids && exam.team_ids.some((tid: string) => userTeams.includes(tid));
+      return isTargetedIntern || isTargetedTeam;
+    });
+    
+    // Get exams the user has already submitted
+    const { data: submissions } = await adminClient.from('cbt_submissions').select('exam_id').eq('intern_id', userId);
+    const submittedExamIds = new Set((submissions || []).map(s => s.exam_id));
+    
+    // Return only exams that haven't been submitted yet
+    return availableExams.filter(exam => !submittedExamIds.has(exam.id));
+  });

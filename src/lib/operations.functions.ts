@@ -346,6 +346,7 @@ const taskSchema = z.object({
   is_pool_task: z.boolean().optional().default(false),
   target_role: z.enum(["employee", "intern", "all", "individual"]).optional(),
   target_user_id: z.string().optional().nullable(),
+  credits: z.number().optional().default(10),
 });
 
 export const listTasks = createServerFn({ method: "GET" })
@@ -489,6 +490,7 @@ export const createTask = createServerFn({ method: "POST" })
       is_pool_task: data.is_pool_task || false,
       target_role: data.target_role || "all",
       created_by: context.userId,
+      credits: data.credits || 10,
     };
     if (data.target_user_id) payload.target_user_id = data.target_user_id;
 

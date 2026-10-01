@@ -328,19 +328,19 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                   <div className="text-[14px] text-slate-800 dark:text-slate-200">
                     <div className="flex items-center gap-4">
                       <span className="font-mono text-slate-500 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded">
-                        {personalRoom ? `https://vyntyra.com/meet/${personalRoom.id}` : 'https://vyntyra.com/meet/demo-1234'}
+                        {personalRoom ? `https://vyntyraconsultancyservices.in/meet/${personalRoom.id}` : 'https://vyntyraconsultancyservices.in/meet/demo-1234'}
                       </span>
-                      <button onClick={() => copyToClipboard(personalRoom ? `https://vyntyra.com/meet/${personalRoom.id}` : 'https://vyntyra.com/meet/demo-1234')} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                      <button onClick={() => copyToClipboard(personalRoom ? `https://vyntyraconsultancyservices.in/meet/${personalRoom.id}` : 'https://vyntyraconsultancyservices.in/meet/demo-1234')} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                         <Copy className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 pt-6">
-                  <Button onClick={() => window.open(`/meet/${personalRoom ? personalRoom.id : 'zoom-demo'}`, '_blank')} className="bg-[#0b5cff] hover:bg-[#094bdd] text-white px-8 rounded-md">
+                  <Button onClick={() => window.open(`https://vyntyraconsultancyservices.in/meet/${personalRoom ? personalRoom.id : 'zoom-demo'}`, '_blank')} className="bg-[#0b5cff] hover:bg-[#094bdd] text-white px-8 rounded-md">
                     Start
                   </Button>
-                  <Button variant="outline" className="text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 bg-transparent rounded-md gap-2" onClick={() => copyToClipboard(personalRoom ? `https://vyntyra.com/meet/${personalRoom.id}` : 'https://vyntyra.com/meet/demo-1234')}>
+                  <Button variant="outline" className="text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 bg-transparent rounded-md gap-2" onClick={() => copyToClipboard(personalRoom ? `https://vyntyraconsultancyservices.in/meet/${personalRoom.id}` : 'https://vyntyraconsultancyservices.in/meet/demo-1234')}>
                     <Copy className="h-4 w-4" /> Copy Invitation
                   </Button>
                 </div>
@@ -361,7 +361,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                 <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm divide-y divide-slate-100 dark:divide-slate-800/60">
                   {meetings.map((room: any) => {
                     const settings = room.settings ? JSON.parse(room.settings) : {};
-                    const meetUrl = `${window.location.origin}/meet/${room.id}`;
+                    const meetUrl = `https://vyntyraconsultancyservices.in/meet/${room.id}`;
                     
                     return (
                       <div key={room.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -376,7 +376,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button size="sm" onClick={() => window.open(`/meet/${room.id}`, '_blank')} className="bg-[#0b5cff] hover:bg-[#094bdd] text-white rounded">
+                          <Button size="sm" onClick={() => window.open(`https://vyntyraconsultancyservices.in/meet/${room.id}`, '_blank')} className="bg-[#0b5cff] hover:bg-[#094bdd] text-white rounded">
                             {role === 'intern' ? 'Join Live' : 'Start'}
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => copyToClipboard(meetUrl)} className="rounded text-slate-600 border-slate-300">

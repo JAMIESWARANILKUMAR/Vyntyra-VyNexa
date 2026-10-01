@@ -554,15 +554,15 @@ function AdminDashboard() {
                   {stats.total} total applications · {stats.new} new · {stats.shortlisted} shortlisted
                 </p>
               </div>
-              <div className="flex flex-col items-end gap-2 shrink-0">
-                <div className="text-right hidden sm:block">
-                  <div className="text-5xl font-bold tracking-tight">{stats.total}</div>
+              <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto mt-4 sm:mt-0">
+                <div className="text-left sm:text-right hidden sm:block">
+                  <div className="text-4xl sm:text-5xl font-bold tracking-tight">{stats.total}</div>
                   <div className="text-xs uppercase tracking-widest text-primary-foreground/60 mt-1">Total Applications</div>
                 </div>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex flex-wrap justify-start sm:justify-end items-center gap-2 mt-1 w-full sm:w-auto">
                   <Button
                     asChild
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0 flex-1 sm:flex-none justify-center"
                   >
                     <Link to="/admin/cbt/generate">
                       <BrainCircuit className="h-4 w-4" /> AI CBT Engine
@@ -571,7 +571,7 @@ function AdminDashboard() {
 
                   <Button
                     asChild
-                    className="bg-gold hover:bg-gold/90 text-slate-950 font-bold text-xs shadow-lg flex items-center gap-1.5 border-0"
+                    className="bg-gold hover:bg-gold/90 text-slate-950 font-bold text-xs shadow-lg flex items-center gap-1.5 border-0 flex-1 sm:flex-none justify-center"
                   >
                     <Link to="/admin/b2b-playbook">
                       <BookOpen className="h-4 w-4" /> B2B Sales Playbook
@@ -580,14 +580,14 @@ function AdminDashboard() {
 
                   <Button
                     onClick={() => setSelectionTrackerOpen(true)}
-                    className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0"
+                    className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0 flex-1 sm:flex-none justify-center"
                   >
                     <Mail className="h-4 w-4 text-gold" /> Selection Emails
                   </Button>
 
                   <Button
                     asChild
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0 flex-1 sm:flex-none justify-center"
                   >
                     <Link to="/admin/operations">
                       <ClipboardList className="h-4 w-4" /> Operations & Tasks

@@ -29,7 +29,7 @@ import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProfileChangeRequestModal } from "@/components/profile-change-request-modal";
 import { FirstLoginWelcomeModal } from "@/components/first-login-welcome-modal";
 import { GoogleDocViewerModal } from "@/components/google-doc-viewer-modal";
-import { listInternSubmissionsFn } from "@/lib/cbt.functions";
+import { listInternSubmissionsFn, listInternAvailableExamsFn } from "@/lib/cbt.functions";
 import { TechDomainWorkspace } from "@/components/tech-domain-workspace";
 import { NonTechDomainWorkspace } from "@/components/non-tech-domain-workspace";
 import { ManagementDomainWorkspace } from "@/components/management-domain-workspace";
@@ -4161,6 +4161,7 @@ function InternDashboard() {
                 </div>
               </div>
 
+              <CbtAvailableExamsSection />
               <CbtResultsSection />
 
             </div>
@@ -5641,6 +5642,40 @@ function InternDashboard() {
           department: profile?.department,
         }}
       />
+    </div>
+  );
+}
+function CbtAvailableExamsSection() {
+  const getExamsFn = useServerFn(listInternAvailableExamsFn);
+  const { data: exams, isLoading } = useQuery({
+    queryKey: ['intern-available-exams'],
+    queryFn: () => getExamsFn()
+  });
+
+  return (
+    <div className="bg-white/80 backdrop-blur-2xl p-8 rounded-2xl shadow-xl border border-slate-200/60 mt-6">
+      <h3 className="font-bold text-lg mb-6 flex items-center gap-2"><BrainCircuit className="h-5 w-5 text-indigo-500" /> Pending CBT Exams</h3>
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-slate-500">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading exams...
+        </div>
+      ) : (!exams || exams.length === 0) ? (
+        <div className="text-slate-500 text-sm italic">You have no pending exams. Check back later!</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {exams.map((exam: any) => (
+            <div key={exam.id} className="p-5 border border-indigo-100 rounded-xl bg-indigo-50/50 hover:bg-indigo-50 transition flex flex-col justify-between">
+              <div>
+                <h4 className="font-bold text-indigo-900 mb-1">{exam.title}</h4>
+                <p className="text-xs text-indigo-700/80 mb-4 line-clamp-2">{exam.description}</p>
+              </div>
+              <Button onClick={() => window.location.href = "/cbt/" + exam.id} className="w-full bg-indigo-600 hover:bg-indigo-700">
+                Start Exam Now
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

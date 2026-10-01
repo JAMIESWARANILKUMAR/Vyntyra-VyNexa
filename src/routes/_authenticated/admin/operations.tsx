@@ -270,7 +270,7 @@ function OperationsDashboard() {
   // Form states
   const [provisionForm, setProvisionForm] = useState({ full_name: "", email: "", password: "", role: "employee" as "employee" | "intern", department: "", position: "", bank_account_number: "", employee_id: "", intern_id: "", duration_months: "" });
   const [announcementForm, setAnnouncementForm] = useState({ title: "", body: "", target_role: "all" as "employee" | "intern" | "all" });
-  const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium" as "low" | "medium" | "high", is_pool_task: false });
+  const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium" as "low" | "medium" | "high", is_pool_task: false, credits: 10 });
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [bulkDueDate, setBulkDueDate] = useState("");
   const [scheduleForm, setScheduleForm] = useState({ title: "", description: "", event_date: "", event_time: "", target_role: "all" as "employee" | "intern" | "all" | "individual", target_user_id: "" });
@@ -687,7 +687,7 @@ function OperationsDashboard() {
       await doCreateTask({ data: taskForm });
       toast.success("Task assigned successfully!");
       setTaskOpen(false);
-      setTaskForm({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium", is_pool_task: false });
+      setTaskForm({ title: "", description: "", assigned_to: "", due_date: "", priority: "medium", is_pool_task: false, credits: 10 });
       qc.invalidateQueries({ queryKey: ["tasks"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to assign task");
@@ -1607,9 +1607,15 @@ function OperationsDashboard() {
                           </Select>
                         </div>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label>Due Date <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                        <Input type="date" value={taskForm.due_date} onChange={e => setTaskForm({ ...taskForm, due_date: e.target.value })} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label>Due Date <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                          <Input type="date" value={taskForm.due_date} onChange={e => setTaskForm({ ...taskForm, due_date: e.target.value })} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Task Credits / Points</Label>
+                          <Input type="number" value={taskForm.credits} onChange={e => setTaskForm({ ...taskForm, credits: parseInt(e.target.value) || 0 })} placeholder="e.g. 10" />
+                        </div>
                       </div>
                       <DialogFooter>
                         <Button type="button" variant="ghost" onClick={() => setTaskOpen(false)}>Cancel</Button>
