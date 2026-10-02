@@ -384,3 +384,18 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
 
     return { success: true, message: "Exam successfully assigned and allocated!" };
   });
+
+export const listAllCbtSubmissionsFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const adminClient = getAdminClient();
+    const { data: subs, error } = await adminClient
+      .from('cbt_submissions')
+      .select('*, cbt_exams(title, passing_score), profiles(full_name, email, intern_id)')
+      .order('submitted_at', { ascending: false });
+    if (error) {
+      console.error(error);
+      return [];
+    }
+    return subs || [];
+  });

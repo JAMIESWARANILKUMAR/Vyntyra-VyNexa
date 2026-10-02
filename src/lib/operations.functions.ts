@@ -8785,3 +8785,57 @@ export const listFeedbackResponsesFn = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return res || [];
   });
+
+export const adminAssignOrUpdateTaskCredits = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    taskId: z.string().optional(),
+    internId: z.string(),
+    taskTitle: z.string(),
+    credits: z.number().min(0),
+    status: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    
+    if (data.taskId) {
+      const { error } = await admin
+        .from("tasks")
+        .update({
+          credits: data.credits,
+          status: data.status || "completed",
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", data.taskId);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await admin
+        .from("tasks")
+        .insert({
+          title: data.taskTitle,
+          assigned_to: data.internId,
+          target_user_id: data.internId,
+          credits: data.credits,
+          status: data.status || "completed",
+          completed_at: new Date().toISOString()
+        });
+      if (error) throw new Error(error.message);
+    }
+
+    // Recalculate intern's total_credits in intern_profiles
+    const { data: internTasks } = await admin
+      .from("tasks")
+      .select("credits, status")
+      .or(`assigned_to.eq.${data.internId},target_user_id.eq.${data.internId}`)
+      .eq("status", "completed");
+
+    const sumCredits = (internTasks || []).reduce((acc, t) => acc + (t.credits || 10), 0);
+
+    await admin
+      .from("intern_profiles")
+      .update({ total_credits: sumCredits })
+      .eq("id", data.internId);
+
+    return { success: true, message: "Task credits updated and synchronized with intern dashboard!" };
+  });

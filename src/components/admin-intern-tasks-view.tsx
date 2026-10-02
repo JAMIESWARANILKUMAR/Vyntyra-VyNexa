@@ -5,8 +5,9 @@ import {
   listAllInternTasksWithProgress, reviewInternTaskByAdmin, deleteTask, 
   reviewDeadlineExtension, bulkDeleteTasks, bulkUpdateTasks, deleteTaskBatch, deleteAllInternTasks, 
   adminFinalizeTaskCompletion, listActiveInternsForCohortAssignment, rolloverVerifiedTasksToCohort,
-  moveTasksToStoredBank, assignStoredTasksToInterns
+  moveTasksToStoredBank, assignStoredTasksToInterns, adminAssignOrUpdateTaskCredits
 } from "@/lib/operations.functions";
+import { listAllCbtSubmissionsFn } from "@/lib/cbt.functions";
 import { Button } from "@/components/ui/button";
 import { Award, CreditCard, Layers, ArrowRight, CheckCheck, RefreshCw, SendHorizonal, Calendar, FolderArchive, Archive, PackageCheck, BookmarkPlus, ArrowUpRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,33 @@ export function AdminInternTasksView() {
   // Tab State: "active" (Assigned to Interns) vs "stored_bank" (Repository for Future) vs "intern_points"
   const [activeViewTab, setActiveViewTab] = useState<"active" | "submissions" | "stored_bank" | "intern_points">("active");
   const [previewTask, setPreviewTask] = useState<any>(null);
+
+  const fetchAllCbtSubmissions = useServerFn(listAllCbtSubmissionsFn);
+  const doAssignOrUpdateCredits = useServerFn(adminAssignOrUpdateTaskCredits);
+
+  const { data: allCbtSubmissions = [] } = useQuery({
+    queryKey: ["all-cbt-submissions"],
+    queryFn: () => fetchAllCbtSubmissions(),
+  });
+
+  const [selectedMatrixInternId, setSelectedMatrixInternId] = useState<string>("");
+  const [creditEditModal, setCreditEditModal] = useState<{
+    open: boolean;
+    intern: any;
+    taskId?: string;
+    taskTitle: string;
+    milestoneName: string;
+    credits: number;
+    status: string;
+  }>({
+    open: false,
+    intern: null,
+    taskTitle: "",
+    milestoneName: "",
+    credits: 10,
+    status: "completed"
+  });
+  const [isUpdatingCredits, setIsUpdatingCredits] = useState(false);
 
   const [manageTeamTask, setManageTeamTask] = useState<any>(null);
   const [editingDeadlineTaskId, setEditingDeadlineTaskId] = useState<string | null>(null);
@@ -417,7 +445,7 @@ export function AdminInternTasksView() {
     }
   };
 
-  const handleDownloadMarksheet = async (intern: any, completedTasks: any[], totalCredits: number) => {
+  const handleDownloadMarksheet = async (intern: any, internTasks: any[], totalCredits: number, internCbtSubs: any[] = []) => {
     try {
       toast.info("Generating Experience Marksheet...");
       const { generateExperienceMarksheetPdf } = await import("@/lib/marksheetGenerator");
@@ -430,6 +458,32 @@ export function AdminInternTasksView() {
         console.warn("Could not load signature for marksheet:", sigErr);
       }
 
+      const STANDARD_MILESTONES = [
+        "Task 1: Initial Milestone & Onboarding Task",
+        "Task 2: Core Domain Task",
+        "Task 3: Intermediate Project Task",
+        "Task 4: Advanced Technical Implementation",
+        "Task 5: System Integration & Evaluation",
+        "Task 6: Pre-Deployment Audit Task",
+        "Final Capstone Project: Enterprise Delivery"
+      ];
+
+      const mappedTasks = STANDARD_MILESTONES.map((defaultTitle, index) => {
+        const matchingTask = (internTasks || [])[index];
+        const matchingCbt = (internCbtSubs || []).find((s: any) => s.intern_id === intern.id || (s.profiles && s.profiles.email === intern.email));
+        const cbtScoreStr = matchingCbt ? `${matchingCbt.score || 0}% (${matchingCbt.passed ? 'Passed' : 'Completed'})` : "N/A";
+
+        return {
+          milestone: index === 6 ? "Final Project" : `Task ${index + 1}`,
+          title: matchingTask ? matchingTask.title : defaultTitle,
+          domain: matchingTask?.task_domain || intern.department || "Technology",
+          status: matchingTask ? matchingTask.status : "pending",
+          credits: matchingTask ? (matchingTask.credits || 10) : 0,
+          cbtScore: cbtScoreStr,
+          completedAt: matchingTask?.completed_at ? new Date(matchingTask.completed_at).toLocaleDateString() : "N/A"
+        };
+      });
+
       const doc = generateExperienceMarksheetPdf({
         candidateName: intern.full_name || "Intern",
         internId: intern.intern_id || "N/A",
@@ -437,21 +491,15 @@ export function AdminInternTasksView() {
         startDate: intern.created_at ? new Date(intern.created_at).toLocaleDateString() : "N/A",
         endDate: new Date().toLocaleDateString(),
         issueDate: new Date().toLocaleDateString(),
-        tasks: completedTasks.map(t => ({
-          title: t.title || "Task",
-          domain: t.task_domain || "General",
-          status: t.status,
-          credits: t.credits || 10,
-          completedAt: t.completed_at ? new Date(t.completed_at).toLocaleDateString() : "N/A"
-        })),
+        tasks: mappedTasks,
         totalCredits: totalCredits,
-        maxCredits: Math.max(totalCredits, 100), // example
+        maxCredits: Math.max(totalCredits, 100),
         grade: totalCredits >= 90 ? "A+" : totalCredits >= 70 ? "A" : totalCredits >= 50 ? "B" : "C",
         signatureBase64: signatureBase64,
       });
       
       doc.save(`Experience_Marksheet_${intern.full_name?.replace(/\s+/g, "_")}.pdf`);
-      toast.success("Marksheet downloaded successfully!");
+      toast.success("Knowledge & Work Experience Marksheet generated!");
     } catch (err: any) {
       toast.error("Failed to generate marksheet: " + err.message);
     }
@@ -1914,16 +1962,45 @@ export function AdminInternTasksView() {
 
       {activeViewTab === "intern_points" && (
         <div className="space-y-6 w-full max-w-full">
-          <div className="bg-white p-6 rounded-2xl border shadow-sm">
-            <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2"><Award className="h-6 w-6 text-amber-600" /> Intern Progress & Accumulated Points</h2>
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
+          {/* Top Selection & Summary Card */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                  <Award className="h-6 w-6 text-amber-600" />
+                  Corporate Intern Curriculum &amp; Points Evaluation Matrix
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-1">
+                  Select an intern to view &amp; allocate points for Task 1 through Task 6 + Final Capstone Project and review CBT test evaluation scores.
+                </p>
+              </div>
+
+              {/* Select Intern Dropdown */}
+              <div className="w-full md:w-80">
+                <Select value={selectedMatrixInternId} onValueChange={setSelectedMatrixInternId}>
+                  <SelectTrigger className="w-full bg-slate-50 border-slate-200 font-semibold text-xs h-10">
+                    <SelectValue placeholder="Select an Intern to View Matrix..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allActiveInterns.map((i: any) => (
+                      <SelectItem key={i.id} value={i.id}>
+                        {i.full_name} ({i.intern_id || i.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Quick Intern Summary Table */}
+            <div className="overflow-x-auto rounded-xl border border-slate-200 mt-2">
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 border-b text-slate-600 font-bold uppercase text-xs">
                   <tr>
                     <th className="px-4 py-3">Intern Name</th>
-                    <th className="px-4 py-3">Total Tasks</th>
+                    <th className="px-4 py-3">Reg ID / Email</th>
                     <th className="px-4 py-3">Completed Tasks</th>
-                    <th className="px-4 py-3 text-right">Accumulated Credits / Points</th>
+                    <th className="px-4 py-3 text-right">Total Points</th>
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -1936,21 +2013,37 @@ export function AdminInternTasksView() {
                     );
                     const completedTasks = internTasks.filter((t: any) => t.status === 'completed');
                     const totalCredits = completedTasks.reduce((acc: number, t: any) => acc + (t.credits || 10), 0);
-                    
+                    const isSelected = selectedMatrixInternId === intern.id;
+
                     return (
-                      <tr key={intern.id} className="hover:bg-slate-50/50">
+                      <tr 
+                        key={intern.id} 
+                        className={`hover:bg-slate-50/80 cursor-pointer transition-colors ${isSelected ? "bg-amber-50/60 font-semibold" : ""}`}
+                        onClick={() => setSelectedMatrixInternId(intern.id)}
+                      >
                         <td className="px-4 py-3">
-                          <div className="font-bold text-slate-900">{intern.full_name}</div>
-                          <div className="text-[10px] text-slate-500">{intern.email} | {intern.intern_id}</div>
+                          <div className="font-bold text-slate-900 flex items-center gap-2">
+                            <User className="h-4 w-4 text-slate-400" />
+                            {intern.full_name}
+                          </div>
                         </td>
-                        <td className="px-4 py-3 text-slate-600 font-medium">{internTasks.length}</td>
-                        <td className="px-4 py-3 text-emerald-600 font-medium">{completedTasks.length}</td>
-                        <td className="px-4 py-3 text-right font-black text-amber-600 text-lg">
+                        <td className="px-4 py-3 text-xs text-slate-500 font-mono">
+                          {intern.intern_id || "N/A"} · {intern.email}
+                        </td>
+                        <td className="px-4 py-3 text-emerald-600 font-medium">
+                          {completedTasks.length} / {internTasks.length} Tasks
+                        </td>
+                        <td className="px-4 py-3 text-right font-black text-amber-600 text-base">
                           {totalCredits} <span className="text-xs font-semibold text-slate-400">pts</span>
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          <Button size="sm" onClick={() => handleDownloadMarksheet(intern, completedTasks, totalCredits)} className="h-8 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white gap-1.5 shadow-xs">
-                            <Download className="h-3.5 w-3.5" /> Marksheet
+                        <td className="px-4 py-3 text-right space-x-2">
+                          <Button 
+                            size="sm" 
+                            variant={isSelected ? "default" : "outline"}
+                            onClick={(e) => { e.stopPropagation(); setSelectedMatrixInternId(intern.id); }}
+                            className="h-8 text-xs font-bold gap-1"
+                          >
+                            <Eye className="h-3.5 w-3.5" /> View Matrix
                           </Button>
                         </td>
                       </tr>
@@ -1958,13 +2051,145 @@ export function AdminInternTasksView() {
                   })}
                   {allActiveInterns.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-4 py-8 text-center text-slate-500 text-sm">No interns found.</td>
+                      <td colSpan={5} className="px-4 py-8 text-center text-slate-500 text-sm">No interns found.</td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
           </div>
+
+          {/* Selected Intern Matrix Section */}
+          {(() => {
+            const currentIntern = allActiveInterns.find((i: any) => i.id === selectedMatrixInternId);
+            if (!currentIntern) return null;
+
+            const internTasks = (tasks || []).filter((t: any) => 
+              (t.assigned_to === currentIntern.id) || 
+              (t.target_user_id === currentIntern.id) || 
+              (t.team_id && currentIntern.team_id === t.team_id)
+            );
+            const completedTasks = internTasks.filter((t: any) => t.status === 'completed');
+            const totalCredits = completedTasks.reduce((acc: number, t: any) => acc + (t.credits || 10), 0);
+            const internCbtSubs = (allCbtSubmissions || []).filter((s: any) => s.intern_id === currentIntern.id || (s.profiles && s.profiles.email === currentIntern.email));
+
+            const STANDARD_CURRICULUM = [
+              { name: "Task 1", label: "Task 1: Initial Milestone & Onboarding Task" },
+              { name: "Task 2", label: "Task 2: Core Domain Task" },
+              { name: "Task 3", label: "Task 3: Intermediate Project Task" },
+              { name: "Task 4", label: "Task 4: Advanced Technical Implementation" },
+              { name: "Task 5", label: "Task 5: System Integration & Evaluation" },
+              { name: "Task 6", label: "Task 6: Pre-Deployment Audit Task" },
+              { name: "Final Project", label: "Final Capstone Project: Enterprise Delivery" }
+            ];
+
+            return (
+              <div className="bg-white p-6 rounded-2xl border border-indigo-200 shadow-md space-y-5 animate-in fade-in duration-300">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full">
+                      Intern Evaluation Matrix
+                    </span>
+                    <h3 className="text-xl font-black text-slate-900 mt-1 flex items-center gap-2">
+                      {currentIntern.full_name}
+                      <span className="text-xs font-mono font-normal text-slate-500">({currentIntern.intern_id || currentIntern.email})</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">Domain: <strong>{currentIntern.department || "Technology"}</strong> · Accumulated Credits: <strong className="text-amber-600">{totalCredits} pts</strong></p>
+                  </div>
+
+                  <Button 
+                    onClick={() => handleDownloadMarksheet(currentIntern, internTasks, totalCredits, internCbtSubs)}
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs gap-1.5 shadow-sm h-10 px-5"
+                  >
+                    <Download className="h-4 w-4 text-amber-400" /> Download Experience Marksheet PDF
+                  </Button>
+                </div>
+
+                {/* 6 Tasks + Final Capstone Project Corporate Table */}
+                <div className="overflow-x-auto rounded-xl border border-slate-200">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-900 text-white font-bold uppercase text-xs">
+                      <tr>
+                        <th className="px-4 py-3">Milestone</th>
+                        <th className="px-4 py-3">Assigned Task Title</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3 text-center">Allocated Credits / Points</th>
+                        <th className="px-4 py-3 text-center">CBT Evaluation Score</th>
+                        <th className="px-4 py-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {STANDARD_CURRICULUM.map((curr, index) => {
+                        const matchingTask = internTasks[index];
+                        const matchingCbt = internCbtSubs[index];
+
+                        return (
+                          <tr key={curr.name} className="hover:bg-slate-50">
+                            <td className="px-4 py-3 font-bold text-slate-900 whitespace-nowrap">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold border">
+                                <BookmarkPlus className="h-3.5 w-3.5 text-indigo-600" />
+                                {curr.name}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="font-semibold text-slate-800 text-xs">
+                                {matchingTask ? matchingTask.title : curr.label}
+                              </div>
+                              {matchingTask?.task_domain && (
+                                <div className="text-[10px] text-slate-400">Domain: {matchingTask.task_domain}</div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {matchingTask ? (
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${matchingTask.status === 'completed' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'}`}>
+                                  {matchingTask.status}
+                                </span>
+                              ) : (
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-500 border border-slate-200">
+                                  Not Created
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-center font-black text-amber-600 text-base whitespace-nowrap">
+                              {matchingTask ? (matchingTask.credits || 10) : 0} <span className="text-xs font-normal text-slate-400">pts</span>
+                            </td>
+                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                              {matchingCbt ? (
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${matchingCbt.passed ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                                  <Sparkles className="h-3 w-3" /> {matchingCbt.score || 0}% ({matchingCbt.passed ? 'Passed' : 'Completed'})
+                                </span>
+                              ) : (
+                                <span className="text-xs text-slate-400 italic">No CBT Attempt</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setCreditEditModal({
+                                    open: true,
+                                    intern: currentIntern,
+                                    taskId: matchingTask?.id,
+                                    taskTitle: matchingTask?.title || curr.label,
+                                    milestoneName: curr.name,
+                                    credits: matchingTask ? (matchingTask.credits || 10) : 10,
+                                    status: matchingTask?.status || "completed"
+                                  });
+                                }}
+                                className="h-7 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white gap-1 shadow-xs"
+                              >
+                                <Award className="h-3.5 w-3.5" /> {matchingTask ? "Edit Credits" : "Assign Credits"}
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -2868,6 +3093,95 @@ export function AdminInternTasksView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit / Assign Task Credits Modal */}
+      {creditEditModal.open && (
+        <Dialog open={creditEditModal.open} onOpenChange={(open) => !open && setCreditEditModal({ ...creditEditModal, open: false })}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-amber-600" />
+                Allocate / Edit Task Credits
+              </DialogTitle>
+              <DialogDescription>
+                Assign or update credits for <strong>{creditEditModal.intern?.full_name}</strong> ({creditEditModal.milestoneName}).
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-2">
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Task / Milestone Title</label>
+                <Input
+                  value={creditEditModal.taskTitle}
+                  onChange={(e) => setCreditEditModal({ ...creditEditModal, taskTitle: e.target.value })}
+                  placeholder="e.g. Task 1: Onboarding Evaluation"
+                  className="text-xs bg-white font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Allocated Credits / Points</label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={creditEditModal.credits}
+                  onChange={(e) => setCreditEditModal({ ...creditEditModal, credits: parseInt(e.target.value) || 0 })}
+                  placeholder="e.g. 15"
+                  className="text-xs font-mono font-bold bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Task Status</label>
+                <select
+                  value={creditEditModal.status}
+                  onChange={(e) => setCreditEditModal({ ...creditEditModal, status: e.target.value })}
+                  className="w-full rounded-md border p-2 text-xs bg-white font-medium"
+                >
+                  <option value="completed">Completed (Award Points Immediately)</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="submitted">Under Review / Submitted</option>
+                </select>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreditEditModal({ ...creditEditModal, open: false })}>
+                Cancel
+              </Button>
+              <Button
+                disabled={isUpdatingCredits}
+                onClick={async () => {
+                  setIsUpdatingCredits(true);
+                  try {
+                    const res = await doAssignOrUpdateCredits({
+                      data: {
+                        taskId: creditEditModal.taskId,
+                        internId: creditEditModal.intern.id,
+                        taskTitle: creditEditModal.taskTitle,
+                        credits: creditEditModal.credits,
+                        status: creditEditModal.status
+                      }
+                    });
+                    toast.success(res.message || "Credits updated successfully!");
+                    setCreditEditModal({ ...creditEditModal, open: false });
+                    qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                    qc.invalidateQueries({ queryKey: ["tasks"] });
+                    qc.invalidateQueries({ queryKey: ["my-tasks"] });
+                  } catch (err: any) {
+                    toast.error(err.message || "Failed to update credits");
+                  } finally {
+                    setIsUpdatingCredits(false);
+                  }
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              >
+                {isUpdatingCredits ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save & Synchronize Points"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
