@@ -211,5 +211,5 @@ function renderPreview(html: string) {
     portal_link: "https://vynexaconsultancyservices.in/track",
     application_id: "APP-0000-0000",
   };
-  return html.replace(/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g, (_, k) => vars[k] ?? {{}});
+  return html.replace(/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g, (_, k) => vars[k] ?? `{{${k}}}`);
 }

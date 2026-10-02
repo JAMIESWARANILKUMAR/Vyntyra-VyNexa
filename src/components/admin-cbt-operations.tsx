@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { generateAiTestFn, saveGeneratedTestFn, listCbtTargetsFn, listAdminTestsFn, deleteAdminTestFn, toggleAdminTestStatusFn, listAdminTestSubmissionsFn } from "@/lib/cbt.functions";
+import { generateAiTestFn, saveGeneratedTestFn, listCbtTargetsFn, listAdminTestsFn, deleteAdminTestFn, toggleAdminTestStatusFn, listAdminTestSubmissionsFn, reassignAdminTestFn } from "@/lib/cbt.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { BrainCircuit, Upload, Loader2, Save, Users, FileText, CheckCircle2, Trash2, CheckCircle, XCircle, RefreshCw, AlertTriangle, Search, Activity, Clock } from "lucide-react";
+import { BrainCircuit, Upload, Loader2, Save, Users, FileText, CheckCircle2, Trash2, CheckCircle, XCircle, RefreshCw, AlertTriangle, Search, Activity, Clock, UserPlus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ActiveStreamsSection } from "./cbt-streams";
 
 const ALL_MODULES = [
@@ -140,7 +141,10 @@ function AdminCbtGenerateView() {
           time_limit_seconds: 60
         }));
         setGenerated({ ...res, questions: questionsWithTimers });
-        toast.success("AI Test generated successfully!");
+        toast.success("Exam questions generated! Review below and click 'Approve & Assign CBT Exam' to allocate.");
+        setTimeout(() => {
+          window.scrollTo({ top: 800, behavior: 'smooth' });
+        }, 150);
       }
     } catch (e) {
       toast.error("Generation failed. Please try again.");
@@ -390,8 +394,36 @@ function AdminCbtGenerateView() {
     const doDelete = useServerFn(deleteAdminTestFn);
     const doToggle = useServerFn(toggleAdminTestStatusFn);
     const fetchTargets = useServerFn(listCbtTargetsFn);
+    const doReassign = useServerFn(reassignAdminTestFn);
     
     const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
+    const [assigningExam, setAssigningExam] = useState<any>(null);
+    const [assignTargetType, setAssignTargetType] = useState<"intern" | "team">("intern");
+    const [assignTargetId, setAssignTargetId] = useState<string>("");
+    const [isReassigning, setIsReassigning] = useState<boolean>(false);
+
+    const handleConfirmAssign = async () => {
+      if (!assigningExam) return;
+      if (!assignTargetId) return toast.error("Please select a target Intern or Team.");
+      setIsReassigning(true);
+      try {
+        const res = await doReassign({
+          data: {
+            testId: assigningExam.id,
+            target_type: assignTargetType,
+            target_id: assignTargetId,
+          }
+        });
+        toast.success(res.message || "Test allocated and assigned successfully!");
+        setAssigningExam(null);
+        setAssignTargetId("");
+        qc.invalidateQueries({ queryKey: ["admin-cbt-tests"] });
+      } catch (err: any) {
+        toast.error(err.message || "Failed to assign test");
+      } finally {
+        setIsReassigning(false);
+      }
+    };
   
     const { data: tests = [], isLoading: isLoadingTests } = useQuery({
       queryKey: ["admin-cbt-tests"],
@@ -482,6 +514,17 @@ function AdminCbtGenerateView() {
                     </td>
                     <td className="px-6 py-4 text-slate-500">{new Date(t.created_at).toLocaleDateString()}</td>
                     <td className="px-6 py-4 text-right space-x-2">
+                      <Button
+                        size="sm"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs gap-1"
+                        onClick={() => {
+                          setAssignTargetType("intern");
+                          setAssignTargetId("");
+                          setAssigningExam(t);
+                        }}
+                      >
+                        <UserPlus className="h-3.5 w-3.5" /> Assign Test
+                      </Button>
                       <Button variant="secondary" size="sm" onClick={() => setSelectedTestId(t.id)}>
                         Review Submissions
                       </Button>
@@ -498,6 +541,86 @@ function AdminCbtGenerateView() {
             </tbody>
           </table>
         </div>
+
+        {/* Assign Test Modal */}
+        {assigningExam && (
+          <Dialog open={!!assigningExam} onOpenChange={(open) => !open && setAssigningExam(null)}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-indigo-600" />
+                  Assign CBT Exam
+                </DialogTitle>
+                <DialogDescription>
+                  Allocate <strong>{assigningExam.title}</strong> directly to an intern or an entire team.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 py-2">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">Target Type</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="assignTargetType" 
+                        value="intern" 
+                        checked={assignTargetType === "intern"} 
+                        onChange={() => { setAssignTargetType("intern"); setAssignTargetId(""); }} 
+                      />
+                      Individual Intern
+                    </label>
+                    <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="assignTargetType" 
+                        value="team" 
+                        checked={assignTargetType === "team"} 
+                        onChange={() => { setAssignTargetType("team"); setAssignTargetId(""); }} 
+                      />
+                      Entire Team
+                    </label>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                    {assignTargetType === "intern" ? "Select Intern" : "Select Team"}
+                  </label>
+                  <Select value={assignTargetId} onValueChange={setAssignTargetId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={assignTargetType === "intern" ? "Choose an intern..." : "Choose a team..."} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {assignTargetType === "intern"
+                        ? (targets?.interns || []).map((i: any) => (
+                            <SelectItem key={i.id} value={i.id}>
+                              {i.full_name} ({i.email})
+                            </SelectItem>
+                          ))
+                        : (targets?.teams || []).map((t: any) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name}
+                            </SelectItem>
+                          ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" onClick={() => setAssigningExam(null)}>Cancel</Button>
+                <Button 
+                  onClick={handleConfirmAssign} 
+                  disabled={isReassigning || !assignTargetId}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                >
+                  {isReassigning ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Assigning...</> : "Confirm & Assign Test"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     );
   }

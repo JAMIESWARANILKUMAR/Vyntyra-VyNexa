@@ -422,6 +422,14 @@ export function AdminInternTasksView() {
       toast.info("Generating Experience Marksheet...");
       const { generateExperienceMarksheetPdf } = await import("@/lib/marksheetGenerator");
       
+      let signatureBase64: string | null = null;
+      try {
+        const { urlToBase64 } = await import("@/lib/nocGenerator");
+        signatureBase64 = await urlToBase64("/signature.png", 260, 80, true);
+      } catch (sigErr) {
+        console.warn("Could not load signature for marksheet:", sigErr);
+      }
+
       const doc = generateExperienceMarksheetPdf({
         candidateName: intern.full_name || "Intern",
         internId: intern.intern_id || "N/A",
@@ -438,7 +446,8 @@ export function AdminInternTasksView() {
         })),
         totalCredits: totalCredits,
         maxCredits: Math.max(totalCredits, 100), // example
-        grade: totalCredits >= 90 ? "A+" : totalCredits >= 70 ? "A" : totalCredits >= 50 ? "B" : "C"
+        grade: totalCredits >= 90 ? "A+" : totalCredits >= 70 ? "A" : totalCredits >= 50 ? "B" : "C",
+        signatureBase64: signatureBase64,
       });
       
       doc.save(`Experience_Marksheet_${intern.full_name?.replace(/\s+/g, "_")}.pdf`);

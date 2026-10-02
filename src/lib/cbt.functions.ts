@@ -342,3 +342,45 @@ export const listInternAvailableExamsFn = createServerFn({ method: "GET" })
     // Return only exams that haven't been submitted yet
     return availableExams.filter(exam => !submittedExamIds.has(exam.id));
   });
+
+export const reassignAdminTestFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    testId: z.string(),
+    target_type: z.enum(['intern', 'team']),
+    target_id: z.string(),
+  }).parse(d))
+  .handler(async ({ data: args }) => {
+    const adminClient = getAdminClient();
+    const { testId, target_type, target_id } = args;
+
+    const { data: test, error: fetchErr } = await adminClient
+      .from('cbt_exams')
+      .select('intern_ids, team_ids')
+      .eq('id', testId)
+      .single();
+
+    if (fetchErr || !test) throw new Error("Exam not found");
+
+    const updatePayload: any = {
+      status: 'published',
+      allocation_mode: target_type === 'team' ? 'team' : 'individual',
+    };
+
+    if (target_type === 'team') {
+      const existingTeams = Array.isArray(test.team_ids) ? test.team_ids : [];
+      updatePayload.team_ids = Array.from(new Set([...existingTeams, target_id]));
+    } else {
+      const existingInterns = Array.isArray(test.intern_ids) ? test.intern_ids : [];
+      updatePayload.intern_ids = Array.from(new Set([...existingInterns, target_id]));
+    }
+
+    const { error: updateErr } = await adminClient
+      .from('cbt_exams')
+      .update(updatePayload)
+      .eq('id', testId);
+
+    if (updateErr) throw new Error("Failed to assign exam: " + updateErr.message);
+
+    return { success: true, message: "Exam successfully assigned and allocated!" };
+  });

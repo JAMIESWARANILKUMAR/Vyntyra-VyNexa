@@ -20,6 +20,8 @@ export interface MarksheetData {
   totalCredits: number;
   maxCredits: number;
   grade: string;
+  signatureBase64?: string | null;
+  logoBase64?: string | null;
 }
 
 export function generateExperienceMarksheetPdf(data: MarksheetData): jsPDF {
@@ -150,6 +152,14 @@ export function generateExperienceMarksheetPdf(data: MarksheetData): jsPDF {
   doc.text(data.grade, 75, finalY + 25);
 
   // Signatures
+  if (data.signatureBase64 && data.signatureBase64.startsWith("data:image")) {
+    try {
+      doc.addImage(data.signatureBase64, "PNG", pageW - 70, pageH - 58, 48, 16);
+    } catch (e) {
+      console.warn("Could not render signature image on marksheet:", e);
+    }
+  }
+
   doc.setTextColor(30, 30, 30);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
