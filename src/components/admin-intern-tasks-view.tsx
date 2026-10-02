@@ -47,8 +47,8 @@ export function AdminInternTasksView() {
   const doMoveToStoredBank = useServerFn(moveTasksToStoredBank);
   const doAssignStoredTasks = useServerFn(assignStoredTasksToInterns);
 
-  // Tab State: "active" (Assigned to Interns) vs "stored_bank" (Repository for Future)
-  const [activeViewTab, setActiveViewTab] = useState<"active" | "submissions" | "stored_bank">("active");
+  // Tab State: "active" (Assigned to Interns) vs "stored_bank" (Repository for Future) vs "intern_points"
+  const [activeViewTab, setActiveViewTab] = useState<"active" | "submissions" | "stored_bank" | "intern_points">("active");
   const [previewTask, setPreviewTask] = useState<any>(null);
 
   const [manageTeamTask, setManageTeamTask] = useState<any>(null);
@@ -417,6 +417,37 @@ export function AdminInternTasksView() {
     }
   };
 
+  const handleDownloadMarksheet = async (intern: any, completedTasks: any[], totalCredits: number) => {
+    try {
+      toast.info("Generating Experience Marksheet...");
+      const { generateExperienceMarksheetPdf } = await import("@/lib/marksheetGenerator");
+      
+      const doc = generateExperienceMarksheetPdf({
+        candidateName: intern.full_name || "Intern",
+        internId: intern.intern_id || "N/A",
+        domainName: intern.department || "Technology",
+        startDate: intern.created_at ? new Date(intern.created_at).toLocaleDateString() : "N/A",
+        endDate: new Date().toLocaleDateString(),
+        issueDate: new Date().toLocaleDateString(),
+        tasks: completedTasks.map(t => ({
+          title: t.title || "Task",
+          domain: t.task_domain || "General",
+          status: t.status,
+          credits: t.credits || 10,
+          completedAt: t.completed_at ? new Date(t.completed_at).toLocaleDateString() : "N/A"
+        })),
+        totalCredits: totalCredits,
+        maxCredits: Math.max(totalCredits, 100), // example
+        grade: totalCredits >= 90 ? "A+" : totalCredits >= 70 ? "A" : totalCredits >= 50 ? "B" : "C"
+      });
+      
+      doc.save(`Experience_Marksheet_${intern.full_name?.replace(/\s+/g, "_")}.pdf`);
+      toast.success("Marksheet downloaded successfully!");
+    } catch (err: any) {
+      toast.error("Failed to generate marksheet: " + err.message);
+    }
+  };
+
   const handleUpdateTeamStatus = async (taskIds: string[], newStatus: any) => {
     try {
       for (const id of taskIds) {
@@ -771,6 +802,15 @@ export function AdminInternTasksView() {
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "stored_bank" ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-700"}`}>
             {storedBankTasks.length}
           </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveViewTab("intern_points")}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeViewTab === "intern_points" ? "bg-white dark:bg-slate-950 text-amber-600 dark:text-amber-400 shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
+        >
+          <Award className="h-4 w-4 text-amber-600" />
+          <span className="hidden sm:inline">Intern Progress & Points</span>
+          <span className="sm:hidden">Points</span>
         </button>
       </div>
 
@@ -1859,6 +1899,62 @@ export function AdminInternTasksView() {
                 );
               })
             )}
+          </div>
+        </div>
+      )}
+
+      {activeViewTab === "intern_points" && (
+        <div className="space-y-6 w-full max-w-full">
+          <div className="bg-white p-6 rounded-2xl border shadow-sm">
+            <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2"><Award className="h-6 w-6 text-amber-600" /> Intern Progress & Accumulated Points</h2>
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 border-b text-slate-600 font-bold uppercase text-xs">
+                  <tr>
+                    <th className="px-4 py-3">Intern Name</th>
+                    <th className="px-4 py-3">Total Tasks</th>
+                    <th className="px-4 py-3">Completed Tasks</th>
+                    <th className="px-4 py-3 text-right">Accumulated Credits / Points</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {allActiveInterns.map((intern: any) => {
+                    const internTasks = (tasks || []).filter((t: any) => 
+                      (t.assigned_to === intern.id) || 
+                      (t.target_user_id === intern.id) || 
+                      (t.team_id && intern.team_id === t.team_id)
+                    );
+                    const completedTasks = internTasks.filter((t: any) => t.status === 'completed');
+                    const totalCredits = completedTasks.reduce((acc: number, t: any) => acc + (t.credits || 10), 0);
+                    
+                    return (
+                      <tr key={intern.id} className="hover:bg-slate-50/50">
+                        <td className="px-4 py-3">
+                          <div className="font-bold text-slate-900">{intern.full_name}</div>
+                          <div className="text-[10px] text-slate-500">{intern.email} | {intern.intern_id}</div>
+                        </td>
+                        <td className="px-4 py-3 text-slate-600 font-medium">{internTasks.length}</td>
+                        <td className="px-4 py-3 text-emerald-600 font-medium">{completedTasks.length}</td>
+                        <td className="px-4 py-3 text-right font-black text-amber-600 text-lg">
+                          {totalCredits} <span className="text-xs font-semibold text-slate-400">pts</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Button size="sm" onClick={() => handleDownloadMarksheet(intern, completedTasks, totalCredits)} className="h-8 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white gap-1.5 shadow-xs">
+                            <Download className="h-3.5 w-3.5" /> Marksheet
+                          </Button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                  {allActiveInterns.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-8 text-center text-slate-500 text-sm">No interns found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

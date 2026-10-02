@@ -290,7 +290,7 @@ function AdminCbtGenerateView() {
           </div>
           <div className="mt-auto">
             <Button onClick={handleGenerate} disabled={isGenerating} className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-lg font-bold rounded-xl shadow-lg shadow-indigo-500/30">
-              {isGenerating ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Generating via Gemini AI...</> : <><BrainCircuit className="mr-2 h-5 w-5" /> Generate CBT Questions</>}
+              {isGenerating ? <><Loader2 className="mr-2 animate-spin h-5 w-5" /> Generating via Gemini AI...</> : <><BrainCircuit className="mr-2 h-5 w-5" /> Step 1: Generate & Review Exam</>}
             </Button>
           </div>
         </div>
@@ -324,7 +324,7 @@ function AdminCbtGenerateView() {
                 + Add Custom Question
               </Button>
               <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700 font-bold px-6 shadow-md shadow-emerald-500/20">
-                <CheckCircle2 className="mr-2 h-5 w-5" /> Approve & Publish Test
+                <CheckCircle2 className="mr-2 h-5 w-5" /> Approve & Assign CBT Exam
               </Button>
             </div>
           </div>
