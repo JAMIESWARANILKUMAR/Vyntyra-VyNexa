@@ -7,6 +7,24 @@ import { getRequest } from "@tanstack/react-start/server";
 import { supabase } from "@/integrations/supabase/client";
 import crypto from 'crypto';
 
+function getRealtimeCredentials() {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID || "a3566574bfc98346c9a06293c449f2f8";
+
+  let appId = process.env.CLOUDFLARE_REALTIME_APP_ID || "669555ba-9904-43d4-8bcf-61263bd5bb2d";
+  // Always normalize to the active RealtimeKit App ID (UUID format)
+  if (!appId || appId === "02ba0189fe45ea7bb41046b4073780f8") {
+    appId = "669555ba-9904-43d4-8bcf-61263bd5bb2d";
+  }
+
+  let apiToken = process.env.CLOUDFLARE_REALTIME_API_TOKEN || "";
+  // Clean up if the token was accidentally pasted or concatenated multiple times
+  if (apiToken.includes("cfat_") && apiToken.indexOf("cfat_", 1) !== -1) {
+    apiToken = apiToken.slice(0, apiToken.indexOf("cfat_", 1));
+  }
+
+  return { accountId, appId, apiToken };
+}
+
 // Creates a new meeting room
 export const createMeetingRoomFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -29,9 +47,7 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
     }).optional()
   }).parse(d))
   .handler(async ({ data, context }) => {
-    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-    const appId = process.env.CLOUDFLARE_REALTIME_APP_ID;
-    const apiToken = process.env.CLOUDFLARE_REALTIME_API_TOKEN;
+    const { accountId, appId, apiToken } = getRealtimeCredentials();
 
     if (!accountId || !appId || !apiToken) {
       throw new Error("Missing CLOUDFLARE_REALTIME_API_TOKEN in environment. Please generate a Cloudflare User API Token with RealtimeKit permissions.");
@@ -50,8 +66,9 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
     });
 
     if (!response.ok) {
-      console.error("Cloudflare RealtimeKit error:", await response.text());
-      throw new Error("Failed to create meeting in Cloudflare RealtimeKit");
+      const errText = await response.text();
+      console.error("Cloudflare RealtimeKit error:", errText);
+      throw new Error(`Failed to create meeting in Cloudflare RealtimeKit: ${errText}`);
     }
 
     const cfData = await response.json() as any;
@@ -171,9 +188,7 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
     const isSuperHost = isCreator || (settings.superHosts && userEmail && settings.superHosts.toLowerCase().includes(userEmail.toLowerCase()));
     const isHost = isSuperHost || (settings.hosts && userEmail && settings.hosts.toLowerCase().includes(userEmail.toLowerCase()));
 
-    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-    const appId = process.env.CLOUDFLARE_REALTIME_APP_ID;
-    const apiToken = process.env.CLOUDFLARE_REALTIME_API_TOKEN;
+    const { accountId, appId, apiToken } = getRealtimeCredentials();
 
     if (!accountId || !appId || !apiToken) {
       throw new Error("Missing CLOUDFLARE_REALTIME_API_TOKEN in environment. Please generate a Cloudflare User API Token with RealtimeKit permissions.");
@@ -201,8 +216,9 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
     });
 
     if (!response.ok) {
-      console.error("Cloudflare Add Participant error:", await response.text());
-      throw new Error("Failed to add participant to Cloudflare RealtimeKit");
+      const errText = await response.text();
+      console.error("Cloudflare Add Participant error:", errText);
+      throw new Error(`Failed to add participant to Cloudflare RealtimeKit: ${errText}`);
     }
 
     const cfData = await response.json() as any;
