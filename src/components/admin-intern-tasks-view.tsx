@@ -688,12 +688,13 @@ export function AdminInternTasksView() {
   });
   const allActiveInterns: any[] = internsQ.data || [];
 
+  const firstInternId = internsQ.data?.[0]?.id;
   // Auto-select first intern if none is selected
   useEffect(() => {
-    if (!selectedMatrixInternId && allActiveInterns.length > 0) {
-      setSelectedMatrixInternId(allActiveInterns[0].id);
+    if (!selectedMatrixInternId && firstInternId) {
+      setSelectedMatrixInternId(firstInternId);
     }
-  }, [allActiveInterns, selectedMatrixInternId]);
+  }, [firstInternId, selectedMatrixInternId]);
 
   const handleMoveToStoredBank = async (taskIds: string[]) => {
     if (!taskIds || taskIds.length === 0) {
