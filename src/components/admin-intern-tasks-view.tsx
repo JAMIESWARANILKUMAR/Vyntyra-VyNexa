@@ -685,9 +685,15 @@ export function AdminInternTasksView() {
   const internsQ = useQuery({
     queryKey: ["active-interns-for-cohort"],
     queryFn: () => fetchActiveInterns(),
-    enabled: rolloverModalOpen || assignStoredModalOpen || isManageTeamOpen,
   });
   const allActiveInterns: any[] = internsQ.data || [];
+
+  // Auto-select first intern if none is selected
+  useEffect(() => {
+    if (!selectedMatrixInternId && allActiveInterns.length > 0) {
+      setSelectedMatrixInternId(allActiveInterns[0].id);
+    }
+  }, [allActiveInterns, selectedMatrixInternId]);
 
   const handleMoveToStoredBank = async (taskIds: string[]) => {
     if (!taskIds || taskIds.length === 0) {
