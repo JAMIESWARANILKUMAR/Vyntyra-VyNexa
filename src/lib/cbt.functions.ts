@@ -4,6 +4,7 @@ import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 import { getAdminClient } from "@/integrations/supabase/admin";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getOrSetCache, invalidateCache } from "@/lib/server-cache";
 
 export const generateAiTestFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -239,15 +240,18 @@ Return JSON with exactly this schema: { "score": number, "feedback": "reasoning"
        status: 'graded'
     }).eq('id', subId);
     
+    invalidateCache("all_cbt_submissions");
     return { success: true, submissionId: subId, score: totalScore, passed };
   });
 
 export const listAdminTestsFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async (): Promise<any[]> => {
-    const adminClient = getAdminClient();
-    const { data } = await adminClient.from('cbt_exams').select('*').order('created_at', { ascending: false });
-    return data || [];
+    return getOrSetCache("admin_cbt_tests", 10000, async () => {
+      const adminClient = getAdminClient();
+      const { data } = await adminClient.from('cbt_exams').select('*').order('created_at', { ascending: false });
+      return data || [];
+    });
   });
 
 export const deleteAdminTestFn = createServerFn({ method: "POST" })
@@ -291,21 +295,25 @@ export const listInternSubmissionsFn = createServerFn({ method: "GET" })
 export const listCbtTargetsFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    const supabase = getAdminClient();
-    
-    const { data: interns } = await supabase.from("profiles").select("id, full_name, email").in("role", ["intern", "employee"]);
-    const { data: tasks } = await supabase.from("tasks").select("team_id, team_name").not("team_id", "is", null);
-    
-    const uniqueTeams: any[] = [];
-    const seenIds = new Set();
-    for (const t of (tasks || [])) {
-       if (!seenIds.has(t.team_id)) {
-          seenIds.add(t.team_id);
-          uniqueTeams.push({ id: t.team_id, name: t.team_name || t.team_id });
-       }
-    }
-    
-    return { interns: interns || [], teams: uniqueTeams };
+    return getOrSetCache("cbt_targets", 10000, async () => {
+      const supabase = getAdminClient();
+      
+      const [{ data: interns }, { data: tasks }] = await Promise.all([
+        supabase.from("profiles").select("id, full_name, email").in("role", ["intern", "employee"]),
+        supabase.from("tasks").select("team_id, team_name").not("team_id", "is", null)
+      ]);
+      
+      const uniqueTeams: any[] = [];
+      const seenIds = new Set();
+      for (const t of (tasks || [])) {
+         if (!seenIds.has(t.team_id)) {
+            seenIds.add(t.team_id);
+            uniqueTeams.push({ id: t.team_id, name: t.team_name || t.team_id });
+         }
+      }
+      
+      return { interns: interns || [], teams: uniqueTeams };
+    });
   });
 export const listAdminTestSubmissionsFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -321,11 +329,13 @@ export const listInternAvailableExamsFn = createServerFn({ method: "GET" })
     const adminClient = getAdminClient();
     const userId = context.user.id;
     
-    // Get all published exams
-    const { data: exams } = await adminClient.from('cbt_exams').select('*').eq('status', 'published');
+    // Fetch all needed data in parallel
+    const [{ data: exams }, { data: userTasks }, { data: submissions }] = await Promise.all([
+      adminClient.from('cbt_exams').select('*').eq('status', 'published'),
+      adminClient.from('tasks').select('team_id').eq('assigned_to', userId).not('team_id', 'is', null),
+      adminClient.from('cbt_submissions').select('exam_id').eq('intern_id', userId)
+    ]);
     
-    // Get user's teams (via tasks assigned to them)
-    const { data: userTasks } = await adminClient.from('tasks').select('team_id').eq('assigned_to', userId).not('team_id', 'is', null);
     const userTeams = Array.from(new Set((userTasks || []).map(t => t.team_id)));
     
     // Filter exams where intern_ids contains userId OR team_ids overlaps with userTeams
@@ -335,8 +345,6 @@ export const listInternAvailableExamsFn = createServerFn({ method: "GET" })
       return isTargetedIntern || isTargetedTeam;
     });
     
-    // Get exams the user has already submitted
-    const { data: submissions } = await adminClient.from('cbt_submissions').select('exam_id').eq('intern_id', userId);
     const submittedExamIds = new Set((submissions || []).map(s => s.exam_id));
     
     // Return only exams that haven't been submitted yet
@@ -388,14 +396,16 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
 export const listAllCbtSubmissionsFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    const adminClient = getAdminClient();
-    const { data: subs, error } = await adminClient
-      .from('cbt_submissions')
-      .select('*, cbt_exams(title, passing_score), profiles(full_name, email, intern_id)')
-      .order('submitted_at', { ascending: false });
-    if (error) {
-      console.error(error);
-      return [];
-    }
-    return subs || [];
+    return getOrSetCache("all_cbt_submissions", 5000, async () => {
+      const adminClient = getAdminClient();
+      const { data: subs, error } = await adminClient
+        .from('cbt_submissions')
+        .select('*, cbt_exams(title, passing_score), profiles(full_name, email, intern_id)')
+        .order('submitted_at', { ascending: false });
+      if (error) {
+        console.error(error);
+        return [];
+      }
+      return subs || [];
+    });
   });

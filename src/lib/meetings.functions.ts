@@ -5,6 +5,7 @@ import { getD1Database } from "@/lib/cloudflare-d1";
 import { getAdminClient } from "@/integrations/supabase/admin";
 import { getRequest } from "@tanstack/react-start/server";
 import { supabase } from "@/integrations/supabase/client";
+import { getOrSetCache, invalidateCache } from "@/lib/server-cache";
 import crypto from 'crypto';
 
 function getRealtimeCredentials() {
@@ -237,31 +238,33 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
 export const getActiveMeetingsFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const d1 = getD1Database();
-    const adminClient = getAdminClient();
-    
-    // Fetch user role and email to enforce RBAC
-    const { data: roleData } = await adminClient.from('profiles').select('role, email, department').eq('id', context.user.id).single();
-    const role = roleData?.role || 'intern';
-    const email = roleData?.email?.toLowerCase() || '';
-    const department = roleData?.department?.toLowerCase() || '';
+    return getOrSetCache(`active_meetings_${context.user.id}`, 5000, async () => {
+      const d1 = getD1Database();
+      const adminClient = getAdminClient();
+      
+      // Parallelize profile, tasks, and D1 room queries to optimize Worker CPU and latency
+      const [{ data: roleData }, { data: userTasks }, d1Rooms] = await Promise.all([
+        adminClient.from('profiles').select('role, email, department').eq('id', context.user.id).single(),
+        adminClient.from('tasks').select('team_id, team_members, target_user_id, assigned_to'),
+        d1!.prepare("SELECT * FROM meet_rooms WHERE status = 'active' ORDER BY created_at DESC").all()
+      ]);
 
-    // Fetch user's teams by looking at tasks
-    const { data: userTasks } = await adminClient.from('tasks').select('team_id, team_members, target_user_id, assigned_to');
-    const userTeamIds = new Set<string>();
-    for (const t of (userTasks || [])) {
-      if (t.team_id) {
-        if (t.assigned_to === context.user.id || t.target_user_id === context.user.id) {
-          userTeamIds.add(t.team_id);
-        } else if (Array.isArray(t.team_members) && t.team_members.some((m: any) => String(m) === context.user.id || String(m) === email)) {
-          userTeamIds.add(t.team_id);
+      const role = roleData?.role || 'intern';
+      const email = roleData?.email?.toLowerCase() || '';
+      const department = roleData?.department?.toLowerCase() || '';
+
+      const userTeamIds = new Set<string>();
+      for (const t of (userTasks || [])) {
+        if (t.team_id) {
+          if (t.assigned_to === context.user.id || t.target_user_id === context.user.id) {
+            userTeamIds.add(t.team_id);
+          } else if (Array.isArray(t.team_members) && t.team_members.some((m: any) => String(m) === context.user.id || String(m) === email)) {
+            userTeamIds.add(t.team_id);
+          }
         }
       }
-    }
 
-    const { results } = await d1!.prepare(`
-      SELECT * FROM meet_rooms WHERE status = 'active' ORDER BY created_at DESC
-    `).all();
+      const results = d1Rooms?.results || [];
 
     const filtered = results.filter((room: any) => {
       // 1. Admins see all meetings
@@ -306,7 +309,8 @@ export const getActiveMeetingsFn = createServerFn({ method: "GET" })
       return false;
     });
 
-    return filtered as any[];
+      return filtered as any[];
+    });
   });
 
 // Ends a meeting
@@ -330,5 +334,6 @@ export const endMeetingFn = createServerFn({ method: "POST" })
       throw new Error("Room not found.");
     }
 
+    invalidateCache("active_meetings");
     return { success: true };
   });

@@ -9,6 +9,7 @@ import { generateUploadUrl } from "./r2";
 import { supabase as anonClient } from "@/integrations/supabase/client";
 import { localDateTimeToIso, generateGoogleCalendarUrl } from "./date-utils";
 import { sendMeetingScheduleNotification } from "./notifications-omni.functions";
+import { getOrSetCache, invalidateCache } from "@/lib/server-cache";
 
 const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
@@ -100,69 +101,63 @@ export const revokeUser = createServerFn({ method: "POST" })
 export const listTeamMembers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    const adminClient = getAdminClient();
-    async function getValidUrl(url: string | null, client: any) {
-      if (!url) return null;
-      if (url.includes("/storage/v1/object/")) {
-        try {
-          const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
-          if (match) {
-            const bucket = match[2];
-            const filePath = decodeURIComponent(match[3]).split("?")[0];
-            const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
-            if (signedData?.signedUrl) return signedData.signedUrl;
+    return getOrSetCache("team_members", 10000, async () => {
+      const adminClient = getAdminClient();
+      async function getValidUrl(url: string | null, client: any) {
+        if (!url) return null;
+        if (url.includes("/storage/v1/object/")) {
+          try {
+            const match = url.match(/\/storage\/v1\/object\/(sign|public)\/([^\/]+)\/(.+)/);
+            if (match) {
+              const bucket = match[2];
+              const filePath = decodeURIComponent(match[3]).split("?")[0];
+              const { data: signedData } = await client.storage.from(bucket).createSignedUrl(filePath, 7200);
+              if (signedData?.signedUrl) return signedData.signedUrl;
+            }
+          } catch (e) {
+            console.warn("Failed to re-sign URL", e);
           }
-        } catch (e) {
-          console.warn("Failed to re-sign URL", e);
         }
+        return url;
       }
-      return url;
-    }
 
-    // Fetch user roles
-    const { data: roles } = await adminClient
-      .from("user_roles")
-      .select("user_id, role");
+      // Parallelize bulk queries to reduce CPU/wall latency
+      const [
+        { data: roles },
+        { data: profiles },
+        { data: applications },
+        { data: nocSettingsList },
+        { data: authData }
+      ] = await Promise.all([
+        adminClient.from("user_roles").select("user_id, role"),
+        adminClient.from("profiles").select("*"),
+        adminClient.from("applications").select("id, email, phone, full_name, profile_photo_url, college, domain, sub_domain, internship_start_date, joining_date, hod_name, noc_url, referral_code_used, exam_fee_paid, payment_reference_no, payment_mode, payment_status"),
+        adminClient.from("site_settings").select("id, enabled"),
+        adminClient.auth.admin.listUsers()
+      ]);
 
-    // Bulk fetch profiles
-    const { data: profiles } = await adminClient
-      .from("profiles")
-      .select("*");
+      const nocSettingsMap = new Map<string, boolean>();
+      (nocSettingsList || []).forEach((s: any) => nocSettingsMap.set(s.id, !!s.enabled));
+      const globalNocEnabled = nocSettingsMap.get("noc_download_settings") ?? false;
 
-    // Bulk fetch applications to attach profile photos, domains, colleges, noc_url, referral_code_used, etc.
-    const { data: applications } = await adminClient
-      .from("applications")
-      .select("id, email, phone, full_name, profile_photo_url, college, domain, sub_domain, internship_start_date, joining_date, hod_name, noc_url, referral_code_used, exam_fee_paid, payment_reference_no, payment_mode, payment_status");
+      const appByEmail = new Map<string, any>();
+      const appById = new Map<string, any>();
+      (applications || []).forEach((a: any) => {
+        if (a.email) appByEmail.set(a.email.toLowerCase(), a);
+        if (a.id) appById.set(a.id, a);
+      });
 
-    // Fetch site_settings to check NOC download flags
-    const { data: nocSettingsList } = await adminClient
-      .from("site_settings")
-      .select("id, enabled");
+      const authUsers = authData?.users || [];
 
-    const nocSettingsMap = new Map<string, boolean>();
-    (nocSettingsList || []).forEach((s: any) => nocSettingsMap.set(s.id, !!s.enabled));
-    const globalNocEnabled = nocSettingsMap.get("noc_download_settings") ?? false;
+      const roleMap = new Map<string, string>();
+      (roles || []).forEach((r: any) => roleMap.set(r.user_id, r.role));
 
-    const appByEmail = new Map<string, any>();
-    const appById = new Map<string, any>();
-    (applications || []).forEach((a: any) => {
-      if (a.email) appByEmail.set(a.email.toLowerCase(), a);
-      if (a.id) appById.set(a.id, a);
-    });
+      const membersMap = new Map<string, any>();
 
-    // Fetch auth users
-    const { data: authData } = await adminClient.auth.admin.listUsers();
-    const authUsers = authData?.users || [];
-
-    const roleMap = new Map<string, string>();
-    (roles || []).forEach((r: any) => roleMap.set(r.user_id, r.role));
-
-    const membersMap = new Map<string, any>();
-
-    (profiles || []).forEach((p: any) => {
-      const authUser = authUsers.find((u: any) => u.id === p.id);
-              let calculatedRole = p.role;
-        
+      (profiles || []).forEach((p: any) => {
+        const authUser = authUsers.find((u: any) => u.id === p.id);
+        let calculatedRole = p.role;
+          
         // Explicit ID-based checking (EMP = employee, INT = intern)
         if (p.employee_id && String(p.employee_id).toUpperCase().startsWith("EMP")) {
           calculatedRole = "employee";
@@ -178,70 +173,71 @@ export const listTeamMembers = createServerFn({ method: "GET" })
 
         const assignedRole = roleMap.get(p.id) || calculatedRole;
 
-      const email = (p.email || authUser?.email || "").toLowerCase();
-      const full_name = p.full_name || authUser?.user_metadata?.full_name || email.split("@")[0];
-      const matchedApp = appByEmail.get(email) || appById.get(p.id) || {};
+        const email = (p.email || authUser?.email || "").toLowerCase();
+        const full_name = p.full_name || authUser?.user_metadata?.full_name || email.split("@")[0];
+        const matchedApp = appByEmail.get(email) || appById.get(p.id) || {};
 
-      const profilePhoto = p.avatar_url || p.photo_url || p.profile_photo_url || matchedApp.profile_photo_url || null;
+        const profilePhoto = p.avatar_url || p.photo_url || p.profile_photo_url || matchedApp.profile_photo_url || null;
 
-      // Determine NOC download enabled state
-      const internNocSetting = nocSettingsMap.get(`noc_enabled_${email}`) ?? nocSettingsMap.get(`noc_enabled_${p.id}`) ?? nocSettingsMap.get(`noc_enabled_${matchedApp.id}`);
-      const isNocEnabled = internNocSetting !== undefined ? internNocSetting : (p.noc_download_enabled ?? matchedApp.noc_download_enabled ?? globalNocEnabled);
+        // Determine NOC download enabled state
+        const internNocSetting = nocSettingsMap.get(`noc_enabled_${email}`) ?? nocSettingsMap.get(`noc_enabled_${p.id}`) ?? nocSettingsMap.get(`noc_enabled_${matchedApp.id}`);
+        const isNocEnabled = internNocSetting !== undefined ? internNocSetting : (p.noc_download_enabled ?? matchedApp.noc_download_enabled ?? globalNocEnabled);
 
-      const isPaid = Boolean(p.exam_fee_paid || matchedApp.exam_fee_paid);
-      const refNo = p.payment_reference_no || matchedApp.payment_reference_no || null;
-      const payMode = p.payment_mode || matchedApp.payment_mode || null;
-      const payStatus = p.payment_status || matchedApp.payment_status || (isPaid ? "paid" : "unpaid");
-      const refCodeUsed = p.referral_code_used || matchedApp.referral_code_used || null;
+        const isPaid = Boolean(p.exam_fee_paid || matchedApp.exam_fee_paid);
+        const refNo = p.payment_reference_no || matchedApp.payment_reference_no || null;
+        const payMode = p.payment_mode || matchedApp.payment_mode || null;
+        const payStatus = p.payment_status || matchedApp.payment_status || (isPaid ? "paid" : "unpaid");
+        const refCodeUsed = p.referral_code_used || matchedApp.referral_code_used || null;
 
-      membersMap.set(p.id, {
-        ...matchedApp,
-        ...p,
-        id: p.id,
-        application_id: matchedApp.id || p.id,
-        user_id: p.id,
-        role: assignedRole,
-        email,
-        full_name,
-        avatar_url: profilePhoto,
-        profile_photo_url: profilePhoto,
-        college: p.college || matchedApp.college || "Academic Institution",
-        department: p.department || matchedApp.domain || "Technology & Software",
-        position: p.position || matchedApp.sub_domain || "Full Stack Web Development",
-        start_date: p.start_date || matchedApp.internship_start_date || matchedApp.joining_date || null,
-        hod_name: p.hod_name || matchedApp.hod_name || null,
-        noc_url: p.noc_url || matchedApp.noc_url || null,
-        noc_download_enabled: isNocEnabled,
-        exam_fee_paid: isPaid,
-        payment_reference_no: refNo,
-        payment_mode: payMode,
-        payment_status: payStatus,
-        referral_code_used: refCodeUsed,
-      });
-    });
-
-    (roles || []).forEach((r: any) => {
-      if (!membersMap.has(r.user_id)) {
-        const authUser = authUsers.find((u: any) => u.id === r.user_id);
-        const email = (authUser?.email || "").toLowerCase();
-        const full_name = authUser?.user_metadata?.full_name || email.split("@")[0];
-        const matchedApp = appByEmail.get(email) || {};
-        const profilePhoto = matchedApp.profile_photo_url || null;
-
-        membersMap.set(r.user_id, {
+        membersMap.set(p.id, {
           ...matchedApp,
-          id: r.user_id,
-          user_id: r.user_id,
-          role: r.role,
+          ...p,
+          id: p.id,
+          application_id: matchedApp.id || p.id,
+          user_id: p.id,
+          role: assignedRole,
           email,
           full_name,
           avatar_url: profilePhoto,
           profile_photo_url: profilePhoto,
+          college: p.college || matchedApp.college || "Academic Institution",
+          department: p.department || matchedApp.domain || "Technology & Software",
+          position: p.position || matchedApp.sub_domain || "Full Stack Web Development",
+          start_date: p.start_date || matchedApp.internship_start_date || matchedApp.joining_date || null,
+          hod_name: p.hod_name || matchedApp.hod_name || null,
+          noc_url: p.noc_url || matchedApp.noc_url || null,
+          noc_download_enabled: isNocEnabled,
+          exam_fee_paid: isPaid,
+          payment_reference_no: refNo,
+          payment_mode: payMode,
+          payment_status: payStatus,
+          referral_code_used: refCodeUsed,
         });
-      }
-    });
+      });
 
-    return Array.from(membersMap.values());
+      (roles || []).forEach((r: any) => {
+        if (!membersMap.has(r.user_id)) {
+          const authUser = authUsers.find((u: any) => u.id === r.user_id);
+          const email = (authUser?.email || "").toLowerCase();
+          const full_name = authUser?.user_metadata?.full_name || email.split("@")[0];
+          const matchedApp = appByEmail.get(email) || {};
+          const profilePhoto = matchedApp.profile_photo_url || null;
+
+          membersMap.set(r.user_id, {
+            ...matchedApp,
+            id: r.user_id,
+            user_id: r.user_id,
+            role: r.role,
+            email,
+            full_name,
+            avatar_url: profilePhoto,
+            profile_photo_url: profilePhoto,
+          });
+        }
+      });
+
+      return Array.from(membersMap.values());
+    });
   });
 
 // ─── Announcements ────────────────────────────────────────────────
@@ -1914,27 +1910,25 @@ export const requestTaskResources = createServerFn({ method: "POST" })
 export const listAllInternTasksWithProgress = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const admin = getAdminClient();
-    const { data: tasks, error } = await admin
-      .from("tasks")
-      .select("*")
-      .order("created_at", { ascending: false });
+    return getOrSetCache("all_intern_tasks_with_progress", 5000, async () => {
+      const admin = getAdminClient();
+      const [{ data: tasks, error }, { data: profiles }] = await Promise.all([
+        admin.from("tasks").select("*").order("created_at", { ascending: false }),
+        admin.from("profiles").select("id, full_name, email, phone, phone_number, department, position, intern_id, avatar_url")
+      ]);
 
-    if (error) throw new Error(error.message);
+      if (error) throw new Error(error.message);
 
-    const { data: profiles } = await admin
-      .from("profiles")
-      .select("id, full_name, email, phone, phone_number, department, position, intern_id, avatar_url");
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
 
-    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
-
-    return (tasks || []).map((t: any) => {
-      const norm = normalizeTaskDocLinks(t);
-      const assignedId = norm.assigned_to || norm.target_user_id;
-      return {
-        ...norm,
-        assigned_profile: profileMap.get(assignedId) || null,
-      };
+      return (tasks || []).map((t: any) => {
+        const norm = normalizeTaskDocLinks(t);
+        const assignedId = norm.assigned_to || norm.target_user_id;
+        return {
+          ...norm,
+          assigned_profile: profileMap.get(assignedId) || null,
+        };
+      });
     });
   });
 
@@ -6815,23 +6809,25 @@ export const listInternTasksForMentor = createServerFn({ method: "POST" })
 export const listActiveInternsForCohortAssignment = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    const admin = getAdminClient();
-    const { data: interns, error } = await admin
-      .from("profiles")
-      .select("id, full_name, email, role, department, intern_id, avatar_url, phone, college_name, domain, created_at")
-      .or("role.eq.intern,intern_id.not.is.null")
-      .order("full_name", { ascending: true });
-
-    if (error) {
-      console.warn("[listActiveInternsForCohortAssignment] query warning:", error.message);
-      const { data: fallback } = await admin
+    return getOrSetCache("active_interns_cohort", 10000, async () => {
+      const admin = getAdminClient();
+      const { data: interns, error } = await admin
         .from("profiles")
-        .select("id, full_name, email, role, department, intern_id, avatar_url")
+        .select("id, full_name, email, role, department, intern_id, avatar_url, phone, college_name, domain, created_at")
+        .or("role.eq.intern,intern_id.not.is.null")
         .order("full_name", { ascending: true });
-      return fallback || [];
-    }
 
-    return interns || [];
+      if (error) {
+        console.warn("[listActiveInternsForCohortAssignment] query warning:", error.message);
+        const { data: fallback } = await admin
+          .from("profiles")
+          .select("id, full_name, email, role, department, intern_id, avatar_url")
+          .order("full_name", { ascending: true });
+        return fallback || [];
+      }
+
+      return interns || [];
+    });
   });
 
 export const rolloverVerifiedTasksToCohort = createServerFn({ method: "POST" })
@@ -8836,6 +8832,9 @@ export const adminAssignOrUpdateTaskCredits = createServerFn({ method: "POST" })
       .from("intern_profiles")
       .update({ total_credits: sumCredits })
       .eq("id", data.internId);
+
+    invalidateCache("all_intern_tasks_with_progress");
+    invalidateCache("team_members");
 
     return { success: true, message: "Task credits updated and synchronized with intern dashboard!" };
   });
