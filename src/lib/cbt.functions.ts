@@ -106,10 +106,11 @@ export const getInternTestSessionFn = createServerFn({ method: "POST" })
   .handler(async ({ data: args, context }) => {
     const adminClient = getAdminClient();
     
-    const { data: test, error: testErr } = await adminClient.from('cbt_exams').select('*').eq('id', args.testId).single();
+    const [{ data: test, error: testErr }, { data: questions, error: qErr }] = await Promise.all([
+      adminClient.from('cbt_exams').select('*').eq('id', args.testId).single(),
+      adminClient.from('cbt_questions').select('*').eq('exam_id', args.testId).order('order_index', { ascending: true })
+    ]);
     if (testErr || !test) throw new Error("Test not found");
-    
-    const { data: questions, error: qErr } = await adminClient.from('cbt_questions').select('*').eq('exam_id', args.testId).order('order_index', { ascending: true });
     
     const safeQuestions = (questions || []).map((q: any) => {
       let options = q.options;

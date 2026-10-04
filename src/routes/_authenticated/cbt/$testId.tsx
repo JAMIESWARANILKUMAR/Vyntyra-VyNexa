@@ -17,13 +17,6 @@ function CbtExamInterface() {
   const navigate = useNavigate();
   const [isDesktop, setIsDesktop] = useState(true);
 
-  useEffect(() => {
-    const checkSize = () => setIsDesktop(window.innerWidth >= 1024);
-    checkSize();
-    window.addEventListener("resize", checkSize);
-    return () => window.removeEventListener("resize", checkSize);
-  }, []);
-
   const [test, setTest] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [answers, setAnswers] = useState<any>({});
@@ -37,12 +30,109 @@ function CbtExamInterface() {
   const [postTestCountdown, setPostTestCountdown] = useState(120);
   const [terminationReason, setTerminationReason] = useState("");
   const [calculatedScore, setCalculatedScore] = useState(0);
+  const [warningLeft, setWarningLeft] = useState(20);
 
   // WebRTC / Live Streaming hook
   const rtcConnection = useRef<RTCPeerConnection | null>(null);
-
   const globalChannelRef = useRef<any>(null);
 
+  const getSessionFn = useServerFn(getInternTestSessionFn);
+  const submitFn = useServerFn(submitCbtExamFn);
+
+  // Score & Submit Helpers
+  const calculateMockScore = () => {
+    const answeredCount = Object.keys(answers).length;
+    const score = questions.length > 0 ? Math.round((answeredCount / questions.length) * 100) : 0;
+    setCalculatedScore(score);
+  };
+
+  const submitExamData = async (currentLogs?: any[]) => {
+    localStorage.removeItem(`cbt_autosave_${testId}`); 
+    if (testId === "demo") return;
+    try {
+      await submitFn({ data: { testId, answers, proctoringLogs: currentLogs || logs } });
+    } catch (e) {
+      toast.error("Network error during submission. Result cached locally.");
+    }
+  };
+
+  const handleTerminate = (reason: string) => {
+    setTerminationReason(reason);
+    setExamStatus("terminating");
+    calculateMockScore();
+    submitExamData(logs);
+  };
+
+  const handleFinalize = async (isAuto = false) => {
+    setExamStatus("submitting");
+    calculateMockScore();
+    submitExamData(logs);
+    if (isAuto) toast.info("Time is up! Exam auto-submitted.");
+  };
+
+  // Proctoring Enforcement Hook (must be declared before useEffect hooks that use strikes/logs)
+  const { requestFullscreen, strikes, logs, stream, activeWarning, clearWarning } = useProctoringEnforcement(
+    examStatus === "running", 
+    (reason) => handleTerminate(reason)
+  );
+
+  const setVideoRef = (node: HTMLVideoElement | null) => {
+    if (node && stream) {
+      node.srcObject = stream;
+    }
+  };
+
+  // 1. Desktop Window Size check
+  useEffect(() => {
+    const checkSize = () => setIsDesktop(window.innerWidth >= 1024);
+    checkSize();
+    window.addEventListener("resize", checkSize);
+    return () => window.removeEventListener("resize", checkSize);
+  }, []);
+
+  // 2. Fetch IP & Load CBT Exam Session
+  useEffect(() => {
+    fetch("https://api.ipify.org?format=json")
+      .then(r => r.json())
+      .then(data => setIpAddress(data.ip))
+      .catch(() => setIpAddress("Unknown"));
+
+    const saved = localStorage.getItem(`cbt_autosave_${testId}`);
+    if (saved) {
+      try { setAnswers(JSON.parse(saved)); } catch (e) {}
+    }
+
+    if (testId === "demo") {
+      setTest({ 
+        title: "VyNexa Portal Familiarization Demo", 
+        description: "This is a 5-question demo to familiarize yourself with the VyNexa portal CBT engine.", 
+        time_limit_minutes: 10, 
+        passing_score: 80, 
+        internId: "INT-8492" 
+      });
+      setQuestions([
+        { id: "demo-q1", question_type: "mcq", question_text: "What is the primary color of the VyNexa dashboard theme?", options: [{id: "opt1", text: "Emerald"}, {id: "opt2", text: "Crimson"}, {id: "opt3", text: "Indigo"}] },
+        { id: "demo-q2", question_type: "mcq", question_text: "Where can you find the AI CBT Exams tab?", options: [{id: "opt4", text: "Connect & Support"}, {id: "opt5", text: "My Profile"}, {id: "opt6", text: "Settings"}] },
+        { id: "demo-q3", question_type: "long_answer", question_text: "Describe the purpose of the Daily Standup log in a few words." },
+        { id: "demo-q4", question_type: "mcq", question_text: "What happens if you switch tabs during a proctored exam?", options: [{id: "opt7", text: "You get a strike (2 strikes = fail)"}, {id: "opt8", text: "Nothing"}, {id: "opt9", text: "You earn bonus points"}] },
+        { id: "demo-q5", question_type: "coding", question_text: "Write a simple function that returns 'VyNexa'." }
+      ]);
+      setTimeLeft(60);
+      return;
+    }
+
+    getSessionFn({ data: { testId } })
+      .then(res => {
+        setTest({ ...res.test, internId: res.test?.intern_ids?.[0] || "INT-4829" });
+        setQuestions(res.questions || []);
+      })
+      .catch(err => {
+        console.error("Failed to load CBT test:", err);
+        toast.error("Failed to load test session: " + (err.message || "Unknown error"));
+      });
+  }, [testId]);
+
+  // 3. WebRTC & Channel setup
   useEffect(() => {
     if (examStatus !== "running" || !test) return;
 
@@ -123,6 +213,7 @@ function CbtExamInterface() {
     };
   }, [examStatus, test, testId, ipAddress]);
 
+  // 4. Telemetry Tracking
   useEffect(() => {
     if (globalChannelRef.current && test) {
        const latestLog = logs.length > 0 ? logs[logs.length - 1].reason : null;
@@ -140,36 +231,7 @@ function CbtExamInterface() {
     }
   }, [activeQ, timeLeft, questions.length, strikes, logs]);
 
-  const getSessionFn = useServerFn(getInternTestSessionFn);
-  const submitFn = useServerFn(submitCbtExamFn);
-
-  useEffect(() => {
-    fetch("https://api.ipify.org?format=json").then(r => r.json()).then(data => setIpAddress(data.ip)).catch(() => setIpAddress("Unknown"));
-
-    const saved = localStorage.getItem(`cbt_autosave_${testId}`);
-    if (saved) {
-      try { setAnswers(JSON.parse(saved)); } catch (e) {}
-    }
-
-    if (testId === "demo") {
-      setTest({ title: "VyNexa Portal Familiarization Demo", description: "This is a 5-question demo to familiarize yourself with the VyNexa portal CBT engine.", time_limit_minutes: 10, passing_score: 80, internId: "INT-8492" });
-      setQuestions([
-        { id: "demo-q1", question_type: "mcq", question_text: "What is the primary color of the VyNexa dashboard theme?", options: [{id: "opt1", text: "Emerald"}, {id: "opt2", text: "Crimson"}, {id: "opt3", text: "Indigo"}] },
-        { id: "demo-q2", question_type: "mcq", question_text: "Where can you find the AI CBT Exams tab?", options: [{id: "opt4", text: "Connect & Support"}, {id: "opt5", text: "My Profile"}, {id: "opt6", text: "Settings"}] },
-        { id: "demo-q3", question_type: "long_answer", question_text: "Describe the purpose of the Daily Standup log in a few words." },
-        { id: "demo-q4", question_type: "mcq", question_text: "What happens if you switch tabs during a proctored exam?", options: [{id: "opt7", text: "You get a strike (2 strikes = fail)"}, {id: "opt8", text: "Nothing"}, {id: "opt9", text: "You earn bonus points"}] },
-        { id: "demo-q5", question_type: "coding", question_text: "Write a simple function that returns 'VyNexa'." }
-      ]);
-      setTimeLeft(60);
-      return;
-    }
-
-    getSessionFn({ data: { testId } }).then(res => {
-      setTest({...res.test, internId: "INT-4829"}); // fallback if not in test
-      setQuestions(res.questions);
-    });
-  }, [testId]);
-
+  // 5. Question Timer Initializer
   useEffect(() => {
     if (examStatus !== "running" || questions.length === 0) return;
     if (timeLeft === null) {
@@ -178,6 +240,7 @@ function CbtExamInterface() {
     }
   }, [examStatus, activeQ, questions, timeLeft]);
 
+  // 6. Autosave Interval
   useEffect(() => {
     if (examStatus !== "running") return;
     const interval = setInterval(() => {
@@ -186,6 +249,7 @@ function CbtExamInterface() {
     return () => clearInterval(interval);
   }, [answers, examStatus, testId]);
 
+  // 7. Timer Countdown
   useEffect(() => {
     if (examStatus !== "running" || timeLeft === null) return;
     if (timeLeft <= 0) {
@@ -203,7 +267,7 @@ function CbtExamInterface() {
     return () => clearInterval(timer);
   }, [examStatus, timeLeft, activeQ, questions]);
 
-  // Post-test countdown timer (120s -> 0)
+  // 8. Post-test countdown timer (120s -> 0)
   useEffect(() => {
     if (examStatus !== "terminating" && examStatus !== "submitting") return;
     if (postTestCountdown <= 0) {
@@ -217,52 +281,7 @@ function CbtExamInterface() {
     return () => clearInterval(timer);
   }, [examStatus, postTestCountdown, navigate]);
 
-  const { requestFullscreen, strikes, logs, stream, activeWarning, clearWarning } = useProctoringEnforcement(
-    examStatus === "running", 
-    (reason) => handleTerminate(reason)
-  );
-
-  const handleTerminate = (reason: string) => {
-    setTerminationReason(reason);
-    setExamStatus("terminating");
-    calculateMockScore();
-    submitExamData();
-  };
-
-  const handleFinalize = async (isAuto = false) => {
-    setExamStatus("submitting");
-    calculateMockScore();
-    submitExamData();
-    if (isAuto) toast.info("Time is up! Exam auto-submitted.");
-  };
-
-  const calculateMockScore = () => {
-    // Basic mock score calculation for the visual representation
-    const answeredCount = Object.keys(answers).length;
-    const score = questions.length > 0 ? Math.round((answeredCount / questions.length) * 100) : 0;
-    setCalculatedScore(score);
-  };
-
-  const submitExamData = async () => {
-    localStorage.removeItem(`cbt_autosave_${testId}`); 
-    if (testId === "demo") return;
-    try {
-      await submitFn({ data: { testId, answers, proctoringLogs: logs } });
-    } catch (e) {
-      toast.error("Network error during submission. Result cached locally.");
-    }
-  };
-
-  const setVideoRef = (node: HTMLVideoElement | null) => {
-    if (node && stream) {
-      node.srcObject = stream;
-    }
-  };
-
-  // -------------------------------------------------------------
-  // Warning Overlay (20s)
-  // -------------------------------------------------------------
-  const [warningLeft, setWarningLeft] = useState(20);
+  // 9. Warning Overlay Timer
   useEffect(() => {
     if (!activeWarning) {
       setWarningLeft(20);
@@ -475,6 +494,9 @@ function CbtExamInterface() {
   // Live Exam Screen
   // -------------------------------------------------------------
   const q = questions[activeQ];
+  if (!q) {
+    return <div className="flex h-screen items-center justify-center text-slate-500 font-sans">Loading question data...</div>;
+  }
   const mins = Math.floor((timeLeft || 0) / 60);
   const secs = (timeLeft || 0) % 60;
 
