@@ -108,7 +108,7 @@ function CbtExamInterface() {
         description: "This is a 5-question demo to familiarize yourself with the VyNexa portal CBT engine.", 
         time_limit_minutes: 10, 
         passing_score: 80, 
-        internId: "INT-8492" 
+        internId: "INT-DEMO-PREVIEW" 
       });
       setQuestions([
         { id: "demo-q1", question_type: "mcq", question_text: "What is the primary color of the VyNexa dashboard theme?", options: [{id: "opt1", text: "Emerald"}, {id: "opt2", text: "Crimson"}, {id: "opt3", text: "Indigo"}] },
@@ -123,7 +123,7 @@ function CbtExamInterface() {
 
     getSessionFn({ data: { testId } })
       .then(res => {
-        setTest({ ...res.test, internId: res.test?.intern_ids?.[0] || "INT-4829" });
+        setTest(res.test);
         setQuestions(res.questions || []);
       })
       .catch(err => {
@@ -330,6 +330,17 @@ function CbtExamInterface() {
         <div className="absolute inset-0 z-0 bg-white" />
         <div className={`absolute top-0 left-0 w-full h-2 ${isTerminated ? "bg-red-500" : "bg-emerald-500"}`} />
         
+        {/* Repeating Watermark Grid with Vyntyra Branding and Intern ID */}
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden flex flex-wrap gap-x-14 gap-y-16 opacity-[0.035] rotate-[-25deg] scale-150 justify-center items-center select-none">
+          {Array.from({ length: 140 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-2.5 whitespace-nowrap font-mono">
+              <span className="text-xl font-black text-slate-900 tracking-wider">Vyntyra</span>
+              <span className="text-xl font-bold text-slate-400">•</span>
+              <span className="text-xl font-black text-slate-800 tracking-widest">{test?.internId || "INT-SECURE"}</span>
+            </div>
+          ))}
+        </div>
+
         <div className="z-10 w-full max-w-4xl bg-white shadow-2xl border border-slate-200 rounded-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700">
           
           <div className={`p-8 text-white ${isTerminated ? "bg-red-600" : "bg-slate-900"} flex items-center justify-between`}>
@@ -437,6 +448,16 @@ function CbtExamInterface() {
   if (examStatus === "not_started") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 text-slate-900 font-sans relative overflow-hidden">
+        {/* Repeating Watermark Grid with Vyntyra Branding and Intern ID */}
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden flex flex-wrap gap-x-14 gap-y-16 opacity-[0.035] rotate-[-25deg] scale-150 justify-center items-center select-none">
+          {Array.from({ length: 140 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-2.5 whitespace-nowrap font-mono">
+              <span className="text-xl font-black text-slate-900 tracking-wider">Vyntyra</span>
+              <span className="text-xl font-bold text-slate-400">•</span>
+              <span className="text-xl font-black text-slate-800 tracking-widest">{test?.internId || "INT-SECURE"}</span>
+            </div>
+          ))}
+        </div>
         <div className="bg-white p-10 shadow-lg max-w-3xl w-full border-t-8 border-slate-900 relative z-10 rounded-sm">
           
           <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-200 justify-between">
@@ -647,10 +668,14 @@ function CbtExamInterface() {
         {/* Right Main Panel (Active Question Area) */}
         <div className="flex-1 flex flex-col relative z-10 bg-white">
           
-          {/* Repeating Watermark Grid */}
-          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden flex flex-wrap gap-x-12 gap-y-16 opacity-[0.03] rotate-[-30deg] scale-150 justify-center items-center">
-            {Array.from({ length: 200 }).map((_, i) => (
-              <span key={i} className="text-2xl font-bold text-slate-900 whitespace-nowrap">Vyntyra Consultancy Services</span>
+          {/* Repeating Watermark Grid with Vyntyra Branding and Intern ID */}
+          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden flex flex-wrap gap-x-14 gap-y-16 opacity-[0.045] rotate-[-25deg] scale-150 justify-center items-center select-none">
+            {Array.from({ length: 160 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-2.5 whitespace-nowrap font-mono">
+                <span className="text-xl font-black text-slate-900 tracking-wider">Vyntyra</span>
+                <span className="text-xl font-bold text-slate-400">•</span>
+                <span className="text-xl font-black text-slate-800 tracking-widest">{test?.internId || "INT-SECURE"}</span>
+              </div>
             ))}
           </div>
 

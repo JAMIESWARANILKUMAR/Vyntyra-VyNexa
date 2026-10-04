@@ -106,9 +106,10 @@ export const getInternTestSessionFn = createServerFn({ method: "POST" })
   .handler(async ({ data: args, context }) => {
     const adminClient = getAdminClient();
     
-    const [{ data: test, error: testErr }, { data: questions, error: qErr }] = await Promise.all([
+    const [{ data: test, error: testErr }, { data: questions, error: qErr }, { data: profile }] = await Promise.all([
       adminClient.from('cbt_exams').select('*').eq('id', args.testId).single(),
-      adminClient.from('cbt_questions').select('*').eq('exam_id', args.testId).order('order_index', { ascending: true })
+      adminClient.from('cbt_questions').select('*').eq('exam_id', args.testId).order('order_index', { ascending: true }),
+      adminClient.from('profiles').select('id, intern_id, employee_id, full_name, email').eq('id', context.user.id).single()
     ]);
     if (testErr || !test) throw new Error("Test not found");
     
@@ -124,8 +125,18 @@ export const getInternTestSessionFn = createServerFn({ method: "POST" })
         time_limit_seconds: q.time_limit_seconds
       };
     });
+
+    const candidateId = profile?.intern_id || profile?.employee_id || (test.intern_ids && test.intern_ids[0]) || context.user.id.slice(0, 8).toUpperCase();
     
-    return { test, questions: safeQuestions };
+    return { 
+      test: {
+        ...test,
+        internId: candidateId,
+        internName: profile?.full_name || profile?.email || "Candidate"
+      }, 
+      questions: safeQuestions,
+      internId: candidateId
+    };
   });
 
 export const submitCbtExamFn = createServerFn({ method: "POST" })

@@ -26,8 +26,18 @@ function CbtResults() {
   const strikes = (result.proctoring_logs as any[])?.length || 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8 font-sans">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <div className="min-h-screen bg-slate-50 p-8 font-sans relative overflow-hidden">
+      {/* Repeating Watermark Grid with Vyntyra Branding and Intern ID */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden flex flex-wrap gap-x-14 gap-y-16 opacity-[0.035] rotate-[-25deg] scale-150 justify-center items-center select-none">
+        {Array.from({ length: 140 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-2.5 whitespace-nowrap font-mono">
+            <span className="text-xl font-black text-slate-900 tracking-wider">Vyntyra</span>
+            <span className="text-xl font-bold text-slate-400">•</span>
+            <span className="text-xl font-black text-slate-800 tracking-widest">{result?.intern_id || "INT-SECURE"}</span>
+          </div>
+        ))}
+      </div>
+      <div className="max-w-5xl mx-auto space-y-8 relative z-10">
         
         <div className="flex items-center gap-4">
           <Button variant="outline" onClick={() => window.history.back()} className="rounded-full h-10 w-10 p-0">

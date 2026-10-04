@@ -192,13 +192,15 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  // Hide public chrome on dashboard pages
+  // Hide public chrome on dashboard pages, CBT exams, and meeting rooms
   const isDashboard = 
     pathname.startsWith("/admin") ||
     pathname.startsWith("/employee") ||
     pathname.startsWith("/intern") ||
     pathname.startsWith("/cms") ||
-    pathname.startsWith("/templates");
+    pathname.startsWith("/templates") ||
+    pathname.startsWith("/cbt") ||
+    pathname.startsWith("/meet");
 
   return (
     <QueryClientProvider client={queryClient}>
