@@ -11,14 +11,19 @@ export const generateAiTestFn = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({
     taskContext: z.string(),
     documentText: z.string().optional(),
-    modules: z.array(z.string())
+    modules: z.array(z.string()),
+    questionCount: z.number().optional(),
+    defaultTimeSeconds: z.number().optional()
   }).parse(d))
   .handler(async ({ data: args }) => {
+    const targetCount = Number(args.questionCount) > 0 ? Number(args.questionCount) : 10;
+    const defaultTimer = Number(args.defaultTimeSeconds) > 0 ? Number(args.defaultTimeSeconds) : 60;
+
     // 1. Attempt Gemini AI if valid API key is present
     const geminiKey = getEnv("GEMINI_API_KEY");
     if (geminiKey && (geminiKey.startsWith("AIzaSy") || geminiKey.length > 20)) {
       try {
-        const prompt = `You are an expert technical evaluator. Generate a computer-based test (CBT) based on the following context.
+        const prompt = `You are an expert technical evaluator. Generate a computer-based test (CBT) with EXACTLY ${targetCount} high-yield, comprehensive questions based on the following context.
         
 TASK CONTEXT:
 ${args.taskContext}
@@ -30,10 +35,12 @@ REQUESTED MODULES:
 ${args.modules.join(', ')}
 
 IMPORTANT RULES:
-1. Every question MUST have its solution pre-marked!
-2. For MCQ/Aptitude/Scenario: Provide 4 distinct options with option IDs A, B, C, D and pre-mark correct_answer: "A" or { "id": "A" }. Also include an in-depth "explanation" explaining why the solution is correct.
-3. For Coding questions: Provide problem description, pre-marked reference solution code in "correct_answer", and at least 2 test cases in "test_cases" with "input" and "expected_output".
-4. For Subjective / Long Answer questions: Provide the grading criteria and model answer in "correct_answer" and "explanation".
+1. Generate EXACTLY ${targetCount} questions in total!
+2. Every question MUST have its solution pre-marked!
+3. Default time_limit_seconds should be ${defaultTimer} (or adjusted between 30-180 seconds based on question complexity, e.g. 60s for standard MCQ, 120-180s for coding).
+4. For MCQ/Aptitude/Scenario/True_False: Provide 4 distinct options with option IDs A, B, C, D (2 options for true_false) and pre-mark correct_answer: "A" or { "id": "A" }. Also include an in-depth "explanation" explaining why the solution is correct.
+5. For Coding questions: Provide problem description, pre-marked reference solution code in "correct_answer", and at least 2 test cases in "test_cases" with "input" and "expected_output".
+6. For Subjective / Long Answer questions: Provide the grading criteria and model answer in "correct_answer" and "explanation".
 
 Output the result STRICTLY as JSON with schema:
 {
@@ -45,7 +52,7 @@ Output the result STRICTLY as JSON with schema:
       "correct_answer": "A",
       "explanation": "...",
       "max_points": 10,
-      "time_limit_seconds": 60
+      "time_limit_seconds": ${defaultTimer}
     }
   ]
 }`;
@@ -58,7 +65,13 @@ Output the result STRICTLY as JSON with schema:
         
         const parsed = JSON.parse(response.text || '{}');
         if (parsed.questions && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
-          return parsed;
+          // Normalize questions
+          const sanitizedQuestions = parsed.questions.map((q: any) => ({
+            ...q,
+            time_limit_seconds: Number(q.time_limit_seconds) || defaultTimer,
+            max_points: Number(q.max_points) || 10
+          }));
+          return { questions: sanitizedQuestions };
         }
       } catch (geminiErr: any) {
         console.warn("[generateAiTestFn] Gemini API call skipped or returned error, using curriculum synthesizer:", geminiErr.message);
@@ -66,10 +79,16 @@ Output the result STRICTLY as JSON with schema:
     }
 
     // 2. High-Yield Contextual Curriculum Synthesizer Fallback (100% Guaranteed Success)
-    return synthesizeQuestionsFromContext(args.taskContext, args.documentText, args.modules);
+    return synthesizeQuestionsFromContext(args.taskContext, args.documentText, args.modules, targetCount, defaultTimer);
   });
 
-function synthesizeQuestionsFromContext(taskContext: string, documentText?: string, modules: string[] = ["mcq", "scenario"]): { questions: any[] } {
+function synthesizeQuestionsFromContext(
+  taskContext: string, 
+  documentText?: string, 
+  modules: string[] = ["mcq", "scenario"],
+  requestedCount: number = 10,
+  defaultTimeSeconds: number = 60
+): { questions: any[] } {
   const combined = `${taskContext || ""} ${documentText || ""}`.trim();
   const lower = combined.toLowerCase();
   
@@ -366,9 +385,9 @@ function synthesizeQuestionsFromContext(taskContext: string, documentText?: stri
     }
   }
 
-  // Ensure at least 6 high-yield questions are always returned
-  if (questions.length === 0) {
-    addQ({
+  // Add extra high-yield questions to ensure any requested count (up to 30) can be fulfilled
+  const extraPool = [
+    {
       question_type: "mcq",
       question_text: "In software engineering, what is the primary benefit of adhering to the Single Responsibility Principle (SRP) in system design?",
       options: [
@@ -380,11 +399,144 @@ function synthesizeQuestionsFromContext(taskContext: string, documentText?: stri
       correct_answer: "A",
       explanation: "SRP mandates that each module or class should be responsible for a single piece of functionality, reducing coupling and side-effects.",
       max_points: 10,
-      time_limit_seconds: 60,
-    });
+      time_limit_seconds: defaultTimeSeconds,
+    },
+    {
+      question_type: "mcq",
+      question_text: "In Git version control, what does 'git merge --squash feature-branch' accomplish when integrating changes?",
+      options: [
+        { id: "A", text: "It combines all commits from the feature branch into a single uncommitted change on the target branch." },
+        { id: "B", text: "It deletes the remote repository branch and discards commit diffs." },
+        { id: "C", text: "It performs an interactive rebase and force-pushes changes upstream." },
+        { id: "D", text: "It creates a fast-forward commit with linear SHA preservation." },
+      ],
+      correct_answer: "A",
+      explanation: "Squash merges condense all intermediate commits into a single cohesive commit, preserving a clean master/main log history.",
+      max_points: 10,
+      time_limit_seconds: defaultTimeSeconds,
+    },
+    {
+      question_type: "mcq",
+      question_text: "What is the primary operational objective of implementing a Reverse Proxy (such as Nginx or Cloudflare) in front of application backends?",
+      options: [
+        { id: "A", text: "Load balancing, SSL/TLS termination, edge caching, and DDoS mitigation." },
+        { id: "B", text: "Executing heavy database SQL joins directly on the proxy layer." },
+        { id: "C", text: "Transpiling client-side TypeScript code into machine bytecode." },
+        { id: "D", text: "Replacing client browsers with headless server-side terminals." },
+      ],
+      correct_answer: "A",
+      explanation: "Reverse proxies distribute network traffic, provide security protection, terminate SSL certificates, and cache static assets close to end users.",
+      max_points: 10,
+      time_limit_seconds: defaultTimeSeconds,
+    },
+    {
+      question_type: "scenario",
+      question_text: "Scenario: An e-commerce API suffers severe performance degradation during flash sales due to high read traffic on product catalog tables. What caching pattern should be adopted?",
+      options: [
+        { id: "A", text: "Cache-Aside pattern using an in-memory Redis cluster with reasonable TTL and cache invalidation on updates." },
+        { id: "B", text: "Writing all product data to flat text files on disk for each HTTP request." },
+        { id: "C", text: "Restarting PostgreSQL on a 5-minute cron job to clear buffers." },
+        { id: "D", text: "Requiring every customer to download the entire database as a CSV before browsing." },
+      ],
+      correct_answer: "A",
+      explanation: "The Cache-Aside pattern with Redis dramatically reduces database read loads, serving sub-millisecond responses for read-heavy operations.",
+      max_points: 10,
+      time_limit_seconds: Math.max(defaultTimeSeconds, 90),
+    },
+    {
+      question_type: "true_false",
+      question_text: "In relational database design, the ACID 'Isolation' property guarantees that concurrent transactions execute without interfering with one another's intermediate states.",
+      options: [
+        { id: "A", text: "True" },
+        { id: "B", text: "False" },
+      ],
+      correct_answer: "A",
+      explanation: "Isolation prevents dirty reads, non-repeatable reads, and phantom reads depending on the configured isolation level.",
+      max_points: 5,
+      time_limit_seconds: Math.max(20, Math.floor(defaultTimeSeconds / 2)),
+    },
+    {
+      question_type: "mcq",
+      question_text: "In modern cloud architectures, what is the key difference between horizontal scaling (scaling out) and vertical scaling (scaling up)?",
+      options: [
+        { id: "A", text: "Horizontal scaling adds more machine/container instances to a pool, while vertical scaling adds CPU/RAM to a single machine." },
+        { id: "B", text: "Horizontal scaling is only possible on Windows servers." },
+        { id: "C", text: "Vertical scaling eliminates all single points of failure automatically." },
+        { id: "D", text: "There is no architectural difference between the two terms." },
+      ],
+      correct_answer: "A",
+      explanation: "Scaling horizontally adds nodes to distribute load with high availability; scaling vertically upgrades the capacity of existing individual nodes.",
+      max_points: 10,
+      time_limit_seconds: defaultTimeSeconds,
+    },
+    {
+      question_type: "mcq",
+      question_text: "Which of the following describes the purpose of JSON Web Tokens (JWT) in stateless authentication architectures?",
+      options: [
+        { id: "A", text: "A digitally signed claims token that allows servers to verify client identity without querying a session database on every request." },
+        { id: "B", text: "An encrypted algorithm to store whole database tables in browser local storage." },
+        { id: "C", text: "A replacement for HTML markup in single-page applications." },
+        { id: "D", text: "A specialized compiler for transpiling Python to JavaScript." },
+      ],
+      correct_answer: "A",
+      explanation: "JWTs contain cryptographically signed claims (header, payload, signature), enabling stateless verification across distributed servers.",
+      max_points: 10,
+      time_limit_seconds: defaultTimeSeconds,
+    },
+    {
+      question_type: "scenario",
+      question_text: "Scenario: A mission-critical background job processing payment webhooks fails intermittently due to transient third-party network timeouts. How should resiliency be improved?",
+      options: [
+        { id: "A", text: "Implement exponential backoff retry mechanism with jitter and a Dead-Letter Queue (DLQ) for unrecoverable errors." },
+        { id: "B", text: "Immediately drop the failed webhook payload and ignore payment confirmations." },
+        { id: "C", text: "Execute the payment synchronous loop in an infinite while(true) block without delays." },
+        { id: "D", text: "Increase database max_connections parameter to infinity." },
+      ],
+      correct_answer: "A",
+      explanation: "Exponential backoff retries handle transient glitches smoothly without overloading downstream services, while DLQs capture persistent failures for manual audit.",
+      max_points: 10,
+      time_limit_seconds: Math.max(defaultTimeSeconds, 90),
+    },
+    {
+      question_type: "coding",
+      question_text: "Write a function 'deepClone(obj)' in JavaScript that creates a deep duplicate of a given nested plain object or array without mutating the original.",
+      options: [],
+      correct_answer: "function deepClone(obj) { return structuredClone ? structuredClone(obj) : JSON.parse(JSON.stringify(obj)); }",
+      explanation: "structuredClone is the modern standard for creating deep object clones, preventing shared references across complex state objects.",
+      reference_code: "function deepClone(obj) {\n  // Implement deep clone\n  return structuredClone(obj);\n}",
+      test_cases: [
+        { input: '{"a": 1, "b": {"c": 2}}', expected_output: '{"a": 1, "b": {"c": 2}}' },
+        { input: '[1, [2, 3]]', expected_output: '[1, [2, 3]]' }
+      ],
+      max_points: 15,
+      time_limit_seconds: Math.max(defaultTimeSeconds, 120),
+    },
+    {
+      question_type: "short_answer",
+      question_text: "Define Cross-Site Request Forgery (CSRF) and explain how SameSite cookie policies and Anti-CSRF tokens defend against it.",
+      options: [],
+      correct_answer: "CSRF occurs when an unauthorized script tricks an authenticated user's browser into executing unwanted actions on a trusted site. Anti-CSRF tokens provide unique, unpredictable server-validated secrets, and SameSite=Lax/Strict restricts cookie transmission on cross-site requests.",
+      explanation: "Anti-CSRF tokens and SameSite cookies ensure that only requests originating genuinely from the expected application UI are authenticated.",
+      max_points: 10,
+      time_limit_seconds: Math.max(defaultTimeSeconds, 90),
+    }
+  ];
+
+  // Append extra questions if needed to reach requestedCount
+  for (const extraQ of extraPool) {
+    if (questions.length >= requestedCount) break;
+    addQ(extraQ);
   }
 
-  return { questions };
+  // Adjust timers according to defaultTimeSeconds if user chose custom timer
+  const finalQuestions = questions.slice(0, requestedCount).map((q, idx) => ({
+    ...q,
+    id: q.id || `q_${idx + 1}`,
+    time_limit_seconds: q.time_limit_seconds || defaultTimeSeconds,
+    max_points: q.max_points || 10
+  }));
+
+  return { questions: finalQuestions };
 }
 
 async function sendCbtAssignmentEmail({
@@ -591,6 +743,9 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       description, 
       target_type, 
       target_id, 
+      target_ids,
+      target_intern_ids,
+      target_team_ids,
       passing_score, 
       time_limit_minutes, 
       enable_camera, 
@@ -602,10 +757,39 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       category 
     } = args.testMetadata;
     
-    const sanitizedTargetId = typeof target_id === 'string' ? target_id.trim() : target_id;
-    const targetArray = Array.isArray(sanitizedTargetId) 
-      ? sanitizedTargetId.filter(Boolean) 
-      : (sanitizedTargetId && sanitizedTargetId !== 'none' ? [sanitizedTargetId] : []);
+    // Multi-target resolution: support arrays of interns and teams
+    let resolvedInternIds: string[] = [];
+    let resolvedTeamIds: string[] = [];
+
+    if (Array.isArray(target_intern_ids)) {
+      resolvedInternIds.push(...target_intern_ids.filter(Boolean));
+    }
+    if (Array.isArray(target_team_ids)) {
+      resolvedTeamIds.push(...target_team_ids.filter(Boolean));
+    }
+
+    // Process target_ids or target_id based on target_type
+    const rawTargetPool: string[] = [];
+    if (Array.isArray(target_ids)) {
+      rawTargetPool.push(...target_ids.filter(Boolean));
+    }
+    if (Array.isArray(target_id)) {
+      rawTargetPool.push(...target_id.filter(Boolean));
+    } else if (typeof target_id === 'string' && target_id && target_id !== 'none') {
+      rawTargetPool.push(target_id.trim());
+    }
+
+    if (target_type === 'team') {
+      resolvedTeamIds.push(...rawTargetPool);
+    } else if (target_type === 'intern' || target_type === 'manual') {
+      resolvedInternIds.push(...rawTargetPool);
+    }
+
+    // Dedup
+    resolvedInternIds = Array.from(new Set(resolvedInternIds.filter(Boolean)));
+    resolvedTeamIds = Array.from(new Set(resolvedTeamIds.filter(Boolean)));
+
+    const allocationMode = resolvedTeamIds.length > 0 && resolvedInternIds.length === 0 ? 'team' : 'individual';
 
     // 1. Create the CBT Exam with graceful multi-tier fallback
     const fullPayload: any = {
@@ -615,9 +799,9 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       passing_score: Number(passing_score) || 50,
       created_by: userId,
       status: 'published',
-      allocation_mode: target_type === 'team' ? 'team' : 'individual',
-      team_ids: target_type === 'team' ? targetArray : [],
-      intern_ids: target_type === 'intern' ? targetArray : [],
+      allocation_mode: allocationMode,
+      team_ids: resolvedTeamIds,
+      intern_ids: resolvedInternIds,
       time_limit_minutes: Number(time_limit_minutes) || 30,
       enable_camera: enable_camera !== false,
       camera_required: enable_camera !== false,
@@ -626,10 +810,12 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       shuffle_questions: Boolean(shuffle_questions),
       show_instant_results: show_instant_results !== false,
       max_attempts: Number(max_attempts) || 1,
+      pdf_url: null,
+      csv_url: null,
     };
 
     let exam: any = null;
-    let examInsertRes = await adminClient.from('cbt_exams').insert(fullPayload).select('id').single();
+    let examInsertRes = await adminClient.from('cbt_exams').insert(fullPayload).select('id, title, passing_score, time_limit_minutes').single();
 
     if (examInsertRes.error) {
       console.warn("[saveGeneratedTestFn] Primary insert failed, trying reduced payload:", examInsertRes.error.message);
@@ -640,15 +826,15 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
         passing_score: Number(passing_score) || 50,
         created_by: userId,
         status: 'published',
-        allocation_mode: target_type === 'team' ? 'team' : 'individual',
-        team_ids: target_type === 'team' ? targetArray : [],
-        intern_ids: target_type === 'intern' ? targetArray : [],
+        allocation_mode: allocationMode,
+        team_ids: resolvedTeamIds,
+        intern_ids: resolvedInternIds,
         time_limit_minutes: Number(time_limit_minutes) || 30,
         enable_camera: enable_camera !== false,
         camera_required: enable_camera !== false,
         deadline: deadline || null,
       };
-      examInsertRes = await adminClient.from('cbt_exams').insert(reducedPayload).select('id').single();
+      examInsertRes = await adminClient.from('cbt_exams').insert(reducedPayload).select('id, title, passing_score, time_limit_minutes').single();
     }
 
     if (examInsertRes.error) {
@@ -660,34 +846,20 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
         passing_score: Number(passing_score) || 50,
         created_by: userId,
         status: 'published',
-        allocation_mode: target_type === 'team' ? 'team' : 'individual',
-        team_ids: target_type === 'team' ? targetArray : [],
-        intern_ids: target_type === 'intern' ? targetArray : [],
+        allocation_mode: allocationMode,
+        team_ids: resolvedTeamIds,
+        intern_ids: resolvedInternIds,
       };
-      examInsertRes = await adminClient.from('cbt_exams').insert(basePayload).select('id').single();
+      examInsertRes = await adminClient.from('cbt_exams').insert(basePayload).select('id, title, passing_score, time_limit_minutes').single();
     }
 
-    if (examInsertRes.error) {
-      console.warn("[saveGeneratedTestFn] Base insert failed, testing without foreign key or array types:", examInsertRes.error.message);
-      const safePayload = {
-        title: title || 'New AI CBT Exam',
-        description: description || 'Generated AI Assessment',
-        category: category || 'General',
-        passing_score: Number(passing_score) || 50,
-        status: 'published',
-        allocation_mode: target_type === 'team' ? 'team' : 'individual',
-        team_ids: [],
-        intern_ids: [],
-      };
-      examInsertRes = await adminClient.from('cbt_exams').insert(safePayload).select('id').single();
-      if (examInsertRes.error || !examInsertRes.data) {
-        throw new Error("Failed to create CBT Exam: " + examInsertRes.error.message);
-      }
+    if (examInsertRes.error || !examInsertRes.data) {
+      throw new Error("Failed to create CBT Exam: " + (examInsertRes.error?.message || "Unknown error"));
     }
 
     exam = examInsertRes.data;
 
-    // 2. Insert Questions into cbt_questions with fallback if max_points column is not in DB yet
+    // 2. Insert Questions into cbt_questions with fallback
     const questionsToInsert = args.questions.map((q: any, i: number) => ({
       exam_id: exam.id,
       question_text: q.question_text || `Question ${i + 1}`,
@@ -711,26 +883,62 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       }
     }
 
+    // 3. Automated Branded PDF & CSV Question Paper Generation (Stored in Cloudflare R2)
+    let generatedPdfUrl = "";
+    let generatedCsvUrl = "";
+    try {
+      const { exportAndStoreExamPaper } = await import("./cbt-exam-export.server");
+      
+      const targetLabels: string[] = [];
+      if (resolvedInternIds.length > 0) {
+        const { data: profs } = await adminClient.from('profiles').select('full_name, email').in('id', resolvedInternIds.slice(0, 5));
+        if (profs) targetLabels.push(...profs.map(p => p.full_name || p.email));
+        if (resolvedInternIds.length > 5) targetLabels.push(`+${resolvedInternIds.length - 5} more candidates`);
+      }
+      if (resolvedTeamIds.length > 0) {
+        targetLabels.push(...resolvedTeamIds.map(t => `Team: ${t}`));
+      }
+
+      const exportResult = await exportAndStoreExamPaper({
+        exam: { ...fullPayload, id: exam.id },
+        questions: args.questions,
+        targetLabels
+      });
+
+      generatedPdfUrl = exportResult.pdfUrl;
+      generatedCsvUrl = exportResult.csvUrl;
+
+      if (generatedPdfUrl || generatedCsvUrl) {
+        await adminClient.from('cbt_exams').update({
+          pdf_url: generatedPdfUrl || null,
+          csv_url: generatedCsvUrl || null
+        }).eq('id', exam.id);
+      }
+    } catch (paperErr) {
+      console.error("[saveGeneratedTestFn] Branded Paper generation notice:", paperErr);
+    }
+
     invalidateCache("admin_cbt_tests");
 
-    // 3. Automated Email Notification
+    // 4. Automated Candidate Notification Emails
     try {
       let targetEmails: { email: string; name: string }[] = [];
-      if (target_type === 'intern' && targetArray.length > 0) {
+      if (resolvedInternIds.length > 0) {
         const { data: profiles } = await adminClient
           .from('profiles')
           .select('email, full_name')
-          .in('id', targetArray);
+          .in('id', resolvedInternIds);
         if (profiles) {
-          targetEmails = profiles.map(p => ({ email: p.email, name: p.full_name }));
+          targetEmails.push(...profiles.map(p => ({ email: p.email, name: p.full_name })));
         }
-      } else if (target_type === 'team' && targetArray.length > 0) {
+      }
+      if (resolvedTeamIds.length > 0) {
         const { data: taskProfiles } = await adminClient
           .from('tasks')
           .select('assigned_to, profiles:assigned_to(email, full_name)')
-          .in('team_id', targetArray);
+          .in('team_id', resolvedTeamIds);
         if (taskProfiles) {
-          const seen = new Set<string>();
+          const seen = new Set(targetEmails.map(t => t.email));
           for (const t of taskProfiles) {
             const prof: any = t.profiles;
             if (prof?.email && !seen.has(prof.email)) {
@@ -761,10 +969,13 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       console.warn("[saveGeneratedTestFn] Automated email dispatch encountered an issue:", emailErr);
     }
 
+    const totalAssignedCount = resolvedInternIds.length + resolvedTeamIds.length;
     return { 
       success: true, 
       testId: exam.id, 
-      message: "Exam successfully created and allocated! Candidate notification emails dispatched." 
+      pdfUrl: generatedPdfUrl,
+      csvUrl: generatedCsvUrl,
+      message: `Exam successfully created and assigned to ${totalAssignedCount > 0 ? `${totalAssignedCount} candidate/team targets` : "candidates"}! Branded PDF question paper & CSV generated and stored securely.` 
     };
   });
 
@@ -1282,8 +1493,11 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     testId: z.string(),
-    target_type: z.enum(['intern', 'team']),
-    target_id: z.string(),
+    target_type: z.enum(['intern', 'team', 'manual']),
+    target_id: z.union([z.string(), z.array(z.string())]).optional(),
+    target_ids: z.array(z.string()).optional(),
+    target_intern_ids: z.array(z.string()).optional(),
+    target_team_ids: z.array(z.string()).optional(),
     deadline: z.string().optional(),
     enable_camera: z.boolean().optional(),
     camera_strictness: z.string().optional(),
@@ -1292,7 +1506,19 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data: args }) => {
     const adminClient = getAdminClient();
-    const { testId, target_type, target_id, deadline, enable_camera, camera_strictness, time_limit_minutes, passing_score } = args;
+    const { 
+      testId, 
+      target_type, 
+      target_id, 
+      target_ids,
+      target_intern_ids,
+      target_team_ids,
+      deadline, 
+      enable_camera, 
+      camera_strictness, 
+      time_limit_minutes, 
+      passing_score 
+    } = args;
 
     const { data: test, error: fetchErr } = await adminClient
       .from('cbt_exams')
@@ -1304,7 +1530,6 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
 
     const updatePayload: any = {
       status: 'published',
-      allocation_mode: target_type === 'team' ? 'team' : 'individual',
     };
 
     if (deadline !== undefined) updatePayload.deadline = deadline || null;
@@ -1316,15 +1541,30 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
     if (time_limit_minutes !== undefined) updatePayload.time_limit_minutes = Number(time_limit_minutes);
     if (passing_score !== undefined) updatePayload.passing_score = Number(passing_score);
 
-    const safeTargetId = target_id.trim();
+    // Resolve multi-targets
+    const newInterns: string[] = Array.isArray(target_intern_ids) ? [...target_intern_ids] : [];
+    const newTeams: string[] = Array.isArray(target_team_ids) ? [...target_team_ids] : [];
+
+    const rawTargets: string[] = [];
+    if (Array.isArray(target_ids)) rawTargets.push(...target_ids);
+    if (Array.isArray(target_id)) rawTargets.push(...target_id);
+    else if (typeof target_id === 'string' && target_id && target_id !== 'none') rawTargets.push(target_id.trim());
 
     if (target_type === 'team') {
-      const existingTeams = Array.isArray(test.team_ids) ? test.team_ids : [];
-      updatePayload.team_ids = Array.from(new Set([...existingTeams, safeTargetId].filter(Boolean)));
+      newTeams.push(...rawTargets);
     } else {
-      const existingInterns = Array.isArray(test.intern_ids) ? test.intern_ids : [];
-      updatePayload.intern_ids = Array.from(new Set([...existingInterns, safeTargetId].filter(Boolean)));
+      newInterns.push(...rawTargets);
     }
+
+    const existingTeams = Array.isArray(test.team_ids) ? test.team_ids : [];
+    const existingInterns = Array.isArray(test.intern_ids) ? test.intern_ids : [];
+
+    const finalTeams = Array.from(new Set([...existingTeams, ...newTeams].filter(Boolean)));
+    const finalInterns = Array.from(new Set([...existingInterns, ...newInterns].filter(Boolean)));
+
+    updatePayload.team_ids = finalTeams;
+    updatePayload.intern_ids = finalInterns;
+    updatePayload.allocation_mode = finalTeams.length > 0 && finalInterns.length === 0 ? 'team' : 'individual';
 
     let { error: updateErr } = await adminClient
       .from('cbt_exams')
@@ -1335,7 +1575,6 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
       console.warn("[reassignAdminTestFn] Primary update failed, trying safe fallback:", updateErr.message);
       const fallbackPayload: any = {
         status: 'published',
-        allocation_mode: target_type === 'team' ? 'team' : 'individual',
       };
       if (deadline !== undefined) fallbackPayload.deadline = deadline || null;
       if (enable_camera !== undefined) fallbackPayload.enable_camera = enable_camera;
@@ -1349,25 +1588,25 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
 
     invalidateCache("admin_cbt_tests");
 
-    // Send notification email to the newly assigned target
+    // Send notification email to all newly assigned targets
     try {
       let targetEmails: { email: string; name: string }[] = [];
-      if (target_type === 'intern') {
-        const { data: profile } = await adminClient
+      if (newInterns.length > 0) {
+        const { data: profiles } = await adminClient
           .from('profiles')
           .select('email, full_name')
-          .eq('id', target_id)
-          .single();
-        if (profile?.email) {
-          targetEmails.push({ email: profile.email, name: profile.full_name });
+          .in('id', newInterns);
+        if (profiles) {
+          targetEmails.push(...profiles.map(p => ({ email: p.email, name: p.full_name })));
         }
-      } else {
+      }
+      if (newTeams.length > 0) {
         const { data: taskProfiles } = await adminClient
           .from('tasks')
           .select('assigned_to, profiles:assigned_to(email, full_name)')
-          .eq('team_id', target_id);
+          .in('team_id', newTeams);
         if (taskProfiles) {
-          const seen = new Set<string>();
+          const seen = new Set(targetEmails.map(t => t.email));
           for (const t of taskProfiles) {
             const prof: any = t.profiles;
             if (prof?.email && !seen.has(prof.email)) {
@@ -1398,7 +1637,75 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
       console.warn("[reassignAdminTestFn] Email notification warning:", err);
     }
 
-    return { success: true, message: "Exam successfully assigned and allocated!" };
+    return { 
+      success: true, 
+      message: `Exam successfully assigned to ${newInterns.length + newTeams.length} candidate(s)/team(s)! Notification emails dispatched.` 
+    };
+  });
+
+export const getAdminExamPaperDownloadsFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ testId: z.string() }).parse(d))
+  .handler(async ({ data: args, context }) => {
+    const adminClient = getAdminClient();
+    const userId = context.user.id;
+
+    // Admin authorization check: only admins can download official exam papers & solution guides
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    const role = (profile?.role || '').toLowerCase();
+    const isAdmin = ['admin', 'super_admin', 'director', 'founder', 'manager'].includes(role);
+    if (!isAdmin) {
+      throw new Error("Access restricted: Official Exam Papers & Solution Guides are strictly restricted to administrators.");
+    }
+
+    const { data: exam, error: examErr } = await adminClient
+      .from('cbt_exams')
+      .select('*')
+      .eq('id', args.testId)
+      .single();
+
+    if (examErr || !exam) throw new Error("Exam not found");
+
+    if (exam.pdf_url && exam.csv_url) {
+      return { 
+        pdfUrl: exam.pdf_url, 
+        csvUrl: exam.csv_url, 
+        title: exam.title 
+      };
+    }
+
+    // Generate papers on demand if not present
+    const { data: questions } = await adminClient
+      .from('cbt_questions')
+      .select('*')
+      .eq('exam_id', args.testId)
+      .order('order_index', { ascending: true });
+
+    const { exportAndStoreExamPaper } = await import("./cbt-exam-export.server");
+    const { pdfUrl, csvUrl } = await exportAndStoreExamPaper({
+      exam,
+      questions: questions || [],
+      targetLabels: exam.allocation_mode === 'team' ? (exam.team_ids || []) : (exam.intern_ids || [])
+    });
+
+    if (pdfUrl || csvUrl) {
+      await adminClient.from('cbt_exams').update({
+        pdf_url: pdfUrl || exam.pdf_url,
+        csv_url: csvUrl || exam.csv_url,
+      }).eq('id', args.testId);
+      invalidateCache("admin_cbt_tests");
+    }
+
+    return { 
+      pdfUrl: pdfUrl || exam.pdf_url || "", 
+      csvUrl: csvUrl || exam.csv_url || "",
+      title: exam.title
+    };
   });
 
 export const extendAdminTestDeadlineFn = createServerFn({ method: "POST" })

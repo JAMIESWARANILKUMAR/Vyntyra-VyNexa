@@ -15,7 +15,8 @@ import {
   overrideSubmissionScoreFn,
   grantInternRetakeFn,
   clearSubmissionStrikesFn,
-  getAdminTestQuestionsFn
+  getAdminTestQuestionsFn,
+  getAdminExamPaperDownloadsFn
 } from "@/lib/cbt.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -24,7 +25,7 @@ import {
   CheckCircle, XCircle, RefreshCw, AlertTriangle, Search, Activity, Clock, 
   UserPlus, Camera, CameraOff, Calendar, Plus, Edit3, Eye, ShieldAlert, 
   ShieldCheck, Award, Check, Sparkles, AlertCircle, RotateCcw, Sliders, Shield, 
-  Shuffle, CheckSquare, ChevronDown, ChevronUp
+  Shuffle, CheckSquare, ChevronDown, ChevronUp, Download, X
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -96,8 +97,14 @@ function AdminCbtGenerateView() {
   const [maxAttempts, setMaxAttempts] = useState(1);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
-  const [targetType, setTargetType] = useState<"intern" | "team">("intern");
-  const [targetId, setTargetId] = useState("");
+  const [targetType, setTargetType] = useState<"intern" | "team" | "manual">("intern");
+  const [selectedInternIds, setSelectedInternIds] = useState<string[]>([]);
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
+  const [targetSearchQuery, setTargetSearchQuery] = useState("");
+  const [questionCount, setQuestionCount] = useState<number>(10);
+  const [defaultQuestionTime, setDefaultQuestionTime] = useState<number>(60);
+  const [savedExamDownloads, setSavedExamDownloads] = useState<{ pdfUrl: string; csvUrl: string; title: string } | null>(null);
+
   const [taskContext, setTaskContext] = useState("");
   const [modules, setModules] = useState<string[]>(["mcq"]);
   const [generated, setGenerated] = useState<any>(null);
@@ -131,13 +138,34 @@ function AdminCbtGenerateView() {
 
   const handleOpenPreview = (questionsToPreview: any[]) => {
     if (!title.trim()) return toast.error("Please provide an Exam Title first.");
-    if (!targetId || targetId === "none") return toast.error("Please select a target Intern or Team.");
+    const totalCount = targetType === "intern" 
+      ? selectedInternIds.length 
+      : targetType === "team" 
+      ? selectedTeamIds.length 
+      : selectedInternIds.length + selectedTeamIds.length;
+    if (totalCount === 0) {
+      return toast.error("Please select at least one target candidate or team.");
+    }
     if (!questionsToPreview || questionsToPreview.length === 0) {
       return toast.error("No questions available to preview. Add questions or generate first.");
     }
-    const targetLabel = targetType === "intern" 
-      ? (targetId === "all" ? `★ All Active Interns (${targets.interns.length} candidates)` : (targets.interns.find(i => i.id === targetId)?.full_name || targetId))
-      : (targets.teams.find(t => t.id === targetId)?.name || targetId);
+
+    let targetLabel = "";
+    if (targetType === "intern") {
+      if (selectedInternIds.length === 1) {
+        targetLabel = targets.interns.find(i => i.id === selectedInternIds[0])?.full_name || selectedInternIds[0];
+      } else {
+        targetLabel = `${selectedInternIds.length} Selected Candidates`;
+      }
+    } else if (targetType === "team") {
+      if (selectedTeamIds.length === 1) {
+        targetLabel = targets.teams.find(t => t.id === selectedTeamIds[0])?.name || selectedTeamIds[0];
+      } else {
+        targetLabel = `${selectedTeamIds.length} Selected Teams`;
+      }
+    } else {
+      targetLabel = `Custom Mix (${selectedInternIds.length} Candidates, ${selectedTeamIds.length} Teams)`;
+    }
 
     setPreviewExamMeta({
       title: title || "New AI CBT Exam",
@@ -204,14 +232,23 @@ function AdminCbtGenerateView() {
 
   const handleGenerate = async () => {
     if (!title.trim()) return toast.error("Please provide an Exam Title.");
-    if (!targetId || targetId === "none") return toast.error("Please select a target Intern or Team.");
+    const totalCount = targetType === "intern" 
+      ? selectedInternIds.length 
+      : targetType === "team" 
+      ? selectedTeamIds.length 
+      : selectedInternIds.length + selectedTeamIds.length;
+    if (totalCount === 0) {
+      return toast.error("Please select at least one target candidate or team to allocate.");
+    }
     if (!taskContext.trim()) return toast.error("Please provide Task Context or Syllabus.");
     
     setIsGenerating(true);
     try {
       const res = await generateFn({ data: { 
         taskContext, 
-        modules
+        modules,
+        questionCount,
+        defaultTimeSeconds: defaultQuestionTime
       } });
       
       if (res.error) {
@@ -219,11 +256,11 @@ function AdminCbtGenerateView() {
       } else if (res.questions && res.questions.length > 0) {
         const questionsWithTimers = (res.questions || []).map((q: any) => ({
           ...q,
-          time_limit_seconds: q.time_limit_seconds || 60,
-          max_points: q.max_points || 10,
+          time_limit_seconds: Number(q.time_limit_seconds) || defaultQuestionTime,
+          max_points: Number(q.max_points) || 10,
         }));
         setGenerated({ ...res, questions: questionsWithTimers });
-        toast.success(`Generated ${questionsWithTimers.length} exam questions! Review below and click 'Preview & Allocate Test' to assign.`);
+        toast.success(`Generated ${questionsWithTimers.length} exam questions! Review below, fine-tune timers, and click 'Preview & Allocate Test' to assign.`);
         setTimeout(() => {
           window.scrollTo({ top: 800, behavior: 'smooth' });
         }, 150);
@@ -252,7 +289,7 @@ function AdminCbtGenerateView() {
           { id: "D", text: "Option D" },
         ],
         correct_answer: "A",
-        time_limit_seconds: 60,
+        time_limit_seconds: defaultQuestionTime,
         max_points: 10,
       }
     ]);
@@ -267,14 +304,13 @@ function AdminCbtGenerateView() {
 
   const handleSaveExam = async (questionsList: any[]) => {
     if (!title.trim()) return toast.error("Please provide an Exam Title.");
-    if (!targetId || targetId === "none") return toast.error("Please select a target Intern or Team.");
+    const totalCount = targetType === "intern" 
+      ? selectedInternIds.length 
+      : targetType === "team" 
+      ? selectedTeamIds.length 
+      : selectedInternIds.length + selectedTeamIds.length;
+    if (totalCount === 0) return toast.error("Please select at least one target candidate or team.");
     if (!questionsList || questionsList.length === 0) return toast.error("At least one question is required.");
-
-    // Resolve target IDs (supporting "all" interns)
-    let finalTargetId: any = targetId;
-    if (targetType === "intern" && targetId === "all") {
-      finalTargetId = targets.interns.map(i => i.id);
-    }
 
     setIsSaving(true);
     try {
@@ -283,7 +319,9 @@ function AdminCbtGenerateView() {
           title, 
           description,
           target_type: targetType, 
-          target_id: finalTargetId, 
+          target_intern_ids: selectedInternIds,
+          target_team_ids: selectedTeamIds,
+          target_id: targetType === "team" ? selectedTeamIds[0] : selectedInternIds[0],
           passing_score: Number(passingScore) || 50,
           time_limit_minutes: Number(timeLimitMinutes) || 30,
           enable_camera: enableCamera,
@@ -301,12 +339,20 @@ function AdminCbtGenerateView() {
       if (res.success) {
         toast.success(res.message || "Test successfully created and assigned!");
         setPreviewModalOpen(false);
+        if (res.pdfUrl || res.csvUrl) {
+          setSavedExamDownloads({
+            pdfUrl: res.pdfUrl,
+            csvUrl: res.csvUrl,
+            title
+          });
+        }
         setGenerated(null);
         setTitle("");
         setDescription("");
         setTaskContext("");
         setDeadline("");
-        setTargetId("");
+        setSelectedInternIds([]);
+        setSelectedTeamIds([]);
       }
     } catch (e: any) {
       toast.error(e.message || "Failed to save test.");
@@ -385,6 +431,73 @@ function AdminCbtGenerateView() {
                     className="w-full p-2.5 border rounded-lg mt-1 text-sm" 
                     value={timeLimitMinutes} onChange={e => setTimeLimitMinutes(Number(e.target.value))}
                   />
+                </div>
+              </div>
+
+              {/* Question Count & Default Per-Question Timer */}
+              <div className="grid grid-cols-2 gap-4 p-3 bg-indigo-50/40 border border-indigo-100 rounded-xl">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-indigo-950 uppercase tracking-wider">Total Questions</label>
+                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100/80 px-1.5 py-0.5 rounded">
+                      {questionCount} Qs
+                    </span>
+                  </div>
+                  <input 
+                    type="number" 
+                    min={1} max={50}
+                    className="w-full p-2 border rounded-lg mt-1 text-sm bg-white" 
+                    value={questionCount} 
+                    onChange={e => setQuestionCount(Math.max(1, Math.min(50, Number(e.target.value) || 10)))}
+                  />
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {[5, 10, 15, 20, 25, 30].map(cnt => (
+                      <button
+                        key={cnt}
+                        type="button"
+                        onClick={() => setQuestionCount(cnt)}
+                        className={`text-[10px] px-2 py-0.5 rounded font-bold transition-all ${
+                          questionCount === cnt 
+                            ? "bg-indigo-600 text-white shadow-xs" 
+                            : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+                        }`}
+                      >
+                        {cnt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-indigo-950 uppercase tracking-wider">Default Q-Timer</label>
+                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100/80 px-1.5 py-0.5 rounded">
+                      {defaultQuestionTime}s
+                    </span>
+                  </div>
+                  <input 
+                    type="number" 
+                    min={10} max={600}
+                    className="w-full p-2 border rounded-lg mt-1 text-sm bg-white" 
+                    value={defaultQuestionTime} 
+                    onChange={e => setDefaultQuestionTime(Math.max(10, Number(e.target.value) || 60))}
+                  />
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {[30, 45, 60, 90, 120, 180].map(sec => (
+                      <button
+                        key={sec}
+                        type="button"
+                        onClick={() => setDefaultQuestionTime(sec)}
+                        className={`text-[10px] px-2 py-0.5 rounded font-bold transition-all ${
+                          defaultQuestionTime === sec 
+                            ? "bg-indigo-600 text-white shadow-xs" 
+                            : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+                        }`}
+                      >
+                        {sec}s
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -572,54 +685,253 @@ function AdminCbtGenerateView() {
           <hr className="border-slate-100" />
           
           {/* Target Allocation */}
-          <div>
-            <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-              <Users className="h-5 w-5 text-indigo-500"/> Candidate Allocation & Automated Email
-            </h3>
-            <p className="text-xs text-slate-500 mb-3">
-              Allocated candidate(s) will automatically receive a branded email notification with parameters and test link.
-            </p>
-            <div className="flex gap-4 mb-4">
-              <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold">
-                <input type="radio" name="target" checked={targetType === "intern"} onChange={() => { setTargetType("intern"); setTargetId(""); }} /> Individual Intern
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold">
-                <input type="radio" name="target" checked={targetType === "team"} onChange={() => { setTargetType("team"); setTargetId(""); }} /> Entire Team
-              </label>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                <Users className="h-5 w-5 text-indigo-500"/> Candidate Allocation & Automated Email
+              </h3>
+              <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                {targetType === "intern" 
+                  ? `${selectedInternIds.length} Candidate(s) Selected` 
+                  : targetType === "team" 
+                  ? `${selectedTeamIds.length} Team(s) Selected` 
+                  : `${selectedInternIds.length} Interns + ${selectedTeamIds.length} Teams`}
+              </span>
             </div>
-            
-            {targetType === "intern" ? (
-              <Select value={targetId} onValueChange={setTargetId}>
-                <SelectTrigger className="w-full bg-white border-slate-300">
-                  <SelectValue placeholder="Select an Intern to assign..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {targets.interns.length > 0 && (
-                    <SelectItem value="all" className="font-bold text-indigo-600">
-                      ★ Assign to All Active Interns ({targets.interns.length} candidates)
-                    </SelectItem>
+            <p className="text-xs text-slate-500">
+              Admin can assign tests to multiple teams, multiple individual candidates, or custom manual multi-selection with no limit. Allocated candidates automatically receive branded email notifications.
+            </p>
+
+            {/* Mode Switcher */}
+            <div className="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setTargetType("intern")}
+                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  targetType === "intern"
+                    ? "bg-white text-indigo-700 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <Users className="h-3.5 w-3.5" /> Individual Candidates
+              </button>
+              <button
+                type="button"
+                onClick={() => setTargetType("team")}
+                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  targetType === "team"
+                    ? "bg-white text-indigo-700 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <Shield className="h-3.5 w-3.5" /> Entire Teams
+              </button>
+              <button
+                type="button"
+                onClick={() => setTargetType("manual")}
+                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  targetType === "manual"
+                    ? "bg-white text-indigo-700 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <CheckSquare className="h-3.5 w-3.5" /> Manual Multi-Select
+              </button>
+            </div>
+
+            {/* Search Filter & Bulk Action Row */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Filter candidates or teams by name or email..."
+                  value={targetSearchQuery}
+                  onChange={e => setTargetSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-xs h-8"
+                onClick={() => {
+                  if (targetType === "intern") {
+                    setSelectedInternIds(targets.interns.map(i => i.id));
+                  } else if (targetType === "team") {
+                    setSelectedTeamIds(targets.teams.map(t => t.id));
+                  } else {
+                    setSelectedInternIds(targets.interns.map(i => i.id));
+                    setSelectedTeamIds(targets.teams.map(t => t.id));
+                  }
+                }}
+              >
+                Select All
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-xs h-8 text-slate-500"
+                onClick={() => {
+                  if (targetType === "intern") setSelectedInternIds([]);
+                  else if (targetType === "team") setSelectedTeamIds([]);
+                  else {
+                    setSelectedInternIds([]);
+                    setSelectedTeamIds([]);
+                  }
+                }}
+              >
+                Clear
+              </Button>
+            </div>
+
+            {/* Checkbox Target List */}
+            <div className="max-h-56 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white">
+              {/* Individual Interns List */}
+              {(targetType === "intern" || targetType === "manual") && (
+                <>
+                  {targetType === "manual" && (
+                    <div className="px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider sticky top-0 z-10">
+                      Candidates / Interns ({targets.interns.length})
+                    </div>
                   )}
-                  {targets.interns.map(intern => (
-                    <SelectItem key={intern.id} value={intern.id}>
-                      {intern.full_name} ({intern.email})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Select value={targetId} onValueChange={setTargetId}>
-                <SelectTrigger className="w-full bg-white border-slate-300">
-                  <SelectValue placeholder="Select a Team to assign..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {targets.teams.length === 0 && <SelectItem value="none" disabled>No active teams found</SelectItem>}
-                  {targets.teams.map(team => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  {targets.interns
+                    .filter(i => {
+                      if (!targetSearchQuery.trim()) return true;
+                      const q = targetSearchQuery.toLowerCase();
+                      return (i.full_name?.toLowerCase().includes(q) || i.email?.toLowerCase().includes(q));
+                    })
+                    .map(intern => {
+                      const isChecked = selectedInternIds.includes(intern.id);
+                      return (
+                        <label
+                          key={intern.id}
+                          className={`flex items-center justify-between p-2.5 cursor-pointer text-xs transition-colors hover:bg-slate-50 ${
+                            isChecked ? "bg-indigo-50/50" : ""
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={e => {
+                                if (e.target.checked) {
+                                  setSelectedInternIds([...selectedInternIds, intern.id]);
+                                } else {
+                                  setSelectedInternIds(selectedInternIds.filter(id => id !== intern.id));
+                                }
+                              }}
+                              className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                            />
+                            <div>
+                              <div className="font-bold text-slate-900">{intern.full_name}</div>
+                              <div className="text-[11px] text-slate-500">{intern.email}</div>
+                            </div>
+                          </div>
+                          {isChecked && (
+                            <span className="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">
+                              Selected
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
+                </>
+              )}
+
+              {/* Teams List */}
+              {(targetType === "team" || targetType === "manual") && (
+                <>
+                  {targetType === "manual" && (
+                    <div className="px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider sticky top-0 z-10 border-t border-slate-200">
+                      Teams ({targets.teams.length})
+                    </div>
+                  )}
+                  {targets.teams
+                    .filter(t => {
+                      if (!targetSearchQuery.trim()) return true;
+                      return t.name?.toLowerCase().includes(targetSearchQuery.toLowerCase());
+                    })
+                    .map(team => {
+                      const isChecked = selectedTeamIds.includes(team.id);
+                      return (
+                        <label
+                          key={team.id}
+                          className={`flex items-center justify-between p-2.5 cursor-pointer text-xs transition-colors hover:bg-slate-50 ${
+                            isChecked ? "bg-indigo-50/50" : ""
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={e => {
+                                if (e.target.checked) {
+                                  setSelectedTeamIds([...selectedTeamIds, team.id]);
+                                } else {
+                                  setSelectedTeamIds(selectedTeamIds.filter(id => id !== team.id));
+                                }
+                              }}
+                              className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                            />
+                            <div>
+                              <div className="font-bold text-slate-900">{team.name}</div>
+                              <div className="text-[11px] text-slate-500">Team ID: {team.id}</div>
+                            </div>
+                          </div>
+                          {isChecked && (
+                            <span className="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">
+                              Selected
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
+                </>
+              )}
+            </div>
+
+            {/* Selected Chips Strip */}
+            {(selectedInternIds.length > 0 || selectedTeamIds.length > 0) && (
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Active Selected Targets ({selectedInternIds.length + selectedTeamIds.length}):
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                  {selectedInternIds.map(id => {
+                    const intern = targets.interns.find(i => i.id === id);
+                    return (
+                      <span key={id} className="inline-flex items-center gap-1 text-[11px] font-medium bg-white text-indigo-800 border border-indigo-200 px-2 py-0.5 rounded-full shadow-2xs">
+                        <span>👤 {intern?.full_name || id}</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedInternIds(selectedInternIds.filter(i => i !== id))}
+                          className="hover:text-red-600 text-slate-400"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    );
+                  })}
+                  {selectedTeamIds.map(id => {
+                    const team = targets.teams.find(t => t.id === id);
+                    return (
+                      <span key={id} className="inline-flex items-center gap-1 text-[11px] font-medium bg-white text-purple-800 border border-purple-200 px-2 py-0.5 rounded-full shadow-2xs">
+                        <span>👥 Team: {team?.name || id}</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTeamIds(selectedTeamIds.filter(t => t !== id))}
+                          className="hover:text-red-600 text-slate-400"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -980,6 +1292,74 @@ function AdminCbtGenerateView() {
           </div>
         </div>
       )}
+
+      {/* Exam Generation & Cloudflare Storage Download Dialog */}
+      {savedExamDownloads && (
+        <Dialog open={!!savedExamDownloads} onOpenChange={() => setSavedExamDownloads(null)}>
+          <DialogContent className="sm:max-w-md bg-white border border-slate-200 shadow-xl">
+            <DialogHeader>
+              <div className="h-12 w-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-2">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <DialogTitle className="text-center text-xl font-black text-slate-900">
+                Exam Paper Generated & Allocated!
+              </DialogTitle>
+              <DialogDescription className="text-center text-xs text-slate-500">
+                The test has been assigned and candidate notification emails were dispatched. The official question paper and solutions have been converted and saved in Cloudflare R2 with full Vyntyra branding and Founder Signature.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3 py-2">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Exam Title</div>
+                <div className="text-sm font-black text-slate-900 mt-0.5">{savedExamDownloads.title}</div>
+              </div>
+
+              {savedExamDownloads.pdfUrl ? (
+                <a
+                  href={savedExamDownloads.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors text-amber-950 group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <FileText className="h-5 w-5 text-amber-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-bold">Official Question Paper & Solution Guide (.PDF)</div>
+                      <div className="text-[10px] text-amber-700">Vyntyra Branding • Founder Signature • Corporate Seal</div>
+                    </div>
+                  </div>
+                  <Download className="h-4 w-4 text-amber-700 group-hover:scale-110 transition-transform shrink-0" />
+                </a>
+              ) : null}
+
+              {savedExamDownloads.csvUrl ? (
+                <a
+                  href={savedExamDownloads.csvUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 transition-colors text-emerald-950 group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Download className="h-5 w-5 text-emerald-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-bold">Structured Question Dataset (.CSV)</div>
+                      <div className="text-[10px] text-emerald-700">RFC-4180 • Full Options, Pre-Marked Answers & Timers</div>
+                    </div>
+                  </div>
+                  <Download className="h-4 w-4 text-emerald-700 group-hover:scale-110 transition-transform shrink-0" />
+                </a>
+              ) : null}
+            </div>
+
+            <DialogFooter>
+              <Button onClick={() => setSavedExamDownloads(null)} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold">
+                Done
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
@@ -1224,10 +1604,34 @@ function AdminCbtSubmissionsView() {
   
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
   const [assigningExam, setAssigningExam] = useState<any>(null);
-  const [assignTargetType, setAssignTargetType] = useState<"intern" | "team">("intern");
-  const [assignTargetId, setAssignTargetId] = useState<string>("");
+  const [assignTargetType, setAssignTargetType] = useState<"intern" | "team" | "manual">("intern");
+  const [assignSelectedInternIds, setAssignSelectedInternIds] = useState<string[]>([]);
+  const [assignSelectedTeamIds, setAssignSelectedTeamIds] = useState<string[]>([]);
   const [assignStrictness, setAssignStrictness] = useState<string>("standard");
+  const [assignSearchQuery, setAssignSearchQuery] = useState<string>("");
   const [isReassigning, setIsReassigning] = useState<boolean>(false);
+
+  const [downloadingFormat, setDownloadingFormat] = useState<{ testId: string; format: 'pdf' | 'csv' } | null>(null);
+  const getPaperDownloads = useServerFn(getAdminExamPaperDownloadsFn);
+
+  const handleDownloadPaper = async (exam: any, format: 'pdf' | 'csv') => {
+    setDownloadingFormat({ testId: exam.id, format });
+    const toastId = toast.loading(`Retrieving official ${format.toUpperCase()} paper from Cloudflare...`);
+    try {
+      const res = await getPaperDownloads({ data: { testId: exam.id } });
+      const url = format === 'pdf' ? res.pdfUrl : res.csvUrl;
+      if (url) {
+        toast.success(`Official ${format.toUpperCase()} Paper ready! Opening download...`, { id: toastId });
+        window.open(url, '_blank');
+      } else {
+        toast.error(`Unable to retrieve ${format.toUpperCase()} paper URL. Please try again.`, { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.message || `Failed to download ${format.toUpperCase()} paper`, { id: toastId });
+    } finally {
+      setDownloadingFormat(null);
+    }
+  };
 
   // Extend Deadline Dialog State
   const [extendingExam, setExtendingExam] = useState<any>(null);
@@ -1237,20 +1641,29 @@ function AdminCbtSubmissionsView() {
 
   const handleConfirmAssign = async () => {
     if (!assigningExam) return;
-    if (!assignTargetId) return toast.error("Please select a target Intern or Team.");
+    const totalCount = assignTargetType === "intern" 
+      ? assignSelectedInternIds.length 
+      : assignTargetType === "team" 
+      ? assignSelectedTeamIds.length 
+      : assignSelectedInternIds.length + assignSelectedTeamIds.length;
+    if (totalCount === 0) return toast.error("Please select at least one candidate or team.");
+    
     setIsReassigning(true);
     try {
       const res = await doReassign({
         data: {
           testId: assigningExam.id,
           target_type: assignTargetType,
-          target_id: assignTargetId,
+          target_intern_ids: assignSelectedInternIds,
+          target_team_ids: assignSelectedTeamIds,
+          target_id: assignTargetType === "team" ? assignSelectedTeamIds[0] : assignSelectedInternIds[0],
           camera_strictness: assignStrictness
         }
       });
       toast.success(res.message || "Test allocated and assigned successfully!");
       setAssigningExam(null);
-      setAssignTargetId("");
+      setAssignSelectedInternIds([]);
+      setAssignSelectedTeamIds([]);
       qc.invalidateQueries({ queryKey: ["admin-cbt-tests"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to assign test");
@@ -1306,14 +1719,24 @@ function AdminCbtSubmissionsView() {
   const getTargetName = (type: string, ids: string[]) => {
     if (!targets) return "Loading...";
     if (!ids || ids.length === 0) return "Global";
-    const id = ids[0];
-    if (type === "intern") {
-      const intern = targets.interns.find(i => i.id === id);
-      return intern ? intern.full_name : id;
-    } else {
-      const team = targets.teams.find(t => t.id === id);
-      return team ? team.name : id;
+    if (ids.length === 1) {
+      const id = ids[0];
+      if (type === "intern") {
+        const intern = targets.interns.find(i => i.id === id);
+        return intern ? intern.full_name : id;
+      } else {
+        const team = targets.teams.find(t => t.id === id);
+        return team ? team.name : id;
+      }
     }
+    const names = ids.map(id => {
+      const intern = targets.interns.find(i => i.id === id);
+      if (intern) return intern.full_name;
+      const team = targets.teams.find(t => t.id === id);
+      if (team) return team.name;
+      return id;
+    });
+    return `${ids.length} Targets (${names.slice(0, 2).join(", ")}${ids.length > 2 ? "..." : ""})`;
   };
 
   if (selectedTestId) {
@@ -1432,6 +1855,40 @@ function AdminCbtSubmissionsView() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
+                      {/* Branded Official Paper Download (PDF) */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs gap-1 border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold"
+                        onClick={() => handleDownloadPaper(t, 'pdf')}
+                        disabled={downloadingFormat?.testId === t.id && downloadingFormat?.format === 'pdf'}
+                        title="Download Vyntyra Branded Official Exam Paper (.PDF) with Founder Signature"
+                      >
+                        {downloadingFormat?.testId === t.id && downloadingFormat?.format === 'pdf' ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-600" />
+                        ) : (
+                          <FileText className="h-3.5 w-3.5 text-amber-600" />
+                        )}
+                        Paper (PDF)
+                      </Button>
+
+                      {/* Structured CSV Dataset Download */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs gap-1 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold"
+                        onClick={() => handleDownloadPaper(t, 'csv')}
+                        disabled={downloadingFormat?.testId === t.id && downloadingFormat?.format === 'csv'}
+                        title="Download Structured Questions Dataset (.CSV)"
+                      >
+                        {downloadingFormat?.testId === t.id && downloadingFormat?.format === 'csv' ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" />
+                        ) : (
+                          <Download className="h-3.5 w-3.5 text-emerald-600" />
+                        )}
+                        CSV
+                      </Button>
+
                       <Button
                         size="sm"
                         variant="outline"
@@ -1456,8 +1913,9 @@ function AdminCbtSubmissionsView() {
                         size="sm"
                         className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs gap-1"
                         onClick={() => {
-                          setAssignTargetType("intern");
-                          setAssignTargetId("");
+                          setAssignTargetType(t.allocation_mode === 'team' ? 'team' : 'intern');
+                          setAssignSelectedInternIds(t.intern_ids || []);
+                          setAssignSelectedTeamIds(t.team_ids || []);
                           setAssignStrictness(t.camera_strictness || "standard");
                           setAssigningExam(t);
                         }}
@@ -1537,67 +1995,235 @@ function AdminCbtSubmissionsView() {
       {/* Assign Test Modal */}
       {assigningExam && (
         <Dialog open={!!assigningExam} onOpenChange={(open) => !open && setAssigningExam(null)}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <UserPlus className="h-5 w-5 text-indigo-600" />
                 Assign CBT Exam & Dispatch Email
               </DialogTitle>
               <DialogDescription>
-                Allocate <strong>{assigningExam.title}</strong> directly to an intern or an entire team.
+                Allocate <strong>{assigningExam.title}</strong> to multiple individual candidates, multiple teams, or manual multi-selection with no limit.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 py-2">
+            <div className="space-y-4 py-2 overflow-y-auto flex-1 pr-1">
               <div>
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">Target Type</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="assignTargetType" 
-                      value="intern" 
-                      checked={assignTargetType === "intern"} 
-                      onChange={() => { setAssignTargetType("intern"); setAssignTargetId(""); }} 
-                    />
-                    Individual Intern
-                  </label>
-                  <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="assignTargetType" 
-                      value="team" 
-                      checked={assignTargetType === "team"} 
-                      onChange={() => { setAssignTargetType("team"); setAssignTargetId(""); }} 
-                    />
-                    Entire Team
-                  </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Target Allocation Mode</label>
+                  <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                    {assignTargetType === "intern" 
+                      ? `${assignSelectedInternIds.length} Candidate(s)` 
+                      : assignTargetType === "team" 
+                      ? `${assignSelectedTeamIds.length} Team(s)` 
+                      : `${assignSelectedInternIds.length} Candidates + ${assignSelectedTeamIds.length} Teams`}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setAssignTargetType("intern")}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                      assignTargetType === "intern"
+                        ? "bg-white text-indigo-700 shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Users className="h-3.5 w-3.5" /> Individual Candidates
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssignTargetType("team")}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                      assignTargetType === "team"
+                        ? "bg-white text-indigo-700 shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Shield className="h-3.5 w-3.5" /> Entire Teams
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssignTargetType("manual")}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                      assignTargetType === "manual"
+                        ? "bg-white text-indigo-700 shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <CheckSquare className="h-3.5 w-3.5" /> Manual Multi-Select
+                  </button>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                  {assignTargetType === "intern" ? "Select Intern" : "Select Team"}
-                </label>
-                <Select value={assignTargetId} onValueChange={setAssignTargetId}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={assignTargetType === "intern" ? "Choose an intern..." : "Choose a team..."} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {assignTargetType === "intern"
-                      ? (targets?.interns || []).map((i: any) => (
-                          <SelectItem key={i.id} value={i.id}>
-                            {i.full_name} ({i.email})
-                          </SelectItem>
-                        ))
-                      : (targets?.teams || []).map((t: any) => (
-                          <SelectItem key={t.id} value={t.id}>
-                            {t.name}
-                          </SelectItem>
-                        ))}
-                  </SelectContent>
-                </Select>
+              {/* Filter and Bulk Action */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search candidates or teams..."
+                    value={assignSearchQuery}
+                    onChange={e => setAssignSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7 px-2.5"
+                  onClick={() => {
+                    if (assignTargetType === "intern") {
+                      setAssignSelectedInternIds((targets?.interns || []).map((i: any) => i.id));
+                    } else if (assignTargetType === "team") {
+                      setAssignSelectedTeamIds((targets?.teams || []).map((t: any) => t.id));
+                    } else {
+                      setAssignSelectedInternIds((targets?.interns || []).map((i: any) => i.id));
+                      setAssignSelectedTeamIds((targets?.teams || []).map((t: any) => t.id));
+                    }
+                  }}
+                >
+                  Select All
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7 px-2.5 text-slate-500"
+                  onClick={() => {
+                    if (assignTargetType === "intern") setAssignSelectedInternIds([]);
+                    else if (assignTargetType === "team") setAssignSelectedTeamIds([]);
+                    else {
+                      setAssignSelectedInternIds([]);
+                      setAssignSelectedTeamIds([]);
+                    }
+                  }}
+                >
+                  Clear
+                </Button>
               </div>
+
+              {/* Checkbox List */}
+              <div className="max-h-56 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white">
+                {(assignTargetType === "intern" || assignTargetType === "manual") && (
+                  <>
+                    {assignTargetType === "manual" && (
+                      <div className="px-3 py-1 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider sticky top-0 z-10">
+                        Candidates / Interns ({(targets?.interns || []).length})
+                      </div>
+                    )}
+                    {(targets?.interns || [])
+                      .filter((i: any) => 
+                        !assignSearchQuery || 
+                        i.full_name?.toLowerCase().includes(assignSearchQuery.toLowerCase()) || 
+                        i.email?.toLowerCase().includes(assignSearchQuery.toLowerCase())
+                      )
+                      .map((intern: any) => {
+                        const isSelected = assignSelectedInternIds.includes(intern.id);
+                        return (
+                          <label 
+                            key={intern.id} 
+                            className={`flex items-center gap-3 p-2.5 text-xs hover:bg-slate-50 cursor-pointer transition-colors ${isSelected ? "bg-indigo-50/50" : ""}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setAssignSelectedInternIds([...assignSelectedInternIds, intern.id]);
+                                } else {
+                                  setAssignSelectedInternIds(assignSelectedInternIds.filter(id => id !== intern.id));
+                                }
+                              }}
+                              className="h-4 w-4 text-indigo-600 rounded"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-slate-900 truncate">{intern.full_name}</p>
+                              <p className="text-[11px] text-slate-500 truncate">{intern.email}</p>
+                            </div>
+                          </label>
+                        );
+                      })}
+                  </>
+                )}
+
+                {(assignTargetType === "team" || assignTargetType === "manual") && (
+                  <>
+                    {assignTargetType === "manual" && (
+                      <div className="px-3 py-1 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider sticky top-0 z-10">
+                        Teams ({(targets?.teams || []).length})
+                      </div>
+                    )}
+                    {(targets?.teams || [])
+                      .filter((t: any) => 
+                        !assignSearchQuery || 
+                        t.name?.toLowerCase().includes(assignSearchQuery.toLowerCase())
+                      )
+                      .map((team: any) => {
+                        const isSelected = assignSelectedTeamIds.includes(team.id);
+                        return (
+                          <label 
+                            key={team.id} 
+                            className={`flex items-center gap-3 p-2.5 text-xs hover:bg-slate-50 cursor-pointer transition-colors ${isSelected ? "bg-indigo-50/50" : ""}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setAssignSelectedTeamIds([...assignSelectedTeamIds, team.id]);
+                                } else {
+                                  setAssignSelectedTeamIds(assignSelectedTeamIds.filter(id => id !== team.id));
+                                }
+                              }}
+                              className="h-4 w-4 text-indigo-600 rounded"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-slate-900 truncate">{team.name}</p>
+                              <p className="text-[11px] text-slate-500">Entire Team Allocation</p>
+                            </div>
+                          </label>
+                        );
+                      })}
+                  </>
+                )}
+              </div>
+
+              {/* Selected Pills Preview */}
+              {(assignSelectedInternIds.length > 0 || assignSelectedTeamIds.length > 0) && (
+                <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 rounded-lg max-h-24 overflow-y-auto">
+                  {assignSelectedInternIds.map(id => {
+                    const intern = (targets?.interns || []).find((i: any) => i.id === id);
+                    return (
+                      <span key={id} className="inline-flex items-center gap-1 text-[11px] font-medium bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
+                        {intern?.full_name || id}
+                        <button
+                          type="button"
+                          onClick={() => setAssignSelectedInternIds(assignSelectedInternIds.filter(x => x !== id))}
+                          className="hover:text-indigo-950 font-bold"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    );
+                  })}
+                  {assignSelectedTeamIds.map(id => {
+                    const team = (targets?.teams || []).find((t: any) => t.id === id);
+                    return (
+                      <span key={id} className="inline-flex items-center gap-1 text-[11px] font-medium bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
+                        {team?.name || id}
+                        <button
+                          type="button"
+                          onClick={() => setAssignSelectedTeamIds(assignSelectedTeamIds.filter(x => x !== id))}
+                          className="hover:text-purple-950 font-bold"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Strictness Level during allocation */}
               {assigningExam.enable_camera !== false && (
@@ -1618,11 +2244,11 @@ function AdminCbtSubmissionsView() {
               )}
             </div>
 
-            <DialogFooter className="gap-2 sm:gap-0">
+            <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-slate-100">
               <Button variant="outline" onClick={() => setAssigningExam(null)}>Cancel</Button>
               <Button 
                 onClick={handleConfirmAssign} 
-                disabled={isReassigning || !assignTargetId}
+                disabled={isReassigning || (assignSelectedInternIds.length === 0 && assignSelectedTeamIds.length === 0)}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
               >
                 {isReassigning ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Allocating...</> : "Confirm & Send Email"}
