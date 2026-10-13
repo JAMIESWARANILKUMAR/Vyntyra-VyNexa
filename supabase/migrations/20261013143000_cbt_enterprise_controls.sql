@@ -15,17 +15,34 @@ ADD COLUMN IF NOT EXISTS shuffle_questions BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS show_instant_results BOOLEAN DEFAULT true,
 ADD COLUMN IF NOT EXISTS max_attempts INTEGER DEFAULT 1;
 
--- 3. Safely convert team_ids and intern_ids to TEXT[] to accept any team text identifiers or custom intern IDs without UUID type errors
+-- 3. Safely convert team_ids and intern_ids only if they are ARRAY (e.g. UUID[]), leaving jsonb intact
 DO $$
+DECLARE
+  team_type text;
+  intern_type text;
 BEGIN
-  BEGIN
-    ALTER TABLE public.cbt_exams ALTER COLUMN team_ids TYPE TEXT[] USING team_ids::TEXT[];
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
-  BEGIN
-    ALTER TABLE public.cbt_exams ALTER COLUMN intern_ids TYPE TEXT[] USING intern_ids::TEXT[];
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
+  SELECT data_type INTO team_type 
+  FROM information_schema.columns 
+  WHERE table_schema = 'public' AND table_name = 'cbt_exams' AND column_name = 'team_ids';
+
+  SELECT data_type INTO intern_type 
+  FROM information_schema.columns 
+  WHERE table_schema = 'public' AND table_name = 'cbt_exams' AND column_name = 'intern_ids';
+
+  -- Only alter if currently typed as a postgres ARRAY (e.g. UUID[])
+  IF team_type = 'ARRAY' THEN
+    BEGIN
+      ALTER TABLE public.cbt_exams ALTER COLUMN team_ids TYPE TEXT[] USING team_ids::TEXT[];
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
+  END IF;
+
+  IF intern_type = 'ARRAY' THEN
+    BEGIN
+      ALTER TABLE public.cbt_exams ALTER COLUMN intern_ids TYPE TEXT[] USING intern_ids::TEXT[];
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
+  END IF;
 END $$;
 
 -- 4. Submissions tracking enhancements
