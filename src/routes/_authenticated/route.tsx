@@ -20,12 +20,21 @@ function AuthenticatedLayout() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (mounted) {
-          if (!session) {
+          const storedExpiry = localStorage.getItem("vyntyra_intern_session_expiry");
+          const isInternSessionExpired = storedExpiry && Date.now() > Number(storedExpiry);
+
+          if (!session || isInternSessionExpired) {
+            if (isInternSessionExpired) {
+              localStorage.removeItem("vyntyra_intern_session_id");
+              localStorage.removeItem("vyntyra_intern_session_expiry");
+              await supabase.auth.signOut().catch(() => {});
+            }
             setIsAuthenticated(false);
             setChecking(false);
             const p = location.pathname;
             const isAdminRoute = p.startsWith("/admin") || p === "/cms" || p === "/templates";
-            navigate({ to: isAdminRoute ? "/auth/admin" : "/auth/employee" });
+            const isInternRoute = p.startsWith("/intern") || p.startsWith("/cbt");
+            navigate({ to: isAdminRoute ? "/auth/admin" : isInternRoute ? "/auth/intern" : "/auth/employee" });
           } else {
             setIsAuthenticated(true);
             setChecking(false);
@@ -46,7 +55,8 @@ function AuthenticatedLayout() {
         setIsAuthenticated(false);
         const p = location.pathname;
         const isAdminRoute = p.startsWith("/admin") || p === "/cms" || p === "/templates";
-        navigate({ to: isAdminRoute ? "/auth/admin" : "/auth/employee" });
+        const isInternRoute = p.startsWith("/intern") || p.startsWith("/cbt");
+        navigate({ to: isAdminRoute ? "/auth/admin" : isInternRoute ? "/auth/intern" : "/auth/employee" });
       } else if (session) {
         setIsAuthenticated(true);
         setChecking(false);

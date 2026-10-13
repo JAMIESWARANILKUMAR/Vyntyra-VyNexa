@@ -1,11 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { GraduationCap, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { GraduationCap, Mail, Lock, Loader2, ArrowRight, Sun, Heart, Sparkles, PartyPopper, CalendarCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { listHolidays } from "@/lib/operations.functions";
+import { recordInternLoginSessionFn } from "@/lib/cbt.functions";
 
 export const Route = createFileRoute("/auth/intern")({
   head: () => ({ meta: [{ title: "Intern Portal — Vyntyra" }] }),
@@ -17,6 +21,38 @@ function InternAuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Holiday Alert Modal State
+  const [todayHoliday, setTodayHoliday] = useState<any>(null);
+  const [holidayModalOpen, setHolidayModalOpen] = useState(false);
+  const fetchHolidays = useServerFn(listHolidays);
+  const recordSession = useServerFn(recordInternLoginSessionFn);
+
+  useEffect(() => {
+    // Check if today is marked as a company or public holiday
+    const checkTodayHoliday = async () => {
+      try {
+        const holidays = await fetchHolidays();
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        const match = (holidays || []).find((h: any) => {
+          if (!h.date) return false;
+          if (h.date === todayStr) return true;
+          if (h.is_recurring && h.date.slice(5) === todayStr.slice(5)) return true;
+          return false;
+        });
+
+        if (match) {
+          setTodayHoliday(match);
+          setHolidayModalOpen(true);
+        }
+      } catch (err) {
+        console.warn("[Holiday Check Notice]:", err);
+      }
+    };
+
+    checkTodayHoliday();
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -35,12 +71,39 @@ function InternAuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-        const { error } = await supabase.auth.signInWithPassword({ 
+        const { data: authData, error } = await supabase.auth.signInWithPassword({ 
           email: email.trim(), 
           password: password.trim() 
         });
         if (error) throw error;
-        toast.success("Welcome back to your workspace");
+
+        // Generate a new cryptographically secured session ID on each login
+        const newSessionId = "sess_" + crypto.randomUUID();
+        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000; // 7 days (1 week)
+        const expiresAt = Date.now() + sevenDaysMs;
+
+        // Securely store the 7-day session token in localStorage & document cookie
+        localStorage.setItem("vyntyra_intern_session_id", newSessionId);
+        localStorage.setItem("vyntyra_intern_session_expiry", expiresAt.toString());
+        localStorage.setItem("vyntyra_intern_session_started", Date.now().toString());
+
+        try {
+          document.cookie = `vyntyra_intern_session_id=${newSessionId}; max-age=${7 * 86400}; path=/; SameSite=Lax`;
+          document.cookie = `vyntyra_intern_session_expiry=${expiresAt}; max-age=${7 * 86400}; path=/; SameSite=Lax`;
+        } catch (_) {}
+
+        // Record session to server audit logs
+        try {
+          await recordSession({
+            data: {
+              sessionId: newSessionId,
+              expiresAt,
+              userAgent: navigator.userAgent
+            }
+          });
+        } catch (_) {}
+
+        toast.success("Welcome back! Active session secured for 7 days.");
     } catch(error: any) {
         toast.error(error.message);
     } finally {
@@ -124,6 +187,58 @@ function InternAuthPage() {
           </div>
         </div>
       </div>
+
+      {/* Holiday Alert Dialog */}
+      <Dialog open={holidayModalOpen} onOpenChange={setHolidayModalOpen}>
+        <DialogContent className="max-w-md bg-slate-900 border border-emerald-500/40 text-white rounded-3xl p-6 shadow-2xl overflow-hidden relative">
+          {/* Ambient Glow */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+
+          <DialogHeader className="text-center space-y-3 relative z-10">
+            <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-tr from-amber-500/30 to-emerald-500/30 border border-emerald-400/40 flex items-center justify-center text-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.25)] animate-bounce">
+              <PartyPopper className="h-8 w-8 text-amber-400" />
+            </div>
+            <DialogTitle className="text-2xl font-black text-white tracking-wide">
+              Official Holiday Today!
+            </DialogTitle>
+            <DialogDescription className="text-emerald-300 font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5">
+              <CalendarCheck className="h-4 w-4 text-emerald-400" />
+              {todayHoliday?.name || "Company Holiday"} ({todayHoliday?.type || "Official"})
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="my-5 p-5 bg-slate-800/80 border border-slate-700/60 rounded-2xl text-center relative z-10 space-y-3">
+            <p className="text-base font-bold text-amber-200 leading-relaxed italic">
+              "take a break yarr, your company has provided holiday enjoy with your family see you tommorrow."
+            </p>
+            {todayHoliday?.description && (
+              <p className="text-xs text-slate-400 border-t border-slate-700/50 pt-2.5">
+                {todayHoliday.description}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2 relative z-10">
+            <Button
+              onClick={() => {
+                setHolidayModalOpen(false);
+                toast.info("Enjoy your holiday! Have a wonderful time with your family.");
+              }}
+              className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20"
+            >
+              🎉 Enjoy the Holiday
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setHolidayModalOpen(false)}
+              className="w-full text-xs text-slate-400 hover:text-white hover:bg-slate-800/60"
+            >
+              Continue to Workspace anyway
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

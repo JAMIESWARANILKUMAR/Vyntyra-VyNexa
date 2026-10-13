@@ -26,15 +26,25 @@ export const generateAiTestFn = createServerFn({ method: "POST" })
     REQUESTED MODULES:
     ${args.modules.join(', ')}
     
+    IMPORTANT RULES:
+    1. Every question MUST have its solution pre-marked!
+    2. For MCQ/Aptitude: Provide 4 distinct options with option IDs A, B, C, D and pre-mark correct_answer: { "id": "A" } or "A". Also include an in-depth "explanation" explaining why the solution is correct.
+    3. For Coding questions: Provide the problem description, pre-marked reference solution code in "correct_answer", and at least 2 test cases in "test_cases" with "input" and "expected_output".
+    4. For Subjective / Long Answer questions: Provide the grading criteria and model answer in "correct_answer" and "explanation".
+    
     Output the result STRICTLY as JSON with the following schema:
     {
       "questions": [
         {
           "question_type": "mcq" | "coding" | "aptitude" | "long_answer",
           "question_text": "...",
-          "options": [{ "id": "...", "text": "..." }],
+          "options": [{ "id": "A", "text": "..." }, { "id": "B", "text": "..." }, { "id": "C", "text": "..." }, { "id": "D", "text": "..." }],
           "correct_answer": { "id": "..." } | "...",
-          "max_points": 10
+          "explanation": "Detailed solution breakdown and explanation...",
+          "test_cases": [{ "input": "...", "expected_output": "..." }],
+          "reference_code": "// Optional starter or reference code",
+          "max_points": 10,
+          "time_limit_seconds": 60
         }
       ]
     }`;
@@ -500,6 +510,7 @@ export const submitCbtExamFn = createServerFn({ method: "POST" })
 
     let insertAnswers: any[] = [];
     let globalAiFeedback: any = {};
+    let questionsReview: any[] = [];
 
     for (const q of (questions || [])) {
       const internAnswer = answersObj ? answersObj[q.id] : null;
@@ -508,12 +519,82 @@ export const submitCbtExamFn = createServerFn({ method: "POST" })
       
       let qScore = 0;
       let qFeedback = "";
+      let isQuestionCorrect = false;
+      let codingVerification: any = null;
 
       if (q.question_type === 'mcq' || q.question_type === 'true_false') {
         const isCorrect = internAnswer?.id === correctAnswer?.id || internAnswer === correctAnswer?.id || internAnswer === correctAnswer;
         qScore = isCorrect ? (q.max_points || 10) : 0;
-        qFeedback = isCorrect ? 'Correct.' : 'Incorrect.';
+        isQuestionCorrect = isCorrect;
+        qFeedback = isCorrect ? 'Correct. Selected option matches verified solution.' : 'Incorrect. Option mismatch.';
         totalScore += qScore;
+      } else if (q.question_type === 'coding') {
+        const studentCode = typeof internAnswer === 'string' ? internAnswer.trim() : (internAnswer ? JSON.stringify(internAnswer) : "");
+        if (!studentCode) {
+          qScore = 0;
+          isQuestionCorrect = false;
+          qFeedback = "No code submitted. Output check failed.";
+          codingVerification = {
+            output_matches: false,
+            passed_test_cases: 0,
+            total_test_cases: 1,
+            actual_output: "None (unanswered)",
+            expected_output: "Refer to problem test cases",
+            allocated_score: 0
+          };
+        } else {
+          try {
+            const prompt = `You are an automated code verification test runner and unit test judge.
+EVALUATE CANDIDATE SUBMITTED CODE:
+Problem: ${q.question_text}
+Reference Context / Required Output / Expected Solution: ${JSON.stringify(correctAnswer)}
+Candidate Submitted Code:
+\`\`\`
+${studentCode}
+\`\`\`
+Max Possible Points: ${q.max_points || 10}
+
+Verification Instructions:
+1. Determine whether the candidate code compiles/runs and produces the EXACT required output.
+2. If required output is produced correctly, set output_matches to true and allocate full score (${q.max_points || 10}). If partially correct, allocate proportionate points. If non-working or wrong output, allocate 0.
+
+Respond strictly in valid JSON format:
+{
+  "output_matches": boolean,
+  "allocated_score": number,
+  "passed_test_cases": number,
+  "total_test_cases": number,
+  "actual_output": "...",
+  "expected_output": "...",
+  "feedback": "..."
+}`;
+            const response = await ai.models.generateContent({
+              model: 'gemini-1.5-flash',
+              contents: prompt,
+              config: { responseMimeType: 'application/json' }
+            });
+            const resJson = JSON.parse(response.text || '{}');
+            const matches = Boolean(resJson.output_matches);
+            qScore = typeof resJson.allocated_score === 'number' 
+              ? resJson.allocated_score 
+              : (matches ? (q.max_points || 10) : 0);
+            isQuestionCorrect = matches || qScore >= ((q.max_points || 10) * 0.7);
+            qFeedback = `${matches ? "✓ Required output verified & passed." : "✗ Required output check failed."} ${resJson.feedback || ""}`;
+            codingVerification = {
+              output_matches: matches,
+              passed_test_cases: resJson.passed_test_cases ?? (matches ? 1 : 0),
+              total_test_cases: resJson.total_test_cases ?? 1,
+              actual_output: resJson.actual_output || "",
+              expected_output: resJson.expected_output || "",
+              allocated_score: qScore
+            };
+            totalScore += qScore;
+          } catch (e) {
+            console.error("[Coding verification error]:", e);
+            qScore = 0;
+            qFeedback = 'Automated verification error during evaluation.';
+          }
+        }
       } else {
         if (!internAnswer) {
           qFeedback = 'No answer provided.';
@@ -534,6 +615,7 @@ Return JSON with exactly this schema: { "score": number, "feedback": "reasoning"
             const resJson = JSON.parse(response.text || '{}');
             qScore = resJson.score || 0;
             qFeedback = resJson.feedback || "";
+            isQuestionCorrect = qScore >= ((q.max_points || 10) * 0.6);
             totalScore += qScore;
           } catch (e) {
             qFeedback = 'Error grading with AI.';
@@ -541,7 +623,23 @@ Return JSON with exactly this schema: { "score": number, "feedback": "reasoning"
         }
       }
 
-      globalAiFeedback[q.id] = { score: qScore, max: q.max_points, feedback: qFeedback };
+      globalAiFeedback[q.id] = { score: qScore, max: q.max_points, feedback: qFeedback, coding_verification: codingVerification };
+
+      questionsReview.push({
+        question_id: q.id,
+        question_text: q.question_text,
+        question_type: q.question_type,
+        options: q.options,
+        intern_answer: internAnswer,
+        correct_answer: correctAnswer,
+        explanation: q.explanation || "Official pre-marked solution.",
+        test_cases: q.test_cases || null,
+        coding_verification: codingVerification,
+        is_correct: isQuestionCorrect,
+        score: qScore,
+        max_points: q.max_points || 10,
+        feedback: qFeedback
+      });
 
       insertAnswers.push({
          submission_id: subId,
@@ -557,16 +655,36 @@ Return JSON with exactly this schema: { "score": number, "feedback": "reasoning"
       await adminClient.from('cbt_answers').insert(insertAnswers);
     }
     
-    const passed = totalScore >= (test?.passing_score || 60);
+    const maxPossibleScore = (questions || []).reduce((acc: number, curr: any) => acc + (curr.max_points || 10), 0) || 100;
+    const percentage = Math.round((totalScore / maxPossibleScore) * 100);
+    const passed = percentage >= (test?.passing_score || 50);
+
+    const submissionSummary = {
+      totalScore,
+      maxPossibleScore,
+      percentage,
+      passed,
+      passing_score: test?.passing_score || 50,
+      questionsReview,
+      submittedAt: new Date().toISOString()
+    };
     
     await adminClient.from('cbt_submissions').update({
        total_score: totalScore,
-       ai_feedback: JSON.stringify(globalAiFeedback),
+       ai_feedback: JSON.stringify(submissionSummary),
        status: 'graded'
     }).eq('id', subId);
     
     invalidateCache("all_cbt_submissions");
-    return { success: true, submissionId: subId, score: totalScore, passed };
+    return { 
+      success: true, 
+      submissionId: subId, 
+      score: totalScore, 
+      maxPossibleScore, 
+      percentage, 
+      passed, 
+      questionsReview 
+    };
   });
 
 export const listAdminTestsFn = createServerFn({ method: "GET" })
@@ -599,13 +717,148 @@ export const toggleAdminTestStatusFn = createServerFn({ method: "POST" })
 
 export const getInternSubmissionResultFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ testId: z.string() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ testId: z.string(), submissionId: z.string().optional() }).parse(d))
   .handler(async ({ data: args, context }) => {
     const adminClient = getAdminClient();
     const userId = context.user.id;
     
-    const { data: sub } = await adminClient.from('cbt_submissions').select('*, cbt_exams(*)').eq('exam_id', args.testId).eq('intern_id', userId).order('started_at', { ascending: false }).limit(1).single();
-    return sub;
+    let query = adminClient
+      .from('cbt_submissions')
+      .select('*, cbt_exams(*)')
+      .eq('exam_id', args.testId);
+
+    if (args.submissionId) {
+      query = query.eq('id', args.submissionId);
+    } else {
+      query = query.eq('intern_id', userId);
+    }
+
+    const { data: sub } = await query.order('started_at', { ascending: false }).limit(1).maybeSingle();
+    if (!sub) return null;
+
+    let parsedFeedback: any = null;
+    try {
+      if (typeof sub.ai_feedback === 'string') {
+        parsedFeedback = JSON.parse(sub.ai_feedback);
+      }
+    } catch {}
+
+    const [{ data: questions }, { data: answers }, { data: logs }] = await Promise.all([
+      adminClient.from('cbt_questions').select('*').eq('exam_id', args.testId).order('order_index', { ascending: true }),
+      adminClient.from('cbt_answers').select('*').eq('submission_id', sub.id),
+      adminClient.from('cbt_malpractice_logs').select('*').eq('submission_id', sub.id).order('timestamp', { ascending: true })
+    ]);
+
+    const passingScore = sub.cbt_exams?.passing_score || 50;
+    const maxScore = (questions || []).reduce((acc: number, q: any) => acc + (q.max_points || 10), 0) || 100;
+    const percentage = parsedFeedback?.percentage ?? Math.round(((sub.total_score || 0) / maxScore) * 100);
+    const passed = parsedFeedback?.passed ?? (percentage >= passingScore);
+
+    return {
+      ...sub,
+      score: sub.total_score,
+      percentage,
+      passed,
+      maxScore,
+      passingScore,
+      questions: questions || [],
+      answers: answers || [],
+      questionsReview: parsedFeedback?.questionsReview || null,
+      proctoring_logs: logs || []
+    };
+  });
+
+export const getUniversalSubmissionScoreFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ submissionId: z.string().optional(), testId: z.string().optional() }).parse(d))
+  .handler(async ({ data: args }) => {
+    const adminClient = getAdminClient();
+    let query = adminClient
+      .from('cbt_submissions')
+      .select('*, cbt_exams(*), profiles:intern_id(id, full_name, email, intern_id)');
+
+    if (args.submissionId) {
+      query = query.eq('id', args.submissionId);
+    } else if (args.testId) {
+      query = query.eq('exam_id', args.testId);
+    } else {
+      return null;
+    }
+
+    const { data: sub } = await query.order('submitted_at', { ascending: false }).limit(1).maybeSingle();
+    if (!sub) return null;
+
+    let parsedFeedback: any = null;
+    try {
+      if (typeof sub.ai_feedback === 'string') {
+        parsedFeedback = JSON.parse(sub.ai_feedback);
+      }
+    } catch {}
+
+    const [{ data: questions }, { data: answers }, { data: logs }] = await Promise.all([
+      adminClient.from('cbt_questions').select('*').eq('exam_id', sub.exam_id).order('order_index', { ascending: true }),
+      adminClient.from('cbt_answers').select('*').eq('submission_id', sub.id),
+      adminClient.from('cbt_malpractice_logs').select('*').eq('submission_id', sub.id).order('timestamp', { ascending: true })
+    ]);
+
+    const passingScore = sub.cbt_exams?.passing_score || 50;
+    const maxScore = (questions || []).reduce((acc: number, q: any) => acc + (q.max_points || 10), 0) || 100;
+    const percentage = parsedFeedback?.percentage ?? Math.round(((sub.total_score || 0) / maxScore) * 100);
+    const passed = parsedFeedback?.passed ?? (percentage >= passingScore);
+
+    return {
+      submission: sub,
+      score: sub.total_score,
+      percentage,
+      passed,
+      maxScore,
+      passingScore,
+      questions: questions || [],
+      answers: answers || [],
+      questionsReview: parsedFeedback?.questionsReview || null,
+      proctoring_logs: logs || []
+    };
+  });
+
+export const getAdminTestQuestionsFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ testId: z.string() }).parse(d))
+  .handler(async ({ data: args }) => {
+    const adminClient = getAdminClient();
+    const { data: questions } = await adminClient
+      .from('cbt_questions')
+      .select('*')
+      .eq('exam_id', args.testId)
+      .order('order_index', { ascending: true });
+    return questions || [];
+  });
+
+export const recordInternLoginSessionFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    sessionId: z.string(),
+    expiresAt: z.number(),
+    userAgent: z.string().optional()
+  }).parse(d))
+  .handler(async ({ data: args, context }) => {
+    const adminClient = getAdminClient();
+    const userId = context.user.id;
+    try {
+      await adminClient.from("site_settings").upsert({
+        id: `intern_session_${userId}`,
+        value: {
+          user_id: userId,
+          session_id: args.sessionId,
+          expires_at: new Date(args.expiresAt).toISOString(),
+          created_at: new Date().toISOString(),
+          duration_days: 7,
+          user_agent: args.userAgent || "browser"
+        },
+        updated_at: new Date().toISOString()
+      });
+    } catch (e) {
+      console.warn("[recordInternLoginSessionFn] session log notice:", e);
+    }
+    return { success: true, sessionId: args.sessionId };
   });
 
 export const listInternSubmissionsFn = createServerFn({ method: "GET" })

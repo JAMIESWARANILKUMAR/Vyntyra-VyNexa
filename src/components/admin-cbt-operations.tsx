@@ -14,7 +14,8 @@ import {
   getAdminSubmissionDetailFn,
   overrideSubmissionScoreFn,
   grantInternRetakeFn,
-  clearSubmissionStrikesFn
+  clearSubmissionStrikesFn,
+  getAdminTestQuestionsFn
 } from "@/lib/cbt.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -122,6 +123,38 @@ function AdminCbtGenerateView() {
   ]);
   
   const [targets, setTargets] = useState<{interns: any[], teams: any[]}>({ interns: [], teams: [] });
+
+  // Pre-allocation Question Preview Modal State
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewQuestionsList, setPreviewQuestionsList] = useState<any[]>([]);
+  const [previewExamMeta, setPreviewExamMeta] = useState<any>(null);
+
+  const handleOpenPreview = (questionsToPreview: any[]) => {
+    if (!title.trim()) return toast.error("Please provide an Exam Title first.");
+    if (!targetId || targetId === "none") return toast.error("Please select a target Intern or Team.");
+    if (!questionsToPreview || questionsToPreview.length === 0) {
+      return toast.error("No questions available to preview. Add questions or generate first.");
+    }
+    const targetLabel = targetType === "intern" 
+      ? (targetId === "all" ? `★ All Active Interns (${targets.interns.length} candidates)` : (targets.interns.find(i => i.id === targetId)?.full_name || targetId))
+      : (targets.teams.find(t => t.id === targetId)?.name || targetId);
+
+    setPreviewExamMeta({
+      title: title || "New AI CBT Exam",
+      description: description || "Technical Assessment",
+      timeLimitMinutes,
+      passingScore,
+      enableCamera,
+      cameraStrictness,
+      deadline,
+      targetLabel,
+      shuffleQuestions,
+      showInstantResults,
+      maxAttempts
+    });
+    setPreviewQuestionsList(questionsToPreview);
+    setPreviewModalOpen(true);
+  };
   
   const generateFn = useServerFn(generateAiTestFn);
   const saveFn = useServerFn(saveGeneratedTestFn);
@@ -265,6 +298,7 @@ function AdminCbtGenerateView() {
       
       if (res.success) {
         toast.success(res.message || "Test successfully created and assigned!");
+        setPreviewModalOpen(false);
         setGenerated(null);
         setTitle("");
         setDescription("");
@@ -806,18 +840,36 @@ function AdminCbtGenerateView() {
               ))}
             </div>
 
-            <div className="mt-auto pt-2">
+            <div className="mt-auto pt-2 flex flex-col sm:flex-row items-center gap-3">
               <Button 
-                onClick={() => handleSaveExam(manualQuestions)} 
-                disabled={isSaving}
-                className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md text-sm"
+                type="button"
+                variant="outline"
+                onClick={() => handleOpenPreview(manualQuestions)}
+                className="w-full sm:w-1/2 h-12 border-emerald-500 text-emerald-700 hover:bg-emerald-50 font-bold rounded-xl text-xs gap-1.5 shadow-xs"
               >
-                {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing Exam & Notifying...</> : <><CheckCircle2 className="mr-2 h-4 w-4" /> Save, Allocate & Dispatch Exam Email</>}
+                <Eye className="h-4 w-4 text-emerald-600" /> Preview Questions Mode
+              </Button>
+              <Button 
+                onClick={() => handleOpenPreview(manualQuestions)} 
+                disabled={isSaving}
+                className="w-full sm:w-1/2 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md text-xs gap-1.5"
+              >
+                {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing & Notifying...</> : <><CheckCircle2 className="mr-2 h-4 w-4" /> Preview & Allocate Test</>}
               </Button>
             </div>
           </div>
         )}
       </div>
+
+{/* Question Pre-Allocation Preview Modal */}
+      <ExamQuestionPreviewModal
+        isOpen={previewModalOpen}
+        onClose={() => setPreviewModalOpen(false)}
+        examMeta={previewExamMeta}
+        questions={previewQuestionsList}
+        onConfirmAllocate={() => handleSaveExam(previewQuestionsList)}
+        isAllocating={isSaving}
+      />
 
       {/* AI Generated Review Panel */}
       {creationMode === "ai" && generated && (
@@ -852,12 +904,20 @@ function AdminCbtGenerateView() {
                 + Add Custom Question
               </Button>
               <Button 
-                onClick={() => handleSaveExam(generated.questions)} 
+                type="button"
+                variant="outline"
+                onClick={() => handleOpenPreview(generated.questions)}
+                className="font-bold border-indigo-300 text-indigo-700 hover:bg-indigo-50 gap-1.5"
+              >
+                <Eye className="h-4 w-4 text-indigo-600" /> Preview Questions Mode
+              </Button>
+              <Button 
+                onClick={() => handleOpenPreview(generated.questions)} 
                 disabled={isSaving}
                 className="bg-emerald-600 hover:bg-emerald-700 font-bold px-6 shadow-md shadow-emerald-500/20"
               >
                 {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="mr-2 h-5 w-5" />}
-                Approve, Allocate & Email Candidate
+                Preview & Allocate Test
               </Button>
             </div>
           </div>
@@ -922,6 +982,220 @@ function AdminCbtGenerateView() {
   );
 }
 
+
+function ExamQuestionPreviewModal({
+  isOpen,
+  onClose,
+  examMeta,
+  questions,
+  onConfirmAllocate,
+  isAllocating
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  examMeta: any;
+  questions: any[];
+  onConfirmAllocate?: () => void;
+  isAllocating?: boolean;
+}) {
+  if (!isOpen) return null;
+  const totalPoints = (questions || []).reduce((acc, q) => acc + (Number(q.max_points) || 10), 0);
+  const mcqCount = (questions || []).filter(q => q.question_type === 'mcq' || q.question_type === 'true_false').length;
+  const codingCount = (questions || []).filter(q => q.question_type === 'coding').length;
+  const otherCount = (questions || []).length - mcqCount - codingCount;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-50 border-slate-200">
+        <DialogHeader className="p-6 bg-slate-900 text-white shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-500 text-white tracking-widest">
+                  Assessment Preview Mode
+                </span>
+                <span className="text-xs text-slate-400 font-mono">
+                  {questions.length} Modules Configured
+                </span>
+              </div>
+              <DialogTitle className="text-2xl font-black text-white">
+                {examMeta?.title || "Exam Preview"}
+              </DialogTitle>
+              {examMeta?.description && (
+                <p className="text-xs text-slate-300 mt-1 line-clamp-1">{examMeta.description}</p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 text-right">
+              <div className="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl text-xs">
+                <span className="text-slate-400 block text-[9px] uppercase font-bold">Total Points</span>
+                <span className="text-emerald-400 font-black text-base">{totalPoints} pts</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Policy Strip */}
+          <div className="mt-4 pt-3 border-t border-slate-800 flex flex-wrap items-center gap-3 text-xs text-slate-300">
+            {examMeta?.targetLabel && (
+              <span className="bg-slate-800 px-2.5 py-1 rounded-md text-[11px] font-bold text-indigo-300">
+                🎯 Target: {examMeta.targetLabel}
+              </span>
+            )}
+            <span className="bg-slate-800 px-2.5 py-1 rounded-md text-[11px]">
+              ⏱️ {examMeta?.timeLimitMinutes || 30} Mins
+            </span>
+            <span className="bg-slate-800 px-2.5 py-1 rounded-md text-[11px]">
+              🏆 Pass: {examMeta?.passingScore || 50}%
+            </span>
+            <span className="bg-slate-800 px-2.5 py-1 rounded-md text-[11px]">
+              {examMeta?.enableCamera !== false ? `📹 ${examMeta?.cameraStrictness || 'Standard'} Cam` : "🛡️ Focus Only"}
+            </span>
+            {examMeta?.deadline && (
+              <span className="bg-slate-800 px-2.5 py-1 rounded-md text-[11px] text-amber-300">
+                📅 Deadline: {new Date(examMeta.deadline).toLocaleString()}
+              </span>
+            )}
+          </div>
+        </DialogHeader>
+
+        {/* Question Cards List */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+            <span>Pre-Marked Question Breakdown ({questions.length})</span>
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px]">{mcqCount} MCQ</span>
+              {codingCount > 0 && <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px]">{codingCount} Coding</span>}
+              {otherCount > 0 && <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded text-[10px]">{otherCount} Subjective</span>}
+            </div>
+          </div>
+
+          {questions.map((q: any, idx: number) => {
+            const correctOptId = typeof q.correct_answer === 'object' ? q.correct_answer?.id : String(q.correct_answer || '');
+            return (
+              <div key={q.id || idx} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="h-6 w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black">
+                      {idx + 1}
+                    </span>
+                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      {q.question_type.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-slate-500 font-semibold">
+                    <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-slate-400" /> {q.time_limit_seconds || 60}s</span>
+                    <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-black">{q.max_points || 10} pts</span>
+                  </div>
+                </div>
+
+                <div className="text-sm font-semibold text-slate-900 leading-relaxed whitespace-pre-wrap">
+                  {q.question_text}
+                </div>
+
+                {/* MCQ Options with Pre-marked Correct Answer */}
+                {q.options && Array.isArray(q.options) && q.options.length > 0 && (
+                  <div className="space-y-2 pt-1">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Candidate Options & Pre-Marked Solution:</div>
+                    {q.options.map((opt: any, optIdx: number) => {
+                      const isPreMarked = opt.id === correctOptId || opt.text === correctOptId;
+                      return (
+                        <div 
+                          key={optIdx} 
+                          className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-all ${
+                            isPreMarked 
+                              ? "bg-emerald-50 border-emerald-400 text-emerald-900 font-bold shadow-xs ring-1 ring-emerald-500/30" 
+                              : "bg-slate-50/70 border-slate-200 text-slate-700"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-black ${
+                              isPreMarked ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-700"
+                            }`}>
+                              {opt.id || String.fromCharCode(65 + optIdx)}
+                            </span>
+                            <span>{opt.text}</span>
+                          </div>
+                          {isPreMarked && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-300">
+                              <Check className="h-3 w-3 text-emerald-600" /> Pre-Marked Solution
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Pre-Solution Explanation */}
+                {q.explanation && (
+                  <div className="p-3 bg-amber-50/60 border border-amber-200/80 rounded-xl text-xs text-amber-900">
+                    <strong className="block text-[10px] uppercase font-bold text-amber-700 mb-0.5">💡 Solution Explanation / Reference Context:</strong>
+                    {q.explanation}
+                  </div>
+                )}
+
+                {/* Coding Reference Code & Unit Test Cases */}
+                {q.question_type === 'coding' && (
+                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                    {q.correct_answer && (
+                      <div className="p-3 bg-slate-900 text-slate-100 rounded-xl font-mono text-xs">
+                        <div className="text-[10px] font-sans font-bold text-emerald-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                          <Check className="h-3 w-3" /> Pre-Marked Reference Solution Code
+                        </div>
+                        <pre className="whitespace-pre-wrap overflow-x-auto text-[11px]">
+                          {typeof q.correct_answer === 'string' ? q.correct_answer : JSON.stringify(q.correct_answer, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                    {q.test_cases && Array.isArray(q.test_cases) && q.test_cases.length > 0 && (
+                      <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs space-y-1.5">
+                        <div className="text-[10px] font-bold text-indigo-900 uppercase tracking-wider">Automated Verification Test Cases ({q.test_cases.length}):</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {q.test_cases.map((tc: any, tcIdx: number) => (
+                            <div key={tcIdx} className="bg-white p-2 rounded-lg border border-indigo-100 text-[11px] font-mono">
+                              <div className="text-slate-500">Input: <span className="text-slate-900 font-bold">{tc.input || "Default"}</span></div>
+                              <div className="text-emerald-700 font-bold">Required Output: {tc.expected_output}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Subjective Model Answer */}
+                {q.question_type !== 'mcq' && q.question_type !== 'true_false' && q.question_type !== 'coding' && q.correct_answer && (
+                  <div className="p-3 bg-slate-100 rounded-xl text-xs text-slate-800">
+                    <strong className="block text-[10px] uppercase font-bold text-slate-500 mb-0.5">Model Answer / Grading Rubric:</strong>
+                    {typeof q.correct_answer === 'string' ? q.correct_answer : JSON.stringify(q.correct_answer)}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Modal Footer */}
+        <DialogFooter className="p-4 bg-white border-t border-slate-200 flex sm:items-center justify-between gap-3 shrink-0">
+          <Button variant="outline" onClick={onClose} className="font-bold text-xs">
+            ✏️ Back to Edit
+          </Button>
+          {onConfirmAllocate && (
+            <Button 
+              onClick={onConfirmAllocate} 
+              disabled={isAllocating}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-md shadow-emerald-500/20"
+            >
+              {isAllocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+              Confirm Allocation & Dispatch Exam Emails
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function AdminCbtSubmissionsView() {
   const qc = useQueryClient();
   const fetchTests = useServerFn(listAdminTestsFn);
@@ -930,6 +1204,21 @@ function AdminCbtSubmissionsView() {
   const fetchTargets = useServerFn(listCbtTargetsFn);
   const doReassign = useServerFn(reassignAdminTestFn);
   const doExtendDeadline = useServerFn(extendAdminTestDeadlineFn);
+  const fetchExamQuestions = useServerFn(getAdminTestQuestionsFn);
+  const [existingExamPreview, setExistingExamPreview] = useState<{ exam: any, questions: any[] } | null>(null);
+  const [isLoadingExistingQuestions, setIsLoadingExistingQuestions] = useState(false);
+
+  const handlePreviewExistingExam = async (exam: any) => {
+    setIsLoadingExistingQuestions(true);
+    try {
+      const qs = await fetchExamQuestions({ data: { testId: exam.id } });
+      setExistingExamPreview({ exam, questions: qs });
+    } catch (e: any) {
+      toast.error("Failed to load questions: " + e.message);
+    } finally {
+      setIsLoadingExistingQuestions(false);
+    }
+  };
   
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
   const [assigningExam, setAssigningExam] = useState<any>(null);
@@ -1151,6 +1440,15 @@ function AdminCbtSubmissionsView() {
                         }}
                       >
                         <Calendar className="h-3.5 w-3.5" /> Extend Deadline
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs gap-1 border-indigo-200 hover:bg-indigo-50 text-indigo-700 font-semibold"
+                        onClick={() => handlePreviewExistingExam(t)}
+                        disabled={isLoadingExistingQuestions}
+                      >
+                        <Eye className="h-3.5 w-3.5" /> Preview Questions
                       </Button>
                       <Button
                         size="sm"

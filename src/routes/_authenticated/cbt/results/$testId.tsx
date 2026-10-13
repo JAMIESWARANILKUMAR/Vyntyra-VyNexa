@@ -15,7 +15,11 @@ function CbtResults() {
 
   const { data: result, isLoading, error } = useQuery({
     queryKey: ["cbt-result", testId],
-    queryFn: () => getResultsFn({ data: { testId } }),
+    queryFn: () => {
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const subId = urlParams ? urlParams.get('submissionId') : undefined;
+      return getResultsFn({ data: { testId, submissionId: subId || undefined } });
+    },
   });
 
   if (isLoading) return <div className="flex h-screen items-center justify-center text-slate-500">Loading AI Results...</div>;
@@ -87,24 +91,96 @@ function CbtResults() {
             </div>
 
             <div className="md:col-span-2 space-y-6">
-              <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-200">
-                <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2"><BrainCircuit className="h-6 w-6 text-emerald-500"/> AI Grading Feedback</h2>
+              <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-200 space-y-6">
+                <div className="flex items-center justify-between border-b pb-4">
+                  <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                    <BrainCircuit className="h-6 w-6 text-emerald-500"/> Complete Question & Solution Breakdown
+                  </h2>
+                  <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                    Official Record
+                  </span>
+                </div>
                 
-                {result.ai_feedback && Array.isArray(result.ai_feedback) && result.ai_feedback.length > 0 ? (
-                  <div className="space-y-6">
-                    {result.ai_feedback.map((fb: any, i: number) => (
-                      <div key={i} className="p-5 bg-slate-50 rounded-xl border border-slate-100">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-bold text-slate-800">{fb.question_id || `Question ${i+1}`}</h4>
-                          <span className="bg-slate-200 text-slate-700 px-3 py-1 rounded-full text-xs font-bold">{fb.points_awarded} / {fb.max_points} pts</span>
+                {((result.questionsReview || []).length > 0 ? result.questionsReview : (result.questions || [])).length > 0 ? (
+                  <div className="space-y-4">
+                    {((result.questionsReview || []).length > 0 ? result.questionsReview : result.questions).map((qItem: any, i: number) => {
+                      const answerRow = (result.answers || []).find((a: any) => a.question_id === (qItem.question_id || qItem.id));
+                      const isCorrect = qItem.is_correct ?? (answerRow ? (answerRow.ai_score > 0) : false);
+                      const pts = qItem.score ?? answerRow?.ai_score ?? 0;
+                      const maxPts = qItem.max_points || 10;
+                      const candidateAns = qItem.intern_answer || answerRow?.selected_option || answerRow?.subjective_answer || "(Skipped)";
+
+                      return (
+                        <div key={qItem.id || i} className={`p-5 rounded-2xl border text-sm space-y-3 transition-all ${
+                          isCorrect ? "bg-emerald-50/40 border-emerald-200" : "bg-slate-50/70 border-slate-200"
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                              <span className="font-mono font-bold text-slate-900 bg-slate-200 px-2.5 py-1 rounded-md text-xs">
+                                Question {i + 1}
+                              </span>
+                              <span className="font-bold uppercase tracking-wider text-[11px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
+                                {(qItem.question_type || "mcq").toUpperCase()}
+                              </span>
+                            </div>
+                            <span className={`font-black px-3 py-1 rounded-full text-xs ${
+                              isCorrect ? "bg-emerald-100 text-emerald-800 border border-emerald-300" : "bg-rose-100 text-rose-800 border border-rose-300"
+                            }`}>
+                              {pts} / {maxPts} Points Awarded
+                            </span>
+                          </div>
+
+                          <div className="font-semibold text-slate-900 leading-relaxed whitespace-pre-wrap">
+                            {qItem.question_text}
+                          </div>
+
+                          {/* Candidate Response */}
+                          <div className="p-3 bg-white border border-slate-200 rounded-xl">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Candidate Submitted Response:</span>
+                            <div className={`font-mono text-xs font-semibold ${isCorrect ? "text-emerald-700" : "text-rose-700"}`}>
+                              {typeof candidateAns === "object" ? JSON.stringify(candidateAns) : String(candidateAns)}
+                            </div>
+                          </div>
+
+                          {/* Coding Automated Output Verification */}
+                          {qItem.coding_verification && (
+                            <div className="p-3.5 bg-slate-900 text-slate-100 rounded-xl font-mono text-xs space-y-1">
+                              <div className="text-[10px] font-sans font-bold text-indigo-400 uppercase tracking-wider">
+                                Automated Code Output Verification:
+                              </div>
+                              <div className={qItem.coding_verification.output_matches ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+                                {qItem.coding_verification.output_matches ? "✓ Required Output Matched Expected Unit Tests" : "✗ Output Did Not Match Required Criteria"}
+                              </div>
+                              {qItem.coding_verification.actual_output && (
+                                <div className="text-slate-400 text-[11px]">Actual Output: {qItem.coding_verification.actual_output}</div>
+                              )}
+                              {qItem.coding_verification.expected_output && (
+                                <div className="text-emerald-300 text-[11px]">Expected Output: {qItem.coding_verification.expected_output}</div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Pre-Marked Solution */}
+                          <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl space-y-1.5">
+                            <div className="flex items-center gap-1.5 text-emerald-800 font-black text-xs uppercase tracking-wider">
+                              <Trophy className="h-4 w-4 text-emerald-600" /> Pre-Marked Official Solution:
+                            </div>
+                            <div className="text-emerald-950 font-bold text-xs">
+                              {qItem.correct_answer ? (typeof qItem.correct_answer === "string" ? qItem.correct_answer : JSON.stringify(qItem.correct_answer)) : "Official Reference Solution"}
+                            </div>
+                            {qItem.explanation && (
+                              <div className="text-xs text-emerald-800 pt-1.5 border-t border-emerald-200">
+                                <span className="font-bold">Explanation / Reasoning:</span> {qItem.explanation}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-slate-600 text-sm">{fb.feedback || fb.justification || "Correct."}</p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center p-8 text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                    No detailed AI feedback available for this run.
+                    No detailed question breakdown recorded for this submission.
                   </div>
                 )}
               </div>

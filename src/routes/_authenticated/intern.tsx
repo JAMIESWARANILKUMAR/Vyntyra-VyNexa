@@ -585,6 +585,7 @@ function InternDashboard() {
   const isFeePaymentPending = Boolean(profile?.fee_payment_scheduled && !profile?.exam_fee_paid && !profile?.is_fee_exempted);
   const doDismissUrgentPopup = useServerFn(dismissUrgentPopup);
   const [isDismissingPopup, setIsDismissingPopup] = useState(false);
+  const [holidayPopupDismissed, setHolidayPopupDismissed] = useState(false);
   
   const todayStr_ = new Date().toISOString().split('T')[0];
   const isBeforeStart = profile?.start_date && todayStr_ < profile.start_date.split('T')[0];
@@ -5333,6 +5334,63 @@ function InternDashboard() {
           </div>
         </div>
       )}
+
+      {/* ─── COMPANY HOLIDAY GREETING POPUP ─── */}
+      {(() => {
+        const now = new Date();
+        const todayStr = String(now.getFullYear()) + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        const todayHoliday = (holidaysQ.data || []).find((h: any) => h.date === todayStr || (h.is_recurring && h.date && h.date.slice(5) === todayStr.slice(5)));
+        if (!todayHoliday || holidayPopupDismissed) return null;
+        return (
+          <div className="fixed inset-0 z-[160] bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl border-2 border-emerald-500/50 animate-in fade-in zoom-in-95 duration-200 text-white relative overflow-hidden">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-amber-500/20 border border-amber-400/40 rounded-2xl text-amber-300">
+                  <PartyPopper className="h-7 w-7 animate-bounce" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-sans">
+                    Official Holiday Today
+                  </span>
+                  <h3 className="font-extrabold text-white text-lg mt-1">
+                    {todayHoliday.name || "Company Holiday"}
+                  </h3>
+                </div>
+              </div>
+
+              <div className="p-5 bg-slate-800/80 border border-slate-700/60 rounded-2xl text-center space-y-2">
+                <p className="text-base font-bold text-amber-200 leading-relaxed italic font-serif">
+                  "take a break yarr, your company has provided holiday enjoy with your family see you tommorrow."
+                </p>
+                {todayHoliday.description && (
+                  <p className="text-xs text-slate-400 border-t border-slate-700/50 pt-2">
+                    {todayHoliday.description}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Button
+                  onClick={() => {
+                    setHolidayPopupDismissed(true);
+                    toast.info("Enjoy your holiday with your family!");
+                  }}
+                  className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20"
+                >
+                  🎉 Enjoy the Holiday
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setHolidayPopupDismissed(true)}
+                  className="w-full text-xs text-slate-400 hover:text-white"
+                >
+                  Continue to Workspace anyway
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ─── URGENT ONSCREEN POPUP NOTIFICATION MODAL ─── */}
       {profile?.urgent_popup_active && isFeePaymentPending && (

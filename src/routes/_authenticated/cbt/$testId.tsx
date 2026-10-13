@@ -31,6 +31,8 @@ function CbtExamInterface() {
   const [terminationReason, setTerminationReason] = useState("");
   const [calculatedScore, setCalculatedScore] = useState(0);
   const [warningLeft, setWarningLeft] = useState(20);
+  const [submissionResult, setSubmissionResult] = useState<any>(null);
+  const [isSubmittingExam, setIsSubmittingExam] = useState(false);
 
   // WebRTC / Live Streaming hook
   const rtcConnection = useRef<RTCPeerConnection | null>(null);
@@ -48,11 +50,39 @@ function CbtExamInterface() {
 
   const submitExamData = async (currentLogs?: any[]) => {
     localStorage.removeItem(`cbt_autosave_${testId}`); 
-    if (testId === "demo") return;
+    if (testId === "demo") {
+      setSubmissionResult({
+        score: calculatedScore,
+        percentage: calculatedScore,
+        passed: calculatedScore >= (test?.passing_score || 60),
+        questionsReview: questions.map((q, i) => ({
+          question_id: q.id,
+          question_text: q.question_text,
+          question_type: q.question_type,
+          options: q.options,
+          intern_answer: answers[q.id],
+          correct_answer: q.options ? q.options[0]?.id : "Sample Answer",
+          explanation: "Familiarization demo question reference solution.",
+          is_correct: Boolean(answers[q.id]),
+          score: answers[q.id] ? 10 : 0,
+          max_points: 10
+        }))
+      });
+      return;
+    }
+    setIsSubmittingExam(true);
     try {
-      await submitFn({ data: { testId, answers, proctoringLogs: currentLogs || logs } });
+      const res = await submitFn({ data: { testId, answers, proctoringLogs: currentLogs || logs } });
+      if (res) {
+        setSubmissionResult(res);
+        if (typeof res.percentage === 'number') {
+          setCalculatedScore(res.percentage);
+        }
+      }
     } catch (e) {
       toast.error("Network error during submission. Result cached locally.");
+    } finally {
+      setIsSubmittingExam(false);
     }
   };
 
@@ -398,39 +428,101 @@ function CbtExamInterface() {
             </div>
 
             {/* Answer Summary */}
-            <div className="w-2/3">
-              <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Response Audit</div>
-              <div className="h-64 overflow-y-auto custom-scrollbar border border-slate-200 bg-white rounded-sm">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-100 text-slate-600 font-bold text-xs uppercase tracking-wider sticky top-0">
-                    <tr>
-                      <th className="px-4 py-3 border-b border-slate-200">Q#</th>
-                      <th className="px-4 py-3 border-b border-slate-200">Status</th>
-                      <th className="px-4 py-3 border-b border-slate-200">Recorded Answer</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {questions.map((q, i) => {
-                      const ans = answers[q.id];
-                      return (
-                        <tr key={q.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                          <td className="px-4 py-3 font-mono font-bold text-slate-500">{i + 1}</td>
-                          <td className="px-4 py-3">
-                            {ans ? (
-                              <span className="text-emerald-600 font-bold text-xs bg-emerald-50 px-2 py-1 rounded">Answered</span>
-                            ) : (
-                              <span className="text-slate-400 font-bold text-xs bg-slate-100 px-2 py-1 rounded">Skipped</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-slate-700 truncate max-w-[200px]">
-                            {ans ? (typeof ans === "string" ? ans : ans.text) : "--"}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            <div className="w-2/3 flex flex-col">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Post-Submission Question & Solution Sheet
+                </div>
+                {submissionResult?.submissionId && (
+                  <span className="text-[10px] font-mono text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
+                    Score Saved to Database
+                  </span>
+                )}
               </div>
+
+              {isSubmittingExam ? (
+                <div className="h-72 border border-slate-200 bg-white rounded-xl p-8 flex flex-col items-center justify-center text-center space-y-3">
+                  <RefreshCcw className="h-8 w-8 text-indigo-600 animate-spin" />
+                  <p className="font-bold text-slate-800 text-sm">Grading Responses & Running Code Verifications...</p>
+                  <p className="text-xs text-slate-500">Checking unit test case outputs and checking pre-marked solutions.</p>
+                </div>
+              ) : (
+                <div className="h-80 overflow-y-auto custom-scrollbar border border-slate-200 bg-white rounded-xl p-4 space-y-4">
+                  {((submissionResult?.questionsReview || []).length > 0 ? submissionResult.questionsReview : questions).map((qItem: any, i: number) => {
+                    const ans = answers[qItem.id || qItem.question_id];
+                    const review = (submissionResult?.questionsReview || []).find((r: any) => r.question_id === (qItem.id || qItem.question_id)) || qItem;
+                    const isCorrect = Boolean(review.is_correct);
+                    const qScore = review.score ?? (isCorrect ? (review.max_points || 10) : 0);
+                    const maxPts = review.max_points || 10;
+                    const correctOptId = typeof review.correct_answer === 'object' ? review.correct_answer?.id : String(review.correct_answer || '');
+
+                    return (
+                      <div key={qItem.id || i} className={`p-4 rounded-xl border text-xs space-y-2.5 transition-all ${
+                        isCorrect ? "bg-emerald-50/40 border-emerald-200" : "bg-slate-50/70 border-slate-200"
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-slate-800 bg-slate-200 px-2 py-0.5 rounded">
+                              Q{i + 1}
+                            </span>
+                            <span className="font-bold uppercase tracking-wider text-[10px] text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                              {(qItem.question_type || "mcq").toUpperCase()}
+                            </span>
+                          </div>
+                          <span className={`font-black px-2 py-0.5 rounded text-[11px] ${
+                            isCorrect ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
+                          }`}>
+                            {qScore} / {maxPts} pts
+                          </span>
+                        </div>
+
+                        <p className="font-medium text-slate-800 whitespace-pre-wrap">{qItem.question_text}</p>
+
+                        {/* Candidate Selected Answer */}
+                        <div className="p-2.5 bg-white border border-slate-200 rounded-lg">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Your Response:</span>
+                          <span className={`font-semibold ${isCorrect ? "text-emerald-700" : "text-rose-700"}`}>
+                            {ans ? (typeof ans === "string" ? ans : ans.text || ans.id) : "(Skipped / Unanswered)"}
+                          </span>
+                        </div>
+
+                        {/* Coding Output Verification Box */}
+                        {qItem.question_type === 'coding' && review.coding_verification && (
+                          <div className="p-3 bg-slate-900 text-slate-100 rounded-lg font-mono text-[11px] space-y-1">
+                            <div className="text-[10px] font-sans font-bold text-indigo-400 uppercase tracking-wider">
+                              Automated Code Output Verification:
+                            </div>
+                            <div className={review.coding_verification.output_matches ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+                              {review.coding_verification.output_matches ? "✓ Required Output Matched Expected Criteria" : "✗ Output Did Not Match Required Criteria"}
+                            </div>
+                            {review.coding_verification.actual_output && (
+                              <div className="text-slate-400 text-[10px]">Actual Output: {review.coding_verification.actual_output}</div>
+                            )}
+                            {review.coding_verification.expected_output && (
+                              <div className="text-emerald-300 text-[10px]">Expected Output: {review.coding_verification.expected_output}</div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Pre-Marked Correct Answer & Explanation */}
+                        <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg space-y-1">
+                          <div className="flex items-center gap-1.5 text-emerald-800 font-black text-[10px] uppercase tracking-wider">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Pre-Marked Correct Solution:
+                          </div>
+                          <div className="text-emerald-950 font-bold">
+                            {review.correct_answer ? (typeof review.correct_answer === "string" ? review.correct_answer : JSON.stringify(review.correct_answer)) : "Verified Answer"}
+                          </div>
+                          {review.explanation && (
+                            <div className="text-[11px] text-emerald-800 pt-1 border-t border-emerald-200/80">
+                              <span className="font-bold">Explanation:</span> {review.explanation}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
