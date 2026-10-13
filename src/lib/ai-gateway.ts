@@ -190,9 +190,8 @@ async function callOpenRouterSecondary(
   if (typeof options.temperature === "number") {
     bodyPayload.temperature = options.temperature;
   }
-  if (typeof options.maxTokens === "number") {
-    bodyPayload.max_tokens = options.maxTokens;
-  }
+  // Default to 4096 tokens so OpenRouter doesn't reserve credit for 65k context windows
+  bodyPayload.max_tokens = typeof options.maxTokens === "number" ? options.maxTokens : 4096;
   if (options.responseMimeType === "application/json") {
     bodyPayload.response_format = { type: "json_object" };
   }
