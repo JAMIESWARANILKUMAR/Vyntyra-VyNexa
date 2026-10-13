@@ -4,11 +4,51 @@ import * as faceDetection from '@tensorflow-models/face-detection';
 import '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs-core';
 
+export type ProctoringStrictness = "lenient" | "standard" | "strict";
+
+export const STRICTNESS_PROFILES: Record<ProctoringStrictness, {
+  maxStrikes: number;
+  faceGraceMs: number;
+  multiFaceGraceMs: number;
+  gazeGraceMs: number;
+  gazeMargin: number;
+  label: string;
+}> = {
+  lenient: {
+    maxStrikes: 3, // 3 strikes allowed before termination on 4th
+    faceGraceMs: 6000,
+    multiFaceGraceMs: 4000,
+    gazeGraceMs: 6000,
+    gazeMargin: 0.10, // allows center 10% to 90%
+    label: "Lenient (3 Warnings)"
+  },
+  standard: {
+    maxStrikes: 2, // 2 strikes allowed before termination on 3rd
+    faceGraceMs: 3000,
+    multiFaceGraceMs: 2000,
+    gazeGraceMs: 3000,
+    gazeMargin: 0.15, // allows center 15% to 85%
+    label: "Standard (2 Warnings)"
+  },
+  strict: {
+    maxStrikes: 1, // 1 strike allowed, 2nd terminates immediately
+    faceGraceMs: 1500,
+    multiFaceGraceMs: 1000,
+    gazeGraceMs: 1500,
+    gazeMargin: 0.22, // must look within center 22% to 78%
+    label: "Ultra-Strict (1 Warning Max)"
+  }
+};
+
 export function useProctoringEnforcement(
   isActive: boolean, 
   onTerminate: (reason: string) => void,
-  enableCamera: boolean = true
+  enableCamera: boolean = true,
+  strictness: ProctoringStrictness = "standard"
 ) {
+  const profile = STRICTNESS_PROFILES[strictness] || STRICTNESS_PROFILES.standard;
+  const maxStrikes = profile.maxStrikes;
+
   const [strikes, setStrikes] = useState(0);
   const [logs, setLogs] = useState<any[]>([]);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -24,14 +64,14 @@ export function useProctoringEnforcement(
       const newStrikes = prev + 1;
       setLogs(l => [...l, { time: new Date().toISOString(), reason }]);
       
-      if (newStrikes >= 3) {
-        toast.error("FINAL STRIKE: Exam Terminated due to malpractice!", { duration: 5000 });
+      if (newStrikes > maxStrikes) {
+        toast.error(`TERMINATED: Maximum strikes exceeded (${newStrikes}/${maxStrikes}) due to proctoring violation!`, { duration: 6000 });
         onTerminate(reason);
         return newStrikes;
       }
       
-      toast.error(`Warning: ${reason}. Strike ${newStrikes}/2`);
-      setActiveWarning({ reason, expiresAt: Date.now() + 20000 }); // 20s timer
+      toast.error(`Warning: ${reason}. Strike ${newStrikes}/${maxStrikes}`);
+      setActiveWarning({ reason, expiresAt: Date.now() + 20000 }); // 20s warning overlay
       
       return newStrikes;
     });
@@ -95,14 +135,14 @@ export function useProctoringEnforcement(
 
         if (faces.length === 0) {
           if (!gazeViolationStartRef.current) gazeViolationStartRef.current = now;
-          else if (now - gazeViolationStartRef.current > 3000) {
+          else if (now - gazeViolationStartRef.current > profile.faceGraceMs) {
             addStrike("Face not visible in camera");
             gazeViolationStartRef.current = null;
           }
         } else if (faces.length > 1) {
           if (!gazeViolationStartRef.current) gazeViolationStartRef.current = now;
-          else if (now - gazeViolationStartRef.current > 2000) {
-            addStrike("Multiple faces detected in frame");
+          else if (now - gazeViolationStartRef.current > profile.multiFaceGraceMs) {
+            addStrike("Multiple faces detected in camera frame");
             gazeViolationStartRef.current = null;
           }
         } else {
@@ -111,9 +151,9 @@ export function useProctoringEnforcement(
           const centerX = box.xMin + box.width / 2;
           const videoWidth = videoRef.current.videoWidth;
           
-          if (centerX < videoWidth * 0.15 || centerX > videoWidth * 0.85) {
+          if (centerX < videoWidth * profile.gazeMargin || centerX > videoWidth * (1 - profile.gazeMargin)) {
             if (!gazeViolationStartRef.current) gazeViolationStartRef.current = now;
-            else if (now - gazeViolationStartRef.current > 3000) {
+            else if (now - gazeViolationStartRef.current > profile.gazeGraceMs) {
               addStrike("Suspicious gaze / looking away from screen");
               gazeViolationStartRef.current = null;
             }
@@ -137,8 +177,7 @@ export function useProctoringEnforcement(
         detectorRef.current.dispose();
       }
     };
-  }, [isActive, stream]);
-
+  }, [isActive, stream, enableCamera, strictness]);
 
   // Tab visibility, fullscreen, shortcuts tracking
   useEffect(() => {
@@ -180,7 +219,7 @@ export function useProctoringEnforcement(
     document.addEventListener("copy", preventDefault);
     document.addEventListener("cut", preventDefault);
     document.addEventListener("paste", preventDefault);
-    
+
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -191,7 +230,7 @@ export function useProctoringEnforcement(
       document.removeEventListener("cut", preventDefault);
       document.removeEventListener("paste", preventDefault);
     };
-  }, [isActive]);
+  }, [isActive, maxStrikes]);
 
   const requestFullscreen = async () => {
     try {
@@ -212,5 +251,5 @@ export function useProctoringEnforcement(
 
   const clearWarning = () => setActiveWarning(null);
 
-  return { requestFullscreen, strikes, logs, stream, activeWarning, clearWarning };
+  return { requestFullscreen, strikes, maxStrikes, logs, stream, activeWarning, clearWarning, strictness };
 }

@@ -72,12 +72,14 @@ function CbtExamInterface() {
 
   const isCameraEnabled = test?.enable_camera !== false && test?.camera_required !== false;
   const isExpired = Boolean(test?.deadline && new Date(test.deadline).getTime() < Date.now());
+  const strictness = (test?.camera_strictness || "standard") as "lenient" | "standard" | "strict";
 
   // Proctoring Enforcement Hook (must be declared before useEffect hooks that use strikes/logs)
-  const { requestFullscreen, strikes, logs, stream, activeWarning, clearWarning } = useProctoringEnforcement(
+  const { requestFullscreen, strikes, maxStrikes, logs, stream, activeWarning, clearWarning } = useProctoringEnforcement(
     examStatus === "running", 
     (reason) => handleTerminate(reason),
-    isCameraEnabled
+    isCameraEnabled,
+    strictness
   );
 
   const setVideoRef = (node: HTMLVideoElement | null) => {
@@ -519,9 +521,14 @@ function CbtExamInterface() {
                 This assessment has expired as of {new Date(test.deadline).toLocaleString()}. Access is locked.
               </div>
             ) : (
-              <div className="mt-6 bg-red-50 border border-red-200 p-3 text-red-700 font-bold text-xs flex items-center gap-2 uppercase tracking-wide">
-                <AlertTriangle className="h-4 w-4 shrink-0" />
-                Maximum 1 warning. The 2nd violation automatically terminates the exam.
+              <div className="mt-6 bg-amber-50 border border-amber-200 p-3 text-amber-900 font-bold text-xs flex items-center justify-between rounded-sm">
+                <div className="flex items-center gap-2 uppercase tracking-wide">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+                  Policy: Maximum {maxStrikes} warning{maxStrikes > 1 ? "s" : ""}. The {maxStrikes + 1}th violation automatically terminates the exam.
+                </div>
+                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-200/80 text-amber-900">
+                  {strictness === "strict" ? "Ultra-Strict" : strictness === "lenient" ? "Lenient" : "Standard"} Proctoring
+                </span>
               </div>
             )}
           </div>
@@ -650,10 +657,21 @@ function CbtExamInterface() {
             {/* Strikes Info */}
             <div className="mb-6 bg-white p-3 border border-slate-200 rounded-sm shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 uppercase">Violations</span>
-                <span className={`font-black text-sm ${strikes > 0 ? "text-red-600" : "text-emerald-600"}`}>{strikes} / 2</span>
+                <div>
+                  <span className="text-xs font-bold text-slate-700 uppercase block">Violations</span>
+                  <span className="text-[9px] uppercase font-bold text-slate-400">
+                    {strictness === "strict" ? "Ultra-Strict" : strictness === "lenient" ? "Lenient" : "Standard"}
+                  </span>
+                </div>
+                <span className={`font-black text-sm ${strikes > 0 ? "text-red-600" : "text-emerald-600"}`}>
+                  {strikes} / {maxStrikes}
+                </span>
               </div>
-              {strikes > 0 && <div className="mt-2 text-[10px] text-red-700 font-bold bg-red-50 p-2 border border-red-200 rounded-sm">Warning: 1 strike remaining.</div>}
+              {strikes > 0 && (
+                <div className="mt-2 text-[10px] text-red-700 font-bold bg-red-50 p-2 border border-red-200 rounded-sm">
+                  {maxStrikes - strikes <= 0 ? "Final violation reached." : `Warning: ${maxStrikes - strikes} strike(s) remaining.`}
+                </div>
+              )}
             </div>
 
             {/* Question Palette */}

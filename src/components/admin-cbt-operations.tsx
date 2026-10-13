@@ -12,7 +12,9 @@ import {
   reassignAdminTestFn,
   extendAdminTestDeadlineFn,
   getAdminSubmissionDetailFn,
-  overrideSubmissionScoreFn
+  overrideSubmissionScoreFn,
+  grantInternRetakeFn,
+  clearSubmissionStrikesFn
 } from "@/lib/cbt.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -20,7 +22,8 @@ import {
   BrainCircuit, Upload, Loader2, Save, Users, FileText, CheckCircle2, Trash2, 
   CheckCircle, XCircle, RefreshCw, AlertTriangle, Search, Activity, Clock, 
   UserPlus, Camera, CameraOff, Calendar, Plus, Edit3, Eye, ShieldAlert, 
-  ShieldCheck, Award, Check, Sparkles, AlertCircle
+  ShieldCheck, Award, Check, Sparkles, AlertCircle, RotateCcw, Sliders, Shield, 
+  Shuffle, CheckSquare, ChevronDown, ChevronUp
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -46,7 +49,7 @@ export function CbtOperationsTab() {
             AI & Manual CBT Engine Control Hub
           </h2>
           <p className="text-sm text-slate-500 font-medium mt-1">
-            Complete assessment governance: manual/AI question authoring, proctoring controls, deadline extenders, and full mark sheets.
+            Complete assessment governance: camera strictness levels, manual/AI authoring, deadline extenders, retake manager, and full mark sheets.
           </p>
         </div>
         <div className="flex bg-slate-100 p-1 rounded-xl">
@@ -85,7 +88,13 @@ function AdminCbtGenerateView() {
   const [passingScore, setPassingScore] = useState(50);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(30);
   const [enableCamera, setEnableCamera] = useState(true);
+  const [cameraStrictness, setCameraStrictness] = useState<"lenient" | "standard" | "strict">("standard");
   const [deadline, setDeadline] = useState("");
+  const [shuffleQuestions, setShuffleQuestions] = useState(false);
+  const [showInstantResults, setShowInstantResults] = useState(true);
+  const [maxAttempts, setMaxAttempts] = useState(1);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+
   const [targetType, setTargetType] = useState<"intern" | "team">("intern");
   const [targetId, setTargetId] = useState("");
   const [taskContext, setTaskContext] = useState("");
@@ -226,6 +235,12 @@ function AdminCbtGenerateView() {
     if (!targetId || targetId === "none") return toast.error("Please select a target Intern or Team.");
     if (!questionsList || questionsList.length === 0) return toast.error("At least one question is required.");
 
+    // Resolve target IDs (supporting "all" interns)
+    let finalTargetId: any = targetId;
+    if (targetType === "intern" && targetId === "all") {
+      finalTargetId = targets.interns.map(i => i.id);
+    }
+
     setIsSaving(true);
     try {
       const res = await saveFn({ data: {
@@ -233,11 +248,15 @@ function AdminCbtGenerateView() {
           title, 
           description,
           target_type: targetType, 
-          target_id: targetId, 
+          target_id: finalTargetId, 
           passing_score: Number(passingScore) || 50,
           time_limit_minutes: Number(timeLimitMinutes) || 30,
           enable_camera: enableCamera,
+          camera_strictness: cameraStrictness,
           deadline: deadline ? new Date(deadline).toISOString() : null,
+          shuffle_questions: shuffleQuestions,
+          show_instant_results: showInstantResults,
+          max_attempts: maxAttempts,
           category: "Technical Assessment",
           modules
         },
@@ -245,7 +264,7 @@ function AdminCbtGenerateView() {
       } });
       
       if (res.success) {
-        toast.success(res.message || "Test successfully created and automated emails sent!");
+        toast.success(res.message || "Test successfully created and assigned!");
         setGenerated(null);
         setTitle("");
         setDescription("");
@@ -373,6 +392,74 @@ function AdminCbtGenerateView() {
                 </div>
               </div>
 
+              {/* Camera Strictness Selector (Visible when Camera is Enforced) */}
+              {enableCamera && (
+                <div className="p-3.5 bg-indigo-50/40 border border-indigo-200/80 rounded-xl space-y-2 animate-in fade-in">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <Shield className="h-4 w-4 text-indigo-600" />
+                      Proctoring Strictness Level
+                    </label>
+                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                      {cameraStrictness === "strict" ? "Zero Tolerance" : cameraStrictness === "lenient" ? "Flexible Mode" : "Balanced"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCameraStrictness("lenient")}
+                      className={`p-2.5 rounded-xl border text-left transition-all ${
+                        cameraStrictness === "lenient"
+                          ? "bg-white border-emerald-500 shadow-sm ring-2 ring-emerald-500/20"
+                          : "bg-slate-50/70 border-slate-200 hover:bg-white text-slate-600"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                        <span className="text-xs font-bold text-slate-800">Lenient</span>
+                      </div>
+                      <div className="text-[11px] font-black text-emerald-700">3 Strikes Allowed</div>
+                      <div className="text-[9px] text-slate-500 mt-0.5 leading-tight">6s gaze tolerance, generous head tilt</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setCameraStrictness("standard")}
+                      className={`p-2.5 rounded-xl border text-left transition-all ${
+                        cameraStrictness === "standard"
+                          ? "bg-white border-amber-500 shadow-sm ring-2 ring-amber-500/20"
+                          : "bg-slate-50/70 border-slate-200 hover:bg-white text-slate-600"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <div className="h-2 w-2 rounded-full bg-amber-500" />
+                        <span className="text-xs font-bold text-slate-800">Standard</span>
+                      </div>
+                      <div className="text-[11px] font-black text-amber-700">2 Strikes Allowed</div>
+                      <div className="text-[9px] text-slate-500 mt-0.5 leading-tight">3s gaze tolerance, corporate benchmark</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setCameraStrictness("strict")}
+                      className={`p-2.5 rounded-xl border text-left transition-all ${
+                        cameraStrictness === "strict"
+                          ? "bg-white border-rose-500 shadow-sm ring-2 ring-rose-500/20"
+                          : "bg-slate-50/70 border-slate-200 hover:bg-white text-slate-600"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <div className="h-2 w-2 rounded-full bg-rose-500" />
+                        <span className="text-xs font-bold text-slate-800">Ultra-Strict</span>
+                      </div>
+                      <div className="text-[11px] font-black text-rose-700">1 Strike Max</div>
+                      <div className="text-[9px] text-slate-500 mt-0.5 leading-tight">1.5s tolerance, auto-termination</div>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Assessment Deadline */}
               <div>
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between mb-1">
@@ -382,11 +469,66 @@ function AdminCbtGenerateView() {
                 <div className="relative">
                   <input 
                     type="datetime-local" 
-                    className="w-full p-2.5 border rounded-lg text-sm text-slate-800"
+                    className="w-full p-2.5 border rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none"
                     value={deadline}
                     onChange={e => setDeadline(e.target.value)}
                   />
                 </div>
+              </div>
+
+              {/* Advanced Controls Toggle */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+                  className="w-full p-3 bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-xs font-bold text-slate-700"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Sliders className="h-4 w-4 text-indigo-600" />
+                    Advanced Assessment Delivery Settings
+                  </span>
+                  {showAdvancedSettings ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </button>
+
+                {showAdvancedSettings && (
+                  <div className="p-3.5 space-y-3 bg-white text-xs">
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                        <input 
+                          type="checkbox" 
+                          checked={shuffleQuestions} 
+                          onChange={e => setShuffleQuestions(e.target.checked)}
+                          className="h-4 w-4 text-indigo-600 rounded" 
+                        />
+                        <span>Shuffle Question Order</span>
+                      </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                        <input 
+                          type="checkbox" 
+                          checked={showInstantResults} 
+                          onChange={e => setShowInstantResults(e.target.checked)}
+                          className="h-4 w-4 text-indigo-600 rounded" 
+                        />
+                        <span>Show Score Immediately</span>
+                      </label>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Max Retakes / Attempts</label>
+                      <select 
+                        value={maxAttempts} 
+                        onChange={e => setMaxAttempts(Number(e.target.value))}
+                        className="w-full text-xs p-2 border rounded-lg bg-white"
+                      >
+                        <option value={1}>1 Attempt Only (Single Shot)</option>
+                        <option value={2}>2 Attempts Allowed</option>
+                        <option value={3}>3 Attempts Allowed</option>
+                        <option value={999}>Unlimited Attempts</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -416,6 +558,11 @@ function AdminCbtGenerateView() {
                   <SelectValue placeholder="Select an Intern to assign..." />
                 </SelectTrigger>
                 <SelectContent>
+                  {targets.interns.length > 0 && (
+                    <SelectItem value="all" className="font-bold text-indigo-600">
+                      ★ Assign to All Active Interns ({targets.interns.length} candidates)
+                    </SelectItem>
+                  )}
                   {targets.interns.map(intern => (
                     <SelectItem key={intern.id} value={intern.id}>
                       {intern.full_name} ({intern.email})
@@ -788,6 +935,7 @@ function AdminCbtSubmissionsView() {
   const [assigningExam, setAssigningExam] = useState<any>(null);
   const [assignTargetType, setAssignTargetType] = useState<"intern" | "team">("intern");
   const [assignTargetId, setAssignTargetId] = useState<string>("");
+  const [assignStrictness, setAssignStrictness] = useState<string>("standard");
   const [isReassigning, setIsReassigning] = useState<boolean>(false);
 
   // Extend Deadline Dialog State
@@ -806,6 +954,7 @@ function AdminCbtSubmissionsView() {
           testId: assigningExam.id,
           target_type: assignTargetType,
           target_id: assignTargetId,
+          camera_strictness: assignStrictness
         }
       });
       toast.success(res.message || "Test allocated and assigned successfully!");
@@ -912,6 +1061,7 @@ function AdminCbtSubmissionsView() {
             <tr>
               <th className="px-6 py-4">Title & Policy</th>
               <th className="px-6 py-4">Target Candidate</th>
+              <th className="px-6 py-4">Proctoring Strictness</th>
               <th className="px-6 py-4">Deadline</th>
               <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4 text-right">Governance Actions</th>
@@ -919,12 +1069,13 @@ function AdminCbtSubmissionsView() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {isLoadingTests ? (
-              <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">Loading exams...</td></tr>
+              <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">Loading exams...</td></tr>
             ) : tests.length === 0 ? (
-              <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">No exams found.</td></tr>
+              <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No exams found.</td></tr>
             ) : (
               tests.map((t: any) => {
                 const isExpired = t.deadline && new Date(t.deadline).getTime() < Date.now();
+                const strictness = t.camera_strictness || "standard";
                 return (
                   <tr key={t.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4">
@@ -933,10 +1084,10 @@ function AdminCbtSubmissionsView() {
                         <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
                           {t.time_limit_minutes || 30} mins
                         </span>
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.enable_camera !== false ? "bg-red-50 text-red-700 border border-red-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.enable_camera !== false ? "bg-indigo-50 text-indigo-700 border border-indigo-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
                           {t.enable_camera !== false ? "Camera Enforced" : "Focus Only"}
                         </span>
-                        <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">
                           Pass: {t.passing_score || 50}%
                         </span>
                       </div>
@@ -948,6 +1099,24 @@ function AdminCbtSubmissionsView() {
                       <span className="text-[10px] uppercase font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
                         {t.allocation_mode}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {t.enable_camera === false ? (
+                        <span className="text-[11px] font-bold text-slate-400">N/A (No Camera)</span>
+                      ) : (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1 ${
+                          strictness === 'strict' 
+                            ? 'bg-rose-100 text-rose-800 border border-rose-300' 
+                            : strictness === 'lenient'
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : 'bg-amber-100 text-amber-800 border border-amber-300'
+                        }`}>
+                          <div className={`h-1.5 w-1.5 rounded-full ${
+                            strictness === 'strict' ? 'bg-rose-600' : strictness === 'lenient' ? 'bg-emerald-600' : 'bg-amber-600'
+                          }`} />
+                          {strictness === 'strict' ? 'Ultra-Strict (1 Strike)' : strictness === 'lenient' ? 'Lenient (3 Strikes)' : 'Standard (2 Strikes)'}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       {t.deadline ? (
@@ -989,6 +1158,7 @@ function AdminCbtSubmissionsView() {
                         onClick={() => {
                           setAssignTargetType("intern");
                           setAssignTargetId("");
+                          setAssignStrictness(t.camera_strictness || "standard");
                           setAssigningExam(t);
                         }}
                       >
@@ -1128,6 +1298,24 @@ function AdminCbtSubmissionsView() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Strictness Level during allocation */}
+              {assigningExam.enable_camera !== false && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                    Camera Proctoring Strictness
+                  </label>
+                  <select 
+                    value={assignStrictness} 
+                    onChange={e => setAssignStrictness(e.target.value)}
+                    className="w-full text-xs p-2 border rounded-lg bg-white"
+                  >
+                    <option value="lenient">Lenient (3 Warnings Allowed, 6s grace)</option>
+                    <option value="standard">Standard (2 Warnings Allowed, 3s grace)</option>
+                    <option value="strict">Ultra-Strict (1 Warning Max, 1.5s grace)</option>
+                  </select>
+                </div>
+              )}
             </div>
 
             <DialogFooter className="gap-2 sm:gap-0">
@@ -1153,6 +1341,8 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
   const fetchDetail = useServerFn(getAdminSubmissionDetailFn);
   const doOverride = useServerFn(overrideSubmissionScoreFn);
   const doExtend = useServerFn(extendAdminTestDeadlineFn);
+  const doRetake = useServerFn(grantInternRetakeFn);
+  const doClearStrikes = useServerFn(clearSubmissionStrikesFn);
 
   const [activeSubmissionDetail, setActiveSubmissionDetail] = useState<any>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
@@ -1166,6 +1356,11 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
   const [showExtendModal, setShowExtendModal] = useState<boolean>(false);
   const [newDeadline, setNewDeadline] = useState<string>("");
   const [isExtending, setIsExtending] = useState<boolean>(false);
+
+  // Retake modal state
+  const [retakeSubmission, setRetakeSubmission] = useState<any>(null);
+  const [retakeReason, setRetakeReason] = useState<string>("");
+  const [isResettingAttempt, setIsResettingAttempt] = useState<boolean>(false);
   
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ["admin-cbt-submissions", testId],
@@ -1199,7 +1394,6 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
       });
       toast.success(res.message || "Score overridden successfully!");
       qc.invalidateQueries({ queryKey: ["admin-cbt-submissions", testId] });
-      // Update local state
       setActiveSubmissionDetail({
         ...activeSubmissionDetail,
         submission: {
@@ -1211,6 +1405,48 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
       toast.error(e.message || "Failed to override score.");
     } finally {
       setIsOverriding(false);
+    }
+  };
+
+  const handleConfirmRetake = async () => {
+    if (!retakeSubmission) return;
+    setIsResettingAttempt(true);
+    try {
+      const res = await doRetake({
+        data: {
+          submissionId: retakeSubmission.id,
+          reason: retakeReason || "Administrative reset granted."
+        }
+      });
+      toast.success(res.message || "Attempt reset and retake granted!");
+      setRetakeSubmission(null);
+      setRetakeReason("");
+      setActiveSubmissionDetail(null);
+      qc.invalidateQueries({ queryKey: ["admin-cbt-submissions", testId] });
+    } catch (e: any) {
+      toast.error(e.message || "Failed to grant retake.");
+    } finally {
+      setIsResettingAttempt(false);
+    }
+  };
+
+  const handleClearStrikes = async (submissionId: string) => {
+    try {
+      const res = await doClearStrikes({ data: { submissionId } });
+      toast.success(res.message || "Strikes cleared!");
+      qc.invalidateQueries({ queryKey: ["admin-cbt-submissions", testId] });
+      if (activeSubmissionDetail && activeSubmissionDetail.submission.id === submissionId) {
+        setActiveSubmissionDetail({
+          ...activeSubmissionDetail,
+          malpracticeLogs: [],
+          submission: {
+            ...activeSubmissionDetail.submission,
+            malpractice_warnings: 0
+          }
+        });
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Failed to clear strikes.");
     }
   };
 
@@ -1236,6 +1472,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
   };
 
   const passingScore = test?.passing_score || 50;
+  const strictness = test?.camera_strictness || "standard";
 
   return (
     <div className="space-y-6">
@@ -1250,7 +1487,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
               <span>•</span>
               <span>Pass Benchmark: <strong>{passingScore}%</strong></span>
               <span>•</span>
-              <span>Proctoring: <strong>{test?.enable_camera !== false ? "Camera Enforced" : "Focus Only"}</strong></span>
+              <span>Proctoring: <strong>{test?.enable_camera !== false ? `Camera Enforced (${strictness.toUpperCase()})` : "Focus Only"}</strong></span>
               {test?.deadline && (
                 <>
                   <span>•</span>
@@ -1282,8 +1519,8 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
               <th className="px-6 py-4">Candidate Name</th>
               <th className="px-6 py-4">Submitted At</th>
               <th className="px-6 py-4">Total Score</th>
-              <th className="px-6 py-4">Assessment Result</th>
-              <th className="px-6 py-4 text-right">Detailed Inspection</th>
+              <th className="px-6 py-4">Result</th>
+              <th className="px-6 py-4 text-right">Candidate Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -1314,13 +1551,24 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                         {isPassed ? "Passed" : "Needs Retest"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="text-xs font-semibold gap-1 text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                        onClick={() => {
+                          setRetakeSubmission(sub);
+                          setRetakeReason("");
+                        }}
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" /> Grant Retake
+                      </Button>
                       <Button 
                         size="sm" 
                         className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs gap-1"
                         onClick={() => handleOpenDetail(sub.id)}
                       >
-                        <Eye className="h-3.5 w-3.5" /> View Full Mark Sheet & Report
+                        <Eye className="h-3.5 w-3.5" /> Mark Sheet
                       </Button>
                     </td>
                   </tr>
@@ -1330,6 +1578,47 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
           </tbody>
         </table>
       </div>
+
+      {/* Grant Retake Confirmation Modal */}
+      {retakeSubmission && (
+        <Dialog open={!!retakeSubmission} onOpenChange={(open) => !open && setRetakeSubmission(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <RotateCcw className="h-5 w-5 text-emerald-600" />
+                Grant Retake / Reset Candidate Session
+              </DialogTitle>
+              <DialogDescription>
+                This will reset the previous submission for <strong>{retakeSubmission.profiles?.full_name || "the candidate"}</strong>, clear any strikes, and dispatch an automated email granting a fresh attempt.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3 py-2">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                Reason / Administrative Note (Included in Email)
+              </label>
+              <textarea 
+                className="w-full p-2.5 border rounded-lg text-xs resize-none" 
+                rows={3}
+                placeholder="e.g. Technical network disconnection verified; granting full retake opportunity."
+                value={retakeReason}
+                onChange={e => setRetakeReason(e.target.value)}
+              />
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setRetakeSubmission(null)}>Cancel</Button>
+              <Button 
+                onClick={handleConfirmRetake} 
+                disabled={isResettingAttempt}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              >
+                {isResettingAttempt ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Resetting...</> : "Confirm Retake & Send Email"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Comprehensive Mark Sheet & Proctoring Report Modal */}
       {activeSubmissionDetail && (
@@ -1376,14 +1665,27 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
 
               {/* Proctoring & Infractions Log */}
               <div>
-                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-2">
-                  <ShieldAlert className="h-4 w-4 text-rose-500" />
-                  Proctoring Telemetry ({activeSubmissionDetail.malpracticeLogs?.length || 0} Events)
-                </h4>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                    <ShieldAlert className="h-4 w-4 text-rose-500" />
+                    Proctoring Telemetry ({activeSubmissionDetail.malpracticeLogs?.length || 0} Events)
+                  </h4>
+                  {activeSubmissionDetail.malpracticeLogs?.length > 0 && (
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="text-[10px] h-7 text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+                      onClick={() => handleClearStrikes(activeSubmissionDetail.submission?.id)}
+                    >
+                      Clear Strikes / Forgive Infractions
+                    </Button>
+                  )}
+                </div>
+
                 {activeSubmissionDetail.malpracticeLogs?.length === 0 ? (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 font-semibold flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-emerald-600" />
-                    Zero infractions detected. The candidate adhered strictly to fullscreen and focus requirements.
+                    Zero infractions detected. Candidate adhered strictly to fullscreen and focus requirements.
                   </div>
                 ) : (
                   <div className="space-y-1.5 max-h-36 overflow-y-auto">
@@ -1489,7 +1791,17 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                     />
                   </div>
                 </div>
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    variant="outline"
+                    className="text-xs text-emerald-700 border-emerald-300"
+                    onClick={() => {
+                      setRetakeSubmission(activeSubmissionDetail.submission);
+                      setRetakeReason("");
+                    }}
+                  >
+                    <RotateCcw className="h-3.5 w-3.5 mr-1" /> Grant Fresh Retake
+                  </Button>
                   <Button 
                     onClick={handleSaveOverride} 
                     disabled={isOverriding}

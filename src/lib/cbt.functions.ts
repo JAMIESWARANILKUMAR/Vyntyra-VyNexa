@@ -235,73 +235,121 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       passing_score, 
       time_limit_minutes, 
       enable_camera, 
+      camera_strictness,
       deadline, 
+      shuffle_questions,
+      show_instant_results,
+      max_attempts,
       category 
     } = args.testMetadata;
     
-    // 1. Create the CBT Exam with graceful fallback for columns
-    const examDataToInsert: any = {
+    const sanitizedTargetId = typeof target_id === 'string' ? target_id.trim() : target_id;
+    const targetArray = Array.isArray(sanitizedTargetId) 
+      ? sanitizedTargetId.filter(Boolean) 
+      : (sanitizedTargetId && sanitizedTargetId !== 'none' ? [sanitizedTargetId] : []);
+
+    // 1. Create the CBT Exam with graceful multi-tier fallback
+    const fullPayload: any = {
       title: title || 'New AI CBT Exam',
       description: description || 'Generated AI Assessment',
       category: category || 'General',
-      passing_score: passing_score || 50,
+      passing_score: Number(passing_score) || 50,
       created_by: userId,
       status: 'published',
       allocation_mode: target_type === 'team' ? 'team' : 'individual',
-      team_ids: target_type === 'team' ? (Array.isArray(target_id) ? target_id : [target_id]) : [],
-      intern_ids: target_type === 'intern' ? (Array.isArray(target_id) ? target_id : [target_id]) : [],
-      time_limit_minutes: time_limit_minutes || 30,
+      team_ids: target_type === 'team' ? targetArray : [],
+      intern_ids: target_type === 'intern' ? targetArray : [],
+      time_limit_minutes: Number(time_limit_minutes) || 30,
       enable_camera: enable_camera !== false,
       camera_required: enable_camera !== false,
+      camera_strictness: camera_strictness || 'standard',
       deadline: deadline || null,
+      shuffle_questions: Boolean(shuffle_questions),
+      show_instant_results: show_instant_results !== false,
+      max_attempts: Number(max_attempts) || 1,
     };
 
     let exam: any = null;
-    const { data: createdExam, error: examError } = await adminClient
-      .from('cbt_exams')
-      .insert(examDataToInsert)
-      .select('id')
-      .single();
+    let examInsertRes = await adminClient.from('cbt_exams').insert(fullPayload).select('id').single();
 
-    if (examError) {
-      console.warn("[saveGeneratedTestFn] Primary insert error, falling back:", examError.message);
-      const fallbackPayload = {
+    if (examInsertRes.error) {
+      console.warn("[saveGeneratedTestFn] Primary insert failed, trying reduced payload:", examInsertRes.error.message);
+      const reducedPayload = {
         title: title || 'New AI CBT Exam',
         description: description || 'Generated AI Assessment',
         category: category || 'General',
-        passing_score: passing_score || 50,
+        passing_score: Number(passing_score) || 50,
         created_by: userId,
         status: 'published',
         allocation_mode: target_type === 'team' ? 'team' : 'individual',
-        team_ids: target_type === 'team' ? (Array.isArray(target_id) ? target_id : [target_id]) : [],
-        intern_ids: target_type === 'intern' ? (Array.isArray(target_id) ? target_id : [target_id]) : [],
+        team_ids: target_type === 'team' ? targetArray : [],
+        intern_ids: target_type === 'intern' ? targetArray : [],
+        time_limit_minutes: Number(time_limit_minutes) || 30,
+        enable_camera: enable_camera !== false,
+        camera_required: enable_camera !== false,
+        deadline: deadline || null,
       };
-      const fallbackRes = await adminClient.from('cbt_exams').insert(fallbackPayload).select('id').single();
-      if (fallbackRes.error || !fallbackRes.data) {
-        throw new Error("Failed to create CBT Exam: " + (fallbackRes.error?.message || examError.message));
-      }
-      exam = fallbackRes.data;
-    } else {
-      exam = createdExam;
+      examInsertRes = await adminClient.from('cbt_exams').insert(reducedPayload).select('id').single();
     }
 
-    // 2. Insert Questions with manual timers & points
+    if (examInsertRes.error) {
+      console.warn("[saveGeneratedTestFn] Reduced insert failed, trying base table columns:", examInsertRes.error.message);
+      const basePayload = {
+        title: title || 'New AI CBT Exam',
+        description: description || 'Generated AI Assessment',
+        category: category || 'General',
+        passing_score: Number(passing_score) || 50,
+        created_by: userId,
+        status: 'published',
+        allocation_mode: target_type === 'team' ? 'team' : 'individual',
+        team_ids: target_type === 'team' ? targetArray : [],
+        intern_ids: target_type === 'intern' ? targetArray : [],
+      };
+      examInsertRes = await adminClient.from('cbt_exams').insert(basePayload).select('id').single();
+    }
+
+    if (examInsertRes.error) {
+      console.warn("[saveGeneratedTestFn] Base insert failed, testing without foreign key or array types:", examInsertRes.error.message);
+      const safePayload = {
+        title: title || 'New AI CBT Exam',
+        description: description || 'Generated AI Assessment',
+        category: category || 'General',
+        passing_score: Number(passing_score) || 50,
+        status: 'published',
+        allocation_mode: target_type === 'team' ? 'team' : 'individual',
+        team_ids: [],
+        intern_ids: [],
+      };
+      examInsertRes = await adminClient.from('cbt_exams').insert(safePayload).select('id').single();
+      if (examInsertRes.error || !examInsertRes.data) {
+        throw new Error("Failed to create CBT Exam: " + examInsertRes.error.message);
+      }
+    }
+
+    exam = examInsertRes.data;
+
+    // 2. Insert Questions into cbt_questions with fallback if max_points column is not in DB yet
     const questionsToInsert = args.questions.map((q: any, i: number) => ({
       exam_id: exam.id,
-      question_text: q.question_text,
+      question_text: q.question_text || `Question ${i + 1}`,
       question_type: q.question_type || 'mcq',
-      options: q.options || {},
-      correct_answer: typeof q.correct_answer === 'object' ? q.correct_answer.id : q.correct_answer,
-      time_limit_seconds: q.time_limit_seconds || 60,
-      max_points: q.max_points || 10,
+      options: typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || {}),
+      correct_answer: typeof q.correct_answer === 'object' && q.correct_answer !== null
+        ? (q.correct_answer.id || JSON.stringify(q.correct_answer))
+        : String(q.correct_answer ?? ''),
+      time_limit_seconds: Number(q.time_limit_seconds) || 60,
+      max_points: Number(q.max_points) || 10,
       order_index: i
     }));
 
-    const { error: questionsError } = await adminClient.from('cbt_questions').insert(questionsToInsert);
-    
-    if (questionsError) {
-      console.error(questionsError);
-      throw new Error("Failed to insert CBT questions into Supabase");
+    let qInsertRes = await adminClient.from('cbt_questions').insert(questionsToInsert);
+    if (qInsertRes.error) {
+      console.warn("[saveGeneratedTestFn] Insert questions with max_points failed, retrying without max_points:", qInsertRes.error.message);
+      const questionsWithoutPoints = questionsToInsert.map(({ max_points, ...rest }) => rest);
+      qInsertRes = await adminClient.from('cbt_questions').insert(questionsWithoutPoints);
+      if (qInsertRes.error) {
+        throw new Error("Failed to insert CBT questions into Supabase: " + qInsertRes.error.message);
+      }
     }
 
     invalidateCache("admin_cbt_tests");
@@ -309,20 +357,19 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
     // 3. Automated Email Notification
     try {
       let targetEmails: { email: string; name: string }[] = [];
-      if (target_type === 'intern' && target_id) {
-        const internIds = Array.isArray(target_id) ? target_id : [target_id];
+      if (target_type === 'intern' && targetArray.length > 0) {
         const { data: profiles } = await adminClient
           .from('profiles')
           .select('email, full_name')
-          .in('id', internIds);
+          .in('id', targetArray);
         if (profiles) {
           targetEmails = profiles.map(p => ({ email: p.email, name: p.full_name }));
         }
-      } else if (target_type === 'team' && target_id) {
+      } else if (target_type === 'team' && targetArray.length > 0) {
         const { data: taskProfiles } = await adminClient
           .from('tasks')
           .select('assigned_to, profiles:assigned_to(email, full_name)')
-          .eq('team_id', target_id);
+          .in('team_id', targetArray);
         if (taskProfiles) {
           const seen = new Set<string>();
           for (const t of taskProfiles) {
@@ -342,8 +389,8 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
             internName: target.name,
             testTitle: title || 'New Assessment',
             description,
-            timeLimitMinutes: time_limit_minutes || 30,
-            passingScore: passing_score || 50,
+            timeLimitMinutes: Number(time_limit_minutes) || 30,
+            passingScore: Number(passing_score) || 50,
             enableCamera: enable_camera !== false,
             deadline,
             testId: exam.id,
@@ -358,7 +405,7 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
     return { 
       success: true, 
       testId: exam.id, 
-      message: "Exam successfully created and assigned! Automated emails dispatched to interns." 
+      message: "Exam successfully created and allocated! Candidate notification emails dispatched." 
     };
   });
 
@@ -375,7 +422,7 @@ export const getInternTestSessionFn = createServerFn({ method: "POST" })
     ]);
     if (testErr || !test) throw new Error("Test not found");
     
-    const safeQuestions = (questions || []).map((q: any) => {
+    let safeQuestions = (questions || []).map((q: any) => {
       let options = q.options;
       try { if (typeof options === 'string') options = JSON.parse(options); } catch (e) {}
       return {
@@ -383,10 +430,14 @@ export const getInternTestSessionFn = createServerFn({ method: "POST" })
         question_type: q.question_type,
         question_text: q.question_text,
         options: options,
-        max_points: q.max_points,
-        time_limit_seconds: q.time_limit_seconds
+        max_points: q.max_points || 10,
+        time_limit_seconds: q.time_limit_seconds || 60
       };
     });
+
+    if (test.shuffle_questions) {
+      safeQuestions = [...safeQuestions].sort(() => Math.random() - 0.5);
+    }
 
     const candidateId = profile?.intern_id || profile?.employee_id || (test.intern_ids && test.intern_ids[0]) || context.user.id.slice(0, 8).toUpperCase();
     
@@ -633,12 +684,13 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
     target_id: z.string(),
     deadline: z.string().optional(),
     enable_camera: z.boolean().optional(),
+    camera_strictness: z.string().optional(),
     time_limit_minutes: z.number().optional(),
     passing_score: z.number().optional(),
   }).parse(d))
   .handler(async ({ data: args }) => {
     const adminClient = getAdminClient();
-    const { testId, target_type, target_id, deadline, enable_camera, time_limit_minutes, passing_score } = args;
+    const { testId, target_type, target_id, deadline, enable_camera, camera_strictness, time_limit_minutes, passing_score } = args;
 
     const { data: test, error: fetchErr } = await adminClient
       .from('cbt_exams')
@@ -658,23 +710,40 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
       updatePayload.enable_camera = enable_camera;
       updatePayload.camera_required = enable_camera;
     }
-    if (time_limit_minutes !== undefined) updatePayload.time_limit_minutes = time_limit_minutes;
-    if (passing_score !== undefined) updatePayload.passing_score = passing_score;
+    if (camera_strictness !== undefined) updatePayload.camera_strictness = camera_strictness;
+    if (time_limit_minutes !== undefined) updatePayload.time_limit_minutes = Number(time_limit_minutes);
+    if (passing_score !== undefined) updatePayload.passing_score = Number(passing_score);
+
+    const safeTargetId = target_id.trim();
 
     if (target_type === 'team') {
       const existingTeams = Array.isArray(test.team_ids) ? test.team_ids : [];
-      updatePayload.team_ids = Array.from(new Set([...existingTeams, target_id]));
+      updatePayload.team_ids = Array.from(new Set([...existingTeams, safeTargetId].filter(Boolean)));
     } else {
       const existingInterns = Array.isArray(test.intern_ids) ? test.intern_ids : [];
-      updatePayload.intern_ids = Array.from(new Set([...existingInterns, target_id]));
+      updatePayload.intern_ids = Array.from(new Set([...existingInterns, safeTargetId].filter(Boolean)));
     }
 
-    const { error: updateErr } = await adminClient
+    let { error: updateErr } = await adminClient
       .from('cbt_exams')
       .update(updatePayload)
       .eq('id', testId);
 
-    if (updateErr) throw new Error("Failed to assign exam: " + updateErr.message);
+    if (updateErr) {
+      console.warn("[reassignAdminTestFn] Primary update failed, trying safe fallback:", updateErr.message);
+      const fallbackPayload: any = {
+        status: 'published',
+        allocation_mode: target_type === 'team' ? 'team' : 'individual',
+      };
+      if (deadline !== undefined) fallbackPayload.deadline = deadline || null;
+      if (enable_camera !== undefined) fallbackPayload.enable_camera = enable_camera;
+      if (time_limit_minutes !== undefined) fallbackPayload.time_limit_minutes = Number(time_limit_minutes);
+      
+      const fallbackRes = await adminClient.from('cbt_exams').update(fallbackPayload).eq('id', testId);
+      if (fallbackRes.error) {
+        throw new Error("Failed to assign exam: " + fallbackRes.error.message);
+      }
+    }
 
     invalidateCache("admin_cbt_tests");
 
@@ -879,4 +948,79 @@ export const listAllCbtSubmissionsFn = createServerFn({ method: "GET" })
       }
       return subs || [];
     });
+  });
+
+export const grantInternRetakeFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    submissionId: z.string(),
+    reason: z.string().optional()
+  }).parse(d))
+  .handler(async ({ data: args }) => {
+    const adminClient = getAdminClient();
+    const { submissionId, reason } = args;
+
+    const { data: sub, error: subErr } = await adminClient
+      .from('cbt_submissions')
+      .select('*, profiles(email, full_name), cbt_exams(title, id)')
+      .eq('id', submissionId)
+      .single();
+
+    if (subErr || !sub) throw new Error("Submission not found");
+
+    // Cleanly delete submission and answers to allow fresh retake
+    await adminClient.from('cbt_answers').delete().eq('submission_id', submissionId);
+    await adminClient.from('cbt_malpractice_logs').delete().eq('submission_id', submissionId);
+    await adminClient.from('cbt_submissions').delete().eq('id', submissionId);
+
+    invalidateCache("all_cbt_submissions");
+
+    // Send automated email to candidate
+    const candidateEmail = sub.profiles?.email;
+    if (candidateEmail) {
+      const apiKey = getEnv("RESEND_API_KEY");
+      if (apiKey) {
+        try {
+          const { Resend } = await import("resend");
+          const resend = new Resend(apiKey);
+          const appUrl = "https://vynexaconnect.vyntyraconsultancyservices.in";
+          await resend.emails.send({
+            from: "VyNexa Connect <noreply@vyntyraconsultancyservices.in>",
+            to: candidateEmail,
+            subject: `[VyNexa Connect] Retake Approved: ${sub.cbt_exams?.title || "Assessment"}`,
+            html: `
+              <div style="font-family: sans-serif; padding: 24px; color: #1e293b;">
+                <h2 style="color: #059669;">Assessment Retake Approved</h2>
+                <p>Hello <strong>${sub.profiles?.full_name || "Candidate"}</strong>,</p>
+                <p>Your previous assessment submission for <strong>${sub.cbt_exams?.title || "Assessment"}</strong> has been officially reset by the administrator.</p>
+                <p>You may now launch and attempt the assessment again.</p>
+                ${reason ? `<p><strong>Administrator Note:</strong> ${reason}</p>` : ""}
+                <div style="margin-top: 24px;">
+                  <a href="${appUrl}/cbt/${sub.cbt_exams?.id || sub.exam_id}" style="display: inline-block; background-color: #059669; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">
+                    Launch Retake Assessment &rarr;
+                  </a>
+                </div>
+              </div>
+            `
+          });
+        } catch (err) {
+          console.warn("[grantInternRetakeFn] Email warning:", err);
+        }
+      }
+    }
+
+    return { success: true, message: "Attempt reset! Intern has been granted a fresh retake and notified via email." };
+  });
+
+export const clearSubmissionStrikesFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    submissionId: z.string(),
+  }).parse(d))
+  .handler(async ({ data: args }) => {
+    const adminClient = getAdminClient();
+    await adminClient.from('cbt_malpractice_logs').delete().eq('submission_id', args.submissionId);
+    await adminClient.from('cbt_submissions').update({ malpractice_warnings: 0 }).eq('id', args.submissionId);
+    invalidateCache("all_cbt_submissions");
+    return { success: true, message: "All violations and strikes cleared for this candidate." };
   });
