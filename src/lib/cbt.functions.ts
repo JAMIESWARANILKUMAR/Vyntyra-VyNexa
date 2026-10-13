@@ -198,12 +198,32 @@ async function sendCbtAssignmentEmail({
   try {
     const { Resend } = await import("resend");
     const resend = new Resend(apiKey);
-    const result = await resend.emails.send({
+    let result = await resend.emails.send({
       from: `VyNexa Connect <noreply@vyntyraconsultancyservices.in>`,
       to,
       subject,
       html,
     });
+
+    if (result.error) {
+      console.warn("[cbt-email] Primary sender failed, retrying with careers@vyntyraconsultancyservices.in:", result.error.message);
+      result = await resend.emails.send({
+        from: `VyNexa Connect <careers@vyntyraconsultancyservices.in>`,
+        to,
+        subject,
+        html,
+      });
+    }
+
+    if (result.error && (result.error.message.includes("domain") || result.error.message.includes("verify") || result.error.message.includes("validation"))) {
+      console.warn("[cbt-email] Domain verification issue, retrying with onboarding@resend.dev:", result.error.message);
+      result = await resend.emails.send({
+        from: `VyNexa Connect <onboarding@resend.dev>`,
+        to,
+        subject,
+        html,
+      });
+    }
 
     const supabase = getAdminClient();
     try {

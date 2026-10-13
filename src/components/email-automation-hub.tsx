@@ -258,7 +258,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
         <div className="relative z-10 space-y-1.5">
           <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-            <ShieldCheck className="h-4 w-4 text-emerald-400" /> High-Deliverability Resend & Brevo Enterprise Mesh
+            <ShieldCheck className="h-4 w-4 text-emerald-400" /> High-Deliverability Resend Enterprise Engine
           </div>
           <h2 className="text-2xl font-black mt-1 text-white flex items-center gap-2.5 tracking-tight">
             <Mail className="h-6 w-6 text-indigo-400" /> Automated Email Outreach & Promotion Engine
@@ -397,11 +397,11 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
         {/* Safety Email Service Quota & Load Balancer Widgets */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Card 1: Resend Quota */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2 shadow-xs">
+          <div className="rounded-xl border border-emerald-300 bg-white p-4 space-y-2 shadow-xs ring-1 ring-emerald-500/10">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Resend Primary Service</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">Resend Primary Engine</span>
               <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
-                100 / day &middot; 3k / mo
+                Primary &middot; 3k / mo
               </span>
             </div>
             <div className="flex items-baseline justify-between">
@@ -415,34 +415,34 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
               />
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-              <span>Today: <strong>{quota.resendSentToday || 0} / 100 max</strong></span>
+              <span>Today: <strong>{quota.resendSentToday || 0} Sent</strong></span>
               <span className="text-emerald-700 font-semibold font-mono">
-                {(quota.resendSentToday || 0) >= 100 ? "⚠️ Auto-Brevo" : quota.hasResendKey ? "✓ API Active" : "⚠️ Key Missing"}
+                {quota.hasResendKey ? "✓ Resend Active (Primary)" : "⚠️ Key Missing"}
               </span>
             </div>
           </div>
 
           {/* Card 2: Brevo Secondary Quota */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2 shadow-xs">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2 shadow-xs">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Brevo Secondary Service</span>
-              <span className="bg-sky-100 text-sky-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
-                9,000 / mo Quota
+              <span className="bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                Dormant / Standby
               </span>
             </div>
             <div className="flex items-baseline justify-between">
-              <div className="text-2xl font-black text-slate-900">{quota.brevoAvailable.toLocaleString()}</div>
-              <div className="text-xs text-slate-500 font-medium">Available Emails</div>
+              <div className="text-2xl font-black text-slate-500">{quota.brevoAvailable.toLocaleString()}</div>
+              <div className="text-xs text-slate-400 font-medium">Available Quota</div>
             </div>
             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
               <div 
-                className="bg-sky-500 h-full transition-all" 
+                className="bg-slate-400 h-full transition-all" 
                 style={{ width: `${Math.min(100, (quota.brevoSentThisMonth / quota.brevoQuota) * 100)}%` }} 
               />
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
               <span>Sent: <strong>{quota.brevoSentThisMonth.toLocaleString()}</strong></span>
-              <span className="text-sky-700 font-semibold">{quota.hasBrevoKey ? "✓ API Active" : "⚠️ BREVO_API_KEY Optional"}</span>
+              <span className="text-slate-500 font-semibold">Resend Preferred</span>
             </div>
           </div>
 
@@ -451,7 +451,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">Total Safety Capacity</span>
               <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
-                Equal Load Balancer
+                Resend Direct
               </span>
             </div>
             <div className="flex items-baseline justify-between">
@@ -459,7 +459,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
               <div className="text-xs text-emerald-800 font-medium">Total Sent This Month</div>
             </div>
             <div className="text-[11px] text-emerald-800 leading-snug pt-1">
-              Emails are automatically balanced equally between Resend &amp; Brevo to ensure 100% inbox delivery and zero quota exhaustion.
+              All emails are delivered directly via the Resend Enterprise Engine with 100% reliable inbox delivery and smart deliverability pacing.
             </div>
           </div>
         </div>

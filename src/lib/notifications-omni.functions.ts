@@ -172,12 +172,30 @@ export const sendPaymentReminderEmail = createServerFn({ method: "POST" })
       const apiKey = getEnv("RESEND_API_KEY");
       if (apiKey) {
         const resend = new Resend(apiKey);
-        const res = await resend.emails.send({
+        let res = await resend.emails.send({
           from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
           to: email,
           subject,
           html,
         });
+        if (res.error) {
+          console.warn("[sendPaymentReminderEmail] Noreply sender error, retrying with careers sender:", res.error.message);
+          res = await resend.emails.send({
+            from: `${SITE_NAME} <careers@${FROM_DOMAIN}>`,
+            to: email,
+            subject,
+            html,
+          });
+        }
+        if (res.error && (res.error.message.includes("domain") || res.error.message.includes("verify") || res.error.message.includes("validation"))) {
+          console.warn("[sendPaymentReminderEmail] Domain pending verification, retrying with onboarding@resend.dev:", res.error.message);
+          res = await resend.emails.send({
+            from: `${SITE_NAME} <onboarding@resend.dev>`,
+            to: email,
+            subject,
+            html,
+          });
+        }
         if (res.error) throw new Error(res.error.message);
         resendId = res.data?.id || null;
       } else {
@@ -521,12 +539,30 @@ export const sendTaskNotificationEmail = createServerFn({ method: "POST" })
       const apiKey = getEnv("RESEND_API_KEY");
       if (apiKey) {
         const resend = new Resend(apiKey);
-        const res = await resend.emails.send({
+        let res = await resend.emails.send({
           from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
           to: email,
           subject,
           html,
         });
+        if (res.error) {
+          console.warn("[sendTaskNotificationEmail] Noreply sender error, retrying with careers sender:", res.error.message);
+          res = await resend.emails.send({
+            from: `${SITE_NAME} <careers@${FROM_DOMAIN}>`,
+            to: email,
+            subject,
+            html,
+          });
+        }
+        if (res.error && (res.error.message.includes("domain") || res.error.message.includes("verify") || res.error.message.includes("validation"))) {
+          console.warn("[sendTaskNotificationEmail] Domain pending verification, retrying with onboarding@resend.dev:", res.error.message);
+          res = await resend.emails.send({
+            from: `${SITE_NAME} <onboarding@resend.dev>`,
+            to: email,
+            subject,
+            html,
+          });
+        }
         if (res.error) throw new Error(res.error.message);
         resendId = res.data?.id || null;
       } else {

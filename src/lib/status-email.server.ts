@@ -164,7 +164,7 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
   if (apiKey) {
     try {
       const resend = new Resend(apiKey);
-      const res = await resend.emails.send({
+      let res = await resend.emails.send({
         to: input.toEmail,
         from: fromAddr,
         subject,
@@ -176,10 +176,22 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
 
       if (res.error) {
         lastError = `Resend Error: ${res.error.message}`;
-        console.warn("[status-email] Resend returned error:", res.error);
+        console.warn("[status-email] Resend returned error, trying noreply fallback:", res.error);
 
-        // Fallback: If domain verification issue, try fallback address if configured
-        if (res.error.message.includes("domain") || res.error.message.includes("verify") || res.error.message.includes("validation")) {
+        // Fallback 1: Try noreply address
+        res = await resend.emails.send({
+          to: input.toEmail,
+          from: "Vyntyra Careers <noreply@vyntyraconsultancyservices.in>",
+          subject,
+          html,
+          text,
+          ...(input.ccEmail ? { cc: input.ccEmail } : {}),
+          ...(resendAttachments.length > 0 ? { attachments: resendAttachments } : {})
+        });
+
+        // Fallback 2: If domain verification issue, try fallback sandbox address
+        if (res.error && (res.error.message.includes("domain") || res.error.message.includes("verify") || res.error.message.includes("validation"))) {
+          console.warn("[status-email] Domain verification issue, trying onboarding@resend.dev:", res.error.message);
           const fallbackRes = await resend.emails.send({
             to: input.toEmail,
             from: "Vyntyra Careers <onboarding@resend.dev>",
@@ -191,17 +203,20 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
           if (!fallbackRes.error) {
             return { messageId: fallbackRes.data?.id || "resend-fallback-ok", provider: 'resend' as const };
           }
+          lastError = `Resend Sandbox Error: ${fallbackRes.error.message}`;
         }
-      } else {
+      }
+
+      if (!res.error) {
         return { messageId: res.data?.id || "resend-ok", provider: 'resend' as const };
       }
     } catch (err: any) {
       lastError = `Resend Exception: ${err.message}`;
-      console.warn("[status-email] Resend failed, trying Brevo fallback:", err);
+      console.warn("[status-email] Resend exception:", err);
     }
   }
 
-  // 2. Try Brevo API Fallback
+  // 2. Try Brevo API Fallback only if Resend failed and Brevo is configured
   if (brevoKey) {
     try {
       const bRes = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -226,11 +241,9 @@ export async function sendStatusChangeEmail(input: StatusEmailInput) {
         return { messageId: bJson.messageId || "brevo-ok", provider: 'brevo' as const };
       } else {
         const bErrJson = await bRes.json().catch(() => ({ message: bRes.statusText }));
-        lastError = `Brevo Error (${bRes.status}): ${bErrJson.message || bRes.statusText}`;
-        console.error("[status-email] Brevo returned error:", bErrJson);
+        console.error("[status-email] Brevo secondary returned error:", bErrJson);
       }
     } catch (bErr: any) {
-      lastError = `Brevo Exception: ${bErr.message}`;
       console.error("[status-email] Brevo fallback failed:", bErr);
     }
   }

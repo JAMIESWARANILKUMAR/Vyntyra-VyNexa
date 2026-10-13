@@ -4621,81 +4621,59 @@ export const sendPromotionalInternshipEmail = createServerFn({ method: "POST" })
       const hasResend = !!getEnv("RESEND_API_KEY");
       const hasBrevo = !!getEnv("BREVO_API_KEY");
 
-      // Select primary provider (Auto-switch to Brevo if Resend reaches 100 emails/day limit)
-      let primaryProvider: "resend" | "brevo" = "resend";
-      if (hasResend && hasBrevo) {
-        if (resendCountToday >= 100 && brevoCountThisMonth < 9000) {
-          primaryProvider = "brevo";
-        } else if (brevoCountThisMonth < resendCountThisMonth && brevoCountThisMonth < 9000) {
-          primaryProvider = "brevo";
-        } else if (resendCountThisMonth < 3000 && resendCountToday < 100) {
-          primaryProvider = "resend";
-        } else {
-          primaryProvider = "brevo";
-        }
-      } else if (hasBrevo && !hasResend) {
-        primaryProvider = "brevo";
-      }
+      // Resend is 100% prioritized as the primary high-deliverability engine
+      const primaryProvider: "resend" | "brevo" = hasResend ? "resend" : "brevo";
 
       try {
-        if (primaryProvider === "brevo" && hasBrevo) {
-          try {
-            resendId = await sendViaBrevo({ recipientEmail, recipientName, subject, htmlContent });
-            providerUsed = "brevo";
-          } catch (bErr: any) {
-            console.warn("[email-balancer] Brevo primary failed, falling back to Resend:", bErr.message);
-            if (hasResend) {
-              const { Resend } = await import("resend");
-              const resend = new Resend(getEnv("RESEND_API_KEY")!);
-              let resp = await resend.emails.send({
-                from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
-                to: recipientEmail,
-                subject: subject,
-                html: htmlContent,
-                replyTo: "internships@vyntyraconsultancyservices.in",
-              });
-              if (resp.error) throw new Error(resp.error.message);
-              resendId = resp.data?.id || null;
-              providerUsed = "resend";
-            } else {
-              throw bErr;
-            }
-          }
-        } else {
-          // Resend Primary
-          try {
-            const { Resend } = await import("resend");
-            const apiKey = getEnv("RESEND_API_KEY");
-            if (!apiKey) throw new Error("RESEND_API_KEY is not configured");
-            const resend = new Resend(apiKey);
-            let resp = await resend.emails.send({
-              from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
+        if (hasResend) {
+          // Primary Resend Engine with multi-tier sender fallback
+          const { Resend } = await import("resend");
+          const apiKey = getEnv("RESEND_API_KEY");
+          if (!apiKey) throw new Error("RESEND_API_KEY is not configured");
+          const resend = new Resend(apiKey);
+
+          // Tier 1: Primary Corporate Careers Sender
+          let resp = await resend.emails.send({
+            from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
+            to: recipientEmail,
+            subject: subject,
+            html: htmlContent,
+            replyTo: "internships@vyntyraconsultancyservices.in",
+          });
+
+          // Tier 2: Noreply fallback if primary address has deliverability issue
+          if (resp.error) {
+            console.warn("[email-dispatch] Resend careers sender returned error, retrying with noreply:", resp.error.message);
+            resp = await resend.emails.send({
+              from: "Vyntyra Careers <noreply@vyntyraconsultancyservices.in>",
               to: recipientEmail,
               subject: subject,
               html: htmlContent,
               replyTo: "internships@vyntyraconsultancyservices.in",
             });
-            if (resp.error) {
-              resp = await resend.emails.send({
-                from: "Vyntyra Careers <noreply@vyntyraconsultancyservices.in>",
-                to: recipientEmail,
-                subject: subject,
-                html: htmlContent,
-                replyTo: "internships@vyntyraconsultancyservices.in",
-              });
-            }
-            if (resp.error) throw new Error(resp.error.message);
-            resendId = resp.data?.id || null;
-            providerUsed = "resend";
-          } catch (rErr: any) {
-            console.warn("[email-balancer] Resend primary failed, falling back to Brevo:", rErr.message);
-            if (hasBrevo) {
-              resendId = await sendViaBrevo({ recipientEmail, recipientName, subject, htmlContent });
-              providerUsed = "brevo";
-            } else {
-              throw rErr;
-            }
           }
+
+          // Tier 3: Verified sandbox fallback if domain DNS validation is pending
+          if (resp.error && (resp.error.message.includes("domain") || resp.error.message.includes("verify") || resp.error.message.includes("validation"))) {
+            console.warn("[email-dispatch] Resend domain pending verification, retrying with onboarding@resend.dev sandbox:", resp.error.message);
+            resp = await resend.emails.send({
+              from: "Vyntyra Careers <onboarding@resend.dev>",
+              to: recipientEmail,
+              subject: subject,
+              html: htmlContent,
+              replyTo: "internships@vyntyraconsultancyservices.in",
+            });
+          }
+
+          if (resp.error) throw new Error(resp.error.message);
+          resendId = resp.data?.id || null;
+          providerUsed = "resend";
+        } else if (hasBrevo) {
+          // Brevo secondary fallback only if Resend API key is completely absent
+          resendId = await sendViaBrevo({ recipientEmail, recipientName, subject, htmlContent });
+          providerUsed = "brevo";
+        } else {
+          throw new Error("RESEND_API_KEY is not configured on the server.");
         }
       } catch (err: any) {
         status = "failed";
@@ -4793,31 +4771,76 @@ export const sendB2bPitchEmail = createServerFn({ method: "POST" })
     const hasBrevo = !!getEnv("BREVO_API_KEY");
 
     if (hasResend) {
-      try {
-        const { Resend } = await import("resend");
-        const resend = new Resend(getEnv("RESEND_API_KEY")!);
-        const resp = await resend.emails.send({
-          from: "Vyntyra Outreach <outreach@vyntyraconsultancyservices.in>",
+      const { Resend } = await import("resend");
+      const resend = new Resend(getEnv("RESEND_API_KEY")!);
+
+      // Tier 1: Outreach address
+      let resp = await resend.emails.send({
+        from: "Vyntyra Outreach <outreach@vyntyraconsultancyservices.in>",
+        to: recipientEmail,
+        subject: subject,
+        html: htmlContent,
+        replyTo: "contact@vyntyraconsultancyservices.in",
+      });
+
+      // Tier 2: Careers address fallback
+      if (resp.error) {
+        console.warn("[sendB2bPitchEmail] Primary sender error, retrying with careers@vyntyraconsultancyservices.in:", resp.error.message);
+        resp = await resend.emails.send({
+          from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
           to: recipientEmail,
           subject: subject,
           html: htmlContent,
           replyTo: "contact@vyntyraconsultancyservices.in",
         });
-        if (resp.error) throw new Error(resp.error.message);
-        resendId = resp.data?.id || null;
-      } catch (rErr: any) {
+      }
+
+      // Tier 3: Noreply address fallback
+      if (resp.error) {
+        console.warn("[sendB2bPitchEmail] Retrying with noreply@vyntyraconsultancyservices.in:", resp.error.message);
+        resp = await resend.emails.send({
+          from: "Vyntyra Careers <noreply@vyntyraconsultancyservices.in>",
+          to: recipientEmail,
+          subject: subject,
+          html: htmlContent,
+          replyTo: "contact@vyntyraconsultancyservices.in",
+        });
+      }
+
+      // Tier 4: Onboarding sandbox fallback if domain is not yet verified on Resend
+      if (resp.error && (resp.error.message.includes("domain") || resp.error.message.includes("verify") || resp.error.message.includes("validation"))) {
+        console.warn("[sendB2bPitchEmail] Retrying with onboarding@resend.dev sandbox:", resp.error.message);
+        resp = await resend.emails.send({
+          from: "Vyntyra Outreach <onboarding@resend.dev>",
+          to: recipientEmail,
+          subject: subject,
+          html: htmlContent,
+          replyTo: "contact@vyntyraconsultancyservices.in",
+        });
+      }
+
+      if (resp.error) {
+        // If Brevo exists as fallback, try once but don't crash without logging
         if (hasBrevo) {
-          resendId = await sendViaBrevo({ recipientEmail, recipientName, subject, htmlContent });
-          providerUsed = "brevo";
+          try {
+            resendId = await sendViaBrevo({ recipientEmail, recipientName, subject, htmlContent });
+            providerUsed = "brevo";
+          } catch (bErr: any) {
+            console.error("[sendB2bPitchEmail] Brevo fallback failed:", bErr.message);
+            throw new Error(`Resend Error: ${resp.error.message} (Brevo also unavailable: ${bErr.message})`);
+          }
         } else {
-          throw rErr;
+          throw new Error(resp.error.message);
         }
+      } else {
+        resendId = resp.data?.id || null;
+        providerUsed = "resend";
       }
     } else if (hasBrevo) {
       resendId = await sendViaBrevo({ recipientEmail, recipientName, subject, htmlContent });
       providerUsed = "brevo";
     } else {
-      throw new Error("Neither RESEND_API_KEY nor BREVO_API_KEY is configured on the server.");
+      throw new Error("RESEND_API_KEY is not configured on the server.");
     }
 
     // Record log in automated_emails_log
