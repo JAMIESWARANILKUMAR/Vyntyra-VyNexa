@@ -534,192 +534,428 @@ function synthesizeQuestionsFromContext(
   return { questions: finalQuestions };
 }
 
-async function sendCbtAssignmentEmail({
-  to,
-  internName,
-  testTitle,
-  description,
-  timeLimitMinutes,
-  passingScore,
-  enableCamera,
-  deadline,
-  testId,
-  isExtension = false,
-}: {
+function formatQuestionTypes(types?: string[]): string {
+  if (!types || types.length === 0) return "Multiple Choice (MCQ), Scenario-Based Assessment";
+  const labelMap: Record<string, string> = {
+    mcq: "Multiple Choice Questions (MCQ)",
+    multiple_choice: "Multiple Choice Questions (MCQ)",
+    coding: "Live Code Implementation & Automated Test Verification",
+    scenario: "Real-World Industrial Scenario Analysis",
+    aptitude: "Quantitative & Analytical Aptitude",
+    subjective: "Subjective & Architectural Review",
+    long_answer: "Comprehensive Technical Analysis",
+    short_answer: "Concise Technical Theory",
+    true_false: "Core Concept Validation (True/False)"
+  };
+  return types.map(t => labelMap[t.toLowerCase()] || t.toUpperCase()).join(", ");
+}
+
+interface SendCbtAssignmentEmailInput {
   to: string;
   internName: string;
+  internId?: string;
+  internRole?: string;
+  examId?: string;
+  testId?: string;
   testTitle: string;
   description?: string;
+  totalQuestions?: number;
   timeLimitMinutes?: number;
+  questionTypes?: string[];
+  maxAttempts?: number;
+  totalScore?: number;
   passingScore?: number;
   enableCamera?: boolean;
+  cameraStrictness?: string;
   deadline?: string | null;
-  testId: string;
   isExtension?: boolean;
-}) {
-  const apiKey = getEnv("RESEND_API_KEY");
-  if (!apiKey) {
-    console.warn("[CBT Email] RESEND_API_KEY not configured; skipping dispatch.");
-    return { sent: false, reason: "RESEND_API_KEY not configured" };
+}
+
+async function sendCbtAssignmentEmail(params: SendCbtAssignmentEmailInput) {
+  const {
+    to,
+    internName: initialInternName,
+    testTitle,
+    description,
+    timeLimitMinutes = 30,
+    passingScore = 50,
+    enableCamera = true,
+    cameraStrictness = "standard",
+    deadline,
+    isExtension = false,
+  } = params;
+
+  const adminClient = getAdminClient();
+  const resolvedExamId = params.examId || params.testId || "EXAM-VYN-CBT";
+
+  // Dynamic candidate profile enrichment if internId or internRole is missing
+  let internName = initialInternName || "Candidate";
+  let internId = params.internId;
+  let internRole = params.internRole;
+
+  if ((!internId || !internRole || internName === "Candidate" || internName === "Intern") && to) {
+    try {
+      const { data: prof } = await adminClient
+        .from('profiles')
+        .select('id, intern_id, position, department, full_name')
+        .eq('email', to)
+        .maybeSingle();
+      if (prof) {
+        if (!internId) internId = prof.intern_id || `VCS-INT-${prof.id?.slice(0, 8)?.toUpperCase() || "PROV"}`;
+        if (!internRole) internRole = prof.position || prof.department || "Technical Intern";
+        if (internName === "Candidate" || internName === "Intern") internName = prof.full_name || internName;
+      }
+    } catch (_) {}
+  }
+  internId = internId || "VCS-INT-2026-PROV";
+  internRole = internRole || "Technical Intern";
+
+  // Dynamic question counts and scoring enrichment if not passed
+  let totalQuestions = params.totalQuestions || 0;
+  let totalScore = params.totalScore || 0;
+  let questionTypes = params.questionTypes || [];
+  let maxAttempts = params.maxAttempts || 1;
+
+  if (totalQuestions === 0 && resolvedExamId) {
+    try {
+      const { data: qData } = await adminClient
+        .from('cbt_questions')
+        .select('question_type, max_points')
+        .or(`exam_id.eq.${resolvedExamId},test_id.eq.${resolvedExamId}`);
+      if (qData && qData.length > 0) {
+        totalQuestions = qData.length;
+        totalScore = totalScore || qData.reduce((acc: number, q: any) => acc + (Number(q.max_points) || 10), 0);
+        if (questionTypes.length === 0) {
+          questionTypes = Array.from(new Set(qData.map((q: any) => q.question_type || 'mcq')));
+        }
+      }
+    } catch (_) {}
+  }
+  if (totalQuestions === 0) totalQuestions = 10;
+  if (totalScore === 0) totalScore = totalQuestions * 10;
+
+  const brevoKey = getEnv("BREVO_API_KEY");
+  const resendKey = getEnv("RESEND_API_KEY");
+
+  if (!brevoKey && !resendKey) {
+    console.warn("[CBT Email] Neither BREVO_API_KEY nor RESEND_API_KEY configured; skipping dispatch.");
+    return { sent: false, reason: "No email API key configured" };
   }
 
   const subject = isExtension
-    ? `[VyNexa Connect] Assessment Deadline Extended: ${testTitle}`
-    : `[VyNexa Connect] New Assessment Assigned: ${testTitle}`;
+    ? `[VyNexa Connect] Assessment Deadline Extended: ${testTitle} (Exam ID: ${resolvedExamId})`
+    : `[VyNexa Connect] Official CBT Assessment Allocation: ${testTitle} (Exam ID: ${resolvedExamId})`;
 
   const appUrl = "https://vynexaconnect.vyntyraconsultancyservices.in";
-  const examUrl = `${appUrl}/cbt/${testId}`;
+  const examUrl = `${appUrl}/cbt/${resolvedExamId}`;
   const formattedDeadline = deadline
     ? new Date(deadline).toLocaleString("en-US", {
         dateStyle: "medium",
         timeStyle: "short",
       })
-    : "No strict deadline set";
+    : "No expiration deadline (Continuous evaluation)";
+
+  const formattedTypes = formatQuestionTypes(questionTypes);
+  const proctoringLabel = enableCamera !== false 
+    ? `Webcam AI Monitoring Required (${cameraStrictness.toUpperCase()} enforcement)` 
+    : "Focus Tracking Active (Camera Not Mandatory)";
 
   const html = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #1e293b;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 32px 12px; color: #1e293b; line-height: 1.5;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 660px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);">
+    
+    <!-- Top Accent Bar -->
     <tr>
-      <td style="background-color: #0f172a; padding: 32px; text-align: center;">
-        <h1 style="color: #ffffff; margin: 0 0 8px; font-size: 24px; font-weight: 800; letter-spacing: 0.5px;">Vyntyra • VyNexa Connect</h1>
-        <p style="color: #94a3b8; margin: 0; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Secure CBT Evaluation Portal</p>
+      <td style="background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 50%, #4f46e5 100%); height: 5px;"></td>
+    </tr>
+
+    <!-- Header Block -->
+    <tr>
+      <td style="background-color: #0b0f19; padding: 32px 28px; text-align: center;">
+        <div style="display: inline-block; background-color: rgba(99, 102, 241, 0.2); border: 1px solid rgba(129, 140, 248, 0.4); border-radius: 9999px; padding: 4px 14px; margin-bottom: 12px;">
+          <span style="color: #a5b4fc; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">
+            ${isExtension ? "DEADLINE EXTENSION NOTICE" : "OFFICIAL CBT ASSESSMENT ALLOCATION"}
+          </span>
+        </div>
+        <h1 style="color: #ffffff; margin: 0 0 6px; font-size: 22px; font-weight: 800; letter-spacing: 0.5px;">
+          VYNTYRA CONSULTANCY SERVICES
+        </h1>
+        <p style="color: #94a3b8; margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+          VyNexa Connect • Computer-Based Testing (CBT) System
+        </p>
       </td>
     </tr>
+
+    <!-- Main Content Area -->
     <tr>
-      <td style="padding: 32px;">
-        <h2 style="color: #0f172a; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 12px;">
-          ${isExtension ? "Assessment Deadline Updated" : "New Assessment Allocated"}
+      <td style="padding: 32px 28px;">
+        <h2 style="color: #0f172a; font-size: 19px; font-weight: 700; margin-top: 0; margin-bottom: 8px;">
+          ${isExtension ? "Assessment Deadline Notice" : "New Assessment Allocated"}
         </h2>
-        <p style="color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
-          Hello <strong>${internName || "Candidate"}</strong>,<br/>
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-top: 0; margin-bottom: 22px;">
+          Dear <strong>${internName}</strong>,<br/>
           ${
             isExtension
-              ? `The submission deadline for your assigned evaluation assessment has been officially extended.`
-              : `You have been assigned a new computer-based evaluation assessment on VyNexa Connect.`
+              ? `The submission deadline for your assigned evaluation assessment has been officially updated. Please ensure your submission is completed within the revised timeline specified below.`
+              : `You have been allocated an official evaluation assessment on the VyNexa Connect enterprise testing engine. Review your candidate details, examination specifications, and proctoring rules carefully before launching.`
           }
         </p>
 
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; border-radius: 8px; padding: 20px; margin-bottom: 24px; border-left: 4px solid #4f46e5;">
+        <!-- Candidate & Assessment Details Card -->
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 26px; overflow: hidden;">
           <tr>
-            <td style="padding: 5px 0;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Assessment Title:</span></td>
-            <td style="padding: 5px 0; text-align: right;"><strong style="color: #0f172a; font-size: 14px;">${testTitle}</strong></td>
+            <td colspan="2" style="background-color: #f1f5f9; padding: 12px 18px; border-bottom: 1px solid #e2e8f0;">
+              <span style="color: #0f172a; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                Candidate &amp; Examination Credentials
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9; width: 40%;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Candidate Name:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9; width: 60%;"><strong style="color: #0f172a; font-size: 13px;">${internName}</strong></td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Intern ID:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><code style="color: #4f46e5; background-color: #eef2ff; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 12px;">${internId}</code></td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Intern Role / Domain:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><strong style="color: #0f172a; font-size: 13px;">${internRole}</strong></td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Unique Exam ID:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><code style="color: #0369a1; background-color: #e0f2fe; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11px;">${resolvedExamId}</code></td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Assessment Name:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><strong style="color: #0f172a; font-size: 13px;">${testTitle}</strong></td>
           </tr>
           ${
             description
               ? `<tr>
-            <td style="padding: 5px 0;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Description:</span></td>
-            <td style="padding: 5px 0; text-align: right;"><span style="color: #334155; font-size: 13px;">${description}</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Description:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #334155; font-size: 13px;">${description}</span></td>
           </tr>`
               : ""
           }
           <tr>
-            <td style="padding: 5px 0;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Duration:</span></td>
-            <td style="padding: 5px 0; text-align: right;"><strong style="color: #0f172a; font-size: 14px;">${timeLimitMinutes || 30} Minutes</strong></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Total Questions:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><strong style="color: #0f172a; font-size: 13px;">${totalQuestions} Questions</strong></td>
           </tr>
           <tr>
-            <td style="padding: 5px 0;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Passing Criteria:</span></td>
-            <td style="padding: 5px 0; text-align: right;"><strong style="color: #10b981; font-size: 14px;">${passingScore || 50}%</strong></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Assessment Duration:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><strong style="color: #0f172a; font-size: 13px;">${timeLimitMinutes} Minutes</strong></td>
           </tr>
           <tr>
-            <td style="padding: 5px 0;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Proctoring Mode:</span></td>
-            <td style="padding: 5px 0; text-align: right;"><strong style="color: ${enableCamera !== false ? "#ef4444" : "#0284c7"}; font-size: 13px;">${enableCamera !== false ? "Webcam Monitoring Required" : "Focus-Only Tracking (No Camera)"}</strong></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Question Types:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #334155; font-size: 12px; font-weight: 600;">${formattedTypes}</span></td>
           </tr>
           <tr>
-            <td style="padding: 5px 0;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Assessment Deadline:</span></td>
-            <td style="padding: 5px 0; text-align: right;"><strong style="color: #e11d48; font-size: 13px;">${formattedDeadline}</strong></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Allowed Attempts:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><strong style="color: #0f172a; font-size: 13px;">${maxAttempts} Attempt(s) (Single Active Session)</strong></td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Total Score / Passing:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><strong style="color: #059669; font-size: 13px;">${totalScore} Marks (Passing: ${passingScore}%)</strong></td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Proctoring Mode:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: ${enableCamera !== false ? "#b91c1c" : "#0284c7"}; font-size: 12px; font-weight: 700;">${proctoringLabel}</span></td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 18px;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Submission Deadline:</span></td>
+            <td style="padding: 10px 18px;"><strong style="color: #e11d48; font-size: 13px;">${formattedDeadline}</strong></td>
           </tr>
         </table>
 
-        <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 16px; margin-bottom: 28px;">
-          <p style="color: #b45309; font-size: 13px; font-weight: 600; margin: 0 0 6px;">Secure Testing Environment Rules:</p>
-          <ul style="color: #78350f; font-size: 12px; margin: 0; padding-left: 20px; line-height: 1.6;">
-            <li>Access is strictly restricted to desktop browsers (1024px or wider).</li>
-            <li>Full-screen enforcement is active throughout the test.</li>
-            <li>Tab-switching or losing focus logs a violation warning. 2 violations trigger termination.</li>
-            ${enableCamera !== false ? "<li>Webcam feed is continuously monitored for unauthorized movement or absence.</li>" : ""}
+        <!-- CBT Model Instructions & Guidelines -->
+        <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 18px; margin-bottom: 26px;">
+          <h3 style="color: #92400e; font-size: 14px; font-weight: 800; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+            Mandatory CBT Instructions &amp; Proctoring Rules
+          </h3>
+          <ul style="color: #78350f; font-size: 12px; margin: 0; padding-left: 18px; line-height: 1.7;">
+            <li><strong>Desktop / Laptop Only:</strong> Access is strictly restricted to desktop browsers (screen width &ge; 1024px). Mobile devices and tablets are blocked.</li>
+            <li><strong>Browser Recommendation:</strong> Use the latest stable version of Google Chrome or Microsoft Edge. Ensure all browser extensions and ad-blockers are disabled.</li>
+            <li><strong>Camera &amp; Audio Readiness:</strong> ${enableCamera !== false ? "Active HD webcam access is mandatory. The AI proctor continuously monitors candidate presence, facial orientation, and multiple face infractions." : "Focus-tracking is enforced throughout your assessment."}</li>
+            <li><strong>Full-Screen Lockdown:</strong> The assessment operates in forced full-screen mode. Do not press ESC or attempt to exit full-screen mode during the exam.</li>
+            <li><strong>Anti-Malpractice Protocol:</strong> Tab-switching, Alt-Tabbing, minimizing the window, opening developer tools (F12/Inspect), or right-clicking is logged immediately. <strong>Accumulating two (2) infractions results in instantaneous test termination.</strong></li>
+            <li><strong>Continuous Timer &amp; Autosave:</strong> The timer runs continuously in real time. Answers are autosaved as you progress. Upon timer expiration (00:00:00), the exam will auto-freeze and submit.</li>
           </ul>
         </div>
 
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="text-align: center;">
+        <!-- Call-to-Action Launch Button -->
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="text-align: center; margin-bottom: 28px;">
           <tr>
             <td align="center">
-              <a href="${examUrl}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);">
-                Launch Assessment &rarr;
+              <a href="${examUrl}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; font-size: 15px; font-weight: 700; text-decoration: none; padding: 15px 36px; border-radius: 8px; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35); letter-spacing: 0.3px;">
+                Launch Assessment Session &rarr;
               </a>
+              <p style="color: #64748b; font-size: 11px; margin: 10px 0 0;">
+                Direct URL: <a href="${examUrl}" style="color: #4f46e5; text-decoration: underline;">${examUrl}</a>
+              </p>
             </td>
           </tr>
         </table>
+
+        <!-- Official Sign-off & Signature Block -->
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 10px;">
+          <p style="color: #334155; font-size: 13px; font-weight: 700; margin: 0 0 2px;">
+            VyNexa Technical Evaluation &amp; Assessment Board
+          </p>
+          <p style="color: #64748b; font-size: 12px; font-weight: 600; margin: 0 0 2px;">
+            Vyntyra Consultancy Services Private Limited
+          </p>
+          <p style="color: #94a3b8; font-size: 11px; margin: 0 0 4px;">
+            Enterprise Talent Acquisition &amp; Performance Operations Division
+          </p>
+          <p style="color: #64748b; font-size: 11px; margin: 0;">
+            Support: <a href="mailto:careers@vyntyraconsultancyservices.in" style="color: #4f46e5; text-decoration: none;">careers@vyntyraconsultancyservices.in</a> | 
+            Portal: <a href="${appUrl}" style="color: #4f46e5; text-decoration: none;">vynexaconnect.vyntyraconsultancyservices.in</a>
+          </p>
+        </div>
+
       </td>
     </tr>
+
+    <!-- Confidentiality Notice & Legal Disclaimer -->
     <tr>
-      <td style="background-color: #f8fafc; padding: 24px; text-align: center; border-top: 1px solid #e2e8f0;">
-        <p style="color: #64748b; font-size: 12px; margin: 0 0 4px;">
+      <td style="background-color: #f8fafc; padding: 22px 28px; border-top: 1px solid #e2e8f0;">
+        <div style="background-color: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; margin-bottom: 12px;">
+          <p style="color: #475569; font-size: 10px; line-height: 1.5; margin: 0;">
+            <strong>CONFIDENTIALITY &amp; PROPRIETARY ASSESSMENT NOTICE:</strong> This electronic transmission and the embedded examination materials contain proprietary, confidential, and legally protected information owned by Vyntyra Consultancy Services Private Limited. This assessment is exclusively designated for the candidate identified above (<strong>${internName}</strong>, ID: <strong>${internId}</strong>). Any unauthorized reproduction, recording, screenshotting, sharing, public posting, or distribution of any part of this test or its solutions is strictly prohibited under the terms of your Internship Confidentiality Agreement and Non-Disclosure Agreement (NDA). Infractions will lead to immediate cancellation of your internship program, voiding of certifications, and potential legal remedies.
+          </p>
+        </div>
+        <p style="color: #64748b; font-size: 11px; text-align: center; margin: 0 0 2px;">
           &copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.
         </p>
-        <p style="color: #94a3b8; font-size: 11px; margin: 0;">
-          This is an automated notification from the VyNexa Secure Evaluation Engine.
+        <p style="color: #94a3b8; font-size: 10px; text-align: center; margin: 0;">
+          Automated Transmission from VyNexa Secure Evaluation Engine.
         </p>
       </td>
     </tr>
+
   </table>
 </body>
 </html>`;
 
-  try {
-    const { Resend } = await import("resend");
-    const resend = new Resend(apiKey);
-    let result = await resend.emails.send({
-      from: `VyNexa Connect <noreply@vyntyraconsultancyservices.in>`,
-      to,
-      subject,
-      html,
-    });
+  let messageId: string | null = null;
+  let providerUsed: "brevo" | "resend" = "brevo";
+  let dispatchError: string | null = null;
 
-    if (result.error) {
-      console.warn("[cbt-email] Primary sender failed, retrying with careers@vyntyraconsultancyservices.in:", result.error.message);
-      result = await resend.emails.send({
+  // 1. Primary: Brevo Email API (as requested by user)
+  if (brevoKey) {
+    try {
+      const bRes = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "api-key": brevoKey,
+        },
+        body: JSON.stringify({
+          sender: {
+            name: "Vyntyra Assessments • VyNexa Connect",
+            email: "careers@vyntyraconsultancyservices.in",
+          },
+          to: [{ email: to, name: internName }],
+          replyTo: {
+            email: "careers@vyntyraconsultancyservices.in",
+            name: "VyNexa Technical Evaluation Board",
+          },
+          subject,
+          htmlContent: html,
+        }),
+      });
+
+      const bData = await bRes.json().catch(() => ({}));
+      if (bRes.ok) {
+        messageId = bData.messageId || bData.id || `brevo-${Date.now()}`;
+        providerUsed = "brevo";
+      } else {
+        const errMsg = bData.message || bData.code || `Brevo HTTP error ${bRes.status}`;
+        console.warn("[cbt-email] Brevo primary dispatch failed, falling back to Resend:", errMsg);
+        dispatchError = errMsg;
+      }
+    } catch (bErr: any) {
+      console.warn("[cbt-email] Brevo request exception, falling back to Resend:", bErr.message);
+      dispatchError = bErr.message;
+    }
+  }
+
+  // 2. Secondary Fallback: Resend (if Brevo failed or Brevo key missing)
+  if (!messageId && resendKey) {
+    try {
+      const { Resend } = await import("resend");
+      const resend = new Resend(resendKey);
+      let result = await resend.emails.send({
         from: `VyNexa Connect <careers@vyntyraconsultancyservices.in>`,
         to,
         subject,
         html,
       });
+
+      if (result.error && (result.error.message.includes("domain") || result.error.message.includes("verify") || result.error.message.includes("validation"))) {
+        result = await resend.emails.send({
+          from: `VyNexa Connect <onboarding@resend.dev>`,
+          to,
+          subject,
+          html,
+        });
+      }
+
+      if (!result.error && result.data?.id) {
+        messageId = result.data.id;
+        providerUsed = "resend";
+        dispatchError = null;
+      } else if (result.error) {
+        dispatchError = result.error.message;
+      }
+    } catch (rErr: any) {
+      console.error("[cbt-email] Resend fallback error:", rErr.message);
+      dispatchError = rErr.message;
     }
+  }
 
-    if (result.error && (result.error.message.includes("domain") || result.error.message.includes("verify") || result.error.message.includes("validation"))) {
-      console.warn("[cbt-email] Domain verification issue, retrying with onboarding@resend.dev:", result.error.message);
-      result = await resend.emails.send({
-        from: `VyNexa Connect <onboarding@resend.dev>`,
-        to,
-        subject,
-        html,
-      });
-    }
+  // 3. Log to automated_email_logs & automated_emails_log
+  try {
+    await adminClient.from("automated_email_logs").insert({
+      recipient_email: to,
+      recipient_name: internName,
+      campaign_type: isExtension ? "cbt_deadline_extension" : "cbt_assessment_assigned",
+      subject,
+      status: messageId ? "sent" : "failed",
+      provider_used: providerUsed,
+      resend_message_id: messageId,
+      error_message: dispatchError,
+      created_at: new Date().toISOString(),
+    });
+  } catch (_) {}
 
-    const supabase = getAdminClient();
-    try {
-      await supabase.from("automated_email_logs").insert({
-        recipient_email: to,
-        recipient_name: internName,
-        campaign_type: isExtension ? "cbt_deadline_extension" : "cbt_assessment_assigned",
-        subject,
-        status: result.error ? "failed" : "sent",
-        provider_used: "resend",
-        resend_message_id: result.data?.id || null,
-        error_message: result.error?.message || null,
-        created_at: new Date().toISOString(),
-      });
-    } catch (_) {}
+  try {
+    await adminClient.from("automated_emails_log").insert({
+      recipient_email: to,
+      recipient_name: internName,
+      domain: internRole || "Technology",
+      subject,
+      status: messageId ? "sent" : "failed",
+      provider: providerUsed,
+      provider_message_id: messageId,
+      error_message: dispatchError,
+      sent_at: new Date().toISOString(),
+    });
+  } catch (_) {}
 
-    return { sent: true, id: result.data?.id };
-  } catch (err: any) {
-    console.error("[CBT Email Dispatch Error]:", err.message);
-    return { sent: false, reason: err.message };
+  if (messageId) {
+    return { sent: true, id: messageId, provider: providerUsed };
+  } else {
+    return { sent: false, reason: dispatchError || "Email dispatch failed" };
   }
 }
 
@@ -933,22 +1169,27 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
 
     invalidateCache("admin_cbt_tests");
 
-    // 4. Automated Candidate Notification Emails
+    // 4. Automated Candidate Notification Emails via Brevo
     try {
-      let targetEmails: { email: string; name: string }[] = [];
+      let targetEmails: { email: string; name: string; internId?: string; internRole?: string }[] = [];
       if (resolvedInternIds.length > 0) {
         const { data: profiles } = await adminClient
           .from('profiles')
-          .select('email, full_name')
+          .select('id, email, full_name, intern_id, position, department')
           .in('id', resolvedInternIds);
         if (profiles) {
-          targetEmails.push(...profiles.map(p => ({ email: p.email, name: p.full_name })));
+          targetEmails.push(...profiles.map(p => ({ 
+            email: p.email, 
+            name: p.full_name || "Intern",
+            internId: p.intern_id || `VCS-INT-${p.id.slice(0, 8).toUpperCase()}`,
+            internRole: p.position || p.department || "Technical Intern"
+          })));
         }
       }
       if (resolvedTeamIds.length > 0) {
         const { data: taskProfiles } = await adminClient
           .from('tasks')
-          .select('assigned_to, profiles:assigned_to(email, full_name)')
+          .select('assigned_to, profiles:assigned_to(id, email, full_name, intern_id, position, department)')
           .in('team_id', resolvedTeamIds);
         if (taskProfiles) {
           const seen = new Set(targetEmails.map(t => t.email));
@@ -956,24 +1197,41 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
             const prof: any = t.profiles;
             if (prof?.email && !seen.has(prof.email)) {
               seen.add(prof.email);
-              targetEmails.push({ email: prof.email, name: prof.full_name || "Intern" });
+              targetEmails.push({ 
+                email: prof.email, 
+                name: prof.full_name || "Intern",
+                internId: prof.intern_id || `VCS-INT-${prof.id?.slice(0, 8)?.toUpperCase() || "PROV"}`,
+                internRole: prof.position || prof.department || "Technical Intern"
+              });
             }
           }
         }
       }
+
+      const totalQuestions = args.questions.length;
+      const totalScore = args.questions.reduce((sum: number, q: any) => sum + (Number(q.max_points) || 10), 0);
+      const questionTypes = Array.from(new Set(args.questions.map((q: any) => q.question_type || 'mcq')));
 
       for (const target of targetEmails) {
         if (target.email) {
           await sendCbtAssignmentEmail({
             to: target.email,
             internName: target.name,
+            internId: target.internId,
+            internRole: target.internRole,
+            examId: exam.id,
+            testId: exam.id,
             testTitle: title || 'New Assessment',
             description,
+            totalQuestions,
             timeLimitMinutes: Number(time_limit_minutes) || 30,
+            questionTypes,
+            maxAttempts: Number(max_attempts) || 1,
+            totalScore,
             passingScore: Number(passing_score) || 50,
             enableCamera: enable_camera !== false,
+            cameraStrictness: camera_strictness || 'standard',
             deadline,
-            testId: exam.id,
             isExtension: false
           });
         }
@@ -1631,22 +1889,27 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
 
     invalidateCache("admin_cbt_tests");
 
-    // Send notification email to all newly assigned targets
+    // Send notification email to all newly assigned targets via Brevo
     try {
-      let targetEmails: { email: string; name: string }[] = [];
+      let targetEmails: { email: string; name: string; internId?: string; internRole?: string }[] = [];
       if (newInterns.length > 0) {
         const { data: profiles } = await adminClient
           .from('profiles')
-          .select('email, full_name')
+          .select('id, email, full_name, intern_id, position, department')
           .in('id', newInterns);
         if (profiles) {
-          targetEmails.push(...profiles.map(p => ({ email: p.email, name: p.full_name })));
+          targetEmails.push(...profiles.map(p => ({ 
+            email: p.email, 
+            name: p.full_name || "Intern",
+            internId: p.intern_id || `VCS-INT-${p.id.slice(0, 8).toUpperCase()}`,
+            internRole: p.position || p.department || "Technical Intern"
+          })));
         }
       }
       if (newTeams.length > 0) {
         const { data: taskProfiles } = await adminClient
           .from('tasks')
-          .select('assigned_to, profiles:assigned_to(email, full_name)')
+          .select('assigned_to, profiles:assigned_to(id, email, full_name, intern_id, position, department)')
           .in('team_id', newTeams);
         if (taskProfiles) {
           const seen = new Set(targetEmails.map(t => t.email));
@@ -1654,7 +1917,12 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
             const prof: any = t.profiles;
             if (prof?.email && !seen.has(prof.email)) {
               seen.add(prof.email);
-              targetEmails.push({ email: prof.email, name: prof.full_name || "Intern" });
+              targetEmails.push({ 
+                email: prof.email, 
+                name: prof.full_name || "Intern",
+                internId: prof.intern_id || `VCS-INT-${prof.id?.slice(0, 8)?.toUpperCase() || "PROV"}`,
+                internRole: prof.position || prof.department || "Technical Intern"
+              });
             }
           }
         }
@@ -1665,13 +1933,17 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
           await sendCbtAssignmentEmail({
             to: target.email,
             internName: target.name,
+            internId: target.internId,
+            internRole: target.internRole,
+            examId: testId,
+            testId,
             testTitle: test.title,
             description: test.description,
             timeLimitMinutes: updatePayload.time_limit_minutes || test.time_limit_minutes || 30,
             passingScore: updatePayload.passing_score || test.passing_score || 50,
             enableCamera: updatePayload.enable_camera ?? (test.enable_camera !== false),
+            cameraStrictness: updatePayload.camera_strictness || test.camera_strictness || 'standard',
             deadline: updatePayload.deadline ?? test.deadline,
-            testId,
             isExtension: false
           });
         }
@@ -1781,20 +2053,25 @@ export const extendAdminTestDeadlineFn = createServerFn({ method: "POST" })
 
     if (notifyInterns) {
       try {
-        let targetEmails: { email: string; name: string }[] = [];
+        let targetEmails: { email: string; name: string; internId?: string; internRole?: string }[] = [];
         if (test.intern_ids && test.intern_ids.length > 0) {
           const { data: profiles } = await adminClient
             .from('profiles')
-            .select('email, full_name')
+            .select('id, email, full_name, intern_id, position, department')
             .in('id', test.intern_ids);
           if (profiles) {
-            targetEmails = profiles.map(p => ({ email: p.email, name: p.full_name }));
+            targetEmails = profiles.map(p => ({ 
+              email: p.email, 
+              name: p.full_name || "Intern",
+              internId: p.intern_id || `VCS-INT-${p.id.slice(0, 8).toUpperCase()}`,
+              internRole: p.position || p.department || "Technical Intern"
+            }));
           }
         }
         if (test.team_ids && test.team_ids.length > 0) {
           const { data: taskProfiles } = await adminClient
             .from('tasks')
-            .select('assigned_to, profiles:assigned_to(email, full_name)')
+            .select('assigned_to, profiles:assigned_to(id, email, full_name, intern_id, position, department)')
             .in('team_id', test.team_ids);
           if (taskProfiles) {
             const seen = new Set(targetEmails.map(t => t.email));
@@ -1802,7 +2079,12 @@ export const extendAdminTestDeadlineFn = createServerFn({ method: "POST" })
               const prof: any = t.profiles;
               if (prof?.email && !seen.has(prof.email)) {
                 seen.add(prof.email);
-                targetEmails.push({ email: prof.email, name: prof.full_name || "Intern" });
+                targetEmails.push({ 
+                  email: prof.email, 
+                  name: prof.full_name || "Intern",
+                  internId: prof.intern_id || `VCS-INT-${prof.id?.slice(0, 8)?.toUpperCase() || "PROV"}`,
+                  internRole: prof.position || prof.department || "Technical Intern"
+                });
               }
             }
           }
@@ -1813,13 +2095,17 @@ export const extendAdminTestDeadlineFn = createServerFn({ method: "POST" })
             await sendCbtAssignmentEmail({
               to: target.email,
               internName: target.name,
+              internId: target.internId,
+              internRole: target.internRole,
+              examId: testId,
+              testId,
               testTitle: test.title,
               description: test.description,
               timeLimitMinutes: test.time_limit_minutes || 30,
               passingScore: test.passing_score || 50,
               enableCamera: test.enable_camera !== false,
+              cameraStrictness: test.camera_strictness || 'standard',
               deadline,
-              testId,
               isExtension: true
             });
           }
