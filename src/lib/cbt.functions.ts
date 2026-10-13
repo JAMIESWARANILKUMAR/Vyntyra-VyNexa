@@ -854,7 +854,7 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
 
     exam = examInsertRes.data;
 
-    // 2. Insert Questions into cbt_questions with fallback
+    // 2. Insert Questions into cbt_questions with robust multi-column schema fallback
     const questionsToInsert = args.questions.map((q: any, i: number) => ({
       exam_id: exam.id,
       question_text: q.question_text || `Question ${i + 1}`,
@@ -868,11 +868,29 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       order_index: i
     }));
 
-    let qInsertRes = await adminClient.from('cbt_questions').insert(questionsToInsert);
+    let candidateQuestions: any[] = questionsToInsert;
+    let qInsertRes = await adminClient.from('cbt_questions').insert(candidateQuestions);
+
     if (qInsertRes.error) {
-      console.warn("[saveGeneratedTestFn] Insert questions with max_points failed, retrying without max_points:", qInsertRes.error.message);
-      const questionsWithoutPoints = questionsToInsert.map(({ max_points, ...rest }) => rest);
-      qInsertRes = await adminClient.from('cbt_questions').insert(questionsWithoutPoints);
+      console.warn("[saveGeneratedTestFn] First insert attempt failed:", qInsertRes.error.message);
+      
+      // If error indicates exam_id column not found, fallback to test_id
+      if (qInsertRes.error.message.includes("exam_id")) {
+        console.info("[saveGeneratedTestFn] Retrying question insert with 'test_id' instead of 'exam_id'");
+        candidateQuestions = candidateQuestions.map(({ exam_id, ...rest }) => ({
+          ...rest,
+          test_id: exam.id
+        }));
+        qInsertRes = await adminClient.from('cbt_questions').insert(candidateQuestions);
+      }
+
+      // If error mentions max_points or time_limit_seconds, strip unsupported columns
+      if (qInsertRes.error && (qInsertRes.error.message.includes("max_points") || qInsertRes.error.message.includes("time_limit_seconds"))) {
+        console.info("[saveGeneratedTestFn] Retrying question insert without extended timer/points columns");
+        candidateQuestions = candidateQuestions.map(({ max_points, time_limit_seconds, ...rest }: any) => rest);
+        qInsertRes = await adminClient.from('cbt_questions').insert(candidateQuestions);
+      }
+
       if (qInsertRes.error) {
         throw new Error("Failed to insert CBT questions into Supabase: " + qInsertRes.error.message);
       }
@@ -987,7 +1005,17 @@ export const getInternTestSessionFn = createServerFn({ method: "POST" })
     ]);
     if (testErr || !test) throw new Error("Test not found");
     
-    let safeQuestions = (questions || []).map((q: any) => {
+    let questionsData = questions;
+    if (qErr && qErr.message?.includes("exam_id")) {
+      const { data: fallbackQ } = await adminClient
+        .from('cbt_questions')
+        .select('*')
+        .eq('test_id', args.testId)
+        .order('order_index', { ascending: true });
+      questionsData = fallbackQ;
+    }
+
+    let safeQuestions = (questionsData || []).map((q: any) => {
       let options = q.options;
       try { if (typeof options === 'string') options = JSON.parse(options); } catch (e) {}
       return {
@@ -1053,8 +1081,14 @@ export const submitCbtExamFn = createServerFn({ method: "POST" })
       );
     }
 
-    // Trigger grading via Gemini 1.5 Flash immediately
-    const { data: questions } = await adminClient.from('cbt_questions').select('*').eq('exam_id', args.testId);
+    // Trigger grading via AI Gateway immediately
+    let { data: questions, error: qErr } = await adminClient.from('cbt_questions').select('*').eq('exam_id', args.testId);
+    if (!questions || questions.length === 0 || (qErr && qErr.message?.includes("exam_id"))) {
+      const qFallback = await adminClient.from('cbt_questions').select('*').eq('test_id', args.testId);
+      if (qFallback.data && qFallback.data.length > 0) {
+        questions = qFallback.data;
+      }
+    }
     const { data: test } = await adminClient.from('cbt_exams').select('*').eq('id', args.testId).single();
     
     let totalScore = 0;
@@ -1384,11 +1418,20 @@ export const getAdminTestQuestionsFn = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ testId: z.string() }).parse(d))
   .handler(async ({ data: args }) => {
     const adminClient = getAdminClient();
-    const { data: questions } = await adminClient
+    let { data: questions, error } = await adminClient
       .from('cbt_questions')
       .select('*')
       .eq('exam_id', args.testId)
       .order('order_index', { ascending: true });
+
+    if (error && error.message?.includes("exam_id")) {
+      const res = await adminClient
+        .from('cbt_questions')
+        .select('*')
+        .eq('test_id', args.testId)
+        .order('order_index', { ascending: true });
+      questions = res.data;
+    }
     return questions || [];
   });
 
