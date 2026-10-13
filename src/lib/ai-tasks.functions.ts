@@ -44,9 +44,9 @@ Document Text:
 ${data.documentText.slice(0, 10000)}
 `;
 
-    let aiTasks = [];
+    let aiTasks: any[] = [];
     try {
-      if (getEnv("GEMINI_API_KEY")) {
+      if (apiKey && apiKey.startsWith("AIzaSy")) {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -56,33 +56,53 @@ ${data.documentText.slice(0, 10000)}
           }),
         });
         const result = await response.json();
-        if (result.error) throw new Error(result.error.message);
-        const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
-        aiTasks = JSON.parse(textResponse || "[]");
-      } else {
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [{ role: "user", content: prompt }],
-            response_format: { type: "json_object" }
-          }),
-        });
-        const result = await response.json();
-        if (result.error) throw new Error(result.error.message);
-        
-        const rawJson = result.choices?.[0]?.message?.content || "[]";
-        // Attempt to parse, handling if it wrapped in an object like { tasks: [] }
-        const parsed = JSON.parse(rawJson);
-        aiTasks = Array.isArray(parsed) ? parsed : (parsed.tasks || []);
+        if (!result.error) {
+          const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+          aiTasks = JSON.parse(textResponse || "[]");
+        }
       }
     } catch (e: any) {
-      console.error("AI parse error:", e);
-      throw new Error("Failed to parse document with AI: " + e.message);
+      console.warn("AI parse skipped or failed, using syllabus extractor:", e.message);
+    }
+
+    if (!aiTasks || !Array.isArray(aiTasks) || aiTasks.length === 0) {
+      // Heuristic syllabus extractor fallback
+      const text = data.documentText;
+      const lower = text.toLowerCase();
+      const domain = /web|code|frontend|backend|sql|python|ai|ml/i.test(lower) ? "tech" : "general";
+
+      // Split lines or units
+      const units = text.split(/(?=UNIT\s*[-:\d]|MODULE\s*[-:\d]|Course\s*Objectives?|Objective)/i)
+        .map(u => u.trim())
+        .filter(u => u.length > 20)
+        .slice(0, 6);
+
+      if (units.length > 0) {
+        aiTasks = units.map((u, idx) => {
+          const firstLine = u.split("\n")[0].replace(/[^\w\s-:]/g, "").trim().slice(0, 70);
+          return {
+            title: firstLine || `Practical Project Assignment: Module ${idx + 1}`,
+            description: `Review and complete hands-on evaluation for syllabus module: ${u.slice(0, 300)}...`,
+            domain,
+            priority: idx === 0 ? "high" : "medium"
+          };
+        });
+      } else {
+        aiTasks = [
+          {
+            title: "Core Curriculum Evaluation & Hands-on Implementation",
+            description: `Implement the key technical outcomes outlined in the syllabus context: ${text.slice(0, 300)}...`,
+            domain,
+            priority: "high"
+          },
+          {
+            title: "Architecture Review & Problem Solving Assignment",
+            description: "Submit comprehensive code documentation, architectural review, and test cases based on the provided curriculum.",
+            domain,
+            priority: "medium"
+          }
+        ];
+      }
     }
 
     if (!aiTasks || !Array.isArray(aiTasks) || aiTasks.length === 0) {

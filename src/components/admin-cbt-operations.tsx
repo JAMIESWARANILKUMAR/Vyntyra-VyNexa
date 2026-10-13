@@ -205,7 +205,7 @@ function AdminCbtGenerateView() {
   const handleGenerate = async () => {
     if (!title.trim()) return toast.error("Please provide an Exam Title.");
     if (!targetId || targetId === "none") return toast.error("Please select a target Intern or Team.");
-    if (!taskContext.trim()) return toast.error("Please provide Task Context.");
+    if (!taskContext.trim()) return toast.error("Please provide Task Context or Syllabus.");
     
     setIsGenerating(true);
     try {
@@ -216,20 +216,22 @@ function AdminCbtGenerateView() {
       
       if (res.error) {
         toast.error(res.error);
-      } else {
+      } else if (res.questions && res.questions.length > 0) {
         const questionsWithTimers = (res.questions || []).map((q: any) => ({
           ...q,
           time_limit_seconds: q.time_limit_seconds || 60,
           max_points: q.max_points || 10,
         }));
         setGenerated({ ...res, questions: questionsWithTimers });
-        toast.success("Exam questions generated! Review below and click 'Approve & Assign CBT Exam' to allocate.");
+        toast.success(`Generated ${questionsWithTimers.length} exam questions! Review below and click 'Preview & Allocate Test' to assign.`);
         setTimeout(() => {
           window.scrollTo({ top: 800, behavior: 'smooth' });
         }, 150);
+      } else {
+        toast.error("No questions were generated. Please check your syllabus context.");
       }
-    } catch (e) {
-      toast.error("Generation failed. Please try again.");
+    } catch (e: any) {
+      toast.error(e?.message || "Generation failed. Please try again.");
     }
     setIsGenerating(false);
   };
