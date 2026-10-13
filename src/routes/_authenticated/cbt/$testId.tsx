@@ -70,10 +70,14 @@ function CbtExamInterface() {
     if (isAuto) toast.info("Time is up! Exam auto-submitted.");
   };
 
+  const isCameraEnabled = test?.enable_camera !== false && test?.camera_required !== false;
+  const isExpired = Boolean(test?.deadline && new Date(test.deadline).getTime() < Date.now());
+
   // Proctoring Enforcement Hook (must be declared before useEffect hooks that use strikes/logs)
   const { requestFullscreen, strikes, logs, stream, activeWarning, clearWarning } = useProctoringEnforcement(
     examStatus === "running", 
-    (reason) => handleTerminate(reason)
+    (reason) => handleTerminate(reason),
+    isCameraEnabled
   );
 
   const setVideoRef = (node: HTMLVideoElement | null) => {
@@ -487,7 +491,10 @@ function CbtExamInterface() {
             <div className="grid grid-cols-2 gap-8 text-sm">
               <ul className="space-y-3 font-medium text-slate-700">
                 <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" /> <strong>Fullscreen Enforced:</strong> Exiting triggers a violation.</li>
-                <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" /> <strong>Proctoring Active:</strong> Webcam is continuously monitored.</li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" /> 
+                  <strong>Proctoring Mode:</strong> {isCameraEnabled ? "Webcam continuously monitored." : "Focus & Tab Tracking only (Camera Disabled)."}
+                </li>
                 <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" /> <strong>Focus Tracking:</strong> Alt+Tab or losing focus is recorded.</li>
                 <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" /> <strong>No Clipboard:</strong> Copy/Paste operations are blocked.</li>
               </ul>
@@ -495,16 +502,35 @@ function CbtExamInterface() {
                 <li className="flex items-center justify-between"><span className="text-slate-500">Duration:</span> <strong className="text-slate-900">{test.time_limit_minutes || 30} Minutes</strong></li>
                 <li className="flex items-center justify-between"><span className="text-slate-500">Passing Criteria:</span> <strong className="text-slate-900">{test.passing_score || 60}%</strong></li>
                 <li className="flex items-center justify-between"><span className="text-slate-500">Total Modules:</span> <strong className="text-slate-900">{questions.length}</strong></li>
+                {test.deadline && (
+                  <li className="flex items-center justify-between">
+                    <span className="text-slate-500">Deadline:</span> 
+                    <strong className={`text-xs ${isExpired ? "text-red-600 font-bold" : "text-slate-900"}`}>
+                      {new Date(test.deadline).toLocaleString()}
+                    </strong>
+                  </li>
+                )}
                 <li className="flex items-center justify-between"><span className="text-slate-500">Origin IP:</span> <strong className="text-slate-900 font-mono text-xs">{ipAddress}</strong></li>
               </ul>
             </div>
-            <div className="mt-6 bg-red-50 border border-red-200 p-3 text-red-700 font-bold text-xs flex items-center gap-2 uppercase tracking-wide">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              Maximum 1 warning. The 2nd violation automatically terminates the exam.
-            </div>
+            {isExpired ? (
+              <div className="mt-6 bg-red-100 border border-red-300 p-3 text-red-800 font-bold text-xs flex items-center gap-2 rounded-sm uppercase tracking-wide">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-red-600" />
+                This assessment has expired as of {new Date(test.deadline).toLocaleString()}. Access is locked.
+              </div>
+            ) : (
+              <div className="mt-6 bg-red-50 border border-red-200 p-3 text-red-700 font-bold text-xs flex items-center gap-2 uppercase tracking-wide">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                Maximum 1 warning. The 2nd violation automatically terminates the exam.
+              </div>
+            )}
           </div>
-          <Button onClick={async () => { await requestFullscreen(); setExamStatus("running"); }} className="w-full h-12 bg-slate-900 hover:bg-slate-800 font-bold text-white uppercase tracking-wider rounded-sm">
-            Acknowledge & Start Exam
+          <Button 
+            disabled={isExpired}
+            onClick={async () => { await requestFullscreen(); setExamStatus("running"); }} 
+            className="w-full h-12 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 font-bold text-white uppercase tracking-wider rounded-sm"
+          >
+            {isExpired ? "Assessment Expired - Contact Admin" : "Acknowledge & Start Exam"}
           </Button>
         </div>
       </div>
@@ -590,24 +616,35 @@ function CbtExamInterface() {
           
           <div className="p-4 flex-1 flex flex-col overflow-y-auto custom-scrollbar">
             
-            {/* Live Video Feed - Strict, No Black Background */}
+            {/* Live Video Feed or Focus Tracking Mode */}
             <div className="mb-6 relative">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-2">
-                Proctoring Feed
+              <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 flex items-center justify-between">
+                <span>Proctoring Feed</span>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${isCameraEnabled ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
+                  {isCameraEnabled ? "Cam Active" : "Focus Only"}
+                </span>
               </div>
-              <div className="relative rounded-sm overflow-hidden border border-slate-300 aspect-video flex items-center justify-center bg-slate-200">
-                {stream ? (
-                  <video ref={setVideoRef} autoPlay playsInline muted className="w-full h-full object-cover mirror mix-blend-multiply" />
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-slate-400 gap-2">
-                    <VideoOff className="h-6 w-6" />
+              {isCameraEnabled ? (
+                <div className="relative rounded-sm overflow-hidden border border-slate-300 aspect-video flex items-center justify-center bg-slate-200">
+                  {stream ? (
+                    <video ref={setVideoRef} autoPlay playsInline muted className="w-full h-full object-cover mirror mix-blend-multiply" />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-slate-400 gap-2">
+                      <VideoOff className="h-6 w-6" />
+                    </div>
+                  )}
+                  {/* Floating REC Badge */}
+                  <div className="absolute top-2 left-2 flex items-center gap-1.5 text-red-600 font-black text-[9px] uppercase tracking-widest bg-white/90 backdrop-blur-sm px-2 py-1 rounded-sm border border-slate-200 shadow-sm">
+                    <div className="h-2 w-2 rounded-full bg-red-600 animate-pulse" /> REC
                   </div>
-                )}
-                {/* Floating REC Badge */}
-                <div className="absolute top-2 left-2 flex items-center gap-1.5 text-red-600 font-black text-[9px] uppercase tracking-widest bg-white/90 backdrop-blur-sm px-2 py-1 rounded-sm border border-slate-200 shadow-sm">
-                  <div className="h-2 w-2 rounded-full bg-red-600 animate-pulse" /> REC
                 </div>
-              </div>
+              ) : (
+                <div className="relative rounded-sm border border-slate-300 aspect-video p-3 bg-white flex flex-col items-center justify-center text-center">
+                  <ShieldCheck className="h-6 w-6 text-emerald-600 mb-1" />
+                  <span className="text-xs font-bold text-slate-800">Focus-Only Proctoring</span>
+                  <span className="text-[9px] text-slate-500 mt-0.5 leading-tight">Camera disabled by admin. Fullscreen & tab tracking enabled.</span>
+                </div>
+              )}
             </div>
 
             {/* Strikes Info */}

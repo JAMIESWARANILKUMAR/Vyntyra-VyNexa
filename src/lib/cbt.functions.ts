@@ -48,6 +48,175 @@ export const generateAiTestFn = createServerFn({ method: "POST" })
     return JSON.parse(response.text || '{}');
   });
 
+async function sendCbtAssignmentEmail({
+  to,
+  internName,
+  testTitle,
+  description,
+  timeLimitMinutes,
+  passingScore,
+  enableCamera,
+  deadline,
+  testId,
+  isExtension = false,
+}: {
+  to: string;
+  internName: string;
+  testTitle: string;
+  description?: string;
+  timeLimitMinutes?: number;
+  passingScore?: number;
+  enableCamera?: boolean;
+  deadline?: string | null;
+  testId: string;
+  isExtension?: boolean;
+}) {
+  const apiKey = getEnv("RESEND_API_KEY");
+  if (!apiKey) {
+    console.warn("[CBT Email] RESEND_API_KEY not configured; skipping dispatch.");
+    return { sent: false, reason: "RESEND_API_KEY not configured" };
+  }
+
+  const subject = isExtension
+    ? `[VyNexa Connect] Assessment Deadline Extended: ${testTitle}`
+    : `[VyNexa Connect] New Assessment Assigned: ${testTitle}`;
+
+  const appUrl = "https://vynexaconnect.vyntyraconsultancyservices.in";
+  const examUrl = `${appUrl}/cbt/${testId}`;
+  const formattedDeadline = deadline
+    ? new Date(deadline).toLocaleString("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : "No strict deadline set";
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${subject}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #1e293b;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+    <tr>
+      <td style="background-color: #0f172a; padding: 32px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0 0 8px; font-size: 24px; font-weight: 800; letter-spacing: 0.5px;">Vyntyra • VyNexa Connect</h1>
+        <p style="color: #94a3b8; margin: 0; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Secure CBT Evaluation Portal</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 32px;">
+        <h2 style="color: #0f172a; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 12px;">
+          ${isExtension ? "Assessment Deadline Updated" : "New Assessment Allocated"}
+        </h2>
+        <p style="color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+          Hello <strong>${internName || "Candidate"}</strong>,<br/>
+          ${
+            isExtension
+              ? `The submission deadline for your assigned evaluation assessment has been officially extended.`
+              : `You have been assigned a new computer-based evaluation assessment on VyNexa Connect.`
+          }
+        </p>
+
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; border-radius: 8px; padding: 20px; margin-bottom: 24px; border-left: 4px solid #4f46e5;">
+          <tr>
+            <td style="padding: 5px 0;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Assessment Title:</span></td>
+            <td style="padding: 5px 0; text-align: right;"><strong style="color: #0f172a; font-size: 14px;">${testTitle}</strong></td>
+          </tr>
+          ${
+            description
+              ? `<tr>
+            <td style="padding: 5px 0;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Description:</span></td>
+            <td style="padding: 5px 0; text-align: right;"><span style="color: #334155; font-size: 13px;">${description}</span></td>
+          </tr>`
+              : ""
+          }
+          <tr>
+            <td style="padding: 5px 0;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Duration:</span></td>
+            <td style="padding: 5px 0; text-align: right;"><strong style="color: #0f172a; font-size: 14px;">${timeLimitMinutes || 30} Minutes</strong></td>
+          </tr>
+          <tr>
+            <td style="padding: 5px 0;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Passing Criteria:</span></td>
+            <td style="padding: 5px 0; text-align: right;"><strong style="color: #10b981; font-size: 14px;">${passingScore || 50}%</strong></td>
+          </tr>
+          <tr>
+            <td style="padding: 5px 0;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Proctoring Mode:</span></td>
+            <td style="padding: 5px 0; text-align: right;"><strong style="color: ${enableCamera !== false ? "#ef4444" : "#0284c7"}; font-size: 13px;">${enableCamera !== false ? "Webcam Monitoring Required" : "Focus-Only Tracking (No Camera)"}</strong></td>
+          </tr>
+          <tr>
+            <td style="padding: 5px 0;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Assessment Deadline:</span></td>
+            <td style="padding: 5px 0; text-align: right;"><strong style="color: #e11d48; font-size: 13px;">${formattedDeadline}</strong></td>
+          </tr>
+        </table>
+
+        <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 16px; margin-bottom: 28px;">
+          <p style="color: #b45309; font-size: 13px; font-weight: 600; margin: 0 0 6px;">Secure Testing Environment Rules:</p>
+          <ul style="color: #78350f; font-size: 12px; margin: 0; padding-left: 20px; line-height: 1.6;">
+            <li>Access is strictly restricted to desktop browsers (1024px or wider).</li>
+            <li>Full-screen enforcement is active throughout the test.</li>
+            <li>Tab-switching or losing focus logs a violation warning. 2 violations trigger termination.</li>
+            ${enableCamera !== false ? "<li>Webcam feed is continuously monitored for unauthorized movement or absence.</li>" : ""}
+          </ul>
+        </div>
+
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="text-align: center;">
+          <tr>
+            <td align="center">
+              <a href="${examUrl}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);">
+                Launch Assessment &rarr;
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #f8fafc; padding: 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+        <p style="color: #64748b; font-size: 12px; margin: 0 0 4px;">
+          &copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.
+        </p>
+        <p style="color: #94a3b8; font-size: 11px; margin: 0;">
+          This is an automated notification from the VyNexa Secure Evaluation Engine.
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+    const result = await resend.emails.send({
+      from: `VyNexa Connect <noreply@vyntyraconsultancyservices.in>`,
+      to,
+      subject,
+      html,
+    });
+
+    const supabase = getAdminClient();
+    try {
+      await supabase.from("automated_email_logs").insert({
+        recipient_email: to,
+        recipient_name: internName,
+        campaign_type: isExtension ? "cbt_deadline_extension" : "cbt_assessment_assigned",
+        subject,
+        status: result.error ? "failed" : "sent",
+        provider_used: "resend",
+        resend_message_id: result.data?.id || null,
+        error_message: result.error?.message || null,
+        created_at: new Date().toISOString(),
+      });
+    } catch (_) {}
+
+    return { sent: true, id: result.data?.id };
+  } catch (err: any) {
+    console.error("[CBT Email Dispatch Error]:", err.message);
+    return { sent: false, reason: err.message };
+  }
+}
+
 export const saveGeneratedTestFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
@@ -58,10 +227,20 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
     const adminClient = getAdminClient();
     const userId = context.user.id;
     
-    const { title, description, target_type, target_id, passing_score, time_limit_minutes, category } = args.testMetadata;
+    const { 
+      title, 
+      description, 
+      target_type, 
+      target_id, 
+      passing_score, 
+      time_limit_minutes, 
+      enable_camera, 
+      deadline, 
+      category 
+    } = args.testMetadata;
     
-    // 1. Create the CBT Exam
-    const { data: exam, error: examError } = await adminClient.from('cbt_exams').insert({
+    // 1. Create the CBT Exam with graceful fallback for columns
+    const examDataToInsert: any = {
       title: title || 'New AI CBT Exam',
       description: description || 'Generated AI Assessment',
       category: category || 'General',
@@ -69,20 +248,48 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       created_by: userId,
       status: 'published',
       allocation_mode: target_type === 'team' ? 'team' : 'individual',
-      team_ids: target_type === 'team' ? [target_id] : [],
-      intern_ids: target_type === 'intern' ? [target_id] : []
-    }).select('id').single();
+      team_ids: target_type === 'team' ? (Array.isArray(target_id) ? target_id : [target_id]) : [],
+      intern_ids: target_type === 'intern' ? (Array.isArray(target_id) ? target_id : [target_id]) : [],
+      time_limit_minutes: time_limit_minutes || 30,
+      enable_camera: enable_camera !== false,
+      camera_required: enable_camera !== false,
+      deadline: deadline || null,
+    };
 
-    if (examError || !exam) {
-      console.error(examError);
-      throw new Error("Failed to create CBT Exam in Supabase");
+    let exam: any = null;
+    const { data: createdExam, error: examError } = await adminClient
+      .from('cbt_exams')
+      .insert(examDataToInsert)
+      .select('id')
+      .single();
+
+    if (examError) {
+      console.warn("[saveGeneratedTestFn] Primary insert error, falling back:", examError.message);
+      const fallbackPayload = {
+        title: title || 'New AI CBT Exam',
+        description: description || 'Generated AI Assessment',
+        category: category || 'General',
+        passing_score: passing_score || 50,
+        created_by: userId,
+        status: 'published',
+        allocation_mode: target_type === 'team' ? 'team' : 'individual',
+        team_ids: target_type === 'team' ? (Array.isArray(target_id) ? target_id : [target_id]) : [],
+        intern_ids: target_type === 'intern' ? (Array.isArray(target_id) ? target_id : [target_id]) : [],
+      };
+      const fallbackRes = await adminClient.from('cbt_exams').insert(fallbackPayload).select('id').single();
+      if (fallbackRes.error || !fallbackRes.data) {
+        throw new Error("Failed to create CBT Exam: " + (fallbackRes.error?.message || examError.message));
+      }
+      exam = fallbackRes.data;
+    } else {
+      exam = createdExam;
     }
 
-    // 2. Insert Questions with manual timers
+    // 2. Insert Questions with manual timers & points
     const questionsToInsert = args.questions.map((q: any, i: number) => ({
       exam_id: exam.id,
       question_text: q.question_text,
-      question_type: q.question_type,
+      question_type: q.question_type || 'mcq',
       options: q.options || {},
       correct_answer: typeof q.correct_answer === 'object' ? q.correct_answer.id : q.correct_answer,
       time_limit_seconds: q.time_limit_seconds || 60,
@@ -97,7 +304,62 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       throw new Error("Failed to insert CBT questions into Supabase");
     }
 
-    return { success: true, testId: exam.id, message: "Exam Successfully Created in Supabase!" };
+    invalidateCache("admin_cbt_tests");
+
+    // 3. Automated Email Notification
+    try {
+      let targetEmails: { email: string; name: string }[] = [];
+      if (target_type === 'intern' && target_id) {
+        const internIds = Array.isArray(target_id) ? target_id : [target_id];
+        const { data: profiles } = await adminClient
+          .from('profiles')
+          .select('email, full_name')
+          .in('id', internIds);
+        if (profiles) {
+          targetEmails = profiles.map(p => ({ email: p.email, name: p.full_name }));
+        }
+      } else if (target_type === 'team' && target_id) {
+        const { data: taskProfiles } = await adminClient
+          .from('tasks')
+          .select('assigned_to, profiles:assigned_to(email, full_name)')
+          .eq('team_id', target_id);
+        if (taskProfiles) {
+          const seen = new Set<string>();
+          for (const t of taskProfiles) {
+            const prof: any = t.profiles;
+            if (prof?.email && !seen.has(prof.email)) {
+              seen.add(prof.email);
+              targetEmails.push({ email: prof.email, name: prof.full_name || "Intern" });
+            }
+          }
+        }
+      }
+
+      for (const target of targetEmails) {
+        if (target.email) {
+          await sendCbtAssignmentEmail({
+            to: target.email,
+            internName: target.name,
+            testTitle: title || 'New Assessment',
+            description,
+            timeLimitMinutes: time_limit_minutes || 30,
+            passingScore: passing_score || 50,
+            enableCamera: enable_camera !== false,
+            deadline,
+            testId: exam.id,
+            isExtension: false
+          });
+        }
+      }
+    } catch (emailErr) {
+      console.warn("[saveGeneratedTestFn] Automated email dispatch encountered an issue:", emailErr);
+    }
+
+    return { 
+      success: true, 
+      testId: exam.id, 
+      message: "Exam successfully created and assigned! Automated emails dispatched to interns." 
+    };
   });
 
 export const getInternTestSessionFn = createServerFn({ method: "POST" })
@@ -369,14 +631,18 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
     testId: z.string(),
     target_type: z.enum(['intern', 'team']),
     target_id: z.string(),
+    deadline: z.string().optional(),
+    enable_camera: z.boolean().optional(),
+    time_limit_minutes: z.number().optional(),
+    passing_score: z.number().optional(),
   }).parse(d))
   .handler(async ({ data: args }) => {
     const adminClient = getAdminClient();
-    const { testId, target_type, target_id } = args;
+    const { testId, target_type, target_id, deadline, enable_camera, time_limit_minutes, passing_score } = args;
 
     const { data: test, error: fetchErr } = await adminClient
       .from('cbt_exams')
-      .select('intern_ids, team_ids')
+      .select('*')
       .eq('id', testId)
       .single();
 
@@ -386,6 +652,14 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
       status: 'published',
       allocation_mode: target_type === 'team' ? 'team' : 'individual',
     };
+
+    if (deadline !== undefined) updatePayload.deadline = deadline || null;
+    if (enable_camera !== undefined) {
+      updatePayload.enable_camera = enable_camera;
+      updatePayload.camera_required = enable_camera;
+    }
+    if (time_limit_minutes !== undefined) updatePayload.time_limit_minutes = time_limit_minutes;
+    if (passing_score !== undefined) updatePayload.passing_score = passing_score;
 
     if (target_type === 'team') {
       const existingTeams = Array.isArray(test.team_ids) ? test.team_ids : [];
@@ -402,7 +676,192 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
 
     if (updateErr) throw new Error("Failed to assign exam: " + updateErr.message);
 
+    invalidateCache("admin_cbt_tests");
+
+    // Send notification email to the newly assigned target
+    try {
+      let targetEmails: { email: string; name: string }[] = [];
+      if (target_type === 'intern') {
+        const { data: profile } = await adminClient
+          .from('profiles')
+          .select('email, full_name')
+          .eq('id', target_id)
+          .single();
+        if (profile?.email) {
+          targetEmails.push({ email: profile.email, name: profile.full_name });
+        }
+      } else {
+        const { data: taskProfiles } = await adminClient
+          .from('tasks')
+          .select('assigned_to, profiles:assigned_to(email, full_name)')
+          .eq('team_id', target_id);
+        if (taskProfiles) {
+          const seen = new Set<string>();
+          for (const t of taskProfiles) {
+            const prof: any = t.profiles;
+            if (prof?.email && !seen.has(prof.email)) {
+              seen.add(prof.email);
+              targetEmails.push({ email: prof.email, name: prof.full_name || "Intern" });
+            }
+          }
+        }
+      }
+
+      for (const target of targetEmails) {
+        if (target.email) {
+          await sendCbtAssignmentEmail({
+            to: target.email,
+            internName: target.name,
+            testTitle: test.title,
+            description: test.description,
+            timeLimitMinutes: updatePayload.time_limit_minutes || test.time_limit_minutes || 30,
+            passingScore: updatePayload.passing_score || test.passing_score || 50,
+            enableCamera: updatePayload.enable_camera ?? (test.enable_camera !== false),
+            deadline: updatePayload.deadline ?? test.deadline,
+            testId,
+            isExtension: false
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("[reassignAdminTestFn] Email notification warning:", err);
+    }
+
     return { success: true, message: "Exam successfully assigned and allocated!" };
+  });
+
+export const extendAdminTestDeadlineFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    testId: z.string(),
+    deadline: z.string(),
+    notifyInterns: z.boolean().optional(),
+  }).parse(d))
+  .handler(async ({ data: args }) => {
+    const adminClient = getAdminClient();
+    const { testId, deadline, notifyInterns = true } = args;
+
+    const { data: test, error: fetchErr } = await adminClient
+      .from('cbt_exams')
+      .select('*')
+      .eq('id', testId)
+      .single();
+
+    if (fetchErr || !test) throw new Error("Exam not found");
+
+    const { error: updateErr } = await adminClient
+      .from('cbt_exams')
+      .update({ deadline })
+      .eq('id', testId);
+
+    if (updateErr) throw new Error("Failed to extend deadline: " + updateErr.message);
+
+    invalidateCache("admin_cbt_tests");
+
+    if (notifyInterns) {
+      try {
+        let targetEmails: { email: string; name: string }[] = [];
+        if (test.intern_ids && test.intern_ids.length > 0) {
+          const { data: profiles } = await adminClient
+            .from('profiles')
+            .select('email, full_name')
+            .in('id', test.intern_ids);
+          if (profiles) {
+            targetEmails = profiles.map(p => ({ email: p.email, name: p.full_name }));
+          }
+        }
+        if (test.team_ids && test.team_ids.length > 0) {
+          const { data: taskProfiles } = await adminClient
+            .from('tasks')
+            .select('assigned_to, profiles:assigned_to(email, full_name)')
+            .in('team_id', test.team_ids);
+          if (taskProfiles) {
+            const seen = new Set(targetEmails.map(t => t.email));
+            for (const t of taskProfiles) {
+              const prof: any = t.profiles;
+              if (prof?.email && !seen.has(prof.email)) {
+                seen.add(prof.email);
+                targetEmails.push({ email: prof.email, name: prof.full_name || "Intern" });
+              }
+            }
+          }
+        }
+
+        for (const target of targetEmails) {
+          if (target.email) {
+            await sendCbtAssignmentEmail({
+              to: target.email,
+              internName: target.name,
+              testTitle: test.title,
+              description: test.description,
+              timeLimitMinutes: test.time_limit_minutes || 30,
+              passingScore: test.passing_score || 50,
+              enableCamera: test.enable_camera !== false,
+              deadline,
+              testId,
+              isExtension: true
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("[extendAdminTestDeadlineFn] Email dispatch error:", err);
+      }
+    }
+
+    return { 
+      success: true, 
+      message: `Deadline extended to ${new Date(deadline).toLocaleString()}` 
+    };
+  });
+
+export const getAdminSubmissionDetailFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ submissionId: z.string() }).parse(d))
+  .handler(async ({ data: args }) => {
+    const adminClient = getAdminClient();
+    const { data: submission, error: subErr } = await adminClient
+      .from('cbt_submissions')
+      .select('*, profiles(id, full_name, email, intern_id), cbt_exams(*)')
+      .eq('id', args.submissionId)
+      .single();
+
+    if (subErr || !submission) throw new Error("Submission not found");
+
+    const [{ data: answers }, { data: malpracticeLogs }, { data: questions }] = await Promise.all([
+      adminClient.from('cbt_answers').select('*').eq('submission_id', args.submissionId),
+      adminClient.from('cbt_malpractice_logs').select('*').eq('submission_id', args.submissionId).order('timestamp', { ascending: true }),
+      adminClient.from('cbt_questions').select('*').eq('exam_id', submission.exam_id).order('order_index', { ascending: true }),
+    ]);
+
+    return {
+      submission,
+      answers: answers || [],
+      malpracticeLogs: malpracticeLogs || [],
+      questions: questions || [],
+    };
+  });
+
+export const overrideSubmissionScoreFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    submissionId: z.string(),
+    newScore: z.number().min(0).max(100),
+    reviewRemarks: z.string().optional()
+  }).parse(d))
+  .handler(async ({ data: args }) => {
+    const adminClient = getAdminClient();
+    const { error } = await adminClient
+      .from('cbt_submissions')
+      .update({
+        total_score: args.newScore,
+        ai_feedback: args.reviewRemarks || "Score manually verified and updated by administrator.",
+        status: 'graded'
+      })
+      .eq('id', args.submissionId);
+
+    if (error) throw new Error(error.message);
+    invalidateCache("all_cbt_submissions");
+    return { success: true, message: "Submission score updated successfully!" };
   });
 
 export const listAllCbtSubmissionsFn = createServerFn({ method: "GET" })

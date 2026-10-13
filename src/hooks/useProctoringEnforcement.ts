@@ -4,7 +4,11 @@ import * as faceDetection from '@tensorflow-models/face-detection';
 import '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs-core';
 
-export function useProctoringEnforcement(isActive: boolean, onTerminate: (reason: string) => void) {
+export function useProctoringEnforcement(
+  isActive: boolean, 
+  onTerminate: (reason: string) => void,
+  enableCamera: boolean = true
+) {
   const [strikes, setStrikes] = useState(0);
   const [logs, setLogs] = useState<any[]>([]);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -50,7 +54,7 @@ export function useProctoringEnforcement(isActive: boolean, onTerminate: (reason
   const gazeViolationStartRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!isActive || !stream) return;
+    if (!isActive || !enableCamera || !stream) return;
 
     let isMounted = true;
     const initDetector = async () => {
@@ -191,13 +195,17 @@ export function useProctoringEnforcement(isActive: boolean, onTerminate: (reason
 
   const requestFullscreen = async () => {
     try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      if (enableCamera && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const ms = await navigator.mediaDevices.getUserMedia({ video: true });
         setStream(ms);
       }
       await document.documentElement.requestFullscreen();
     } catch (e) {
-      toast.error("Fullscreen and Camera permissions are required to start the exam.");
+      if (enableCamera) {
+        toast.error("Fullscreen and Camera permissions are required to start the exam.");
+      } else {
+        toast.error("Fullscreen permission is required to start the exam.");
+      }
       throw e;
     }
   };
