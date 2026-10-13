@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getAdminClient } from "@/integrations/supabase/admin";
 import { getEnv } from "@/lib/env";
+import { generateAiJson } from "@/lib/ai-gateway";
 
 const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as any)[prop] });
 
@@ -20,12 +21,7 @@ export const parseDocumentAndAssignTasks = createServerFn({ method: "POST" })
       throw new Error("Unauthorized. Only admins can use AI task assignment.");
     }
 
-    // 2. Call AI API
-    const apiKey = getEnv("GEMINI_API_KEY") || getEnv("OPENAI_API_KEY");
-    if (!apiKey) {
-      throw new Error("No AI API Key configured. Please add GEMINI_API_KEY to your environment variables.");
-    }
-
+    // 2. Call AI API via Unified Gateway (Gemini primary with OpenRouter fallback)
     const prompt = `You are an AI assistant for an internship management system.
 Your goal is to extract actionable tasks from the following document or syllabus and map them to domains.
 Domains: tech, marketing, hr, design, operations, management, sales, general.
@@ -46,20 +42,12 @@ ${data.documentText.slice(0, 10000)}
 
     let aiTasks: any[] = [];
     try {
-      if (apiKey && apiKey.startsWith("AIzaSy")) {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: "application/json" }
-          }),
-        });
-        const result = await response.json();
-        if (!result.error) {
-          const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
-          aiTasks = JSON.parse(textResponse || "[]");
-        }
+      const res = await generateAiJson<any[]>({
+        model: "gemini-1.5-flash",
+        prompt,
+      });
+      if (Array.isArray(res.data)) {
+        aiTasks = res.data;
       }
     } catch (e: any) {
       console.warn("AI parse skipped or failed, using syllabus extractor:", e.message);

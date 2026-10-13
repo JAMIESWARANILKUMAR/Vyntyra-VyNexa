@@ -2,6 +2,7 @@
 // interview questions from an applicant's resume + role.
 // Called fire-and-forget after submission and on-demand from the admin panel.
 import { supabase } from "@/integrations/supabase/client";
+import { generateAiText } from "@/lib/ai-gateway";
 
 interface Args {
   applicationId: string;
@@ -75,12 +76,6 @@ async function saveMockFallback(args: Args): Promise<string> {
 }
 
 export async function generateInterviewQuestions(args: Args): Promise<string> {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) {
-    console.warn("LOVABLE_API_KEY missing. Generating high-quality mock interview kit fallback.");
-    return await saveMockFallback(args);
-  }
-
   // Load resume if PDF (only PDF is reliably supported multimodal). For other
   // types, fall back to role-only generation.
   let filePart: any = null;
@@ -128,45 +123,64 @@ Generate a structured interview kit as clean Markdown with these sections:
 
 Keep it concise, direct, and interview-ready. No preamble.`;
 
-  const contentBlocks: any[] = [{ type: "text", text: instruction }];
-  if (filePart) contentBlocks.push(filePart);
+  // 1. If Lovable AI Gateway is present, try it first
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (apiKey) {
+    const contentBlocks: any[] = [{ type: "text", text: instruction }];
+    if (filePart) contentBlocks.push(filePart);
 
-  try {
-    const res = await fetch(GATEWAY_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [{ role: "user", content: contentBlocks }],
-      }),
-    });
+    try {
+      const res = await fetch(GATEWAY_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [{ role: "user", content: contentBlocks }],
+        }),
+      });
 
-    if (!res.ok) {
-      const body = await res.text();
-      console.warn(`AI Gateway failed (${res.status}): ${body.slice(0, 300)}. Falling back to mock generator.`);
-      return await saveMockFallback(args);
+      if (res.ok) {
+        const json = await res.json();
+        const text: string = json?.choices?.[0]?.message?.content ?? "";
+        if (text.trim()) {
+          await supabase
+            .from("applications")
+            .update({
+              interview_questions: text,
+              interview_questions_generated_at: new Date().toISOString(),
+            })
+            .eq('id', args.applicationId);
+          return text;
+        }
+      }
+    } catch (e) {
+      console.warn("Lovable gateway failed, trying Unified AI Gateway:", e);
     }
-
-    const json = await res.json();
-    const text: string = json?.choices?.[0]?.message?.content ?? "";
-    if (!text.trim()) {
-      return await saveMockFallback(args);
-    }
-
-    await supabase
-      .from("applications")
-      .update({
-        interview_questions: text,
-        interview_questions_generated_at: new Date().toISOString(),
-      })
-      .eq('id', args.applicationId);
-
-    return text;
-  } catch (err) {
-    console.warn("AI generation error. Falling back to mock:", (err as Error).message);
-    return await saveMockFallback(args);
   }
+
+  // 2. Try Unified AI Gateway (Gemini primary -> OpenRouter secondary)
+  try {
+    const res = await generateAiText({
+      prompt: instruction,
+      model: "gemini-1.5-flash",
+    });
+    if (res.text && res.text.trim()) {
+      await supabase
+        .from("applications")
+        .update({
+          interview_questions: res.text,
+          interview_questions_generated_at: new Date().toISOString(),
+        })
+        .eq('id', args.applicationId);
+      return res.text;
+    }
+  } catch (err: any) {
+    console.warn("Unified AI Gateway generation error. Falling back to mock:", err.message);
+  }
+
+  // 3. Fallback to mock kit
+  return await saveMockFallback(args);
 }

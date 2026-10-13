@@ -1,6 +1,7 @@
 import { getEnv } from '@/lib/env';
 import { createServerFn } from "@tanstack/react-start";
 import { GoogleGenAI } from "@google/genai";
+import { generateAiText } from "@/lib/ai-gateway";
 import { z } from "zod";
 import QRCode from "qrcode";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -8603,9 +8604,6 @@ export const generateAiFeedbackReport = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!feedbacks || feedbacks.length === 0) throw new Error("No feedback data available for analysis.");
 
-    // Initialize Google Gen AI
-    const ai = new GoogleGenAI({ apiKey: getEnv("GEMINI_API_KEY") });
-    
     const feedbackSummary = feedbacks.map((f: any) => `
     Role: ${f.domain_track}
     NPS: ${f.nps_score}
@@ -8629,9 +8627,10 @@ export const generateAiFeedbackReport = createServerFn({ method: "POST" })
     ${feedbackSummary}`;
 
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: prompt,
+      const response = await generateAiText({
+        model: 'gemini-1.5-flash',
+        openRouterModel: 'google/gemini-2.5-flash',
+        prompt,
       });
       return { success: true, report: response.text };
     } catch (e: any) {

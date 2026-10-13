@@ -1,6 +1,7 @@
 import { getEnv } from "@/lib/env";
 import { createServerFn } from "@tanstack/react-start";
 import { GoogleGenAI } from "@google/genai";
+import { generateAiJson } from "@/lib/ai-gateway";
 import { z } from "zod";
 import { getAdminClient } from "@/integrations/supabase/admin";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -19,12 +20,10 @@ export const generateAiTestFn = createServerFn({ method: "POST" })
     const targetCount = Number(args.questionCount) > 0 ? Number(args.questionCount) : 10;
     const defaultTimer = Number(args.defaultTimeSeconds) > 0 ? Number(args.defaultTimeSeconds) : 60;
 
-    // 1. Attempt Gemini AI if valid API key is present
-    const geminiKey = getEnv("GEMINI_API_KEY");
-    if (geminiKey && (geminiKey.startsWith("AIzaSy") || geminiKey.length > 20)) {
-      try {
-        const prompt = `You are an expert technical evaluator. Generate a computer-based test (CBT) with EXACTLY ${targetCount} high-yield, comprehensive questions based on the following context.
-        
+    // 1. Attempt AI Generation via AI Gateway (Gemini primary with OpenRouter fallback)
+    try {
+      const prompt = `You are an expert technical evaluator. Generate a computer-based test (CBT) with EXACTLY ${targetCount} high-yield, comprehensive questions based on the following context.
+      
 TASK CONTEXT:
 ${args.taskContext}
 
@@ -56,26 +55,22 @@ Output the result STRICTLY as JSON with schema:
     }
   ]
 }`;
-        const ai = new GoogleGenAI({ apiKey: geminiKey });
-        const response = await ai.models.generateContent({
-          model: 'gemini-1.5-flash',
-          contents: prompt,
-          config: { responseMimeType: 'application/json' }
-        });
-        
-        const parsed = JSON.parse(response.text || '{}');
-        if (parsed.questions && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
-          // Normalize questions
-          const sanitizedQuestions = parsed.questions.map((q: any) => ({
-            ...q,
-            time_limit_seconds: Number(q.time_limit_seconds) || defaultTimer,
-            max_points: Number(q.max_points) || 10
-          }));
-          return { questions: sanitizedQuestions };
-        }
-      } catch (geminiErr: any) {
-        console.warn("[generateAiTestFn] Gemini API call skipped or returned error, using curriculum synthesizer:", geminiErr.message);
+      const result = await generateAiJson<{ questions: any[] }>({
+        prompt,
+        model: 'gemini-1.5-flash',
+      });
+      const parsed = result.data;
+      if (parsed?.questions && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
+        // Normalize questions
+        const sanitizedQuestions = parsed.questions.map((q: any) => ({
+          ...q,
+          time_limit_seconds: Number(q.time_limit_seconds) || defaultTimer,
+          max_points: Number(q.max_points) || 10
+        }));
+        return { questions: sanitizedQuestions };
       }
+    } catch (aiErr: any) {
+      console.warn("[generateAiTestFn] AI Gateway generation error, using curriculum synthesizer:", aiErr.message);
     }
 
     // 2. High-Yield Contextual Curriculum Synthesizer Fallback (100% Guaranteed Success)
@@ -1063,7 +1058,6 @@ export const submitCbtExamFn = createServerFn({ method: "POST" })
     const { data: test } = await adminClient.from('cbt_exams').select('*').eq('id', args.testId).single();
     
     let totalScore = 0;
-    const ai = new GoogleGenAI({ apiKey: getEnv("GEMINI_API_KEY") });
     
     let answersObj = args.answers;
     try { if (typeof answersObj === 'string') answersObj = JSON.parse(answersObj); } catch (e) {}
@@ -1128,12 +1122,19 @@ Respond strictly in valid JSON format:
   "expected_output": "...",
   "feedback": "..."
 }`;
-            const response = await ai.models.generateContent({
+            const res = await generateAiJson<{
+              output_matches: boolean;
+              allocated_score: number;
+              passed_test_cases: number;
+              total_test_cases: number;
+              actual_output: string;
+              expected_output: string;
+              feedback: string;
+            }>({
               model: 'gemini-1.5-flash',
-              contents: prompt,
-              config: { responseMimeType: 'application/json' }
+              prompt,
             });
-            const resJson = JSON.parse(response.text || '{}');
+            const resJson = res.data || ({} as any);
             const matches = Boolean(resJson.output_matches);
             qScore = typeof resJson.allocated_score === 'number' 
               ? resJson.allocated_score 
@@ -1167,12 +1168,11 @@ Student Answer: ${JSON.stringify(internAnswer)}
 Max Points Possible: ${q.max_points || 10}
 
 Return JSON with exactly this schema: { "score": number, "feedback": "reasoning" }`;
-            const response = await ai.models.generateContent({
+            const res = await generateAiJson<{ score: number; feedback: string }>({
               model: 'gemini-1.5-flash',
-              contents: prompt,
-              config: { responseMimeType: 'application/json' }
+              prompt,
             });
-            const resJson = JSON.parse(response.text || '{}');
+            const resJson = res.data || ({} as any);
             qScore = resJson.score || 0;
             qFeedback = resJson.feedback || "";
             isQuestionCorrect = qScore >= ((q.max_points || 10) * 0.6);
