@@ -1380,7 +1380,8 @@ function ExamQuestionPreviewModal({
   examMeta,
   questions,
   onConfirmAllocate,
-  isAllocating
+  isAllocating,
+  onDownloadPaper
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -1388,6 +1389,7 @@ function ExamQuestionPreviewModal({
   questions: any[];
   onConfirmAllocate?: () => void;
   isAllocating?: boolean;
+  onDownloadPaper?: () => void;
 }) {
   if (!isOpen) return null;
   const totalPoints = (questions || []).reduce((acc, q) => acc + (Number(q.max_points) || 10), 0);
@@ -1492,22 +1494,22 @@ function ExamQuestionPreviewModal({
                       return (
                         <div 
                           key={optIdx} 
-                          className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-all ${
+                          className={`p-3 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-start justify-between gap-2 transition-all ${
                             isPreMarked 
                               ? "bg-emerald-50 border-emerald-400 text-emerald-900 font-bold shadow-xs ring-1 ring-emerald-500/30" 
                               : "bg-slate-50/70 border-slate-200 text-slate-700"
                           }`}
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-black ${
+                          <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                            <span className={`h-5 w-5 shrink-0 rounded-full flex items-center justify-center text-[10px] font-black mt-0.5 ${
                               isPreMarked ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-700"
                             }`}>
                               {opt.id || String.fromCharCode(65 + optIdx)}
                             </span>
-                            <span>{opt.text}</span>
+                            <span className="leading-relaxed whitespace-pre-wrap">{opt.text}</span>
                           </div>
                           {isPreMarked && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-300">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-300 shrink-0 self-start sm:self-center">
                               <Check className="h-3 w-3 text-emerald-600" /> Pre-Marked Solution
                             </span>
                           )}
@@ -1567,10 +1569,23 @@ function ExamQuestionPreviewModal({
         </div>
 
         {/* Modal Footer */}
-        <DialogFooter className="p-4 bg-white border-t border-slate-200 flex sm:items-center justify-between gap-3 shrink-0">
-          <Button variant="outline" onClick={onClose} className="font-bold text-xs">
-            ✏️ Back to Edit
-          </Button>
+        <DialogFooter className="p-4 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={onClose} className="font-bold text-xs">
+              ✏️ Close Preview
+            </Button>
+            {onDownloadPaper && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onDownloadPaper}
+                className="text-xs font-bold border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 gap-1.5"
+              >
+                <FileText className="h-3.5 w-3.5 text-amber-600" />
+                Download Paper (PDF)
+              </Button>
+            )}
+          </div>
           {onConfirmAllocate && (
             <Button 
               onClick={onConfirmAllocate} 
@@ -1627,7 +1642,7 @@ function AdminCbtSubmissionsView() {
     setDownloadingFormat({ testId: exam.id, format });
     const toastId = toast.loading(`Retrieving official ${format.toUpperCase()} paper from Cloudflare...`);
     try {
-      const res = await getPaperDownloads({ data: { testId: exam.id } });
+      const res = await getPaperDownloads({ data: { testId: exam.id, regenerate: true } });
       const url = format === 'pdf' ? res.pdfUrl : res.csvUrl;
       if (url) {
         toast.success(`Official ${format.toUpperCase()} Paper ready! Opening download...`, { id: toastId });
@@ -2509,6 +2524,29 @@ function AdminCbtSubmissionsView() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Existing Exam Questions Preview Modal */}
+      {existingExamPreview && (
+        <ExamQuestionPreviewModal
+          isOpen={!!existingExamPreview}
+          onClose={() => setExistingExamPreview(null)}
+          examMeta={{
+            title: existingExamPreview.exam.title,
+            description: existingExamPreview.exam.description,
+            timeLimitMinutes: existingExamPreview.exam.time_limit_minutes,
+            passingScore: existingExamPreview.exam.passing_score,
+            enableCamera: existingExamPreview.exam.enable_camera,
+            cameraStrictness: existingExamPreview.exam.camera_strictness,
+            deadline: existingExamPreview.exam.deadline,
+            targetLabel: getTargetName(
+              existingExamPreview.exam.allocation_mode,
+              existingExamPreview.exam.allocation_mode === 'team' ? existingExamPreview.exam.team_ids : existingExamPreview.exam.intern_ids
+            ),
+          }}
+          questions={existingExamPreview.questions}
+          onDownloadPaper={() => handleDownloadPaper(existingExamPreview.exam, 'pdf')}
+        />
       )}
     </div>
   );

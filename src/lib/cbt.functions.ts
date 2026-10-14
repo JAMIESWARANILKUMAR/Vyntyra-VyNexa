@@ -2070,7 +2070,10 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
 
 export const getAdminExamPaperDownloadsFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ testId: z.string() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ 
+    testId: z.string(),
+    regenerate: z.boolean().optional()
+  }).parse(d))
   .handler(async ({ data: args, context }) => {
     const adminClient = getAdminClient();
     const userId = context.user.id;
@@ -2096,7 +2099,7 @@ export const getAdminExamPaperDownloadsFn = createServerFn({ method: "POST" })
 
     if (examErr || !exam) throw new Error("Exam not found");
 
-    if (exam.pdf_url && exam.csv_url) {
+    if (exam.pdf_url && exam.csv_url && !args.regenerate) {
       return { 
         pdfUrl: exam.pdf_url, 
         csvUrl: exam.csv_url, 
