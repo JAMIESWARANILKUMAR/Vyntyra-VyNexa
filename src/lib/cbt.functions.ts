@@ -637,8 +637,11 @@ async function sendCbtAssignmentEmail(params: SendCbtAssignmentEmailInput) {
     ? `[VyNexa Connect] Assessment Deadline Extended: ${testTitle} (Exam ID: ${resolvedExamId})`
     : `[VyNexa Connect] Official CBT Assessment Allocation: ${testTitle} (Exam ID: ${resolvedExamId})`;
 
+  const portalUrl = "https://portal.vyntyraconsultancyservices.in";
+  const careersUrl = "https://careers.vyntyraconsultancyservices.in";
   const appUrl = "https://vynexaconnect.vyntyraconsultancyservices.in";
-  const examUrl = `${appUrl}/cbt/${resolvedExamId}`;
+  const examUrl = `${portalUrl}/cbt/${resolvedExamId}`;
+  const mirrorExamUrl = `${appUrl}/cbt/${resolvedExamId}`;
   const formattedDeadline = deadline
     ? new Date(deadline).toLocaleString("en-US", {
         dateStyle: "medium",
@@ -725,6 +728,14 @@ async function sendCbtAssignmentEmail(params: SendCbtAssignmentEmailInput) {
             <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><code style="color: #0369a1; background-color: #e0f2fe; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11px;">${resolvedExamId}</code></td>
           </tr>
           <tr>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Candidate Portal:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><a href="${portalUrl}" style="color: #4f46e5; font-size: 13px; font-weight: 700; text-decoration: underline;">portal.vyntyraconsultancyservices.in</a></td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Careers Portal:</span></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><a href="${careersUrl}" style="color: #0284c7; font-size: 13px; font-weight: 700; text-decoration: underline;">careers.vyntyraconsultancyservices.in</a></td>
+          </tr>
+          <tr>
             <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Assessment Name:</span></td>
             <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><strong style="color: #0f172a; font-size: 13px;">${testTitle}</strong></td>
           </tr>
@@ -782,15 +793,60 @@ async function sendCbtAssignmentEmail(params: SendCbtAssignmentEmailInput) {
         </div>
 
         <!-- Call-to-Action Launch Button -->
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="text-align: center; margin-bottom: 28px;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="text-align: center; margin-bottom: 26px;">
           <tr>
             <td align="center">
               <a href="${examUrl}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; font-size: 15px; font-weight: 700; text-decoration: none; padding: 15px 36px; border-radius: 8px; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35); letter-spacing: 0.3px;">
-                Launch Assessment Session &rarr;
+                Launch Assessment on Candidate Portal &rarr;
               </a>
-              <p style="color: #64748b; font-size: 11px; margin: 10px 0 0;">
-                Direct URL: <a href="${examUrl}" style="color: #4f46e5; text-decoration: underline;">${examUrl}</a>
+              <p style="color: #64748b; font-size: 12px; margin: 12px 0 4px; font-weight: 600;">
+                Primary Candidate Portal Link: <br/>
+                <a href="${examUrl}" style="color: #4f46e5; text-decoration: underline; word-break: break-all;">${examUrl}</a>
               </p>
+              <p style="color: #94a3b8; font-size: 11px; margin: 4px 0 0;">
+                Direct Mirror: <a href="${mirrorExamUrl}" style="color: #6366f1; text-decoration: underline; word-break: break-all;">${mirrorExamUrl}</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Official Corporate & Candidate Portals Directory -->
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 26px; overflow: hidden;">
+          <tr>
+            <td colspan="2" style="background-color: #f1f5f9; padding: 10px 18px; border-bottom: 1px solid #e2e8f0;">
+              <span style="color: #0f172a; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                Official Corporate Portals Directory
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9; width: 45%;">
+              <span style="color: #475569; font-size: 12px; font-weight: 600;">Candidate &amp; Intern Portal:</span>
+            </td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9; width: 55%;">
+              <a href="${portalUrl}" target="_blank" style="color: #4f46e5; font-size: 12px; font-weight: 700; text-decoration: underline;">
+                portal.vyntyraconsultancyservices.in
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;">
+              <span style="color: #475569; font-size: 12px; font-weight: 600;">Careers &amp; Opportunities Portal:</span>
+            </td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;">
+              <a href="${careersUrl}" target="_blank" style="color: #0284c7; font-size: 12px; font-weight: 700; text-decoration: underline;">
+                careers.vyntyraconsultancyservices.in
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 18px;">
+              <span style="color: #475569; font-size: 12px; font-weight: 600;">VyNexa Connect Worksuite:</span>
+            </td>
+            <td style="padding: 10px 18px;">
+              <a href="${appUrl}" target="_blank" style="color: #4f46e5; font-size: 12px; font-weight: 700; text-decoration: underline;">
+                vynexaconnect.vyntyraconsultancyservices.in
+              </a>
             </td>
           </tr>
         </table>
@@ -806,9 +862,10 @@ async function sendCbtAssignmentEmail(params: SendCbtAssignmentEmailInput) {
           <p style="color: #94a3b8; font-size: 11px; margin: 0 0 4px;">
             Enterprise Talent Acquisition &amp; Performance Operations Division
           </p>
-          <p style="color: #64748b; font-size: 11px; margin: 0;">
-            Support: <a href="mailto:careers@vyntyraconsultancyservices.in" style="color: #4f46e5; text-decoration: none;">careers@vyntyraconsultancyservices.in</a> | 
-            Portal: <a href="${appUrl}" style="color: #4f46e5; text-decoration: none;">vynexaconnect.vyntyraconsultancyservices.in</a>
+          <p style="color: #64748b; font-size: 11px; margin: 0; line-height: 1.8;">
+            Candidate Portal: <a href="${portalUrl}" style="color: #4f46e5; text-decoration: none; font-weight: 600;">portal.vyntyraconsultancyservices.in</a> &bull; 
+            Careers Portal: <a href="${careersUrl}" style="color: #0284c7; text-decoration: none; font-weight: 600;">careers.vyntyraconsultancyservices.in</a><br/>
+            Support &amp; Recruitment: <a href="mailto:careers@vyntyraconsultancyservices.in" style="color: #4f46e5; text-decoration: none;">careers@vyntyraconsultancyservices.in</a>
           </p>
         </div>
 
@@ -1545,8 +1602,66 @@ export const deleteAdminTestFn = createServerFn({ method: "POST" })
   .inputValidator((d: any) => z.object({ testId: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
-    await adminClient.from('cbt_exams').delete().eq('id', data.testId);
-    return { success: true };
+    const testId = data.testId;
+
+    try {
+      // 1. Fetch all submission IDs belonging to this exam
+      const { data: subs, error: subFetchErr } = await adminClient
+        .from('cbt_submissions')
+        .select('id')
+        .or(`exam_id.eq.${testId},test_id.eq.${testId}`);
+
+      if (subFetchErr) {
+        console.warn("[deleteAdminTestFn] Submissions lookup notice:", subFetchErr.message);
+      }
+
+      const subIds = (subs || []).map((s: any) => s.id).filter(Boolean);
+
+      // 2. Cascade delete dependent child records (answers and malpractice logs)
+      if (subIds.length > 0) {
+        const [ansDel, logsDel] = await Promise.all([
+          adminClient.from('cbt_answers').delete().in('submission_id', subIds),
+          adminClient.from('cbt_malpractice_logs').delete().in('submission_id', subIds),
+        ]);
+        if (ansDel.error) console.warn("[deleteAdminTestFn] answers delete notice:", ansDel.error.message);
+        if (logsDel.error) console.warn("[deleteAdminTestFn] malpractice logs delete notice:", logsDel.error.message);
+
+        // 3. Delete submissions
+        const { error: subDelErr } = await adminClient.from('cbt_submissions').delete().in('id', subIds);
+        if (subDelErr) console.warn("[deleteAdminTestFn] submissions delete notice:", subDelErr.message);
+      }
+
+      // Also clean up any orphan submissions by exam_id or test_id
+      await adminClient.from('cbt_submissions').delete().or(`exam_id.eq.${testId},test_id.eq.${testId}`);
+
+      // 4. Cascade delete all questions for this exam
+      const { error: qDelErr } = await adminClient
+        .from('cbt_questions')
+        .delete()
+        .or(`exam_id.eq.${testId},test_id.eq.${testId}`);
+      if (qDelErr) {
+        console.warn("[deleteAdminTestFn] questions delete notice:", qDelErr.message);
+      }
+
+      // 5. Delete the main exam entry
+      const { error: examDelErr } = await adminClient
+        .from('cbt_exams')
+        .delete()
+        .eq('id', testId);
+
+      if (examDelErr) {
+        throw new Error(`Database error while deleting exam: ${examDelErr.message}`);
+      }
+
+      // 6. Immediately invalidate server caches
+      invalidateCache("admin_cbt_tests");
+      invalidateCache("cbt_targets");
+
+      return { success: true, testId };
+    } catch (err: any) {
+      console.error("[deleteAdminTestFn] Cascade delete failed:", err);
+      throw new Error(err.message || "Failed to delete assigned test.");
+    }
   });
 
 export const toggleAdminTestStatusFn = createServerFn({ method: "POST" })
@@ -1554,7 +1669,9 @@ export const toggleAdminTestStatusFn = createServerFn({ method: "POST" })
   .inputValidator((d: any) => z.object({ testId: z.string(), status: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
-    await adminClient.from('cbt_exams').update({ status: data.status }).eq('id', data.testId);
+    const { error } = await adminClient.from('cbt_exams').update({ status: data.status }).eq('id', data.testId);
+    if (error) throw new Error(error.message);
+    invalidateCache("admin_cbt_tests");
     return { success: true };
   });
 
@@ -2207,33 +2324,70 @@ export const grantInternRetakeFn = createServerFn({ method: "POST" })
     // Send automated email to candidate
     const candidateEmail = sub.profiles?.email;
     if (candidateEmail) {
-      const apiKey = getEnv("RESEND_API_KEY");
-      if (apiKey) {
+      const brevoKey = getEnv("BREVO_API_KEY");
+      const resendKey = getEnv("RESEND_API_KEY");
+      const portalUrl = "https://portal.vyntyraconsultancyservices.in";
+      const careersUrl = "https://careers.vyntyraconsultancyservices.in";
+      const examUrl = `${portalUrl}/cbt/${sub.cbt_exams?.id || sub.exam_id}`;
+      const examTitle = sub.cbt_exams?.title || "Assessment";
+      const candidateName = sub.profiles?.full_name || "Candidate";
+
+      const retakeHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; color: #1e293b; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <h2 style="color: #059669; margin-top: 0;">Assessment Retake Approved</h2>
+          <p>Hello <strong>${candidateName}</strong>,</p>
+          <p>Your previous assessment submission for <strong>${examTitle}</strong> has been officially reset by the administrator.</p>
+          <p>You may now launch and attempt your assessment again through the official Candidate Portal.</p>
+          ${reason ? `<div style="background-color: #f1f5f9; padding: 12px; border-radius: 8px; margin: 16px 0;"><strong>Administrator Note:</strong> ${reason}</div>` : ""}
+          <div style="margin: 24px 0;">
+            <a href="${examUrl}" style="display: inline-block; background-color: #059669; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;">
+              Launch Retake on Candidate Portal &rarr;
+            </a>
+          </div>
+          <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 24px; font-size: 12px; color: #64748b; line-height: 1.6;">
+            <strong>Official Portals:</strong><br/>
+            Candidate Portal: <a href="${portalUrl}" style="color: #4f46e5; text-decoration: underline;">portal.vyntyraconsultancyservices.in</a><br/>
+            Careers Portal: <a href="${careersUrl}" style="color: #0284c7; text-decoration: underline;">careers.vyntyraconsultancyservices.in</a><br/>
+            Support: <a href="mailto:careers@vyntyraconsultancyservices.in" style="color: #4f46e5;">careers@vyntyraconsultancyservices.in</a>
+          </div>
+        </div>
+      `;
+
+      let sent = false;
+      if (brevoKey) {
+        try {
+          const bRes = await fetch("https://api.brevo.com/v3/smtp/email", {
+            method: "POST",
+            headers: {
+              "accept": "application/json",
+              "content-type": "application/json",
+              "api-key": brevoKey,
+            },
+            body: JSON.stringify({
+              sender: { name: "Vyntyra Assessments", email: "careers@vyntyraconsultancyservices.in" },
+              to: [{ email: candidateEmail, name: candidateName }],
+              subject: `[VyNexa Connect] Retake Approved: ${examTitle}`,
+              htmlContent: retakeHtml,
+            }),
+          });
+          if (bRes.ok) sent = true;
+        } catch (e) {
+          console.warn("[grantInternRetakeFn] Brevo retake dispatch error:", e);
+        }
+      }
+
+      if (!sent && resendKey) {
         try {
           const { Resend } = await import("resend");
-          const resend = new Resend(apiKey);
-          const appUrl = "https://vynexaconnect.vyntyraconsultancyservices.in";
+          const resend = new Resend(resendKey);
           await resend.emails.send({
             from: "VyNexa Connect <noreply@vyntyraconsultancyservices.in>",
             to: candidateEmail,
-            subject: `[VyNexa Connect] Retake Approved: ${sub.cbt_exams?.title || "Assessment"}`,
-            html: `
-              <div style="font-family: sans-serif; padding: 24px; color: #1e293b;">
-                <h2 style="color: #059669;">Assessment Retake Approved</h2>
-                <p>Hello <strong>${sub.profiles?.full_name || "Candidate"}</strong>,</p>
-                <p>Your previous assessment submission for <strong>${sub.cbt_exams?.title || "Assessment"}</strong> has been officially reset by the administrator.</p>
-                <p>You may now launch and attempt the assessment again.</p>
-                ${reason ? `<p><strong>Administrator Note:</strong> ${reason}</p>` : ""}
-                <div style="margin-top: 24px;">
-                  <a href="${appUrl}/cbt/${sub.cbt_exams?.id || sub.exam_id}" style="display: inline-block; background-color: #059669; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">
-                    Launch Retake Assessment &rarr;
-                  </a>
-                </div>
-              </div>
-            `
+            subject: `[VyNexa Connect] Retake Approved: ${examTitle}`,
+            html: retakeHtml,
           });
         } catch (err) {
-          console.warn("[grantInternRetakeFn] Email warning:", err);
+          console.warn("[grantInternRetakeFn] Resend retake dispatch error:", err);
         }
       }
     }

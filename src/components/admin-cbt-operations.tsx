@@ -1715,8 +1715,12 @@ function AdminCbtSubmissionsView() {
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => doDelete({ data: { testId: id } }),
-    onSuccess: () => { toast.success("Test deleted"); qc.invalidateQueries({ queryKey: ["admin-cbt-tests"] }); },
-    onError: () => toast.error("Failed to delete test")
+    onSuccess: () => { 
+      toast.success("Assigned test and all associated submissions/questions deleted successfully."); 
+      qc.invalidateQueries({ queryKey: ["admin-cbt-tests"] }); 
+      qc.invalidateQueries({ queryKey: ["all-cbt-submissions"] }); 
+    },
+    onError: (err: any) => toast.error(err?.message || "Failed to delete test")
   });
 
   const toggleMut = useMutation({
