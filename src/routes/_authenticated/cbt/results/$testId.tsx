@@ -138,7 +138,7 @@ function CbtResults() {
                           <div className="p-3 bg-white border border-slate-200 rounded-xl">
                             <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Candidate Submitted Response:</span>
                             <div className={`font-mono text-xs font-semibold ${isCorrect ? "text-emerald-700" : "text-rose-700"}`}>
-                              {typeof candidateAns === "object" ? JSON.stringify(candidateAns) : String(candidateAns)}
+                              {candidateAns ? (typeof candidateAns === "object" ? (candidateAns.text ? `[${candidateAns.id || ''}] ${candidateAns.text}` : (candidateAns.id || JSON.stringify(candidateAns))) : String(candidateAns)) : "(Unanswered)"}
                             </div>
                           </div>
 

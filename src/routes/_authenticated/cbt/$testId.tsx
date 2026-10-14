@@ -6,7 +6,80 @@ import { useProctoringEnforcement } from "@/hooks/useProctoringEnforcement";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { AlertTriangle, ShieldCheck, VideoOff, CheckCircle2, ChevronRight, ChevronLeft, ShieldAlert, AlertCircle, RefreshCcw, MonitorSmartphone } from "lucide-react";
+import { 
+  AlertTriangle, ShieldCheck, VideoOff, CheckCircle2, ChevronRight, ChevronLeft, 
+  ShieldAlert, AlertCircle, RefreshCcw, MonitorSmartphone, XCircle, Code2, 
+  Terminal, Copy, FileText, RotateCcw, Check, Sparkles
+} from "lucide-react";
+
+function normalizeOptions(options: any, questionType?: string): Array<{ id: string; text: string }> {
+  let opts = options;
+  if (typeof opts === 'string') {
+    try { opts = JSON.parse(opts); } catch (e) {}
+  }
+  
+  if (Array.isArray(opts) && opts.length > 0) {
+    return opts.map((opt, idx) => {
+      if (typeof opt === 'string') {
+        return { id: String.fromCharCode(65 + idx), text: opt };
+      }
+      if (typeof opt === 'object' && opt !== null) {
+        return {
+          id: String(opt.id || String.fromCharCode(65 + idx)),
+          text: String(opt.text ?? opt.value ?? opt.label ?? opt.title ?? '')
+        };
+      }
+      return { id: String.fromCharCode(65 + idx), text: String(opt) };
+    });
+  }
+
+  if (opts && typeof opts === 'object' && !Array.isArray(opts)) {
+    const keys = Object.keys(opts);
+    if (keys.length > 0) {
+      return keys.map((k, idx) => ({
+        id: k.length <= 2 ? k.toUpperCase() : String.fromCharCode(65 + idx),
+        text: String(opts[k])
+      }));
+    }
+  }
+
+  // Fallback for true_false questions if missing or empty
+  if (questionType === 'true_false') {
+    return [
+      { id: "A", text: "True" },
+      { id: "B", text: "False" }
+    ];
+  }
+
+  return [];
+}
+
+function getBadgeInfo(type: string) {
+  const norm = (type || "").toLowerCase();
+  switch (norm) {
+    case "true_false":
+      return { label: "TRUE / FALSE", color: "bg-amber-100 text-amber-800 border-amber-300" };
+    case "scenario":
+    case "scenario_based":
+      return { label: "SCENARIO CASE", color: "bg-purple-100 text-purple-800 border-purple-300" };
+    case "code_snippet":
+    case "code_based":
+    case "sql":
+      return { label: "CODE SNIPPET", color: "bg-sky-100 text-sky-800 border-sky-300" };
+    case "coding":
+      return { label: "HANDS-ON CODING", color: "bg-emerald-100 text-emerald-800 border-emerald-300" };
+    case "short_answer":
+      return { label: "SHORT ANSWER", color: "bg-blue-100 text-blue-800 border-blue-300" };
+    case "long_answer":
+    case "subjective":
+      return { label: "WRITTEN RESPONSE", color: "bg-indigo-100 text-indigo-800 border-indigo-300" };
+    case "aptitude":
+      return { label: "APTITUDE REASONING", color: "bg-orange-100 text-orange-800 border-orange-300" };
+    case "mcq":
+    default:
+      return { label: "MULTIPLE CHOICE", color: "bg-slate-200 text-slate-700 border-slate-300" };
+  }
+}
 
 export const Route = createFileRoute("/_authenticated/cbt/$testId")({
   component: CbtExamInterface,
@@ -147,11 +220,12 @@ function CbtExamInterface() {
         internId: "INT-DEMO-PREVIEW" 
       });
       setQuestions([
-        { id: "demo-q1", question_type: "mcq", question_text: "What is the primary color of the VyNexa dashboard theme?", options: [{id: "opt1", text: "Emerald"}, {id: "opt2", text: "Crimson"}, {id: "opt3", text: "Indigo"}] },
-        { id: "demo-q2", question_type: "mcq", question_text: "Where can you find the AI CBT Exams tab?", options: [{id: "opt4", text: "Connect & Support"}, {id: "opt5", text: "My Profile"}, {id: "opt6", text: "Settings"}] },
-        { id: "demo-q3", question_type: "long_answer", question_text: "Describe the purpose of the Daily Standup log in a few words." },
-        { id: "demo-q4", question_type: "mcq", question_text: "What happens if you switch tabs during a proctored exam?", options: [{id: "opt7", text: "You get a strike (2 strikes = fail)"}, {id: "opt8", text: "Nothing"}, {id: "opt9", text: "You earn bonus points"}] },
-        { id: "demo-q5", question_type: "coding", question_text: "Write a simple function that returns 'VyNexa'." }
+        { id: "demo-q1", question_type: "mcq", question_text: "What is the primary color of the VyNexa dashboard theme?", options: [{id: "A", text: "Emerald"}, {id: "B", text: "Crimson"}, {id: "C", text: "Indigo"}] },
+        { id: "demo-q2", question_type: "true_false", question_text: "JavaScript 'Constructors' are used to create new objects based on a blueprint.", options: [{id: "A", text: "True"}, {id: "B", text: "False"}] },
+        { id: "demo-q3", question_type: "scenario", question_text: "Scenario: An intern's camera stream drops during an exam due to a brief network glitch. As a proctoring policy, what should happen?", options: [{id: "A", text: "A 20-second malpractice warning appears with grace timer"}, {id: "B", text: "The test is immediately terminated with 0 score"}, {id: "C", text: "The candidate's computer restarts"}, {id: "D", text: "Nothing happens and proctoring is permanently disabled"}] },
+        { id: "demo-q4", question_type: "code_snippet", question_text: "What will the following code snippet log to the console?\n\nconst [a, ...b] = [1, 2, 3, 4];\nconsole.log(b.length);", reference_code: "const [a, ...b] = [1, 2, 3, 4];\nconsole.log(b.length);", options: [{id: "A", text: "3"}, {id: "B", text: "4"}, {id: "C", text: "1"}, {id: "D", text: "undefined"}] },
+        { id: "demo-q5", question_type: "coding", question_text: "Write a simple function `getGreeting(name)` that returns `'Hello, ' + name`.", reference_code: "function getGreeting(name) {\n  // Write implementation\n  return 'Hello, ' + name;\n}", test_cases: [{ input: "VyNexa", expected_output: "Hello, VyNexa" }] },
+        { id: "demo-q6", question_type: "short_answer", question_text: "Briefly explain the role of proctoring in technical assessments." }
       ]);
       setTimeLeft(60);
       return;
@@ -646,6 +720,28 @@ function CbtExamInterface() {
   const mins = Math.floor((timeLeft || 0) / 60);
   const secs = (timeLeft || 0) % 60;
 
+  const normOpts = normalizeOptions(q?.options, q?.question_type);
+  const qType = (q?.question_type || "mcq").toLowerCase();
+  const isTrueFalse = qType === "true_false";
+  const isCoding = qType === "coding";
+  const isCodeSnippet = qType === "code_snippet" || qType === "code_based" || qType === "sql";
+  const isScenario = qType === "scenario" || qType === "scenario_based" || Boolean(q?.question_text?.toLowerCase().includes("scenario:"));
+  const hasOptions = normOpts.length > 0;
+  const badgeInfo = getBadgeInfo(q?.question_type);
+
+  const isTrueSelected = (
+    answers[q?.id]?.id === "A" || 
+    answers[q?.id]?.text?.toLowerCase() === "true" ||
+    String(answers[q?.id] || "").toLowerCase() === "true" ||
+    String(answers[q?.id] || "").toLowerCase() === "a"
+  );
+  const isFalseSelected = (
+    answers[q?.id]?.id === "B" || 
+    answers[q?.id]?.text?.toLowerCase() === "false" ||
+    String(answers[q?.id] || "").toLowerCase() === "false" ||
+    String(answers[q?.id] || "").toLowerCase() === "b"
+  );
+
   return (
     <div className="flex flex-col h-screen bg-slate-200 font-sans select-none overflow-hidden text-slate-900">
       
@@ -827,68 +923,265 @@ function CbtExamInterface() {
           </div>
 
           {/* Top Header for Question */}
-          <div className="bg-slate-50 border-b border-slate-200 py-3 px-8 z-20 flex justify-between items-center shrink-0">
-            <h2 className="text-lg font-bold text-slate-800">Question {activeQ + 1}</h2>
-            <div className="bg-slate-200 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-300">
-              {q?.question_type.replace("_", " ")}
+          <div className="bg-slate-50 border-b border-slate-200 py-3.5 px-8 z-20 flex justify-between items-center shrink-0">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-bold text-slate-800">
+                Question {activeQ + 1} <span className="text-sm font-normal text-slate-400">of {questions.length}</span>
+              </h2>
+              <div className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-2xs ${badgeInfo.color}`}>
+                {badgeInfo.label}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-600 bg-white border border-slate-200 px-2.5 py-1 rounded">
+                {q?.max_points || 10} Points
+              </span>
             </div>
           </div>
 
           {/* Question Content */}
-          <div className="flex-1 overflow-y-auto p-10 custom-scrollbar relative z-10">
-            <div className="max-w-4xl">
+          <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar relative z-10">
+            <div className="max-w-4xl mx-auto space-y-6">
               
-              <div className="mb-10">
-                <h3 className="text-xl text-slate-900 font-medium leading-relaxed whitespace-pre-wrap">{q?.question_text}</h3>
+              {/* Scenario Context Callout */}
+              {isScenario && (
+                <div className="p-4 rounded-xl bg-purple-50/80 border border-purple-200 flex items-start gap-3 shadow-2xs">
+                  <div className="p-2 rounded-lg bg-purple-100 text-purple-700 shrink-0 mt-0.5">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-purple-900 uppercase tracking-wider">Industrial Case Scenario</h4>
+                    <p className="text-xs text-purple-700 mt-0.5 leading-relaxed">
+                      Evaluate the operational context, business constraints, and technical requirements before selecting or formulating your solution.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Main Question Text */}
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-2xs">
+                <h3 className="text-lg md:text-xl text-slate-900 font-medium leading-relaxed whitespace-pre-wrap">{q?.question_text}</h3>
               </div>
+
+              {/* Reference Code Box if available */}
+              {q?.reference_code && (
+                <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950 shadow-md">
+                  <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800 text-xs font-mono text-slate-300">
+                    <div className="flex items-center gap-2">
+                      <Code2 className="h-4 w-4 text-emerald-400" />
+                      <span className="font-bold tracking-wider uppercase text-[11px] text-slate-300">Reference Code Context</span>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(q.reference_code);
+                        toast.success("Code copied to clipboard");
+                      }}
+                      className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-white transition-colors cursor-pointer"
+                    >
+                      <Copy className="h-3 w-3" /> Copy
+                    </button>
+                  </div>
+                  <pre className="p-4 text-xs font-mono leading-relaxed text-emerald-400 overflow-x-auto selection:bg-emerald-900 selection:text-white">
+                    <code>{q.reference_code}</code>
+                  </pre>
+                </div>
+              )}
               
-              {/* Answer Controls */}
+              {/* Answer Controls Area */}
               <div>
-                {q?.question_type === "mcq" && q.options && (
-                  <div className="space-y-3">
-                    {q.options.map((opt: any) => {
-                      const checked = answers[q.id]?.id === opt.id;
-                      return (
-                        <label key={opt.id} onClick={() => setAnswers({...answers, [q.id]: opt})} className={`flex items-center gap-4 p-4 cursor-pointer transition-colors border rounded-sm ${
-                          checked 
-                            ? "border-emerald-500 bg-emerald-50/50" 
-                            : "border-slate-300 bg-white hover:bg-slate-50"
+                {/* 1. Dedicated True / False Interactive Cards */}
+                {isTrueFalse && (
+                  <div className="space-y-4">
+                    <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-lg flex items-center gap-2.5 text-xs text-amber-900 font-medium">
+                      <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+                      <span>Select whether the proposition stated above is factually <strong>True</strong> or <strong>False</strong>.</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                      {/* True Card */}
+                      <button
+                        type="button"
+                        onClick={() => setAnswers({ ...answers, [q.id]: { id: "A", text: "True" } })}
+                        className={`p-6 rounded-xl border-2 text-left transition-all flex items-start gap-4 cursor-pointer select-none ${
+                          isTrueSelected 
+                            ? "border-emerald-600 bg-emerald-50/90 shadow-md ring-2 ring-emerald-500/30" 
+                            : "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/20"
+                        }`}
+                      >
+                        <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                          isTrueSelected ? "bg-emerald-600 text-white" : "bg-emerald-100 text-emerald-700 border border-emerald-300"
                         }`}>
-                          <div className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
-                            checked ? "border-emerald-600 bg-white" : "border-slate-400 bg-white"
-                          }`}>
-                            {checked && <div className="h-2 w-2 rounded-full bg-emerald-600" />}
+                          <CheckCircle2 className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-lg font-black tracking-wide text-slate-900">TRUE</span>
+                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                              isTrueSelected ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
+                            }`}>[A]</span>
                           </div>
-                          <span className={`text-base ${checked ? "text-slate-900 font-semibold" : "text-slate-700"}`}>{opt.text}</span>
-                        </label>
+                          <p className="text-xs text-slate-600 leading-relaxed">
+                            The technical proposition is verified, correct, and valid.
+                          </p>
+                        </div>
+                      </button>
+
+                      {/* False Card */}
+                      <button
+                        type="button"
+                        onClick={() => setAnswers({ ...answers, [q.id]: { id: "B", text: "False" } })}
+                        className={`p-6 rounded-xl border-2 text-left transition-all flex items-start gap-4 cursor-pointer select-none ${
+                          isFalseSelected 
+                            ? "border-rose-600 bg-rose-50/90 shadow-md ring-2 ring-rose-500/30" 
+                            : "border-slate-200 bg-white hover:border-rose-300 hover:bg-rose-50/20"
+                        }`}
+                      >
+                        <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                          isFalseSelected ? "bg-rose-600 text-white" : "bg-rose-100 text-rose-700 border border-rose-300"
+                        }`}>
+                          <XCircle className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-lg font-black tracking-wide text-slate-900">FALSE</span>
+                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                              isFalseSelected ? "bg-rose-600 text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
+                            }`}>[B]</span>
+                          </div>
+                          <p className="text-xs text-slate-600 leading-relaxed">
+                            The technical proposition contains errors, misconceptions, or is invalid.
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Multiple Choice Options (for MCQ, Scenario, Code Snippet, Aptitude, or any question with options) */}
+                {!isTrueFalse && hasOptions && (
+                  <div className="space-y-3 pt-1">
+                    {normOpts.map((opt: any) => {
+                      const isChecked = 
+                        answers[q.id]?.id === opt.id || 
+                        answers[q.id]?.text === opt.text ||
+                        answers[q.id] === opt.id ||
+                        answers[q.id] === opt.text;
+
+                      return (
+                        <div 
+                          key={opt.id} 
+                          onClick={() => setAnswers({ ...answers, [q.id]: opt })} 
+                          className={`flex items-start gap-4 p-4 cursor-pointer transition-all border-2 rounded-xl select-none ${
+                            isChecked 
+                              ? "border-indigo-600 bg-indigo-50/70 shadow-xs ring-1 ring-indigo-500/20" 
+                              : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70"
+                          }`}
+                        >
+                          <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                            isChecked ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-300 bg-white text-slate-500"
+                          }`}>
+                            <span className="text-[11px] font-bold">{opt.id}</span>
+                          </div>
+                          <div className="flex-1">
+                            <span className={`text-base leading-relaxed ${isChecked ? "text-slate-900 font-semibold" : "text-slate-700"}`}>
+                              {opt.text}
+                            </span>
+                          </div>
+                          <div className={`h-5 w-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                            isChecked ? "border-indigo-600 bg-white" : "border-slate-300 bg-white"
+                          }`}>
+                            {isChecked && <div className="h-2.5 w-2.5 rounded-full bg-indigo-600" />}
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
                 )}
-                
-                {q?.question_type === "coding" && (
-                  <div className="rounded-sm overflow-hidden border border-slate-300 bg-white">
-                    <div className="bg-slate-100 text-slate-600 px-4 py-2 text-[10px] font-mono font-bold uppercase tracking-widest border-b border-slate-300">
-                      JavaScript/TypeScript Editor
+
+                {/* 3. Coding Implementation Editor */}
+                {!isTrueFalse && !hasOptions && (isCoding || isCodeSnippet) && (
+                  <div className="space-y-4 pt-1">
+                    <div className="rounded-xl overflow-hidden border border-slate-300 bg-white shadow-sm">
+                      <div className="bg-slate-100 text-slate-700 px-4 py-2.5 flex items-center justify-between border-b border-slate-300">
+                        <div className="flex items-center gap-2">
+                          <Terminal className="h-4 w-4 text-emerald-600" />
+                          <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-800">
+                            Source Code Implementation Editor
+                          </span>
+                        </div>
+                        {q.reference_code && (
+                          <button
+                            type="button"
+                            onClick={() => setAnswers({ ...answers, [q.id]: q.reference_code })}
+                            className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+                          >
+                            <RotateCcw className="h-3 w-3" /> Reset to Starter Code
+                          </button>
+                        )}
+                      </div>
+                      <textarea 
+                        className="w-full h-[360px] p-5 bg-slate-950 text-slate-100 font-mono text-[13px] leading-relaxed outline-none resize-none selection:bg-indigo-900 selection:text-white"
+                        placeholder="// Write your clean, working implementation here..."
+                        value={typeof answers[q.id] === 'string' ? answers[q.id] : (answers[q.id]?.text || "")}
+                        onChange={e => setAnswers({ ...answers, [q.id]: e.target.value })}
+                        spellCheck={false}
+                      />
                     </div>
-                    <textarea 
-                      className="w-full h-[400px] p-6 bg-slate-900 text-slate-100 font-mono text-[14px] leading-relaxed outline-none resize-none"
-                      placeholder="// Write your optimized solution here..."
-                      value={answers[q.id] || ""}
-                      onChange={e => setAnswers({...answers, [q.id]: e.target.value})}
-                      spellCheck={false}
-                    />
+
+                    {Array.isArray(q.test_cases) && q.test_cases.length > 0 && (
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                        <div className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                          Unit Test Cases ({q.test_cases.length})
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-mono">
+                          {q.test_cases.map((tc: any, tIdx: number) => (
+                            <div key={tIdx} className="p-2.5 bg-white border border-slate-200 rounded-lg space-y-1">
+                              <div className="text-[10px] uppercase font-bold text-slate-500">Case #{tIdx + 1}</div>
+                              {tc.input !== undefined && (
+                                <div className="text-slate-700 truncate"><span className="text-slate-400">Input:</span> {typeof tc.input === 'object' ? JSON.stringify(tc.input) : String(tc.input)}</div>
+                              )}
+                              {tc.expected_output !== undefined && (
+                                <div className="text-emerald-700 font-semibold truncate"><span className="text-slate-400">Expected:</span> {typeof tc.expected_output === 'object' ? JSON.stringify(tc.expected_output) : String(tc.expected_output)}</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {q?.question_type === "long_answer" && (
-                  <div className="bg-white rounded-sm border border-slate-300 overflow-hidden focus-within:border-slate-500 transition-colors">
-                    <textarea 
-                      className="w-full h-[350px] p-6 font-sans text-base leading-relaxed outline-none resize-none text-slate-800 placeholder:text-slate-400"
-                      placeholder="Type your comprehensive response here..."
-                      value={answers[q.id] || ""}
-                      onChange={e => setAnswers({...answers, [q.id]: e.target.value})}
-                    />
+                {/* 4. Subjective / Short Answer / Written Response (Universal Fallback) */}
+                {!isTrueFalse && !hasOptions && !isCoding && !isCodeSnippet && (
+                  <div className="space-y-2 pt-1">
+                    <div className="bg-white rounded-xl border-2 border-slate-200 overflow-hidden focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all shadow-xs">
+                      <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                        <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+                          <FileText className="h-3.5 w-3.5 text-indigo-600" />
+                          {q.question_type === "short_answer" ? "Short Answer / Theory Input" : "Technical Response Area"}
+                        </span>
+                        <span>
+                          {String(answers[q.id] || "").trim() ? `${String(answers[q.id] || "").trim().split(/\s+/).length} words` : "0 words"} • {String(answers[q.id] || "").length} characters
+                        </span>
+                      </div>
+                      <textarea 
+                        className={`w-full p-5 font-sans text-base leading-relaxed outline-none resize-none text-slate-900 placeholder:text-slate-400 ${
+                          q.question_type === "short_answer" ? "h-[220px]" : "h-[320px]"
+                        }`}
+                        placeholder={
+                          q.question_type === "short_answer" 
+                            ? "Type your concise explanation or solution here..." 
+                            : "Type your structured, in-depth architectural or technical response here..."
+                        }
+                        value={typeof answers[q.id] === 'string' ? answers[q.id] : (answers[q.id]?.text || "")}
+                        onChange={e => setAnswers({ ...answers, [q.id]: e.target.value })}
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-500 italic">
+                      Auto-saved continuously. Technical accuracy, key concepts, and structure are evaluated.
+                    </p>
                   </div>
                 )}
               </div>

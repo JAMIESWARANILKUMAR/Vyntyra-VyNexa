@@ -541,6 +541,48 @@ function formatQuestionTypes(types?: string[]): string {
   return types.map(t => labelMap[t.toLowerCase()] || t.toUpperCase()).join(", ");
 }
 
+export function normalizeCbtOptions(options: any, questionType?: string): Array<{ id: string; text: string }> {
+  let opts = options;
+  if (typeof opts === 'string') {
+    try { opts = JSON.parse(opts); } catch (e) {}
+  }
+
+  if (Array.isArray(opts) && opts.length > 0) {
+    return opts.map((opt, idx) => {
+      if (typeof opt === 'string') {
+        return { id: String.fromCharCode(65 + idx), text: opt };
+      }
+      if (typeof opt === 'object' && opt !== null) {
+        return {
+          id: String(opt.id || String.fromCharCode(65 + idx)),
+          text: String(opt.text ?? opt.value ?? opt.label ?? opt.title ?? '')
+        };
+      }
+      return { id: String.fromCharCode(65 + idx), text: String(opt) };
+    });
+  }
+
+  if (opts && typeof opts === 'object' && !Array.isArray(opts)) {
+    const keys = Object.keys(opts);
+    if (keys.length > 0) {
+      return keys.map((k, idx) => ({
+        id: k.length <= 2 ? k.toUpperCase() : String.fromCharCode(65 + idx),
+        text: String(opts[k])
+      }));
+    }
+  }
+
+  // Fallback for true_false questions if missing or empty
+  if (questionType === 'true_false') {
+    return [
+      { id: "A", text: "True" },
+      { id: "B", text: "False" }
+    ];
+  }
+
+  return [];
+}
+
 interface SendCbtAssignmentEmailInput {
   to: string;
   internName: string;
@@ -1322,13 +1364,17 @@ export const getInternTestSessionFn = createServerFn({ method: "POST" })
     }
 
     let safeQuestions = (questionsData || []).map((q: any) => {
-      let options = q.options;
-      try { if (typeof options === 'string') options = JSON.parse(options); } catch (e) {}
+      const normalizedOpts = normalizeCbtOptions(q.options, q.question_type);
+      let testCases = q.test_cases;
+      try { if (typeof testCases === 'string') testCases = JSON.parse(testCases); } catch (e) {}
+
       return {
         id: q.id,
-        question_type: q.question_type,
+        question_type: q.question_type || 'mcq',
         question_text: q.question_text,
-        options: options,
+        options: normalizedOpts.length > 0 ? normalizedOpts : null,
+        reference_code: q.reference_code || q.code_snippet || null,
+        test_cases: Array.isArray(testCases) ? testCases : null,
         max_points: q.max_points || 10,
         time_limit_seconds: q.time_limit_seconds || 60
       };
@@ -1416,12 +1462,43 @@ export const submitCbtExamFn = createServerFn({ method: "POST" })
       let isQuestionCorrect = false;
       let codingVerification: any = null;
 
-      if (q.question_type === 'mcq' || q.question_type === 'true_false') {
-        const isCorrect = internAnswer?.id === correctAnswer?.id || internAnswer === correctAnswer?.id || internAnswer === correctAnswer;
-        qScore = isCorrect ? (q.max_points || 10) : 0;
-        isQuestionCorrect = isCorrect;
-        qFeedback = isCorrect ? 'Correct. Selected option matches verified solution.' : 'Incorrect. Option mismatch.';
-        totalScore += qScore;
+      const normalizedOpts = normalizeCbtOptions(q.options, q.question_type);
+      const isOptionBased = normalizedOpts.length > 0 || q.question_type === 'mcq' || q.question_type === 'true_false' || q.question_type === 'aptitude';
+
+      if (isOptionBased) {
+        if (!internAnswer) {
+          qScore = 0;
+          isQuestionCorrect = false;
+          qFeedback = "Unanswered question.";
+        } else {
+          const internId = typeof internAnswer === 'object' ? String(internAnswer?.id || '') : String(internAnswer);
+          const internText = typeof internAnswer === 'object' ? String(internAnswer?.text || '') : String(internAnswer);
+          const correctId = typeof correctAnswer === 'object' ? String(correctAnswer?.id || '') : String(correctAnswer ?? '');
+          const correctText = typeof correctAnswer === 'object' ? String(correctAnswer?.text || '') : String(correctAnswer ?? '');
+
+          let matchingCorrectOpt = normalizedOpts.find((o: any) => 
+            String(o.id).trim().toLowerCase() === correctId.trim().toLowerCase() ||
+            String(o.text).trim().toLowerCase() === correctId.trim().toLowerCase()
+          );
+
+          const isMatch = 
+            (Boolean(internId) && Boolean(correctId) && internId.trim().toLowerCase() === correctId.trim().toLowerCase()) ||
+            (Boolean(internText) && Boolean(correctText) && internText.trim().toLowerCase() === correctText.trim().toLowerCase()) ||
+            (Boolean(internId) && Boolean(correctText) && internId.trim().toLowerCase() === correctText.trim().toLowerCase()) ||
+            (Boolean(matchingCorrectOpt) && Boolean(internId) && String(matchingCorrectOpt.id).trim().toLowerCase() === internId.trim().toLowerCase()) ||
+            (Boolean(matchingCorrectOpt) && Boolean(internText) && String(matchingCorrectOpt.text).trim().toLowerCase() === internText.trim().toLowerCase()) ||
+            (q.question_type === 'true_false' && (
+              (correctId.toLowerCase().startsWith('t') && (internId.toLowerCase().startsWith('t') || internId.toLowerCase() === 'a' || internText.toLowerCase().startsWith('t'))) ||
+              (correctId.toLowerCase().startsWith('f') && (internId.toLowerCase().startsWith('f') || internId.toLowerCase() === 'b' || internText.toLowerCase().startsWith('f'))) ||
+              (correctId.toLowerCase() === 'a' && (internId.toLowerCase().startsWith('t') || internId.toLowerCase() === 'a' || internText.toLowerCase().startsWith('t'))) ||
+              (correctId.toLowerCase() === 'b' && (internId.toLowerCase().startsWith('f') || internId.toLowerCase() === 'b' || internText.toLowerCase().startsWith('f')))
+            ));
+
+          qScore = isMatch ? (q.max_points || 10) : 0;
+          isQuestionCorrect = isMatch;
+          qFeedback = isMatch ? 'Correct. Selected option matches verified solution.' : 'Incorrect. Option mismatch.';
+          totalScore += qScore;
+        }
       } else if (q.question_type === 'coding') {
         const studentCode = typeof internAnswer === 'string' ? internAnswer.trim() : (internAnswer ? JSON.stringify(internAnswer) : "");
         if (!studentCode) {
@@ -1529,7 +1606,7 @@ Return JSON with exactly this schema: { "score": number, "feedback": "reasoning"
         question_id: q.id,
         question_text: q.question_text,
         question_type: q.question_type,
-        options: q.options,
+        options: normalizedOpts.length > 0 ? normalizedOpts : q.options,
         intern_answer: internAnswer,
         correct_answer: correctAnswer,
         explanation: q.explanation || "Official pre-marked solution.",
@@ -1544,8 +1621,8 @@ Return JSON with exactly this schema: { "score": number, "feedback": "reasoning"
       insertAnswers.push({
          submission_id: subId,
          question_id: q.id,
-         selected_option: (q.question_type === 'mcq' || q.question_type === 'true_false') ? JSON.stringify(internAnswer) : null,
-         subjective_answer: (q.question_type !== 'mcq' && q.question_type !== 'true_false') ? JSON.stringify(internAnswer) : null,
+         selected_option: isOptionBased ? (typeof internAnswer === 'string' ? internAnswer : JSON.stringify(internAnswer)) : null,
+         subjective_answer: !isOptionBased ? (typeof internAnswer === 'string' ? internAnswer : JSON.stringify(internAnswer)) : null,
          ai_score: qScore,
          ai_feedback: qFeedback
       });
