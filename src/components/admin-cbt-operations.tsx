@@ -1648,6 +1648,45 @@ function AdminCbtSubmissionsView() {
   const [notifyInternsOnExtend, setNotifyInternsOnExtend] = useState<boolean>(true);
   const [isExtending, setIsExtending] = useState<boolean>(false);
 
+  // Adjust Exam Settings State
+  const [adjustingExam, setAdjustingExam] = useState<any>(null);
+  const [adjustTime, setAdjustTime] = useState<number>(30);
+  const [adjustPassScore, setAdjustPassScore] = useState<number>(50);
+  const [adjustEnableCamera, setAdjustEnableCamera] = useState<boolean>(true);
+  const [adjustStrictness, setAdjustStrictness] = useState<string>("standard");
+  const [adjustDeadline, setAdjustDeadline] = useState<string>("");
+  const [isSavingAdjustments, setIsSavingAdjustments] = useState<boolean>(false);
+
+  // Delete Exam Confirmation Dialog State
+  const [deletingExam, setDeletingExam] = useState<any>(null);
+
+  const handleConfirmAdjust = async () => {
+    if (!adjustingExam) return;
+    setIsSavingAdjustments(true);
+    try {
+      const res = await doReassign({
+        data: {
+          testId: adjustingExam.id,
+          target_type: adjustingExam.allocation_mode === 'team' ? 'team' : 'intern',
+          target_intern_ids: adjustingExam.intern_ids || [],
+          target_team_ids: adjustingExam.team_ids || [],
+          time_limit_minutes: Number(adjustTime) || 30,
+          passing_score: Number(adjustPassScore) || 50,
+          enable_camera: adjustEnableCamera,
+          camera_strictness: adjustStrictness,
+          deadline: adjustDeadline ? new Date(adjustDeadline).toISOString() : ""
+        }
+      });
+      toast.success(res.message || "Assessment adjustments saved successfully!");
+      setAdjustingExam(null);
+      qc.invalidateQueries({ queryKey: ["admin-cbt-tests"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update test adjustments");
+    } finally {
+      setIsSavingAdjustments(false);
+    }
+  };
+
   const handleConfirmAssign = async () => {
     if (!assigningExam) return;
     const totalCount = assignTargetType === "intern" 
@@ -1783,175 +1822,376 @@ function AdminCbtSubmissionsView() {
 
       {/* Main Exams Registry Table */}
       <div className="bg-white border rounded-2xl overflow-hidden shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 border-b text-slate-600 font-bold uppercase text-xs">
-            <tr>
-              <th className="px-6 py-4">Title & Policy</th>
-              <th className="px-6 py-4">Target Candidate</th>
-              <th className="px-6 py-4">Proctoring Strictness</th>
-              <th className="px-6 py-4">Deadline</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Governance Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {isLoadingTests ? (
-              <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">Loading exams...</td></tr>
-            ) : tests.length === 0 ? (
-              <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No exams found.</td></tr>
-            ) : (
-              tests.map((t: any) => {
-                const isExpired = t.deadline && new Date(t.deadline).getTime() < Date.now();
-                const strictness = t.camera_strictness || "standard";
-                return (
-                  <tr key={t.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-slate-900">{t.title}</div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                          {t.time_limit_minutes || 30} mins
-                        </span>
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.enable_camera !== false ? "bg-indigo-50 text-indigo-700 border border-indigo-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
-                          {t.enable_camera !== false ? "Camera Enforced" : "Focus Only"}
-                        </span>
-                        <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">
-                          Pass: {t.passing_score || 50}%
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="font-medium text-slate-700 block">
-                        {getTargetName(t.allocation_mode, t.allocation_mode === 'team' ? t.team_ids : t.intern_ids)}
-                      </span>
-                      <span className="text-[10px] uppercase font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
-                        {t.allocation_mode}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      {t.enable_camera === false ? (
-                        <span className="text-[11px] font-bold text-slate-400">N/A (No Camera)</span>
-                      ) : (
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1 ${
-                          strictness === 'strict' 
-                            ? 'bg-rose-100 text-rose-800 border border-rose-300' 
-                            : strictness === 'lenient'
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                            : 'bg-amber-100 text-amber-800 border border-amber-300'
-                        }`}>
-                          <div className={`h-1.5 w-1.5 rounded-full ${
-                            strictness === 'strict' ? 'bg-rose-600' : strictness === 'lenient' ? 'bg-emerald-600' : 'bg-amber-600'
-                          }`} />
-                          {strictness === 'strict' ? 'Ultra-Strict (1 Strike)' : strictness === 'lenient' ? 'Lenient (3 Strikes)' : 'Standard (2 Strikes)'}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {t.deadline ? (
-                        <div>
-                          <span className={`text-xs font-semibold ${isExpired ? "text-red-600 font-bold" : "text-slate-700"}`}>
-                            {new Date(t.deadline).toLocaleDateString()} {new Date(t.deadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-sm min-w-[1100px]">
+            <thead className="bg-slate-50 border-b text-slate-600 font-bold uppercase text-xs">
+              <tr>
+                <th className="px-6 py-4">Title & Policy</th>
+                <th className="px-6 py-4">Target Candidate</th>
+                <th className="px-6 py-4">Proctoring Strictness</th>
+                <th className="px-6 py-4">Deadline</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Actions & Controls</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {isLoadingTests ? (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">Loading exams...</td></tr>
+              ) : tests.length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No exams found.</td></tr>
+              ) : (
+                tests.map((t: any) => {
+                  const isExpired = t.deadline && new Date(t.deadline).getTime() < Date.now();
+                  const strictness = t.camera_strictness || "standard";
+                  return (
+                    <tr key={t.id} className="hover:bg-slate-50">
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-slate-900">{t.title}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                            {t.time_limit_minutes || 30} mins
                           </span>
-                          {isExpired && (
-                            <span className="block text-[10px] font-bold text-red-600 uppercase tracking-wider">
-                              (Expired)
-                            </span>
-                          )}
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.enable_camera !== false ? "bg-indigo-50 text-indigo-700 border border-indigo-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
+                            {t.enable_camera !== false ? "Camera Enforced" : "Focus Only"}
+                          </span>
+                          <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">
+                            Pass: {t.passing_score || 50}%
+                          </span>
                         </div>
-                      ) : (
-                        <span className="text-xs text-slate-400">No Deadline</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase flex w-fit items-center gap-1 ${t.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                        {t.status === 'published' ? <CheckCircle className="h-3 w-3"/> : <XCircle className="h-3 w-3"/>}
-                        {t.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
-                      {/* Branded Official Paper Download (PDF) */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs gap-1 border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold"
-                        onClick={() => handleDownloadPaper(t, 'pdf')}
-                        disabled={downloadingFormat?.testId === t.id && downloadingFormat?.format === 'pdf'}
-                        title="Download Vyntyra Branded Official Exam Paper (.PDF) with Founder Signature"
-                      >
-                        {downloadingFormat?.testId === t.id && downloadingFormat?.format === 'pdf' ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-600" />
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="font-medium text-slate-700 block">
+                          {getTargetName(t.allocation_mode, t.allocation_mode === 'team' ? t.team_ids : t.intern_ids)}
+                        </span>
+                        <span className="text-[10px] uppercase font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+                          {t.allocation_mode}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {t.enable_camera === false ? (
+                          <span className="text-[11px] font-bold text-slate-400">N/A (No Camera)</span>
                         ) : (
-                          <FileText className="h-3.5 w-3.5 text-amber-600" />
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1 ${
+                            strictness === 'strict' 
+                              ? 'bg-rose-100 text-rose-800 border border-rose-300' 
+                              : strictness === 'lenient'
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : 'bg-amber-100 text-amber-800 border border-amber-300'
+                          }`}>
+                            <div className={`h-1.5 w-1.5 rounded-full ${
+                              strictness === 'strict' ? 'bg-rose-600' : strictness === 'lenient' ? 'bg-emerald-600' : 'bg-amber-600'
+                            }`} />
+                            {strictness === 'strict' ? 'Ultra-Strict (1 Strike)' : strictness === 'lenient' ? 'Lenient (3 Strikes)' : 'Standard (2 Strikes)'}
+                          </span>
                         )}
-                        Paper (PDF)
-                      </Button>
-
-                      {/* Structured CSV Dataset Download */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs gap-1 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold"
-                        onClick={() => handleDownloadPaper(t, 'csv')}
-                        disabled={downloadingFormat?.testId === t.id && downloadingFormat?.format === 'csv'}
-                        title="Download Structured Questions Dataset (.CSV)"
-                      >
-                        {downloadingFormat?.testId === t.id && downloadingFormat?.format === 'csv' ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" />
+                      </td>
+                      <td className="px-6 py-4">
+                        {t.deadline ? (
+                          <div>
+                            <span className={`text-xs font-semibold ${isExpired ? "text-red-600 font-bold" : "text-slate-700"}`}>
+                              {new Date(t.deadline).toLocaleDateString()} {new Date(t.deadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            {isExpired && (
+                              <span className="block text-[10px] font-bold text-red-600 uppercase tracking-wider">
+                                (Expired)
+                              </span>
+                            )}
+                          </div>
                         ) : (
-                          <Download className="h-3.5 w-3.5 text-emerald-600" />
+                          <span className="text-xs text-slate-400">No Deadline</span>
                         )}
-                        CSV
-                      </Button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase flex w-fit items-center gap-1 ${t.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                          {t.status === 'published' ? <CheckCircle className="h-3 w-3"/> : <XCircle className="h-3 w-3"/>}
+                          {t.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex flex-col items-end gap-2">
+                          {/* Tier 1: Primary Allocation & Review Controls */}
+                          <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                            <Button
+                              size="sm"
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs gap-1 shadow-xs h-7 px-2.5"
+                              onClick={() => {
+                                setAssignTargetType(t.allocation_mode === 'team' ? 'team' : 'intern');
+                                setAssignSelectedInternIds(t.intern_ids || []);
+                                setAssignSelectedTeamIds(t.team_ids || []);
+                                setAssignStrictness(t.camera_strictness || "standard");
+                                setAssigningExam(t);
+                              }}
+                            >
+                              <UserPlus className="h-3.5 w-3.5" /> Assign Test
+                            </Button>
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs gap-1 border-purple-200 hover:bg-purple-50 text-purple-700 font-semibold"
-                        onClick={() => {
-                          setExtendingExam(t);
-                          setNewDeadline(t.deadline ? new Date(t.deadline).toISOString().slice(0, 16) : "");
-                        }}
-                      >
-                        <Calendar className="h-3.5 w-3.5" /> Extend Deadline
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs gap-1 border-indigo-200 hover:bg-indigo-50 text-indigo-700 font-semibold"
-                        onClick={() => handlePreviewExistingExam(t)}
-                        disabled={isLoadingExistingQuestions}
-                      >
-                        <Eye className="h-3.5 w-3.5" /> Preview Questions
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs gap-1"
-                        onClick={() => {
-                          setAssignTargetType(t.allocation_mode === 'team' ? 'team' : 'intern');
-                          setAssignSelectedInternIds(t.intern_ids || []);
-                          setAssignSelectedTeamIds(t.team_ids || []);
-                          setAssignStrictness(t.camera_strictness || "standard");
-                          setAssigningExam(t);
-                        }}
-                      >
-                        <UserPlus className="h-3.5 w-3.5" /> Assign Test
-                      </Button>
-                      <Button variant="secondary" size="sm" className="text-xs font-semibold" onClick={() => setSelectedTestId(t.id)}>
-                        <Eye className="h-3.5 w-3.5 mr-1" /> Mark Sheets
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-xs" onClick={() => toggleMut.mutate({ id: t.id, status: t.status === 'published' ? 'draft' : 'published' })}>
-                        <RefreshCw className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="destructive" size="sm" className="text-xs" onClick={() => { if(confirm("Permanently delete this test?")) deleteMut.mutate(t.id); }}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                            <Button 
+                              variant="secondary" 
+                              size="sm" 
+                              className="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 h-7 px-2.5" 
+                              onClick={() => setSelectedTestId(t.id)}
+                            >
+                              <Eye className="h-3.5 w-3.5 mr-1" /> Mark Sheets
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs gap-1 border-indigo-200 hover:bg-indigo-50 text-indigo-700 font-semibold h-7 px-2.5"
+                              onClick={() => handlePreviewExistingExam(t)}
+                              disabled={isLoadingExistingQuestions}
+                            >
+                              <Eye className="h-3.5 w-3.5" /> Preview Qs
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs gap-1 border-sky-300 bg-sky-50 hover:bg-sky-100 text-sky-800 font-bold h-7 px-2.5"
+                              onClick={() => {
+                                setAdjustingExam(t);
+                                setAdjustTime(t.time_limit_minutes || 30);
+                                setAdjustPassScore(t.passing_score || 50);
+                                setAdjustEnableCamera(t.enable_camera !== false);
+                                setAdjustStrictness(t.camera_strictness || "standard");
+                                setAdjustDeadline(t.deadline ? new Date(t.deadline).toISOString().slice(0, 16) : "");
+                              }}
+                              title="Adjust Time Limit, Passing Score, Camera Strictness & Deadline"
+                            >
+                              <Sliders className="h-3.5 w-3.5 text-sky-600" /> Adjust Settings
+                            </Button>
+                          </div>
+
+                          {/* Tier 2: Downloads, Extensions, Status & Deletion */}
+                          <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs gap-1 border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-semibold h-7 px-2"
+                              onClick={() => handleDownloadPaper(t, 'pdf')}
+                              disabled={downloadingFormat?.testId === t.id && downloadingFormat?.format === 'pdf'}
+                              title="Download Vyntyra Branded Official Exam Paper (.PDF) with Founder Signature"
+                            >
+                              {downloadingFormat?.testId === t.id && downloadingFormat?.format === 'pdf' ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-600" />
+                              ) : (
+                                <FileText className="h-3.5 w-3.5 text-amber-600" />
+                              )}
+                              PDF
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs gap-1 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-semibold h-7 px-2"
+                              onClick={() => handleDownloadPaper(t, 'csv')}
+                              disabled={downloadingFormat?.testId === t.id && downloadingFormat?.format === 'csv'}
+                              title="Download Structured Questions Dataset (.CSV)"
+                            >
+                              {downloadingFormat?.testId === t.id && downloadingFormat?.format === 'csv' ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" />
+                              ) : (
+                                <Download className="h-3.5 w-3.5 text-emerald-600" />
+                              )}
+                              CSV
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs gap-1 border-purple-200 hover:bg-purple-50 text-purple-700 font-semibold h-7 px-2"
+                              onClick={() => {
+                                setExtendingExam(t);
+                                setNewDeadline(t.deadline ? new Date(t.deadline).toISOString().slice(0, 16) : "");
+                              }}
+                            >
+                              <Calendar className="h-3.5 w-3.5" /> Extend
+                            </Button>
+
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-xs h-7 px-2 text-slate-600 hover:text-slate-900" 
+                              title={t.status === 'published' ? "Pause/Draft Test" : "Publish Test"}
+                              onClick={() => toggleMut.mutate({ id: t.id, status: t.status === 'published' ? 'draft' : 'published' })}
+                            >
+                              <RefreshCw className="h-3.5 w-3.5" />
+                            </Button>
+
+                            {/* Dedicated Prominent Red Delete Test Button */}
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs gap-1 h-7 px-2.5 shadow-xs"
+                              onClick={() => setDeletingExam(t)}
+                              title="Permanently Delete Test and All Submissions"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              <span>Delete Test</span>
+                            </Button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* Adjust Test Settings Dialog */}
+      {adjustingExam && (
+        <Dialog open={!!adjustingExam} onOpenChange={(open) => !open && setAdjustingExam(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sliders className="h-5 w-5 text-sky-600" />
+                Adjust Assessment Settings
+              </DialogTitle>
+              <DialogDescription>
+                Fine-tune exam policies, time limits, passing score, proctoring, and deadline for <strong>{adjustingExam.title}</strong>.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-2 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Duration (Minutes)
+                  </label>
+                  <input 
+                    type="number"
+                    min={5}
+                    max={360}
+                    value={adjustTime}
+                    onChange={e => setAdjustTime(Number(e.target.value))}
+                    className="w-full p-2.5 border rounded-lg text-sm text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Passing Score (%)
+                  </label>
+                  <input 
+                    type="number"
+                    min={10}
+                    max={100}
+                    value={adjustPassScore}
+                    onChange={e => setAdjustPassScore(Number(e.target.value))}
+                    className="w-full p-2.5 border rounded-lg text-sm text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                  Submission Deadline
+                </label>
+                <input 
+                  type="datetime-local" 
+                  value={adjustDeadline}
+                  onChange={e => setAdjustDeadline(e.target.value)}
+                  className="w-full p-2.5 border rounded-lg text-sm text-slate-800"
+                />
+              </div>
+
+              <div className="p-3.5 bg-slate-50 border rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-slate-900 text-xs">Webcam Proctoring</div>
+                    <div className="text-[11px] text-slate-500">Require camera & periodic candidate snapshots</div>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={adjustEnableCamera}
+                    onChange={e => setAdjustEnableCamera(e.target.checked)}
+                    className="h-4 w-4 text-sky-600 rounded"
+                  />
+                </div>
+
+                {adjustEnableCamera && (
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                      Camera Strictness & Malpractice Tolerance
+                    </label>
+                    <Select value={adjustStrictness} onValueChange={(val: any) => setAdjustStrictness(val)}>
+                      <SelectTrigger className="w-full bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="lenient">Lenient (3 strikes before auto-submission)</SelectItem>
+                        <SelectItem value="standard">Standard (2 strikes before auto-submission)</SelectItem>
+                        <SelectItem value="strict">Ultra-Strict (1 strike terminates test immediately)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setAdjustingExam(null)} disabled={isSavingAdjustments}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleConfirmAdjust} 
+                disabled={isSavingAdjustments}
+                className="bg-sky-600 hover:bg-sky-700 text-white font-bold"
+              >
+                {isSavingAdjustments ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : "Save Adjustments"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Exam Confirmation Dialog */}
+      {deletingExam && (
+        <Dialog open={!!deletingExam} onOpenChange={(open) => !open && setDeletingExam(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-rose-600">
+                <AlertTriangle className="h-5 w-5 text-rose-600" />
+                Permanently Delete Assessment
+              </DialogTitle>
+              <DialogDescription className="text-slate-600 pt-2 leading-relaxed">
+                Are you sure you want to delete <strong className="text-slate-900 font-bold">{deletingExam.title}</strong>?
+                <br /><br />
+                <span className="text-rose-700 font-semibold bg-rose-50 p-2.5 rounded-lg border border-rose-200 block text-xs">
+                  ⚠️ This action is irreversible. All generated questions, candidate submissions, answer sheets, and malpractice proctoring logs for this test will be permanently erased.
+                </span>
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter className="gap-2 sm:gap-0 mt-4">
+              <Button variant="outline" onClick={() => setDeletingExam(null)} disabled={deleteMut.isPending}>
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={async () => {
+                  try {
+                    await deleteMut.mutateAsync(deletingExam.id);
+                    setDeletingExam(null);
+                  } catch (e) {
+                    // Handled by mutation onError toast
+                  }
+                }}
+                disabled={deleteMut.isPending}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold gap-1.5"
+              >
+                {deleteMut.isPending ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Deleting...</>
+                ) : (
+                  <><Trash2 className="h-4 w-4" /> Yes, Permanently Delete Test</>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Extend Deadline Modal */}
       {extendingExam && (

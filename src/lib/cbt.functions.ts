@@ -1988,6 +1988,8 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
       if (deadline !== undefined) fallbackPayload.deadline = deadline || null;
       if (enable_camera !== undefined) fallbackPayload.enable_camera = enable_camera;
       if (time_limit_minutes !== undefined) fallbackPayload.time_limit_minutes = Number(time_limit_minutes);
+      if (passing_score !== undefined) fallbackPayload.passing_score = Number(passing_score);
+      if (camera_strictness !== undefined) fallbackPayload.camera_strictness = camera_strictness;
       
       const fallbackRes = await adminClient.from('cbt_exams').update(fallbackPayload).eq('id', testId);
       if (fallbackRes.error) {
