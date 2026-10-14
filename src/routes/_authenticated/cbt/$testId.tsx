@@ -9,8 +9,9 @@ import { toast } from "sonner";
 import { 
   AlertTriangle, ShieldCheck, VideoOff, CheckCircle2, ChevronRight, ChevronLeft, 
   ShieldAlert, AlertCircle, RefreshCcw, MonitorSmartphone, XCircle, Code2, 
-  Terminal, Copy, FileText, RotateCcw, Check, Sparkles
+  Terminal, Copy, FileText, RotateCcw, Check, Sparkles, Download, ExternalLink
 } from "lucide-react";
+import { downloadCbtDetailedReportPdf, generateNextAttemptSuggestions, CbtQuestionAudit } from "@/lib/cbt-report";
 
 function normalizeOptions(options: any, questionType?: string): Array<{ id: string; text: string }> {
   let opts = options;
@@ -171,6 +172,75 @@ function CbtExamInterface() {
     calculateMockScore();
     submitExamData(logs);
     if (isAuto) toast.info("Time is up! Exam auto-submitted.");
+  };
+
+  const handleDownloadReport = () => {
+    const questionsReview = submissionResult?.questionsReview || [];
+    const maxScore = submissionResult?.maxScore || questions.reduce((acc: number, q: any) => acc + (Number(q.max_points) || 10), 0) || 100;
+    const totalScore = submissionResult?.totalScore ?? submissionResult?.score ?? questionsReview.reduce((acc: number, r: any) => acc + (Number(r.score) || 0), 0);
+    const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : calculatedScore;
+    const passingScore = test?.passing_score || 50;
+    const passed = percentage >= passingScore;
+
+    let correctCount = 0;
+    let partialCount = 0;
+    let incorrectCount = 0;
+
+    const questionAudits: CbtQuestionAudit[] = (questionsReview.length > 0 ? questionsReview : questions).map((qItem: any, idx: number) => {
+      const review = questionsReview.find((r: any) => r.question_id === (qItem.id || qItem.question_id)) || qItem;
+      const ans = answers[qItem.id || qItem.question_id];
+      const isCorrect = Boolean(review.is_correct);
+      const maxPts = Number(review.max_points) || 10;
+      const score = review.score !== undefined ? Number(review.score) : (isCorrect ? maxPts : 0);
+
+      if (score >= maxPts) correctCount++;
+      else if (score > 0) partialCount++;
+      else incorrectCount++;
+
+      const candidateAns = ans ? (typeof ans === "string" ? ans : ans.text || ans.id) : "No answer recorded";
+      const correctAns = review.correct_answer ? (typeof review.correct_answer === "object" ? JSON.stringify(review.correct_answer) : String(review.correct_answer)) : "Verified Answer";
+
+      return {
+        question_id: qItem.id || qItem.question_id || String(idx),
+        question_number: idx + 1,
+        question_text: qItem.question_text,
+        question_type: qItem.question_type || "mcq",
+        max_points: maxPts,
+        awarded_score: score,
+        is_correct: score >= maxPts,
+        candidate_answer: String(candidateAns),
+        correct_answer: correctAns,
+        explanation: review.explanation,
+        feedback: review.ai_feedback
+      };
+    });
+
+    const accuracyRate = questionAudits.length > 0 ? Math.round((correctCount / questionAudits.length) * 100) : 0;
+    const suggestions = generateNextAttemptSuggestions(questionAudits, passingScore, percentage, totalScore, maxScore);
+
+    downloadCbtDetailedReportPdf({
+      candidateName: test?.internName || test?.internId || "Candidate",
+      candidateEmail: "",
+      internId: test?.internId || "INT-SECURE",
+      examTitle: test?.title || "VyNexa Technical Assessment",
+      examDescription: test?.description,
+      submittedAt: new Date().toLocaleString(),
+      submissionId: submissionResult?.submissionId || `${testId}-${Date.now()}`,
+      totalScore,
+      maxScore,
+      percentage,
+      passingScore,
+      passed,
+      totalQuestions: questionAudits.length,
+      correctCount,
+      partialCount,
+      incorrectCount,
+      accuracyRate,
+      infractionsCount: strikes,
+      malpracticeLogs: logs,
+      questions: questionAudits,
+      suggestions
+    });
   };
 
   const isCameraEnabled = test?.enable_camera !== false && test?.camera_required !== false;
@@ -474,9 +544,9 @@ function CbtExamInterface() {
           </div>
 
           <div className="p-10 flex gap-12 bg-slate-50">
-            {/* Graphical Score */}
+            {/* Graphical Score & Breakdown */}
             <div className="w-1/3 flex flex-col items-center justify-center border-r border-slate-200 pr-12">
-              <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-6 text-center">Calculated Accuracy</div>
+              <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4 text-center">Score & Accuracy</div>
               <div className="relative w-40 h-40 flex items-center justify-center">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 140 140">
                   <circle cx="70" cy="70" r={circleRadius} stroke="#e2e8f0" strokeWidth="12" fill="none" />
@@ -494,10 +564,42 @@ function CbtExamInterface() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className={`text-4xl font-black ${isTerminated ? "text-red-600" : "text-emerald-600"}`}>{calculatedScore}%</span>
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+                    {submissionResult?.passed ? "Passed" : "Completed"}
+                  </span>
                 </div>
               </div>
-              <div className="mt-6 text-xs text-slate-500 text-center">
-                {Object.keys(answers).length} of {questions.length} attempted
+
+              {/* Points & Correct Breakdown */}
+              <div className="mt-4 text-center space-y-1 w-full">
+                <div className="text-xs font-bold text-slate-700">
+                  Total Points: <span className="text-indigo-600 font-black">{submissionResult?.totalScore ?? (submissionResult?.score ?? 0)} / {submissionResult?.maxScore ?? (questions.length * 10)} pts</span>
+                </div>
+                {submissionResult?.questionsReview && (
+                  <div className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full inline-block">
+                    Correct: {submissionResult.questionsReview.filter((r: any) => Boolean(r.is_correct)).length} / {questions.length} Questions
+                  </div>
+                )}
+                <div className="text-[10px] text-slate-400">
+                  {Object.keys(answers).length} of {questions.length} attempted
+                </div>
+              </div>
+
+              {/* Action Buttons in Left Column */}
+              <div className="mt-4 w-full space-y-2">
+                <Button 
+                  onClick={handleDownloadReport} 
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                >
+                  <Download className="h-4 w-4" /> Download Report (PDF)
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate({ to: `/cbt/results/${testId}` })} 
+                  className="w-full text-indigo-700 border-indigo-200 hover:bg-indigo-50 font-bold text-xs py-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" /> Full Results & Guidance
+                </Button>
               </div>
             </div>
 
@@ -600,14 +702,25 @@ function CbtExamInterface() {
             </div>
           </div>
 
-          <div className="bg-white p-4 border-t border-slate-200 flex justify-between items-center">
+          <div className="bg-white p-4 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
             <span className="text-slate-400 text-xs font-mono">Session ID: {testId}-{Date.now()}</span>
-            <Button variant="outline" onClick={() => {
-              if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
-              navigate({ to: "/intern" });
-            }}>
-              Return to Dashboard Now
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                onClick={handleDownloadReport}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Download className="h-4 w-4" /> Download Detailed Report (PDF)
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+                  navigate({ to: "/intern" });
+                }}
+              >
+                Return to Dashboard Now
+              </Button>
+            </div>
           </div>
         </div>
       </div>

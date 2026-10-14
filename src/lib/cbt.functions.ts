@@ -1636,8 +1636,9 @@ Return JSON with exactly this schema: { "score": number, "feedback": "reasoning"
     const percentage = Math.round((totalScore / maxPossibleScore) * 100);
     const passed = percentage >= (test?.passing_score || 50);
 
+    const finalScore = Math.round(totalScore);
     const submissionSummary = {
-      totalScore,
+      totalScore: finalScore,
       maxPossibleScore,
       percentage,
       passed,
@@ -1646,17 +1647,34 @@ Return JSON with exactly this schema: { "score": number, "feedback": "reasoning"
       submittedAt: new Date().toISOString()
     };
     
-    await adminClient.from('cbt_submissions').update({
-       total_score: totalScore,
-       ai_feedback: JSON.stringify(submissionSummary),
-       status: 'graded'
-    }).eq('id', subId);
+    try {
+      const { error: updErr } = await adminClient.from('cbt_submissions').update({
+         total_score: finalScore,
+         ai_feedback: JSON.stringify(submissionSummary),
+         status: 'graded'
+      }).eq('id', subId);
+      if (updErr) {
+        console.warn("[submitCbtExamFn] Error updating full submission payload, attempting minimal update:", updErr.message);
+        await adminClient.from('cbt_submissions').update({
+           total_score: finalScore,
+           status: 'graded'
+        }).eq('id', subId);
+      }
+    } catch (e: any) {
+      console.error("[submitCbtExamFn] Failed to update cbt_submissions:", e);
+      try {
+        await adminClient.from('cbt_submissions').update({
+           total_score: finalScore,
+           status: 'graded'
+        }).eq('id', subId);
+      } catch (_) {}
+    }
     
     invalidateCache("all_cbt_submissions");
     return { 
       success: true, 
       submissionId: subId, 
-      score: totalScore, 
+      score: finalScore, 
       maxPossibleScore, 
       percentage, 
       passed, 
@@ -1788,12 +1806,27 @@ export const getInternSubmissionResultFn = createServerFn({ method: "POST" })
 
     const passingScore = sub.cbt_exams?.passing_score || 50;
     const maxScore = (questions || []).reduce((acc: number, q: any) => acc + (q.max_points || 10), 0) || 100;
-    const percentage = parsedFeedback?.percentage ?? Math.round(((sub.total_score || 0) / maxScore) * 100);
-    const passed = parsedFeedback?.passed ?? (percentage >= passingScore);
+    const pointsFromAnswers = (answers || []).reduce((acc: number, a: any) => acc + (Number(a.ai_score) || 0), 0);
+    const actualScore = Math.max(Number(sub.total_score) || 0, pointsFromAnswers);
+    const percentage = parsedFeedback?.percentage ?? (maxScore > 0 ? Math.round((actualScore / maxScore) * 100) : 0);
+    const passed = percentage >= passingScore;
+
+    // Auto-heal DB row if total_score is 0 or less than answer points, or if status is still 'submitted'
+    if (((sub.total_score === 0 || !sub.total_score) && actualScore > 0) || sub.status === 'submitted') {
+      sub.total_score = Math.round(actualScore);
+      sub.status = 'graded';
+      try {
+        await adminClient.from('cbt_submissions').update({
+          total_score: Math.round(actualScore),
+          status: 'graded'
+        }).eq('id', sub.id);
+        invalidateCache("all_cbt_submissions");
+      } catch (_) {}
+    }
 
     return {
       ...sub,
-      score: sub.total_score,
+      score: actualScore,
       percentage,
       passed,
       maxScore,
@@ -1944,8 +1977,44 @@ export const listAdminTestSubmissionsFn = createServerFn({ method: "POST" })
   .inputValidator((d: any) => z.object({ testId: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
-    const { data: subs } = await adminClient.from('cbt_submissions').select('*, profiles(full_name, email)').eq('exam_id', data.testId).order('submitted_at', { ascending: false });
-    return subs || [];
+    const { data: subs } = await adminClient
+      .from('cbt_submissions')
+      .select('*, profiles(full_name, email)')
+      .eq('exam_id', data.testId)
+      .order('submitted_at', { ascending: false });
+
+    if (!subs || subs.length === 0) return [];
+
+    // Auto-heal any 0 or missing score submissions by checking their answers
+    const zeroSubs = subs.filter(s => !s.total_score || s.total_score === 0);
+    if (zeroSubs.length > 0) {
+      const zeroSubIds = zeroSubs.map(s => s.id);
+      const { data: ans } = await adminClient
+        .from('cbt_answers')
+        .select('submission_id, ai_score')
+        .in('submission_id', zeroSubIds);
+
+      if (ans && ans.length > 0) {
+        const sumBySub: Record<string, number> = {};
+        for (const a of ans) {
+          sumBySub[a.submission_id] = (sumBySub[a.submission_id] || 0) + (Number(a.ai_score) || 0);
+        }
+        for (const s of subs) {
+          if (sumBySub[s.id] && sumBySub[s.id] > 0) {
+            s.total_score = Math.round(sumBySub[s.id]);
+            // heal row asynchronously
+            adminClient
+              .from('cbt_submissions')
+              .update({ total_score: Math.round(sumBySub[s.id]), status: 'graded' })
+              .eq('id', s.id)
+              .then(() => {})
+              .catch(() => {});
+          }
+        }
+      }
+    }
+
+    return subs;
   });
 export const listInternAvailableExamsFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -2330,11 +2399,36 @@ export const getAdminSubmissionDetailFn = createServerFn({ method: "POST" })
       adminClient.from('cbt_questions').select('*').eq('exam_id', submission.exam_id).order('order_index', { ascending: true }),
     ]);
 
+    const answersList = answers || [];
+    const questionsList = questions || [];
+    const pointsFromAnswers = answersList.reduce((acc: number, a: any) => acc + (Number(a.ai_score) || 0), 0);
+    const maxScore = questionsList.reduce((acc: number, q: any) => acc + (Number(q.max_points) || 10), 0) || 100;
+    const actualScore = Math.max(Number(submission.total_score) || 0, pointsFromAnswers);
+
+    // Auto-heal DB row if total_score was 0 or less than answer points, or if status was still 'submitted'
+    if (((submission.total_score === 0 || !submission.total_score) && pointsFromAnswers > 0) || submission.status === 'submitted') {
+      submission.total_score = Math.round(actualScore);
+      submission.status = 'graded';
+      try {
+        await adminClient.from('cbt_submissions').update({
+          total_score: Math.round(actualScore),
+          status: 'graded'
+        }).eq('id', args.submissionId);
+        invalidateCache("all_cbt_submissions");
+      } catch (err: any) {
+        console.warn("[getAdminSubmissionDetailFn] Healing update error:", err?.message);
+      }
+    } else if (actualScore > (submission.total_score || 0)) {
+      submission.total_score = Math.round(actualScore);
+    }
+
     return {
       submission,
-      answers: answers || [],
+      answers: answersList,
       malpracticeLogs: malpracticeLogs || [],
-      questions: questions || [],
+      questions: questionsList,
+      totalPointsAwarded: actualScore,
+      maxScore,
     };
   });
 

@@ -20,6 +20,7 @@ import {
 } from "@/lib/cbt.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { downloadCbtDetailedReportPdf, generateNextAttemptSuggestions, CbtQuestionAudit } from "@/lib/cbt-report";
 import { 
   BrainCircuit, Upload, Loader2, Save, Users, FileText, CheckCircle2, Trash2, 
   CheckCircle, XCircle, RefreshCw, AlertTriangle, Search, Activity, Clock, 
@@ -2579,6 +2580,13 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
   const [retakeReason, setRetakeReason] = useState<string>("");
   const [isResettingAttempt, setIsResettingAttempt] = useState<boolean>(false);
   
+  const fetchQuestions = useServerFn(getAdminTestQuestionsFn);
+  const { data: testQuestions = [] } = useQuery({
+    queryKey: ["admin-cbt-questions", testId],
+    queryFn: () => fetchQuestions({ data: { testId } }),
+  });
+  const testMaxScore = (testQuestions || []).reduce((acc: number, q: any) => acc + (Number(q.max_points) || 10), 0) || 100;
+
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ["admin-cbt-submissions", testId],
     queryFn: () => fetchSubmissions({ data: { testId } }),
@@ -2747,7 +2755,8 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
               <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">No candidate submissions recorded yet for this assessment.</td></tr>
             ) : (
               submissions.map((sub: any) => {
-                const isPassed = (sub.total_score || 0) >= passingScore;
+                const subPercentage = testMaxScore > 0 ? Math.round(((sub.total_score || 0) / testMaxScore) * 100) : 0;
+                const isPassed = subPercentage >= passingScore;
                 return (
                   <tr key={sub.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4">
@@ -2758,14 +2767,15 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                       {new Date(sub.submitted_at || sub.started_at).toLocaleString()}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-mono font-black text-lg text-indigo-700">{sub.total_score || 0} pts</span>
+                      <span className="font-mono font-black text-lg text-indigo-700">{sub.total_score || 0} / {testMaxScore} pts</span>
+                      <span className="text-[11px] text-slate-400 block font-semibold">{subPercentage}%</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase flex w-fit items-center gap-1 ${
                         isPassed ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
                       }`}>
                         {isPassed ? <CheckCircle className="h-3.5 w-3.5"/> : <XCircle className="h-3.5 w-3.5"/>}
-                        {isPassed ? "Passed" : "Needs Retest"}
+                        {isPassed ? `Passed (${subPercentage}%)` : `Needs Retest (${subPercentage}%)`}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
@@ -2838,205 +2848,346 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
       )}
 
       {/* Comprehensive Mark Sheet & Proctoring Report Modal */}
-      {activeSubmissionDetail && (
-        <Dialog open={!!activeSubmissionDetail} onOpenChange={(open) => !open && setActiveSubmissionDetail(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Award className="h-6 w-6 text-indigo-600" />
-                  Candidate Mark Sheet & Proctoring Audit
-                </span>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
-                  (activeSubmissionDetail.submission?.total_score || 0) >= passingScore
-                    ? "bg-emerald-100 text-emerald-800"
-                    : "bg-rose-100 text-rose-800"
-                }`}>
-                  {(activeSubmissionDetail.submission?.total_score || 0) >= passingScore ? "Passed" : "Failed"}
-                </span>
-              </DialogTitle>
-              <DialogDescription>
-                Detailed question-by-question response breakdown, AI scoring verification, and proctoring violation telemetry.
-              </DialogDescription>
-            </DialogHeader>
+      {activeSubmissionDetail && (() => {
+        const answersList = activeSubmissionDetail.answers || [];
+        const questionsList = activeSubmissionDetail.questions || [];
+        const pointsFromAnswers = answersList.reduce((acc: number, a: any) => acc + (Number(a.ai_score) || 0), 0);
+        const totalScore = Math.max(Number(activeSubmissionDetail.submission?.total_score) || 0, pointsFromAnswers);
+        const maxScore = activeSubmissionDetail.maxScore || questionsList.reduce((acc: number, q: any) => acc + (Number(q.max_points) || 10), 0) || 100;
+        const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+        const passed = percentage >= passingScore;
 
-            <div className="space-y-6 py-4">
-              {/* Candidate & Assessment Summary Card */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
-                <div>
-                  <span className="text-slate-400 font-bold uppercase block">Candidate</span>
-                  <span className="font-bold text-slate-800 text-sm">{activeSubmissionDetail.submission?.profiles?.full_name || "Intern"}</span>
-                  <span className="text-slate-500 block font-mono">{activeSubmissionDetail.submission?.profiles?.email}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 font-bold uppercase block">Submitted At</span>
-                  <span className="font-semibold text-slate-800">{new Date(activeSubmissionDetail.submission?.submitted_at || activeSubmissionDetail.submission?.started_at).toLocaleString()}</span>
-                  <span className="text-slate-500 block">Status: {activeSubmissionDetail.submission?.status}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 font-bold uppercase block">Total Points Awarded</span>
-                  <span className="text-2xl font-black text-indigo-600">{activeSubmissionDetail.submission?.total_score || 0} pts</span>
-                  <span className="text-slate-500 block font-semibold">Passing Benchmark: {passingScore}%</span>
-                </div>
-              </div>
+        let correctCount = 0;
+        let partialCount = 0;
+        let incorrectCount = 0;
 
-              {/* Proctoring & Infractions Log */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                    <ShieldAlert className="h-4 w-4 text-rose-500" />
-                    Proctoring Telemetry ({activeSubmissionDetail.malpracticeLogs?.length || 0} Events)
-                  </h4>
-                  {activeSubmissionDetail.malpracticeLogs?.length > 0 && (
+        const questionAudits: CbtQuestionAudit[] = questionsList.map((q: any, idx: number) => {
+          const ans = answersList.find((a: any) => a.question_id === q.id);
+          const awarded = Number(ans?.ai_score) || 0;
+          const maxPts = Number(q.max_points) || 10;
+          
+          if (awarded >= maxPts) {
+            correctCount++;
+          } else if (awarded > 0) {
+            partialCount++;
+          } else {
+            incorrectCount++;
+          }
+
+          let parsedSelected = ans?.selected_option;
+          try { if (typeof parsedSelected === 'string') parsedSelected = JSON.parse(parsedSelected); } catch(e){}
+          let parsedSubjective = ans?.subjective_answer;
+          try { if (typeof parsedSubjective === 'string') parsedSubjective = JSON.parse(parsedSubjective); } catch(e){}
+          const candidateResponse = parsedSelected?.text || parsedSelected || parsedSubjective || "No answer recorded";
+
+          return {
+            question_id: q.id,
+            question_number: idx + 1,
+            question_text: q.question_text,
+            question_type: q.question_type || "mcq",
+            max_points: maxPts,
+            awarded_score: awarded,
+            is_correct: awarded >= maxPts,
+            candidate_answer: String(candidateResponse),
+            correct_answer: typeof q.correct_answer === "object" ? JSON.stringify(q.correct_answer) : String(q.correct_answer || ""),
+            feedback: ans?.ai_feedback,
+            explanation: q.explanation
+          };
+        });
+
+        const accuracyRate = questionsList.length > 0 ? Math.round((correctCount / questionsList.length) * 100) : 0;
+        const suggestions = generateNextAttemptSuggestions(questionAudits, passingScore, percentage, totalScore, maxScore);
+
+        const handleDownloadAuditPdf = () => {
+          downloadCbtDetailedReportPdf({
+            candidateName: activeSubmissionDetail.submission?.profiles?.full_name || "Candidate",
+            candidateEmail: activeSubmissionDetail.submission?.profiles?.email || "",
+            internId: activeSubmissionDetail.submission?.profiles?.intern_id || activeSubmissionDetail.submission?.intern_id || "INT-SECURE",
+            examTitle: test?.title || "VyNexa Technical Assessment",
+            examDescription: test?.description,
+            submittedAt: new Date(activeSubmissionDetail.submission?.submitted_at || activeSubmissionDetail.submission?.started_at || Date.now()).toLocaleString(),
+            submissionId: activeSubmissionDetail.submission?.id || "",
+            totalScore,
+            maxScore,
+            percentage,
+            passingScore,
+            passed,
+            totalQuestions: questionsList.length,
+            correctCount,
+            partialCount,
+            incorrectCount,
+            accuracyRate,
+            infractionsCount: activeSubmissionDetail.malpracticeLogs?.length || 0,
+            malpracticeLogs: activeSubmissionDetail.malpracticeLogs,
+            questions: questionAudits,
+            suggestions
+          });
+        };
+
+        return (
+          <Dialog open={!!activeSubmissionDetail} onOpenChange={(open) => !open && setActiveSubmissionDetail(null)}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <span className="flex items-center gap-2">
+                    <Award className="h-6 w-6 text-indigo-600 shrink-0" />
+                    Candidate Mark Sheet & Proctoring Audit
+                  </span>
+                  <div className="flex items-center gap-2">
                     <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="text-[10px] h-7 text-emerald-700 border-emerald-300 hover:bg-emerald-50"
-                      onClick={() => handleClearStrikes(activeSubmissionDetail.submission?.id)}
+                      size="sm"
+                      onClick={handleDownloadAuditPdf}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
                     >
-                      Clear Strikes / Forgive Infractions
+                      <Download className="h-3.5 w-3.5" /> Download Detailed Report (PDF)
                     </Button>
-                  )}
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase shrink-0 ${
+                      passed
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-rose-100 text-rose-800"
+                    }`}>
+                      {passed ? "Passed" : "Failed"} ({percentage}%)
+                    </span>
+                  </div>
+                </DialogTitle>
+                <DialogDescription>
+                  Detailed question-by-question response breakdown, AI scoring verification, and proctoring violation telemetry.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-6 py-4">
+                {/* Candidate & Assessment Summary Card */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase block">Candidate</span>
+                    <span className="font-bold text-slate-800 text-sm">{activeSubmissionDetail.submission?.profiles?.full_name || "Intern"}</span>
+                    <span className="text-slate-500 block font-mono">{activeSubmissionDetail.submission?.profiles?.email}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase block">Submitted At</span>
+                    <span className="font-semibold text-slate-800">{new Date(activeSubmissionDetail.submission?.submitted_at || activeSubmissionDetail.submission?.started_at).toLocaleString()}</span>
+                    <span className="text-slate-500 block">Status: {activeSubmissionDetail.submission?.status}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase block">Total Points Awarded</span>
+                    <span className="text-2xl font-black text-indigo-600">{totalScore} / {maxScore} pts</span>
+                    <span className="text-slate-500 block font-semibold">{percentage}% (Passing Benchmark: {passingScore}%)</span>
+                  </div>
                 </div>
 
-                {activeSubmissionDetail.malpracticeLogs?.length === 0 ? (
-                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 font-semibold flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-600" />
-                    Zero infractions detected. Candidate adhered strictly to fullscreen and focus requirements.
+                {/* Accuracy & Correct Answers Metric Bar */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-100 text-xs">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <div>
+                      <span className="text-slate-500 text-[10px] uppercase font-bold block">Correct</span>
+                      <span className="font-black text-emerald-700 text-sm">{correctCount} / {questionsList.length}</span>
+                    </div>
                   </div>
-                ) : (
-                  <div className="space-y-1.5 max-h-36 overflow-y-auto">
-                    {activeSubmissionDetail.malpracticeLogs.map((log: any, lIdx: number) => (
-                      <div key={lIdx} className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
-                          <span className="font-bold text-rose-900">{log.infraction_type}</span>
-                          <span className="text-rose-700">{log.description}</span>
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+                    <div>
+                      <span className="text-slate-500 text-[10px] uppercase font-bold block">Partial</span>
+                      <span className="font-black text-amber-700 text-sm">{partialCount}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <XCircle className="h-4 w-4 text-rose-500 shrink-0" />
+                    <div>
+                      <span className="text-slate-500 text-[10px] uppercase font-bold block">Incorrect</span>
+                      <span className="font-black text-rose-700 text-sm">{incorrectCount}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Award className="h-4 w-4 text-indigo-600 shrink-0" />
+                    <div>
+                      <span className="text-slate-500 text-[10px] uppercase font-bold block">Accuracy Rate</span>
+                      <span className="font-black text-indigo-700 text-sm">{accuracyRate}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Suggestions for Next Attempt */}
+                <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-xl space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+                    <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+                      Examiner Guidance: Suggestions for Next Attempt ({suggestions.length} Recommendations)
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {suggestions.map((s, idx) => (
+                      <div key={idx} className="p-3 bg-white/90 border border-amber-200/80 rounded-lg text-xs space-y-1 shadow-2xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-amber-950">{s.title}</span>
+                          <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                            {s.category}
+                          </span>
                         </div>
-                        <span className="text-[10px] text-rose-500 font-mono">
-                          {new Date(log.timestamp).toLocaleTimeString()}
-                        </span>
+                        <p className="text-slate-700 leading-relaxed text-[11px]">{s.advice}</p>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Detailed Question Mark Sheet */}
-              <div>
-                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-indigo-500" />
-                  Question-by-Question Response Audit ({activeSubmissionDetail.questions?.length} Questions)
-                </h4>
+                {/* Proctoring & Infractions Log */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                      <ShieldAlert className="h-4 w-4 text-rose-500" />
+                      Proctoring Telemetry ({activeSubmissionDetail.malpracticeLogs?.length || 0} Events)
+                    </h4>
+                    {activeSubmissionDetail.malpracticeLogs?.length > 0 && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="text-[10px] h-7 text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+                        onClick={() => handleClearStrikes(activeSubmissionDetail.submission?.id)}
+                      >
+                        Clear Strikes / Forgive Infractions
+                      </Button>
+                    )}
+                  </div>
 
-                <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
-                  {activeSubmissionDetail.questions.map((q: any, qIdx: number) => {
-                    const ans = activeSubmissionDetail.answers.find((a: any) => a.question_id === q.id);
-                    let parsedSelected = ans?.selected_option;
-                    try { if (typeof parsedSelected === 'string') parsedSelected = JSON.parse(parsedSelected); } catch(e){}
-                    
-                    let parsedSubjective = ans?.subjective_answer;
-                    try { if (typeof parsedSubjective === 'string') parsedSubjective = JSON.parse(parsedSubjective); } catch(e){}
-
-                    const candidateResponse = parsedSelected?.text || parsedSelected || parsedSubjective || "No answer recorded";
-                    const isFullScore = (ans?.ai_score || 0) >= (q.max_points || 10);
-
-                    return (
-                      <div key={q.id || qIdx} className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-slate-900">
-                            Q{qIdx + 1}: {q.question_text}
-                          </span>
-                          <span className={`px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
-                            isFullScore ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
-                          }`}>
-                            {ans?.ai_score ?? 0} / {q.max_points || 10} pts
+                  {activeSubmissionDetail.malpracticeLogs?.length === 0 ? (
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 font-semibold flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-emerald-600" />
+                      Zero infractions detected. Candidate adhered strictly to fullscreen and focus requirements.
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                      {activeSubmissionDetail.malpracticeLogs.map((log: any, lIdx: number) => (
+                        <div key={lIdx} className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
+                            <span className="font-bold text-rose-900">{log.infraction_type}</span>
+                            <span className="text-rose-700">{log.description}</span>
+                          </div>
+                          <span className="text-[10px] text-rose-500 font-mono">
+                            {new Date(log.timestamp).toLocaleTimeString()}
                           </span>
                         </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-                        {/* Candidate response vs benchmark */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                          <div className="p-2.5 bg-white border border-slate-200 rounded-lg">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Candidate Response:</span>
-                            <span className="font-semibold text-slate-800 break-words">{String(candidateResponse)}</span>
-                          </div>
+                {/* Detailed Question Mark Sheet */}
+                <div>
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-indigo-500" />
+                    Question-by-Question Response Audit ({activeSubmissionDetail.questions?.length} Questions)
+                  </h4>
 
-                          <div className="p-2.5 bg-white border border-emerald-200 rounded-lg">
-                            <span className="text-[10px] uppercase font-bold text-emerald-600 block mb-0.5">Benchmark / Correct Answer:</span>
-                            <span className="font-semibold text-slate-800 break-words">
-                              {typeof q.correct_answer === "object" ? JSON.stringify(q.correct_answer) : String(q.correct_answer)}
+                  <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
+                    {activeSubmissionDetail.questions.map((q: any, qIdx: number) => {
+                      const ans = activeSubmissionDetail.answers.find((a: any) => a.question_id === q.id);
+                      let parsedSelected = ans?.selected_option;
+                      try { if (typeof parsedSelected === 'string') parsedSelected = JSON.parse(parsedSelected); } catch(e){}
+                      
+                      let parsedSubjective = ans?.subjective_answer;
+                      try { if (typeof parsedSubjective === 'string') parsedSubjective = JSON.parse(parsedSubjective); } catch(e){}
+
+                      const candidateResponse = parsedSelected?.text || parsedSelected || parsedSubjective || "No answer recorded";
+                      const isFullScore = (ans?.ai_score || 0) >= (q.max_points || 10);
+
+                      return (
+                        <div key={q.id || qIdx} className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-900">
+                              Q{qIdx + 1}: {q.question_text}
+                            </span>
+                            <span className={`px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
+                              isFullScore ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                            }`}>
+                              {ans?.ai_score ?? 0} / {q.max_points || 10} pts
                             </span>
                           </div>
-                        </div>
 
-                        {ans?.ai_feedback && (
-                          <div className="p-2 bg-indigo-50/70 border border-indigo-100 rounded text-slate-700 text-[11px]">
-                            <strong className="text-indigo-800 font-bold">Feedback / Remarks:</strong> {ans.ai_feedback}
+                          {/* Candidate response vs benchmark */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <div className="p-2.5 bg-white border border-slate-200 rounded-lg">
+                              <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Candidate Response:</span>
+                              <span className="font-semibold text-slate-800 break-words">{String(candidateResponse)}</span>
+                            </div>
+
+                            <div className="p-2.5 bg-white border border-emerald-200 rounded-lg">
+                              <span className="text-[10px] uppercase font-bold text-emerald-600 block mb-0.5">Benchmark / Correct Answer:</span>
+                              <span className="font-semibold text-slate-800 break-words">
+                                {typeof q.correct_answer === "object" ? JSON.stringify(q.correct_answer) : String(q.correct_answer)}
+                              </span>
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+
+                          {ans?.ai_feedback && (
+                            <div className="p-2 bg-indigo-50/70 border border-indigo-100 rounded text-slate-700 text-[11px]">
+                              <strong className="text-indigo-800 font-bold">Feedback / Remarks:</strong> {ans.ai_feedback}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Admin Score Adjustment & Override Panel */}
+                <div className="p-4 bg-indigo-50/50 border border-indigo-200 rounded-xl space-y-3">
+                  <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-2">
+                    <Edit3 className="h-4 w-4 text-indigo-600" />
+                    Manual Score Adjustment & Admin Override
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">New Total Score (pts)</label>
+                      <input 
+                        type="number" 
+                        min={0} max={maxScore}
+                        value={overrideScore}
+                        onChange={(e) => setOverrideScore(Number(e.target.value))}
+                        className="w-full p-2 border rounded-lg text-sm bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Reviewer Remarks / Justification</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Manually verified subjective code structure..."
+                        value={overrideRemarks}
+                        onChange={(e) => setOverrideRemarks(e.target.value)}
+                        className="w-full p-2 border rounded-lg text-sm bg-white"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="outline"
+                      className="text-xs text-emerald-700 border-emerald-300"
+                      onClick={() => {
+                        setRetakeSubmission(activeSubmissionDetail.submission);
+                        setRetakeReason("");
+                      }}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5 mr-1" /> Grant Fresh Retake
+                    </Button>
+                    <Button 
+                      onClick={handleSaveOverride} 
+                      disabled={isOverriding}
+                      className="bg-indigo-600 hover:bg-indigo-700 font-bold text-xs"
+                    >
+                      {isOverriding ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
+                      Save Score Override
+                    </Button>
+                  </div>
                 </div>
               </div>
 
-              {/* Admin Score Adjustment & Override Panel */}
-              <div className="p-4 bg-indigo-50/50 border border-indigo-200 rounded-xl space-y-3">
-                <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-2">
-                  <Edit3 className="h-4 w-4 text-indigo-600" />
-                  Manual Score Adjustment & Admin Override
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">New Total Score (pts)</label>
-                    <input 
-                      type="number" 
-                      min={0} max={100}
-                      value={overrideScore}
-                      onChange={(e) => setOverrideScore(Number(e.target.value))}
-                      className="w-full p-2 border rounded-lg text-sm bg-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">Reviewer Remarks / Justification</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Manually verified subjective code structure..."
-                      value={overrideRemarks}
-                      onChange={(e) => setOverrideRemarks(e.target.value)}
-                      className="w-full p-2 border rounded-lg text-sm bg-white"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    variant="outline"
-                    className="text-xs text-emerald-700 border-emerald-300"
-                    onClick={() => {
-                      setRetakeSubmission(activeSubmissionDetail.submission);
-                      setRetakeReason("");
-                    }}
-                  >
-                    <RotateCcw className="h-3.5 w-3.5 mr-1" /> Grant Fresh Retake
-                  </Button>
-                  <Button 
-                    onClick={handleSaveOverride} 
-                    disabled={isOverriding}
-                    className="bg-indigo-600 hover:bg-indigo-700 font-bold text-xs"
-                  >
-                    {isOverriding ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
-                    Save Score Override
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setActiveSubmissionDetail(null)}>Close Mark Sheet</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setActiveSubmissionDetail(null)}>Close Mark Sheet</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
 
       {/* Extend Deadline Modal inside Test Review */}
       {showExtendModal && (
