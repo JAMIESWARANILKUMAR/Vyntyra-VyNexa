@@ -19,33 +19,102 @@ export const generateAiTestFn = createServerFn({ method: "POST" })
   .handler(async ({ data: args }) => {
     const targetCount = Number(args.questionCount) > 0 ? Number(args.questionCount) : 10;
     const defaultTimer = Number(args.defaultTimeSeconds) > 0 ? Number(args.defaultTimeSeconds) : 60;
+    const modules = (args.modules && args.modules.length > 0) ? args.modules : ["mcq"];
 
     // 1. Attempt AI Generation via AI Gateway (Gemini primary with OpenRouter fallback)
     try {
-      const prompt = `You are an expert technical evaluator. Generate a computer-based test (CBT) with EXACTLY ${targetCount} high-yield, comprehensive questions based on the following context.
-      
-TASK CONTEXT:
-${args.taskContext}
+      if (targetCount <= 20) {
+        const questions = await generateQuestionBatch({
+          taskContext: args.taskContext,
+          documentText: args.documentText,
+          modules,
+          count: targetCount,
+          defaultTimer,
+          batchIndex: 1,
+          totalBatches: 1
+        });
+        if (questions && questions.length > 0) {
+          return { questions: questions.slice(0, targetCount) };
+        }
+      } else {
+        // Parallel batching for 25, 30, 50, 75, 100+ questions so tokens are never truncated
+        const BATCH_SIZE = 20;
+        const totalBatches = Math.ceil(targetCount / BATCH_SIZE);
+        const batchPromises: Promise<any[]>[] = [];
 
-DOCUMENT CONTEXT:
-${args.documentText || "None"}
+        for (let i = 0; i < totalBatches; i++) {
+          const currentBatchCount = Math.min(BATCH_SIZE, targetCount - (i * BATCH_SIZE));
+          batchPromises.push(
+            generateQuestionBatch({
+              taskContext: args.taskContext,
+              documentText: args.documentText,
+              modules,
+              count: currentBatchCount,
+              defaultTimer,
+              batchIndex: i + 1,
+              totalBatches,
+            }).catch(err => {
+              console.warn(`[generateAiTestFn] Sub-batch ${i + 1} failed:`, err.message);
+              return [];
+            })
+          );
+        }
 
-REQUESTED MODULES:
-${args.modules.join(', ')}
+        const batchResults = await Promise.all(batchPromises);
+        const aggregatedQuestions = batchResults.flat();
+        if (aggregatedQuestions.length >= Math.min(targetCount, 10)) {
+          return { questions: aggregatedQuestions.slice(0, targetCount) };
+        }
+      }
+    } catch (aiErr: any) {
+      console.warn("[generateAiTestFn] AI Gateway generation error, using curriculum synthesizer:", aiErr.message);
+    }
 
-IMPORTANT RULES:
-1. Generate EXACTLY ${targetCount} questions in total!
-2. Every question MUST have its solution pre-marked!
-3. Default time_limit_seconds should be ${defaultTimer} (or adjusted between 30-180 seconds based on question complexity, e.g. 60s for standard MCQ, 120-180s for coding).
-4. For MCQ/Aptitude/Scenario/True_False: Provide 4 distinct options with option IDs A, B, C, D (2 options for true_false) and pre-mark correct_answer: "A" or { "id": "A" }. Also include an in-depth "explanation" explaining why the solution is correct.
-5. For Coding questions: Provide problem description, pre-marked reference solution code in "correct_answer", and at least 2 test cases in "test_cases" with "input" and "expected_output".
-6. For Subjective / Long Answer questions: Provide the grading criteria and model answer in "correct_answer" and "explanation".
+    // 2. High-Yield Contextual Curriculum Synthesizer Fallback (100% Guaranteed Success on ANY subject)
+    return synthesizeQuestionsFromContext(args.taskContext, args.documentText, args.modules, targetCount, defaultTimer);
+  });
 
-Output the result STRICTLY as JSON with schema:
+async function generateQuestionBatch(params: {
+  taskContext: string;
+  documentText?: string;
+  modules: string[];
+  count: number;
+  defaultTimer: number;
+  batchIndex: number;
+  totalBatches: number;
+}): Promise<any[]> {
+  const { taskContext, documentText, modules, count, defaultTimer, batchIndex, totalBatches } = params;
+  const entropy = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+
+  const prompt = `You are an expert technical assessor and enterprise examiner.
+Generate EXACTLY ${count} unique, high-yield examination questions STRICTLY based on the provided resource material and context below.
+
+=== TASK & SYLLABUS CONTEXT ===
+${taskContext}
+
+=== EXTRACTED RESOURCE / DOCUMENT CONTEXT ===
+${documentText || "None"}
+
+=== ASSESSMENT PARAMETERS ===
+- Requested Question Count for this batch: ${count} (Batch ${batchIndex} of ${totalBatches})
+- Requested Modules: ${modules.join(', ')}
+- Entropy / Variation Key: ${entropy}
+- Base timer per question: ${defaultTimer} seconds
+
+=== STRICT RULES (CRITICAL) ===
+1. SUBJECT INTEGRITY: You MUST strictly generate questions on the specific topic, syllabus, framework, and resources provided above. Under NO circumstances should you default to HTML/CSS or unrelated web technologies unless the provided context explicitly asks for them!
+2. DIVERSITY & UNIQUENESS: Every question must be distinct and non-repeating across tests.
+3. PRE-MARKED SOLUTIONS: Every question MUST have its solution pre-marked in "correct_answer".
+4. For MCQ/Aptitude/Scenario/True_False: Provide 4 distinct options with option IDs A, B, C, D (2 options for true_false) and pre-mark correct_answer ("A", "B", "C", or "D"). Also include an in-depth "explanation" explaining why the solution is correct.
+5. For Coding questions: Include problem description, reference code in "correct_answer", and at least 2 test cases in "test_cases" with "input" and "expected_output".
+6. For Subjective / Short Answer: Include the model answer and evaluation rubric in "correct_answer" and "explanation".
+7. Timers: Set "time_limit_seconds" between 30 and 180 seconds based on question difficulty (default: ${defaultTimer}). Set "max_points" (typically 10).
+
+Output STRICT JSON in this exact structure:
 {
   "questions": [
     {
-      "question_type": "mcq" | "coding" | "aptitude" | "long_answer" | "scenario" | "true_false",
+      "question_type": "mcq" | "coding" | "aptitude" | "short_answer" | "scenario" | "true_false",
       "question_text": "...",
       "options": [{ "id": "A", "text": "..." }, { "id": "B", "text": "..." }, { "id": "C", "text": "..." }, { "id": "D", "text": "..." }],
       "correct_answer": "A",
@@ -55,27 +124,25 @@ Output the result STRICTLY as JSON with schema:
     }
   ]
 }`;
-      const result = await generateAiJson<{ questions: any[] }>({
-        prompt,
-        model: 'gemini-1.5-flash',
-      });
-      const parsed = result.data;
-      if (parsed?.questions && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
-        // Normalize questions
-        const sanitizedQuestions = parsed.questions.map((q: any) => ({
-          ...q,
-          time_limit_seconds: Number(q.time_limit_seconds) || defaultTimer,
-          max_points: Number(q.max_points) || 10
-        }));
-        return { questions: sanitizedQuestions };
-      }
-    } catch (aiErr: any) {
-      console.warn("[generateAiTestFn] AI Gateway generation error, using curriculum synthesizer:", aiErr.message);
-    }
 
-    // 2. High-Yield Contextual Curriculum Synthesizer Fallback (100% Guaranteed Success)
-    return synthesizeQuestionsFromContext(args.taskContext, args.documentText, args.modules, targetCount, defaultTimer);
+  const tokenBudget = Math.min(16384, Math.max(4096, count * 350));
+  const result = await generateAiJson<{ questions: any[] }>({
+    prompt,
+    model: 'gemini-2.5-flash',
+    temperature: 0.75,
+    maxTokens: tokenBudget,
   });
+
+  const parsed = result.data;
+  if (parsed?.questions && Array.isArray(parsed.questions)) {
+    return parsed.questions.map((q: any) => ({
+      ...q,
+      time_limit_seconds: Number(q.time_limit_seconds) || defaultTimer,
+      max_points: Number(q.max_points) || 10
+    }));
+  }
+  return [];
+}
 
 function synthesizeQuestionsFromContext(
   taskContext: string, 
@@ -86,21 +153,117 @@ function synthesizeQuestionsFromContext(
 ): { questions: any[] } {
   const combined = `${taskContext || ""} ${documentText || ""}`.trim();
   const lower = combined.toLowerCase();
-  
-  const isWebTech = /web|html|css|javascript|js|frontend|backend|dom|http|ewt|essentials of web|react|node|client|browser/i.test(lower);
-  const isAIML = /ai|ml|machine learning|deep learning|neural|dataset|model|classification|regression|nlp|python|pytorch|tensorflow/i.test(lower);
-  const isDatabase = /database|dbms|sql|mysql|postgresql|nosql|mongo|query|acid|schema|table|join/i.test(lower);
-
   const selectedModules = (modules && modules.length > 0) ? modules : ["mcq", "scenario"];
   const questions: any[] = [];
   const addQ = (q: any) => questions.push(q);
 
-  if (isWebTech || (!isAIML && !isDatabase)) {
-    // ── Web Technologies & Full-Stack Curriculum ───────────────────────
+  // Extract custom lines, headings, or key phrases from the user's input resource
+  const lines = combined
+    .split(/\r?\n/)
+    .map(l => l.replace(/^[#\-*0-9.]+\s*/, "").trim())
+    .filter(l => l.length > 15 && !l.startsWith("---"));
+
+  // Detect specific technology / engineering domains
+  const isPython = /python|pandas|numpy|django|flask|pip|pydantic|pytest|fastapi/i.test(lower);
+  const isJava = /java|spring|springboot|jvm|hibernate|maven|gradle/i.test(lower);
+  const isWeb = /html|css|javascript|react|vue|angular|frontend|dom|http|tailwind|nextjs/i.test(lower);
+  const isAIML = /ai|ml|machine learning|deep learning|neural|dataset|model|classification|regression|nlp|pytorch|tensorflow/i.test(lower);
+  const isDatabase = /database|dbms|sql|mysql|postgresql|nosql|mongo|query|acid|schema|table|join/i.test(lower);
+  const isCloudDevOps = /cloud|aws|azure|gcp|docker|kubernetes|k8s|ci\/cd|terraform|devops|serverless/i.test(lower);
+  const isCybersecurity = /security|cyber|encryption|vulnerability|firewall|auth|jwt|oauth|owasp|penetration/i.test(lower);
+
+  // 1. Python Domain Questions
+  if (isPython) {
     if (selectedModules.includes("mcq")) {
       addQ({
         question_type: "mcq",
-        question_text: "In modern HTML5 specifications, which semantic element is specifically designated to encapsulate self-contained content that could be independently distributed or syndicated (e.g., a blog post, forum post, or news article)?",
+        question_text: "In Python, what is the key difference between a shallow copy (copy.copy) and a deep copy (copy.deepcopy)?",
+        options: [
+          { id: "A", text: "A shallow copy constructs a new compound object and inserts references into it; deep copy constructs a new object and recursively inserts copies of the child objects." },
+          { id: "B", text: "A shallow copy duplicates all nested mutable objects; deep copy only copies the memory pointer of the root object." },
+          { id: "C", text: "Shallow copy converts objects to immutable tuples; deep copy converts objects to dictionaries." },
+          { id: "D", text: "There is no difference in Python 3; both perform identical recursive byte cloning." }
+        ],
+        correct_answer: "A",
+        explanation: "Shallow copy creates a new object but references the original nested objects. Deep copy recursively copies all nested structures.",
+        max_points: 10,
+        time_limit_seconds: defaultTimeSeconds
+      });
+      addQ({
+        question_type: "mcq",
+        question_text: "What does Python's Global Interpreter Lock (GIL) enforce during the execution of multithreaded CPython programs?",
+        options: [
+          { id: "A", text: "It allows only one native thread to execute Python bytecode at a time, preventing multi-core concurrency for CPU-bound tasks in a single process." },
+          { id: "B", text: "It prevents network sockets from transmitting data concurrently." },
+          { id: "C", text: "It automatically compiles Python scripts into static C binaries before runtime." },
+          { id: "D", text: "It restricts file system operations to read-only mode." }
+        ],
+        correct_answer: "A",
+        explanation: "CPython's GIL ensures thread-safe memory management by allowing only one thread to execute Python bytecode at any moment.",
+        max_points: 10,
+        time_limit_seconds: defaultTimeSeconds
+      });
+    }
+    if (selectedModules.includes("scenario")) {
+      addQ({
+        question_type: "scenario",
+        question_text: "Scenario: An analytics script processing 50 GB log files encounters MemoryError on an 8 GB RAM server. What Python mechanism should be applied?",
+        options: [
+          { id: "A", text: "Use Python generators (yield) or chunked iteration to stream and process logs lazily without loading the whole file into memory." },
+          { id: "B", text: "Read the entire file into a Python list using file.readlines()." },
+          { id: "C", text: "Disable Python garbage collection with gc.disable()." },
+          { id: "D", text: "Convert the log strings to floating point numbers." }
+        ],
+        correct_answer: "A",
+        explanation: "Generators yield items one by one, keeping memory usage constant regardless of file size.",
+        max_points: 10,
+        time_limit_seconds: Math.max(defaultTimeSeconds, 90)
+      });
+    }
+  }
+
+  // 2. Java Domain Questions
+  if (isJava) {
+    if (selectedModules.includes("mcq")) {
+      addQ({
+        question_type: "mcq",
+        question_text: "In the Java Virtual Machine (JVM) memory model, which memory area is shared across all threads and primarily holds class metadata and bytecode?",
+        options: [
+          { id: "A", text: "Metaspace (formerly Permanent Generation)" },
+          { id: "B", text: "Thread Stack" },
+          { id: "C", text: "Program Counter (PC) Register" },
+          { id: "D", text: "Native Method Stack" }
+        ],
+        correct_answer: "A",
+        explanation: "Since Java 8, Metaspace resides in native memory and stores class metadata shared across all threads.",
+        max_points: 10,
+        time_limit_seconds: defaultTimeSeconds
+      });
+    }
+    if (selectedModules.includes("scenario")) {
+      addQ({
+        question_type: "scenario",
+        question_text: "Scenario: A Spring Boot microservice experiences frequent 'OutOfMemoryError: Java heap space' under peak traffic. What diagnostic step is most effective?",
+        options: [
+          { id: "A", text: "Capture and analyze a JVM Heap Dump (.hprof) using Eclipse Memory Analyzer (MAT) to identify memory leaks and large retained objects." },
+          { id: "B", text: "Call System.gc() after every incoming HTTP controller invocation." },
+          { id: "C", text: "Remove all Spring annotations from the codebase." },
+          { id: "D", text: "Reboot the physical server on an hourly cron job." }
+        ],
+        correct_answer: "A",
+        explanation: "Heap dumps capture the state of JVM memory, pinpointing memory leaks, retained objects, and dominant class loaders.",
+        max_points: 10,
+        time_limit_seconds: Math.max(defaultTimeSeconds, 90)
+      });
+    }
+  }
+
+  // 3. Web Technologies & Frontend
+  if (isWeb) {
+    if (selectedModules.includes("mcq")) {
+      addQ({
+        question_type: "mcq",
+        question_text: "In modern HTML5 specifications, which semantic element is specifically designated to encapsulate self-contained content that could be independently distributed or syndicated?",
         options: [
           { id: "A", text: "<article>" },
           { id: "B", text: "<section>" },
@@ -108,11 +271,10 @@ function synthesizeQuestionsFromContext(
           { id: "D", text: "<div>" },
         ],
         correct_answer: "A",
-        explanation: "The <article> element represents a complete, self-contained composition in a document, page, or site and is intended to be independently distributable or reusable.",
+        explanation: "The <article> element represents a complete, self-contained composition in a document intended to be independently distributable or reusable.",
         max_points: 10,
-        time_limit_seconds: 60,
+        time_limit_seconds: defaultTimeSeconds,
       });
-
       addQ({
         question_type: "mcq",
         question_text: "In CSS layout mechanics, how does the CSS Box Model calculate the rendered element width when 'box-sizing: border-box' is applied?",
@@ -123,73 +285,12 @@ function synthesizeQuestionsFromContext(
           { id: "D", text: "The width is overridden by viewport minimum constraints dynamically." },
         ],
         correct_answer: "A",
-        explanation: "With 'box-sizing: border-box', the element's width and height include content, padding, and border, preventing unexpected layout overflows.",
+        explanation: "With 'box-sizing: border-box', the element's width includes content, padding, and border, preventing unexpected layout overflows.",
         max_points: 10,
-        time_limit_seconds: 60,
-      });
-
-      addQ({
-        question_type: "mcq",
-        question_text: "In JavaScript asynchronous execution, how does the runtime Event Loop prioritize the Microtask queue (Promises, queueMicrotask) relative to the Macrotask (callback) queue (setTimeout, setInterval)?",
-        options: [
-          { id: "A", text: "The entire Microtask queue is completely drained before the next Macrotask is processed." },
-          { id: "B", text: "Macrotasks always preempt and cancel running Microtasks." },
-          { id: "C", text: "Microtasks and Macrotasks are executed concurrently across parallel threads." },
-          { id: "D", text: "Macrotasks are executed first, followed by microtasks in reverse FIFO order." },
-        ],
-        correct_answer: "A",
-        explanation: "The JavaScript event loop executes all microtasks in the microtask queue after every synchronous script execution and before picking the next task from the macrotask queue.",
-        max_points: 10,
-        time_limit_seconds: 60,
-      });
-
-      addQ({
-        question_type: "mcq",
-        question_text: "Which HTTP request method is defined by RFC 7231 as idempotent and is primarily used to replace all current representations of the target resource with the uploaded payload?",
-        options: [
-          { id: "A", text: "PUT" },
-          { id: "B", text: "POST" },
-          { id: "C", text: "PATCH" },
-          { id: "D", text: "CONNECT" },
-        ],
-        correct_answer: "A",
-        explanation: "PUT is idempotent: multiple identical PUT requests produce the exact same server state as a single request, completely replacing the target resource.",
-        max_points: 10,
-        time_limit_seconds: 60,
-      });
-
-      addQ({
-        question_type: "mcq",
-        question_text: "What is the primary operational difference between client-side sessionStorage and localStorage in modern web browsers?",
-        options: [
-          { id: "A", text: "sessionStorage data persists only while the browser tab remains open, whereas localStorage persists until explicitly cleared." },
-          { id: "B", text: "sessionStorage is automatically sent with every HTTP request header." },
-          { id: "C", text: "localStorage is cleared automatically when the user navigates between internal routes." },
-          { id: "D", text: "sessionStorage is shared across all browser tabs and windows simultaneously." },
-        ],
-        correct_answer: "A",
-        explanation: "sessionStorage is isolated to the top-level browsing context (tab) and cleared on tab closure; localStorage has no expiration time.",
-        max_points: 10,
-        time_limit_seconds: 60,
+        time_limit_seconds: defaultTimeSeconds,
       });
     }
-
     if (selectedModules.includes("scenario")) {
-      addQ({
-        question_type: "scenario",
-        question_text: "Scenario: A Single Page Application (SPA) on 'https://portal.vyntyraconsultancyservices.in' attempts to fetch user data from 'https://api.vyntyraconsultancyservices.in'. The browser blocks the request with a CORS error: 'No Access-Control-Allow-Origin header is present'. How should this be resolved?",
-        options: [
-          { id: "A", text: "Configure the API server to respond with 'Access-Control-Allow-Origin: https://portal.vyntyraconsultancyservices.in' and required headers." },
-          { id: "B", text: "Ask all client users to disable browser security policies and firewalls." },
-          { id: "C", text: "Convert the client request into an inline SQL statement inside JavaScript." },
-          { id: "D", text: "Encode the frontend code into an iframe with sandbox permissions removed." },
-        ],
-        correct_answer: "A",
-        explanation: "CORS is a browser security measure. When origins differ, the receiving server must declare permitted origins via Access-Control-Allow-Origin headers.",
-        max_points: 10,
-        time_limit_seconds: 90,
-      });
-
       addQ({
         question_type: "scenario",
         question_text: "Scenario: Users report that double-clicking the 'Submit Registration' button causes duplicate candidate records in the database. What enterprise web pattern must be implemented?",
@@ -200,105 +301,19 @@ function synthesizeQuestionsFromContext(
           { id: "D", text: "Drop database unique constraints to permit duplicates." },
         ],
         correct_answer: "A",
-        explanation: "Client-side button debouncing prevents multiple accidental dispatches, and backend idempotency keys guarantee that duplicate HTTP requests do not create duplicate database records.",
+        explanation: "Client-side button debouncing prevents multiple accidental dispatches, and backend idempotency keys guarantee that duplicate requests do not create duplicate records.",
         max_points: 10,
-        time_limit_seconds: 90,
-      });
-
-      addQ({
-        question_type: "scenario",
-        question_text: "Scenario: A web page loads slowly on mobile networks because large CSS and JavaScript bundles block initial rendering. Which optimization technique most effectively reduces First Contentful Paint (FCP)?",
-        options: [
-          { id: "A", text: "Inlining critical above-the-fold CSS, using 'defer' or 'async' on non-critical scripts, and minifying bundle assets." },
-          { id: "B", text: "Increasing device screen resolution and display DPI via HTML meta tags." },
-          { id: "C", text: "Converting all CSS stylesheets into inline base64 images." },
-          { id: "D", text: "Disabling browser HTTP cache headers for all stylesheet files." },
-        ],
-        correct_answer: "A",
-        explanation: "Inlining critical CSS and deferring non-critical JavaScript eliminates render-blocking resources, allowing the browser to paint content rapidly.",
-        max_points: 10,
-        time_limit_seconds: 90,
-      });
-
-      addQ({
-        question_type: "scenario",
-        question_text: "Scenario: You are designing a responsive layout navigation bar. On desktop viewports (>= 1024px), links should appear horizontally in a row. On mobile viewports (< 768px), links must collapse into a vertical hamburger menu. Which CSS technique is standard?",
-        options: [
-          { id: "A", text: "CSS Media Queries (@media (min-width: 1024px)) combined with Flexbox or Grid layout." },
-          { id: "B", text: "Server-side browser user-agent sniffing to redirect users to separate subdomains." },
-          { id: "C", text: "Setting viewport zoom dynamically to 0.5 using window.onresize JavaScript handlers." },
-          { id: "D", text: "HTML frameset elements with conditional browser attributes." },
-        ],
-        correct_answer: "A",
-        explanation: "CSS Media queries provide standard, responsive layout adaptation based on viewport constraints without requiring separate device-specific codebases.",
-        max_points: 10,
-        time_limit_seconds: 90,
+        time_limit_seconds: Math.max(defaultTimeSeconds, 90),
       });
     }
+  }
 
-    if (selectedModules.includes("true_false")) {
-      addQ({
-        question_type: "true_false",
-        question_text: "In CSS, setting 'display: none' removes the element entirely from the document layout flow, whereas 'visibility: hidden' hides the element while still occupying its physical layout space.",
-        options: [
-          { id: "A", text: "True" },
-          { id: "B", text: "False" },
-        ],
-        correct_answer: "A",
-        explanation: "display: none produces no rendered box in the DOM tree, whereas visibility: hidden keeps the box dimensions and blank whitespace in the layout.",
-        max_points: 5,
-        time_limit_seconds: 30,
-      });
-
-      addQ({
-        question_type: "true_false",
-        question_text: "By fundamental design, the standard HTTP protocol (HTTP/1.1 and HTTP/2) is stateless, requiring cookies or tokens to maintain state across requests.",
-        options: [
-          { id: "A", text: "True" },
-          { id: "B", text: "False" },
-        ],
-        correct_answer: "A",
-        explanation: "HTTP is stateless: each request is executed independently without the server retaining automatic context from preceding requests.",
-        max_points: 5,
-        time_limit_seconds: 30,
-      });
-    }
-
-    if (selectedModules.includes("code_snippet")) {
-      addQ({
-        question_type: "coding",
-        question_text: "Write a JavaScript function 'formatIndianCurrency(amount)' that takes a non-negative number and returns a string formatted with commas according to the Indian numbering system (e.g. 100000 -> '1,00,000', 5000 -> '5,000').",
-        options: [],
-        correct_answer: "function formatIndianCurrency(amount) { return Number(amount).toLocaleString('en-IN'); }",
-        explanation: "The Indian numbering format groups the last three digits followed by groups of two digits.",
-        reference_code: "function formatIndianCurrency(amount) {\n  // Write your implementation here\n  return Number(amount).toLocaleString('en-IN');\n}",
-        test_cases: [
-          { input: "100000", expected_output: "1,00,000" },
-          { input: "5000", expected_output: "5,000" },
-          { input: "10000000", expected_output: "1,00,00,000" },
-        ],
-        max_points: 15,
-        time_limit_seconds: 180,
-      });
-    }
-
-    if (selectedModules.includes("short_answer")) {
-      addQ({
-        question_type: "short_answer",
-        question_text: "Explain the concept of Document Object Model (DOM) Event Delegation in JavaScript and describe why it improves web application performance when rendering dynamic lists.",
-        options: [],
-        correct_answer: "Event delegation leverages DOM event bubbling by attaching a single event listener to a common parent element rather than attaching individual listeners to multiple children, reducing memory consumption and handling dynamically added items automatically.",
-        explanation: "By relying on event bubbling, parent listeners catch events from dynamic child nodes without requiring per-node listener creation.",
-        max_points: 10,
-        time_limit_seconds: 120,
-      });
-    }
-  } else if (isAIML) {
-    // ── AI & Machine Learning Curriculum ─────────────────────────────
+  // 4. AI & Machine Learning
+  if (isAIML) {
     if (selectedModules.includes("mcq")) {
       addQ({
         question_type: "mcq",
-        question_text: "In supervised learning, what metric is most appropriate when evaluating a classification model on an imbalanced dataset where false negatives are critical (e.g. fraud or disease detection)?",
+        question_text: "In supervised learning, what metric is most appropriate when evaluating a classification model on an imbalanced dataset where false negatives are critical?",
         options: [
           { id: "A", text: "Recall (Sensitivity)" },
           { id: "B", text: "Accuracy" },
@@ -308,9 +323,8 @@ function synthesizeQuestionsFromContext(
         correct_answer: "A",
         explanation: "Recall measures the proportion of actual positives correctly identified, making it vital when false negatives carry severe consequences.",
         max_points: 10,
-        time_limit_seconds: 60,
+        time_limit_seconds: defaultTimeSeconds,
       });
-
       addQ({
         question_type: "mcq",
         question_text: "Which regularization technique adds a penalty proportional to the square of the magnitude of coefficients (L2 penalty) to prevent neural network overfitting?",
@@ -323,28 +337,13 @@ function synthesizeQuestionsFromContext(
         correct_answer: "A",
         explanation: "Ridge regularization adds the sum of squared weights as a penalty term to the loss function, shrinking weights smoothly toward zero.",
         max_points: 10,
-        time_limit_seconds: 60,
+        time_limit_seconds: defaultTimeSeconds,
       });
     }
+  }
 
-    if (selectedModules.includes("scenario")) {
-      addQ({
-        question_type: "scenario",
-        question_text: "Scenario: A deep neural network achieves 99.8% training accuracy but only 64% validation accuracy. What condition does this indicate, and what is the recommended remedy?",
-        options: [
-          { id: "A", text: "High variance (overfitting); apply dropout, L2 regularization, data augmentation, or early stopping." },
-          { id: "B", text: "High bias (underfitting); simplify the model by removing hidden layers." },
-          { id: "C", text: "Gradient explosion; multiply all inputs by a factor of 100." },
-          { id: "D", text: "Zero learning rate; remove all activation functions." },
-        ],
-        correct_answer: "A",
-        explanation: "A high gap between training and validation accuracy signifies overfitting, which is alleviated by regularization and augmentation techniques.",
-        max_points: 10,
-        time_limit_seconds: 90,
-      });
-    }
-  } else if (isDatabase) {
-    // ── Database & SQL Curriculum ─────────────────────────────────────
+  // 5. Database & SQL
+  if (isDatabase) {
     if (selectedModules.includes("mcq")) {
       addQ({
         question_type: "mcq",
@@ -358,10 +357,9 @@ function synthesizeQuestionsFromContext(
         correct_answer: "A",
         explanation: "WHERE filters rows before aggregation; HAVING filters aggregated groups after GROUP BY operations.",
         max_points: 10,
-        time_limit_seconds: 60,
+        time_limit_seconds: defaultTimeSeconds,
       });
     }
-
     if (selectedModules.includes("scenario")) {
       addQ({
         question_type: "scenario",
@@ -370,160 +368,153 @@ function synthesizeQuestionsFromContext(
           { id: "A", text: "Create a B-tree index on the 'created_at' column." },
           { id: "B", text: "Convert the column data type from TIMESTAMP to VARCHAR." },
           { id: "C", text: "Remove the WHERE clause and filter results in client browser memory." },
-          { id: "D", text: "Restart the PostgreSQL database daemon after each query." },
+          { id: "D", text: "Restart the database server after each query." },
         ],
         correct_answer: "A",
-        explanation: "A B-tree index on 'created_at' enables logarithmic index scans instead of sequential table scans, reducing query execution time from seconds to milliseconds.",
+        explanation: "A B-tree index on 'created_at' enables logarithmic index scans instead of sequential table scans, reducing query execution time.",
         max_points: 10,
-        time_limit_seconds: 90,
+        time_limit_seconds: Math.max(defaultTimeSeconds, 90),
       });
     }
   }
 
-  // Add extra high-yield questions to ensure any requested count (up to 30) can be fulfilled
-  const extraPool = [
-    {
-      question_type: "mcq",
-      question_text: "In software engineering, what is the primary benefit of adhering to the Single Responsibility Principle (SRP) in system design?",
-      options: [
-        { id: "A", text: "A class or module has only one reason to change, maximizing maintainability and testability." },
-        { id: "B", text: "All database queries are executed in a single monolithic file." },
-        { id: "C", text: "Application code compiles directly into binary without dependencies." },
-        { id: "D", text: "It prevents developers from using object-oriented inheritance." },
-      ],
-      correct_answer: "A",
-      explanation: "SRP mandates that each module or class should be responsible for a single piece of functionality, reducing coupling and side-effects.",
-      max_points: 10,
-      time_limit_seconds: defaultTimeSeconds,
-    },
-    {
-      question_type: "mcq",
-      question_text: "In Git version control, what does 'git merge --squash feature-branch' accomplish when integrating changes?",
-      options: [
-        { id: "A", text: "It combines all commits from the feature branch into a single uncommitted change on the target branch." },
-        { id: "B", text: "It deletes the remote repository branch and discards commit diffs." },
-        { id: "C", text: "It performs an interactive rebase and force-pushes changes upstream." },
-        { id: "D", text: "It creates a fast-forward commit with linear SHA preservation." },
-      ],
-      correct_answer: "A",
-      explanation: "Squash merges condense all intermediate commits into a single cohesive commit, preserving a clean master/main log history.",
-      max_points: 10,
-      time_limit_seconds: defaultTimeSeconds,
-    },
-    {
-      question_type: "mcq",
-      question_text: "What is the primary operational objective of implementing a Reverse Proxy (such as Nginx or Cloudflare) in front of application backends?",
-      options: [
-        { id: "A", text: "Load balancing, SSL/TLS termination, edge caching, and DDoS mitigation." },
-        { id: "B", text: "Executing heavy database SQL joins directly on the proxy layer." },
-        { id: "C", text: "Transpiling client-side TypeScript code into machine bytecode." },
-        { id: "D", text: "Replacing client browsers with headless server-side terminals." },
-      ],
-      correct_answer: "A",
-      explanation: "Reverse proxies distribute network traffic, provide security protection, terminate SSL certificates, and cache static assets close to end users.",
-      max_points: 10,
-      time_limit_seconds: defaultTimeSeconds,
-    },
-    {
-      question_type: "scenario",
-      question_text: "Scenario: An e-commerce API suffers severe performance degradation during flash sales due to high read traffic on product catalog tables. What caching pattern should be adopted?",
-      options: [
-        { id: "A", text: "Cache-Aside pattern using an in-memory Redis cluster with reasonable TTL and cache invalidation on updates." },
-        { id: "B", text: "Writing all product data to flat text files on disk for each HTTP request." },
-        { id: "C", text: "Restarting PostgreSQL on a 5-minute cron job to clear buffers." },
-        { id: "D", text: "Requiring every customer to download the entire database as a CSV before browsing." },
-      ],
-      correct_answer: "A",
-      explanation: "The Cache-Aside pattern with Redis dramatically reduces database read loads, serving sub-millisecond responses for read-heavy operations.",
-      max_points: 10,
-      time_limit_seconds: Math.max(defaultTimeSeconds, 90),
-    },
-    {
-      question_type: "true_false",
-      question_text: "In relational database design, the ACID 'Isolation' property guarantees that concurrent transactions execute without interfering with one another's intermediate states.",
-      options: [
-        { id: "A", text: "True" },
-        { id: "B", text: "False" },
-      ],
-      correct_answer: "A",
-      explanation: "Isolation prevents dirty reads, non-repeatable reads, and phantom reads depending on the configured isolation level.",
-      max_points: 5,
-      time_limit_seconds: Math.max(20, Math.floor(defaultTimeSeconds / 2)),
-    },
-    {
-      question_type: "mcq",
-      question_text: "In modern cloud architectures, what is the key difference between horizontal scaling (scaling out) and vertical scaling (scaling up)?",
-      options: [
-        { id: "A", text: "Horizontal scaling adds more machine/container instances to a pool, while vertical scaling adds CPU/RAM to a single machine." },
-        { id: "B", text: "Horizontal scaling is only possible on Windows servers." },
-        { id: "C", text: "Vertical scaling eliminates all single points of failure automatically." },
-        { id: "D", text: "There is no architectural difference between the two terms." },
-      ],
-      correct_answer: "A",
-      explanation: "Scaling horizontally adds nodes to distribute load with high availability; scaling vertically upgrades the capacity of existing individual nodes.",
-      max_points: 10,
-      time_limit_seconds: defaultTimeSeconds,
-    },
-    {
-      question_type: "mcq",
-      question_text: "Which of the following describes the purpose of JSON Web Tokens (JWT) in stateless authentication architectures?",
-      options: [
-        { id: "A", text: "A digitally signed claims token that allows servers to verify client identity without querying a session database on every request." },
-        { id: "B", text: "An encrypted algorithm to store whole database tables in browser local storage." },
-        { id: "C", text: "A replacement for HTML markup in single-page applications." },
-        { id: "D", text: "A specialized compiler for transpiling Python to JavaScript." },
-      ],
-      correct_answer: "A",
-      explanation: "JWTs contain cryptographically signed claims (header, payload, signature), enabling stateless verification across distributed servers.",
-      max_points: 10,
-      time_limit_seconds: defaultTimeSeconds,
-    },
-    {
-      question_type: "scenario",
-      question_text: "Scenario: A mission-critical background job processing payment webhooks fails intermittently due to transient third-party network timeouts. How should resiliency be improved?",
-      options: [
-        { id: "A", text: "Implement exponential backoff retry mechanism with jitter and a Dead-Letter Queue (DLQ) for unrecoverable errors." },
-        { id: "B", text: "Immediately drop the failed webhook payload and ignore payment confirmations." },
-        { id: "C", text: "Execute the payment synchronous loop in an infinite while(true) block without delays." },
-        { id: "D", text: "Increase database max_connections parameter to infinity." },
-      ],
-      correct_answer: "A",
-      explanation: "Exponential backoff retries handle transient glitches smoothly without overloading downstream services, while DLQs capture persistent failures for manual audit.",
-      max_points: 10,
-      time_limit_seconds: Math.max(defaultTimeSeconds, 90),
-    },
-    {
-      question_type: "coding",
-      question_text: "Write a function 'deepClone(obj)' in JavaScript that creates a deep duplicate of a given nested plain object or array without mutating the original.",
-      options: [],
-      correct_answer: "function deepClone(obj) { return structuredClone ? structuredClone(obj) : JSON.parse(JSON.stringify(obj)); }",
-      explanation: "structuredClone is the modern standard for creating deep object clones, preventing shared references across complex state objects.",
-      reference_code: "function deepClone(obj) {\n  // Implement deep clone\n  return structuredClone(obj);\n}",
-      test_cases: [
-        { input: '{"a": 1, "b": {"c": 2}}', expected_output: '{"a": 1, "b": {"c": 2}}' },
-        { input: '[1, [2, 3]]', expected_output: '[1, [2, 3]]' }
-      ],
-      max_points: 15,
-      time_limit_seconds: Math.max(defaultTimeSeconds, 120),
-    },
-    {
-      question_type: "short_answer",
-      question_text: "Define Cross-Site Request Forgery (CSRF) and explain how SameSite cookie policies and Anti-CSRF tokens defend against it.",
-      options: [],
-      correct_answer: "CSRF occurs when an unauthorized script tricks an authenticated user's browser into executing unwanted actions on a trusted site. Anti-CSRF tokens provide unique, unpredictable server-validated secrets, and SameSite=Lax/Strict restricts cookie transmission on cross-site requests.",
-      explanation: "Anti-CSRF tokens and SameSite cookies ensure that only requests originating genuinely from the expected application UI are authenticated.",
-      max_points: 10,
-      time_limit_seconds: Math.max(defaultTimeSeconds, 90),
+  // 6. Cloud & DevOps
+  if (isCloudDevOps) {
+    if (selectedModules.includes("mcq")) {
+      addQ({
+        question_type: "mcq",
+        question_text: "In Kubernetes container orchestration, what is the primary function of an Ingress Controller?",
+        options: [
+          { id: "A", text: "To manage external access to HTTP/HTTPS services within the cluster, providing load balancing, SSL termination, and name-based virtual hosting." },
+          { id: "B", text: "To compile source code into Docker image layers on worker nodes." },
+          { id: "C", text: "To execute database schema migrations on container restart." },
+          { id: "D", text: "To act as the primary etcd cluster storage engine." }
+        ],
+        correct_answer: "A",
+        explanation: "Ingress controllers act as reverse proxies routing external inbound traffic to internal Kubernetes Service endpoints.",
+        max_points: 10,
+        time_limit_seconds: defaultTimeSeconds
+      });
     }
-  ];
-
-  // Append extra questions if needed to reach requestedCount
-  for (const extraQ of extraPool) {
-    if (questions.length >= requestedCount) break;
-    addQ(extraQ);
   }
 
-  // Adjust timers according to defaultTimeSeconds if user chose custom timer
+  // 7. Cybersecurity
+  if (isCybersecurity) {
+    if (selectedModules.includes("mcq")) {
+      addQ({
+        question_type: "mcq",
+        question_text: "Which of the following best mitigates SQL Injection vulnerabilities in backend database interactions?",
+        options: [
+          { id: "A", text: "Parameterized Queries (Prepared Statements) and Object-Relational Mapping (ORM) abstraction." },
+          { id: "B", text: "Concatenating user input directly into SQL strings using string interpolation." },
+          { id: "C", text: "Storing database passwords in plain text inside client cookies." },
+          { id: "D", text: "Allowing users to enter raw SQL commands in login text inputs." }
+        ],
+        correct_answer: "A",
+        explanation: "Parameterized queries separate SQL code from user-supplied parameters, preventing malicious code injection.",
+        max_points: 10,
+        time_limit_seconds: defaultTimeSeconds
+      });
+    }
+  }
+
+  // 8. Dynamic Resource / Syllabus Sentence-Derived Question Synthesis
+  // If the admin provided custom resource text (or if we still need more questions)
+  if (lines.length > 0) {
+    for (let i = 0; i < lines.length && questions.length < requestedCount; i++) {
+      const line = lines[i];
+      const lineSummary = line.length > 120 ? line.substring(0, 117) + "..." : line;
+      const qIndex = questions.length + 1;
+
+      if (selectedModules.includes("mcq")) {
+        addQ({
+          question_type: "mcq",
+          question_text: `According to the syllabus/resource provided, which statement accurately reflects the principles of: "${lineSummary}"?`,
+          options: [
+            { id: "A", text: line },
+            { id: "B", text: `It explicitly contradicts the verified standards of ${lineSummary}.` },
+            { id: "C", text: "It is strictly deprecated and replaced by unverified manual protocols." },
+            { id: "D", text: "It only applies to deprecated legacy hardware architectures." },
+          ],
+          correct_answer: "A",
+          explanation: `The uploaded course syllabus and resource documentation specifically specifies: "${line}".`,
+          max_points: 10,
+          time_limit_seconds: defaultTimeSeconds,
+        });
+      }
+
+      if (questions.length < requestedCount && selectedModules.includes("scenario")) {
+        addQ({
+          question_type: "scenario",
+          question_text: `Scenario: In an enterprise setting applying the guideline "${lineSummary}", an engineer encounters an anomaly during deployment. What is the recommended best practice?`,
+          options: [
+            { id: "A", text: `Verify that implementation directly complies with the established specification: "${lineSummary}".` },
+            { id: "B", text: "Bypass standard verification checks and force deployment without testing." },
+            { id: "C", text: "Disable all monitoring alerts and logging outputs." },
+            { id: "D", text: "Manually alter raw production data without an audit trail." },
+          ],
+          correct_answer: "A",
+          explanation: `Best practices require aligning system operations with established documentation and syllabus criteria: "${lineSummary}".`,
+          max_points: 10,
+          time_limit_seconds: Math.max(defaultTimeSeconds, 90),
+        });
+      }
+
+      if (questions.length < requestedCount && selectedModules.includes("true_false")) {
+        addQ({
+          question_type: "true_false",
+          question_text: `True or False: According to the provided study syllabus, "${lineSummary}" represents a valid technical requirement or concept.`,
+          options: [
+            { id: "A", text: "True" },
+            { id: "B", text: "False" }
+          ],
+          correct_answer: "A",
+          explanation: `Confirmed by the provided resource material: "${line}".`,
+          max_points: 5,
+          time_limit_seconds: Math.max(30, Math.floor(defaultTimeSeconds / 2)),
+        });
+      }
+
+      if (questions.length < requestedCount && selectedModules.includes("short_answer")) {
+        addQ({
+          question_type: "short_answer",
+          question_text: `Explain the practical application and key technical objectives of: "${lineSummary}".`,
+          options: [],
+          correct_answer: line,
+          explanation: `A comprehensive answer should reference: ${line}`,
+          max_points: 10,
+          time_limit_seconds: Math.max(defaultTimeSeconds, 120),
+        });
+      }
+    }
+  }
+
+  // 9. Procedural Dynamic Filler: Guarantees that ANY requested count (up to 250) can be fulfilled
+  let cycle = 1;
+  while (questions.length < requestedCount) {
+    const topicLabel = lines.length > 0 
+      ? lines[(questions.length + cycle) % lines.length] 
+      : (taskContext ? taskContext.substring(0, 80) : "Core Technical Competency");
+
+    const qNum = questions.length + 1;
+    addQ({
+      question_type: selectedModules[qNum % selectedModules.length] || "mcq",
+      question_text: `Assessment Item #${qNum}: When implementing and evaluating principles associated with "${topicLabel}", which approach guarantees optimal correctness and maintainability?`,
+      options: [
+        { id: "A", text: `Adhere strictly to verified architecture patterns and formal criteria outlined for ${topicLabel}.` },
+        { id: "B", text: "Omit integration testing and deploy unchecked configurations directly." },
+        { id: "C", text: "Rely solely on client-side state without backend data validation." },
+        { id: "D", text: "Disable standard security firewalls and CORS protection." }
+      ],
+      correct_answer: "A",
+      explanation: `Enterprise standards require rigorous validation, structured testing, and adherence to established criteria for ${topicLabel}.`,
+      max_points: 10,
+      time_limit_seconds: defaultTimeSeconds
+    });
+    cycle++;
+  }
+
+  // Final normalization and timer attachment
   const finalQuestions = questions.slice(0, requestedCount).map((q, idx) => ({
     ...q,
     id: q.id || `q_${idx + 1}`,

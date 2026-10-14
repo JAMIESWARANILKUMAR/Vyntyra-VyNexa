@@ -39,8 +39,8 @@ export interface AiJsonResponse<T = any> extends AiResponse {
 
 // Default Model Mappings from Gemini canonical IDs to OpenRouter model slugs
 const GEMINI_TO_OPENROUTER_MODEL_MAP: Record<string, string> = {
-  "gemini-1.5-flash": "google/gemini-flash-1.5",
-  "gemini-1.5-pro": "google/gemini-pro-1.5",
+  "gemini-1.5-flash": "google/gemini-2.5-flash",
+  "gemini-1.5-pro": "google/gemini-2.5-pro",
   "gemini-2.0-flash": "google/gemini-2.0-flash-001",
   "gemini-2.5-flash": "google/gemini-2.5-flash",
   "gemini-2.5-pro": "google/gemini-2.5-pro",
@@ -48,7 +48,7 @@ const GEMINI_TO_OPENROUTER_MODEL_MAP: Record<string, string> = {
   "gemini-3.6-flash": "google/gemini-2.5-flash",
 };
 
-const DEFAULT_PRIMARY_MODEL = "gemini-1.5-flash";
+const DEFAULT_PRIMARY_MODEL = "gemini-2.5-flash";
 const DEFAULT_SECONDARY_MODEL = "google/gemini-2.5-flash";
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -80,40 +80,9 @@ export function getAiGatewayConfig() {
  */
 function isFailoverEligibleError(error: any): boolean {
   if (!error) return false;
-  const msg = String(error?.message || error || "").toLowerCase();
-  const status = error?.status || error?.statusCode || error?.response?.status;
-
-  // Rate limiting / Quota exhaustion
-  if (status === 429 || status === 403 || status === 402) return true;
-  if (
-    msg.includes("429") || 
-    msg.includes("quota") || 
-    msg.includes("rate limit") || 
-    msg.includes("resource_exhausted") || 
-    msg.includes("resourceexhausted") || 
-    msg.includes("too many requests") || 
-    msg.includes("credits")
-  ) {
-    return true;
-  }
-
-  // Server downtime / unavailable
-  if (status >= 500 && status < 600) return true;
-  if (
-    msg.includes("500") || 
-    msg.includes("502") || 
-    msg.includes("503") || 
-    msg.includes("504") || 
-    msg.includes("overloaded") || 
-    msg.includes("unavailable") || 
-    msg.includes("timeout") ||
-    msg.includes("network") ||
-    msg.includes("fetch failed")
-  ) {
-    return true;
-  }
-
-  return false;
+  // Any error from the primary provider (401 auth error, 403, 404, 429 rate limit, 500 server error, network timeout)
+  // should gracefully trigger failover to OpenRouter if configured.
+  return true;
 }
 
 /**
@@ -359,9 +328,22 @@ export async function generateAiJson<T = any>(
       ...res,
       data,
     };
-  } catch (parseError: any) {
+  } catch (initialErr: any) {
+    // Resilient fallback: search for valid JSON substring { ... }
+    const startObj = raw.indexOf("{");
+    const endObj = raw.lastIndexOf("}");
+    if (startObj !== -1 && endObj !== -1 && endObj > startObj) {
+      try {
+        const extracted = raw.slice(startObj, endObj + 1);
+        const data = JSON.parse(extracted) as T;
+        return {
+          ...res,
+          data,
+        };
+      } catch (_) {}
+    }
     throw new Error(
-      `Failed to parse AI JSON response (${res.provider} / ${res.model}): ${parseError.message}. Output was: ${raw.slice(0, 300)}`
+      `Failed to parse AI JSON response (${res.provider} / ${res.model}): ${initialErr.message}. Output was: ${raw.slice(0, 300)}`
     );
   }
 }

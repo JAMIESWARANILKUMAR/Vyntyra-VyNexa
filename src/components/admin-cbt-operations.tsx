@@ -207,23 +207,31 @@ function AdminCbtGenerateView() {
     
     setIsGenerating(true);
     try {
-      const pdfjsLib = await import('pdfjs-dist');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      const fileName = file.name.toLowerCase();
+      if (fileName.endsWith('.pdf') || file.type === 'application/pdf') {
+        const pdfjsLib = await import('pdfjs-dist');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      let text = "";
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const pageText = content.items.map((item: any) => item.str).join(" ");
-        text += pageText + "\n";
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let text = "";
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const pageText = content.items.map((item: any) => item.str).join(" ");
+          text += pageText + "\n";
+        }
+        setTaskContext(prev => prev + (prev ? "\n\n" : "") + `--- RESOURCE DOCUMENT: ${file.name} ---\n` + text.trim());
+        toast.success(`PDF parsed successfully (${pdf.numPages} pages)!`);
+      } else {
+        // Plain text, markdown, CSV, JSON, code files
+        const text = await file.text();
+        setTaskContext(prev => prev + (prev ? "\n\n" : "") + `--- RESOURCE MATERIAL: ${file.name} ---\n` + text.trim());
+        toast.success(`Resource file "${file.name}" loaded into context!`);
       }
-      setTaskContext(prev => prev + (prev ? "\n\n" : "") + "--- PDF EXTRACTED CONTEXT ---\n" + text);
-      toast.success("PDF parsed and appended to context!");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Failed to parse PDF.");
+      toast.error(`Failed to parse file: ${error?.message || "Unknown error"}`);
     } finally {
       setIsGenerating(false);
       e.target.value = "";
@@ -246,6 +254,7 @@ function AdminCbtGenerateView() {
     try {
       const res = await generateFn({ data: { 
         taskContext, 
+        documentText: taskContext,
         modules,
         questionCount,
         defaultTimeSeconds: defaultQuestionTime
@@ -445,13 +454,13 @@ function AdminCbtGenerateView() {
                   </div>
                   <input 
                     type="number" 
-                    min={1} max={50}
+                    min={1} max={250}
                     className="w-full p-2 border rounded-lg mt-1 text-sm bg-white" 
                     value={questionCount} 
-                    onChange={e => setQuestionCount(Math.max(1, Math.min(50, Number(e.target.value) || 10)))}
+                    onChange={e => setQuestionCount(Math.max(1, Math.min(250, Number(e.target.value) || 1)))}
                   />
                   <div className="flex flex-wrap gap-1 mt-1.5">
-                    {[5, 10, 15, 20, 25, 30].map(cnt => (
+                    {[5, 10, 20, 30, 40, 50, 75, 100].map(cnt => (
                       <button
                         key={cnt}
                         type="button"
@@ -944,20 +953,20 @@ function AdminCbtGenerateView() {
                 <BrainCircuit className="h-5 w-5 text-indigo-500"/> AI Context & Reference Data
               </h3>
               <p className="text-xs text-slate-500 mb-3">
-                Paste documentation, instructions, or upload a PDF. Gemini will generate high-yield evaluation questions.
+                Paste syllabus, lecture notes, textbook chapters, or upload resources (.pdf, .txt, .md, .csv, .json, .doc). AI strictly generates questions customized to your specific content.
               </p>
               <textarea 
                 className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-sm" 
                 rows={5} 
-                placeholder="Paste the task documentation or specific scenario details here..."
+                placeholder="Paste the syllabus, task documentation, course modules, or specific scenario details here..."
                 value={taskContext}
                 onChange={e => setTaskContext(e.target.value)}
               />
               <label className="mt-3 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 text-center cursor-pointer hover:bg-slate-100 transition-colors block">
-                <input type="file" accept="application/pdf" className="hidden" onChange={handleFileUpload} />
+                <input type="file" accept=".pdf,.txt,.md,.doc,.docx,.csv,.json,.sql" className="hidden" onChange={handleFileUpload} />
                 <Upload className="h-5 w-5 text-slate-400 mx-auto mb-1.5" />
-                <div className="text-xs font-bold text-slate-700">Upload PDF / Word Report</div>
-                <div className="text-[10px] text-slate-500">Auto-extracted into context box</div>
+                <div className="text-xs font-bold text-slate-700">Upload PDF / Syllabus / Resource File</div>
+                <div className="text-[10px] text-slate-500">Supports PDF, TXT, MD, CSV, Word, Code — Auto-appended to context</div>
               </label>
             </div>
 
