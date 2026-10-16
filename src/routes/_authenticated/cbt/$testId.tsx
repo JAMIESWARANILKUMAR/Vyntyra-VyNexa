@@ -13,6 +13,20 @@ import {
 } from "lucide-react";
 import { downloadCbtDetailedReportPdf, generateNextAttemptSuggestions, CbtQuestionAudit } from "@/lib/cbt-report";
 
+function createBlankCanvasTrack(width = 640, height = 480): MediaStreamTrack | null {
+  if (typeof document === 'undefined') return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = '#020617';
+    ctx.fillRect(0, 0, width, height);
+  }
+  const stream = (canvas as any).captureStream ? (canvas as any).captureStream(1) : null;
+  return stream?.getVideoTracks()[0] || null;
+}
+
 function normalizeOptions(options: any, questionType?: string): Array<{ id: string; text: string }> {
   let opts = options;
   if (typeof opts === 'string') {
@@ -113,6 +127,9 @@ function CbtExamInterface() {
   // WebRTC / Live Streaming hook
   const rtcConnection = useRef<RTCPeerConnection | null>(null);
   const globalChannelRef = useRef<any>(null);
+  const activeScreenTrackRef = useRef<MediaStreamTrack | null>(null);
+  const screenSenderRef = useRef<RTCRtpSender | null>(null);
+  const isScreenShareAllowedRef = useRef<boolean>(false);
 
   const getSessionFn = useServerFn(getInternTestSessionFn);
   const submitFn = useServerFn(submitCbtExamFn);
@@ -326,8 +343,10 @@ function CbtExamInterface() {
           isUnlimited: res.isUnlimited,
           currentAttemptNumber: res.currentAttemptNumber,
           proctoring_mode: res.proctoring_mode || res.test?.proctoring_mode,
-          allow_ctrl_keys: res.allow_ctrl_keys ?? res.test?.allow_ctrl_keys
+          allow_ctrl_keys: res.allow_ctrl_keys ?? res.test?.allow_ctrl_keys,
+          allow_screen_share: res.allow_screen_share ?? res.test?.allow_screen_share ?? false
         });
+        isScreenShareAllowedRef.current = Boolean(res.allow_screen_share ?? res.test?.allow_screen_share);
         const qs = res.questions || [];
         setQuestions(qs);
         setOverallTimeLeft((res.test?.time_limit_minutes || 30) * 60);
@@ -354,6 +373,37 @@ function CbtExamInterface() {
       .on('presence', { event: 'sync' }, () => {
         console.log('Presence sync', channel.presenceState());
       })
+      .on('broadcast', { event: 'set_screen_share' }, async ({ payload }: any) => {
+        const shouldEnable = Boolean(payload?.enabled);
+        isScreenShareAllowedRef.current = shouldEnable;
+        setTest((prev: any) => prev ? { ...prev, allow_screen_share: shouldEnable } : prev);
+
+        if (shouldEnable) {
+          toast.info("External screen sharing has been requested/enabled by the Exam Administrator.", { duration: 5000 });
+          try {
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            if (screenStream && screenStream.getVideoTracks().length > 0) {
+              const screenTrack = screenStream.getVideoTracks()[0];
+              activeScreenTrackRef.current = screenTrack;
+              if (screenSenderRef.current) {
+                await screenSenderRef.current.replaceTrack(screenTrack);
+              }
+            }
+          } catch (err) {
+            console.warn("Screen share prompt declined or cancelled by candidate:", err);
+          }
+        } else {
+          toast.info("External screen sharing has been disabled by Administrator.");
+          if (activeScreenTrackRef.current) {
+            activeScreenTrackRef.current.stop();
+            activeScreenTrackRef.current = null;
+          }
+          const blankTrack = createBlankCanvasTrack();
+          if (blankTrack && screenSenderRef.current) {
+            await screenSenderRef.current.replaceTrack(blankTrack);
+          }
+        }
+      })
       .on('broadcast', { event: 'request_stream' }, async () => {
         try {
           if (rtcConnection.current) {
@@ -363,10 +413,23 @@ function CbtExamInterface() {
           rtcConnection.current = pc;
 
           const webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }).catch(() => null);
-          const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true }).catch(() => null);
-
           if (webcamStream) webcamStream.getTracks().forEach(track => pc.addTrack(track, webcamStream));
-          if (screenStream) screenStream.getTracks().forEach(track => pc.addTrack(track, screenStream));
+
+          // Admin screen sharing policy: only share screen if enabled by admin, otherwise send blank track
+          if (isScreenShareAllowedRef.current) {
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true }).catch(() => null);
+            if (screenStream && screenStream.getVideoTracks().length > 0) {
+              const track = screenStream.getVideoTracks()[0];
+              activeScreenTrackRef.current = track;
+              screenSenderRef.current = pc.addTrack(track, screenStream);
+            } else {
+              const blankTrack = createBlankCanvasTrack();
+              if (blankTrack) screenSenderRef.current = pc.addTrack(blankTrack, new MediaStream([blankTrack]));
+            }
+          } else {
+            const blankTrack = createBlankCanvasTrack();
+            if (blankTrack) screenSenderRef.current = pc.addTrack(blankTrack, new MediaStream([blankTrack]));
+          }
 
           pc.onicecandidate = (event) => {
             if (event.candidate) {
@@ -417,6 +480,10 @@ function CbtExamInterface() {
       supabase.removeChannel(channel);
       supabase.removeChannel(globalChannel);
       globalChannelRef.current = null;
+      if (activeScreenTrackRef.current) {
+        activeScreenTrackRef.current.stop();
+        activeScreenTrackRef.current = null;
+      }
       if (rtcConnection.current) {
         rtcConnection.current.close();
         rtcConnection.current = null;

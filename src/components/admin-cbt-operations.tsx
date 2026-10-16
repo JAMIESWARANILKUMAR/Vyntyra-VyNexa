@@ -93,6 +93,7 @@ function AdminCbtGenerateView() {
   const [enableCamera, setEnableCamera] = useState(true);
   const [proctoringMode, setProctoringMode] = useState<"camera_malpractice" | "camera_monitoring" | "focus_only">("camera_malpractice");
   const [allowCtrlKeys, setAllowCtrlKeys] = useState(false);
+  const [allowScreenShare, setAllowScreenShare] = useState(false);
   const [cameraStrictness, setCameraStrictness] = useState<"lenient" | "standard" | "strict">("standard");
   const [deadline, setDeadline] = useState("");
   const [shuffleQuestions, setShuffleQuestions] = useState(false);
@@ -178,6 +179,7 @@ function AdminCbtGenerateView() {
       enableCamera: proctoringMode !== "focus_only",
       proctoringMode,
       allowCtrlKeys,
+      allowScreenShare,
       cameraStrictness,
       deadline,
       targetLabel,
@@ -342,6 +344,7 @@ function AdminCbtGenerateView() {
           camera_strictness: cameraStrictness,
           proctoring_mode: proctoringMode,
           allow_ctrl_keys: allowCtrlKeys,
+          allow_screen_share: allowScreenShare,
           deadline: deadline ? new Date(deadline).toISOString() : null,
           shuffle_questions: shuffleQuestions,
           show_instant_results: showInstantResults,
@@ -594,6 +597,25 @@ function AdminCbtGenerateView() {
                   type="checkbox"
                   checked={allowCtrlKeys}
                   onChange={e => setAllowCtrlKeys(e.target.checked)}
+                  className="h-4 w-4 text-indigo-600 rounded cursor-pointer"
+                />
+              </div>
+
+              {/* External Screen Sharing Permission */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Monitor className="h-3.5 w-3.5 text-indigo-600" />
+                    External Screen Sharing
+                  </div>
+                  <div className="text-[10px] text-slate-500">
+                    Admin managed only. When disabled, the external screen display is kept blank and candidate screen is never accessed.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={allowScreenShare}
+                  onChange={e => setAllowScreenShare(e.target.checked)}
                   className="h-4 w-4 text-indigo-600 rounded cursor-pointer"
                 />
               </div>
@@ -1718,6 +1740,7 @@ function AdminCbtSubmissionsView() {
   const [adjustEnableCamera, setAdjustEnableCamera] = useState<boolean>(true);
   const [adjustProctoringMode, setAdjustProctoringMode] = useState<string>("camera_malpractice");
   const [adjustAllowCtrlKeys, setAdjustAllowCtrlKeys] = useState<boolean>(false);
+  const [adjustAllowScreenShare, setAdjustAllowScreenShare] = useState<boolean>(false);
   const [adjustMaxAttempts, setAdjustMaxAttempts] = useState<number>(1);
   const [adjustStrictness, setAdjustStrictness] = useState<string>("standard");
   const [adjustDeadline, setAdjustDeadline] = useState<string>("");
@@ -1742,6 +1765,7 @@ function AdminCbtSubmissionsView() {
           camera_strictness: adjustStrictness,
           proctoring_mode: adjustProctoringMode,
           allow_ctrl_keys: adjustAllowCtrlKeys,
+          allow_screen_share: adjustAllowScreenShare,
           max_attempts: Number(adjustMaxAttempts) || 1,
           deadline: adjustDeadline ? new Date(adjustDeadline).toISOString() : ""
         }
@@ -2024,6 +2048,7 @@ function AdminCbtSubmissionsView() {
                                 setAdjustEnableCamera(t.enable_camera !== false);
                                 setAdjustProctoringMode(t.proctoring_mode || (t.enable_camera !== false ? "camera_malpractice" : "focus_only"));
                                 setAdjustAllowCtrlKeys(Boolean(t.allow_ctrl_keys));
+                                setAdjustAllowScreenShare(Boolean(t.allow_screen_share));
                                 setAdjustMaxAttempts(t.max_attempts ?? 1);
                                 setAdjustStrictness(t.camera_strictness || "standard");
                                 setAdjustDeadline(t.deadline ? new Date(t.deadline).toISOString().slice(0, 16) : "");
@@ -2215,6 +2240,19 @@ function AdminCbtSubmissionsView() {
                     type="checkbox" 
                     checked={adjustAllowCtrlKeys}
                     onChange={e => setAdjustAllowCtrlKeys(e.target.checked)}
+                    className="h-4 w-4 text-sky-600 rounded cursor-pointer"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                  <div>
+                    <div className="font-bold text-slate-900 text-xs">External Screen Sharing</div>
+                    <div className="text-[11px] text-slate-500">When disabled, candidate screen is kept as a blank display</div>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={adjustAllowScreenShare}
+                    onChange={e => setAdjustAllowScreenShare(e.target.checked)}
                     className="h-4 w-4 text-sky-600 rounded cursor-pointer"
                   />
                 </div>

@@ -2,7 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { MonitorSmartphone, Video, Loader2 } from 'lucide-react';
+import { MonitorSmartphone, Video, Loader2, Monitor, MonitorOff, ShieldCheck } from 'lucide-react';
+import { useServerFn } from '@tanstack/react-start';
+import { toggleAdminExamScreenShareFn } from '@/lib/cbt.functions';
+import { toast } from 'sonner';
 
 export function ActiveStreamsSection() {
   const [activeCandidates, setActiveCandidates] = useState<any[]>([]);
@@ -88,15 +91,44 @@ export function ActiveStreamsSection() {
 
 function StreamModal({ candidate, onClose }: { candidate: any, onClose: () => void }) {
   const [status, setStatus] = useState('connecting');
+  const [isScreenShareEnabled, setIsScreenShareEnabled] = useState<boolean>(Boolean(candidate.allow_screen_share));
+  const [isTogglingScreen, setIsTogglingScreen] = useState(false);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const webcamRef = useRef<HTMLVideoElement>(null);
   const screenRef = useRef<HTMLVideoElement>(null);
+  const channelRef = useRef<any>(null);
+  const toggleScreenFn = useServerFn(toggleAdminExamScreenShareFn);
+
+  const handleToggleScreenShare = async () => {
+    const nextState = !isScreenShareEnabled;
+    setIsTogglingScreen(true);
+    setIsScreenShareEnabled(nextState);
+
+    // Notify candidate via real-time WebRTC broadcast channel
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'set_screen_share',
+        payload: { enabled: nextState }
+      });
+    }
+
+    try {
+      await toggleScreenFn({ data: { testId: candidate.testId, allowScreenShare: nextState } });
+      toast.success(nextState ? "External screen sharing enabled by Admin. Screen feed requested." : "External screen sharing disabled by Admin. Reverted to blank display.");
+    } catch (e: any) {
+      console.warn("Screen share persistence error:", e);
+    } finally {
+      setIsTogglingScreen(false);
+    }
+  };
 
   useEffect(() => {
     let channel: any;
     const initWebRTC = async () => {
        const channelName = `cbt-exam-${candidate.testId}-${candidate.internId}`;
        channel = supabase.channel(channelName);
+       channelRef.current = channel;
        
        const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
        pcRef.current = pc;
@@ -142,6 +174,7 @@ function StreamModal({ candidate, onClose }: { candidate: any, onClose: () => vo
     return () => {
       if (channel) supabase.removeChannel(channel);
       if (pcRef.current) pcRef.current.close();
+      channelRef.current = null;
     };
   }, [candidate]);
 
@@ -154,21 +187,75 @@ function StreamModal({ candidate, onClose }: { candidate: any, onClose: () => vo
                <Video className="h-5 w-5 text-emerald-500" /> 
                Live Stream: {candidate.internId}
              </div>
-             <div className="text-xs font-mono text-slate-400 bg-slate-800 px-2 py-1 rounded">{status.toUpperCase()}</div>
+             <div className="flex items-center gap-3">
+               <Button
+                 size="sm"
+                 variant="outline"
+                 onClick={handleToggleScreenShare}
+                 disabled={isTogglingScreen}
+                 className={`text-xs font-bold border transition-all ${
+                   isScreenShareEnabled 
+                     ? "border-amber-500/70 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20" 
+                     : "border-emerald-500/70 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
+                 }`}
+               >
+                 {isScreenShareEnabled ? (
+                   <><MonitorOff className="h-3.5 w-3.5 mr-1 text-amber-400" /> Disable Screen Share</>
+                 ) : (
+                   <><Monitor className="h-3.5 w-3.5 mr-1 text-emerald-400" /> Enable Screen Share</>
+                 )}
+               </Button>
+               <div className="text-xs font-mono text-slate-400 bg-slate-800 px-2 py-1 rounded border border-slate-700">
+                 {status.toUpperCase()}
+               </div>
+             </div>
            </DialogTitle>
-           <DialogDescription className="text-slate-400">WebRTC secure P2P connection to candidate machine.</DialogDescription>
+           <DialogDescription className="text-slate-400">
+             WebRTC secure P2P candidate monitoring. External screen sharing is restricted and managed by admin only.
+           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid grid-cols-2 gap-4 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+           {/* Webcam Feed */}
            <div className="bg-black rounded-lg overflow-hidden border border-slate-700 aspect-video relative flex items-center justify-center">
              {status !== 'connected' && <Loader2 className="h-8 w-8 text-slate-500 animate-spin absolute" />}
              <video ref={webcamRef} autoPlay playsInline className="w-full h-full object-cover" />
-             <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded font-bold uppercase">Webcam</div>
+             <div className="absolute bottom-2 left-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded font-bold uppercase flex items-center gap-1.5 border border-slate-700">
+               <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Webcam Feed
+             </div>
            </div>
+
+           {/* External Screen Share Display (Live if Admin Enabled, Blank Screen if Disabled) */}
            <div className="bg-black rounded-lg overflow-hidden border border-slate-700 aspect-video relative flex items-center justify-center">
-             {status !== 'connected' && <Loader2 className="h-8 w-8 text-slate-500 animate-spin absolute" />}
-             <video ref={screenRef} autoPlay playsInline className="w-full h-full object-contain" />
-             <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded font-bold uppercase">Screen Share</div>
+             {isScreenShareEnabled ? (
+               <>
+                 {status !== 'connected' && <Loader2 className="h-8 w-8 text-slate-500 animate-spin absolute" />}
+                 <video ref={screenRef} autoPlay playsInline className="w-full h-full object-contain" />
+                 <div className="absolute bottom-2 left-2 bg-emerald-600/90 text-white text-[10px] px-2 py-1 rounded font-bold uppercase flex items-center gap-1.5 shadow">
+                   <div className="h-2 w-2 rounded-full bg-white animate-pulse" /> External Screen Live
+                 </div>
+               </>
+             ) : (
+               <div className="w-full h-full bg-slate-950 flex flex-col items-center justify-center p-6 text-center select-none relative">
+                 <div className="h-14 w-14 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mb-3">
+                   <MonitorOff className="h-7 w-7 text-slate-600" />
+                 </div>
+                 <div className="text-xs font-bold text-slate-300">External Screen Sharing Disabled</div>
+                 <div className="text-[11px] text-slate-500 mt-1 max-w-xs leading-relaxed">
+                   Screen display is blank. External screen sharing is disabled and can only be enabled by the admin dashboard.
+                 </div>
+                 <Button
+                   size="sm"
+                   onClick={handleToggleScreenShare}
+                   disabled={isTogglingScreen}
+                   className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-8 px-4 rounded-lg flex items-center gap-1.5 shadow"
+                 >
+                   <Monitor className="h-3.5 w-3.5" /> Enable Screen Sharing Now
+                 </Button>
+                 {/* Hidden video track container to preserve WebRTC channel */}
+                 <video ref={screenRef} autoPlay playsInline className="hidden" />
+               </div>
+             )}
            </div>
         </div>
       </DialogContent>

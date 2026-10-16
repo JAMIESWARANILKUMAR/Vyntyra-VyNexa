@@ -1132,6 +1132,7 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       camera_strictness: camera_strictness || 'standard',
       proctoring_mode: resolvedProctoringMode,
       allow_ctrl_keys: Boolean(allow_ctrl_keys),
+      allow_screen_share: Boolean(args.testMetadata?.allow_screen_share),
       deadline: deadline || null,
       shuffle_questions: Boolean(shuffle_questions),
       show_instant_results: show_instant_results !== false,
@@ -1412,7 +1413,8 @@ export const getInternTestSessionFn = createServerFn({ method: "POST" })
         isUnlimited,
         currentAttemptNumber: attemptsUsed + 1,
         proctoring_mode: resolvedProctoringMode,
-        allow_ctrl_keys: Boolean(test.allow_ctrl_keys)
+        allow_ctrl_keys: Boolean(test.allow_ctrl_keys),
+        allow_screen_share: Boolean(test.allow_screen_share)
       }, 
       questions: safeQuestions,
       internId: candidateId
@@ -2141,6 +2143,7 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
     camera_strictness: z.string().optional(),
     proctoring_mode: z.string().optional(),
     allow_ctrl_keys: z.boolean().optional(),
+    allow_screen_share: z.boolean().optional(),
     max_attempts: z.number().optional(),
     time_limit_minutes: z.number().optional(),
     passing_score: z.number().optional(),
@@ -2159,6 +2162,7 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
       camera_strictness, 
       proctoring_mode,
       allow_ctrl_keys,
+      allow_screen_share,
       max_attempts,
       time_limit_minutes, 
       passing_score 
@@ -2184,6 +2188,7 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
     if (camera_strictness !== undefined) updatePayload.camera_strictness = camera_strictness;
     if (proctoring_mode !== undefined) updatePayload.proctoring_mode = proctoring_mode;
     if (allow_ctrl_keys !== undefined) updatePayload.allow_ctrl_keys = Boolean(allow_ctrl_keys);
+    if (allow_screen_share !== undefined) updatePayload.allow_screen_share = Boolean(allow_screen_share);
     if (max_attempts !== undefined) updatePayload.max_attempts = Number(max_attempts);
     if (time_limit_minutes !== undefined) updatePayload.time_limit_minutes = Number(time_limit_minutes);
     if (passing_score !== undefined) updatePayload.passing_score = Number(passing_score);
@@ -2675,3 +2680,26 @@ export const clearSubmissionStrikesFn = createServerFn({ method: "POST" })
     invalidateCache("all_cbt_submissions");
     return { success: true, message: "All violations and strikes cleared for this candidate." };
   });
+
+export const toggleAdminExamScreenShareFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    testId: z.string(),
+    allowScreenShare: z.boolean(),
+  }).parse(d))
+  .handler(async ({ data: args }) => {
+    const adminClient = getAdminClient();
+    const { error } = await adminClient
+      .from('cbt_exams')
+      .update({ allow_screen_share: args.allowScreenShare })
+      .eq('id', args.testId);
+
+    if (error) {
+      console.error("[toggleAdminExamScreenShareFn] Error:", error);
+      throw new Error(error.message);
+    }
+
+    invalidateCache("admin_cbt_exams");
+    return { success: true, allowScreenShare: args.allowScreenShare };
+  });
+
