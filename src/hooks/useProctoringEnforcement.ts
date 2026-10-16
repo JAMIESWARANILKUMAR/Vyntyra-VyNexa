@@ -1,8 +1,16 @@
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import * as faceDetection from '@tensorflow-models/face-detection';
+import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs-core';
+
+export interface DetectedDeviceInfo {
+  type: string;
+  location: string;
+  confidence: number;
+  bbox?: [number, number, number, number];
+}
 
 export type ProctoringStrictness = "lenient" | "standard" | "strict";
 export type ProctoringMode = "camera_malpractice" | "camera_monitoring" | "focus_only";
@@ -60,6 +68,10 @@ export function useProctoringEnforcement(
   const [activeWarning, setActiveWarning] = useState<{reason: string, expiresAt: number} | null>(null);
   const activeWarningRef = useRef(activeWarning);
   activeWarningRef.current = activeWarning;
+
+  const [detectedDevice, setDetectedDevice] = useState<DetectedDeviceInfo | null>(null);
+  const detectedDeviceRef = useRef<DetectedDeviceInfo | null>(null);
+  detectedDeviceRef.current = detectedDevice;
   
   const addStrike = (reason: string, isCameraOnlyEvent: boolean = false) => {
     // In camera monitoring mode, camera/gaze events are logged passively without penalty
@@ -101,29 +113,44 @@ export function useProctoringEnforcement(
     return () => clearInterval(interval);
   }, [activeWarning]);
 
-  // TFJS Gaze & Face Tracking
+  // TFJS Gaze, Face & Device Tracking
   const detectorRef = useRef<faceDetection.FaceDetector | null>(null);
+  const objectDetectorRef = useRef<cocoSsd.ObjectDetection | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const trackingRef = useRef<number | null>(null);
   const gazeViolationStartRef = useRef<number | null>(null);
+  const deviceViolationStartRef = useRef<number | null>(null);
+  const lastObjectCheckRef = useRef<number>(0);
 
   useEffect(() => {
     if (!isActive || !enableCamera || !stream) return;
 
     let isMounted = true;
-    const initDetector = async () => {
+    const initDetectors = async () => {
       try {
         await tf.ready();
         const model = faceDetection.SupportedModels.MediaPipeFaceDetector;
         const detectorConfig = { runtime: 'tfjs' as const };
-        const detector = await faceDetection.createDetector(model, detectorConfig);
-        if (isMounted) detectorRef.current = detector;
+        const [faceDet, objDet] = await Promise.all([
+          faceDetection.createDetector(model, detectorConfig).catch(err => {
+            console.error("Face detector initialization error:", err);
+            return null;
+          }),
+          cocoSsd.load({ base: 'lite_mobilenet_v2' }).catch(err => {
+            console.warn("Retrying default cocoSsd:", err);
+            return cocoSsd.load().catch(() => null);
+          })
+        ]);
+        if (isMounted) {
+          detectorRef.current = faceDet;
+          objectDetectorRef.current = objDet;
+        }
       } catch (e) {
-        console.error("Failed to load face detection model:", e);
+        console.error("Failed to load proctoring detection models:", e);
       }
     };
 
-    initDetector();
+    initDetectors();
 
     const video = document.createElement("video");
     video.srcObject = stream;
@@ -135,60 +162,125 @@ export function useProctoringEnforcement(
     };
     videoRef.current = video;
 
-    const detectFaces = async () => {
+    const detectFrames = async () => {
       if (!isMounted) return;
       
-      if (!detectorRef.current || !videoRef.current || videoRef.current.readyState < 2 || activeWarningRef.current) {
-        trackingRef.current = requestAnimationFrame(detectFaces);
+      if (!videoRef.current || videoRef.current.readyState < 2 || activeWarningRef.current) {
+        trackingRef.current = requestAnimationFrame(detectFrames);
         return;
       }
 
-      try {
-        const faces = await detectorRef.current.estimateFaces(videoRef.current);
-        const now = Date.now();
+      const now = Date.now();
 
-        if (faces.length === 0) {
-          if (!gazeViolationStartRef.current) gazeViolationStartRef.current = now;
-          else if (now - gazeViolationStartRef.current > profile.faceGraceMs) {
-            addStrike("Face not visible in camera", true);
-            gazeViolationStartRef.current = null;
+      // 1. Prohibited Electronic Device Detection (Phone, Laptop, Screen, Tablet, Remote)
+      if (objectDetectorRef.current && (now - lastObjectCheckRef.current > 500)) {
+        lastObjectCheckRef.current = now;
+        try {
+          const predictions = await objectDetectorRef.current.detect(videoRef.current);
+          const PROHIBITED_CLASSES = ['cell phone', 'laptop', 'tv', 'remote', 'tablet'];
+          const found = predictions.find(p => 
+            PROHIBITED_CLASSES.includes(p.class.toLowerCase()) && p.score >= 0.45
+          );
+
+          if (found) {
+            const className = found.class.toLowerCase();
+            const deviceName = className === 'cell phone' 
+              ? 'Mobile Phone' 
+              : className === 'tv' 
+              ? 'Secondary Screen / Monitor' 
+              : className === 'laptop' 
+              ? 'Secondary Laptop' 
+              : 'Electronic Device';
+
+            const [x, y, w, h] = found.bbox;
+            const vidW = videoRef.current.videoWidth || 640;
+            const vidH = videoRef.current.videoHeight || 480;
+            const cX = x + w / 2;
+            const cY = y + h / 2;
+            const isMiddle = (cX >= vidW * 0.20 && cX <= vidW * 0.80) && (cY >= vidH * 0.15 && cY <= vidH * 0.85);
+            const loc = isMiddle ? "middle of screen / camera view" : "camera frame";
+
+            const info: DetectedDeviceInfo = {
+              type: deviceName,
+              location: loc,
+              confidence: Math.round(found.score * 100),
+              bbox: [x, y, w, h]
+            };
+            setDetectedDevice(info);
+
+            if (!deviceViolationStartRef.current) {
+              deviceViolationStartRef.current = now;
+            } else if (now - deviceViolationStartRef.current > 1000) { // 1 second persistent device detected
+              const reason = `Prohibited Electronic Device (${deviceName}) detected in ${loc}`;
+              addStrike(reason, false);
+              setActiveWarning({
+                reason: `Prohibited Electronic Device Detected: ${deviceName} in ${loc}. Please remove all unauthorized devices, mobile phones, or secondary screens immediately!`,
+                expiresAt: Date.now() + 20000
+              });
+              deviceViolationStartRef.current = null;
+            }
+          } else {
+            deviceViolationStartRef.current = null;
+            if (detectedDeviceRef.current) {
+              setDetectedDevice(null);
+            }
           }
-        } else if (faces.length > 1) {
-          if (!gazeViolationStartRef.current) gazeViolationStartRef.current = now;
-          else if (now - gazeViolationStartRef.current > profile.multiFaceGraceMs) {
-            addStrike("Multiple faces detected in camera frame", true);
-            gazeViolationStartRef.current = null;
-          }
-        } else {
-          const face = faces[0];
-          const box = face.box;
-          const centerX = box.xMin + box.width / 2;
-          const videoWidth = videoRef.current.videoWidth;
-          
-          if (centerX < videoWidth * profile.gazeMargin || centerX > videoWidth * (1 - profile.gazeMargin)) {
+        } catch (err) {
+          // Ignore inference frame error
+        }
+      }
+
+      // 2. Face and Gaze Detection
+      if (detectorRef.current) {
+        try {
+          const faces = await detectorRef.current.estimateFaces(videoRef.current);
+
+          if (faces.length === 0) {
             if (!gazeViolationStartRef.current) gazeViolationStartRef.current = now;
-            else if (now - gazeViolationStartRef.current > profile.gazeGraceMs) {
-              addStrike("Suspicious gaze / looking away from screen", true);
+            else if (now - gazeViolationStartRef.current > profile.faceGraceMs) {
+              addStrike("Face not visible in camera", true);
+              gazeViolationStartRef.current = null;
+            }
+          } else if (faces.length > 1) {
+            if (!gazeViolationStartRef.current) gazeViolationStartRef.current = now;
+            else if (now - gazeViolationStartRef.current > profile.multiFaceGraceMs) {
+              addStrike("Multiple faces detected in camera frame", true);
               gazeViolationStartRef.current = null;
             }
           } else {
-            gazeViolationStartRef.current = null;
+            const face = faces[0];
+            const box = face.box;
+            const centerX = box.xMin + box.width / 2;
+            const videoWidth = videoRef.current.videoWidth;
+            
+            if (centerX < videoWidth * profile.gazeMargin || centerX > videoWidth * (1 - profile.gazeMargin)) {
+              if (!gazeViolationStartRef.current) gazeViolationStartRef.current = now;
+              else if (now - gazeViolationStartRef.current > profile.gazeGraceMs) {
+                addStrike("Suspicious gaze / looking away from screen", true);
+                gazeViolationStartRef.current = null;
+              }
+            } else {
+              gazeViolationStartRef.current = null;
+            }
           }
+        } catch (e) {
+          // Ignore estimation errors
         }
-      } catch (e) {
-        // Ignore estimation errors (e.g. frame not ready)
       }
 
-      trackingRef.current = requestAnimationFrame(detectFaces);
+      trackingRef.current = requestAnimationFrame(detectFrames);
     };
 
-    trackingRef.current = requestAnimationFrame(detectFaces);
+    trackingRef.current = requestAnimationFrame(detectFrames);
 
     return () => {
       isMounted = false;
       if (trackingRef.current) cancelAnimationFrame(trackingRef.current);
       if (detectorRef.current) {
         detectorRef.current.dispose();
+      }
+      if (objectDetectorRef.current && typeof (objectDetectorRef.current as any).dispose === 'function') {
+        try { (objectDetectorRef.current as any).dispose(); } catch (_) {}
       }
     };
   }, [isActive, stream, enableCamera, strictness, isMonitoringOnly]);
@@ -276,5 +368,17 @@ export function useProctoringEnforcement(
 
   const clearWarning = () => setActiveWarning(null);
 
-  return { requestFullscreen, strikes, maxStrikes, logs, stream, activeWarning, clearWarning, strictness, proctoringMode, allowCtrlKeys };
+  return { 
+    requestFullscreen, 
+    strikes, 
+    maxStrikes, 
+    logs, 
+    stream, 
+    activeWarning, 
+    clearWarning, 
+    strictness, 
+    proctoringMode, 
+    allowCtrlKeys,
+    detectedDevice 
+  };
 }

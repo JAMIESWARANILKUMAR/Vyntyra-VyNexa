@@ -252,7 +252,7 @@ function CbtExamInterface() {
   const allowCtrlKeys = Boolean(test?.allow_ctrl_keys);
 
   // Proctoring Enforcement Hook (must be declared before useEffect hooks that use strikes/logs)
-  const { requestFullscreen, strikes, maxStrikes, logs, stream, activeWarning, clearWarning } = useProctoringEnforcement(
+  const { requestFullscreen, strikes, maxStrikes, logs, stream, activeWarning, clearWarning, detectedDevice } = useProctoringEnforcement(
     examStatus === "running", 
     (reason) => handleTerminate(reason),
     isCameraEnabled,
@@ -917,24 +917,45 @@ function CbtExamInterface() {
   return (
     <div className="flex flex-col h-screen bg-slate-200 font-sans select-none overflow-hidden text-slate-900">
       
+      {/* Real-Time Prohibited Device Banner (Center Screen Alert) */}
+      {detectedDevice && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-rose-600 text-white px-6 py-3.5 rounded-full shadow-2xl border-2 border-white flex items-center gap-3.5 animate-bounce">
+          <MonitorSmartphone className="h-6 w-6 text-amber-300 animate-pulse shrink-0" />
+          <div className="flex flex-col text-left">
+            <span className="font-black text-xs uppercase tracking-wider text-amber-200">
+              Prohibited Device Warning: {detectedDevice.type} Detected!
+            </span>
+            <span className="text-[11px] text-white font-semibold">
+              Detected in {detectedDevice.location}. Remove all phones, laptops, and screens immediately!
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* 20s Warning Overlay */}
       {activeWarning && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white max-w-2xl w-full rounded-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="bg-amber-500 text-white p-6 flex flex-col items-center justify-center text-center">
-              <AlertTriangle className="h-16 w-16 mb-4 animate-bounce" />
-              <h2 className="text-3xl font-black uppercase tracking-widest">Malpractice Warning!</h2>
+            <div className={`${activeWarning.reason.toLowerCase().includes("device") || activeWarning.reason.toLowerCase().includes("phone") ? "bg-rose-600" : "bg-amber-500"} text-white p-6 flex flex-col items-center justify-center text-center`}>
+              {activeWarning.reason.toLowerCase().includes("device") || activeWarning.reason.toLowerCase().includes("phone") ? (
+                <MonitorSmartphone className="h-16 w-16 mb-4 animate-bounce text-amber-200" />
+              ) : (
+                <AlertTriangle className="h-16 w-16 mb-4 animate-bounce" />
+              )}
+              <h2 className="text-3xl font-black uppercase tracking-widest">
+                {activeWarning.reason.toLowerCase().includes("device") ? "Prohibited Device Detected!" : "Malpractice Warning!"}
+              </h2>
             </div>
             <div className="p-8 text-center bg-amber-50">
               <p className="text-xl font-bold text-slate-800 mb-2">Proctoring Violation Detected</p>
-              <p className="text-slate-600 mb-8">{activeWarning.reason}</p>
+              <p className="text-slate-600 mb-8 font-medium">{activeWarning.reason}</p>
               
               <div className="inline-flex flex-col items-center justify-center bg-white border border-amber-200 w-32 h-32 rounded-full shadow-inner">
                 <span className="text-5xl font-mono font-black text-amber-600">{warningLeft}</span>
                 <span className="text-[10px] uppercase font-bold text-slate-400 mt-1">Seconds</span>
               </div>
               <p className="mt-8 text-sm font-bold text-amber-700 bg-amber-100 p-3 rounded-sm">
-                Please return to the secure exam immediately. Repeating this action will lead to auto-termination.
+                Please return to the secure exam immediately. Remove all phones, secondary screens, or gadgets. Repeating this action will lead to auto-termination.
               </p>
             </div>
             <div className="p-4 border-t border-amber-200 bg-white flex justify-center">
@@ -1011,6 +1032,16 @@ function CbtExamInterface() {
                   <div className="absolute top-2 left-2 flex items-center gap-1.5 text-red-600 font-black text-[9px] uppercase tracking-widest bg-white/90 backdrop-blur-sm px-2 py-1 rounded-sm border border-slate-200 shadow-sm">
                     <div className="h-2 w-2 rounded-full bg-red-600 animate-pulse" /> REC
                   </div>
+                  {detectedDevice && (
+                    <div className="absolute inset-0 border-2 border-rose-500 bg-rose-500/15 flex flex-col justify-between p-2 pointer-events-none z-10 animate-pulse">
+                      <span className="bg-rose-600 text-white font-mono text-[9px] font-black uppercase px-2 py-0.5 rounded self-end shadow">
+                        ⚠ {detectedDevice.type} ({detectedDevice.confidence}%)
+                      </span>
+                      <span className="bg-black/80 text-rose-300 text-[8px] font-bold px-1.5 py-0.5 rounded text-center">
+                        Position: {detectedDevice.location}
+                      </span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="relative rounded-sm border border-slate-300 aspect-video p-3 bg-white flex flex-col items-center justify-center text-center">
