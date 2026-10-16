@@ -5,7 +5,7 @@ import { getInternSubmissionResultFn } from "@/lib/cbt.functions";
 import { Button } from "@/components/ui/button";
 import { 
   Trophy, XCircle, BrainCircuit, Activity, Clock, ShieldAlert, ArrowLeft, 
-  Download, CheckCircle2, AlertTriangle, Sparkles, Target, Lightbulb, FileText, CheckCircle
+  Download, CheckCircle2, AlertTriangle, Sparkles, Target, Lightbulb, FileText, CheckCircle, RotateCcw
 } from "lucide-react";
 import { 
   downloadCbtDetailedReportPdf, 
@@ -154,12 +154,22 @@ function CbtResults() {
             </div>
           </div>
 
-          <Button 
-            onClick={handleDownloadPdf}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider h-11 px-5 rounded-xl flex items-center gap-2 shadow-md hover:shadow-indigo-500/20 transition-all cursor-pointer"
-          >
-            <Download className="h-4 w-4" /> Download Detailed Report (PDF)
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button 
+              onClick={handleDownloadPdf}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider h-11 px-5 rounded-xl flex items-center gap-2 shadow-md hover:shadow-indigo-500/20 transition-all cursor-pointer"
+            >
+              <Download className="h-4 w-4" /> Download Detailed Report (PDF)
+            </Button>
+            {result.canRetake && (
+              <Button
+                onClick={() => window.location.href = `/cbt/${testId}`}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider h-11 px-5 rounded-xl flex items-center gap-2 shadow-md hover:shadow-emerald-500/20 transition-all cursor-pointer"
+              >
+                <RotateCcw className="h-4 w-4" /> Retake Test Now
+              </Button>
+            )}
+          </div>
         </div>
 
         {isTerminated ? (
@@ -194,6 +204,20 @@ function CbtResults() {
                 <div className={`inline-block px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider ${passed ? "bg-emerald-500 text-white" : "bg-rose-100 text-rose-800 border border-rose-200"}`}>
                   {passed ? "QUALIFIED / PASSED" : "FAILED / NEEDS RETAKE"}
                 </div>
+                <div className={`mt-4 pt-3 border-t text-xs flex items-center justify-between font-medium ${passed ? "border-emerald-500/50 text-emerald-100" : "border-slate-100 text-slate-600"}`}>
+                  <span>Attempt Record:</span>
+                  <span className="font-bold font-mono">
+                    {result.attemptsUsed || 1} / {result.isUnlimited ? "Unlimited" : (result.maxAttempts || 1)}
+                  </span>
+                </div>
+                {result.canRetake && (
+                  <Button
+                    onClick={() => window.location.href = `/cbt/${testId}`}
+                    className={`mt-3 w-full font-bold text-xs uppercase tracking-wider py-2 rounded-xl flex items-center justify-center gap-2 shadow-sm ${passed ? "bg-white text-emerald-800 hover:bg-emerald-50" : "bg-emerald-600 text-white hover:bg-emerald-700"}`}
+                  >
+                    <RotateCcw className="h-4 w-4" /> Retake Test Now
+                  </Button>
+                )}
               </div>
 
               {/* Performance Breakdown Box (Shows Exactly How Many Are Correct) */}

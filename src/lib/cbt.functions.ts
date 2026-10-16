@@ -1075,6 +1075,8 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       shuffle_questions,
       show_instant_results,
       max_attempts,
+      proctoring_mode,
+      allow_ctrl_keys,
       category 
     } = args.testMetadata;
     
@@ -1113,6 +1115,7 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
     const allocationMode = resolvedTeamIds.length > 0 && resolvedInternIds.length === 0 ? 'team' : 'individual';
 
     // 1. Create the CBT Exam with graceful multi-tier fallback
+    const resolvedProctoringMode = proctoring_mode || (enable_camera !== false ? (camera_strictness === "monitoring" ? "camera_monitoring" : "camera_malpractice") : "focus_only");
     const fullPayload: any = {
       title: title || 'New AI CBT Exam',
       description: description || 'Generated AI Assessment',
@@ -1127,6 +1130,8 @@ export const saveGeneratedTestFn = createServerFn({ method: "POST" })
       enable_camera: enable_camera !== false,
       camera_required: enable_camera !== false,
       camera_strictness: camera_strictness || 'standard',
+      proctoring_mode: resolvedProctoringMode,
+      allow_ctrl_keys: Boolean(allow_ctrl_keys),
       deadline: deadline || null,
       shuffle_questions: Boolean(shuffle_questions),
       show_instant_results: show_instant_results !== false,
@@ -1346,12 +1351,22 @@ export const getInternTestSessionFn = createServerFn({ method: "POST" })
   .handler(async ({ data: args, context }) => {
     const adminClient = getAdminClient();
     
-    const [{ data: test, error: testErr }, { data: questions, error: qErr }, { data: profile }] = await Promise.all([
+    const [{ data: test, error: testErr }, { data: questions, error: qErr }, { data: profile }, { data: userSubmissions }] = await Promise.all([
       adminClient.from('cbt_exams').select('*').eq('id', args.testId).single(),
       adminClient.from('cbt_questions').select('*').eq('exam_id', args.testId).order('order_index', { ascending: true }),
-      adminClient.from('profiles').select('id, intern_id, employee_id, full_name, email').eq('id', context.user.id).single()
+      adminClient.from('profiles').select('id, intern_id, employee_id, full_name, email').eq('id', context.user.id).single(),
+      adminClient.from('cbt_submissions').select('id, submitted_at, total_score').eq('exam_id', args.testId).eq('intern_id', context.user.id)
     ]);
     if (testErr || !test) throw new Error("Test not found");
+
+    const attemptsUsed = userSubmissions?.length || 0;
+    const maxAttempts = Number(test.max_attempts) || 1;
+    const isUnlimited = maxAttempts >= 999 || maxAttempts === 0;
+    const canAttempt = isUnlimited || attemptsUsed < maxAttempts;
+
+    if (!canAttempt) {
+      throw new Error(`Maximum attempt limit reached. You have completed all ${maxAttempts} allowed attempt(s) for this assessment.`);
+    }
     
     let questionsData = questions;
     if (qErr && qErr.message?.includes("exam_id")) {
@@ -1385,12 +1400,19 @@ export const getInternTestSessionFn = createServerFn({ method: "POST" })
     }
 
     const candidateId = profile?.intern_id || profile?.employee_id || (test.intern_ids && test.intern_ids[0]) || context.user.id.slice(0, 8).toUpperCase();
-    
+    const resolvedProctoringMode = test.proctoring_mode || (test.enable_camera !== false ? (test.camera_strictness === "monitoring" ? "camera_monitoring" : "camera_malpractice") : "focus_only");
+
     return { 
       test: {
         ...test,
         internId: candidateId,
-        internName: profile?.full_name || profile?.email || "Candidate"
+        internName: profile?.full_name || profile?.email || "Candidate",
+        attemptsUsed,
+        maxAttempts,
+        isUnlimited,
+        currentAttemptNumber: attemptsUsed + 1,
+        proctoring_mode: resolvedProctoringMode,
+        allow_ctrl_keys: Boolean(test.allow_ctrl_keys)
       }, 
       questions: safeQuestions,
       internId: candidateId
@@ -1824,6 +1846,16 @@ export const getInternSubmissionResultFn = createServerFn({ method: "POST" })
       } catch (_) {}
     }
 
+    const maxAttempts = sub.cbt_exams?.max_attempts ?? 1;
+    const isUnlimited = maxAttempts >= 999 || maxAttempts === 0;
+    const { count: attemptsUsedCount } = await adminClient
+      .from('cbt_submissions')
+      .select('*', { count: 'exact', head: true })
+      .eq('exam_id', args.testId)
+      .eq('intern_id', sub.intern_id);
+    const attemptsUsed = attemptsUsedCount || 1;
+    const canRetake = isUnlimited || (attemptsUsed < maxAttempts);
+
     return {
       ...sub,
       score: actualScore,
@@ -1834,7 +1866,11 @@ export const getInternSubmissionResultFn = createServerFn({ method: "POST" })
       questions: questions || [],
       answers: answers || [],
       questionsReview: parsedFeedback?.questionsReview || null,
-      proctoring_logs: logs || []
+      proctoring_logs: logs || [],
+      canRetake,
+      attemptsUsed,
+      maxAttempts,
+      isUnlimited
     };
   });
 
@@ -1945,8 +1981,31 @@ export const listInternSubmissionsFn = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<any[]> => {
     const adminClient = getAdminClient();
     const userId = context.user.id;
-    const { data } = await adminClient.from('cbt_submissions').select('*, cbt_exams(*)').eq('intern_id', userId).order('started_at', { ascending: false });
-    return data || [];
+    const { data: subs } = await adminClient.from('cbt_submissions').select('*, cbt_exams(*)').eq('intern_id', userId).order('started_at', { ascending: false });
+    
+    // Count submissions per exam
+    const attemptsPerExam: Record<string, number> = {};
+    for (const s of (subs || [])) {
+      attemptsPerExam[s.exam_id] = (attemptsPerExam[s.exam_id] || 0) + 1;
+    }
+
+    const enriched = (subs || []).map((sub: any) => {
+      const exam = sub.cbt_exams;
+      const maxAttempts = Number(exam?.max_attempts) || 1;
+      const isUnlimited = maxAttempts >= 999 || maxAttempts === 0;
+      const attemptsCount = attemptsPerExam[sub.exam_id] || 1;
+      const canRetake = exam?.status === 'published' && (isUnlimited || attemptsCount < maxAttempts);
+
+      return {
+        ...sub,
+        attemptsUsed: attemptsCount,
+        maxAttempts,
+        isUnlimited,
+        canRetake,
+      };
+    });
+
+    return enriched;
   });
 
 export const listCbtTargetsFn = createServerFn({ method: "GET" })
@@ -2026,22 +2085,46 @@ export const listInternAvailableExamsFn = createServerFn({ method: "GET" })
     const [{ data: exams }, { data: userTasks }, { data: submissions }] = await Promise.all([
       adminClient.from('cbt_exams').select('*').eq('status', 'published'),
       adminClient.from('tasks').select('team_id').eq('assigned_to', userId).not('team_id', 'is', null),
-      adminClient.from('cbt_submissions').select('exam_id').eq('intern_id', userId)
+      adminClient.from('cbt_submissions').select('id, exam_id, total_score, submitted_at').eq('intern_id', userId)
     ]);
     
     const userTeams = Array.from(new Set((userTasks || []).map(t => t.team_id)));
     
     // Filter exams where intern_ids contains userId OR team_ids overlaps with userTeams
-    const availableExams = (exams || []).filter(exam => {
+    const targetedExams = (exams || []).filter(exam => {
       const isTargetedIntern = exam.intern_ids && exam.intern_ids.includes(userId);
       const isTargetedTeam = exam.team_ids && exam.team_ids.some((tid: string) => userTeams.includes(tid));
       return isTargetedIntern || isTargetedTeam;
     });
     
-    const submittedExamIds = new Set((submissions || []).map(s => s.exam_id));
+    const subsByExam: Record<string, any[]> = {};
+    for (const s of (submissions || [])) {
+      if (!subsByExam[s.exam_id]) subsByExam[s.exam_id] = [];
+      subsByExam[s.exam_id].push(s);
+    }
+
+    const availableExams = targetedExams.map(exam => {
+      const examSubs = subsByExam[exam.id] || [];
+      const attemptsUsed = examSubs.length;
+      const maxAttempts = Number(exam.max_attempts) || 1;
+      const isUnlimited = maxAttempts >= 999 || maxAttempts === 0;
+      const hasAttemptsRemaining = isUnlimited || attemptsUsed < maxAttempts;
+      const lastScore = examSubs.length > 0 ? examSubs[0].total_score : null;
+
+      return {
+        ...exam,
+        attemptsUsed,
+        maxAttempts,
+        isUnlimited,
+        hasAttemptsRemaining,
+        canRetake: hasAttemptsRemaining && attemptsUsed > 0,
+        isNew: attemptsUsed === 0,
+        lastScore
+      };
+    });
     
-    // Return only exams that haven't been submitted yet
-    return availableExams.filter(exam => !submittedExamIds.has(exam.id));
+    // Return exams that have attempts remaining
+    return availableExams.filter(exam => exam.hasAttemptsRemaining);
   });
 
 export const reassignAdminTestFn = createServerFn({ method: "POST" })
@@ -2056,6 +2139,9 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
     deadline: z.string().optional(),
     enable_camera: z.boolean().optional(),
     camera_strictness: z.string().optional(),
+    proctoring_mode: z.string().optional(),
+    allow_ctrl_keys: z.boolean().optional(),
+    max_attempts: z.number().optional(),
     time_limit_minutes: z.number().optional(),
     passing_score: z.number().optional(),
   }).parse(d))
@@ -2065,12 +2151,15 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
       testId, 
       target_type, 
       target_id, 
-      target_ids,
-      target_intern_ids,
-      target_team_ids,
+      target_ids, 
+      target_intern_ids, 
+      target_team_ids, 
       deadline, 
       enable_camera, 
       camera_strictness, 
+      proctoring_mode,
+      allow_ctrl_keys,
+      max_attempts,
       time_limit_minutes, 
       passing_score 
     } = args;
@@ -2093,6 +2182,9 @@ export const reassignAdminTestFn = createServerFn({ method: "POST" })
       updatePayload.camera_required = enable_camera;
     }
     if (camera_strictness !== undefined) updatePayload.camera_strictness = camera_strictness;
+    if (proctoring_mode !== undefined) updatePayload.proctoring_mode = proctoring_mode;
+    if (allow_ctrl_keys !== undefined) updatePayload.allow_ctrl_keys = Boolean(allow_ctrl_keys);
+    if (max_attempts !== undefined) updatePayload.max_attempts = Number(max_attempts);
     if (time_limit_minutes !== undefined) updatePayload.time_limit_minutes = Number(time_limit_minutes);
     if (passing_score !== undefined) updatePayload.passing_score = Number(passing_score);
 

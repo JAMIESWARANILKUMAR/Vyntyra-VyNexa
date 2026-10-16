@@ -5,6 +5,7 @@ import '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs-core';
 
 export type ProctoringStrictness = "lenient" | "standard" | "strict";
+export type ProctoringMode = "camera_malpractice" | "camera_monitoring" | "focus_only";
 
 export const STRICTNESS_PROFILES: Record<ProctoringStrictness, {
   maxStrikes: number;
@@ -44,10 +45,13 @@ export function useProctoringEnforcement(
   isActive: boolean, 
   onTerminate: (reason: string) => void,
   enableCamera: boolean = true,
-  strictness: ProctoringStrictness = "standard"
+  strictness: ProctoringStrictness = "standard",
+  proctoringMode: ProctoringMode = "camera_malpractice",
+  allowCtrlKeys: boolean = false
 ) {
   const profile = STRICTNESS_PROFILES[strictness] || STRICTNESS_PROFILES.standard;
-  const maxStrikes = profile.maxStrikes;
+  const isMonitoringOnly = proctoringMode === "camera_monitoring";
+  const maxStrikes = isMonitoringOnly ? 999 : profile.maxStrikes;
 
   const [strikes, setStrikes] = useState(0);
   const [logs, setLogs] = useState<any[]>([]);
@@ -57,21 +61,31 @@ export function useProctoringEnforcement(
   const activeWarningRef = useRef(activeWarning);
   activeWarningRef.current = activeWarning;
   
-  const addStrike = (reason: string) => {
+  const addStrike = (reason: string, isCameraOnlyEvent: boolean = false) => {
+    // In camera monitoring mode, camera/gaze events are logged passively without penalty
+    if (isMonitoringOnly && isCameraOnlyEvent) {
+      setLogs(l => [...l, { time: new Date().toISOString(), reason: `[Monitoring Telemetry] ${reason}`, passive: true }]);
+      return;
+    }
+
     if (activeWarningRef.current) return; 
 
     setStrikes(prev => {
       const newStrikes = prev + 1;
       setLogs(l => [...l, { time: new Date().toISOString(), reason }]);
       
-      if (newStrikes > maxStrikes) {
+      if (!isMonitoringOnly && newStrikes > maxStrikes) {
         toast.error(`TERMINATED: Maximum strikes exceeded (${newStrikes}/${maxStrikes}) due to proctoring violation!`, { duration: 6000 });
         onTerminate(reason);
         return newStrikes;
       }
       
-      toast.error(`Warning: ${reason}. Strike ${newStrikes}/${maxStrikes}`);
-      setActiveWarning({ reason, expiresAt: Date.now() + 20000 }); // 20s warning overlay
+      if (isMonitoringOnly) {
+        toast.info(`Proctoring Observation: ${reason}`, { duration: 3000 });
+      } else {
+        toast.error(`Warning: ${reason}. Strike ${newStrikes}/${maxStrikes}`);
+        setActiveWarning({ reason, expiresAt: Date.now() + 20000 }); // 20s warning overlay
+      }
       
       return newStrikes;
     });
@@ -136,13 +150,13 @@ export function useProctoringEnforcement(
         if (faces.length === 0) {
           if (!gazeViolationStartRef.current) gazeViolationStartRef.current = now;
           else if (now - gazeViolationStartRef.current > profile.faceGraceMs) {
-            addStrike("Face not visible in camera");
+            addStrike("Face not visible in camera", true);
             gazeViolationStartRef.current = null;
           }
         } else if (faces.length > 1) {
           if (!gazeViolationStartRef.current) gazeViolationStartRef.current = now;
           else if (now - gazeViolationStartRef.current > profile.multiFaceGraceMs) {
-            addStrike("Multiple faces detected in camera frame");
+            addStrike("Multiple faces detected in camera frame", true);
             gazeViolationStartRef.current = null;
           }
         } else {
@@ -154,7 +168,7 @@ export function useProctoringEnforcement(
           if (centerX < videoWidth * profile.gazeMargin || centerX > videoWidth * (1 - profile.gazeMargin)) {
             if (!gazeViolationStartRef.current) gazeViolationStartRef.current = now;
             else if (now - gazeViolationStartRef.current > profile.gazeGraceMs) {
-              addStrike("Suspicious gaze / looking away from screen");
+              addStrike("Suspicious gaze / looking away from screen", true);
               gazeViolationStartRef.current = null;
             }
           } else {
@@ -177,7 +191,7 @@ export function useProctoringEnforcement(
         detectorRef.current.dispose();
       }
     };
-  }, [isActive, stream, enableCamera, strictness]);
+  }, [isActive, stream, enableCamera, strictness, isMonitoringOnly]);
 
   // Tab visibility, fullscreen, shortcuts tracking
   useEffect(() => {
@@ -197,6 +211,16 @@ export function useProctoringEnforcement(
     };
     
     const handleKeyDown = (e: KeyboardEvent) => {
+      // If admin enabled Ctrl keys, permit copy/paste/code editing shortcuts
+      if (allowCtrlKeys) {
+        if (e.key === "F12" || (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J" || e.key === "C"))) {
+          e.preventDefault();
+          e.stopPropagation();
+          addStrike("Restricted Developer Tools Shortcut");
+        }
+        return;
+      }
+
       const forbiddenKeys = ["F12", "Meta", "OS", "Alt", "AltGraph"];
       const forbiddenCombos = e.ctrlKey || e.metaKey || e.altKey;
       if (forbiddenKeys.includes(e.key) || forbiddenCombos) {
@@ -207,6 +231,7 @@ export function useProctoringEnforcement(
     };
     
     const preventDefault = (e: Event) => {
+      if (allowCtrlKeys) return;
       e.preventDefault();
       addStrike("Clipboard/Menu Action Disabled");
     };
@@ -230,7 +255,7 @@ export function useProctoringEnforcement(
       document.removeEventListener("cut", preventDefault);
       document.removeEventListener("paste", preventDefault);
     };
-  }, [isActive, maxStrikes]);
+  }, [isActive, maxStrikes, allowCtrlKeys]);
 
   const requestFullscreen = async () => {
     try {
@@ -251,5 +276,5 @@ export function useProctoringEnforcement(
 
   const clearWarning = () => setActiveWarning(null);
 
-  return { requestFullscreen, strikes, maxStrikes, logs, stream, activeWarning, clearWarning, strictness };
+  return { requestFullscreen, strikes, maxStrikes, logs, stream, activeWarning, clearWarning, strictness, proctoringMode, allowCtrlKeys };
 }

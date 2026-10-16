@@ -91,6 +91,8 @@ function AdminCbtGenerateView() {
   const [passingScore, setPassingScore] = useState(50);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(30);
   const [enableCamera, setEnableCamera] = useState(true);
+  const [proctoringMode, setProctoringMode] = useState<"camera_malpractice" | "camera_monitoring" | "focus_only">("camera_malpractice");
+  const [allowCtrlKeys, setAllowCtrlKeys] = useState(false);
   const [cameraStrictness, setCameraStrictness] = useState<"lenient" | "standard" | "strict">("standard");
   const [deadline, setDeadline] = useState("");
   const [shuffleQuestions, setShuffleQuestions] = useState(false);
@@ -173,7 +175,9 @@ function AdminCbtGenerateView() {
       description: description || "Technical Assessment",
       timeLimitMinutes,
       passingScore,
-      enableCamera,
+      enableCamera: proctoringMode !== "focus_only",
+      proctoringMode,
+      allowCtrlKeys,
       cameraStrictness,
       deadline,
       targetLabel,
@@ -334,8 +338,10 @@ function AdminCbtGenerateView() {
           target_id: targetType === "team" ? selectedTeamIds[0] : selectedInternIds[0],
           passing_score: Number(passingScore) || 50,
           time_limit_minutes: Number(timeLimitMinutes) || 30,
-          enable_camera: enableCamera,
+          enable_camera: proctoringMode !== "focus_only",
           camera_strictness: cameraStrictness,
+          proctoring_mode: proctoringMode,
+          allow_ctrl_keys: allowCtrlKeys,
           deadline: deadline ? new Date(deadline).toISOString() : null,
           shuffle_questions: shuffleQuestions,
           show_instant_results: showInstantResults,
@@ -511,44 +517,85 @@ function AdminCbtGenerateView() {
                 </div>
               </div>
 
-              {/* Camera Proctoring Toggle */}
+              {/* Camera Proctoring Policy (3 Distinct Modes) */}
               <div>
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
-                  Camera Proctoring Policy
+                  Proctoring Enforcement Mode
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <button
                     type="button"
-                    onClick={() => setEnableCamera(true)}
-                    className={`flex items-center gap-2 p-3 rounded-xl border text-xs font-bold transition-all text-left ${
-                      enableCamera 
-                        ? "bg-indigo-50 border-indigo-400 text-indigo-900 shadow-xs" 
-                        : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                    onClick={() => { setProctoringMode("camera_malpractice"); setEnableCamera(true); }}
+                    className={`flex flex-col gap-1.5 p-3 rounded-xl border text-xs font-bold transition-all text-left ${
+                      proctoringMode === "camera_malpractice"
+                        ? "bg-indigo-50/90 border-indigo-500 text-indigo-950 shadow-xs ring-2 ring-indigo-500/20" 
+                        : "bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-white"
                     }`}
                   >
-                    <Camera className="h-4 w-4 text-indigo-600 shrink-0" />
-                    <div>
-                      <div>Camera Enforced</div>
-                      <div className="text-[10px] font-normal text-slate-500">Live feed & face-tracking active</div>
+                    <div className="flex items-center gap-2">
+                      <Camera className="h-4 w-4 text-rose-600 shrink-0" />
+                      <span className="font-extrabold text-slate-900">Camera + Direct Malpractice</span>
+                    </div>
+                    <div className="text-[10px] font-normal text-slate-600 leading-snug">
+                      Live video + AI face/gaze tracking. Auto-strikes and instant termination upon policy violations.
                     </div>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setEnableCamera(false)}
-                    className={`flex items-center gap-2 p-3 rounded-xl border text-xs font-bold transition-all text-left ${
-                      !enableCamera 
-                        ? "bg-emerald-50 border-emerald-400 text-emerald-900 shadow-xs" 
-                        : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                    onClick={() => { setProctoringMode("camera_monitoring"); setEnableCamera(true); }}
+                    className={`flex flex-col gap-1.5 p-3 rounded-xl border text-xs font-bold transition-all text-left ${
+                      proctoringMode === "camera_monitoring"
+                        ? "bg-amber-50/90 border-amber-500 text-amber-950 shadow-xs ring-2 ring-amber-500/20" 
+                        : "bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-white"
                     }`}
                   >
-                    <CameraOff className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <div>
-                      <div>Focus Only (No Cam)</div>
-                      <div className="text-[10px] font-normal text-slate-500">Only tab & window tracking</div>
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-amber-600 shrink-0" />
+                      <span className="font-extrabold text-slate-900">Only Camera Monitoring</span>
+                    </div>
+                    <div className="text-[10px] font-normal text-slate-600 leading-snug">
+                      Passive video feed streamed to Proctor Hub. No automatic strikes or sudden exam terminations.
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setProctoringMode("focus_only"); setEnableCamera(false); }}
+                    className={`flex flex-col gap-1.5 p-3 rounded-xl border text-xs font-bold transition-all text-left ${
+                      proctoringMode === "focus_only"
+                        ? "bg-emerald-50/90 border-emerald-500 text-emerald-950 shadow-xs ring-2 ring-emerald-500/20" 
+                        : "bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <CameraOff className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span className="font-extrabold text-slate-900">Focus Only (No Cam)</span>
+                    </div>
+                    <div className="text-[10px] font-normal text-slate-600 leading-snug">
+                      Webcam disabled. Only tracks tab switching, window blur, and fullscreen drops.
                     </div>
                   </button>
                 </div>
+              </div>
+
+              {/* Ctrl Keys / Shortcut Permission */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Terminal className="h-3.5 w-3.5 text-indigo-600" />
+                    Allow Ctrl Keys & Shortcuts
+                  </div>
+                  <div className="text-[10px] text-slate-500">
+                    Permits Ctrl+C, Ctrl+V, Select-All, Undo without malpractice strikes (Recommended for coding/IDE tests)
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={allowCtrlKeys}
+                  onChange={e => setAllowCtrlKeys(e.target.checked)}
+                  className="h-4 w-4 text-indigo-600 rounded cursor-pointer"
+                />
               </div>
 
               {/* Camera Strictness Selector (Visible when Camera is Enforced) */}
@@ -1669,6 +1716,9 @@ function AdminCbtSubmissionsView() {
   const [adjustTime, setAdjustTime] = useState<number>(30);
   const [adjustPassScore, setAdjustPassScore] = useState<number>(50);
   const [adjustEnableCamera, setAdjustEnableCamera] = useState<boolean>(true);
+  const [adjustProctoringMode, setAdjustProctoringMode] = useState<string>("camera_malpractice");
+  const [adjustAllowCtrlKeys, setAdjustAllowCtrlKeys] = useState<boolean>(false);
+  const [adjustMaxAttempts, setAdjustMaxAttempts] = useState<number>(1);
   const [adjustStrictness, setAdjustStrictness] = useState<string>("standard");
   const [adjustDeadline, setAdjustDeadline] = useState<string>("");
   const [isSavingAdjustments, setIsSavingAdjustments] = useState<boolean>(false);
@@ -1688,8 +1738,11 @@ function AdminCbtSubmissionsView() {
           target_team_ids: adjustingExam.team_ids || [],
           time_limit_minutes: Number(adjustTime) || 30,
           passing_score: Number(adjustPassScore) || 50,
-          enable_camera: adjustEnableCamera,
+          enable_camera: adjustProctoringMode !== "focus_only",
           camera_strictness: adjustStrictness,
+          proctoring_mode: adjustProctoringMode,
+          allow_ctrl_keys: adjustAllowCtrlKeys,
+          max_attempts: Number(adjustMaxAttempts) || 1,
           deadline: adjustDeadline ? new Date(adjustDeadline).toISOString() : ""
         }
       });
@@ -1969,6 +2022,9 @@ function AdminCbtSubmissionsView() {
                                 setAdjustTime(t.time_limit_minutes || 30);
                                 setAdjustPassScore(t.passing_score || 50);
                                 setAdjustEnableCamera(t.enable_camera !== false);
+                                setAdjustProctoringMode(t.proctoring_mode || (t.enable_camera !== false ? "camera_malpractice" : "focus_only"));
+                                setAdjustAllowCtrlKeys(Boolean(t.allow_ctrl_keys));
+                                setAdjustMaxAttempts(t.max_attempts ?? 1);
                                 setAdjustStrictness(t.camera_strictness || "standard");
                                 setAdjustDeadline(t.deadline ? new Date(t.deadline).toISOString().slice(0, 16) : "");
                               }}
@@ -2113,21 +2169,57 @@ function AdminCbtSubmissionsView() {
                 />
               </div>
 
+              {/* Attempts Allocation */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                  Allowed Attempts / Retake Policy
+                </label>
+                <Select value={String(adjustMaxAttempts)} onValueChange={(val) => setAdjustMaxAttempts(Number(val))}>
+                  <SelectTrigger className="w-full bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Single Attempt (1 Time Only)</SelectItem>
+                    <SelectItem value="2">2 Attempts</SelectItem>
+                    <SelectItem value="3">3 Attempts (Standard Retake)</SelectItem>
+                    <SelectItem value="5">5 Attempts</SelectItem>
+                    <SelectItem value="999">Unlimited Retakes (Practice / Open)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Proctoring Mode Selection */}
               <div className="p-3.5 bg-slate-50 border rounded-xl space-y-3">
-                <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Proctoring Mode
+                  </label>
+                  <Select value={adjustProctoringMode} onValueChange={(val) => setAdjustProctoringMode(val)}>
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="camera_malpractice">Camera with Direct Malpractice (Auto-Strikes & Termination)</SelectItem>
+                      <SelectItem value="camera_monitoring">Only Camera Monitoring (Passive Stream, No Auto-Strikes)</SelectItem>
+                      <SelectItem value="focus_only">Focus Only (No Camera, Tab & Blur Tracking)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200">
                   <div>
-                    <div className="font-bold text-slate-900 text-xs">Webcam Proctoring</div>
-                    <div className="text-[11px] text-slate-500">Require camera & periodic candidate snapshots</div>
+                    <div className="font-bold text-slate-900 text-xs">Allow Ctrl Keys / Shortcuts</div>
+                    <div className="text-[11px] text-slate-500">Allow Ctrl+C, Ctrl+V, Select-All without strikes</div>
                   </div>
                   <input 
                     type="checkbox" 
-                    checked={adjustEnableCamera}
-                    onChange={e => setAdjustEnableCamera(e.target.checked)}
-                    className="h-4 w-4 text-sky-600 rounded"
+                    checked={adjustAllowCtrlKeys}
+                    onChange={e => setAdjustAllowCtrlKeys(e.target.checked)}
+                    className="h-4 w-4 text-sky-600 rounded cursor-pointer"
                   />
                 </div>
 
-                {adjustEnableCamera && (
+                {adjustProctoringMode === "camera_malpractice" && (
                   <div>
                     <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
                       Camera Strictness & Malpractice Tolerance

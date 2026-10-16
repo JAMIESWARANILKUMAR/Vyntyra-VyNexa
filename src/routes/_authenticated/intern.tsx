@@ -9,7 +9,7 @@ import {
   Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
   Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, ArrowLeft, Zap, ChevronRight, X, Trophy, Flame, AlertCircle,
-  Printer, Receipt, Tag, Building2, CheckCheck, Menu, Globe
+  Printer, Receipt, Tag, Building2, CheckCheck, Menu, Globe, RotateCcw
  } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -219,6 +219,33 @@ function CbtResultsSection() {
                   </div>
                 </div>
               )}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100">
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span className="font-semibold text-slate-700">Attempt:</span>
+                  <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-mono font-medium">
+                    {sub.attemptsUsed || 1} / {sub.isUnlimited ? "Unlimited" : (sub.maxAttempts || 1)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs h-8 border-indigo-200 text-indigo-700 hover:bg-indigo-50 flex items-center gap-1.5"
+                    onClick={() => window.location.href = `/cbt/results/${sub.exam_id}`}
+                  >
+                    <FileText className="h-3.5 w-3.5" /> View Mark Sheet & PDF
+                  </Button>
+                  {sub.canRetake && (
+                    <Button
+                      size="sm"
+                      className="text-xs h-8 bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-sm"
+                      onClick={() => window.location.href = `/cbt/${sub.exam_id}`}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" /> Retake Test Now
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -5722,14 +5749,50 @@ function CbtAvailableExamsSection() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {exams.map((exam: any) => (
-            <div key={exam.id} className="p-5 border border-indigo-100 rounded-xl bg-indigo-50/50 hover:bg-indigo-50 transition flex flex-col justify-between">
+            <div key={exam.id} className="p-5 border border-indigo-100 rounded-xl bg-indigo-50/50 hover:bg-indigo-50 transition flex flex-col justify-between gap-4">
               <div>
-                <h4 className="font-bold text-indigo-900 mb-1">{exam.title}</h4>
-                <p className="text-xs text-indigo-700/80 mb-4 line-clamp-2">{exam.description}</p>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h4 className="font-bold text-indigo-900 leading-tight">{exam.title}</h4>
+                  {exam.canRetake ? (
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                      Retake Available ({exam.attemptsUsed} used)
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                      New Assessment
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-indigo-700/80 mb-3 line-clamp-2">{exam.description || "Technical assessment and knowledge evaluation."}</p>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 mb-2">
+                  <span className="bg-white/80 px-2 py-0.5 rounded border border-slate-200 font-medium">
+                    ⏱️ {exam.time_limit_minutes} Mins
+                  </span>
+                  <span className="bg-white/80 px-2 py-0.5 rounded border border-slate-200 font-medium">
+                    🎯 Pass: {exam.passing_score}%
+                  </span>
+                  <span className="bg-white/80 px-2 py-0.5 rounded border border-slate-200 font-medium">
+                    🔄 Attempts: {exam.isUnlimited ? "Unlimited" : `${exam.attemptsUsed || 0} / ${exam.maxAttempts}`}
+                  </span>
+                </div>
               </div>
-              <Button onClick={() => window.location.href = "/cbt/" + exam.id} className="w-full bg-indigo-600 hover:bg-indigo-700">
-                Start Exam Now
-              </Button>
+              <div>
+                {exam.canRetake ? (
+                  <Button
+                    onClick={() => window.location.href = "/cbt/" + exam.id}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    <RotateCcw className="h-4 w-4" /> Retake Test (Attempt {(exam.attemptsUsed || 0) + 1})
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => window.location.href = "/cbt/" + exam.id}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center justify-center gap-2"
+                  >
+                    <Play className="h-4 w-4" /> Start Exam Now
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </div>

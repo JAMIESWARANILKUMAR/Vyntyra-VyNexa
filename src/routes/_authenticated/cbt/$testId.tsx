@@ -97,6 +97,8 @@ function CbtExamInterface() {
   const [activeQ, setActiveQ] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [overallTimeLeft, setOverallTimeLeft] = useState<number | null>(null);
+  const questionTimersRef = useRef<{ [key: number]: number }>({});
   const [ipAddress, setIpAddress] = useState("Fetching IP...");
   
   // Post-test state
@@ -243,17 +245,31 @@ function CbtExamInterface() {
     });
   };
 
-  const isCameraEnabled = test?.enable_camera !== false && test?.camera_required !== false;
+  const isCameraEnabled = test?.proctoring_mode === "focus_only" ? false : (test?.enable_camera !== false && test?.camera_required !== false);
   const isExpired = Boolean(test?.deadline && new Date(test.deadline).getTime() < Date.now());
   const strictness = (test?.camera_strictness || "standard") as "lenient" | "standard" | "strict";
+  const proctoringMode = test?.proctoring_mode || (isCameraEnabled ? "camera_malpractice" : "focus_only");
+  const allowCtrlKeys = Boolean(test?.allow_ctrl_keys);
 
   // Proctoring Enforcement Hook (must be declared before useEffect hooks that use strikes/logs)
   const { requestFullscreen, strikes, maxStrikes, logs, stream, activeWarning, clearWarning } = useProctoringEnforcement(
     examStatus === "running", 
     (reason) => handleTerminate(reason),
     isCameraEnabled,
-    strictness
+    strictness,
+    proctoringMode,
+    allowCtrlKeys
   );
+
+  const switchQuestion = (newIndex: number) => {
+    if (newIndex < 0 || newIndex >= questions.length || newIndex === activeQ) return;
+    questionTimersRef.current[activeQ] = timeLeft !== null ? timeLeft : (questions[activeQ]?.time_limit_seconds || 60);
+    const targetTime = questionTimersRef.current[newIndex] !== undefined
+      ? questionTimersRef.current[newIndex]
+      : (questions[newIndex]?.time_limit_seconds || 60);
+    setTimeLeft(targetTime);
+    setActiveQ(newIndex);
+  };
 
   const setVideoRef = (node: HTMLVideoElement | null) => {
     if (node && stream) {
@@ -303,8 +319,23 @@ function CbtExamInterface() {
 
     getSessionFn({ data: { testId } })
       .then(res => {
-        setTest(res.test);
-        setQuestions(res.questions || []);
+        setTest({
+          ...res.test,
+          attemptsUsed: res.attemptsUsed,
+          maxAttempts: res.maxAttempts,
+          isUnlimited: res.isUnlimited,
+          currentAttemptNumber: res.currentAttemptNumber,
+          proctoring_mode: res.proctoring_mode || res.test?.proctoring_mode,
+          allow_ctrl_keys: res.allow_ctrl_keys ?? res.test?.allow_ctrl_keys
+        });
+        const qs = res.questions || [];
+        setQuestions(qs);
+        setOverallTimeLeft((res.test?.time_limit_minutes || 30) * 60);
+        if (qs.length > 0) {
+          const firstQTime = qs[0]?.time_limit_seconds || 60;
+          setTimeLeft(firstQTime);
+          questionTimersRef.current[0] = firstQTime;
+        }
       })
       .catch(err => {
         console.error("Failed to load CBT test:", err);
@@ -415,7 +446,7 @@ function CbtExamInterface() {
   useEffect(() => {
     if (examStatus !== "running" || questions.length === 0) return;
     if (timeLeft === null) {
-      const currentQTime = questions[activeQ]?.time_limit_seconds || 60;
+      const currentQTime = questionTimersRef.current[activeQ] ?? (questions[activeQ]?.time_limit_seconds || 60);
       setTimeLeft(currentQTime);
     }
   }, [examStatus, activeQ, questions, timeLeft]);
@@ -429,23 +460,42 @@ function CbtExamInterface() {
     return () => clearInterval(interval);
   }, [answers, examStatus, testId]);
 
-  // 7. Timer Countdown
+  // 7. Per-Question Countdown Timer
   useEffect(() => {
     if (examStatus !== "running" || timeLeft === null) return;
     if (timeLeft <= 0) {
       if (activeQ < questions.length - 1) {
-        toast.error("Time is up for this question!");
-        setActiveQ(prev => prev + 1);
-        setTimeLeft(questions[activeQ + 1]?.time_limit_seconds || 60);
+        toast.info(`Time is up for Question ${activeQ + 1}! Moving to next question.`);
+        switchQuestion(activeQ + 1);
       } else {
-        toast.error("Time is up for the exam!");
+        toast.error("Time is up for the final question!");
         handleFinalize(true);
       }
       return;
     }
-    const timer = setInterval(() => setTimeLeft(prev => (prev !== null && prev > 0 ? prev - 1 : 0)), 1000);
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        const nextVal = prev !== null && prev > 0 ? prev - 1 : 0;
+        questionTimersRef.current[activeQ] = nextVal;
+        return nextVal;
+      });
+    }, 1000);
     return () => clearInterval(timer);
-  }, [examStatus, timeLeft, activeQ, questions]);
+  }, [examStatus, timeLeft, activeQ, questions.length]);
+
+  // 7b. Overall Exam Timer Countdown
+  useEffect(() => {
+    if (examStatus !== "running" || overallTimeLeft === null) return;
+    if (overallTimeLeft <= 0) {
+      toast.error("Overall exam time limit reached! Auto-submitting...");
+      handleFinalize(true);
+      return;
+    }
+    const timer = setInterval(() => {
+      setOverallTimeLeft(prev => (prev !== null && prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [examStatus, overallTimeLeft]);
 
   // 8. Post-test countdown timer (120s -> 0)
   useEffect(() => {
@@ -600,6 +650,14 @@ function CbtExamInterface() {
                 >
                   <ExternalLink className="h-3.5 w-3.5" /> Full Results & Guidance
                 </Button>
+                {(test?.isUnlimited || ((test?.attemptsUsed || 1) < (test?.maxAttempts || 1))) && (
+                  <Button
+                    onClick={() => window.location.reload()}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                  >
+                    <RotateCcw className="h-4 w-4" /> Retake Test Now
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -774,10 +832,11 @@ function CbtExamInterface() {
                 <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" /> <strong>Fullscreen Enforced:</strong> Exiting triggers a violation.</li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" /> 
-                  <strong>Proctoring Mode:</strong> {isCameraEnabled ? "Webcam continuously monitored." : "Focus & Tab Tracking only (Camera Disabled)."}
+                  <strong>Proctoring:</strong> {proctoringMode === "camera_monitoring" ? "Passive Camera Monitoring (No auto-strikes)" : proctoringMode === "focus_only" ? "Focus Only (Camera Disabled)" : "Camera with Direct Malpractice Protection"}
                 </li>
-                <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" /> <strong>Focus Tracking:</strong> Alt+Tab or losing focus is recorded.</li>
-                <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" /> <strong>No Clipboard:</strong> Copy/Paste operations are blocked.</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" /> <strong>Focus Tracking:</strong> Alt+Tab, window blur, and fullscreen drops are logged.</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" /> <strong>Keyboard Controls:</strong> {allowCtrlKeys ? "Ctrl Shortcuts Allowed for IDE & Coding" : "Copy/Paste blocked"}</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-indigo-600 shrink-0" /> <strong>Attempts:</strong> {test?.isUnlimited ? "Unlimited Retakes Allowed" : `Attempt ${test?.currentAttemptNumber || (test?.attemptsUsed || 0) + 1} of ${test?.maxAttempts || 1}`}</li>
               </ul>
               <ul className="space-y-3 font-medium text-slate-700 border-l border-slate-300 pl-6">
                 <li className="flex items-center justify-between"><span className="text-slate-500">Duration:</span> <strong className="text-slate-900">{test.time_limit_minutes || 30} Minutes</strong></li>
@@ -895,11 +954,18 @@ function CbtExamInterface() {
           </div>
         </div>
         
-        <div className="flex items-center gap-8">
-          <div className="flex flex-col items-center">
-            <span className="text-[9px] uppercase tracking-widest text-slate-400 mb-0.5">Time Remaining</span>
-            <div className={`font-mono text-xl font-bold leading-none ${ (timeLeft || 0) < 300 ? "text-red-500 animate-pulse" : "text-white" }`}>
-              {mins.toString().padStart(2, "0")}:{secs.toString().padStart(2, "0")}
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex flex-col items-center bg-slate-800/90 px-3 py-1 rounded border border-slate-700">
+            <span className="text-[9px] uppercase tracking-widest text-indigo-400 font-semibold mb-0.5">Q{activeQ + 1} Time</span>
+            <div className={`font-mono text-lg font-black leading-none ${(timeLeft || 0) <= 15 ? "text-red-400 animate-pulse" : "text-emerald-400"}`}>
+              {Math.floor((timeLeft || 0) / 60).toString().padStart(2, "0")}:{((timeLeft || 0) % 60).toString().padStart(2, "0")}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center bg-slate-800/90 px-3 py-1 rounded border border-slate-700">
+            <span className="text-[9px] uppercase tracking-widest text-slate-400 font-semibold mb-0.5">Total Exam Time</span>
+            <div className={`font-mono text-lg font-bold leading-none ${(overallTimeLeft || 0) < 300 ? "text-red-500 animate-pulse" : "text-white"}`}>
+              {Math.floor((overallTimeLeft || 0) / 60).toString().padStart(2, "0")}:{((overallTimeLeft || 0) % 60).toString().padStart(2, "0")}
             </div>
           </div>
           
@@ -991,7 +1057,7 @@ function CbtExamInterface() {
                   return (
                     <button 
                       key={i} 
-                      onClick={() => setActiveQ(i)}
+                      onClick={() => switchQuestion(i)}
                       className={`h-10 rounded-sm font-bold text-xs transition-colors border ${
                         isActive ? "bg-slate-800 text-white border-slate-900" : 
                         isAns ? "bg-emerald-100 text-emerald-800 border-emerald-300" : 
@@ -1307,7 +1373,7 @@ function CbtExamInterface() {
             <Button 
               variant="outline" 
               disabled={activeQ === 0} 
-              onClick={() => setActiveQ(prev => prev - 1)}
+              onClick={() => switchQuestion(activeQ - 1)}
               className="font-bold border-slate-300 text-slate-700 bg-white rounded-sm hover:bg-slate-50 uppercase text-xs tracking-wider h-10 px-6"
             >
               <ChevronLeft className="h-4 w-4 mr-2" /> Previous
@@ -1327,7 +1393,7 @@ function CbtExamInterface() {
 
             <Button 
               onClick={() => {
-                if (activeQ < questions.length - 1) setActiveQ(prev => prev + 1);
+                if (activeQ < questions.length - 1) switchQuestion(activeQ + 1);
               }}
               disabled={activeQ === questions.length - 1}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-sm uppercase text-xs tracking-wider h-10 px-8 disabled:opacity-50"
