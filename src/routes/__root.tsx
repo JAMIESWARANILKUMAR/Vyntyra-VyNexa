@@ -16,6 +16,7 @@ import { PwaRegister } from "@/components/pwa-register";
 import { Footer } from "@/components/footer";
 import { Analytics } from "@vercel/analytics/react";
 import { GLOBAL_SEO_META_TAGS, SCHEMA_ORGANIZATION_JSON_LD } from "@/lib/seo-metadata";
+import { use24HourCookieCleaner } from "@/lib/cookie-maintenance";
 
 function NotFoundComponent() {
   return (
@@ -191,6 +192,9 @@ function PageLoadingIndicator() {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // Clean stale cookies every 24 hours to prevent Cloudflare Worker CPU limits
+  use24HourCookieCleaner();
 
   // Hide public chrome on dashboard pages, CBT exams, and meeting rooms
   const isDashboard = 

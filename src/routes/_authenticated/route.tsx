@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useNavigate, useLocation } from "@tanstack/rea
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { clearAllCookies } from "@/lib/cookie-maintenance";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -27,6 +28,7 @@ function AuthenticatedLayout() {
             if (isInternSessionExpired) {
               localStorage.removeItem("vyntyra_intern_session_id");
               localStorage.removeItem("vyntyra_intern_session_expiry");
+              clearAllCookies();
               await supabase.auth.signOut().catch(() => {});
             }
             setIsAuthenticated(false);
@@ -52,6 +54,7 @@ function AuthenticatedLayout() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       if (event === "SIGNED_OUT" || !session) {
+        clearAllCookies();
         setIsAuthenticated(false);
         const p = location.pathname;
         const isAdminRoute = p.startsWith("/admin") || p === "/cms" || p === "/templates";

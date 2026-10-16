@@ -79,17 +79,17 @@ function InternAuthPage() {
 
         // Generate a new cryptographically secured session ID on each login
         const newSessionId = "sess_" + crypto.randomUUID();
-        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000; // 7 days (1 week)
-        const expiresAt = Date.now() + sevenDaysMs;
+        const oneDayMs = 24 * 60 * 60 * 1000; // 24 hours
+        const expiresAt = Date.now() + oneDayMs;
 
-        // Securely store the 7-day session token in localStorage & document cookie
+        // Securely store the 24-hour session token in localStorage & document cookie
         localStorage.setItem("vyntyra_intern_session_id", newSessionId);
         localStorage.setItem("vyntyra_intern_session_expiry", expiresAt.toString());
         localStorage.setItem("vyntyra_intern_session_started", Date.now().toString());
 
         try {
-          document.cookie = `vyntyra_intern_session_id=${newSessionId}; max-age=${7 * 86400}; path=/; SameSite=Lax`;
-          document.cookie = `vyntyra_intern_session_expiry=${expiresAt}; max-age=${7 * 86400}; path=/; SameSite=Lax`;
+          document.cookie = `vyntyra_intern_session_id=${newSessionId}; max-age=86400; path=/; SameSite=Lax`;
+          document.cookie = `vyntyra_intern_session_expiry=${expiresAt}; max-age=86400; path=/; SameSite=Lax`;
         } catch (_) {}
 
         // Record session to server audit logs
@@ -103,7 +103,7 @@ function InternAuthPage() {
           });
         } catch (_) {}
 
-        toast.success("Welcome back! Active session secured for 7 days.");
+        toast.success("Welcome back! Active session secured for 24 hours.");
     } catch(error: any) {
         toast.error(error.message);
     } finally {
