@@ -26,7 +26,7 @@ import {
   CheckCircle, XCircle, RefreshCw, AlertTriangle, Search, Activity, Clock, 
   UserPlus, Camera, CameraOff, Calendar, Plus, Edit3, Eye, ShieldAlert, 
   ShieldCheck, Award, Check, Sparkles, AlertCircle, RotateCcw, Sliders, Shield, 
-  Shuffle, CheckSquare, ChevronDown, ChevronUp, Download, X
+  Shuffle, CheckSquare, ChevronDown, ChevronUp, Download, X, Terminal, Monitor
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -266,10 +266,10 @@ function AdminCbtGenerateView() {
         questionCount,
         defaultTimeSeconds: defaultQuestionTime
       } });
-      
-      if (res.error) {
-        toast.error(res.error);
-      } else if (res.questions && res.questions.length > 0) {
+      const resultData: any = res;
+      if (resultData?.error) {
+        toast.error(resultData.error);
+      } else if (resultData?.questions && resultData.questions.length > 0) {
         const questionsWithTimers = (res.questions || []).map((q: any) => ({
           ...q,
           time_limit_seconds: Number(q.time_limit_seconds) || defaultQuestionTime,

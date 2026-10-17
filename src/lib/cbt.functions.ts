@@ -1509,8 +1509,8 @@ export const submitCbtExamFn = createServerFn({ method: "POST" })
             (Boolean(internId) && Boolean(correctId) && internId.trim().toLowerCase() === correctId.trim().toLowerCase()) ||
             (Boolean(internText) && Boolean(correctText) && internText.trim().toLowerCase() === correctText.trim().toLowerCase()) ||
             (Boolean(internId) && Boolean(correctText) && internId.trim().toLowerCase() === correctText.trim().toLowerCase()) ||
-            (Boolean(matchingCorrectOpt) && Boolean(internId) && String(matchingCorrectOpt.id).trim().toLowerCase() === internId.trim().toLowerCase()) ||
-            (Boolean(matchingCorrectOpt) && Boolean(internText) && String(matchingCorrectOpt.text).trim().toLowerCase() === internText.trim().toLowerCase()) ||
+            (Boolean(matchingCorrectOpt) && Boolean(internId) && String(matchingCorrectOpt?.id).trim().toLowerCase() === internId.trim().toLowerCase()) ||
+            (Boolean(matchingCorrectOpt) && Boolean(internText) && String(matchingCorrectOpt?.text).trim().toLowerCase() === internText.trim().toLowerCase()) ||
             (q.question_type === 'true_false' && (
               (correctId.toLowerCase().startsWith('t') && (internId.toLowerCase().startsWith('t') || internId.toLowerCase() === 'a' || internText.toLowerCase().startsWith('t'))) ||
               (correctId.toLowerCase().startsWith('f') && (internId.toLowerCase().startsWith('f') || internId.toLowerCase() === 'b' || internText.toLowerCase().startsWith('f'))) ||
@@ -2068,8 +2068,7 @@ export const listAdminTestSubmissionsFn = createServerFn({ method: "POST" })
               .from('cbt_submissions')
               .update({ total_score: Math.round(sumBySub[s.id]), status: 'graded' })
               .eq('id', s.id)
-              .then(() => {})
-              .catch(() => {});
+              .then(() => {}, () => {});
           }
         }
       }

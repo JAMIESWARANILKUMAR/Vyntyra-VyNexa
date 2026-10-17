@@ -335,7 +335,7 @@ function CbtExamInterface() {
     }
 
     getSessionFn({ data: { testId } })
-      .then(res => {
+      .then((res: any) => {
         setTest({
           ...res.test,
           attemptsUsed: res.attemptsUsed,
@@ -603,7 +603,7 @@ function CbtExamInterface() {
         <p className="text-slate-400 max-w-md mx-auto">
           The AI CBT Engine and Proctoring environment is strictly restricted to desktop and larger screens (1024px or wider) to ensure test integrity and optimal experience.
         </p>
-        <Button className="mt-8 bg-indigo-600 hover:bg-indigo-700 font-bold" onClick={() => navigate({ to: "/dashboard" })}>
+        <Button className="mt-8 bg-indigo-600 hover:bg-indigo-700 font-bold" onClick={() => navigate({ to: "/intern" })}>
           Return to Dashboard
         </Button>
       </div>

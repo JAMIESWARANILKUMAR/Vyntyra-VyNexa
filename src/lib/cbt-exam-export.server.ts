@@ -496,7 +496,7 @@ export async function generateCbtExamPdf({
   doc.text(`Official Verification Hash: VCS-CBT-${exam.id ? exam.id.slice(0, 8).toUpperCase() : "SECURE"}-${Date.now().toString().slice(-6)}`, ML + 6, curY + 30.8);
 
   // ── 5. Final Pass: Two-Pass Dynamic Total Page Count & Headers ────
-  const totalPages = doc.internal.getNumberOfPages();
+  const totalPages = (doc.internal as any).getNumberOfPages();
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
     drawHeader(p === 1);

@@ -564,7 +564,7 @@ function AdminDashboard() {
                     asChild
                     className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0 flex-1 sm:flex-none justify-center"
                   >
-                    <Link to="/admin/cbt/generate">
+                    <Link to="/admin/operations" search={{ tab: "cbt" }}>
                       <BrainCircuit className="h-4 w-4" /> AI CBT Engine
                     </Link>
                   </Button>

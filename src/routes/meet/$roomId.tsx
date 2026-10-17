@@ -45,7 +45,7 @@ function MeetingRoom() {
       RealtimeKitClient.init({ authToken: data.token })
         .then(m => {
           setMeeting(m);
-          m.joinRoom?.();
+          (m as any)?.joinRoom?.();
         })
         .catch(err => console.error("RealtimeKit init error:", err));
     }
