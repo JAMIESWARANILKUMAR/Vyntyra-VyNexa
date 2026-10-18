@@ -73,28 +73,52 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
     }
 
     const cfData = await response.json() as any;
-    const roomId = cfData.data.id;
+    const roomId = cfData.data?.id || `meet_${crypto.randomUUID()}`;
 
-    const d1 = getD1Database();
     const hostId = context.user.id;
+    const settingsStr = JSON.stringify(data.settings || {});
     
-    await d1!.prepare(`
-      INSERT INTO meet_rooms (id, title, host_id, status, max_participants, settings)
-      VALUES (?, ?, ?, 'active', ?, ?)
-    `).bind(
-      roomId,
-      data.title,
-      hostId,
-      data.maxParticipants,
-      JSON.stringify(data.settings || {})
-    ).run();
+    // 1. Try D1 if available
+    const d1 = getD1Database(context);
+    if (d1 && typeof d1.prepare === "function") {
+      try {
+        await d1.prepare(`
+          INSERT INTO meet_rooms (id, title, host_id, status, max_participants, settings)
+          VALUES (?, ?, ?, 'active', ?, ?)
+        `).bind(
+          roomId,
+          data.title,
+          hostId,
+          data.maxParticipants,
+          settingsStr
+        ).run();
+      } catch (e) {
+        console.warn("D1 meet_rooms insert error:", e);
+      }
+    }
 
-    // Mirror to Supabase meetings table so it shows up in intern dashboards!
+    // 2. Always persist to Supabase meet_rooms table
+    const adminClient = getAdminClient();
     try {
-      const adminClient = getAdminClient();
+      await adminClient.from('meet_rooms').upsert({
+        id: roomId,
+        title: data.title,
+        host_id: hostId,
+        status: 'active',
+        max_participants: data.maxParticipants,
+        settings: settingsStr,
+        created_at: new Date().toISOString()
+      });
+    } catch (e) {
+      console.warn("Supabase meet_rooms upsert error:", e);
+    }
+
+    // 3. Mirror to Supabase meetings table so it shows up in intern dashboards!
+    try {
       await adminClient.from('meetings').insert({
         title: data.title,
         meeting_link: `https://vyntyraconsultancyservices.in/meet/${roomId}`,
+        meeting_url: `https://vyntyraconsultancyservices.in/meet/${roomId}`,
         scheduled_at: data.settings?.scheduledFor || new Date().toISOString(),
         target_role: (data.settings?.allowedEmails && data.settings.allowedEmails.trim() !== '') ? 'individual' : 'intern',
         send_email_notification: false,
@@ -105,6 +129,7 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
       // Non-fatal, let the meeting creation succeed
     }
 
+    invalidateCache("active_meetings");
     return { roomId, title: data.title };
   });
 
@@ -150,9 +175,81 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
     const d1 = getD1Database();
 
     // Verify room exists and is active
-    const room = await d1!.prepare(`
-      SELECT * FROM meet_rooms WHERE id = ? AND status = 'active'
-    `).bind(data.roomId).first() as any;
+    let room: any = null;
+    if (d1 && typeof d1.prepare === "function") {
+      try {
+        room = await d1.prepare(`
+          SELECT * FROM meet_rooms WHERE id = ? AND status = 'active'
+        `).bind(data.roomId).first() as any;
+      } catch (e) {
+        console.warn("D1 room query error:", e);
+      }
+    }
+
+    // 1. Fallback to Supabase meet_rooms table
+    if (!room) {
+      const adminClient = getAdminClient();
+      try {
+        const { data: supaRoom } = await adminClient
+          .from('meet_rooms')
+          .select('*')
+          .eq('id', data.roomId)
+          .eq('status', 'active')
+          .maybeSingle();
+        if (supaRoom) {
+          room = supaRoom;
+        }
+      } catch (e) {
+        console.warn("Supabase meet_rooms query error:", e);
+      }
+    }
+
+    // 2. Secondary fallback: Check meetings table by link or URL
+    if (!room) {
+      const adminClient = getAdminClient();
+      try {
+        const { data: supaMeet } = await adminClient
+          .from('meetings')
+          .select('*')
+          .or(`meeting_link.ilike.%${data.roomId}%,meeting_url.ilike.%${data.roomId}%`)
+          .maybeSingle();
+        if (supaMeet) {
+          room = {
+            id: data.roomId,
+            title: supaMeet.title,
+            host_id: supaMeet.host_id || supaMeet.target_user_id,
+            status: 'active',
+            settings: JSON.stringify({
+              type: supaMeet.description?.includes('External') ? 'external' : 'internal'
+            })
+          };
+        }
+      } catch (e) {
+        console.warn("Supabase meetings fallback query error:", e);
+      }
+    }
+
+    // 3. Tertiary fallback: Verify directly against Cloudflare RealtimeKit API
+    if (!room) {
+      const { accountId, appId, apiToken } = getRealtimeCredentials();
+      if (accountId && appId && apiToken) {
+        try {
+          const cfCheck = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/realtime/kit/${appId}/meetings/${data.roomId}`, {
+            headers: { "Authorization": `Bearer ${apiToken}` }
+          });
+          if (cfCheck.ok) {
+            const cfRoomData = await cfCheck.json() as any;
+            room = {
+              id: data.roomId,
+              title: cfRoomData.data?.title || "Live Meeting",
+              host_id: "host",
+              status: "active",
+              settings: JSON.stringify({ type: "internal" })
+            };
+          }
+        } catch (_) {}
+      }
+    }
 
     if (!room) {
       throw new Error("Room not found or no longer active.");
@@ -239,14 +336,19 @@ export const getActiveMeetingsFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     return getOrSetCache(`active_meetings_${context.user.id}`, 5000, async () => {
-      const d1 = getD1Database();
+      const d1 = getD1Database(context);
       const adminClient = getAdminClient();
       
-      // Parallelize profile, tasks, and D1 room queries to optimize Worker CPU and latency
+      let d1RoomsPromise: Promise<any> = Promise.resolve(null);
+      if (d1 && typeof d1.prepare === "function") {
+        d1RoomsPromise = d1.prepare("SELECT * FROM meet_rooms WHERE status = 'active' ORDER BY created_at DESC").all().catch(() => null);
+      }
+
+      // Parallelize profile, tasks, and room queries to optimize Worker CPU and latency
       const [{ data: roleData }, { data: userTasks }, d1Rooms] = await Promise.all([
         adminClient.from('profiles').select('role, email, department').eq('id', context.user.id).single(),
         adminClient.from('tasks').select('team_id, team_members, target_user_id, assigned_to'),
-        d1!.prepare("SELECT * FROM meet_rooms WHERE status = 'active' ORDER BY created_at DESC").all()
+        d1RoomsPromise
       ]);
 
       const role = roleData?.role || 'intern';
@@ -264,7 +366,23 @@ export const getActiveMeetingsFn = createServerFn({ method: "GET" })
         }
       }
 
-      const results = d1Rooms?.results || [];
+      let results = d1Rooms?.results || [];
+
+      // If D1 returned no results or is unavailable, load from Supabase meet_rooms table
+      if (!results || results.length === 0) {
+        try {
+          const { data: supaRooms } = await adminClient
+            .from('meet_rooms')
+            .select('*')
+            .eq('status', 'active')
+            .order('created_at', { ascending: false });
+          if (supaRooms && supaRooms.length > 0) {
+            results = supaRooms;
+          }
+        } catch (e) {
+          console.warn("Supabase meet_rooms select error:", e);
+        }
+      }
 
     const filtered = results.filter((room: any) => {
       // 1. Admins see all meetings
@@ -320,18 +438,28 @@ export const endMeetingFn = createServerFn({ method: "POST" })
     roomId: z.string()
   }).parse(d))
   .handler(async ({ data, context }) => {
-    const d1 = getD1Database();
-    const hostId = context.user.id;
+    const d1 = getD1Database(context);
 
-    // Optional: Only allow ending if they are host_id or Super Admin
-    const result = await d1!.prepare(`
-      UPDATE meet_rooms 
-      SET status = 'ended', ended_at = CURRENT_TIMESTAMP
-      WHERE id = ? 
-    `).bind(data.roomId).run(); // Removed AND host_id = ? to allow super admins to end any meeting, but we should probably verify permissions. For now, fine.
+    if (d1 && typeof d1.prepare === "function") {
+      try {
+        await d1.prepare(`
+          UPDATE meet_rooms 
+          SET status = 'ended', ended_at = CURRENT_TIMESTAMP
+          WHERE id = ? 
+        `).bind(data.roomId).run();
+      } catch (e) {
+        console.warn("D1 end meeting error:", e);
+      }
+    }
 
-    if (result.meta.changes === 0) {
-      throw new Error("Room not found.");
+    const adminClient = getAdminClient();
+    try {
+      await adminClient
+        .from('meet_rooms')
+        .update({ status: 'ended', ended_at: new Date().toISOString() })
+        .eq('id', data.roomId);
+    } catch (e) {
+      console.warn("Supabase meet_rooms end error:", e);
     }
 
     invalidateCache("active_meetings");
