@@ -188,13 +188,21 @@ function MeetingRoom() {
           <p className="text-gray-500 text-center text-sm mb-6">
             {errMsg || "This meeting room is invalid or has been terminated."}
           </p>
-          <Button
-            onClick={() => window.location.href = '/'}
-            variant="outline"
-            className="w-full h-11 border-gray-300 text-slate-700"
-          >
-            Return to Dashboard
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button
+              onClick={() => refetch()}
+              className="w-full h-11 bg-[#0b5cff] hover:bg-[#094bdd] text-white"
+            >
+              <RotateCw className="h-4 w-4 mr-2" /> Retry Connection
+            </Button>
+            <Button
+              onClick={() => window.location.href = '/'}
+              variant="outline"
+              className="w-full h-11 border-gray-300 text-slate-700"
+            >
+              Return to Dashboard
+            </Button>
+          </div>
         </div>
       </div>
     );

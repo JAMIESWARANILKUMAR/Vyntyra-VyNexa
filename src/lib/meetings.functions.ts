@@ -337,36 +337,78 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
     const participantName = userFullName || (userEmail ? userEmail.split('@')[0] : (data.guestName || "External Guest"));
     const participantId = userId || `guest_${crypto.randomUUID()}`;
 
-    // Generate a secure JWT/token for Cloudflare RealtimeKit via Add Participant API
-    let response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/realtime/kit/${appId}/meetings/${data.roomId}/participants`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
+    let cfMeetingId = settings.cf_room_id || data.roomId;
+
+    const addParticipant = async (targetMeetingId: string, withPreset = true) => {
+      const bodyPayload: any = {
         name: participantName,
         client_specific_id: participantId,
-        preset_name: isHost ? "group_call_host" : "group_call_participant",
         metadata: {
           avatar_url: userAvatarUrl || null
         }
-      })
-    });
+      };
+      if (withPreset) {
+        bodyPayload.preset_name = isHost ? "group_call_host" : "group_call_participant";
+      }
 
-    // If custom preset is missing or invalid, retry with default preset
-    if (!response.ok && response.status === 400) {
-      response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/realtime/kit/${appId}/meetings/${data.roomId}/participants`, {
+      return await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/realtime/kit/${appId}/meetings/${targetMeetingId}/participants`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiToken}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          name: participantName,
-          client_specific_id: participantId
-        })
+        body: JSON.stringify(bodyPayload)
       });
+    };
+
+    let response = await addParticipant(cfMeetingId, true);
+
+    // If custom preset is missing or invalid, retry with default preset
+    if (!response.ok && response.status === 400) {
+      response = await addParticipant(cfMeetingId, false);
+    }
+
+    // Auto-heal: If meeting was not found on Cloudflare RealtimeKit (404), provision it on-demand!
+    if (!response.ok && response.status === 404) {
+      try {
+        const createRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/realtime/kit/${appId}/meetings`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            title: (room.title as string) || "Live Meeting"
+          })
+        });
+
+        if (createRes.ok) {
+          const createData = await createRes.json() as any;
+          const newCfId = createData.data?.id;
+          if (newCfId) {
+            cfMeetingId = newCfId;
+            settings.cf_room_id = newCfId;
+            const updatedSettingsStr = JSON.stringify(settings);
+
+            // Persist the mapped cf_room_id so all subsequent users join the same room
+            const adminClient = getAdminClient();
+            try {
+              await adminClient.from('meet_rooms').update({ settings: updatedSettingsStr }).eq('id', data.roomId);
+            } catch (_) {}
+            try {
+              await adminClient.from('meetings').update({ description: (room.description || '') + ` __SETTINGS:${updatedSettingsStr}` }).or(`id.eq.${data.roomId},meeting_link.ilike.%${data.roomId}%,meeting_url.ilike.%${data.roomId}%`);
+            } catch (_) {}
+
+            // Now add participant to the newly created Cloudflare meeting!
+            response = await addParticipant(newCfId, true);
+            if (!response.ok && response.status === 400) {
+              response = await addParticipant(newCfId, false);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Cloudflare auto-provision error:", err);
+      }
     }
 
     if (!response.ok) {
