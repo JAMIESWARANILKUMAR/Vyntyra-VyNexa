@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Loader2, Shield, Video, Plus, Lock, Users, Clock, Trash2, Copy, Calendar, Edit, Check } from "lucide-react";
+import { Loader2, Shield, Video, Plus, Lock, Users, Clock, Trash2, Copy, Calendar, Edit, Check, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,6 +37,15 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
   const [targetType, setTargetType] = useState<"all"|"team"|"intern">("all");
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [selectedInterns, setSelectedInterns] = useState<string[]>([]);
+
+  const [createdMeetDetails, setCreatedMeetDetails] = useState<{
+    roomId: string;
+    title: string;
+    url: string;
+    type: string;
+    password?: string;
+    scheduledFor?: string;
+  } | null>(null);
 
   const { data: meetings, isLoading } = useQuery({
     queryKey: ["vyntyra-meet-rooms"],
@@ -78,9 +87,19 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
         }
       });
     },
-    onSuccess: (data) => {
-      toast.success(`Meeting room created: ${data.title}`);
+    onSuccess: (data: any) => {
+      const meetUrl = data?.url || `https://vyntyraconsultancyservices.in/meet/${data?.roomId}`;
+      setCreatedMeetDetails({
+        roomId: data?.roomId,
+        title: data?.title || title,
+        url: meetUrl,
+        type,
+        password: type === 'external' ? password : '',
+        scheduledFor
+      });
+      toast.success(`Meeting room created: ${data?.title || title}`);
       setTitle('');
+      setPassword('');
       setScheduledFor('');
       setIsCreateOpen(false);
       qc.invalidateQueries({ queryKey: ["vyntyra-meet-rooms"] });
@@ -92,7 +111,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success("Link copied to clipboard");
+    toast.success("Copied to clipboard");
   };
 
   const personalRoom = meetings?.find((m: any) => m.title === "Personal Meeting Room");
@@ -216,6 +235,105 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
               </DialogContent>
             </Dialog>
           )}
+
+          {/* Meeting Created Success Modal */}
+          <Dialog open={!!createdMeetDetails} onOpenChange={(open) => !open && setCreatedMeetDetails(null)}>
+            <DialogContent className="sm:max-w-[540px]">
+              <DialogHeader>
+                <div className="flex items-center gap-2 text-emerald-600">
+                  <CheckCircle2 className="h-6 w-6 shrink-0" />
+                  <DialogTitle className="text-xl">Meeting Room Ready!</DialogTitle>
+                </div>
+              </DialogHeader>
+
+              {createdMeetDetails && (
+                <div className="space-y-4 py-2">
+                  <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-3">
+                    <div>
+                      <div className="text-xs text-slate-500 font-medium">Topic</div>
+                      <div className="text-base font-semibold text-slate-900 dark:text-white">{createdMeetDetails.title}</div>
+                    </div>
+
+                    <div>
+                      <div className="text-xs text-slate-500 font-medium mb-1">Meeting Link</div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          readOnly
+                          value={createdMeetDetails.url}
+                          className="bg-white dark:bg-slate-900 font-mono text-xs select-all h-9"
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copyToClipboard(createdMeetDetails.url)}
+                          className="shrink-0 gap-1.5 h-9"
+                        >
+                          <Copy className="h-3.5 w-3.5" /> Copy
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <div className="text-xs text-slate-500 font-medium">Security</div>
+                        <Badge variant={createdMeetDetails.type === 'external' ? 'default' : 'secondary'} className="mt-1 text-xs">
+                          {createdMeetDetails.type === 'external' ? 'External (Password)' : 'Internal (Verified Members)'}
+                        </Badge>
+                      </div>
+                      {createdMeetDetails.type === 'external' && createdMeetDetails.password && (
+                        <div>
+                          <div className="text-xs text-slate-500 font-medium">Meeting Passcode</div>
+                          <div className="font-mono text-sm font-bold text-slate-800 dark:text-slate-200 mt-1 flex items-center gap-1.5">
+                            <Lock className="h-3.5 w-3.5 text-slate-400" />
+                            {createdMeetDetails.password}
+                          </div>
+                        </div>
+                      )}
+                      {createdMeetDetails.scheduledFor && (
+                        <div className="col-span-2">
+                          <div className="text-xs text-slate-500 font-medium">Scheduled Time</div>
+                          <div className="text-xs text-slate-700 dark:text-slate-300 mt-0.5 flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5 text-slate-400" />
+                            {new Date(createdMeetDetails.scheduledFor).toLocaleString()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      className="w-full sm:w-auto text-xs gap-1.5 h-10"
+                      onClick={() => {
+                        const inviteText = `VyNexa Connect Video Meeting\nTopic: ${createdMeetDetails.title}\nJoin Link: ${createdMeetDetails.url}${createdMeetDetails.password ? `\nPasscode: ${createdMeetDetails.password}` : ''}${createdMeetDetails.scheduledFor ? `\nScheduled For: ${new Date(createdMeetDetails.scheduledFor).toLocaleString()}` : ''}`;
+                        copyToClipboard(inviteText);
+                        toast.success("Full meeting invitation copied!");
+                      }}
+                    >
+                      <Copy className="h-3.5 w-3.5" /> Copy Full Invitation
+                    </Button>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <Button
+                        className="w-full sm:w-auto bg-[#0b5cff] hover:bg-[#094bdd] text-white gap-1.5 h-10"
+                        onClick={() => window.open(createdMeetDetails.url, '_blank')}
+                      >
+                        <Video className="h-4 w-4" /> Start Meeting Now
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="h-10"
+                        onClick={() => setCreatedMeetDetails(null)}
+                      >
+                        Done
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
 
         <Tabs defaultValue={role === 'admin' ? "global" : "upcoming"} className="w-full">
@@ -257,12 +375,12 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                   <table className="w-full text-sm text-left">
                     <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
                       <tr>
-                        <th className="px-4 py-3">Meeting Title</th>
-                        <th className="px-4 py-3">Host / Creator</th>
-                        <th className="px-4 py-3">Type</th>
-                        <th className="px-4 py-3">Target</th>
+                        <th className="px-4 py-3">Meeting Topic</th>
+                        <th className="px-4 py-3">Meeting Link</th>
+                        <th className="px-4 py-3">Security & Passcode</th>
+                        <th className="px-4 py-3">Target & Schedule</th>
                         <th className="px-4 py-3">Status</th>
-                        <th className="px-4 py-3 text-right">Action</th>
+                        <th className="px-4 py-3 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -272,22 +390,47 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                         <tr><td colSpan={6} className="text-center py-8 text-slate-500">No active meetings across the organization.</td></tr>
                       ) : meetings.map((room: any) => {
                         const settings = room.settings ? JSON.parse(room.settings) : {};
+                        const meetUrl = `https://vyntyraconsultancyservices.in/meet/${room.id}`;
                         return (
                           <tr key={room.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-200">
-                              {room.title}
-                              <div className="text-xs text-slate-500 font-mono mt-0.5">{room.id.substring(0, 12)}...</div>
-                            </td>
-                            <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                              {room.host_id?.substring(0, 8)}...
+                              <div className="font-semibold">{room.title}</div>
+                              <div className="text-xs text-slate-400 font-mono mt-0.5">ID: {room.id.substring(0, 14)}...</div>
                             </td>
                             <td className="px-4 py-3">
-                              <Badge variant={settings.type === 'external' ? 'default' : 'secondary'} className="text-[10px] uppercase">
-                                {settings.type === 'external' ? 'External' : 'Internal'}
-                              </Badge>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-mono text-xs text-slate-600 dark:text-slate-300 max-w-[190px] truncate" title={meetUrl}>
+                                  {meetUrl}
+                                </span>
+                                <button
+                                  onClick={() => copyToClipboard(meetUrl)}
+                                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+                                  title="Copy meeting link"
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="space-y-1">
+                                <Badge variant={settings.type === 'external' ? 'default' : 'secondary'} className="text-[10px] uppercase">
+                                  {settings.type === 'external' ? 'External' : 'Internal'}
+                                </Badge>
+                                {settings.type === 'external' && settings.password && (
+                                  <div className="flex items-center gap-1 text-[11px] font-mono text-slate-500">
+                                    <Lock className="h-3 w-3" /> {settings.password}
+                                  </div>
+                                )}
+                              </div>
                             </td>
                             <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-xs">
-                              <span className="capitalize">{settings.target_type || 'all'}</span>
+                              <div className="capitalize font-medium text-slate-700 dark:text-slate-300">{settings.target_type || 'all'}</div>
+                              {settings.scheduledFor && (
+                                <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                  <Clock className="h-3 w-3 shrink-0" />
+                                  {new Date(settings.scheduledFor).toLocaleDateString()} {new Date(settings.scheduledFor).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                              )}
                             </td>
                             <td className="px-4 py-3">
                               <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
@@ -299,9 +442,32 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right">
-                              <Button variant="ghost" size="sm" onClick={() => endMut.mutate(room.id)} disabled={endMut.isPending} className="text-red-500 hover:text-red-600 hover:bg-red-50">
-                                Terminate
-                              </Button>
+                              <div className="flex items-center justify-end gap-1.5">
+                                <Button
+                                  size="sm"
+                                  onClick={() => window.open(meetUrl, '_blank')}
+                                  className="bg-[#0b5cff] hover:bg-[#094bdd] text-white text-xs h-8 px-2.5 rounded font-medium"
+                                >
+                                  Start / Join
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => copyToClipboard(meetUrl)}
+                                  className="text-xs h-8 px-2 rounded text-slate-600 border-slate-300 hover:bg-slate-100"
+                                >
+                                  <Copy className="h-3 w-3 mr-1" /> Copy
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => endMut.mutate(room.id)}
+                                  disabled={endMut.isPending}
+                                  className="text-red-500 hover:text-red-600 hover:bg-red-50 text-xs h-8 px-2"
+                                >
+                                  Terminate
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -365,19 +531,43 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                     
                     return (
                       <div key={room.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                          <h4 className="font-semibold text-[15px] text-[#0b5cff] hover:underline cursor-pointer">{room.title}</h4>
-                          <div className="flex flex-wrap items-center gap-3 text-[13px] text-slate-500 mt-1.5">
-                            <span className="font-mono text-slate-600 dark:text-slate-400">ID: {room.id.substring(0,18)}...</span>
-                            <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                        <div className="space-y-1.5">
+                          <h4 
+                            onClick={() => window.open(meetUrl, '_blank')} 
+                            className="font-semibold text-[16px] text-[#0b5cff] hover:underline cursor-pointer flex items-center gap-2"
+                          >
+                            <Video className="h-4 w-4 shrink-0" />
+                            {room.title}
+                          </h4>
+                          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 w-fit">
+                            <span className="font-mono text-xs text-slate-600 dark:text-slate-300">{meetUrl}</span>
+                            <button
+                              onClick={() => copyToClipboard(meetUrl)}
+                              className="text-slate-400 hover:text-slate-600 p-0.5"
+                              title="Copy meeting link"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-3 text-[13px] text-slate-500">
+                            <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs">
                               {settings.type === 'external' ? 'External' : 'Internal'}
                             </span>
-                            {settings.scheduledFor && <span>Scheduled: {new Date(settings.scheduledFor).toLocaleString()}</span>}
+                            {settings.type === 'external' && settings.password && (
+                              <span className="font-mono text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                                <Lock className="h-3 w-3" /> Passcode: <b>{settings.password}</b>
+                              </span>
+                            )}
+                            {settings.scheduledFor && (
+                              <span className="text-xs flex items-center gap-1 text-slate-500">
+                                <Clock className="h-3 w-3" /> {new Date(settings.scheduledFor).toLocaleString()}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button size="sm" onClick={() => window.open(`https://vyntyraconsultancyservices.in/meet/${room.id}`, '_blank')} className="bg-[#0b5cff] hover:bg-[#094bdd] text-white rounded">
-                            {role === 'intern' ? 'Join Live' : 'Start'}
+                          <Button size="sm" onClick={() => window.open(meetUrl, '_blank')} className="bg-[#0b5cff] hover:bg-[#094bdd] text-white rounded">
+                            {role === 'intern' ? 'Join Live' : 'Start / Join'}
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => copyToClipboard(meetUrl)} className="rounded text-slate-600 border-slate-300">
                             Copy Link

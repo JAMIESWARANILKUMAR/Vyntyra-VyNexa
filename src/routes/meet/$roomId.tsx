@@ -9,6 +9,7 @@ import { Shield, Settings, Globe, Loader2, AlertCircle, Lock, User, Layers, Hand
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TranslationOverlay } from '@/components/meet/TranslationOverlay';
+import { supabase } from '@/integrations/supabase/client';
 
 export const Route = createFileRoute('/meet/$roomId')({
   component: MeetingRoom
@@ -34,9 +35,25 @@ function MeetingRoom() {
   const [passwordInput, setPasswordInput] = useState('');
   const [guestNameInput, setGuestNameInput] = useState('');
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['meet-token', roomId, submittedPassword, submittedGuestName],
-    queryFn: () => fetchToken({ data: { roomId, password: submittedPassword, guestName: submittedGuestName } }),
+    queryFn: async () => {
+      let authToken: string | undefined = undefined;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        authToken = session?.access_token || undefined;
+      } catch (err) {
+        console.warn("Failed to get session for meet-token:", err);
+      }
+      return await fetchToken({ 
+        data: { 
+          roomId, 
+          password: submittedPassword, 
+          guestName: submittedGuestName,
+          authToken 
+        } 
+      });
+    },
     retry: false
   });
 
@@ -65,6 +82,73 @@ function MeetingRoom() {
   if (error || !data) {
     const errMsg = error?.message || "";
     
+    if (errMsg.includes("AUTH_REQUIRED") || errMsg.includes("UNAUTHORIZED_INTERNAL")) {
+      const returnUrl = encodeURIComponent(`/meet/${roomId}`);
+      return (
+        <div className="min-h-screen bg-[#f8f9fb] flex flex-col items-center justify-center text-slate-800 p-6 relative">
+          <div className="bg-white border border-gray-200 p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+            <div className="w-14 h-14 bg-blue-50 text-[#0b5cff] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="h-7 w-7" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2 tracking-tight text-slate-900">Corporate Sign-In Required</h2>
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+              This meeting is an internal video conference restricted to verified team members and interns. Please sign in to verify your identity and enter the room.
+            </p>
+
+            <div className="space-y-3">
+              <Button
+                onClick={() => window.location.href = `/auth/admin?redirect=${returnUrl}`}
+                className="w-full h-11 bg-[#0b5cff] hover:bg-[#094bdd] text-white font-medium"
+              >
+                Sign In as Administrator / Employee
+              </Button>
+              <Button
+                onClick={() => window.location.href = `/auth/intern?redirect=${returnUrl}`}
+                variant="outline"
+                className="w-full h-11 border-gray-300 text-slate-700 hover:bg-slate-50 font-medium"
+              >
+                Sign In as Intern
+              </Button>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refetch()}
+                className="text-xs text-slate-500 hover:text-slate-800"
+              >
+                <RotateCw className="h-3.5 w-3.5 mr-1" /> Retry Connection
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (errMsg.includes("ACCESS_DENIED_GUEST_LIST")) {
+      return (
+        <div className="min-h-screen bg-[#f8f9fb] flex flex-col items-center justify-center text-slate-800 p-6 relative">
+          <div className="bg-white border border-gray-200 p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+            <div className="w-14 h-14 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Shield className="h-7 w-7" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2 tracking-tight text-slate-900">Access Restricted</h2>
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+              Your account is not on the attendee list for this private session. Please contact the meeting organizer to request access.
+            </p>
+            <Button
+              onClick={() => window.location.href = '/'}
+              variant="outline"
+              className="w-full h-11 border-gray-300 text-slate-700"
+            >
+              Return to Dashboard
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     if (errMsg.includes("INVALID_PASSWORD")) {
       return (
         <div className="min-h-screen bg-[#f8f9fb] flex flex-col items-center justify-center text-slate-800 p-6 relative">
@@ -98,11 +182,20 @@ function MeetingRoom() {
 
     return (
       <div className="min-h-screen bg-[#f8f9fb] flex flex-col items-center justify-center text-slate-800 p-6">
-        <AlertCircle className="h-12 w-12 text-rose-500 mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-        <p className="text-gray-500 text-center max-w-md">
-          {errMsg || "This meeting room is invalid or has been terminated."}
-        </p>
+        <div className="bg-white border border-gray-200 p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+          <AlertCircle className="h-12 w-12 text-rose-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2 text-slate-900">Access Denied</h2>
+          <p className="text-gray-500 text-center text-sm mb-6">
+            {errMsg || "This meeting room is invalid or has been terminated."}
+          </p>
+          <Button
+            onClick={() => window.location.href = '/'}
+            variant="outline"
+            className="w-full h-11 border-gray-300 text-slate-700"
+          >
+            Return to Dashboard
+          </Button>
+        </div>
       </div>
     );
   }
