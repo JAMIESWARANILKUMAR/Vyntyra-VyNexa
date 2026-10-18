@@ -18,6 +18,20 @@ const fetchMeetings = async () => await getActiveMeetingsFn();
 const createMeeting = async (opts: any) => await createMeetingRoomFn(opts);
 const endMeeting = async (opts: any) => await endMeetingFn(opts);
 
+export const getMeetingBaseUrl = () => {
+  if (typeof window !== "undefined" && window.location?.origin) {
+    if (window.location.hostname === 'vyntyraconsultancyservices.in') {
+      return 'https://portal.vyntyraconsultancyservices.in';
+    }
+    return window.location.origin;
+  }
+  return 'https://portal.vyntyraconsultancyservices.in';
+};
+
+export const buildMeetingUrl = (roomId: string) => {
+  return `${getMeetingBaseUrl()}/meet/${roomId}`;
+};
+
 export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_admin' | 'employee' | 'intern' }) {
   const qc = useQueryClient();
   const getTargets = useServerFn(listCbtTargetsFn);
@@ -88,7 +102,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
       });
     },
     onSuccess: (data: any) => {
-      const meetUrl = data?.url || `https://vyntyraconsultancyservices.in/meet/${data?.roomId}`;
+      const meetUrl = (data?.url && !data.url.includes('://vyntyraconsultancyservices.in/meet/')) ? data.url : buildMeetingUrl(data?.roomId);
       setCreatedMeetDetails({
         roomId: data?.roomId,
         title: data?.title || title,
@@ -390,7 +404,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                         <tr><td colSpan={6} className="text-center py-8 text-slate-500">No active meetings across the organization.</td></tr>
                       ) : meetings.map((room: any) => {
                         const settings = room.settings ? JSON.parse(room.settings) : {};
-                        const meetUrl = `https://vyntyraconsultancyservices.in/meet/${room.id}`;
+                        const meetUrl = buildMeetingUrl(room.id);
                         return (
                           <tr key={room.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-200">
@@ -494,19 +508,19 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                   <div className="text-[14px] text-slate-800 dark:text-slate-200">
                     <div className="flex items-center gap-4">
                       <span className="font-mono text-slate-500 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded">
-                        {personalRoom ? `https://vyntyraconsultancyservices.in/meet/${personalRoom.id}` : 'https://vyntyraconsultancyservices.in/meet/demo-1234'}
+                        {buildMeetingUrl(personalRoom ? personalRoom.id : 'room-personal')}
                       </span>
-                      <button onClick={() => copyToClipboard(personalRoom ? `https://vyntyraconsultancyservices.in/meet/${personalRoom.id}` : 'https://vyntyraconsultancyservices.in/meet/demo-1234')} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                      <button onClick={() => copyToClipboard(buildMeetingUrl(personalRoom ? personalRoom.id : 'room-personal'))} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                         <Copy className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 pt-6">
-                  <Button onClick={() => window.open(`https://vyntyraconsultancyservices.in/meet/${personalRoom ? personalRoom.id : 'zoom-demo'}`, '_blank')} className="bg-[#0b5cff] hover:bg-[#094bdd] text-white px-8 rounded-md">
+                  <Button onClick={() => window.open(buildMeetingUrl(personalRoom ? personalRoom.id : 'room-personal'), '_blank')} className="bg-[#0b5cff] hover:bg-[#094bdd] text-white px-8 rounded-md">
                     Start
                   </Button>
-                  <Button variant="outline" className="text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 bg-transparent rounded-md gap-2" onClick={() => copyToClipboard(personalRoom ? `https://vyntyraconsultancyservices.in/meet/${personalRoom.id}` : 'https://vyntyraconsultancyservices.in/meet/demo-1234')}>
+                  <Button variant="outline" className="text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 bg-transparent rounded-md gap-2" onClick={() => copyToClipboard(buildMeetingUrl(personalRoom ? personalRoom.id : 'room-personal'))}>
                     <Copy className="h-4 w-4" /> Copy Invitation
                   </Button>
                 </div>
@@ -527,7 +541,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                 <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm divide-y divide-slate-100 dark:divide-slate-800/60">
                   {meetings.map((room: any) => {
                     const settings = room.settings ? JSON.parse(room.settings) : {};
-                    const meetUrl = `https://vyntyraconsultancyservices.in/meet/${room.id}`;
+                    const meetUrl = buildMeetingUrl(room.id);
                     
                     return (
                       <div key={room.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">

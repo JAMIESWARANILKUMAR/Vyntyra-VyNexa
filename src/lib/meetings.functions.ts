@@ -27,6 +27,24 @@ function getRealtimeCredentials() {
   return { accountId, appId, apiToken };
 }
 
+function getMeetingBaseUrl(): string {
+  try {
+    const request = getRequest();
+    if (request?.headers) {
+      const origin = request.headers.get('origin');
+      if (origin && !origin.includes('://vyntyraconsultancyservices.in')) {
+        return origin;
+      }
+      const host = request.headers.get('host');
+      if (host && !host.startsWith('vyntyraconsultancyservices.in')) {
+        const proto = request.headers.get('x-forwarded-proto') || 'https';
+        return `${proto}://${host}`;
+      }
+    }
+  } catch (_) {}
+  return getEnv('VITE_APP_URL') || getEnv('APP_URL') || 'https://portal.vyntyraconsultancyservices.in';
+}
+
 // Creates a new meeting room
 export const createMeetingRoomFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -120,7 +138,7 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
     }
 
     // 3. Mirror to Supabase meetings table so it shows up in intern dashboards!
-    const meetingUrl = `https://vyntyraconsultancyservices.in/meet/${roomId}`;
+    const meetingUrl = `${getMeetingBaseUrl()}/meet/${roomId}`;
     try {
       const descText = (data.settings?.type === 'external' 
         ? `External Meeting. Password: ${data.settings.password || 'None'}` 
