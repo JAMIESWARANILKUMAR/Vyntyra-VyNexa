@@ -5,11 +5,17 @@ import { getMeetingTokenFn } from '@/lib/meetings.functions';
 import { useServerFn } from '@tanstack/react-start';
 import RealtimeKitClient from '@cloudflare/realtimekit';
 import { RtkUiProvider, RtkMeeting, RtkChat, RtkParticipantCount } from '@cloudflare/realtimekit-react-ui';
-import { Shield, Settings, Globe, Loader2, AlertCircle, Lock, User, Layers, Hand, Circle, X, Info, MessageSquare, Users, Copy, Link2, ChevronLeft, ChevronRight, RotateCw, Search, Home, Calendar, MoreHorizontal, Maximize, ArrowUpSquare, LayoutGrid, CheckCircle2 } from 'lucide-react';
+import { 
+  Shield, Settings, Globe, Loader2, AlertCircle, Lock, User, Layers, Hand, Circle, X, 
+  Info, MessageSquare, Users, Copy, Link2, ChevronLeft, ChevronRight, RotateCw, Search, 
+  Home, Calendar, MoreHorizontal, Maximize, ArrowUpSquare, LayoutGrid, CheckCircle2,
+  Mic, MicOff, Video, VideoOff
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TranslationOverlay } from '@/components/meet/TranslationOverlay';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const Route = createFileRoute('/meet/$roomId')({
   component: MeetingRoom
@@ -23,6 +29,11 @@ function MeetingRoom() {
   const [translationEnabled, setTranslationEnabled] = useState(false);
   const [targetLang, setTargetLang] = useState('Spanish');
   const [meeting, setMeeting] = useState<any>(null);
+  const [initError, setInitError] = useState<string | null>(null);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [videoEnabled, setVideoEnabled] = useState(false);
+  const [screenShareEnabled, setScreenShareEnabled] = useState(false);
+  const [joinTimeout, setJoinTimeout] = useState(false);
 
   // Corporate Meeting Features State
   const [activeSidebar, setActiveSidebar] = useState<'chat' | 'participants' | 'info' | null>(null);
@@ -57,23 +68,211 @@ function MeetingRoom() {
     retry: false
   });
 
+  // Watch for slow connection / timeout to give immediate actionable feedback
+  useEffect(() => {
+    if (isLoading || (data && !meeting && !initError)) {
+      const timer = setTimeout(() => {
+        setJoinTimeout(true);
+      }, 10000);
+      return () => clearTimeout(timer);
+    } else {
+      setJoinTimeout(false);
+    }
+  }, [isLoading, data, meeting, initError]);
+
+  // Initialize RealtimeKit Client with non-blocking media defaults
   useEffect(() => {
     if (data?.token && !meeting) {
-      RealtimeKitClient.init({ authToken: data.token })
-        .then(m => {
+      let isMounted = true;
+      setInitError(null);
+
+      // We explicitly set audio: false, video: false during initialization
+      // so that browser device enumeration and permission prompts NEVER block room connection.
+      RealtimeKitClient.init({ 
+        authToken: data.token,
+        defaults: {
+          audio: false,
+          video: false
+        }
+      })
+        .then(async (m) => {
+          if (!isMounted) return;
           setMeeting(m);
-          (m as any)?.joinRoom?.();
+          try {
+            await m.join();
+          } catch (joinErr: any) {
+            console.warn("RealtimeKit m.join error:", joinErr);
+          }
         })
-        .catch(err => console.error("RealtimeKit init error:", err));
+        .catch((err: any) => {
+          console.error("RealtimeKit init error:", err);
+          if (isMounted) {
+            setInitError(err?.message || "Failed to initialize video call session.");
+          }
+        });
+
+      return () => {
+        isMounted = false;
+      };
     }
   }, [data?.token, meeting]);
 
-  if (isLoading || (data && !meeting)) {
+  // Synchronize media states with RealtimeKit client
+  useEffect(() => {
+    if (!meeting?.self) return;
+
+    const handleAudioUpdate = (payload: any) => {
+      setAudioEnabled(!!payload.audioEnabled);
+    };
+    const handleVideoUpdate = (payload: any) => {
+      setVideoEnabled(!!payload.videoEnabled);
+    };
+    const handleScreenShareUpdate = (payload: any) => {
+      setScreenShareEnabled(!!payload.screenShareEnabled);
+    };
+
+    try {
+      meeting.self.on('audioUpdate', handleAudioUpdate);
+      meeting.self.on('videoUpdate', handleVideoUpdate);
+      meeting.self.on('screenShareUpdate', handleScreenShareUpdate);
+    } catch (_) {}
+
+    setAudioEnabled(!!meeting.self.audioEnabled);
+    setVideoEnabled(!!meeting.self.videoEnabled);
+    setScreenShareEnabled(!!meeting.self.screenShareEnabled);
+
+    return () => {
+      try {
+        if (typeof meeting.self.removeListener === 'function') {
+          meeting.self.removeListener('audioUpdate', handleAudioUpdate);
+          meeting.self.removeListener('videoUpdate', handleVideoUpdate);
+          meeting.self.removeListener('screenShareUpdate', handleScreenShareUpdate);
+        }
+      } catch (_) {}
+    };
+  }, [meeting]);
+
+  const toggleAudio = async () => {
+    if (!meeting?.self) return;
+    try {
+      if (audioEnabled) {
+        await meeting.self.disableAudio();
+        setAudioEnabled(false);
+      } else {
+        await meeting.self.enableAudio();
+        setAudioEnabled(true);
+        toast.success("Microphone enabled");
+      }
+    } catch (err: any) {
+      console.error("Audio toggle error:", err);
+      toast.error("Microphone access failed: " + (err?.message || "Please check browser permissions"));
+    }
+  };
+
+  const toggleVideo = async () => {
+    if (!meeting?.self) return;
+    try {
+      if (videoEnabled) {
+        await meeting.self.disableVideo();
+        setVideoEnabled(false);
+      } else {
+        await meeting.self.enableVideo();
+        setVideoEnabled(true);
+        toast.success("Camera enabled");
+      }
+    } catch (err: any) {
+      console.error("Video toggle error:", err);
+      toast.error("Camera access failed: " + (err?.message || "Please check browser permissions"));
+    }
+  };
+
+  const toggleScreenShare = async () => {
+    if (!meeting?.self) return;
+    try {
+      if (screenShareEnabled) {
+        await meeting.self.disableScreenShare();
+        setScreenShareEnabled(false);
+      } else {
+        await meeting.self.enableScreenShare();
+        setScreenShareEnabled(true);
+      }
+    } catch (err: any) {
+      console.error("Screen share error:", err);
+      toast.error("Screen share failed: " + (err?.message || "Permission denied"));
+    }
+  };
+
+  const handleLeave = async () => {
+    try {
+      if (meeting) {
+        await meeting.leave();
+      }
+    } catch (err) {
+      console.warn("Leave meeting error:", err);
+    }
+    window.location.href = '/';
+  };
+
+  if (isLoading || (data && !meeting && !initError)) {
     return (
-      <div className="min-h-screen bg-[#1a1a1a] flex flex-col items-center justify-center text-white relative overflow-hidden">
-        <div className="relative z-10 flex flex-col items-center">
-          <Loader2 className="h-8 w-8 animate-spin text-white mb-4" />
-          <h2 className="text-xl font-medium tracking-tight">Connecting to Vyntyra Connect...</h2>
+      <div className="min-h-screen bg-[#1a1a1a] flex flex-col items-center justify-center text-white relative overflow-hidden p-6">
+        <div className="relative z-10 flex flex-col items-center max-w-sm text-center">
+          <Loader2 className="h-9 w-9 animate-spin text-[#0b5cff] mb-4" />
+          <h2 className="text-xl font-medium tracking-tight mb-2">Connecting to Vyntyra Connect...</h2>
+          <p className="text-xs text-gray-400">
+            Establishing secure WebRTC session and joining room.
+          </p>
+
+          {joinTimeout && (
+            <div className="mt-6 p-4 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center animate-in fade-in duration-300">
+              <p className="text-xs text-yellow-400 mb-3">
+                Connection is taking longer than usual. You can retry the handshake.
+              </p>
+              <Button
+                onClick={() => {
+                  setMeeting(null);
+                  refetch();
+                }}
+                size="sm"
+                className="bg-[#0b5cff] hover:bg-[#094bdd] text-white text-xs h-8 px-4"
+              >
+                <RotateCw className="h-3.5 w-3.5 mr-1.5" /> Reconnect Now
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (initError) {
+    return (
+      <div className="min-h-screen bg-[#f8f9fb] flex flex-col items-center justify-center text-slate-800 p-6">
+        <div className="bg-white border border-gray-200 p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+          <AlertCircle className="h-12 w-12 text-rose-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2 text-slate-900">Connection Failed</h2>
+          <p className="text-gray-500 text-center text-sm mb-6">
+            {initError}
+          </p>
+          <div className="flex flex-col gap-2">
+            <Button
+              onClick={() => {
+                setInitError(null);
+                setMeeting(null);
+                refetch();
+              }}
+              className="w-full h-11 bg-[#0b5cff] hover:bg-[#094bdd] text-white"
+            >
+              <RotateCw className="h-4 w-4 mr-2" /> Retry Connection
+            </Button>
+            <Button
+              onClick={() => window.location.href = '/'}
+              variant="outline"
+              className="w-full h-11 border-gray-300 text-slate-700"
+            >
+              Return to Dashboard
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -431,7 +630,9 @@ function MeetingRoom() {
                     onClick={() => setActiveSidebar(activeSidebar === 'info' ? null : 'info')}
                   >
                     <Info className="h-4 w-4" />
-                    <span className="text-xs font-semibold drop-shadow-md">JAMI ESWAR ANIL KUMAR's Personal Meeting Room</span>
+                    <span className="text-xs font-semibold drop-shadow-md">
+                      {data?.title || "Vyntyra Meeting Room"}
+                    </span>
                   </div>
                 </div>
 
@@ -449,44 +650,60 @@ function MeetingRoom() {
                 </div>
 
                 {/* RtkMeeting Grid component handles the actual video tiles */}
-                <RtkMeeting />
+                <RtkMeeting meeting={meeting} showSetupScreen={false} mode="fill" />
                 
                 {/* Overlay for translation */}
                 <div className="absolute inset-0 pointer-events-none z-40">
                   <TranslationOverlay isEnabled={translationEnabled} targetLanguage={targetLang} />
                 </div>
 
-                {/* Custom Zoom-style Buttons overlaid on the bottom bar */}
-                <div className="absolute bottom-[4px] left-0 right-0 flex items-center justify-between px-4 z-[60] h-[52px] pointer-events-none">
+                {/* Zoom-style Interactive Control Bar overlaid on the bottom bar */}
+                <div className="absolute bottom-[4px] left-0 right-0 flex items-center justify-between px-4 z-[60] h-[52px]">
                   
-                  {/* Left Controls */}
-                  <div className="flex items-center gap-1 pointer-events-auto">
+                  {/* Left Controls: Working Audio & Video toggles */}
+                  <div className="flex items-center gap-1">
                     <Button 
                       variant="ghost" 
-                      className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-white transition-none"
+                      onClick={toggleAudio}
+                      title={audioEnabled ? "Mute Microphone" : "Unmute Microphone"}
+                      className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-colors ${audioEnabled ? 'text-white' : 'text-red-400'}`}
                     >
                       <div className="relative pointer-events-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-red-500"><line x1="2" y1="2" x2="22" y2="22"></line><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"></path><path d="M5 10v2a7 7 0 0 0 12 5l-1.5-1.5a5 5 0 0 1-8.5-3.5v-2"></path><path d="M12 18.93v2.07"></path><path d="M8 21h8"></path><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33l1.68 1.68"></path><path d="M9 9v3a3 3 0 0 0 5.12 2.12l-1.5-1.5A1 1 0 0 1 10 12v-1.5z"></path></svg>
+                        {audioEnabled ? (
+                          <Mic className="h-5 w-5 text-white" />
+                        ) : (
+                          <MicOff className="h-5 w-5 text-red-500" />
+                        )}
                       </div>
-                      <span className="text-[10px] pointer-events-none text-white">Unmute</span>
+                      <span className="text-[10px] pointer-events-none">
+                        {audioEnabled ? "Mute" : "Unmute"}
+                      </span>
                     </Button>
                     
                     <Button 
                       variant="ghost" 
-                      className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-white transition-none"
+                      onClick={toggleVideo}
+                      title={videoEnabled ? "Stop Camera" : "Start Camera"}
+                      className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-colors ${videoEnabled ? 'text-white' : 'text-red-400'}`}
                     >
                       <div className="relative pointer-events-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-red-500"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"></path><rect x="2" y="6" width="14" height="12" rx="2"></rect><line x1="2" y1="2" x2="22" y2="22"></line></svg>
+                        {videoEnabled ? (
+                          <Video className="h-5 w-5 text-white" />
+                        ) : (
+                          <VideoOff className="h-5 w-5 text-red-500" />
+                        )}
                       </div>
-                      <span className="text-[10px] pointer-events-none text-white">Video</span>
+                      <span className="text-[10px] pointer-events-none">
+                        {videoEnabled ? "Stop Video" : "Start Video"}
+                      </span>
                     </Button>
                   </div>
 
                   {/* Center Controls */}
-                  <div className="flex items-center gap-0 pointer-events-auto absolute left-1/2 -translate-x-1/2">
+                  <div className="flex items-center gap-0 absolute left-1/2 -translate-x-1/2">
                     <Button 
                       variant="ghost" 
-                      className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-none ${activeSidebar === 'participants' ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
+                      className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-colors ${activeSidebar === 'participants' ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
                       onClick={() => setActiveSidebar(activeSidebar === 'participants' ? null : 'participants')}
                     >
                       <div className="relative pointer-events-none">
@@ -500,7 +717,7 @@ function MeetingRoom() {
                     
                     <Button 
                       variant="ghost" 
-                      className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-none ${activeSidebar === 'chat' ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
+                      className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-colors ${activeSidebar === 'chat' ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
                       onClick={() => setActiveSidebar(activeSidebar === 'chat' ? null : 'chat')}
                     >
                       <MessageSquare className="h-5 w-5 pointer-events-none" />
@@ -509,54 +726,57 @@ function MeetingRoom() {
 
                     <Button 
                       variant="ghost" 
-                      className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-[#b3b3b3] hover:text-white transition-none"
-                      onClick={() => setIsHandRaised(!isHandRaised)}
+                      className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-[#b3b3b3] hover:text-white transition-colors"
+                      onClick={() => {
+                        setIsHandRaised(!isHandRaised);
+                        toast.info(!isHandRaised ? "Hand raised" : "Hand lowered");
+                      }}
                     >
-                      <Hand className={`h-5 w-5 pointer-events-none ${isHandRaised ? 'text-yellow-400' : ''}`} />
+                      <Hand className={`h-5 w-5 pointer-events-none ${isHandRaised ? 'text-yellow-400 fill-yellow-400' : ''}`} />
                       <span className="text-[10px] pointer-events-none">React</span>
                     </Button>
                     
                     <Button 
                       variant="ghost" 
-                      className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-[#58B020] hover:text-[#58B020] transition-none"
+                      onClick={toggleScreenShare}
+                      title={screenShareEnabled ? "Stop Sharing Screen" : "Share Screen"}
+                      className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-colors ${screenShareEnabled ? 'text-blue-400' : 'text-[#58B020] hover:text-[#58B020]'}`}
                     >
                       <ArrowUpSquare className="h-5 w-5 pointer-events-none" />
-                      <span className="text-[10px] pointer-events-none">Share</span>
+                      <span className="text-[10px] pointer-events-none">
+                        {screenShareEnabled ? "Stop Share" : "Share"}
+                      </span>
                     </Button>
                     
                     <Button 
                       variant="ghost" 
-                      className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-[#b3b3b3] hover:text-white transition-none"
+                      onClick={() => setActiveSidebar(activeSidebar === 'info' ? null : 'info')}
+                      className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-[#b3b3b3] hover:text-white transition-colors"
                     >
                       <Shield className="h-5 w-5 pointer-events-none" />
-                      <span className="text-[10px] pointer-events-none">Host tools</span>
+                      <span className="text-[10px] pointer-events-none">Info</span>
                     </Button>
                     
                     <Button 
                       variant="ghost" 
-                      className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-none ${translationEnabled ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
+                      className={`flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] transition-colors ${translationEnabled ? 'bg-[#333] text-white' : 'text-[#b3b3b3] hover:text-white'}`}
                       onClick={() => setTranslationEnabled(!translationEnabled)}
                     >
                       <div className="relative pointer-events-none">
-                         <Globe className="h-5 w-5" />
-                         <span className="absolute -top-1 -right-1 text-[8px] text-blue-400">✨</span>
+                        <Globe className="h-5 w-5" />
+                        <span className="absolute -top-1 -right-1 text-[8px] text-blue-400">✨</span>
                       </div>
                       <span className="text-[10px] pointer-events-none">Vyntyra AI</span>
-                    </Button>
-                    
-                    <Button 
-                      variant="ghost" 
-                      className="flex-col h-[52px] w-[64px] gap-1 rounded-lg hover:bg-[#333] text-[#b3b3b3] hover:text-white transition-none"
-                    >
-                      <MoreHorizontal className="h-5 w-5 pointer-events-none" />
-                      <span className="text-[10px] pointer-events-none">More</span>
                     </Button>
 
                   </div>
                   
-                  {/* Right Controls */}
-                  <div className="flex items-center gap-2 pointer-events-auto">
-                    <Button className="bg-[#ff3b30] hover:bg-[#ff3b30]/90 text-white font-semibold rounded-md h-[32px] px-4">
+                  {/* Right Controls: End Call */}
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      onClick={handleLeave}
+                      className="bg-[#ff3b30] hover:bg-[#ff3b30]/90 text-white font-semibold rounded-md h-[32px] px-4 text-xs"
+                    >
                       End
                     </Button>
                   </div>
@@ -617,29 +837,26 @@ function MeetingRoom() {
 
                     {activeSidebar === 'info' && (
                       <div className="flex flex-col bg-white h-full p-4 space-y-4">
-                        <h4 className="font-semibold text-gray-800">JAMI ESWAR ANIL KUMAR's Personal Meeting Room</h4>
+                        <h4 className="font-semibold text-gray-800">{data?.title || "Vyntyra Meeting Room"}</h4>
                         
                         <div className="space-y-1">
-                          <span className="text-xs text-gray-500 uppercase">Meeting ID</span>
-                          <div className="text-sm text-gray-800 font-mono">233 828 4128</div>
+                          <span className="text-xs text-gray-500 uppercase">Meeting ID / Room</span>
+                          <div className="text-sm text-gray-800 font-mono break-all">{roomId}</div>
                         </div>
                         
                         <div className="space-y-1">
-                          <span className="text-xs text-gray-500 uppercase">Host</span>
-                          <div className="text-sm text-gray-800">JAMI ESWAR ANIL KUMAR</div>
-                        </div>
-                        
-                        <div className="space-y-1">
-                          <span className="text-xs text-gray-500 uppercase">Passcode</span>
-                          <div className="text-sm text-gray-800">********</div>
+                          <span className="text-xs text-gray-500 uppercase">Status</span>
+                          <div className="text-sm text-emerald-600 font-medium">Active & Connected</div>
                         </div>
 
                         <div className="space-y-1">
                           <span className="text-xs text-gray-500 uppercase">Invite Link</span>
-                          <div className="text-sm text-[#0b5cff] break-all">{window.location.href}</div>
+                          <div className="text-sm text-[#0b5cff] break-all">{typeof window !== 'undefined' ? window.location.href : ''}</div>
                           <Button variant="outline" size="sm" className="mt-2 text-xs" onClick={() => {
-                            navigator.clipboard.writeText(window.location.href);
-                            alert('Copied to clipboard');
+                            if (typeof window !== 'undefined') {
+                              navigator.clipboard.writeText(window.location.href);
+                              toast.success('Meeting link copied to clipboard');
+                            }
                           }}>
                             <Copy className="h-3 w-3 mr-1" /> Copy Link
                           </Button>
