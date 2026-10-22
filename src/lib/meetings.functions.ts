@@ -630,3 +630,145 @@ export const endMeetingFn = createServerFn({ method: "POST" })
     invalidateCache("active_meetings");
     return { success: true };
   });
+
+// In-memory translation cache (cleared after 2000 items to bound memory)
+const meetingTranslationCache = new Map<string, string>();
+
+/**
+ * AI Speech & Caption Translation powered by OpenRouter API Models
+ * (Llama 3.3 70B, OpenRouter Auto, DeepSeek) with high-speed caching
+ * and server-side failover.
+ */
+export const translateSpeechFn = createServerFn({ method: "POST" })
+  .validator((d: any) => {
+    return z.object({
+      text: z.string().min(1).max(2000),
+      targetLang: z.string().default("hi"),
+      targetLangName: z.string().default("Hindi"),
+      sourceLang: z.string().optional().default("auto"),
+      model: z.string().optional().default("meta-llama/llama-3.3-70b-instruct"),
+    }).parse(d);
+  })
+  .handler(async ({ data }) => {
+    const cleanText = data.text.trim();
+    if (!cleanText) {
+      return { success: true, translatedText: "", modelUsed: "none", provider: "none" };
+    }
+
+    const cacheKey = `${data.targetLang}:${data.model || 'default'}:${cleanText.toLowerCase()}`;
+    if (meetingTranslationCache.has(cacheKey)) {
+      return {
+        success: true,
+        translatedText: meetingTranslationCache.get(cacheKey)!,
+        modelUsed: "cache",
+        provider: "openrouter-cache",
+        cached: true,
+      };
+    }
+
+    const openRouterKey = getEnv("OPENROUTER_API_KEY") || getEnv("OPENROUTER_KEY") || "";
+
+    // Candidate OpenRouter models tested for Indian languages & speed
+    const modelsToTry = [
+      data.model || "meta-llama/llama-3.3-70b-instruct",
+      "openrouter/auto",
+      "deepseek/deepseek-chat",
+      "meta-llama/llama-3.1-8b-instruct",
+    ];
+    const uniqueModels = Array.from(new Set(modelsToTry));
+
+    if (openRouterKey) {
+      for (const model of uniqueModels) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 6500);
+
+          const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${openRouterKey}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer": "https://portal.vyntyraconsultancyservices.in",
+              "X-Title": "Vyntyra Meet Live Translation",
+            },
+            signal: controller.signal,
+            body: JSON.stringify({
+              model,
+              messages: [
+                {
+                  role: "system",
+                  content: `You are an ultra-fast real-time speech translation engine for live video conferences in Vyntyra Meet. Translate the spoken input directly into fluent ${data.targetLangName}. Output ONLY the direct translated sentence in ${data.targetLangName} script. Do NOT include quotation marks, explanations, notes, or pronunciation guide.`
+                },
+                {
+                  role: "user",
+                  content: cleanText
+                }
+              ],
+              temperature: 0.1,
+              max_tokens: 150,
+            }),
+          });
+
+          clearTimeout(timeout);
+
+          if (response.ok) {
+            const resJson = await response.json();
+            let translated = resJson?.choices?.[0]?.message?.content?.trim() || "";
+            // Clean up any extraneous quotes
+            translated = translated.replace(/^["'“”]+|["'“”]+$/g, '').trim();
+
+            if (translated) {
+              if (meetingTranslationCache.size > 2000) {
+                meetingTranslationCache.clear();
+              }
+              meetingTranslationCache.set(cacheKey, translated);
+              return {
+                success: true,
+                translatedText: translated,
+                modelUsed: model,
+                provider: "openrouter",
+              };
+            }
+          } else {
+            const errBody = await response.text();
+            console.warn(`[OpenRouter Translation] Model ${model} returned ${response.status}:`, errBody);
+          }
+        } catch (err) {
+          console.warn(`[OpenRouter Translation] Exception with ${model}:`, err);
+        }
+      }
+    }
+
+    // Secondary fallback: Server-side translation endpoint
+    try {
+      const gUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(data.targetLang)}&dt=t&q=${encodeURIComponent(cleanText)}`;
+      const gRes = await fetch(gUrl);
+      if (gRes.ok) {
+        const gData = await gRes.json();
+        if (Array.isArray(gData) && Array.isArray(gData[0])) {
+          const translated = gData[0].map((item: any) => item[0]).join('');
+          if (translated) {
+            if (meetingTranslationCache.size > 2000) {
+              meetingTranslationCache.clear();
+            }
+            meetingTranslationCache.set(cacheKey, translated);
+            return {
+              success: true,
+              translatedText: translated,
+              modelUsed: "server-engine",
+              provider: "server-fallback",
+            };
+          }
+        }
+      }
+    } catch (gErr) {
+      console.warn("[Server Translation Fallback Error]:", gErr);
+    }
+
+    return {
+      success: false,
+      translatedText: cleanText,
+      modelUsed: "none",
+      provider: "raw",
+    };
+  });

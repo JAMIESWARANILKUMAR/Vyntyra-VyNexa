@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Languages, Sparkles, Volume2, VolumeX, Mic, MicOff, 
-  Settings2, Check, ChevronDown, Bot, Type, Radio, Sliders 
+  Settings2, Check, ChevronDown, Bot, Type, Radio, Sliders, Cpu, Loader2 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { translateSpeechFn } from '@/lib/meetings.functions';
 
 export interface IndianLanguage {
   code: string;
@@ -42,31 +43,72 @@ export const SPOKEN_LANGUAGES = [
   { code: 'mr-IN', name: 'Marathi (मराठी)', speechLang: 'mr-IN' },
 ];
 
-// In-memory cache to guarantee instant 0ms responses for repeated translations
-const translationCache = new Map<string, string>();
+export const OPENROUTER_MODELS = [
+  {
+    id: 'meta-llama/llama-3.3-70b-instruct',
+    name: 'Meta Llama 3.3 70B',
+    tag: 'Recommended · High Accuracy',
+  },
+  {
+    id: 'openrouter/auto',
+    name: 'OpenRouter Auto',
+    tag: 'Dynamic Fast Routing',
+  },
+  {
+    id: 'deepseek/deepseek-chat',
+    name: 'DeepSeek V3',
+    tag: 'Rapid Conversational',
+  },
+  {
+    id: 'meta-llama/llama-3.1-8b-instruct',
+    name: 'Meta Llama 3.1 8B',
+    tag: 'Ultra-Low Latency',
+  },
+];
 
-async function translateText(text: string, targetLang: string): Promise<string> {
+// In-memory client cache to guarantee instant 0ms responses for repeated translations
+const clientTranslationCache = new Map<string, string>();
+
+async function translateWithOpenRouter(
+  text: string, 
+  targetLang: string, 
+  targetLangName: string, 
+  sourceLang: string, 
+  model: string
+): Promise<{ text: string; modelUsed: string; provider: string }> {
   const clean = text.trim();
-  if (!clean) return '';
-  const cacheKey = `${targetLang}:${clean.toLowerCase()}`;
-  if (translationCache.has(cacheKey)) {
-    return translationCache.get(cacheKey)!;
+  if (!clean) return { text: '', modelUsed: 'none', provider: 'none' };
+  
+  const cacheKey = `${targetLang}:${model}:${clean.toLowerCase()}`;
+  if (clientTranslationCache.has(cacheKey)) {
+    return { text: clientTranslationCache.get(cacheKey)!, modelUsed: 'cache', provider: 'client-cache' };
   }
 
   try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(clean)}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Translate API status ${res.status}`);
-    const data = await res.json();
-    if (Array.isArray(data) && Array.isArray(data[0])) {
-      const translated = data[0].map((item: any) => item[0]).join('');
-      translationCache.set(cacheKey, translated);
-      return translated;
+    const res = await translateSpeechFn({
+      data: {
+        text: clean,
+        targetLang,
+        targetLangName,
+        sourceLang,
+        model,
+      }
+    });
+
+    if (res && res.translatedText) {
+      if (clientTranslationCache.size > 1000) clientTranslationCache.clear();
+      clientTranslationCache.set(cacheKey, res.translatedText);
+      return {
+        text: res.translatedText,
+        modelUsed: res.modelUsed || model,
+        provider: res.provider || 'openrouter'
+      };
     }
   } catch (err) {
-    console.warn("Translation fetch error, returning source text:", err);
+    console.warn("[OpenRouter AI Translator] Client call failed:", err);
   }
-  return clean;
+
+  return { text: clean, modelUsed: 'fallback', provider: 'raw' };
 }
 
 export function IndianLanguageTranslator({
@@ -82,14 +124,16 @@ export function IndianLanguageTranslator({
 }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [spokenLang, setSpokenLang] = useState('en-IN');
+  const [selectedModel, setSelectedModel] = useState('meta-llama/llama-3.3-70b-instruct');
   const [fontSize, setFontSize] = useState<'normal' | 'large'>('normal');
   const [showOriginal, setShowOriginal] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [activeModelLabel, setActiveModelLabel] = useState('OpenRouter Llama 3.3 70B');
   
   const [currentCaption, setCurrentCaption] = useState<{ original: string; translated: string }>({
     original: "Live speech recognition active. Speak into your microphone.",
-    translated: "वास्तविक समय अनुवाद सक्रिय है। कृपया बोलें।",
+    translated: "वास्तविक समय अनुवाद सक्रिय है (OpenRouter AI)। कृपया बोलें।",
   });
 
   const recognitionRef = useRef<any>(null);
@@ -97,25 +141,57 @@ export function IndianLanguageTranslator({
   isEnabledRef.current = isEnabled;
   const targetLangRef = useRef(selectedLanguage);
   targetLangRef.current = selectedLanguage;
+  const spokenLangRef = useRef(spokenLang);
+  spokenLangRef.current = spokenLang;
+  const selectedModelRef = useRef(selectedModel);
+  selectedModelRef.current = selectedModel;
 
   const debounceTimeoutRef = useRef<any>(null);
 
-  // Perform translation safely with debounce
+  // Perform translation safely with debounce and OpenRouter AI models
   const processTranslation = useCallback(async (text: string) => {
-    if (!text.trim()) return;
+    const clean = text.trim();
+    if (!clean) return;
     setIsTranslating(true);
     try {
-      const translated = await translateText(text, targetLangRef.current.code);
+      const result = await translateWithOpenRouter(
+        clean,
+        targetLangRef.current.code,
+        targetLangRef.current.name,
+        spokenLangRef.current,
+        selectedModelRef.current
+      );
+
       setCurrentCaption({
-        original: text,
-        translated: translated || text,
+        original: clean,
+        translated: result.text || clean,
       });
+
+      if (result.modelUsed && result.modelUsed !== 'none') {
+        const shortName = result.modelUsed.split('/').pop() || result.modelUsed;
+        setActiveModelLabel(`OpenRouter · ${shortName}`);
+      }
     } catch (_) {
-      setCurrentCaption(prev => ({ ...prev, original: text }));
+      setCurrentCaption(prev => ({ ...prev, original: clean }));
     } finally {
       setIsTranslating(false);
     }
   }, []);
+
+  // Text-to-speech reader for translated voice
+  const handleSpeakAudio = () => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(currentCaption.translated || currentCaption.original);
+      utterance.lang = selectedLanguage.speechLang;
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+      toast.success(`Playing ${selectedLanguage.name} audio voiceover`);
+    } catch (e) {
+      console.warn("TTS error:", e);
+    }
+  };
 
   // Initialize and keep Web Speech Recognition alive continuously
   useEffect(() => {
@@ -167,17 +243,17 @@ export function IndianLanguageTranslator({
         const textToTranslate = (finalTranscript || interimTranscript).trim();
 
         if (textToTranslate) {
-          // Immediately show speech transcript
+          // Immediately show live transcript
           setCurrentCaption(prev => ({
             original: textToTranslate,
             translated: prev.translated,
           }));
 
-          // Debounce actual translation call by 250ms
+          // Debounce translation call by 300ms to allow smooth sentence completion
           clearTimeout(debounceTimeoutRef.current);
           debounceTimeoutRef.current = setTimeout(() => {
             processTranslation(textToTranslate);
-          }, 250);
+          }, 300);
         }
       };
 
@@ -214,12 +290,12 @@ export function IndianLanguageTranslator({
     };
   }, [isEnabled, spokenLang, processTranslation]);
 
-  // When selected language changes, re-translate current caption immediately
+  // When selected language or model changes, re-translate current caption immediately
   useEffect(() => {
     if (currentCaption.original) {
       processTranslation(currentCaption.original);
     }
-  }, [selectedLanguage, processTranslation]);
+  }, [selectedLanguage, selectedModel, processTranslation]);
 
   return (
     <>
@@ -234,22 +310,25 @@ export function IndianLanguageTranslator({
               ? 'bg-blue-600/30 text-blue-300 border-blue-500/50 shadow-lg' 
               : 'bg-black/50 hover:bg-black/80 text-gray-200 border-white/10'
           }`}
-          title="Live AI Translation & Captions"
+          title="Live AI Translation & Captions (OpenRouter API)"
         >
           <Languages className="h-3.5 w-3.5 mr-1.5 text-blue-400" />
           <span className="hidden sm:inline">{selectedLanguage.flag} {selectedLanguage.nativeName}</span>
+          <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-blue-500/20 text-blue-300 border border-blue-400/30 font-semibold uppercase">
+            AI
+          </span>
           <ChevronDown className="h-3 w-3 opacity-60 ml-1" />
         </Button>
 
         {/* Dropdown Menu */}
         {isDropdownOpen && (
-          <div className="absolute top-full mt-2 right-0 w-80 bg-[#0e1118]/98 backdrop-blur-2xl border border-white/15 rounded-2xl p-3 shadow-2xl z-50 text-white animate-in fade-in zoom-in-95 duration-150 font-sans">
+          <div className="absolute top-full mt-2 right-0 w-84 max-w-[92vw] bg-[#0e1118]/98 backdrop-blur-2xl border border-white/15 rounded-2xl p-3 shadow-2xl z-50 text-white animate-in fade-in zoom-in-95 duration-150 font-sans">
             
             {/* Header: Toggle & Status */}
             <div className="flex items-center justify-between px-1 pb-2.5 border-b border-white/10 mb-2.5">
               <div className="flex items-center gap-1.5 text-xs font-bold text-blue-400 uppercase tracking-wide">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Live Indian AI Subtitles</span>
+                <Sparkles className="h-3.5 w-3.5 text-blue-400" />
+                <span>OpenRouter AI Subtitles</span>
               </div>
               <button
                 onClick={() => onToggle()}
@@ -259,6 +338,33 @@ export function IndianLanguageTranslator({
               >
                 {isEnabled ? '● Active' : 'Turn On'}
               </button>
+            </div>
+
+            {/* OpenRouter AI Model Selector */}
+            <div className="mb-3 px-1">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider flex items-center gap-1">
+                  <Cpu className="h-3 w-3 text-cyan-400" />
+                  <span>OpenRouter AI Model</span>
+                </label>
+                <span className="text-[9px] font-mono text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">
+                  Live LLM
+                </span>
+              </div>
+              <select
+                value={selectedModel}
+                onChange={(e) => {
+                  setSelectedModel(e.target.value);
+                  toast.success(`Switched AI model to ${e.target.value.split('/').pop()}`);
+                }}
+                className="w-full h-8 bg-black/60 border border-white/15 rounded-xl px-2.5 text-xs text-white focus:outline-none focus:border-cyan-500"
+              >
+                {OPENROUTER_MODELS.map((m) => (
+                  <option key={m.id} value={m.id} className="bg-slate-900 text-white">
+                    {m.name} ({m.tag})
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Input Spoken Language Picker */}
@@ -282,11 +388,11 @@ export function IndianLanguageTranslator({
             {/* Subtitle Target Language Header */}
             <div className="px-1 text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1.5 flex items-center justify-between">
               <span>Translate Subtitles Into</span>
-              <span className="text-blue-400 font-mono text-[9px]">13 Languages</span>
+              <span className="text-blue-400 font-mono text-[9px]">13 Indian Languages</span>
             </div>
 
             {/* Language Selection Grid */}
-            <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
+            <div className="space-y-1 max-h-52 overflow-y-auto pr-1">
               {INDIAN_LANGUAGES.map((lang) => {
                 const isSelected = lang.code === selectedLanguage.code;
                 return (
@@ -346,20 +452,37 @@ export function IndianLanguageTranslator({
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-semibold text-blue-400 tracking-wide uppercase flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                <span className="text-[11px] font-semibold text-blue-400 tracking-wide uppercase flex flex-wrap items-center gap-1.5">
                   <span>{selectedLanguage.flag}</span>
-                  <span>AI Live Caption ({selectedLanguage.name} · {selectedLanguage.nativeName})</span>
+                  <span>{selectedLanguage.name} ({selectedLanguage.nativeName})</span>
                   {isListening && (
                     <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.2 rounded-full">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                       Listening
                     </span>
                   )}
-                  {isTranslating && (
-                    <span className="text-[10px] text-blue-300 animate-pulse">Translating...</span>
+                  {isTranslating ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-cyan-300 animate-pulse">
+                      <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
+                      Translating with OpenRouter...
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-mono text-cyan-400/90 bg-cyan-950/40 border border-cyan-800/40 px-2 py-0.2 rounded-full">
+                      <Sparkles className="h-2.5 w-2.5 text-cyan-400" />
+                      {activeModelLabel}
+                    </span>
                   )}
                 </span>
+
+                <button
+                  onClick={handleSpeakAudio}
+                  className="pointer-events-auto text-[10px] text-gray-400 hover:text-white flex items-center gap-1 bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded-md border border-white/10 transition-colors"
+                  title="Read aloud in translated language"
+                >
+                  <Volume2 className="h-3 w-3 text-blue-400" />
+                  <span>Speak</span>
+                </button>
               </div>
 
               {/* Original Spoken Text (if enabled) */}
