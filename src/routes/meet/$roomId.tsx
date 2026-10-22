@@ -6,10 +6,11 @@ import { useServerFn } from '@tanstack/react-start';
 import RealtimeKitClient from '@cloudflare/realtimekit';
 import { RtkUiProvider, RtkMeeting } from '@cloudflare/realtimekit-react-ui';
 import { 
-  Globe, Loader2, AlertCircle, Lock, Copy, RotateCw, CheckCircle2, ShieldCheck, Sparkles
+  Globe, Loader2, AlertCircle, Lock, Copy, RotateCw, CheckCircle2, ShieldCheck, Sparkles, Sliders, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -44,6 +45,7 @@ function MeetingRoom() {
   // Indian Languages AI Translation State
   const [translationEnabled, setTranslationEnabled] = useState(false);
   const [selectedIndianLanguage, setSelectedIndianLanguage] = useState<IndianLanguage>(INDIAN_LANGUAGES[0]);
+  const [isMobileToolsOpen, setIsMobileToolsOpen] = useState(false);
 
   // Auth States for External Guests
   const [submittedPassword, setSubmittedPassword] = useState<string | undefined>(undefined);
@@ -393,23 +395,33 @@ function MeetingRoom() {
       `}} />
 
       {/* Sleek Floating Glassmorphic Top Header */}
-      <header className="absolute top-0 left-0 right-0 h-14 px-4 flex items-center justify-between z-40 bg-gradient-to-b from-black/80 via-black/30 to-transparent pointer-events-none">
+      <header className="absolute top-0 left-0 right-0 h-14 px-3 sm:px-4 flex items-center justify-between z-40 bg-gradient-to-b from-black/80 via-black/30 to-transparent pointer-events-none">
         
         {/* Left: Branding, Room Title & Sleek Share Pill */}
-        <div className="flex items-center gap-2 pointer-events-auto">
-          <div className="flex items-center gap-2 bg-black/60 backdrop-blur-xl border border-white/10 px-3 py-1.5 rounded-full shadow-lg">
-            <img src="/icon-512.png" alt="Vyntyra Logo" className="h-5 w-5 object-contain rounded-md shadow-sm" />
-            <span className="font-bold text-white text-xs tracking-tight">Vyntyra</span>
-            <span className="text-gray-500 text-xs font-light">|</span>
-            <span className="text-xs font-semibold text-gray-100 max-w-[160px] truncate" title={data?.title}>
+        <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-black/60 backdrop-blur-xl border border-white/10 px-2.5 sm:px-3 py-1.5 rounded-full shadow-lg">
+            <img src="/icon-512.png" alt="Vyntyra Logo" className="h-4.5 w-4.5 sm:h-5 sm:w-5 object-contain rounded-md shadow-sm shrink-0" />
+            <span className="font-bold text-white text-xs tracking-tight hidden sm:inline">Vyntyra</span>
+            <span className="text-gray-500 text-xs font-light hidden sm:inline">|</span>
+            <span className="text-xs font-semibold text-gray-100 max-w-[100px] sm:max-w-[160px] truncate" title={data?.title}>
               {data?.title || "Live Meeting"}
             </span>
             <span className="text-gray-600 text-xs">·</span>
-            <span className="font-mono text-xs text-blue-400 font-semibold" title={roomId}>
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  navigator.clipboard.writeText(roomId);
+                  toast.success(`Meeting code copied: ${roomId}`);
+                }
+              }}
+              className="font-mono text-xs text-blue-400 font-semibold hover:underline"
+              title="Click to copy code"
+            >
               {roomId.length > 15 ? `#${roomId.slice(0, 8)}` : roomId}
-            </span>
+            </button>
           </div>
 
+          {/* Desktop Direct Copy Action */}
           <Button
             size="sm"
             variant="ghost"
@@ -419,70 +431,67 @@ function MeetingRoom() {
                 toast.success("Meeting link copied to clipboard!");
               }
             }}
-            className="h-8 px-2.5 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all shadow-sm flex items-center gap-1.5"
+            className="hidden md:inline-flex h-8 px-2.5 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all shadow-sm items-center gap-1.5"
             title="Copy Meeting Link"
           >
             <Copy className="h-3.5 w-3.5 text-blue-400" />
-            <span className="hidden sm:inline">Copy Link</span>
-          </Button>
-
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                navigator.clipboard.writeText(roomId);
-                toast.success(`Meeting code copied: ${roomId}`);
-              }
-            }}
-            className="h-8 px-2.5 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-300 hover:text-white rounded-full text-xs transition-all shadow-sm font-mono hidden md:inline-flex"
-            title="Copy Room Code Only"
-          >
-            Copy Code
+            <span>Copy Link</span>
           </Button>
         </div>
 
-        {/* Right: Telemetry, Grid Resizer, Video Enhancer, Indian Languages & Reactions */}
-        <div className="flex items-center gap-2 pointer-events-auto">
+        {/* Right Section: Responsive Controls */}
+        <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
           {/* Live Network Speed & Ping HUD */}
           <MeetingNetworkHUD />
 
-          {/* Dynamic Grid Resizer (4 to 1000 participants) */}
-          <GridLayoutSelector
-            currentLayout={currentGridLayout}
-            onSelectLayout={(layoutId) => {
-              setCurrentGridLayout(layoutId);
-              toast.info(`Grid adjusted to ${layoutId} tiles format`);
-            }}
-          />
+          {/* Desktop Controls (Hidden on narrow mobile screens) */}
+          <div className="hidden md:flex items-center gap-2">
+            {/* Dynamic Grid Resizer (4 to 1000 participants) */}
+            <GridLayoutSelector
+              currentLayout={currentGridLayout}
+              onSelectLayout={(layoutId) => {
+                setCurrentGridLayout(layoutId);
+                toast.info(`Grid adjusted to ${layoutId} tiles format`);
+              }}
+            />
 
-          {/* Video Enhancer & Dynamic Color View */}
-          <VideoEnhancerModal
-            activeFilter={selectedFilter}
-            activeBackground={selectedBackground}
-            onSelectFilter={(f) => {
-              setSelectedFilter(f);
-              toast.success("Video filter applied");
-            }}
-            onSelectBackground={(b) => {
-              setSelectedBackground(b);
-              toast.success("Background effect updated");
-            }}
-          />
+            {/* Video Enhancer & Dynamic Color View */}
+            <VideoEnhancerModal
+              activeFilter={selectedFilter}
+              activeBackground={selectedBackground}
+              onSelectFilter={(f) => {
+                setSelectedFilter(f);
+                toast.success("Video filter applied");
+              }}
+              onSelectBackground={(b) => {
+                setSelectedBackground(b);
+                toast.success("Background effect updated");
+              }}
+            />
 
-          {/* Indian Languages AI Translator */}
-          <IndianLanguageTranslator
-            isEnabled={translationEnabled}
-            onToggle={() => setTranslationEnabled(!translationEnabled)}
-            selectedLanguage={selectedIndianLanguage}
-            onLanguageChange={(lang) => {
-              setSelectedIndianLanguage(lang);
-              toast.success(`Translated into ${lang.name} (${lang.nativeName})`);
-            }}
-          />
+            {/* Indian Languages AI Translator */}
+            <IndianLanguageTranslator
+              isEnabled={translationEnabled}
+              onToggle={() => setTranslationEnabled(!translationEnabled)}
+              selectedLanguage={selectedIndianLanguage}
+              onLanguageChange={(lang) => {
+                setSelectedIndianLanguage(lang);
+                toast.success(`Translated into ${lang.name} (${lang.nativeName})`);
+              }}
+            />
+          </div>
 
-          {/* Animated Floating Emojis Burst */}
-          <FloatingReactions />
+          {/* Smartphone Clean Tools Trigger (Only visible on mobile) */}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setIsMobileToolsOpen(true)}
+            className="md:hidden h-8 px-2.5 bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 rounded-full text-xs flex items-center gap-1 shadow-sm"
+            title="Meeting Settings & Tools"
+          >
+            <Sliders className="h-3.5 w-3.5 text-blue-400" />
+            <span className="text-[11px] font-semibold">Tools</span>
+          </Button>
         </div>
       </header>
 
@@ -499,6 +508,123 @@ function MeetingRoom() {
           <RtkMeeting meeting={meeting} showSetupScreen={false} />
         </RtkUiProvider>
       </main>
+
+      {/* ─── Bottom Floating Reaction Emoji Launcher (Positioned at bottom with reaction emoji) ─── */}
+      <FloatingReactions 
+        roomId={roomId}
+        userName={data?.participantName || submittedGuestName || "You"}
+      />
+
+      {/* ─── Mobile Meeting Controls Drawer (Prevents top bar clumsiness on phones) ─── */}
+      <Dialog open={isMobileToolsOpen} onOpenChange={setIsMobileToolsOpen}>
+        <DialogContent className="sm:max-w-md bg-[#0e1118]/98 backdrop-blur-2xl border-white/15 text-white rounded-3xl p-5 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center justify-between text-white">
+              <span className="flex items-center gap-2">
+                <Sliders className="h-4 w-4 text-blue-400" />
+                Meeting Controls & Tools
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            
+            {/* Share Meeting Link & Code */}
+            <div className="p-3 bg-black/40 border border-white/10 rounded-2xl space-y-2">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Meeting Details</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-blue-400 text-xs truncate select-all">{roomId}</span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.href);
+                      toast.success("Meeting link copied!");
+                    }}
+                    className="h-7 px-2.5 text-[11px] border-white/10 bg-white/5"
+                  >
+                    Copy Link
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(roomId);
+                      toast.success("Room code copied!");
+                    }}
+                    className="h-7 px-2.5 text-[11px] border-white/10 bg-white/5 font-mono"
+                  >
+                    Copy Code
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Video Enhancer Controls */}
+            <div className="p-3 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between">
+              <div>
+                <span className="font-semibold text-white block">Video Lighting & Filters</span>
+                <span className="text-[11px] text-gray-400">Low-light boost, studio light, and filters</span>
+              </div>
+              <VideoEnhancerModal
+                activeFilter={selectedFilter}
+                activeBackground={selectedBackground}
+                onSelectFilter={(f) => {
+                  setSelectedFilter(f);
+                  toast.success("Video filter applied");
+                }}
+                onSelectBackground={(b) => {
+                  setSelectedBackground(b);
+                  toast.success("Background effect updated");
+                }}
+              />
+            </div>
+
+            {/* Indian Languages AI Subtitles */}
+            <div className="p-3 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between">
+              <div>
+                <span className="font-semibold text-white block">Indian Languages Translation</span>
+                <span className="text-[11px] text-gray-400">13 Indian languages real-time AI subtitles</span>
+              </div>
+              <IndianLanguageTranslator
+                isEnabled={translationEnabled}
+                onToggle={() => setTranslationEnabled(!translationEnabled)}
+                selectedLanguage={selectedIndianLanguage}
+                onLanguageChange={(lang) => {
+                  setSelectedIndianLanguage(lang);
+                  toast.success(`Translated into ${lang.name}`);
+                }}
+              />
+            </div>
+
+            {/* Dynamic Grid Resizer */}
+            <div className="p-3 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between">
+              <div>
+                <span className="font-semibold text-white block">Participant Grid Layout</span>
+                <span className="text-[11px] text-gray-400">Switch between 4, 8, 16, or auditorium tiles</span>
+              </div>
+              <GridLayoutSelector
+                currentLayout={currentGridLayout}
+                onSelectLayout={(layoutId) => {
+                  setCurrentGridLayout(layoutId);
+                  toast.info(`Grid layout adjusted to ${layoutId}`);
+                }}
+              />
+            </div>
+
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <Button
+              onClick={() => setIsMobileToolsOpen(false)}
+              className="bg-[#0b5cff] hover:bg-[#094bdd] text-white text-xs rounded-xl h-9 px-5 font-semibold"
+            >
+              Done
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

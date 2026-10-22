@@ -448,7 +448,8 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
       roomId: data.roomId,
       isHost,
       appId: appId,
-      title: room.title as string
+      title: room.title as string,
+      participantName: participantName || "Guest"
     };
   });
 

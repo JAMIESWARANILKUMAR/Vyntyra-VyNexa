@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Smile, Sparkles, Hand, Search, X, Check, 
-  ThumbsUp, Heart, Flame, Rocket, PartyPopper, Lightbulb, 
-  Briefcase, Award, Coffee, ChevronRight
+  Sparkles, Search, X, Hand, ChevronUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export interface ReactionItem {
   id: string;
   emoji: string;
+  senderName?: string;
   xOffset: number;
   rotation: number;
   sizeMultiplier: number;
@@ -110,18 +110,73 @@ function playReactionSound(isHandRaise = false) {
 }
 
 export function FloatingReactions({ 
-  onTriggerReaction,
-  userName = "You" 
+  roomId,
+  userName = "Attendee",
+  onTriggerReaction 
 }: { 
-  onTriggerReaction?: (emoji: string) => void;
+  roomId: string;
   userName?: string;
+  onTriggerReaction?: (emoji: string) => void;
 }) {
   const [reactions, setReactions] = useState<ReactionItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'quick' | 'corporate' | 'civility' | 'expressions'>('quick');
   const [searchQuery, setSearchQuery] = useState('');
   const [isHandRaised, setIsHandRaised] = useState(false);
+  
   const containerRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<any>(null);
+
+  // Spawns a floating reaction on the screen
+  const spawnFloatingEmoji = (emoji: string, senderName?: string) => {
+    const newReaction: ReactionItem = {
+      id: `${Date.now()}_${Math.random()}`,
+      emoji,
+      senderName,
+      xOffset: (Math.random() - 0.5) * 220,
+      rotation: (Math.random() - 0.5) * 35,
+      sizeMultiplier: 1 + Math.random() * 0.4
+    };
+
+    setReactions((prev) => [...prev.slice(-30), newReaction]);
+    onTriggerReaction?.(emoji);
+
+    setTimeout(() => {
+      setReactions((prev) => prev.filter((r) => r.id !== newReaction.id));
+    }, 2800);
+  };
+
+  // Connect to Supabase Realtime Channel so ALL participants see reactions in real time
+  useEffect(() => {
+    if (!roomId) return;
+
+    const channelTopic = `meet-reactions-${roomId.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const channel = supabase.channel(channelTopic, {
+      config: { broadcast: { self: true } }
+    });
+
+    channel
+      .on('broadcast', { event: 'reaction' }, ({ payload }) => {
+        if (payload?.emoji) {
+          spawnFloatingEmoji(payload.emoji, payload.senderName);
+        }
+      })
+      .on('broadcast', { event: 'hand_raise' }, ({ payload }) => {
+        if (payload?.isRaised && payload.senderName !== userName) {
+          toast.info(`✋ ${payload.senderName || 'Participant'} raised their hand`);
+        }
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          channelRef.current = channel;
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [roomId, userName]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -136,11 +191,23 @@ export function FloatingReactions({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  const addReaction = (emoji: string, action?: string) => {
+  const sendReaction = (emoji: string, action?: string) => {
     if (action === 'raise_hand' || emoji === '✋') {
       const nextState = !isHandRaised;
       setIsHandRaised(nextState);
       playReactionSound(true);
+
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'hand_raise',
+          payload: {
+            isRaised: nextState,
+            senderName: userName
+          }
+        });
+      }
+
       if (nextState) {
         toast.info("✋ You raised your hand", {
           description: "Other participants and hosts can see your hand is raised."
@@ -152,20 +219,21 @@ export function FloatingReactions({
       playReactionSound(false);
     }
 
-    const newReaction: ReactionItem = {
-      id: `${Date.now()}_${Math.random()}`,
-      emoji,
-      xOffset: (Math.random() - 0.5) * 220,
-      rotation: (Math.random() - 0.5) * 35,
-      sizeMultiplier: 1 + Math.random() * 0.4
-    };
-
-    setReactions((prev) => [...prev.slice(-30), newReaction]);
-    onTriggerReaction?.(emoji);
-
-    setTimeout(() => {
-      setReactions((prev) => prev.filter((r) => r.id !== newReaction.id));
-    }, 2800);
+    // Broadcast reaction to ALL participants in the call!
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'reaction',
+        payload: {
+          emoji,
+          senderName: userName,
+          id: `${Date.now()}_${Math.random()}`
+        }
+      });
+    } else {
+      // Fallback local spawn if channel connecting
+      spawnFloatingEmoji(emoji, userName);
+    }
   };
 
   // Filtered emojis when searching
@@ -192,102 +260,84 @@ export function FloatingReactions({
               initial={{
                 opacity: 0,
                 scale: 0.3,
-                y: typeof window !== 'undefined' ? window.innerHeight - 80 : 600,
-                x: typeof window !== 'undefined' ? window.innerWidth - 180 + reaction.xOffset : 300,
+                y: typeof window !== 'undefined' ? window.innerHeight - 100 : 600,
+                x: typeof window !== 'undefined' ? window.innerWidth - 120 + reaction.xOffset : 300,
                 rotate: 0,
               }}
               animate={{
                 opacity: [0, 1, 1, 0],
                 scale: [0.3, 1.4 * reaction.sizeMultiplier, 1.6 * reaction.sizeMultiplier, 1.2],
                 y: typeof window !== 'undefined' ? window.innerHeight - 620 : 100,
-                x: typeof window !== 'undefined' ? window.innerWidth - 180 + reaction.xOffset * 1.6 : 320,
+                x: typeof window !== 'undefined' ? window.innerWidth - 120 + reaction.xOffset * 1.6 : 320,
                 rotate: reaction.rotation,
               }}
               transition={{
                 duration: 2.7,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="absolute text-5xl filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] select-none"
+              className="absolute flex flex-col items-center filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)] select-none pointer-events-none"
             >
-              {reaction.emoji}
+              <span className="text-4xl sm:text-5xl">{reaction.emoji}</span>
+              {reaction.senderName && reaction.senderName !== "Attendee" && (
+                <span className="mt-1 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-[10px] font-semibold text-white border border-white/10 shadow-md">
+                  {reaction.senderName}
+                </span>
+              )}
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
 
-      {/* Persistent Hand Raise Banner (when active) */}
+      {/* Persistent Hand Raise Banner on Screen (when user has raised hand) */}
       <AnimatePresence>
         {isHandRaised && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[#0b5cff] text-white px-4 py-1.5 rounded-full shadow-2xl flex items-center gap-2 border border-blue-400/40 text-xs font-semibold backdrop-blur-md cursor-pointer hover:bg-blue-600 transition-colors"
+            className="fixed top-16 left-1/2 -translate-x-1/2 z-40 bg-[#0b5cff] text-white px-4 py-1.5 rounded-full shadow-2xl flex items-center gap-2 border border-blue-400/40 text-xs font-semibold backdrop-blur-md cursor-pointer hover:bg-blue-600 transition-colors pointer-events-auto"
             onClick={() => {
-              setIsHandRaised(false);
-              toast.info("Hand lowered");
+              sendReaction('✋', 'raise_hand');
             }}
           >
             <span className="text-base animate-bounce">✋</span>
             <span>You raised your hand</span>
-            <span className="text-[10px] text-blue-200 bg-black/20 px-2 py-0.5 rounded-full ml-1">Click to lower</span>
+            <span className="text-[10px] text-blue-200 bg-black/25 px-2 py-0.5 rounded-full ml-1">Tap to lower</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Launcher Trigger Button & Dropdown Menu */}
-      <div className="relative" ref={containerRef}>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setIsOpen(!isOpen)}
-          className={`h-8 px-2.5 rounded-full text-xs transition-all shadow-sm flex items-center gap-1.5 border ${
-            isHandRaised 
-              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30' 
-              : isOpen
-              ? 'bg-[#0b5cff] text-white border-blue-400'
-              : 'bg-black/50 hover:bg-black/80 backdrop-blur-md border-white/10 text-gray-200 hover:text-white'
-          }`}
-          title="Global Professional Emojis & Hand Raise"
-        >
-          {isHandRaised ? (
-            <>
-              <span className="text-sm animate-pulse">✋</span>
-              <span className="hidden md:inline font-semibold">Hand Raised</span>
-            </>
-          ) : (
-            <>
-              <Smile className="h-3.5 w-3.5 text-amber-400" />
-              <span className="hidden md:inline font-medium">Reactions</span>
-            </>
-          )}
-        </Button>
-
-        {/* Global Professional Emoji Picker Dropdown */}
+      {/* ─── Bottom Floating Reaction Emoji Launcher Button ─── */}
+      <div 
+        className="fixed bottom-20 right-4 sm:right-6 z-40 pointer-events-auto flex flex-col items-end"
+        ref={containerRef}
+      >
+        
+        {/* Global Professional Emoji Picker Popup (Opens UPWARDS above the bottom bar) */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.96 }}
+              initial={{ opacity: 0, y: 16, scale: 0.94 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 6, scale: 0.96 }}
+              exit={{ opacity: 0, y: 12, scale: 0.94 }}
               transition={{ duration: 0.16 }}
-              className="absolute top-full mt-2 right-0 w-80 bg-[#0e1118]/95 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl z-50 p-3 overflow-hidden text-white font-sans"
+              className="mb-3 w-[calc(100vw-32px)] sm:w-84 max-w-sm bg-[#0e1118]/95 backdrop-blur-2xl border border-white/15 rounded-3xl p-3.5 shadow-2xl z-50 text-white font-sans"
             >
               
-              {/* Header with Quick Hand Raise Toggle */}
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-200">
-                  <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-                  <span>Professional Reactions</span>
+              {/* Header with Hand Raise Action */}
+              <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-white/10">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-200">
+                  <span className="text-base">😊</span>
+                  <span>Meeting Reactions</span>
                 </div>
 
                 <Button
                   size="sm"
                   variant={isHandRaised ? "default" : "outline"}
-                  onClick={() => addReaction('✋', 'raise_hand')}
-                  className={`h-7 px-2.5 text-[11px] rounded-lg gap-1 transition-all ${
+                  onClick={() => sendReaction('✋', 'raise_hand')}
+                  className={`h-7 px-2.5 text-[11px] rounded-full gap-1 transition-all ${
                     isHandRaised 
-                      ? 'bg-amber-500 hover:bg-amber-600 text-black font-bold' 
+                      ? 'bg-amber-500 hover:bg-amber-600 text-black font-bold shadow-md' 
                       : 'border-white/10 bg-white/5 hover:bg-white/10 text-gray-200'
                   }`}
                 >
@@ -296,28 +346,45 @@ export function FloatingReactions({
                 </Button>
               </div>
 
-              {/* Search Bar */}
+              {/* Quick Reactions Bar (Always 1-tap accessible) */}
+              <div className="flex items-center justify-between gap-1 mb-3 p-1.5 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto">
+                {PROFESSIONAL_EMOJIS.quick.map((item) => (
+                  <button
+                    key={item.emoji + item.label}
+                    onClick={() => {
+                      sendReaction(item.emoji, (item as any).action);
+                      if (item.emoji !== '✋') setIsOpen(false);
+                    }}
+                    title={item.label}
+                    className="h-9 w-9 text-xl flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-transform shrink-0"
+                  >
+                    {item.emoji}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search Field */}
               <div className="relative mb-2.5">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search reactions (e.g. Agree, Kudos, Goal)..."
-                  className="h-8 pl-8 pr-7 text-xs bg-black/40 border-white/10 rounded-xl text-white placeholder:text-gray-500"
+                  className="h-8 pl-8 pr-7 text-xs bg-black/50 border-white/10 rounded-xl text-white placeholder:text-gray-500"
                 />
                 {searchQuery && (
                   <button 
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
 
-              {/* Category Navigation Pills (only if not searching) */}
+              {/* Category Pills (when not searching) */}
               {!searchQuery && (
-                <div className="flex items-center gap-1 mb-2.5 p-1 bg-black/40 rounded-xl border border-white/5 overflow-x-auto text-[10px] font-medium">
+                <div className="flex items-center gap-1 mb-2 p-1 bg-black/40 rounded-xl border border-white/5 overflow-x-auto text-[10px] font-medium">
                   <button
                     onClick={() => setActiveTab('quick')}
                     className={`px-2.5 py-1 rounded-lg transition-colors shrink-0 ${
@@ -354,13 +421,16 @@ export function FloatingReactions({
               )}
 
               {/* Emoji Grid */}
-              <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 max-h-48 overflow-y-auto pr-1">
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 max-h-44 overflow-y-auto pr-1">
                 {displayedEmojis.map((item) => (
                   <button
                     key={item.emoji + item.label}
-                    onClick={() => addReaction(item.emoji, (item as any).action)}
+                    onClick={() => {
+                      sendReaction(item.emoji, (item as any).action);
+                      if (item.emoji !== '✋') setIsOpen(false);
+                    }}
                     title={item.label}
-                    className="h-10 w-full flex flex-col items-center justify-center rounded-xl bg-white/[0.03] hover:bg-white/10 hover:scale-115 active:scale-95 transition-all group relative"
+                    className="h-10 w-full flex flex-col items-center justify-center rounded-xl bg-white/[0.03] hover:bg-white/10 active:scale-90 transition-transform group"
                   >
                     <span className="text-xl">{item.emoji}</span>
                     <span className="text-[8px] text-gray-400 group-hover:text-gray-200 truncate max-w-full px-0.5 line-clamp-1 leading-tight mt-0.5">
@@ -370,15 +440,45 @@ export function FloatingReactions({
                 ))}
               </div>
 
-              {/* Footer Tip */}
-              <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-400 px-1">
-                <span>Clicking sends animated floating reaction</span>
-                <span className="text-blue-400 font-mono">Real-time</span>
+              {/* Footer Note */}
+              <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-400 px-1">
+                <span>Broadcasts to everyone live</span>
+                <span className="text-emerald-400 flex items-center gap-1 font-mono">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Connected
+                </span>
               </div>
 
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* ── Thumb-Friendly Floating Reaction Emoji Button ── */}
+        <Button
+          size="sm"
+          onClick={() => setIsOpen(!isOpen)}
+          className={`h-11 w-11 sm:h-11 sm:w-auto sm:px-3.5 rounded-full shadow-2xl flex items-center justify-center gap-1.5 border transition-all hover:scale-105 active:scale-95 ${
+            isHandRaised 
+              ? 'bg-amber-500 hover:bg-amber-600 text-black border-amber-300 shadow-amber-500/30' 
+              : isOpen
+              ? 'bg-[#0b5cff] hover:bg-[#094bdd] text-white border-blue-400 shadow-blue-500/30'
+              : 'bg-[#12151c]/90 hover:bg-[#1a1f2b] text-white border-white/20 backdrop-blur-xl'
+          }`}
+          title="Send Reaction or Raise Hand"
+        >
+          {isHandRaised ? (
+            <>
+              <span className="text-xl animate-bounce">✋</span>
+              <span className="hidden sm:inline font-bold text-xs uppercase tracking-wider">Hand Up</span>
+            </>
+          ) : (
+            <>
+              <span className="text-xl">😊</span>
+              <span className="hidden sm:inline font-bold text-xs uppercase tracking-wider text-amber-300">React</span>
+            </>
+          )}
+        </Button>
+
       </div>
     </>
   );
