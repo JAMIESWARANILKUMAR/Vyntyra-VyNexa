@@ -117,7 +117,7 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
       doc.setTextColor(slate[0], slate[1], slate[2]);
       doc.text("Dwaraka Nagar, Dwaraka Plaza, Visakhapatnam", MR, 14, { align: "right" });
       doc.text("Andhra Pradesh, India – 530016", MR, 19, { align: "right" });
-      doc.text("Web: careers.vyntyraconsultancyservices.in", MR, 24, { align: "right" });
+      doc.text("Web: portal.vyntyraconsultancyservices.in", MR, 24, { align: "right" });
       doc.text("Email: careers@vyntyraconsultancyservices.in", MR, 29, { align: "right" });
     }
 

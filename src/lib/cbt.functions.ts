@@ -775,7 +775,7 @@ async function sendCbtAssignmentEmail(params: SendCbtAssignmentEmailInput) {
           </tr>
           <tr>
             <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Careers Portal:</span></td>
-            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><a href="${careersUrl}" style="color: #0284c7; font-size: 13px; font-weight: 700; text-decoration: underline;">careers.vyntyraconsultancyservices.in</a></td>
+            <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><a href="${portalUrl}" style="color: #0284c7; font-size: 13px; font-weight: 700; text-decoration: underline;">portal.vyntyraconsultancyservices.in</a></td>
           </tr>
           <tr>
             <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;"><span style="color: #64748b; font-size: 13px; font-weight: 600;">Assessment Name:</span></td>
@@ -873,11 +873,11 @@ async function sendCbtAssignmentEmail(params: SendCbtAssignmentEmailInput) {
           </tr>
           <tr>
             <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;">
-              <span style="color: #475569; font-size: 12px; font-weight: 600;">Careers &amp; Opportunities Portal:</span>
+              <span style="color: #475569; font-size: 12px; font-weight: 600;">Candidate &amp; Opportunities Portal:</span>
             </td>
             <td style="padding: 10px 18px; border-bottom: 1px solid #f1f5f9;">
-              <a href="${careersUrl}" target="_blank" style="color: #0284c7; font-size: 12px; font-weight: 700; text-decoration: underline;">
-                careers.vyntyraconsultancyservices.in
+              <a href="${portalUrl}" target="_blank" style="color: #0284c7; font-size: 12px; font-weight: 700; text-decoration: underline;">
+                portal.vyntyraconsultancyservices.in
               </a>
             </td>
           </tr>
@@ -905,8 +905,7 @@ async function sendCbtAssignmentEmail(params: SendCbtAssignmentEmailInput) {
             Enterprise Talent Acquisition &amp; Performance Operations Division
           </p>
           <p style="color: #64748b; font-size: 11px; margin: 0; line-height: 1.8;">
-            Candidate Portal: <a href="${portalUrl}" style="color: #4f46e5; text-decoration: none; font-weight: 600;">portal.vyntyraconsultancyservices.in</a> &bull; 
-            Careers Portal: <a href="${careersUrl}" style="color: #0284c7; text-decoration: none; font-weight: 600;">careers.vyntyraconsultancyservices.in</a><br/>
+            Candidate Portal: <a href="${portalUrl}" style="color: #4f46e5; text-decoration: none; font-weight: 600;">portal.vyntyraconsultancyservices.in</a><br/>
             Support &amp; Recruitment: <a href="mailto:careers@vyntyraconsultancyservices.in" style="color: #4f46e5; text-decoration: none;">careers@vyntyraconsultancyservices.in</a>
           </p>
         </div>
@@ -2619,7 +2618,6 @@ export const grantInternRetakeFn = createServerFn({ method: "POST" })
           <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 24px; font-size: 12px; color: #64748b; line-height: 1.6;">
             <strong>Official Portals:</strong><br/>
             Candidate Portal: <a href="${portalUrl}" style="color: #4f46e5; text-decoration: underline;">portal.vyntyraconsultancyservices.in</a><br/>
-            Careers Portal: <a href="${careersUrl}" style="color: #0284c7; text-decoration: underline;">careers.vyntyraconsultancyservices.in</a><br/>
             Support: <a href="mailto:careers@vyntyraconsultancyservices.in" style="color: #4f46e5;">careers@vyntyraconsultancyservices.in</a>
           </div>
         </div>

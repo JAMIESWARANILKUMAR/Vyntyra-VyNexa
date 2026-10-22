@@ -356,7 +356,7 @@ export function generateNocPdf(data: NocData): jsPDF {
   doc.setFontSize(7);
   doc.setTextColor(33, 53, 78);
   doc.text(`Issue Date: ${issued}`, margin + 7, sealY + 13);
-  doc.text(`Verification: careers.vyntyraconsultancyservices.in/verify?id=${refId}`, margin + 7, sealY + 18, { maxWidth: sealTextMaxW });
+  doc.text(`Verification: portal.vyntyraconsultancyservices.in/verify?id=${refId}`, margin + 7, sealY + 18, { maxWidth: sealTextMaxW });
   doc.text("ISO 9001:2015 Compliant  ·  UDYAM-AP-10-0143100  ·  Securely Signed & Verified", margin + 7, sealY + 23, { maxWidth: sealTextMaxW });
 
   // ── Signature section ────────────────────────────────────────────────
@@ -425,7 +425,7 @@ export function generateNocPdf(data: NocData): jsPDF {
     pageW / 2, footerY + 4.5, { align: "center" }
   );
   doc.text(
-    "UDYAM Reg: UDYAM-AP-10-0143100  ·  careers.vyntyraconsultancyservices.in",
+    "UDYAM Reg: UDYAM-AP-10-0143100  ·  portal.vyntyraconsultancyservices.in",
     pageW / 2, footerY + 9, { align: "center" }
   );
 
@@ -443,7 +443,7 @@ export function generateNocPdf(data: NocData): jsPDF {
     pageW / 2, 276, { align: "center" }
   );
   doc.text(
-    "hr@vyntyraconsultancyservices.in  ·  careers.vyntyraconsultancyservices.in",
+    "hr@vyntyraconsultancyservices.in  ·  portal.vyntyraconsultancyservices.in",
     pageW / 2, 281, { align: "center" }
   );
   doc.text(

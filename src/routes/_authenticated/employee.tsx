@@ -1289,7 +1289,7 @@ function EmployeeDashboard() {
       const { data, error } = await supabase.auth.mfa.enroll({ 
         factorType: 'totp', 
         friendlyName: uniqueName,
-        issuer: 'careers.vyntyraconsultancyservices.in'
+        issuer: 'portal.vyntyraconsultancyservices.in'
       });
       if (error) throw error;
       setMfaFactorId(data.id);

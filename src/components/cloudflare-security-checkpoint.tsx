@@ -9,7 +9,7 @@ interface CloudflareSecurityCheckpointProps {
 
 export function CloudflareSecurityCheckpoint({
   onVerified,
-  hostname = "careers.vyntyraconsultancyservices.in",
+  hostname = typeof window !== "undefined" ? window.location.hostname : "portal.vyntyraconsultancyservices.in",
   className = "",
 }: CloudflareSecurityCheckpointProps) {
   const [verifying, setVerifying] = useState(false);
