@@ -208,12 +208,12 @@ export function EmployeeReferEarn() {
             <p className="text-xs text-slate-500 leading-relaxed">Send this invite directly to candidates wishing to apply.</p>
             
             <div className="bg-slate-50/90 border border-slate-200 p-3.5 rounded-2xl text-xs font-light text-slate-600 font-mono select-all leading-relaxed whitespace-pre-wrap max-h-[140px] overflow-y-auto shadow-inner">
-              {`Hey! Apply for the industrial internship at Vyntyra Consultancy Services using my referral code "${referralCode}" to get scholarship benefits: https://careers.vyntyraconsultancyservices.in/careers`}
+              {`Hey! Apply for the industrial internship at Vyntyra Consultancy Services using my referral code "${referralCode}" to get scholarship benefits: https://portal.vyntyraconsultancyservices.in/careers`}
             </div>
 
             <Button
               onClick={() => {
-                const shareText = `Hey! Apply for the industrial internship at Vyntyra Consultancy Services using my referral code "${referralCode}" to get scholarship benefits: https://careers.vyntyraconsultancyservices.in/careers`;
+                const shareText = `Hey! Apply for the industrial internship at Vyntyra Consultancy Services using my referral code "${referralCode}" to get scholarship benefits: https://portal.vyntyraconsultancyservices.in/careers`;
                 navigator.clipboard.writeText(shareText);
                 setCopiedInvite(true);
                 toast.success("Invitation message copied to clipboard!");

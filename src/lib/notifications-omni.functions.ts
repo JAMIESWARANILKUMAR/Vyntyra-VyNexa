@@ -11,7 +11,7 @@ const supabase = new Proxy({} as any, { get: (_, prop) => (getAdminClient() as a
 const SITE_NAME = "VyNexa Connect";
 const FROM_DOMAIN = "vyntyraconsultancyservices.in";
 const DEFAULT_LOGO_URL = "https://raw.githubusercontent.com/JAMIESWARANILKUMAR/Vyntyra-VyNexa/main/public/icon-512.png";
-const BASE_APP_URL = getEnv("VITE_APP_URL") || "https://careers.vyntyraconsultancyservices.in";
+const BASE_APP_URL = getEnv("VITE_APP_URL") || "https://portal.vyntyraconsultancyservices.in";
 
 async function checkIsAdmin(userId: string): Promise<boolean> {
   const { data, error } = await supabase

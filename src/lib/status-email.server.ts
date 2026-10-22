@@ -34,7 +34,7 @@ function stripHtml(h: string) {
   return h.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
-const LOGO_URL = 'https://careers.vyntyraconsultancyservices.in/icon-512.png';
+const LOGO_URL = 'https://portal.vyntyraconsultancyservices.in/icon-512.png';
 
 export function shell(innerHtml: string) {
   return `<!doctype html>
@@ -82,7 +82,7 @@ export function shell(innerHtml: string) {
                 <span style="color:#cbd5e1;">|</span>
                 <a href="https://www.instagram.com/vyntyraindia" style="color:#2563eb;font-weight:500;text-decoration:none;margin:0 8px;">Instagram</a>
                 <span style="color:#cbd5e1;">|</span>
-                <a href="https://careers.vyntyraconsultancyservices.in/" style="color:#2563eb;font-weight:500;text-decoration:none;margin:0 8px;">Official Portal</a>
+                <a href="https://portal.vyntyraconsultancyservices.in/" style="color:#2563eb;font-weight:500;text-decoration:none;margin:0 8px;">Official Portal</a>
               </div>
 
               <div style="padding-top:12px;color:#64748b;">

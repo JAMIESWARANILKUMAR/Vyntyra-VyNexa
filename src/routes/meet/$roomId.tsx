@@ -372,6 +372,18 @@ function MeetingRoom() {
           }
         ` : ''}
 
+        /* Hide RealtimeKit's duplicate top header so our unified header looks pristine and clean */
+        .rtk-meeting-header, 
+        rtk-header, 
+        [data-part="header"],
+        .rtk-top-bar,
+        .rtk-header-container,
+        rtk-meeting > header,
+        .rtk-meeting-title,
+        .rtk-title-bar {
+          display: none !important;
+        }
+
         /* Ensure RealtimeKit Meeting Component Fills 100% of Screen */
         rtk-meeting {
           display: flex !important;
@@ -383,16 +395,18 @@ function MeetingRoom() {
       {/* Sleek Floating Glassmorphic Top Header */}
       <header className="absolute top-0 left-0 right-0 h-14 px-4 flex items-center justify-between z-40 bg-gradient-to-b from-black/80 via-black/30 to-transparent pointer-events-none">
         
-        {/* Left: Branding, Room Title & Copy Invite */}
+        {/* Left: Branding, Room Title & Sleek Share Pill */}
         <div className="flex items-center gap-2 pointer-events-auto">
-          <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full shadow-lg">
-            <span className="font-bold text-[#0b5cff] text-sm tracking-tight">Vyntyra</span>
+          <div className="flex items-center gap-2 bg-black/60 backdrop-blur-xl border border-white/10 px-3 py-1.5 rounded-full shadow-lg">
+            <span className="font-bold text-[#0b5cff] text-xs tracking-tight">Vyntyra</span>
             <span className="text-gray-500 text-xs font-light">|</span>
-            <span className="text-xs font-medium text-gray-100 max-w-[200px] truncate">
-              {data?.title || "Vyntyra Meeting"}
+            <span className="text-xs font-semibold text-gray-100 max-w-[160px] truncate" title={data?.title}>
+              {data?.title || "Live Meeting"}
             </span>
-            <span className="text-gray-500 text-xs font-light">·</span>
-            <span className="font-mono text-xs text-blue-400 font-semibold">{roomId}</span>
+            <span className="text-gray-600 text-xs">·</span>
+            <span className="font-mono text-xs text-blue-400 font-semibold" title={roomId}>
+              {roomId.length > 15 ? `#${roomId.slice(0, 8)}` : roomId}
+            </span>
           </div>
 
           <Button
@@ -401,13 +415,13 @@ function MeetingRoom() {
             onClick={() => {
               if (typeof window !== 'undefined') {
                 navigator.clipboard.writeText(window.location.href);
-                toast.success("Short meeting link copied!");
+                toast.success("Meeting link copied to clipboard!");
               }
             }}
-            className="h-8 px-2.5 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all shadow-sm"
-            title="Copy Short Link"
+            className="h-8 px-2.5 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all shadow-sm flex items-center gap-1.5"
+            title="Copy Meeting Link"
           >
-            <Copy className="h-3.5 w-3.5 mr-1 text-blue-400" />
+            <Copy className="h-3.5 w-3.5 text-blue-400" />
             <span className="hidden sm:inline">Copy Link</span>
           </Button>
 
@@ -420,7 +434,7 @@ function MeetingRoom() {
                 toast.success(`Meeting code copied: ${roomId}`);
               }
             }}
-            className="h-8 px-2 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-300 hover:text-white rounded-full text-xs transition-all shadow-sm font-mono"
+            className="h-8 px-2.5 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-300 hover:text-white rounded-full text-xs transition-all shadow-sm font-mono hidden md:inline-flex"
             title="Copy Room Code Only"
           >
             Copy Code

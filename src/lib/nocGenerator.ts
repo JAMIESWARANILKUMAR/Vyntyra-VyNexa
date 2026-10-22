@@ -47,7 +47,7 @@ export async function urlToBase64(
       if (typeof window !== "undefined") {
         targetUrl = window.location.origin + targetUrl;
       } else {
-        targetUrl = "https://careers.vyntyraconsultancyservices.in" + targetUrl;
+        targetUrl = "https://portal.vyntyraconsultancyservices.in" + targetUrl;
       }
     }
 

@@ -284,7 +284,7 @@ export function generateInternshipCertificatePdf(data: InternshipCertificateData
   doc.setTextColor(100, 116, 139);
   doc.text("This is an Official Blockchain-Verified Credential issued by Vyntyra Consultancy Services Pvt. Ltd.", contentLeft, 183);
   doc.text("Registered & Verified Employer on NASSCOM Talent Connect Portal  ·  ISO 9001:2015 Quality Certified  ·  MSME Member", contentLeft, 188);
-  doc.text("Authenticity can be verified 24/7 by scanning the QR code or visiting https://careers.vyntyraconsultancyservices.in/verify", contentLeft, 193);
+  doc.text("Authenticity can be verified 24/7 by scanning the QR code or visiting https://portal.vyntyraconsultancyservices.in/verify", contentLeft, 193);
 
   return doc;
 }

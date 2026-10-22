@@ -35,7 +35,7 @@ export const generatePayuCheckout = createServerFn({ method: "POST" })
     const amount = data.amount.toFixed(2);
 
     // Success / Failure URLs — redirect back to intern dashboard
-    const baseUrl = process.env.VITE_APP_URL || "https://careers.vyntyraconsultancyservices.in";
+    const baseUrl = process.env.VITE_APP_URL || "https://portal.vyntyraconsultancyservices.in";
     const surl = `${baseUrl}/intern?payment=success&txnid=${txnid}`;
     const furl = `${baseUrl}/intern?payment=failed&txnid=${txnid}`;
 
@@ -160,7 +160,7 @@ export const generateKotakCheckout = createServerFn({ method: "POST" })
     const amount = data.amount.toFixed(2);
 
     // Return URLs
-    const baseUrl = process.env.VITE_APP_URL || "https://careers.vyntyraconsultancyservices.in";
+    const baseUrl = process.env.VITE_APP_URL || "https://portal.vyntyraconsultancyservices.in";
     const surl = `${baseUrl}/intern?payment=success&gateway=kotak&txnid=${txnid}`;
     const furl = `${baseUrl}/intern?payment=failed&gateway=kotak&txnid=${txnid}`;
 

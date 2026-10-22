@@ -4608,7 +4608,7 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
             <Label className="text-xs">SMS Message Body *</Label>
             <Textarea
               rows={3}
-              placeholder="e.g. Congratulations! Your application for Vyntyra Internship Program 2026 has been reviewed. Check your portal: https://careers.vyntyraconsultancyservices.in/"
+              placeholder="e.g. Congratulations! Your application for Vyntyra Internship Program 2026 has been reviewed. Check your portal: https://portal.vyntyraconsultancyservices.in/"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               className="mt-1 text-xs p-3 font-mono"

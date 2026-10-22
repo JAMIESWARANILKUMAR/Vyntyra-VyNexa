@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Body, Container, Head, Heading, Html, Img, Preview, Section, Text, Link } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
-const LOGO_URL = 'https://careers.vyntyraconsultancyservices.in/icon-512.png'
+const LOGO_URL = 'https://portal.vyntyraconsultancyservices.in/icon-512.png'
 const INK = '#111827'
 const MUTED = '#4B5563'
 const LINE = '#E5E7EB'
@@ -82,7 +82,7 @@ const AdminNotify = ({ fullName = 'Candidate', email = 'candidate@example.com', 
             </table>
           </div>
 
-          <Link href={`https://careers.vyntyraconsultancyservices.in/admin`} style={{ display: 'inline-block', backgroundColor: BRAND, color: '#ffffff', padding: '10px 20px', borderRadius: 6, textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
+          <Link href={`https://portal.vyntyraconsultancyservices.in/admin`} style={{ display: 'inline-block', backgroundColor: BRAND, color: '#ffffff', padding: '10px 20px', borderRadius: 6, textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
             Review Application
           </Link>
         </Section>

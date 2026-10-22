@@ -246,7 +246,9 @@ export function PreJoinLobby({
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-400">Meeting Room Code</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-mono text-blue-400 font-bold text-xs">{roomId}</span>
+                  <span className="font-mono text-blue-400 font-bold text-xs" title={roomId}>
+                    {roomId.length > 15 ? `#${roomId.slice(0, 8)}` : roomId}
+                  </span>
                   <button
                     onClick={() => {
                       if (typeof window !== 'undefined') {

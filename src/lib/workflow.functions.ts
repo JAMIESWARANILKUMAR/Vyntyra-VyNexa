@@ -522,7 +522,7 @@ export async function dispatchSelectionEmail(applicationId: string) {
     avatar_url: app.profile_photo_url || null
   });
 
-  const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
+  const verificationUrl = `https://portal.vyntyraconsultancyservices.in/verify?id=${app.id}`;
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`;
   
   let qrBase64 = null;
@@ -623,7 +623,7 @@ export async function dispatchSelectionEmail(applicationId: string) {
   }
 
   const subject = `OFFICIAL SELECTION: Vyntyra Industrial Internship Program 2026`;
-  const portalLink = `https://careers.vyntyraconsultancyservices.in/auth/intern`;
+  const portalLink = `https://portal.vyntyraconsultancyservices.in/auth/intern`;
   const htmlBody = `
     <h2 style="color: #0f172a; margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; font-size: 20px;">Selection Confirmation & Joining Offer</h2>
     <p style="font-size: 14.5px; color: #334155; line-height: 1.5; margin-top: 20px;">Dear <strong>${app.full_name}</strong>,</p>

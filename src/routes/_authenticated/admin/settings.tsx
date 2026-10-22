@@ -513,7 +513,7 @@ function AdminSettingsPage() {
     const loadingToast = toast.loading(`Generating customized NOC for ${intern.full_name || intern.email}...`);
     try {
       const QRCode = (await import("qrcode")).default;
-      const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${intern.id}`;
+      const verificationUrl = `https://portal.vyntyraconsultancyservices.in/verify?id=${intern.id}`;
       const qrBase64 = await QRCode.toDataURL(verificationUrl, { margin: 1, color: { dark: "#0f172a", light: "#ffffff" } });
 
       const sigUrl = brandingForm.founder_signature_url || "/signature.png";
@@ -670,7 +670,7 @@ function AdminSettingsPage() {
 
       for (const intern of allInterns) {
         try {
-          const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${intern.id}`;
+          const verificationUrl = `https://portal.vyntyraconsultancyservices.in/verify?id=${intern.id}`;
           const qrBase64 = await QRCode.toDataURL(verificationUrl, { margin: 1, color: { dark: "#0f172a", light: "#ffffff" } });
           const photoUrl = intern.profile_photo_url || intern.avatar_url || intern.photo_url || null;
           const photoBase64 = photoUrl ? await urlToBase64(photoUrl, 180, 220, false) : null;

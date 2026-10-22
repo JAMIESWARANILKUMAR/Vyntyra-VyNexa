@@ -680,7 +680,7 @@ async function sendCbtAssignmentEmail(params: SendCbtAssignmentEmailInput) {
     : `[VyNexa Connect] Official CBT Assessment Allocation: ${testTitle} (Exam ID: ${resolvedExamId})`;
 
   const portalUrl = "https://portal.vyntyraconsultancyservices.in";
-  const careersUrl = "https://careers.vyntyraconsultancyservices.in";
+  const careersUrl = "https://portal.vyntyraconsultancyservices.in";
   const appUrl = "https://vynexaconnect.vyntyraconsultancyservices.in";
   const examUrl = `${portalUrl}/cbt/${resolvedExamId}`;
   const mirrorExamUrl = `${appUrl}/cbt/${resolvedExamId}`;
@@ -2599,7 +2599,7 @@ export const grantInternRetakeFn = createServerFn({ method: "POST" })
       const brevoKey = getEnv("BREVO_API_KEY");
       const resendKey = getEnv("RESEND_API_KEY");
       const portalUrl = "https://portal.vyntyraconsultancyservices.in";
-      const careersUrl = "https://careers.vyntyraconsultancyservices.in";
+      const careersUrl = "https://portal.vyntyraconsultancyservices.in";
       const examUrl = `${portalUrl}/cbt/${sub.cbt_exams?.id || sub.exam_id}`;
       const examTitle = sub.cbt_exams?.title || "Assessment";
       const candidateName = sub.profiles?.full_name || "Candidate";

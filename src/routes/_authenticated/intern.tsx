@@ -3013,7 +3013,7 @@ function InternDashboard() {
                                   const loadingToast = toast.loading(`Generating ${c.name}...`);
                                   try {
                                     const internId = profile?.intern_id || c.code;
-                                    const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${internId}`;
+                                    const verificationUrl = `https://portal.vyntyraconsultancyservices.in/verify?id=${internId}`;
                                     const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(verificationUrl)}`;
                                     let qrCodeBase64: string | null = null;
                                     try {

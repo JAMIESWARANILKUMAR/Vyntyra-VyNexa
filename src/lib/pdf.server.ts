@@ -81,7 +81,7 @@ export async function generateOfferLetterPDF(details: IOfferDetails): Promise<st
   let logoBase64: string | null = null;
   let sigBase64: string | null = null;
   try {
-    logoBase64 = await fetchBase64Image("https://careers.vyntyraconsultancyservices.in/icon-512.png");
+    logoBase64 = await fetchBase64Image("https://portal.vyntyraconsultancyservices.in/icon-512.png");
     sigBase64 = await fetchBase64Image("https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
   } catch (e) {}
 

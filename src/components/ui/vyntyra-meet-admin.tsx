@@ -448,7 +448,9 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                               <div className="font-semibold">{room.title}</div>
                               <div className="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1">
                                 <span>Code:</span>
-                                <span className="text-blue-600 dark:text-blue-400 font-semibold">{room.id}</span>
+                                <span className="text-blue-600 dark:text-blue-400 font-semibold" title={room.id}>
+                                  {room.id.length > 15 ? `#${room.id.slice(0, 8)}` : room.id}
+                                </span>
                               </div>
                             </td>
                             <td className="px-4 py-3">

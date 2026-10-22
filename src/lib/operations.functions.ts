@@ -2542,7 +2542,7 @@ export const getMyDocuments = createServerFn({ method: "GET" })
             const branding = await getBrandingSettings();
 
             const signatureBase64 = await urlToBase64(branding.founder_signature_url || "https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
-            const logoBase64 = await urlToBase64(branding.vyntyra_logo_url || "https://careers.vyntyraconsultancyservices.in/icon-512.png");
+            const logoBase64 = await urlToBase64(branding.vyntyra_logo_url || "https://portal.vyntyraconsultancyservices.in/icon-512.png");
 
             let photoBase64 = null;
             const url = profile.avatar_url || app.profile_photo_url;
@@ -2572,7 +2572,7 @@ export const getMyDocuments = createServerFn({ method: "GET" })
 
             const startDate = profile.start_date ? new Date(profile.start_date) : (app.internship_start_date ? new Date(app.internship_start_date) : new Date());
 
-            const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
+            const verificationUrl = `https://portal.vyntyraconsultancyservices.in/verify?id=${app.id}`;
             let generatedQrBase64 = null;
             try {
               generatedQrBase64 = await QRCode.toDataURL(verificationUrl, { margin: 1, color: { dark: '#0f172a', light: '#ffffff' } });
@@ -2818,7 +2818,7 @@ export const deleteStoredNocAndRegenerate = createServerFn({ method: "POST" })
     const { getBrandingSettings } = await import("./settings.functions");
     const branding = await getBrandingSettings();
 
-    const logoBase64 = await urlToBase64(branding.vyntyra_logo_url || "https://careers.vyntyraconsultancyservices.in/icon-512.png");
+    const logoBase64 = await urlToBase64(branding.vyntyra_logo_url || "https://portal.vyntyraconsultancyservices.in/icon-512.png");
     const signatureBase64 = await urlToBase64(branding.founder_signature_url || "https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
 
     let photoBase64: string | null = null;
@@ -2826,7 +2826,7 @@ export const deleteStoredNocAndRegenerate = createServerFn({ method: "POST" })
       photoBase64 = await urlToBase64(app.profile_photo_url);
     }
 
-    const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
+    const verificationUrl = `https://portal.vyntyraconsultancyservices.in/verify?id=${app.id}`;
     const QRCode = (await import("qrcode")).default;
     const qrBase64 = await QRCode.toDataURL(verificationUrl, { margin: 1, color: { dark: '#0f172a', light: '#ffffff' } });
 
@@ -8417,7 +8417,7 @@ export const bulkRegenerateNocs = createServerFn({ method: "POST" })
     const { getBrandingSettings } = await import("./settings.functions");
     const branding = await getBrandingSettings();
 
-    const logoBase64 = await urlToBase64(branding.vyntyra_logo_url || "https://careers.vyntyraconsultancyservices.in/icon-512.png");
+    const logoBase64 = await urlToBase64(branding.vyntyra_logo_url || "https://portal.vyntyraconsultancyservices.in/icon-512.png");
     const signatureBase64 = await urlToBase64(branding.founder_signature_url || "https://kommodo.ai/i/olXE11N8ipqBTR8DBSXt");
 
     let count = 0;
@@ -8431,7 +8431,7 @@ export const bulkRegenerateNocs = createServerFn({ method: "POST" })
           .maybeSingle();
         if (!app) continue;
 
-        const verificationUrl = `https://careers.vyntyraconsultancyservices.in/verify?id=${app.id}`;
+        const verificationUrl = `https://portal.vyntyraconsultancyservices.in/verify?id=${app.id}`;
         const QRCode = (await import("qrcode")).default;
         const qrBase64 = await QRCode.toDataURL(verificationUrl, { margin: 1, color: { dark: '#0f172a', light: '#ffffff' } });
 

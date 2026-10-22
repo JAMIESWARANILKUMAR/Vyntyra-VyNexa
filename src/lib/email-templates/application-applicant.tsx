@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Body, Container, Head, Heading, Html, Img, Preview, Section, Text, Hr, Link } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
-const LOGO_URL = 'https://careers.vyntyraconsultancyservices.in/icon-512.png'
+const LOGO_URL = 'https://portal.vyntyraconsultancyservices.in/icon-512.png'
 const INK = '#111827'
 const MUTED = '#4B5563'
 const LINE = '#E5E7EB'
@@ -109,7 +109,7 @@ const ApplicantConfirm = ({ fullName = 'there', email = '', roleApplied = 'the r
           <Text style={{ margin: '0 0 16px', color: INK, fontSize: 15, lineHeight: 1.6 }}>
             You can track the status of your application online by visiting the applicant portal.
           </Text>
-          <Link href="https://careers.vyntyraconsultancyservices.in/track" style={{ display: 'inline-block', backgroundColor: BRAND, color: '#ffffff', padding: '10px 20px', borderRadius: 6, textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
+          <Link href="https://portal.vyntyraconsultancyservices.in/track" style={{ display: 'inline-block', backgroundColor: BRAND, color: '#ffffff', padding: '10px 20px', borderRadius: 6, textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
             Track Application
           </Link>
           <Text style={{ margin: '32px 0 0', color: INK, fontSize: 15 }}>
@@ -135,27 +135,27 @@ const ApplicantConfirm = ({ fullName = 'there', email = '', roleApplied = 'the r
               <tr>
                 <td style={{ padding: '0 6px' }} align="center">
                   <Link href="https://facebook.com/vyntyraindia" target="_blank" style={{ textDecoration: 'none' }}>
-                    <Img src="https://careers.vyntyraconsultancyservices.in/social/facebook.png" alt="Facebook" width={32} height={32} style={{ display: 'block', border: 0 }} />
+                    <Img src="https://portal.vyntyraconsultancyservices.in/social/facebook.png" alt="Facebook" width={32} height={32} style={{ display: 'block', border: 0 }} />
                   </Link>
                 </td>
                 <td style={{ padding: '0 6px' }} align="center">
                   <Link href="https://x.com/vyntyraindia" target="_blank" style={{ textDecoration: 'none' }}>
-                    <Img src="https://careers.vyntyraconsultancyservices.in/social/x.png" alt="X" width={32} height={32} style={{ display: 'block', border: 0 }} />
+                    <Img src="https://portal.vyntyraconsultancyservices.in/social/x.png" alt="X" width={32} height={32} style={{ display: 'block', border: 0 }} />
                   </Link>
                 </td>
                 <td style={{ padding: '0 6px' }} align="center">
                   <Link href="https://www.linkedin.com/company/vyntyra-consultancy-services" target="_blank" style={{ textDecoration: 'none' }}>
-                    <Img src="https://careers.vyntyraconsultancyservices.in/social/linkedin.png" alt="LinkedIn" width={32} height={32} style={{ display: 'block', border: 0 }} />
+                    <Img src="https://portal.vyntyraconsultancyservices.in/social/linkedin.png" alt="LinkedIn" width={32} height={32} style={{ display: 'block', border: 0 }} />
                   </Link>
                 </td>
                 <td style={{ padding: '0 6px' }} align="center">
                   <Link href="https://www.instagram.com/vyntyraindia" target="_blank" style={{ textDecoration: 'none' }}>
-                    <Img src="https://careers.vyntyraconsultancyservices.in/social/instagram.png" alt="Instagram" width={32} height={32} style={{ display: 'block', border: 0 }} />
+                    <Img src="https://portal.vyntyraconsultancyservices.in/social/instagram.png" alt="Instagram" width={32} height={32} style={{ display: 'block', border: 0 }} />
                   </Link>
                 </td>
                 <td style={{ padding: '0 6px' }} align="center">
                   <Link href="https://youtube.com/@vyntyra" target="_blank" style={{ textDecoration: 'none' }}>
-                    <Img src="https://careers.vyntyraconsultancyservices.in/social/youtube.png" alt="YouTube" width={32} height={32} style={{ display: 'block', border: 0 }} />
+                    <Img src="https://portal.vyntyraconsultancyservices.in/social/youtube.png" alt="YouTube" width={32} height={32} style={{ display: 'block', border: 0 }} />
                   </Link>
                 </td>
               </tr>
@@ -174,9 +174,9 @@ const ApplicantConfirm = ({ fullName = 'there', email = '', roleApplied = 'the r
           </div>
           
           <div style={{ marginBottom: 16 }}>
-            <Link href="https://careers.vyntyraconsultancyservices.in/privacy" style={{ color: MUTED, textDecoration: 'underline', marginRight: '12px' }}>Privacy Policy</Link>
+            <Link href="https://portal.vyntyraconsultancyservices.in/privacy" style={{ color: MUTED, textDecoration: 'underline', marginRight: '12px' }}>Privacy Policy</Link>
             <span style={{ color: LINE }}>|</span>
-            <Link href="https://careers.vyntyraconsultancyservices.in/terms" style={{ color: MUTED, textDecoration: 'underline', marginLeft: '12px' }}>Applicant Terms</Link>
+            <Link href="https://portal.vyntyraconsultancyservices.in/terms" style={{ color: MUTED, textDecoration: 'underline', marginLeft: '12px' }}>Applicant Terms</Link>
           </div>
 
           <div style={{ fontSize: 10, color: '#9CA3AF', fontStyle: 'italic', marginTop: 16 }}>
