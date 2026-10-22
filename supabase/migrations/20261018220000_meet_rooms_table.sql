@@ -30,3 +30,9 @@ CREATE POLICY "meet_rooms can be inserted by authenticated users"
 CREATE POLICY "meet_rooms can be updated by authenticated users"
   ON public.meet_rooms FOR UPDATE
   USING (true);
+
+-- Explicit Grants for Supabase Data API (PostgREST / supabase-js)
+GRANT SELECT ON public.meet_rooms TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.meet_rooms TO authenticated;
+GRANT ALL ON public.meet_rooms TO service_role;
+

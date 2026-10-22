@@ -163,5 +163,26 @@ CREATE POLICY "Allow authenticated users to manage answers" ON public.cbt_answer
 DROP POLICY IF EXISTS "Allow authenticated users to manage malpractice logs" ON public.cbt_malpractice_logs;
 CREATE POLICY "Allow authenticated users to manage malpractice logs" ON public.cbt_malpractice_logs FOR ALL USING (auth.role() = 'authenticated');
 
--- 9. RELOAD POSTGREST SCHEMA CACHE
+-- 9. EXPLICIT GRANTS FOR SUPABASE DATA API (PostgREST / supabase-js)
+GRANT SELECT ON public.cbt_exams TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.cbt_exams TO authenticated;
+GRANT ALL ON public.cbt_exams TO service_role;
+
+GRANT SELECT ON public.cbt_questions TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.cbt_questions TO authenticated;
+GRANT ALL ON public.cbt_questions TO service_role;
+
+GRANT SELECT ON public.cbt_submissions TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.cbt_submissions TO authenticated;
+GRANT ALL ON public.cbt_submissions TO service_role;
+
+GRANT SELECT ON public.cbt_answers TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.cbt_answers TO authenticated;
+GRANT ALL ON public.cbt_answers TO service_role;
+
+GRANT SELECT ON public.cbt_malpractice_logs TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.cbt_malpractice_logs TO authenticated;
+GRANT ALL ON public.cbt_malpractice_logs TO service_role;
+
+-- 10. RELOAD POSTGREST SCHEMA CACHE
 NOTIFY pgrst, 'reload schema';
