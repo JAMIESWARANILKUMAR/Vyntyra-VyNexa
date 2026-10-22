@@ -398,7 +398,8 @@ function MeetingRoom() {
         {/* Left: Branding, Room Title & Sleek Share Pill */}
         <div className="flex items-center gap-2 pointer-events-auto">
           <div className="flex items-center gap-2 bg-black/60 backdrop-blur-xl border border-white/10 px-3 py-1.5 rounded-full shadow-lg">
-            <span className="font-bold text-[#0b5cff] text-xs tracking-tight">Vyntyra</span>
+            <img src="/icon-512.png" alt="Vyntyra Logo" className="h-5 w-5 object-contain rounded-md shadow-sm" />
+            <span className="font-bold text-white text-xs tracking-tight">Vyntyra</span>
             <span className="text-gray-500 text-xs font-light">|</span>
             <span className="text-xs font-semibold text-gray-100 max-w-[160px] truncate" title={data?.title}>
               {data?.title || "Live Meeting"}
@@ -487,6 +488,13 @@ function MeetingRoom() {
 
       {/* Main Full-Bleed Video Conference Canvas */}
       <main className="flex-1 w-full h-full relative overflow-hidden bg-[#080808]">
+        {/* Official Vyntyra Watermark Badge */}
+        <div className="absolute top-16 left-4 z-20 pointer-events-none select-none flex items-center gap-2 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 opacity-80 transition-opacity">
+          <img src="/icon-512.png" alt="Vyntyra Logo" className="h-4 w-4 object-contain rounded" />
+          <span className="text-[11px] font-bold tracking-wider text-white">VYNTYRA</span>
+          <span className="text-[9px] font-semibold text-blue-400 bg-blue-500/20 px-1.5 py-0.5 rounded uppercase">MEET</span>
+        </div>
+
         <RtkUiProvider meeting={meeting}>
           <RtkMeeting meeting={meeting} showSetupScreen={false} />
         </RtkUiProvider>

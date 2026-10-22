@@ -222,8 +222,9 @@ export function PreJoinLobby({
         <div className="w-full lg:w-96 flex flex-col justify-between h-full py-2">
           <div>
             <div className="flex items-center gap-2 mb-2">
+              <img src="/icon-512.png" alt="Vyntyra Logo" className="h-6 w-6 object-contain rounded-md" />
               <span className="text-xs font-bold uppercase tracking-wider text-[#0b5cff] px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
-                Vyntyra Connect
+                Vyntyra Meet
               </span>
               <span className="text-xs text-emerald-400 flex items-center gap-1 font-medium">
                 <CheckCircle2 className="h-3 w-3" /> Ready to Join

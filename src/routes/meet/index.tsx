@@ -120,9 +120,7 @@ function MeetIndexComponent() {
       {/* Top Navbar */}
       <header className="h-16 border-b border-white/5 px-6 sm:px-12 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-[#0b5cff] to-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <Video className="h-5 w-5 text-white" />
-          </div>
+          <img src="/icon-512.png" alt="Vyntyra Logo" className="h-9 w-9 object-contain rounded-xl shadow-lg shadow-blue-500/20" />
           <div className="flex items-baseline gap-2">
             <span className="font-bold text-lg tracking-tight text-white">Vyntyra</span>
             <span className="text-xs uppercase tracking-wider text-blue-400 font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
