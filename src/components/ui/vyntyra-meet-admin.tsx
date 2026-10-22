@@ -48,6 +48,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
   const [hosts, setHosts] = useState("");
   const [scheduledFor, setScheduledFor] = useState("");
 
+  const [customRoomId, setCustomRoomId] = useState("");
   const [targetType, setTargetType] = useState<"all"|"team"|"intern">("all");
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [selectedInterns, setSelectedInterns] = useState<string[]>([]);
@@ -86,6 +87,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
         data: {
           title,
           maxParticipants,
+          customRoomId: customRoomId.trim() || undefined,
           settings: { 
             muteOnEntry, 
             disableCameras, 
@@ -113,6 +115,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
       });
       toast.success(`Meeting room created: ${data?.title || title}`);
       setTitle('');
+      setCustomRoomId('');
       setPassword('');
       setScheduledFor('');
       setIsCreateOpen(false);
@@ -157,6 +160,22 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                   <div>
                     <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Meeting Topic</label>
                     <Input required value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Weekly All-Hands" className="mt-1" />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Custom Short Code (Optional)</label>
+                      <span className="text-[11px] text-slate-400">Leave blank for auto short code</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-xs text-slate-400 font-mono select-none px-2 py-2 bg-slate-100 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700">.../meet/</span>
+                      <Input 
+                        value={customRoomId} 
+                        onChange={e => setCustomRoomId(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} 
+                        placeholder="e.g. all-hands or sprint-demo" 
+                        className="font-mono text-xs" 
+                      />
+                    </div>
                   </div>
                   
                   <div>
@@ -269,12 +288,12 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                     </div>
 
                     <div>
-                      <div className="text-xs text-slate-500 font-medium mb-1">Meeting Link</div>
+                      <div className="text-xs text-slate-500 font-medium mb-1">Short Meeting Link (Easy to Share)</div>
                       <div className="flex items-center gap-2">
                         <Input
                           readOnly
                           value={createdMeetDetails.url}
-                          className="bg-white dark:bg-slate-900 font-mono text-xs select-all h-9"
+                          className="bg-white dark:bg-slate-900 font-mono text-xs select-all h-9 text-blue-600 dark:text-blue-400 font-semibold"
                         />
                         <Button
                           size="sm"
@@ -282,9 +301,27 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                           onClick={() => copyToClipboard(createdMeetDetails.url)}
                           className="shrink-0 gap-1.5 h-9"
                         >
-                          <Copy className="h-3.5 w-3.5" /> Copy
+                          <Copy className="h-3.5 w-3.5" /> Copy Link
                         </Button>
                       </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 rounded-xl">
+                      <div>
+                        <div className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider">Quick Room Code</div>
+                        <div className="font-mono text-base font-bold text-slate-900 dark:text-white mt-0.5 tracking-wide">{createdMeetDetails.roomId}</div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          copyToClipboard(createdMeetDetails.roomId);
+                          toast.success(`Meeting code copied: ${createdMeetDetails.roomId}`);
+                        }}
+                        className="h-8 gap-1.5 text-xs font-semibold bg-white dark:bg-slate-800 shadow-xs"
+                      >
+                        <Copy className="h-3 w-3" /> Copy Code
+                      </Button>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 pt-1">
@@ -320,7 +357,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                       variant="outline"
                       className="w-full sm:w-auto text-xs gap-1.5 h-10"
                       onClick={() => {
-                        const inviteText = `VyNexa Connect Video Meeting\nTopic: ${createdMeetDetails.title}\nJoin Link: ${createdMeetDetails.url}${createdMeetDetails.password ? `\nPasscode: ${createdMeetDetails.password}` : ''}${createdMeetDetails.scheduledFor ? `\nScheduled For: ${new Date(createdMeetDetails.scheduledFor).toLocaleString()}` : ''}`;
+                        const inviteText = `📢 Vyntyra Meet Video Conference\n📌 Topic: ${createdMeetDetails.title}\n🔗 Short Link: ${createdMeetDetails.url}\n🔑 Meeting Code: ${createdMeetDetails.roomId}${createdMeetDetails.password ? `\n🔒 Passcode: ${createdMeetDetails.password}` : ''}${createdMeetDetails.scheduledFor ? `\n📅 Scheduled For: ${new Date(createdMeetDetails.scheduledFor).toLocaleString()}` : ''}`;
                         copyToClipboard(inviteText);
                         toast.success("Full meeting invitation copied!");
                       }}
@@ -409,17 +446,23 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                           <tr key={room.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-200">
                               <div className="font-semibold">{room.title}</div>
-                              <div className="text-xs text-slate-400 font-mono mt-0.5">ID: {room.id.substring(0, 14)}...</div>
+                              <div className="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1">
+                                <span>Code:</span>
+                                <span className="text-blue-600 dark:text-blue-400 font-semibold">{room.id}</span>
+                              </div>
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-1.5">
-                                <span className="font-mono text-xs text-slate-600 dark:text-slate-300 max-w-[190px] truncate" title={meetUrl}>
+                                <span className="font-mono text-xs text-slate-600 dark:text-slate-300 max-w-[210px] truncate" title={meetUrl}>
                                   {meetUrl}
                                 </span>
                                 <button
-                                  onClick={() => copyToClipboard(meetUrl)}
+                                  onClick={() => {
+                                    copyToClipboard(meetUrl);
+                                    toast.success("Short meeting link copied!");
+                                  }}
                                   className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
-                                  title="Copy meeting link"
+                                  title="Copy short link"
                                 >
                                   <Copy className="h-3.5 w-3.5" />
                                 </button>

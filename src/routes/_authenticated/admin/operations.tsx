@@ -2096,8 +2096,25 @@ function OperationsDashboard() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label>Meeting Video Link (Google Meet / Zoom / MS Teams)</Label>
-                      <Input required type="url" value={meetingForm.meeting_link} onChange={e => setMeetingForm({ ...meetingForm, meeting_link: e.target.value })} placeholder="https://meet.google.com/xyz-abcd-efg" />
+                      <div className="flex items-center justify-between">
+                        <Label>Meeting Video Link</Label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+                            const p1 = Array.from({ length: 3 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+                            const p2 = Array.from({ length: 3 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+                            const shortCode = `vyn-${p1}-${p2}`;
+                            const origin = typeof window !== 'undefined' ? (window.location.hostname === 'vyntyraconsultancyservices.in' ? 'https://portal.vyntyraconsultancyservices.in' : window.location.origin) : 'https://portal.vyntyraconsultancyservices.in';
+                            setMeetingForm({ ...meetingForm, meeting_link: `${origin}/meet/${shortCode}` });
+                            toast.success(`Generated Short Vyntyra Meet link (${shortCode})!`);
+                          }}
+                          className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 hover:underline"
+                        >
+                          <Sparkles className="h-3 w-3" /> Auto-generate Short Vyntyra Link
+                        </button>
+                      </div>
+                      <Input required type="url" value={meetingForm.meeting_link} onChange={e => setMeetingForm({ ...meetingForm, meeting_link: e.target.value })} placeholder="https://portal.vyntyraconsultancyservices.in/meet/vyn-abc-xyz" />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -2218,13 +2235,30 @@ function OperationsDashboard() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label>Meeting Video Link (Google Meet / Zoom / MS Teams)</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>Meeting Video Link</Label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+                            const p1 = Array.from({ length: 3 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+                            const p2 = Array.from({ length: 3 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+                            const shortCode = `vyn-${p1}-${p2}`;
+                            const origin = typeof window !== 'undefined' ? (window.location.hostname === 'vyntyraconsultancyservices.in' ? 'https://portal.vyntyraconsultancyservices.in' : window.location.origin) : 'https://portal.vyntyraconsultancyservices.in';
+                            setEditMeetingForm({ ...editMeetingForm, meeting_link: `${origin}/meet/${shortCode}` });
+                            toast.success(`Generated Short Vyntyra Meet link (${shortCode})!`);
+                          }}
+                          className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 hover:underline"
+                        >
+                          <Sparkles className="h-3 w-3" /> Auto-generate Short Vyntyra Link
+                        </button>
+                      </div>
                       <Input 
                         required 
                         type="url" 
                         value={editMeetingForm.meeting_link} 
                         onChange={e => setEditMeetingForm({ ...editMeetingForm, meeting_link: e.target.value })} 
-                        placeholder="https://meet.google.com/xyz-abcd-efg" 
+                        placeholder="https://portal.vyntyraconsultancyservices.in/meet/vyn-abc-xyz" 
                       />
                     </div>
 

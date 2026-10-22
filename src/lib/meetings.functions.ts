@@ -45,12 +45,21 @@ function getMeetingBaseUrl(): string {
   return getEnv('VITE_APP_URL') || getEnv('APP_URL') || 'https://portal.vyntyraconsultancyservices.in';
 }
 
+// Helper to generate a short, memorable, easily shareable Google-Meet-style room ID
+export const generateShortRoomId = () => {
+  const chars = "abcdefghjkmnpqrstuvwxyz23456789"; // readable chars excluding ambiguous 0/o/1/l/i
+  const part1 = Array.from({ length: 3 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  const part2 = Array.from({ length: 3 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  return `vyn-${part1}-${part2}`;
+};
+
 // Creates a new meeting room
 export const createMeetingRoomFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     title: z.string(),
     maxParticipants: z.number().default(40),
+    customRoomId: z.string().optional(),
     settings: z.object({
       muteOnEntry: z.boolean().default(false),
       disableCameras: z.boolean().default(false),
@@ -69,7 +78,12 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { accountId, appId, apiToken } = getRealtimeCredentials();
 
-    let roomId = `meet_${crypto.randomUUID()}`;
+    // Use custom vanity code if provided, otherwise generate a sleek short code (e.g. vyn-k7p-92m)
+    let roomId = (data.customRoomId && data.customRoomId.trim().length > 0)
+      ? data.customRoomId.trim().toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 30)
+      : generateShortRoomId();
+
+    let cfMeetingId = "";
 
     // Call Cloudflare to create the meeting if credentials exist
     if (accountId && appId && apiToken) {
@@ -88,7 +102,7 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
         if (response.ok) {
           const cfData = await response.json() as any;
           if (cfData.data?.id) {
-            roomId = cfData.data.id;
+            cfMeetingId = cfData.data.id;
           }
         } else {
           const errText = await response.text();
@@ -100,7 +114,12 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
     }
 
     const hostId = context.user.id;
-    const settingsStr = JSON.stringify(data.settings || {});
+    // Keep internal Cloudflare meeting ID preserved in settings while exposing the sleek short roomId in the URL
+    const mergedSettings = {
+      ...(data.settings || {}),
+      cf_room_id: cfMeetingId || roomId
+    };
+    const settingsStr = JSON.stringify(mergedSettings);
     
     // 1. Try D1 if available
     const d1 = getD1Database(context);
@@ -210,11 +229,15 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
 
     // Verify room exists and is active
     let room: any = null;
+    const cleanRoomId = data.roomId.trim().toLowerCase();
+    const noHyphenId = cleanRoomId.replace(/-/g, '');
+
     if (d1 && typeof d1.prepare === "function") {
       try {
         room = await d1.prepare(`
-          SELECT * FROM meet_rooms WHERE id = ? AND status = 'active'
-        `).bind(data.roomId).first() as any;
+          SELECT * FROM meet_rooms 
+          WHERE (id = ? OR LOWER(id) = ? OR REPLACE(LOWER(id), '-', '') = ?) AND status = 'active'
+        `).bind(data.roomId, cleanRoomId, noHyphenId).first() as any;
       } catch (e) {
         console.warn("D1 room query error:", e);
       }
@@ -227,7 +250,7 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
         const { data: supaRoom } = await adminClient
           .from('meet_rooms')
           .select('*')
-          .eq('id', data.roomId)
+          .or(`id.eq.${data.roomId},id.eq.${cleanRoomId},id.ilike.%${cleanRoomId}%`)
           .eq('status', 'active')
           .maybeSingle();
         if (supaRoom) {
@@ -245,7 +268,7 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
         const { data: supaMeet } = await adminClient
           .from('meetings')
           .select('*')
-          .or(`meeting_link.ilike.%${data.roomId}%,meeting_url.ilike.%${data.roomId}%,id.eq.${data.roomId}`)
+          .or(`meeting_link.ilike.%${cleanRoomId}%,meeting_url.ilike.%${cleanRoomId}%,meeting_link.ilike.%${data.roomId}%,meeting_url.ilike.%${data.roomId}%,id.eq.${cleanRoomId}`)
           .maybeSingle();
         if (supaMeet) {
           let parsedSettings: any = {

@@ -20,6 +20,7 @@ import { Route as CareersRouteImport } from './routes/careers'
 import { Route as AgreementRouteImport } from './routes/agreement'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MeetIndexRouteImport } from './routes/meet/index'
 import { Route as StatusTokenRouteImport } from './routes/status.$token'
 import { Route as MeetRoomIdRouteImport } from './routes/meet/$roomId'
 import { Route as AuthInternRouteImport } from './routes/auth/intern'
@@ -90,6 +91,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeetIndexRoute = MeetIndexRouteImport.update({
+  id: '/meet/',
+  path: '/meet/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StatusTokenRoute = StatusTokenRouteImport.update({
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/auth/intern': typeof AuthInternRoute
   '/meet/$roomId': typeof MeetRoomIdRoute
   '/status/$token': typeof StatusTokenRoute
+  '/meet/': typeof MeetIndexRoute
   '/admin/b2b-playbook': typeof AuthenticatedAdminB2bPlaybookRoute
   '/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
   '/admin/operations': typeof AuthenticatedAdminOperationsRoute
@@ -233,6 +240,7 @@ export interface FileRoutesByTo {
   '/auth/intern': typeof AuthInternRoute
   '/meet/$roomId': typeof MeetRoomIdRoute
   '/status/$token': typeof StatusTokenRoute
+  '/meet': typeof MeetIndexRoute
   '/admin/b2b-playbook': typeof AuthenticatedAdminB2bPlaybookRoute
   '/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
   '/admin/operations': typeof AuthenticatedAdminOperationsRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/auth/intern': typeof AuthInternRoute
   '/meet/$roomId': typeof MeetRoomIdRoute
   '/status/$token': typeof StatusTokenRoute
+  '/meet/': typeof MeetIndexRoute
   '/_authenticated/admin/b2b-playbook': typeof AuthenticatedAdminB2bPlaybookRoute
   '/_authenticated/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
   '/_authenticated/admin/operations': typeof AuthenticatedAdminOperationsRoute
@@ -295,6 +304,7 @@ export interface FileRouteTypes {
     | '/auth/intern'
     | '/meet/$roomId'
     | '/status/$token'
+    | '/meet/'
     | '/admin/b2b-playbook'
     | '/admin/email-campaigns'
     | '/admin/operations'
@@ -324,6 +334,7 @@ export interface FileRouteTypes {
     | '/auth/intern'
     | '/meet/$roomId'
     | '/status/$token'
+    | '/meet'
     | '/admin/b2b-playbook'
     | '/admin/email-campaigns'
     | '/admin/operations'
@@ -354,6 +365,7 @@ export interface FileRouteTypes {
     | '/auth/intern'
     | '/meet/$roomId'
     | '/status/$token'
+    | '/meet/'
     | '/_authenticated/admin/b2b-playbook'
     | '/_authenticated/admin/email-campaigns'
     | '/_authenticated/admin/operations'
@@ -380,6 +392,7 @@ export interface RootRouteChildren {
   AuthEmployeeRoute: typeof AuthEmployeeRoute
   AuthInternRoute: typeof AuthInternRoute
   MeetRoomIdRoute: typeof MeetRoomIdRoute
+  MeetIndexRoute: typeof MeetIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -459,6 +472,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meet/': {
+      id: '/meet/'
+      path: '/meet'
+      fullPath: '/meet/'
+      preLoaderRoute: typeof MeetIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/status/$token': {
@@ -643,6 +663,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthEmployeeRoute: AuthEmployeeRoute,
   AuthInternRoute: AuthInternRoute,
   MeetRoomIdRoute: MeetRoomIdRoute,
+  MeetIndexRoute: MeetIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
