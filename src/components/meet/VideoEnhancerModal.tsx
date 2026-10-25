@@ -7,6 +7,7 @@ export interface BackgroundEffect {
   name: string;
   type: 'none' | 'blur' | 'image';
   preview: string;
+  imageUrl?: string;
   cssStyle?: string;
   blurAmount?: number;
 }
@@ -23,10 +24,34 @@ export const BACKGROUND_PRESETS: BackgroundEffect[] = [
   { id: 'none', name: 'Original', type: 'none', preview: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=150&auto=format&fit=crop&q=60' },
   { id: 'blur_soft', name: 'Soft Blur', type: 'blur', blurAmount: 8, preview: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=150&auto=format&fit=crop&q=60' },
   { id: 'blur_deep', name: 'Studio Bokeh', type: 'blur', blurAmount: 20, preview: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=150&auto=format&fit=crop&q=60' },
-  { id: 'office_glass', name: 'Executive Suite', type: 'image', preview: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=150&auto=format&fit=crop&q=60' },
-  { id: 'library', name: 'Warm Library', type: 'image', preview: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=150&auto=format&fit=crop&q=60' },
-  { id: 'tech_lab', name: 'Modern Studio', type: 'image', preview: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150&auto=format&fit=crop&q=60' },
-  { id: 'penthouse', name: 'Skyline View', type: 'image', preview: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=150&auto=format&fit=crop&q=60' },
+  { 
+    id: 'office_glass', 
+    name: 'Executive Suite', 
+    type: 'image', 
+    preview: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=150&auto=format&fit=crop&q=60',
+    imageUrl: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1920&auto=format&fit=crop&q=80'
+  },
+  { 
+    id: 'library', 
+    name: 'Warm Library', 
+    type: 'image', 
+    preview: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=150&auto=format&fit=crop&q=60',
+    imageUrl: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1920&auto=format&fit=crop&q=80'
+  },
+  { 
+    id: 'tech_lab', 
+    name: 'Modern Studio', 
+    type: 'image', 
+    preview: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150&auto=format&fit=crop&q=60',
+    imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&auto=format&fit=crop&q=80'
+  },
+  { 
+    id: 'penthouse', 
+    name: 'Skyline View', 
+    type: 'image', 
+    preview: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=150&auto=format&fit=crop&q=60',
+    imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1920&auto=format&fit=crop&q=80'
+  },
 ];
 
 export const COLOR_FILTERS: ColorFilter[] = [

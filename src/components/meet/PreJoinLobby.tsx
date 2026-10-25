@@ -355,6 +355,8 @@ export function PreJoinLobby({
   };
 
   const currentColorFilter = COLOR_FILTERS.find(f => f.id === selectedFilter)?.filterCss || 'none';
+  const currentBgPreset = BACKGROUND_PRESETS.find(b => b.id === selectedBackground);
+  const bgUrl = currentBgPreset?.imageUrl || currentBgPreset?.preview;
   const returnUrl = typeof window !== 'undefined' ? encodeURIComponent(window.location.pathname) : '';
 
   return (
@@ -363,7 +365,14 @@ export function PreJoinLobby({
         
         {/* Left: Video Preview & Hardware Controls */}
         <div className="flex-1 w-full flex flex-col items-center">
-          <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black/80 border border-white/10 shadow-2xl flex items-center justify-center">
+          <div 
+            className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black/80 border border-white/10 shadow-2xl flex items-center justify-center transition-all duration-300"
+            style={currentBgPreset?.type === 'image' && bgUrl ? {
+              backgroundImage: `url('${bgUrl}')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            } : undefined}
+          >
             
             {/* Camera Video Stream */}
             <video
@@ -371,7 +380,11 @@ export function PreJoinLobby({
               autoPlay
               playsInline
               muted
-              style={{ filter: currentColorFilter }}
+              style={{ 
+                filter: `${currentColorFilter !== 'none' ? currentColorFilter : ''} ${currentBgPreset?.type === 'blur' ? `blur(${Math.min(currentBgPreset.blurAmount || 12, 6)}px)` : ''}`.trim() || 'none',
+                WebkitMaskImage: currentBgPreset?.type === 'image' ? 'radial-gradient(ellipse 68% 80% at 50% 50%, black 50%, rgba(0,0,0,0.4) 75%, transparent 100%)' : undefined,
+                maskImage: currentBgPreset?.type === 'image' ? 'radial-gradient(ellipse 68% 80% at 50% 50%, black 50%, rgba(0,0,0,0.4) 75%, transparent 100%)' : undefined,
+              }}
               className={`w-full h-full object-cover transform -scale-x-100 transition-all duration-300 ${
                 isVideoMuted ? 'hidden' : 'block'
               }`}
@@ -442,23 +455,44 @@ export function PreJoinLobby({
             )}
           </div>
 
-          {/* Quick Filter Selection Chips */}
-          <div className="w-full mt-3 flex items-center justify-between text-xs text-gray-400 px-1">
-            <span className="flex items-center gap-1 text-[11px]">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Hardware Verified & Encrypted
-            </span>
-            <div className="flex items-center gap-1">
-              {COLOR_FILTERS.slice(0, 3).map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => onSelectFilter(f.id)}
-                  className={`px-2 py-0.5 rounded-full text-[10px] transition-colors ${
-                    selectedFilter === f.id ? 'bg-[#0b5cff] text-white' : 'bg-white/5 hover:bg-white/10 text-gray-400'
-                  }`}
-                >
-                  {f.name.split(' ')[0]}
-                </button>
-              ))}
+          {/* Quick Studio Enhancer Chips */}
+          <div className="w-full mt-3 flex flex-col gap-2 px-1">
+            <div className="flex items-center justify-between text-[11px] text-gray-400">
+              <span className="flex items-center gap-1">
+                <Sparkles className="h-3.5 w-3.5 text-blue-400" /> Color Enhancer
+              </span>
+              <div className="flex items-center gap-1">
+                {COLOR_FILTERS.slice(0, 4).map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => onSelectFilter(f.id)}
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${
+                      selectedFilter === f.id ? 'bg-[#0b5cff] text-white shadow-sm' : 'bg-white/5 hover:bg-white/10 text-gray-400'
+                    }`}
+                  >
+                    {f.name.split(' ')[0]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-gray-400">
+              <span className="flex items-center gap-1">
+                <Wand2 className="h-3.5 w-3.5 text-purple-400" /> Virtual BG
+              </span>
+              <div className="flex items-center gap-1">
+                {BACKGROUND_PRESETS.slice(0, 4).map((b) => (
+                  <button
+                    key={b.id}
+                    onClick={() => onSelectBackground(b.id)}
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${
+                      selectedBackground === b.id ? 'bg-purple-600 text-white shadow-sm' : 'bg-white/5 hover:bg-white/10 text-gray-400'
+                    }`}
+                  >
+                    {b.name.split(' ')[0]}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

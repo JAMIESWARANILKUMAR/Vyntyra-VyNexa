@@ -368,24 +368,70 @@ function MeetingRoom() {
     };
   }, [meeting]);
 
-  // Active Color Filter CSS
+  // Active Color Filter & Virtual Background Presets
   const activeColorFilterCss = COLOR_FILTERS.find(f => f.id === selectedFilter)?.filterCss || 'none';
+  const activeBgPreset = BACKGROUND_PRESETS.find(b => b.id === selectedBackground);
 
-  // Direct DOM video enhancement enforcer (MutationObserver ensures every video tile gets active filter)
+  // Direct DOM Video FX Engine (Recursively penetrates Shadow DOM to apply Color Enhancers & Virtual Backgrounds)
   useEffect(() => {
-    const applyVideoFilters = () => {
-      const videos = document.querySelectorAll('video');
-      videos.forEach((vid) => {
-        vid.style.filter = activeColorFilterCss;
-        vid.style.transition = 'filter 0.3s ease';
-      });
+    const bgUrl = activeBgPreset?.imageUrl || activeBgPreset?.preview;
+
+    const applyVideoEffects = () => {
+      // Helper to recursively traverse light DOM and Web Component Shadow Roots
+      function walk(root: Node | ShadowRoot) {
+        if (!root) return;
+
+        // Process <video> elements inside Shadow DOM or Light DOM
+        if (root instanceof HTMLVideoElement) {
+          const combinedFilter = `${activeColorFilterCss !== 'none' ? activeColorFilterCss : ''} ${
+            activeBgPreset?.type === 'blur' ? `blur(${Math.min(activeBgPreset.blurAmount || 12, 6)}px)` : ''
+          }`.trim() || 'none';
+
+          root.style.setProperty('filter', combinedFilter, 'important');
+          root.style.setProperty('transition', 'filter 0.3s ease, mask-image 0.3s ease', 'important');
+
+          if (activeBgPreset?.type === 'image') {
+            root.style.setProperty('-webkit-mask-image', 'radial-gradient(ellipse 68% 80% at 50% 50%, black 50%, rgba(0,0,0,0.4) 75%, transparent 100%)', 'important');
+            root.style.setProperty('mask-image', 'radial-gradient(ellipse 68% 80% at 50% 50%, black 50%, rgba(0,0,0,0.4) 75%, transparent 100%)', 'important');
+          } else {
+            root.style.removeProperty('-webkit-mask-image');
+            root.style.removeProperty('mask-image');
+          }
+        }
+
+        // Process Participant Tile containers
+        if (root instanceof HTMLElement) {
+          const tag = root.tagName.toLowerCase();
+          if (tag === 'rtk-participant-tile' || root.classList.contains('rtk-participant-tile') || root.classList.contains('rtk-video-tile')) {
+            if (activeBgPreset?.type === 'image' && bgUrl) {
+              root.style.setProperty('background-image', `url('${bgUrl}')`, 'important');
+              root.style.setProperty('background-size', 'cover', 'important');
+              root.style.setProperty('background-position', 'center', 'important');
+              root.style.setProperty('background-repeat', 'no-repeat', 'important');
+            } else {
+              root.style.removeProperty('background-image');
+              root.style.removeProperty('background-size');
+              root.style.removeProperty('background-position');
+              root.style.removeProperty('background-repeat');
+            }
+          }
+        }
+
+        // Traverse into Shadow Root
+        if ((root as Element).shadowRoot) {
+          walk((root as Element).shadowRoot!);
+        }
+        root.childNodes.forEach(child => walk(child));
+      }
+
+      walk(document.body);
     };
 
-    applyVideoFilters();
-    const observer = new MutationObserver(applyVideoFilters);
-    observer.observe(document.body, { childList: true, subtree: true });
+    applyVideoEffects();
+    const observer = new MutationObserver(applyVideoEffects);
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
     return () => observer.disconnect();
-  }, [activeColorFilterCss]);
+  }, [activeColorFilterCss, activeBgPreset]);
 
   // Real-time Web Audio DSP Engine (Dolby 3D Audio, Studio Stereo, Crisp Mono)
   useEffect(() => {
@@ -726,7 +772,6 @@ function MeetingRoom() {
     );
   }
 
-  const activeBgPreset = BACKGROUND_PRESETS.find(b => b.id === selectedBackground);
   const isSuperHostUser = Boolean(
     data?.isSuperHost || 
     data?.userType === 'super_host' ||
@@ -736,12 +781,18 @@ function MeetingRoom() {
   );
   const isHostUser = Boolean(data?.isHost || data?.isCoHost || data?.isSuperHost || isSuperHostUser);
 
+  const activeBgUrl = activeBgPreset?.imageUrl || activeBgPreset?.preview;
+
   return (
     <div className="fixed inset-0 w-screen h-screen bg-[#080808] text-white flex flex-col font-sans overflow-hidden select-none">
       
       {/* Dynamic Video Enhancement & Layout CSS Injection */}
       <style dangerouslySetInnerHTML={{__html: `
-        /* Dynamic Hardware Color Enhancer for ALL video elements */
+        /* Dynamic Hardware Color Enhancer & Background Filter penetrating Shadow DOM */
+        rtk-participant-tile::part(video),
+        rtk-video::part(video),
+        *::part(video),
+        [part="video"],
         video,
         rtk-video video,
         rtk-participant-tile video,
@@ -749,26 +800,27 @@ function MeetingRoom() {
         [data-part="video"],
         .rtk-video video,
         rtk-meeting video {
-          filter: ${activeColorFilterCss} !important;
-          transition: filter 0.3s ease !important;
+          filter: ${activeColorFilterCss !== 'none' ? activeColorFilterCss : ''} ${activeBgPreset?.type === 'blur' ? `blur(${Math.min(activeBgPreset.blurAmount || 12, 6)}px)` : ''} !important;
+          ${activeBgPreset?.type === 'image' ? `
+            -webkit-mask-image: radial-gradient(ellipse 68% 80% at 50% 50%, black 50%, rgba(0,0,0,0.4) 75%, transparent 100%) !important;
+            mask-image: radial-gradient(ellipse 68% 80% at 50% 50%, black 50%, rgba(0,0,0,0.4) 75%, transparent 100%) !important;
+          ` : `
+            -webkit-mask-image: none !important;
+            mask-image: none !important;
+          `}
+          transition: filter 0.3s ease, mask-image 0.3s ease !important;
         }
 
-        /* Virtual Background Simulation on Video Canvas */
-        ${activeBgPreset?.type === 'blur' ? `
+        /* Virtual Background Backdrop on Participant Tiles */
+        ${activeBgPreset?.type === 'image' && activeBgUrl ? `
           rtk-participant-tile,
+          .rtk-participant-tile,
           .rtk-video-tile,
-          .rtk-participant-tile {
-            backdrop-filter: blur(${activeBgPreset.blurAmount || 12}px) !important;
-          }
-        ` : ''}
-
-        ${activeBgPreset?.type === 'image' ? `
-          rtk-participant-tile,
-          .rtk-video-tile,
-          .rtk-participant-tile {
-            background-image: url('${activeBgPreset.preview}') !important;
+          rtk-video {
+            background-image: url('${activeBgUrl}') !important;
             background-size: cover !important;
             background-position: center !important;
+            background-repeat: no-repeat !important;
           }
         ` : ''}
 
