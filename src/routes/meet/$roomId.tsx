@@ -9,7 +9,7 @@ import { RtkUiProvider, RtkMeeting } from '@cloudflare/realtimekit-react-ui';
 import { 
   Globe, Loader2, AlertCircle, Lock, Copy, RotateCw, CheckCircle2, 
   ShieldCheck, Sparkles, Sliders, X, Shield, FileSpreadsheet, Users, UserX,
-  Briefcase, GraduationCap, KeyRound
+  Briefcase, GraduationCap, KeyRound, Pen, FileText, Music, LayoutGrid
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,11 @@ import { MeetingAttendanceModal } from '@/components/meet/MeetingAttendanceModal
 import { AudioEnhancerModal, AudioMode } from '@/components/meet/AudioEnhancerModal';
 import { AppleHelloGreeting } from '@/components/meet/AppleHelloGreeting';
 import { PostMeetingSummary } from '@/components/meet/PostMeetingSummary';
+
+// Meeting Plugins
+import { MeetingWhiteboardModal } from '@/components/meet/MeetingWhiteboardModal';
+import { MeetingNotesPlugin } from '@/components/meet/MeetingNotesPlugin';
+import { MeetingSoundboardPlugin } from '@/components/meet/MeetingSoundboardPlugin';
 
 export const Route = createFileRoute('/meet/$roomId')({
   component: MeetingRoom
@@ -64,6 +69,11 @@ function MeetingRoom() {
   const [isHostControlsOpen, setIsHostControlsOpen] = useState(false);
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
   const [roomSettings, setRoomSettings] = useState<any>({});
+
+  // Meeting Plugins State
+  const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [isSoundboardOpen, setIsSoundboardOpen] = useState(false);
 
   // Auth, Access Code & Guest Gatekeeper Credentials
   const [accessCodeState, setAccessCodeState] = useState<string | undefined>(undefined);
@@ -833,16 +843,16 @@ function MeetingRoom() {
         }
       `}} />
 
-      {/* Sleek Floating Glassmorphic Top Header */}
-      <header className="absolute top-0 left-0 right-0 h-14 px-3 sm:px-4 flex items-center justify-between z-40 bg-gradient-to-b from-black/80 via-black/30 to-transparent pointer-events-none">
+      {/* Sleek Floating Glassmorphic Top Header with Mobile Safe Area */}
+      <header className="absolute top-0 left-0 right-0 h-14 sm:h-16 pt-[max(6px,env(safe-area-inset-top))] sm:pt-1 px-2.5 sm:px-4 flex items-center justify-between z-40 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-none">
         
         {/* Left: Branding, Room Title & Sleek Share Pill */}
         <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
           <div className="flex items-center gap-1.5 sm:gap-2 bg-black/60 backdrop-blur-xl border border-white/10 px-2.5 sm:px-3 py-1.5 rounded-full shadow-lg">
             <img src="/icon-512.png" alt="Vyntyra Logo" className="h-4.5 w-4.5 sm:h-5 sm:w-5 object-contain rounded-md shadow-sm shrink-0" />
-            <span className="font-bold text-white text-xs tracking-tight hidden sm:inline">Vyntyra</span>
+            <span className="font-bold text-white text-xs tracking-tight hidden sm:inline">VCS</span>
             <span className="text-gray-500 text-xs font-light hidden sm:inline">|</span>
-            <span className="text-xs font-semibold text-gray-100 max-w-[120px] sm:max-w-[180px] truncate" title={data?.title}>
+            <span className="text-xs font-semibold text-gray-100 max-w-[95px] sm:max-w-[170px] truncate" title={data?.title}>
               {data?.title || "Live Meeting"}
             </span>
             <span className="text-gray-600 text-xs">·</span>
@@ -856,7 +866,7 @@ function MeetingRoom() {
               className="font-mono text-xs text-blue-400 font-semibold hover:underline"
               title="Click to copy code"
             >
-              {roomId.length > 15 ? `#${roomId.slice(0, 8)}` : roomId}
+              {roomId.length > 12 ? `#${roomId.slice(0, 8)}` : roomId}
             </button>
           </div>
 
@@ -894,6 +904,42 @@ function MeetingRoom() {
           {/* Desktop Controls (hidden on screens < 1024px to prevent smartphone clutter) */}
           <div className="hidden lg:flex items-center gap-2">
             
+            {/* Collaborative Whiteboard Plugin */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsWhiteboardOpen(true)}
+              className="h-8 px-2.5 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all shadow-sm flex items-center gap-1.5"
+              title="Collaborative Whiteboard"
+            >
+              <Pen className="h-3.5 w-3.5 text-blue-400" />
+              <span>Whiteboard</span>
+            </Button>
+
+            {/* Shared Notes Plugin */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsNotesOpen(true)}
+              className="h-8 px-2.5 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all shadow-sm flex items-center gap-1.5"
+              title="Meeting Notes & Tasks"
+            >
+              <FileText className="h-3.5 w-3.5 text-purple-400" />
+              <span>Notes</span>
+            </Button>
+
+            {/* Soundboard Plugin */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsSoundboardOpen(true)}
+              className="h-8 px-2.5 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all shadow-sm flex items-center gap-1.5"
+              title="Meeting Soundboard FX"
+            >
+              <Music className="h-3.5 w-3.5 text-amber-400" />
+              <span>FX</span>
+            </Button>
+
             {/* Host Tools Pill (Only for Hosts / Co-Hosts / Super Admins) */}
             {isHostUser && (
               <Button
@@ -963,13 +1009,24 @@ function MeetingRoom() {
             />
           </div>
 
+          {/* Quick Whiteboard Shortcut for Mobile */}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setIsWhiteboardOpen(true)}
+            className="lg:hidden h-8 w-8 p-0 bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 rounded-full flex items-center justify-center shadow-sm"
+            title="Whiteboard"
+          >
+            <Pen className="h-3.5 w-3.5 text-blue-400" />
+          </Button>
+
           {/* Smartphone Clean Tools Trigger */}
           <Button
             size="sm"
             variant="ghost"
             onClick={() => setIsMobileToolsOpen(true)}
             className="lg:hidden h-8 px-2.5 bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 rounded-full text-xs flex items-center gap-1 shadow-sm"
-            title="Meeting Settings & Tools"
+            title="Meeting Settings, Plugins & Tools"
           >
             <Sliders className="h-3.5 w-3.5 text-blue-400" />
             <span className="text-[11px] font-semibold">Tools</span>
@@ -1181,6 +1238,82 @@ function MeetingRoom() {
               />
             </div>
 
+            {/* ─── Interactive Meeting Plugins Suite ─── */}
+            <div className="space-y-2 pt-2 border-t border-white/10">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block px-1">
+                Interactive Meeting Plugins
+              </span>
+
+              {/* Plugin 1: Collaborative Whiteboard */}
+              <div className="p-3 bg-blue-500/10 border border-blue-500/25 rounded-2xl flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                    <Pen className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-white block">Collaborative Whiteboard</span>
+                    <span className="text-[10px] text-gray-400">Live sketch, architecture diagrams & doubts</span>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setIsMobileToolsOpen(false);
+                    setIsWhiteboardOpen(true);
+                  }}
+                  className="h-7 px-3 bg-blue-600 hover:bg-blue-700 text-white text-[11px] rounded-xl font-semibold shrink-0"
+                >
+                  Open
+                </Button>
+              </div>
+
+              {/* Plugin 2: Shared Meeting Notes */}
+              <div className="p-3 bg-purple-500/10 border border-purple-500/25 rounded-2xl flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-white block">Meeting Notes & Action Items</span>
+                    <span className="text-[10px] text-gray-400">Shared agenda, tasks checklist & export</span>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setIsMobileToolsOpen(false);
+                    setIsNotesOpen(true);
+                  }}
+                  className="h-7 px-3 bg-purple-600 hover:bg-purple-700 text-white text-[11px] rounded-xl font-semibold shrink-0"
+                >
+                  Open
+                </Button>
+              </div>
+
+              {/* Plugin 3: Meeting Soundboard FX */}
+              <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                    <Music className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-white block">Soundboard Audio Cues</span>
+                    <span className="text-[10px] text-gray-400">Applause, timer bell, chimes & fanfares</span>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setIsMobileToolsOpen(false);
+                    setIsSoundboardOpen(true);
+                  }}
+                  className="h-7 px-3 bg-amber-600 hover:bg-amber-700 text-white text-[11px] rounded-xl font-semibold shrink-0"
+                >
+                  Open
+                </Button>
+              </div>
+            </div>
+
           </div>
 
           <div className="pt-2 flex justify-end">
@@ -1193,6 +1326,31 @@ function MeetingRoom() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ─── Interactive Whiteboard Plugin Modal ─── */}
+      <MeetingWhiteboardModal
+        isOpen={isWhiteboardOpen}
+        onClose={() => setIsWhiteboardOpen(false)}
+        roomId={roomId}
+        userName={data?.participantName || submittedGuestName || "You"}
+      />
+
+      {/* ─── Collaborative Meeting Notes Plugin Modal ─── */}
+      <MeetingNotesPlugin
+        isOpen={isNotesOpen}
+        onClose={() => setIsNotesOpen(false)}
+        roomId={roomId}
+        meetingTitle={data?.title || "Meeting"}
+        userName={data?.participantName || submittedGuestName || "You"}
+      />
+
+      {/* ─── Meeting Soundboard FX Plugin Modal ─── */}
+      <MeetingSoundboardPlugin
+        isOpen={isSoundboardOpen}
+        onClose={() => setIsSoundboardOpen(false)}
+        roomId={roomId}
+        userName={data?.participantName || submittedGuestName || "You"}
+      />
     </div>
   );
 }
