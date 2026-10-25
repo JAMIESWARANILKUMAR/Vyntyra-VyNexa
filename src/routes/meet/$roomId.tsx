@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { getMeetingTokenFn, recordMeetingTelemetryFn } from '@/lib/meetings.functions';
+import { applyDspToAllMeetingMedia } from '@/lib/meet-audio-dsp';
 import { useServerFn } from '@tanstack/react-start';
 import RealtimeKitClient from '@cloudflare/realtimekit';
 import { RtkUiProvider, RtkMeeting } from '@cloudflare/realtimekit-react-ui';
@@ -314,6 +315,37 @@ function MeetingRoom() {
       } catch (_) {}
     };
   }, [meeting]);
+
+  // Active Color Filter CSS
+  const activeColorFilterCss = COLOR_FILTERS.find(f => f.id === selectedFilter)?.filterCss || 'none';
+
+  // Direct DOM video enhancement enforcer (MutationObserver ensures every video tile gets active filter)
+  useEffect(() => {
+    const applyVideoFilters = () => {
+      const videos = document.querySelectorAll('video');
+      videos.forEach((vid) => {
+        vid.style.filter = activeColorFilterCss;
+        vid.style.transition = 'filter 0.3s ease';
+      });
+    };
+
+    applyVideoFilters();
+    const observer = new MutationObserver(applyVideoFilters);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [activeColorFilterCss]);
+
+  // Real-time Web Audio DSP Engine (Dolby 3D Audio, Studio Stereo, Crisp Mono)
+  useEffect(() => {
+    if (!meeting || !hasJoinedMeeting) return;
+    applyDspToAllMeetingMedia(audioMode);
+
+    const observer = new MutationObserver(() => {
+      applyDspToAllMeetingMedia(audioMode);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [audioMode, meeting, hasJoinedMeeting]);
 
   // Loading initial token
   if (isLoading) {
@@ -642,7 +674,6 @@ function MeetingRoom() {
     );
   }
 
-  const activeColorFilterCss = COLOR_FILTERS.find(f => f.id === selectedFilter)?.filterCss || 'none';
   const activeBgPreset = BACKGROUND_PRESETS.find(b => b.id === selectedBackground);
   const isHostUser = Boolean(data?.isHost || data?.isCoHost || data?.isSuperHost);
 
@@ -651,21 +682,31 @@ function MeetingRoom() {
       
       {/* Dynamic Video Enhancement & Layout CSS Injection */}
       <style dangerouslySetInnerHTML={{__html: `
-        /* Dynamic Hardware Color Enhancer */
-        .rtk-video-tile video {
+        /* Dynamic Hardware Color Enhancer for ALL video elements */
+        video,
+        rtk-video video,
+        rtk-participant-tile video,
+        .rtk-video-tile video,
+        [data-part="video"],
+        .rtk-video video,
+        rtk-meeting video {
           filter: ${activeColorFilterCss} !important;
           transition: filter 0.3s ease !important;
         }
 
         /* Virtual Background Simulation on Video Canvas */
         ${activeBgPreset?.type === 'blur' ? `
-          .rtk-video-tile {
+          rtk-participant-tile,
+          .rtk-video-tile,
+          .rtk-participant-tile {
             backdrop-filter: blur(${activeBgPreset.blurAmount || 12}px) !important;
           }
         ` : ''}
 
         ${activeBgPreset?.type === 'image' ? `
-          .rtk-video-tile {
+          rtk-participant-tile,
+          .rtk-video-tile,
+          .rtk-participant-tile {
             background-image: url('${activeBgPreset.preview}') !important;
             background-size: cover !important;
             background-position: center !important;
@@ -684,28 +725,107 @@ function MeetingRoom() {
           display: none !important;
         }
 
-        /* Ensure RealtimeKit Meeting Component Fills 100% of Screen and adapts cleanly across all devices */
-        rtk-meeting {
+        /* Ensure RealtimeKit Meeting Component Fills 100% of Screen */
+        rtk-meeting,
+        .rtk-meeting,
+        .rtk-meeting-container {
           display: flex !important;
+          flex-direction: column !important;
           width: 100% !important;
           height: 100% !important;
+          background: #080808 !important;
+          overflow: hidden !important;
         }
 
-        /* Responsive layout adaptation for smartphone, laptop, desktop, ultra-wide & projectors */
-        @media (max-width: 640px) {
-          .rtk-meeting-container {
-            padding-bottom: 68px !important;
-            padding-top: 56px !important;
+        /* ── Responsive Mobile Portrait Video Layout (max-width: 768px) ── */
+        @media (max-width: 768px) {
+          rtk-meeting,
+          .rtk-meeting,
+          .rtk-meeting-container,
+          [data-part="container"] {
+            padding-top: 52px !important;
+            padding-bottom: 72px !important;
+            box-sizing: border-box !important;
           }
-          .rtk-control-bar {
+
+          /* Video grid expands to fill portrait smartphone viewport */
+          rtk-grid,
+          .rtk-grid,
+          [data-part="grid"] {
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100% !important;
+            height: 100% !important;
+            flex: 1 1 auto !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 8px !important;
             padding: 6px !important;
+            box-sizing: border-box !important;
+          }
+
+          /* Video tile fills vertical height nicely instead of tiny 16:9 letterbox */
+          rtk-participant-tile,
+          .rtk-participant-tile,
+          .rtk-video-tile {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 55vh !important;
+            max-height: calc(100vh - 135px) !important;
+            border-radius: 24px !important;
+            overflow: hidden !important;
+            background: #11141c !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            margin: 0 !important;
+            aspect-ratio: auto !important;
+          }
+
+          /* Video stream fills tile in portrait mode */
+          rtk-participant-tile video,
+          rtk-video video,
+          .rtk-video-tile video,
+          video {
+            object-fit: cover !important;
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 22px !important;
+          }
+
+          /* Clean touch-friendly bottom control bar */
+          rtk-control-bar,
+          .rtk-control-bar,
+          [data-part="control-bar"] {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            height: 64px !important;
+            padding: 8px 12px !important;
+            padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
+            background: rgba(8, 10, 15, 0.94) !important;
+            backdrop-filter: blur(24px) !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+            display: flex !important;
+            justify-content: space-around !important;
+            align-items: center !important;
+            z-index: 30 !important;
             gap: 4px !important;
+            overflow-x: auto !important;
+            scrollbar-width: none !important;
+          }
+
+          rtk-control-bar button,
+          .rtk-control-bar button,
+          rtk-button {
+            min-width: 42px !important;
+            height: 42px !important;
+            border-radius: 14px !important;
           }
         }
 
-        @media (min-width: 1920px) {
+        @media (min-width: 1024px) {
           .rtk-video-tile {
-            border-radius: 16px !important;
+            border-radius: 20px !important;
           }
           .rtk-meeting {
             max-width: 100% !important;
@@ -722,7 +842,7 @@ function MeetingRoom() {
             <img src="/icon-512.png" alt="Vyntyra Logo" className="h-4.5 w-4.5 sm:h-5 sm:w-5 object-contain rounded-md shadow-sm shrink-0" />
             <span className="font-bold text-white text-xs tracking-tight hidden sm:inline">Vyntyra</span>
             <span className="text-gray-500 text-xs font-light hidden sm:inline">|</span>
-            <span className="text-xs font-semibold text-gray-100 max-w-[100px] sm:max-w-[160px] truncate" title={data?.title}>
+            <span className="text-xs font-semibold text-gray-100 max-w-[120px] sm:max-w-[180px] truncate" title={data?.title}>
               {data?.title || "Live Meeting"}
             </span>
             <span className="text-gray-600 text-xs">·</span>
@@ -771,8 +891,8 @@ function MeetingRoom() {
           {/* Live Network Speed & Ping HUD */}
           <MeetingNetworkHUD />
 
-          {/* Desktop Controls */}
-          <div className="hidden md:flex items-center gap-2">
+          {/* Desktop Controls (hidden on screens < 1024px to prevent smartphone clutter) */}
+          <div className="hidden lg:flex items-center gap-2">
             
             {/* Host Tools Pill (Only for Hosts / Co-Hosts / Super Admins) */}
             {isHostUser && (
@@ -784,7 +904,7 @@ function MeetingRoom() {
                 title="Enterprise Host Controls & Security"
               >
                 <Shield className="h-3.5 w-3.5 text-blue-400" />
-                <span className="hidden lg:inline">Host Controls</span>
+                <span>Host Controls</span>
               </Button>
             )}
 
@@ -798,7 +918,7 @@ function MeetingRoom() {
                 title="Smart Attendance & Session Telemetry"
               >
                 <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="hidden lg:inline">Attendance</span>
+                <span>Attendance</span>
               </Button>
             )}
 
@@ -848,7 +968,7 @@ function MeetingRoom() {
             size="sm"
             variant="ghost"
             onClick={() => setIsMobileToolsOpen(true)}
-            className="md:hidden h-8 px-2.5 bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 rounded-full text-xs flex items-center gap-1 shadow-sm"
+            className="lg:hidden h-8 px-2.5 bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 rounded-full text-xs flex items-center gap-1 shadow-sm"
             title="Meeting Settings & Tools"
           >
             <Sliders className="h-3.5 w-3.5 text-blue-400" />
@@ -859,12 +979,27 @@ function MeetingRoom() {
 
       {/* Main Full-Bleed Video Conference Canvas */}
       <main className="flex-1 w-full h-full relative overflow-hidden bg-[#080808]">
-        {/* Transparent Vyntyra Meet Watermark (14px mobile / 16px desktop) */}
-        <div className="absolute bottom-4 left-4 z-20 pointer-events-none select-none flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/25 backdrop-blur-sm border border-white/5 opacity-50 hover:opacity-80 transition-opacity">
-          <img src="/icon-512.png" alt="Vyntyra Logo" className="h-4 w-4 object-contain rounded opacity-75" />
-          <span className="text-[14px] sm:text-[16px] font-semibold tracking-wider text-white/80 font-sans">
-            Vyntyra Meet
-          </span>
+        {/* ─── Online Exam-Style Continuous Security Watermark Overlay ─── */}
+        <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-20">
+          <div 
+            className="w-[200%] h-[200%] -top-[50%] -left-[50%] absolute grid grid-cols-2 sm:grid-cols-3 gap-y-20 sm:gap-y-28 gap-x-8 sm:gap-x-16 transform -rotate-[22deg] opacity-[0.06] text-white font-mono text-[11px] sm:text-[13px] font-semibold tracking-[0.25em] uppercase justify-items-center items-center"
+          >
+            {Array.from({ length: 30 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-2 whitespace-nowrap">
+                <span>VYNTYRA MEET</span>
+                <span>•</span>
+                <span>{roomId.slice(0, 10).toUpperCase()}</span>
+                <span>•</span>
+                <span>{(data?.internId || submittedGuestName || data?.participantName || "CONFIDENTIAL").toUpperCase()}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Top-Right Exam Proctor Security Stamp */}
+          <div className="absolute top-16 right-3 sm:top-16 sm:right-6 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/30 backdrop-blur-sm border border-white/10 text-[10px] font-mono tracking-wider text-white/50 uppercase shadow-sm">
+            <ShieldCheck className="h-3 w-3 text-emerald-400/70" />
+            <span>VYNTYRA VERIFIED · {roomId.slice(0, 8).toUpperCase()}</span>
+          </div>
         </div>
 
         <RtkUiProvider meeting={meeting}>

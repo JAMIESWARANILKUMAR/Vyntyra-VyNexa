@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import { playAudioModePreview } from '@/lib/meet-audio-dsp';
 
 export type AudioMode = 'dolby' | 'stereo' | 'mono';
 
@@ -206,6 +207,7 @@ export function AudioEnhancerModal({
   const handleSelectMode = (mode: AudioMode) => {
     setSelectedMode(mode);
     onModeChange?.(mode);
+    playAudioModePreview(mode);
     toast.success(`Audio mode switched to ${AUDIO_MODES.find(m => m.id === mode)?.name}`);
   };
 

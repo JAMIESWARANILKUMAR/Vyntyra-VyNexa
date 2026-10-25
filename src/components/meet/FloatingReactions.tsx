@@ -309,7 +309,7 @@ export function FloatingReactions({
 
       {/* ─── Bottom Floating Reaction Emoji Launcher Button ─── */}
       <div 
-        className="fixed bottom-20 right-4 sm:right-6 z-40 pointer-events-auto flex flex-col items-end"
+        className="fixed bottom-[74px] right-3 sm:bottom-20 sm:right-6 z-40 pointer-events-auto flex flex-col items-end"
         ref={containerRef}
       >
         
