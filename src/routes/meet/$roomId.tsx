@@ -9,7 +9,7 @@ import { RtkUiProvider, RtkMeeting, createDefaultConfig } from '@cloudflare/real
 import { 
   Globe, Loader2, AlertCircle, Lock, Copy, RotateCw, CheckCircle2, 
   ShieldCheck, Sparkles, Sliders, X, Shield, FileSpreadsheet, Users, UserX,
-  Briefcase, GraduationCap, KeyRound, Pen, FileText, Music, LayoutGrid
+  Briefcase, GraduationCap, KeyRound, Pen, FileText, Music, LayoutGrid, Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,7 @@ import { MeetingAttendanceModal } from '@/components/meet/MeetingAttendanceModal
 import { AudioEnhancerModal, AudioMode } from '@/components/meet/AudioEnhancerModal';
 import { AppleHelloGreeting } from '@/components/meet/AppleHelloGreeting';
 import { PostMeetingSummary } from '@/components/meet/PostMeetingSummary';
+import { MeetingSettingsModal, MeetingPreferences, getSavedPreferences, WAVEFORM_THEMES } from '@/components/meet/MeetingSettingsModal';
 
 // Meeting Plugins
 import { MeetingWhiteboardModal } from '@/components/meet/MeetingWhiteboardModal';
@@ -59,6 +60,10 @@ function MeetingRoom() {
   const [selectedBackground, setSelectedBackground] = useState('none');
   const [currentGridLayout, setCurrentGridLayout] = useState('8');
   const [audioMode, setAudioMode] = useState<AudioMode>('dolby');
+
+  // Meeting Preferences & Waveform Styling State
+  const [meetingPrefs, setMeetingPrefs] = useState<MeetingPreferences>(getSavedPreferences);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Indian Languages AI Translation State
   const [translationEnabled, setTranslationEnabled] = useState(false);
@@ -371,8 +376,9 @@ function MeetingRoom() {
   // Active Color Filter & Virtual Background Presets
   const activeColorFilterCss = COLOR_FILTERS.find(f => f.id === selectedFilter)?.filterCss || 'none';
   const activeBgPreset = BACKGROUND_PRESETS.find(b => b.id === selectedBackground);
+  const activeWaveTheme = WAVEFORM_THEMES.find(t => t.id === meetingPrefs.waveformThemeId) || WAVEFORM_THEMES[0];
 
-  // Direct DOM Video FX Engine (Recursively penetrates Shadow DOM to apply Color Enhancers & Virtual Backgrounds)
+  // Direct DOM Video FX Engine (Recursively penetrates Shadow DOM to apply Color Enhancers, Virtual Backgrounds & Waveform Styles)
   useEffect(() => {
     const bgUrl = activeBgPreset?.imageUrl || activeBgPreset?.preview;
 
@@ -390,6 +396,10 @@ function MeetingRoom() {
           root.style.setProperty('filter', combinedFilter, 'important');
           root.style.setProperty('transition', 'filter 0.3s ease, mask-image 0.3s ease', 'important');
 
+          if (meetingPrefs.mirrorVideo) {
+            root.style.setProperty('transform', 'scaleX(-1)', 'important');
+          }
+
           if (activeBgPreset?.type === 'image') {
             root.style.setProperty('-webkit-mask-image', 'radial-gradient(ellipse 68% 80% at 50% 50%, black 50%, rgba(0,0,0,0.4) 75%, transparent 100%)', 'important');
             root.style.setProperty('mask-image', 'radial-gradient(ellipse 68% 80% at 50% 50%, black 50%, rgba(0,0,0,0.4) 75%, transparent 100%)', 'important');
@@ -397,6 +407,12 @@ function MeetingRoom() {
             root.style.removeProperty('-webkit-mask-image');
             root.style.removeProperty('mask-image');
           }
+        }
+
+        // Process Speaking Waveform Canvas inside Shadow DOM (e.g. inside rtk-audio-visualizer)
+        if (root instanceof HTMLCanvasElement && (root.classList.contains('bars') || root.getAttribute('part') === 'canvas')) {
+          root.style.setProperty('color', activeWaveTheme.color, 'important');
+          root.style.setProperty('filter', `drop-shadow(0 0 4px ${activeWaveTheme.glow}) drop-shadow(0 0 8px ${activeWaveTheme.glow2})`, 'important');
         }
 
         // Process Participant Tile containers
@@ -415,6 +431,13 @@ function MeetingRoom() {
               root.style.removeProperty('background-repeat');
             }
           }
+
+          // Style Name Tag Glass Capsule
+          if (tag === 'rtk-name-tag' || root.classList.contains('rtk-name-tag')) {
+            root.style.setProperty('border-radius', '9999px', 'important');
+            root.style.setProperty('backdrop-filter', 'blur(16px)', 'important');
+            root.style.setProperty('-webkit-backdrop-filter', 'blur(16px)', 'important');
+          }
         }
 
         // Traverse into Shadow Root
@@ -431,7 +454,7 @@ function MeetingRoom() {
     const observer = new MutationObserver(applyVideoEffects);
     observer.observe(document.body, { childList: true, subtree: true, attributes: true });
     return () => observer.disconnect();
-  }, [activeColorFilterCss, activeBgPreset]);
+  }, [activeColorFilterCss, activeBgPreset, activeWaveTheme, meetingPrefs.mirrorVideo]);
 
   // Real-time Web Audio DSP Engine (Dolby 3D Audio, Studio Stereo, Crisp Mono)
   useEffect(() => {
@@ -870,18 +893,68 @@ function MeetingRoom() {
           transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
 
+        /* ── Speaking Wave Audio Visualizer (Dynamic Color & Neon Glow) ── */
+        rtk-audio-visualizer,
+        rtk-audio-visualizer::part(canvas),
+        canvas.bars,
+        [part="canvas"] {
+          color: ${activeWaveTheme.color} !important;
+          --rtk-colors-brand-500: ${activeWaveTheme.color} !important;
+          filter: drop-shadow(0 0 4px ${activeWaveTheme.glow}) drop-shadow(0 0 8px ${activeWaveTheme.glow2}) !important;
+          transition: color 0.3s ease, filter 0.3s ease !important;
+        }
+
+        @keyframes rtkWavePulse {
+          0%, 100% {
+            filter: drop-shadow(0 0 3px ${activeWaveTheme.glow}) drop-shadow(0 0 6px ${activeWaveTheme.glow2});
+            transform: scale(1);
+          }
+          50% {
+            filter: drop-shadow(0 0 6px ${activeWaveTheme.color}) drop-shadow(0 0 12px ${activeWaveTheme.glow});
+            transform: scale(1.05);
+          }
+        }
+
+        rtk-audio-visualizer canvas.visible,
+        rtk-audio-visualizer canvas.bars,
+        rtk-audio-visualizer::part(canvas) {
+          animation: rtkWavePulse 2s ease-in-out infinite alternate !important;
+        }
+
         /* ── Participant Name Tags: Polished Frosted Glass Capsule ── */
         rtk-name-tag,
-        .rtk-name-tag {
-          background: rgba(10, 13, 22, 0.78) !important;
-          backdrop-filter: blur(16px) !important;
-          border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        .rtk-name-tag,
+        [data-part="name-tag"] {
+          background: ${
+            meetingPrefs.nameTagStyle === 'minimal'
+              ? 'rgba(0, 0, 0, 0.45)'
+              : meetingPrefs.nameTagStyle === 'solid'
+                ? 'rgba(15, 18, 26, 0.95)'
+                : 'rgba(10, 13, 22, 0.82)'
+          } !important;
+          backdrop-filter: blur(20px) !important;
+          -webkit-backdrop-filter: blur(20px) !important;
+          border: 1px solid rgba(255, 255, 255, 0.14) !important;
           border-radius: 9999px !important;
           color: #f8fafc !important;
-          font-weight: 500 !important;
-          padding: 3px 11px !important;
-          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+          font-weight: 600 !important;
+          padding: 4px 12px !important;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+          letter-spacing: 0.02em !important;
+          transition: all 0.25s ease !important;
         }
+
+        rtk-name-tag span.name {
+          font-weight: 600 !important;
+          color: #ffffff !important;
+        }
+
+        ${meetingPrefs.hideSelfView ? `
+          rtk-participant-tile[is-self="true"],
+          rtk-participant-tile[data-self="true"] {
+            display: none !important;
+          }
+        ` : ''}
 
         /* ── Bottom WebRTC Control Bar: Floating Corporate Glass Dock ── */
         rtk-controlbar,
@@ -1151,6 +1224,18 @@ function MeetingRoom() {
               }}
             />
 
+            {/* Group 2.5: Settings & Preferences */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsSettingsOpen(true)}
+              className="h-7.5 px-2.5 hover:bg-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all flex items-center gap-1.5"
+              title="Meeting Settings, Devices & Waveform Style"
+            >
+              <Settings className="h-3.5 w-3.5 text-blue-400" />
+              <span className="font-medium">Settings</span>
+            </Button>
+
             {/* Group 3: Host Privilege Controls */}
             {isHostUser && (
               <>
@@ -1214,21 +1299,25 @@ function MeetingRoom() {
       <main className="flex-1 w-full h-full relative overflow-hidden bg-[#080808]">
         {/* ─── High-End Enterprise Continuous Security Watermark ─── */}
         <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-20">
-          <div 
-            className="w-[200%] h-[200%] -top-[50%] -left-[50%] absolute grid grid-cols-2 sm:grid-cols-3 gap-y-24 sm:gap-y-32 gap-x-12 sm:gap-x-20 transform -rotate-[22deg] opacity-[0.025] sm:opacity-[0.032] text-white font-mono text-[9px] sm:text-[11px] font-normal tracking-[0.35em] uppercase justify-items-center items-center"
-          >
-            {Array.from({ length: 30 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-2 whitespace-nowrap">
-                <span>VYNTYRA VCS</span>
-                <span>·</span>
-                <span>CONFIDENTIAL</span>
-                <span>·</span>
-                <span>{roomId.slice(0, 8).toUpperCase()}</span>
-                <span>·</span>
-                <span>{(data?.internId || submittedGuestName || data?.participantName || "AUTHORIZED ATTENDEE").toUpperCase()}</span>
-              </div>
-            ))}
-          </div>
+          {meetingPrefs.watermarkVisibility !== 'off' && (
+            <div 
+              className={`w-[200%] h-[200%] -top-[50%] -left-[50%] absolute grid grid-cols-2 sm:grid-cols-3 gap-y-24 sm:gap-y-32 gap-x-12 sm:gap-x-20 transform -rotate-[22deg] ${
+                meetingPrefs.watermarkVisibility === 'high' ? 'opacity-[0.065]' : 'opacity-[0.025] sm:opacity-[0.032]'
+              } text-white font-mono text-[9px] sm:text-[11px] font-normal tracking-[0.35em] uppercase justify-items-center items-center`}
+            >
+              {Array.from({ length: 30 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-2 whitespace-nowrap">
+                  <span>VYNTYRA VCS</span>
+                  <span>·</span>
+                  <span>CONFIDENTIAL</span>
+                  <span>·</span>
+                  <span>{roomId.slice(0, 8).toUpperCase()}</span>
+                  <span>·</span>
+                  <span>{(data?.internId || submittedGuestName || data?.participantName || "AUTHORIZED ATTENDEE").toUpperCase()}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Top-Right Session Security Stamp */}
           <div className="absolute top-16 right-3 sm:top-16 sm:right-6 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0a0d14]/75 backdrop-blur-xl border border-white/10 text-[10px] font-mono tracking-wider text-gray-300 shadow-xl pointer-events-auto">
@@ -1257,6 +1346,15 @@ function MeetingRoom() {
       <FloatingReactions 
         roomId={roomId}
         userName={data?.participantName || submittedGuestName || "You"}
+      />
+
+      {/* ─── Meeting Settings & Studio Preferences Modal ─── */}
+      <MeetingSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        meeting={meeting}
+        currentPrefs={meetingPrefs}
+        onUpdatePrefs={(newPrefs) => setMeetingPrefs(newPrefs)}
       />
 
       {/* ─── Host Controls Modal ─── */}
@@ -1290,6 +1388,29 @@ function MeetingRoom() {
           </DialogHeader>
 
           <div className="space-y-3.5 py-2 text-xs">
+            
+            {/* Studio Settings Quick Trigger on Mobile */}
+            <div className="p-3 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-2xl flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-blue-600/30 text-blue-400">
+                  <Settings className="h-4 w-4" />
+                </div>
+                <div>
+                  <span className="font-semibold text-white block">Settings & Waveform FX</span>
+                  <span className="text-[10px] text-gray-400">Audio waves color, mic test, video quality</span>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setIsMobileToolsOpen(false);
+                  setIsSettingsOpen(true);
+                }}
+                className="h-7 px-3 bg-blue-600 hover:bg-blue-700 text-white text-[11px] rounded-xl font-semibold shrink-0"
+              >
+                Open
+              </Button>
+            </div>
             
             {/* Host Tools Quick Access for Mobile */}
             {isHostUser && (

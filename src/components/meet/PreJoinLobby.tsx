@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { BACKGROUND_PRESETS, COLOR_FILTERS } from './VideoEnhancerModal';
 import { verifyGuestIdentityFn } from '@/lib/meetings.functions';
+import { MeetingSettingsModal, MeetingPreferences, getSavedPreferences } from './MeetingSettingsModal';
 
 export type JoinMethod = 'employee' | 'intern' | 'access_code';
 
@@ -88,6 +89,8 @@ export function PreJoinLobby({
   const [verifiedUserType, setVerifiedUserType] = useState<string | null>(initialUserType || null);
   const [isVerified, setIsVerified] = useState<boolean>(isInitiallyVerified);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [meetingPrefs, setMeetingPrefs] = useState<MeetingPreferences>(getSavedPreferences);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -424,6 +427,16 @@ export function PreJoinLobby({
                 title={isVideoMuted ? "Turn On Camera" : "Turn Off Camera"}
               >
                 {isVideoMuted ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5 text-blue-400" />}
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsSettingsOpen(true)}
+                className="h-10 w-10 p-0 rounded-full transition-all bg-white/10 hover:bg-white/20 text-white"
+                title="Meeting Settings & Waveform Style"
+              >
+                <Settings className="h-4.5 w-4.5 text-gray-200" />
               </Button>
             </div>
 
@@ -860,6 +873,14 @@ export function PreJoinLobby({
         </div>
 
       </div>
+
+      {/* ─── Meeting Settings & Hardware Calibration Modal ─── */}
+      <MeetingSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        currentPrefs={meetingPrefs}
+        onUpdatePrefs={(newPrefs) => setMeetingPrefs(newPrefs)}
+      />
     </div>
   );
 }
