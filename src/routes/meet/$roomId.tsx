@@ -5,7 +5,7 @@ import { getMeetingTokenFn, recordMeetingTelemetryFn } from '@/lib/meetings.func
 import { applyDspToAllMeetingMedia } from '@/lib/meet-audio-dsp';
 import { useServerFn } from '@tanstack/react-start';
 import RealtimeKitClient from '@cloudflare/realtimekit';
-import { RtkUiProvider, RtkMeeting } from '@cloudflare/realtimekit-react-ui';
+import { RtkUiProvider, RtkMeeting, createDefaultConfig } from '@cloudflare/realtimekit-react-ui';
 import { 
   Globe, Loader2, AlertCircle, Lock, Copy, RotateCw, CheckCircle2, 
   ShieldCheck, Sparkles, Sliders, X, Shield, FileSpreadsheet, Users, UserX,
@@ -90,6 +90,48 @@ function MeetingRoom() {
   const [guestNameInput, setGuestNameInput] = useState('');
 
   const sessionStartTimeRef = useRef<number>(Date.now());
+  const [meetingTimer, setMeetingTimer] = useState('00:00');
+
+  // Executive Live Meeting Duration Clock
+  useEffect(() => {
+    if (!hasJoinedMeeting) return;
+    const interval = setInterval(() => {
+      const elapsedSeconds = Math.max(0, Math.floor((Date.now() - sessionStartTimeRef.current) / 1000));
+      const hours = Math.floor(elapsedSeconds / 3600);
+      const mins = Math.floor((elapsedSeconds % 3600) / 60);
+      const secs = elapsedSeconds % 60;
+      if (hours > 0) {
+        setMeetingTimer(`${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`);
+      } else {
+        setMeetingTimer(`${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [hasJoinedMeeting]);
+
+  // Clean RealtimeKit configuration that strips out default duplicate headers
+  const rtkConfig = React.useMemo(() => {
+    try {
+      const cfg = createDefaultConfig();
+      if (cfg?.root?.['rtk-meeting[meeting=joined]']) {
+        cfg.root['rtk-meeting[meeting=joined]'] = [
+          'rtk-stage',
+          'rtk-controlbar',
+          'rtk-participants-audio',
+          'rtk-dialog-manager'
+        ];
+      }
+      if (cfg?.styles) {
+        cfg.styles['rtk-header'] = { display: 'none !important', height: '0px' };
+        cfg.styles['rtk-header.sm'] = { display: 'none !important', height: '0px' };
+        cfg.styles['div#header-center'] = { display: 'none !important' };
+        cfg.styles['rtk-meeting-title'] = { display: 'none !important' };
+      }
+      return cfg;
+    } catch (e) {
+      return undefined;
+    }
+  }, []);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['meet-token', roomId, submittedPassword, submittedGuestName, guestCredentials.guestEmail, guestCredentials.internId, accessCodeState],
@@ -723,16 +765,27 @@ function MeetingRoom() {
           }
         ` : ''}
 
-        /* Hide RealtimeKit's duplicate top header so our unified header looks pristine and clean */
+        /* ── RealtimeKit Root Cleanup: completely eliminate ghost headers & titles ── */
+        rtk-header,
+        .rtk-header,
         .rtk-meeting-header, 
-        rtk-header, 
         [data-part="header"],
         .rtk-top-bar,
         .rtk-header-container,
         rtk-meeting > header,
+        rtk-meeting-title,
         .rtk-meeting-title,
-        .rtk-title-bar {
+        .rtk-title-bar,
+        div#header-center,
+        div#header-left,
+        div#header-right {
           display: none !important;
+          visibility: hidden !important;
+          height: 0 !important;
+          max-height: 0 !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          overflow: hidden !important;
         }
 
         /* Ensure RealtimeKit Meeting Component Fills 100% of Screen */
@@ -745,6 +798,59 @@ function MeetingRoom() {
           height: 100% !important;
           background: #080808 !important;
           overflow: hidden !important;
+        }
+
+        /* ── Participant Video Tiles: Executive Obsidian Bevel & Cinematic Depth ── */
+        rtk-participant-tile,
+        .rtk-participant-tile,
+        .rtk-video-tile {
+          border-radius: 20px !important;
+          overflow: hidden !important;
+          box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+          background: #0d1017 !important;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        /* ── Participant Name Tags: Polished Frosted Glass Capsule ── */
+        rtk-name-tag,
+        .rtk-name-tag {
+          background: rgba(10, 13, 22, 0.78) !important;
+          backdrop-filter: blur(16px) !important;
+          border: 1px solid rgba(255, 255, 255, 0.12) !important;
+          border-radius: 9999px !important;
+          color: #f8fafc !important;
+          font-weight: 500 !important;
+          padding: 3px 11px !important;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+        }
+
+        /* ── Bottom WebRTC Control Bar: Floating Corporate Glass Dock ── */
+        rtk-controlbar,
+        .rtk-controlbar,
+        [data-part="control-bar"] {
+          background: rgba(9, 12, 18, 0.88) !important;
+          backdrop-filter: blur(28px) !important;
+          border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+          box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.6) !important;
+          transition: background 0.3s ease !important;
+        }
+
+        /* ── Refined Crimson Glass Leave Button ── */
+        rtk-leave-button button,
+        button[data-part="leave"],
+        .rtk-leave-button button {
+          background: rgba(239, 68, 68, 0.16) !important;
+          border: 1px solid rgba(239, 68, 68, 0.35) !important;
+          color: #fca5a5 !important;
+          border-radius: 12px !important;
+          transition: all 0.2s ease !important;
+        }
+        rtk-leave-button button:hover,
+        button[data-part="leave"]:hover,
+        .rtk-leave-button button:hover {
+          background: rgba(239, 68, 68, 0.35) !important;
+          border-color: rgba(239, 68, 68, 0.6) !important;
+          color: #ffffff !important;
         }
 
         /* ── Responsive Mobile Portrait Video Layout (max-width: 768px) ── */
@@ -844,17 +950,19 @@ function MeetingRoom() {
       `}} />
 
       {/* Sleek Floating Glassmorphic Top Header with Mobile Safe Area */}
-      <header className="absolute top-0 left-0 right-0 h-14 sm:h-16 pt-[max(6px,env(safe-area-inset-top))] sm:pt-1 px-2.5 sm:px-4 flex items-center justify-between z-40 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-none">
+      <header className="absolute top-0 left-0 right-0 h-14 sm:h-16 pt-[max(6px,env(safe-area-inset-top))] sm:pt-1 px-3 sm:px-5 flex items-center justify-between z-40 bg-gradient-to-b from-black/90 via-black/50 to-transparent pointer-events-none">
         
-        {/* Left: Branding, Room Title & Sleek Share Pill */}
-        <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-black/60 backdrop-blur-xl border border-white/10 px-2.5 sm:px-3 py-1.5 rounded-full shadow-lg">
-            <img src="/icon-512.png" alt="Vyntyra Logo" className="h-4.5 w-4.5 sm:h-5 sm:w-5 object-contain rounded-md shadow-sm shrink-0" />
-            <span className="font-bold text-white text-xs tracking-tight hidden sm:inline">VCS</span>
-            <span className="text-gray-500 text-xs font-light hidden sm:inline">|</span>
-            <span className="text-xs font-semibold text-gray-100 max-w-[95px] sm:max-w-[170px] truncate" title={data?.title}>
-              {data?.title || "Live Meeting"}
-            </span>
+        {/* Left: Branding, Room Title, Live Clock & Sleek Share Pill */}
+        <div className="flex items-center gap-2 sm:gap-2.5 pointer-events-auto">
+          <div className="flex items-center gap-2 bg-[#0a0d14]/85 backdrop-blur-2xl border border-white/10 px-3 py-1.5 rounded-full shadow-2xl">
+            <img src="/icon-512.png" alt="Vyntyra Logo" className="h-5 w-5 object-contain rounded-md shadow-sm shrink-0" />
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-white text-xs tracking-tight">VCS</span>
+              <span className="text-gray-500 text-xs font-light">|</span>
+              <span className="text-xs font-medium text-gray-200 max-w-[100px] sm:max-w-[200px] truncate" title={data?.title}>
+                {data?.title || "Live Meeting"}
+              </span>
+            </div>
             <span className="text-gray-600 text-xs">·</span>
             <button
               onClick={() => {
@@ -863,11 +971,18 @@ function MeetingRoom() {
                   toast.success(`Meeting code copied: ${roomId}`);
                 }
               }}
-              className="font-mono text-xs text-blue-400 font-semibold hover:underline"
-              title="Click to copy code"
+              className="font-mono text-xs text-blue-400 font-medium hover:text-blue-300 hover:underline"
+              title="Click to copy room code"
             >
               {roomId.length > 12 ? `#${roomId.slice(0, 8)}` : roomId}
             </button>
+          </div>
+
+          {/* Live Meeting Duration Timer Pill */}
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-[10px] font-semibold text-red-300 backdrop-blur-md shadow-sm">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse"></span>
+            <span className="tracking-wider uppercase text-[9px] text-red-400">REC</span>
+            <span className="font-mono text-gray-200">{meetingTimer}</span>
           </div>
 
           {/* Desktop Direct Copy Action */}
@@ -880,101 +995,72 @@ function MeetingRoom() {
                 toast.success("Meeting link copied to clipboard!");
               }
             }}
-            className="hidden md:inline-flex h-8 px-2.5 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all shadow-sm items-center gap-1.5"
+            className="hidden md:inline-flex h-8 px-3 bg-[#0a0d14]/75 hover:bg-black/90 backdrop-blur-xl border border-white/10 text-gray-300 hover:text-white rounded-full text-xs transition-all shadow-md items-center gap-1.5"
             title="Copy Meeting Link"
           >
             <Copy className="h-3.5 w-3.5 text-blue-400" />
-            <span>Copy Link</span>
+            <span className="font-medium">Copy Link</span>
           </Button>
 
           {/* Verified Intern / Employee Tag */}
           {data?.internId && (
-            <div className="hidden lg:flex items-center gap-1 bg-blue-500/15 border border-blue-500/30 px-2.5 py-1 rounded-full text-[10px] font-mono text-blue-300">
-              <ShieldCheck className="h-3 w-3 text-blue-400" />
+            <div className="hidden lg:flex items-center gap-1.5 bg-blue-500/15 border border-blue-500/30 px-3 py-1 rounded-full text-[10px] font-mono text-blue-300 backdrop-blur-md">
+              <ShieldCheck className="h-3.5 w-3.5 text-blue-400" />
               <span>{data.internId}</span>
             </div>
           )}
         </div>
 
-        {/* Right Section: Responsive Controls, Host Tools & Attendance */}
-        <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
+        {/* Right Section: Stream HUD & Enterprise Suite Controls */}
+        <div className="flex items-center gap-2 sm:gap-2.5 pointer-events-auto">
           {/* Live Network Speed & Ping HUD */}
           <MeetingNetworkHUD />
 
-          {/* Desktop Controls (hidden on screens < 1024px to prevent smartphone clutter) */}
-          <div className="hidden lg:flex items-center gap-2">
+          {/* Desktop Executive Controls (hidden on screens < 1024px to prevent clutter) */}
+          <div className="hidden lg:flex items-center gap-2 bg-[#0a0d14]/80 backdrop-blur-2xl border border-white/10 p-1 rounded-full shadow-2xl">
             
-            {/* Collaborative Whiteboard Plugin */}
+            {/* Group 1: Collaboration Suite */}
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setIsWhiteboardOpen(true)}
-              className="h-8 px-2.5 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all shadow-sm flex items-center gap-1.5"
+              className="h-7.5 px-2.5 hover:bg-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all flex items-center gap-1.5"
               title="Collaborative Whiteboard"
             >
               <Pen className="h-3.5 w-3.5 text-blue-400" />
-              <span>Whiteboard</span>
+              <span className="font-medium">Whiteboard</span>
             </Button>
 
-            {/* Shared Notes Plugin */}
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setIsNotesOpen(true)}
-              className="h-8 px-2.5 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all shadow-sm flex items-center gap-1.5"
+              className="h-7.5 px-2.5 hover:bg-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all flex items-center gap-1.5"
               title="Meeting Notes & Tasks"
             >
               <FileText className="h-3.5 w-3.5 text-purple-400" />
-              <span>Notes</span>
+              <span className="font-medium">Notes</span>
             </Button>
 
-            {/* Soundboard Plugin */}
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setIsSoundboardOpen(true)}
-              className="h-8 px-2.5 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all shadow-sm flex items-center gap-1.5"
+              className="h-7.5 px-2.5 hover:bg-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all flex items-center gap-1.5"
               title="Meeting Soundboard FX"
             >
               <Music className="h-3.5 w-3.5 text-amber-400" />
-              <span>FX</span>
+              <span className="font-medium">FX</span>
             </Button>
 
-            {/* Host Tools Pill (Only for Hosts / Co-Hosts / Super Admins) */}
-            {isHostUser && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setIsHostControlsOpen(true)}
-                className="h-8 px-2.5 bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 border border-blue-500/40 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
-                title="Enterprise Host Controls & Security"
-              >
-                <Shield className="h-3.5 w-3.5 text-blue-400" />
-                <span>Host Controls</span>
-              </Button>
-            )}
+            <div className="h-4 w-px bg-white/10 mx-0.5" />
 
-            {/* Smart Attendance & Session Telemetry Pill */}
-            {isHostUser && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setIsAttendanceOpen(true)}
-                className="h-8 px-2.5 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/30 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
-                title="Smart Attendance & Session Telemetry"
-              >
-                <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-400" />
-                <span>Attendance</span>
-              </Button>
-            )}
-
-            {/* Dolby Audio & Hi-Fi Encoding Engine */}
+            {/* Group 2: Audio & Video Studio */}
             <AudioEnhancerModal
               activeMode={audioMode}
               onModeChange={(m) => setAudioMode(m)}
             />
 
-            {/* Dynamic Grid Resizer (4 to 1000 participants) */}
             <GridLayoutSelector
               currentLayout={currentGridLayout}
               onSelectLayout={(layoutId) => {
@@ -983,7 +1069,6 @@ function MeetingRoom() {
               }}
             />
 
-            {/* Video Enhancer & Dynamic Color View */}
             <VideoEnhancerModal
               activeFilter={selectedFilter}
               activeBackground={selectedBackground}
@@ -997,7 +1082,6 @@ function MeetingRoom() {
               }}
             />
 
-            {/* Indian Languages AI Translator */}
             <IndianLanguageTranslator
               isEnabled={translationEnabled}
               onToggle={() => setTranslationEnabled(!translationEnabled)}
@@ -1007,6 +1091,35 @@ function MeetingRoom() {
                 toast.success(`Translated into ${lang.name} (${lang.nativeName})`);
               }}
             />
+
+            {/* Group 3: Host Privilege Controls */}
+            {isHostUser && (
+              <>
+                <div className="h-4 w-px bg-white/10 mx-0.5" />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsHostControlsOpen(true)}
+                  className="h-7.5 px-2.5 bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 border border-blue-500/40 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all"
+                  title="Enterprise Host Controls & Security"
+                >
+                  <Shield className="h-3.5 w-3.5 text-blue-400" />
+                  <span>Host</span>
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsAttendanceOpen(true)}
+                  className="h-7.5 px-2.5 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/30 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all"
+                  title="Smart Attendance & Session Telemetry"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>Attendance</span>
+                </Button>
+              </>
+            )}
+
           </div>
 
           {/* Quick Whiteboard Shortcut for Mobile */}
@@ -1014,7 +1127,7 @@ function MeetingRoom() {
             size="sm"
             variant="ghost"
             onClick={() => setIsWhiteboardOpen(true)}
-            className="lg:hidden h-8 w-8 p-0 bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 rounded-full flex items-center justify-center shadow-sm"
+            className="lg:hidden h-8 w-8 p-0 bg-[#0a0d14]/80 hover:bg-black/90 backdrop-blur-xl border border-white/10 text-gray-200 rounded-full flex items-center justify-center shadow-md"
             title="Whiteboard"
           >
             <Pen className="h-3.5 w-3.5 text-blue-400" />
@@ -1025,7 +1138,7 @@ function MeetingRoom() {
             size="sm"
             variant="ghost"
             onClick={() => setIsMobileToolsOpen(true)}
-            className="lg:hidden h-8 px-2.5 bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 rounded-full text-xs flex items-center gap-1 shadow-sm"
+            className="lg:hidden h-8 px-3 bg-[#0a0d14]/80 hover:bg-black/90 backdrop-blur-xl border border-white/10 text-gray-200 rounded-full text-xs flex items-center gap-1.5 shadow-md"
             title="Meeting Settings, Plugins & Tools"
           >
             <Sliders className="h-3.5 w-3.5 text-blue-400" />
@@ -1036,31 +1149,44 @@ function MeetingRoom() {
 
       {/* Main Full-Bleed Video Conference Canvas */}
       <main className="flex-1 w-full h-full relative overflow-hidden bg-[#080808]">
-        {/* ─── Online Exam-Style Continuous Security Watermark Overlay ─── */}
+        {/* ─── High-End Enterprise Continuous Security Watermark ─── */}
         <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-20">
           <div 
-            className="w-[200%] h-[200%] -top-[50%] -left-[50%] absolute grid grid-cols-2 sm:grid-cols-3 gap-y-20 sm:gap-y-28 gap-x-8 sm:gap-x-16 transform -rotate-[22deg] opacity-[0.06] text-white font-mono text-[11px] sm:text-[13px] font-semibold tracking-[0.25em] uppercase justify-items-center items-center"
+            className="w-[200%] h-[200%] -top-[50%] -left-[50%] absolute grid grid-cols-2 sm:grid-cols-3 gap-y-24 sm:gap-y-32 gap-x-12 sm:gap-x-20 transform -rotate-[22deg] opacity-[0.025] sm:opacity-[0.032] text-white font-mono text-[9px] sm:text-[11px] font-normal tracking-[0.35em] uppercase justify-items-center items-center"
           >
             {Array.from({ length: 30 }).map((_, i) => (
               <div key={i} className="flex items-center gap-2 whitespace-nowrap">
-                <span>VYNTYRA MEET</span>
-                <span>•</span>
-                <span>{roomId.slice(0, 10).toUpperCase()}</span>
-                <span>•</span>
-                <span>{(data?.internId || submittedGuestName || data?.participantName || "CONFIDENTIAL").toUpperCase()}</span>
+                <span>VYNTYRA VCS</span>
+                <span>·</span>
+                <span>CONFIDENTIAL</span>
+                <span>·</span>
+                <span>{roomId.slice(0, 8).toUpperCase()}</span>
+                <span>·</span>
+                <span>{(data?.internId || submittedGuestName || data?.participantName || "AUTHORIZED ATTENDEE").toUpperCase()}</span>
               </div>
             ))}
           </div>
 
           {/* Top-Right Exam Proctor Security Stamp */}
-          <div className="absolute top-16 right-3 sm:top-16 sm:right-6 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/30 backdrop-blur-sm border border-white/10 text-[10px] font-mono tracking-wider text-white/50 uppercase shadow-sm">
-            <ShieldCheck className="h-3 w-3 text-emerald-400/70" />
-            <span>VYNTYRA VERIFIED · {roomId.slice(0, 8).toUpperCase()}</span>
+          <div className="absolute top-16 right-3 sm:top-16 sm:right-6 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0a0d14]/75 backdrop-blur-xl border border-white/10 text-[10px] font-mono tracking-wider text-gray-300 shadow-xl pointer-events-auto">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="font-semibold text-white/90">SECURE PROCTORED</span>
+            <span className="text-gray-600">|</span>
+            <span className="text-blue-400">#{roomId.slice(0, 8).toUpperCase()}</span>
+            {data?.internId && (
+              <>
+                <span className="text-gray-600">·</span>
+                <span className="text-emerald-400 font-medium">{data.internId}</span>
+              </>
+            )}
           </div>
         </div>
 
         <RtkUiProvider meeting={meeting}>
-          <RtkMeeting meeting={meeting} showSetupScreen={false} />
+          <RtkMeeting meeting={meeting} config={rtkConfig} showSetupScreen={false} />
         </RtkUiProvider>
       </main>
 

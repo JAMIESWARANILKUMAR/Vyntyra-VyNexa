@@ -468,24 +468,24 @@ export function FloatingReactions({
         <Button
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
-          className={`h-11 w-11 sm:h-11 sm:w-auto sm:px-3.5 rounded-full shadow-2xl flex items-center justify-center gap-1.5 border transition-all hover:scale-105 active:scale-95 ${
+          className={`h-10 w-10 sm:h-10 sm:w-auto sm:px-3.5 rounded-full shadow-2xl flex items-center justify-center gap-2 border transition-all hover:scale-105 active:scale-95 ${
             isHandRaised 
-              ? 'bg-amber-500 hover:bg-amber-600 text-black border-amber-300 shadow-amber-500/30' 
+              ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40 shadow-amber-500/20 backdrop-blur-xl' 
               : isOpen
-              ? 'bg-[#0b5cff] hover:bg-[#094bdd] text-white border-blue-400 shadow-blue-500/30'
-              : 'bg-[#12151c]/90 hover:bg-[#1a1f2b] text-white border-white/20 backdrop-blur-xl'
+              ? 'bg-blue-600/30 hover:bg-blue-600/40 text-blue-300 border-blue-400/50 shadow-blue-500/20 backdrop-blur-xl'
+              : 'bg-[#0a0d14]/80 hover:bg-[#121622] text-gray-200 hover:text-white border-white/10 backdrop-blur-xl'
           }`}
           title="Send Reaction or Raise Hand"
         >
           {isHandRaised ? (
             <>
-              <span className="text-xl animate-bounce">✋</span>
-              <span className="hidden sm:inline font-bold text-xs uppercase tracking-wider">Hand Up</span>
+              <span className="text-base animate-bounce">✋</span>
+              <span className="hidden sm:inline font-semibold text-xs tracking-wide">Hand Raised</span>
             </>
           ) : (
             <>
-              <span className="text-xl">😊</span>
-              <span className="hidden sm:inline font-bold text-xs uppercase tracking-wider text-amber-300">React</span>
+              <span className="text-base">😊</span>
+              <span className="hidden sm:inline font-medium text-xs tracking-wide text-gray-200">Reactions</span>
             </>
           )}
         </Button>
