@@ -260,8 +260,8 @@ export function AppleHelloGreeting({
               <span>HD Studio Lights</span>
             </div>
             <div className="flex items-center justify-center gap-1.5 bg-black/40 border border-white/5 px-2.5 py-1 rounded-xl">
-              <Shield className="h-3 w-3 text-emerald-400" />
-              <span>Exam Proctoring</span>
+              <ShieldCheck className="h-3 w-3 text-emerald-400" />
+              <span>Enterprise Encrypted</span>
             </div>
           </div>
 

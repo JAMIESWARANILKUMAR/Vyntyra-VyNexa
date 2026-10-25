@@ -1167,13 +1167,13 @@ function MeetingRoom() {
             ))}
           </div>
 
-          {/* Top-Right Exam Proctor Security Stamp */}
+          {/* Top-Right Session Security Stamp */}
           <div className="absolute top-16 right-3 sm:top-16 sm:right-6 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0a0d14]/75 backdrop-blur-xl border border-white/10 text-[10px] font-mono tracking-wider text-gray-300 shadow-xl pointer-events-auto">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="font-semibold text-white/90">SECURE PROCTORED</span>
+            <span className="font-semibold text-white/90">VCS ENCRYPTED</span>
             <span className="text-gray-600">|</span>
             <span className="text-blue-400">#{roomId.slice(0, 8).toUpperCase()}</span>
             {data?.internId && (
