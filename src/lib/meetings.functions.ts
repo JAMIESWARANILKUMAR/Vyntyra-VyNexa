@@ -495,20 +495,21 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
       } catch (_) {}
     }
 
-    // Role assignment & RBAC Hierarchy
+    // Role assignment & RBAC Hierarchy (hr@vyntyraconsultancyservices.in is the designated Super Host)
+    const isHrSuperAdmin = effectiveEmail === 'hr@vyntyraconsultancyservices.in';
     const isCreator = room.host_id === userId;
-    const isSuperHost = isCreator || (settings.superHosts && effectiveEmail && settings.superHosts.toLowerCase().includes(effectiveEmail)) || dbRole === 'super_admin';
-    const isCoHost = (settings.coHosts && Array.isArray(settings.coHosts) && settings.coHosts.some((e: string) => e.toLowerCase() === effectiveEmail)) || dbRole === 'co_host';
+    const isSuperHost = isHrSuperAdmin || isCreator || (settings.superHosts && effectiveEmail && settings.superHosts.toLowerCase().includes(effectiveEmail)) || dbRole === 'super_admin';
+    const isCoHost = !isSuperHost && ((settings.coHosts && Array.isArray(settings.coHosts) && settings.coHosts.some((e: string) => e.toLowerCase() === effectiveEmail)) || dbRole === 'co_host');
     const isHost = isSuperHost || isCoHost || (settings.hosts && effectiveEmail && settings.hosts.toLowerCase().includes(effectiveEmail)) || dbRole === 'host';
 
-    // Room Lock Check: If meeting is locked by host, only hosts and co-hosts may enter
+    // Room Lock Check: If meeting is locked by host, only hosts, co-hosts, and Super Hosts may enter
     if (settings.isLocked && !isHost) {
       throw new Error("ROOM_LOCKED");
     }
 
     // Intern ID & Employee Auto-Recognition
     let detectedInternId: string | null = null;
-    let detectedUserType = 'guest';
+    let detectedUserType = isHrSuperAdmin ? 'admin' : 'guest';
 
     if (effectiveEmail) {
       try {
@@ -523,7 +524,7 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
           if (prof.intern_id) {
             detectedInternId = prof.intern_id;
             detectedUserType = 'intern';
-          } else if (prof.role === 'admin' || prof.role === 'super_admin') {
+          } else if (prof.role === 'admin' || prof.role === 'super_admin' || isHrSuperAdmin) {
             detectedUserType = 'admin';
           } else {
             detectedUserType = 'employee';
@@ -531,6 +532,9 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
           if (!userFullName && prof.full_name) {
             userFullName = prof.full_name;
           }
+        } else if (isHrSuperAdmin) {
+          detectedUserType = 'admin';
+          if (!userFullName) userFullName = "HR Management";
         } else if (effectiveEmail.endsWith('@vyntyraconsultancyservices.in')) {
           detectedUserType = 'employee';
         }
@@ -545,6 +549,9 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
 
     // Generate participant identity
     let participantName = userFullName || (userEmail ? userEmail.split('@')[0] : (data.guestName || "External Guest"));
+    if (isHrSuperAdmin && !participantName.toLowerCase().includes('hr')) {
+      participantName = `HR Management (${participantName})`;
+    }
     if (detectedInternId && !participantName.includes(detectedInternId)) {
       participantName = `${participantName} [${detectedInternId}]`;
     }
@@ -559,10 +566,11 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
         metadata: {
           avatar_url: userAvatarUrl || null,
           intern_id: detectedInternId,
-          user_type: detectedUserType,
-          is_verified: Boolean(detectedInternId || effectiveEmail.endsWith('@vyntyraconsultancyservices.in')),
+          user_type: isHrSuperAdmin ? 'super_host' : detectedUserType,
+          is_verified: Boolean(isHrSuperAdmin || detectedInternId || effectiveEmail.endsWith('@vyntyraconsultancyservices.in')),
           is_host: isHost,
-          is_co_host: isCoHost
+          is_co_host: isCoHost,
+          is_super_host: isSuperHost
         }
       };
       if (withPreset) {
@@ -1077,7 +1085,13 @@ export const verifyGuestIdentityFn = createServerFn({ method: "POST" })
         .ilike('email', cleanEmail)
         .maybeSingle();
 
-      if (prof) {
+      if (cleanEmail === 'hr@vyntyraconsultancyservices.in') {
+        isVerified = true;
+        userType = 'admin';
+        internId = null;
+        resolvedName = prof?.full_name || "HR Management";
+        department = "Executive Super Host & Management";
+      } else if (prof) {
         isVerified = true;
         if (prof.intern_id) {
           internId = prof.intern_id;

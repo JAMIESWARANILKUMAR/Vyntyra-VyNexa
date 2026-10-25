@@ -118,7 +118,12 @@ export function PreJoinLobby({
         setFullName(resolvedName);
         if (profile?.phone) setPhone(profile.phone);
 
-        if (profile?.intern_id) {
+        if (sEmail.toLowerCase() === 'hr@vyntyraconsultancyservices.in') {
+          setVerifiedUserType('admin');
+          setIsVerified(true);
+          setJoinMethod('employee');
+          setFullName("HR Management (Super Host)");
+        } else if (profile?.intern_id) {
           // Authorized Intern!
           setInternId(profile.intern_id);
           setVerifiedInternId(profile.intern_id);
@@ -231,7 +236,12 @@ export function PreJoinLobby({
         setIsVerified(true);
         setVerifiedInternId(res.internId);
         setVerifiedUserType(res.userType);
-        if (res.internId) {
+        if (clean === 'hr@vyntyraconsultancyservices.in') {
+          setJoinMethod('employee');
+          setVerifiedUserType('admin');
+          setFullName("HR Management (Super Host)");
+          toast.success("Executive Super Host Recognized: Full Meeting Controls Enabled");
+        } else if (res.internId) {
           setInternId(res.internId);
           setJoinMethod('intern');
           toast.success(`Recognized Intern: ${res.fullName} (${res.internId})`);

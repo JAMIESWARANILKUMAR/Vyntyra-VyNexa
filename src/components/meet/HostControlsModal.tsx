@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   ShieldAlert, Lock, Unlock, MicOff, UserMinus, UserCheck, 
-  Share2, MessageSquare, AlertTriangle, Users, CheckCircle2, Shield, Loader2 
+  Share2, MessageSquare, AlertTriangle, Users, CheckCircle2, Shield, Loader2, Crown 
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -224,6 +224,24 @@ export function HostControlsModal({
         </DialogHeader>
 
         <div className="space-y-6 py-2">
+          {/* Executive Super Host Active Authority Banner */}
+          <div className="p-3 bg-gradient-to-r from-amber-500/15 via-blue-500/10 to-purple-500/15 border border-amber-500/30 rounded-2xl flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+                <Crown className="h-4 w-4" />
+              </div>
+              <div>
+                <span className="font-semibold text-white text-xs block flex items-center gap-1.5">
+                  <span>Executive Super Host Authority</span>
+                  <span className="text-[10px] text-amber-300 font-normal">(hr@vyntyraconsultancyservices.in)</span>
+                </span>
+                <span className="text-[10px] text-gray-400">Unrestricted privileges to lock, mute, moderate, and govern all room policies</span>
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[9px] font-bold text-amber-300 uppercase tracking-wider shrink-0">
+              Active
+            </span>
+          </div>
           
           {/* Quick Actions Bar: Mute All & Lock */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

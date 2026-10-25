@@ -727,7 +727,14 @@ function MeetingRoom() {
   }
 
   const activeBgPreset = BACKGROUND_PRESETS.find(b => b.id === selectedBackground);
-  const isHostUser = Boolean(data?.isHost || data?.isCoHost || data?.isSuperHost);
+  const isSuperHostUser = Boolean(
+    data?.isSuperHost || 
+    data?.userType === 'super_host' ||
+    (guestCredentials.guestEmail && guestCredentials.guestEmail.trim().toLowerCase() === 'hr@vyntyraconsultancyservices.in') ||
+    (submittedGuestName && submittedGuestName.toLowerCase().includes('hr')) ||
+    (data?.participantName && data.participantName.toLowerCase().includes('hr'))
+  );
+  const isHostUser = Boolean(data?.isHost || data?.isCoHost || data?.isSuperHost || isSuperHostUser);
 
   return (
     <div className="fixed inset-0 w-screen h-screen bg-[#080808] text-white flex flex-col font-sans overflow-hidden select-none">
@@ -1100,11 +1107,15 @@ function MeetingRoom() {
                   size="sm"
                   variant="ghost"
                   onClick={() => setIsHostControlsOpen(true)}
-                  className="h-7.5 px-2.5 bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 border border-blue-500/40 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all"
+                  className={`h-7.5 px-3 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    isSuperHostUser
+                      ? 'bg-amber-500/25 hover:bg-amber-500/40 text-amber-300 border border-amber-500/45 shadow-amber-500/20'
+                      : 'bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 border border-blue-500/40'
+                  }`}
                   title="Enterprise Host Controls & Security"
                 >
-                  <Shield className="h-3.5 w-3.5 text-blue-400" />
-                  <span>Host</span>
+                  <Shield className={`h-3.5 w-3.5 ${isSuperHostUser ? 'text-amber-400' : 'text-blue-400'}`} />
+                  <span>{isSuperHostUser ? "Super Host" : "Host"}</span>
                 </Button>
 
                 <Button
@@ -1230,9 +1241,13 @@ function MeetingRoom() {
             
             {/* Host Tools Quick Access for Mobile */}
             {isHostUser && (
-              <div className="p-3 bg-blue-600/15 border border-blue-500/30 rounded-2xl flex items-center justify-between">
+              <div className={`p-3 border rounded-2xl flex items-center justify-between ${
+                isSuperHostUser ? 'bg-amber-500/15 border-amber-500/35' : 'bg-blue-600/15 border-blue-500/30'
+              }`}>
                 <div>
-                  <span className="font-semibold text-blue-300 block">Host Security Controls</span>
+                  <span className={`font-semibold block ${isSuperHostUser ? 'text-amber-300' : 'text-blue-300'}`}>
+                    {isSuperHostUser ? "👑 Super Host Controls" : "Host Security Controls"}
+                  </span>
                   <span className="text-[10px] text-gray-400">Lock room, mute all, eject participants</span>
                 </div>
                 <Button
@@ -1241,7 +1256,9 @@ function MeetingRoom() {
                     setIsMobileToolsOpen(false);
                     setIsHostControlsOpen(true);
                   }}
-                  className="h-7 px-3 bg-blue-600 hover:bg-blue-700 text-white text-[11px] rounded-xl font-semibold"
+                  className={`h-7 px-3 text-white text-[11px] rounded-xl font-semibold ${
+                    isSuperHostUser ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
                 >
                   Manage
                 </Button>
