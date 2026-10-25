@@ -7,7 +7,8 @@ import RealtimeKitClient from '@cloudflare/realtimekit';
 import { RtkUiProvider, RtkMeeting } from '@cloudflare/realtimekit-react-ui';
 import { 
   Globe, Loader2, AlertCircle, Lock, Copy, RotateCw, CheckCircle2, 
-  ShieldCheck, Sparkles, Sliders, X, Shield, FileSpreadsheet, Users, UserX
+  ShieldCheck, Sparkles, Sliders, X, Shield, FileSpreadsheet, Users, UserX,
+  Briefcase, GraduationCap, KeyRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,7 +81,7 @@ function MeetingRoom() {
   const sessionStartTimeRef = useRef<number>(Date.now());
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['meet-token', roomId, submittedPassword, submittedGuestName, guestCredentials.guestEmail, accessCodeState],
+    queryKey: ['meet-token', roomId, submittedPassword, submittedGuestName, guestCredentials.guestEmail, guestCredentials.internId, accessCodeState],
     queryFn: async () => {
       let authToken: string | undefined = undefined;
       try {
@@ -94,6 +95,7 @@ function MeetingRoom() {
           roomId, 
           password: submittedPassword,
           accessCode: accessCodeState,
+          internId: guestCredentials.internId || undefined,
           guestName: submittedGuestName,
           guestEmail: guestCredentials.guestEmail,
           guestPhone: guestCredentials.guestPhone,
@@ -385,7 +387,7 @@ function MeetingRoom() {
       );
     }
 
-    if (errMsg.includes("AUTH_REQUIRED") || errMsg.includes("UNAUTHORIZED_INTERNAL")) {
+    if (errMsg.includes("AUTH_REQUIRED") || errMsg.includes("UNAUTHORIZED_INTERNAL") || errMsg.includes("MANDATORY_DETAILS_REQUIRED")) {
       const returnUrl = encodeURIComponent(`/meet/${roomId}`);
       return (
         <div className="min-h-screen bg-[#090b0e] flex flex-col items-center justify-center text-white p-6 relative">
@@ -395,23 +397,53 @@ function MeetingRoom() {
             </div>
             <h2 className="text-2xl font-bold mb-2 tracking-tight text-white">Corporate Sign-In Required</h2>
             <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-              This meeting is restricted to verified team members and interns. Please sign in to verify your identity and enter the room.
+              This meeting is restricted to verified team members and interns. Please sign in with your Vyntyra account or join using an authorized 8-digit access code.
             </p>
 
             <div className="space-y-3">
               <Button
                 onClick={() => window.location.href = `/auth/admin?redirect=${returnUrl}`}
-                className="w-full h-11 bg-[#0b5cff] hover:bg-[#094bdd] text-white font-medium rounded-xl"
+                className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl flex items-center justify-center gap-2"
               >
-                Sign In as Administrator / Employee
+                <Briefcase className="h-4 w-4" />
+                <span>Sign In as Administrator / Employee</span>
               </Button>
               <Button
                 onClick={() => window.location.href = `/auth/intern?redirect=${returnUrl}`}
                 variant="outline"
-                className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-gray-200 font-medium rounded-xl"
+                className="w-full h-11 border-purple-500/30 bg-purple-600/15 hover:bg-purple-600/25 text-purple-200 font-medium rounded-xl flex items-center justify-center gap-2"
               >
-                Sign In as Intern
+                <GraduationCap className="h-4 w-4 text-purple-300" />
+                <span>Sign In as Intern</span>
               </Button>
+
+              <div className="relative py-1 flex items-center justify-center">
+                <div className="border-t border-white/10 w-full" />
+                <span className="bg-[#12151c] px-3 text-[10px] text-gray-400 uppercase tracking-wider absolute">
+                  Or Guest Access Code
+                </span>
+              </div>
+
+              <div className="flex gap-2">
+                <Input
+                  value={accessCodeState || ''}
+                  onChange={(e) => setAccessCodeState(e.target.value.toUpperCase())}
+                  placeholder="Enter 8-digit code"
+                  className="h-10 bg-black/60 font-mono tracking-widest text-xs uppercase rounded-xl border-white/10"
+                />
+                <Button
+                  onClick={() => {
+                    if (!accessCodeState || accessCodeState.length < 6) {
+                      toast.error("Please enter a valid 8-digit access code.");
+                      return;
+                    }
+                    refetch();
+                  }}
+                  className="h-10 bg-[#0b5cff] hover:bg-[#094bdd] text-white text-xs px-4 rounded-xl font-medium"
+                >
+                  Join
+                </Button>
+              </div>
             </div>
 
             <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-center">
@@ -527,7 +559,11 @@ function MeetingRoom() {
       <PreJoinLobby
         title={data.title}
         roomId={roomId}
-        userName={submittedGuestName || ""}
+        userName={submittedGuestName || data?.participantName || ""}
+        initialUserType={data?.userType}
+        initialInternId={data?.internId || guestCredentials.internId}
+        initialEmail={guestCredentials.guestEmail}
+        isInitiallyVerified={data?.isVerified}
         defaultAccessCode={accessCodeState || data?.accessCode}
         onJoin={handleJoinFromLobby}
         selectedFilter={selectedFilter}

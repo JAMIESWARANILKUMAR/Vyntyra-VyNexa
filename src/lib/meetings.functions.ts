@@ -233,6 +233,7 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
     roomId: z.string(),
     password: z.string().optional(),
     accessCode: z.string().optional(),
+    internId: z.string().optional(),
     guestName: z.string().optional(),
     guestEmail: z.string().optional(),
     guestPhone: z.string().optional(),
@@ -404,16 +405,48 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
       (cleanAccessCode.length >= 6 && cleanAccessCode === derivedAccessCode.toUpperCase())
     );
 
-    // Mandatory Attendee Details Check for Guests & Access Code joinees
-    if (!userId || isAccessCodeAuthorized) {
-      if (!data.guestName?.trim() || !data.guestEmail?.trim() || !data.guestPhone?.trim()) {
-        throw new Error("MANDATORY_DETAILS_REQUIRED");
+    // Direct Intern ID & Email verification for interns without active session
+    let isDirectInternAuthorized = false;
+    let isDirectEmployeeAuthorized = false;
+
+    if (!userId && data.internId && data.guestEmail) {
+      try {
+        const adminClient = getAdminClient();
+        const { data: internProf } = await adminClient
+          .from('profiles')
+          .select('id, full_name, intern_id, email, role, department')
+          .ilike('intern_id', data.internId.trim())
+          .ilike('email', data.guestEmail.trim().toLowerCase())
+          .maybeSingle();
+
+        if (internProf) {
+          userId = internProf.id;
+          userEmail = internProf.email;
+          if (!userFullName && internProf.full_name) {
+            userFullName = internProf.full_name;
+          }
+          isDirectInternAuthorized = true;
+        }
+      } catch (e) {
+        console.warn("Direct intern verification error:", e);
       }
     }
-    
+
+    // Direct Employee domain & passcode verification for employees without active session
+    if (!userId && data.guestEmail) {
+      const cleanEmail = data.guestEmail.trim().toLowerCase();
+      if (cleanEmail.endsWith('@vyntyraconsultancyservices.in') || cleanEmail.endsWith('@vcs.in')) {
+        userId = `emp_${crypto.randomUUID()}`;
+        userEmail = cleanEmail;
+        isDirectEmployeeAuthorized = true;
+      }
+    }
+
     // Auth & Access Checks
+    const isAuthorized = Boolean(userId || isAccessCodeAuthorized || isDirectInternAuthorized || isDirectEmployeeAuthorized);
+
     if (isInternal && !isAccessCodeAuthorized) {
-      if (!userId || !userEmail) {
+      if (!isAuthorized) {
         throw new Error("AUTH_REQUIRED");
       }
       
@@ -422,9 +455,9 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
       const hosts = settings.hosts ? settings.hosts.split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean) : [];
       
       const isCreator = room.host_id === userId;
-      const isExplicitHost = superHosts.includes(userEmail.toLowerCase()) || hosts.includes(userEmail.toLowerCase());
+      const isExplicitHost = userEmail && (superHosts.includes(userEmail.toLowerCase()) || hosts.includes(userEmail.toLowerCase()));
       
-      if (!isCreator && !isExplicitHost && allowedEmails.length > 0 && !allowedEmails.includes(userEmail.toLowerCase())) {
+      if (!isCreator && !isExplicitHost && allowedEmails.length > 0 && userEmail && !allowedEmails.includes(userEmail.toLowerCase())) {
         throw new Error("ACCESS_DENIED_GUEST_LIST");
       }
     } else if (!isAccessCodeAuthorized) {

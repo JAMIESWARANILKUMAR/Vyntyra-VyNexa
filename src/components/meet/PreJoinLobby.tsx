@@ -3,11 +3,12 @@ import {
   Mic, MicOff, Video, VideoOff, Settings, Volume2, ShieldCheck, 
   Sparkles, Wand2, ArrowRight, UserCheck, CheckCircle2, Copy, 
   User, Mail, Phone, Building, Loader2, BadgeCheck, KeyRound, 
-  Briefcase, GraduationCap, Lock, AlertCircle
+  Briefcase, GraduationCap, Lock, AlertCircle, ExternalLink, Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { BACKGROUND_PRESETS, COLOR_FILTERS } from './VideoEnhancerModal';
 import { verifyGuestIdentityFn } from '@/lib/meetings.functions';
 
@@ -19,6 +20,10 @@ export interface PreJoinLobbyProps {
   userName: string;
   userAvatar?: string | null;
   defaultAccessCode?: string;
+  initialUserType?: 'admin' | 'employee' | 'intern' | 'guest' | null;
+  initialInternId?: string | null;
+  initialEmail?: string | null;
+  isInitiallyVerified?: boolean;
   onJoin: (options: { 
     isAudioMuted: boolean; 
     isVideoMuted: boolean;
@@ -44,6 +49,10 @@ export function PreJoinLobby({
   userName: initialUserName,
   userAvatar,
   defaultAccessCode = '',
+  initialUserType = null,
+  initialInternId = null,
+  initialEmail = null,
+  isInitiallyVerified = false,
   onJoin,
   selectedFilter,
   selectedBackground,
@@ -56,26 +65,89 @@ export function PreJoinLobby({
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
   // 3 Methods to Join
-  const [joinMethod, setJoinMethod] = useState<JoinMethod>('access_code');
+  const [joinMethod, setJoinMethod] = useState<JoinMethod>(
+    initialUserType === 'intern' 
+      ? 'intern' 
+      : (initialUserType === 'admin' || initialUserType === 'employee') 
+        ? 'employee' 
+        : 'access_code'
+  );
 
-  // Form Fields - All Mandatory based on method
+  // Form Fields
   const [fullName, setFullName] = useState(initialUserName || '');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail || '');
   const [phone, setPhone] = useState('');
   const [collegeOrg, setCollegeOrg] = useState('');
   const [accessCode, setAccessCode] = useState(defaultAccessCode || '');
-  const [internId, setInternId] = useState('');
+  const [internId, setInternId] = useState(initialInternId || '');
   const [employeePasscode, setEmployeePasscode] = useState('');
 
   // Auto-verification & Loading states
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  const [verifiedInternId, setVerifiedInternId] = useState<string | null>(null);
-  const [verifiedUserType, setVerifiedUserType] = useState<string | null>(null);
-  const [isVerified, setIsVerified] = useState(false);
+  const [verifiedInternId, setVerifiedInternId] = useState<string | null>(initialInternId || null);
+  const [verifiedUserType, setVerifiedUserType] = useState<string | null>(initialUserType || null);
+  const [isVerified, setIsVerified] = useState<boolean>(isInitiallyVerified);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // Auto-detect active corporate / intern Supabase session on mount (Same as previous!)
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadActiveSession() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!mounted || !session?.user) return;
+
+        const sUser = session.user;
+        const sEmail = sUser.email || '';
+        setEmail(sEmail);
+
+        // Fetch user profile from database
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, phone, intern_id, role, department')
+          .eq('id', sUser.id)
+          .maybeSingle();
+
+        if (!mounted) return;
+
+        const resolvedName = profile?.full_name || sUser.user_metadata?.full_name || sEmail.split('@')[0];
+        setFullName(resolvedName);
+        if (profile?.phone) setPhone(profile.phone);
+
+        if (profile?.intern_id) {
+          // Authorized Intern!
+          setInternId(profile.intern_id);
+          setVerifiedInternId(profile.intern_id);
+          setVerifiedUserType('intern');
+          setIsVerified(true);
+          setJoinMethod('intern');
+        } else if (
+          profile?.role === 'admin' || 
+          profile?.role === 'super_admin' || 
+          sEmail.endsWith('@vyntyraconsultancyservices.in') || 
+          sEmail.endsWith('@vcs.in')
+        ) {
+          // Authorized Employee / Administrator!
+          const roleType = (profile?.role === 'admin' || profile?.role === 'super_admin') ? 'admin' : 'employee';
+          setVerifiedUserType(roleType);
+          setIsVerified(true);
+          setJoinMethod('employee');
+        }
+      } catch (err) {
+        console.warn("Session check in lobby:", err);
+      }
+    }
+
+    loadActiveSession();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Initialize local device preview for Green Room
   useEffect(() => {
@@ -159,16 +231,16 @@ export function PreJoinLobby({
         setIsVerified(true);
         setVerifiedInternId(res.internId);
         setVerifiedUserType(res.userType);
-        if (res.internId && !internId) {
+        if (res.internId) {
           setInternId(res.internId);
+          setJoinMethod('intern');
+          toast.success(`Recognized Intern: ${res.fullName} (${res.internId})`);
+        } else {
+          setJoinMethod('employee');
+          toast.success(`Recognized Team Member: ${res.fullName}`);
         }
         if (res.fullName && (!fullName || fullName === 'Attendee')) {
           setFullName(res.fullName);
-        }
-        if (res.internId) {
-          toast.success(`Recognized as Intern: ${res.fullName} (${res.internId})`);
-        } else {
-          toast.success(`Recognized as verified Vyntyra team member!`);
         }
       } else {
         setIsVerified(false);
@@ -200,7 +272,7 @@ export function PreJoinLobby({
     setIsVideoMuted(!isVideoMuted);
   };
 
-  // Strictly enforce that all required details are filled out
+  // Strictly enforce required details based on auth state
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
@@ -212,7 +284,8 @@ export function PreJoinLobby({
       errors.email = "Valid official email address is mandatory.";
     }
 
-    if (!phone.trim() || phone.replace(/\D/g, '').length < 8) {
+    // Phone is mandatory for guests, recommended for verified
+    if (!isVerified && (!phone.trim() || phone.replace(/\D/g, '').length < 8)) {
       errors.phone = "Valid contact phone number is mandatory.";
     }
 
@@ -226,16 +299,16 @@ export function PreJoinLobby({
       }
     }
 
-    if (joinMethod === 'employee') {
-      if (!email.toLowerCase().includes('@vyntyraconsultancyservices.in') && !email.toLowerCase().includes('@vcs.in') && !isVerified) {
+    if (joinMethod === 'employee' && !isVerified) {
+      if (!email.toLowerCase().includes('@vyntyraconsultancyservices.in') && !email.toLowerCase().includes('@vcs.in')) {
         errors.email = "Employee email must be registered under company domain.";
       }
       if (!employeePasscode.trim()) {
-        errors.employeePasscode = "Employee security passcode is mandatory.";
+        errors.employeePasscode = "Employee security passcode is mandatory for unauthenticated entry.";
       }
     }
 
-    if (joinMethod === 'intern') {
+    if (joinMethod === 'intern' && !isVerified) {
       const targetInternId = internId.trim() || verifiedInternId;
       if (!targetInternId) {
         errors.internId = "Assigned Intern ID is mandatory.";
@@ -262,16 +335,17 @@ export function PreJoinLobby({
       joinMethod,
       guestName: fullName.trim(),
       guestEmail: email.trim().toLowerCase(),
-      guestPhone: phone.trim(),
-      guestOrg: collegeOrg.trim() || undefined,
+      guestPhone: phone.trim() || '+910000000000',
+      guestOrg: collegeOrg.trim() || (isVerified ? "VCS Corporate Workspace" : undefined),
       accessCode: accessCode.trim().toUpperCase() || undefined,
-      internId: internId.trim() || verifiedInternId,
+      internId: internId.trim() || verifiedInternId || undefined,
       isVerified,
       password: employeePasscode.trim() || undefined,
     });
   };
 
   const currentColorFilter = COLOR_FILTERS.find(f => f.id === selectedFilter)?.filterCss || 'none';
+  const returnUrl = typeof window !== 'undefined' ? encodeURIComponent(window.location.pathname) : '';
 
   return (
     <div className="fixed inset-0 w-screen h-screen bg-[#090b0e] text-white flex items-center justify-center p-3 sm:p-6 overflow-y-auto font-sans select-none">
@@ -347,7 +421,13 @@ export function PreJoinLobby({
             {isVerified && (
               <div className="absolute top-4 right-4 bg-emerald-600/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-semibold text-white flex items-center gap-1.5 border border-emerald-400/40 shadow-lg">
                 <BadgeCheck className="h-3.5 w-3.5 text-emerald-300" />
-                <span>{verifiedUserType === 'intern' ? `Verified Intern (${verifiedInternId})` : 'Verified Team Member'}</span>
+                <span>
+                  {verifiedUserType === 'intern' 
+                    ? `Verified Intern (${verifiedInternId || 'VCS'})` 
+                    : verifiedUserType === 'admin' 
+                      ? 'Administrator' 
+                      : 'Verified Employee'}
+                </span>
               </div>
             )}
           </div>
@@ -373,8 +453,8 @@ export function PreJoinLobby({
           </div>
         </div>
 
-        {/* Right: 3 Methods to Join & Mandatory Fields Form */}
-        <div className="w-full lg:w-[420px] flex flex-col justify-between h-full py-1">
+        {/* Right: 3 Methods to Join & Authorization Selector */}
+        <div className="w-full lg:w-[430px] flex flex-col justify-between h-full py-1">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <img src="/icon-512.png" alt="Vyntyra Logo" className="h-6 w-6 object-contain rounded-md" />
@@ -395,17 +475,17 @@ export function PreJoinLobby({
               <button
                 type="button"
                 onClick={() => {
-                  setJoinMethod('access_code');
+                  setJoinMethod('employee');
                   setValidationErrors({});
                 }}
                 className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-[11px] font-semibold transition-all ${
-                  joinMethod === 'access_code'
-                    ? 'bg-[#0b5cff] text-white shadow-md'
+                  joinMethod === 'employee'
+                    ? 'bg-indigo-600 text-white shadow-md'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <KeyRound className="h-3.5 w-3.5 mb-1" />
-                <span>Access Code</span>
+                <Briefcase className="h-3.5 w-3.5 mb-1" />
+                <span>Employee/Admin</span>
               </button>
 
               <button
@@ -427,31 +507,154 @@ export function PreJoinLobby({
               <button
                 type="button"
                 onClick={() => {
-                  setJoinMethod('employee');
+                  setJoinMethod('access_code');
                   setValidationErrors({});
                 }}
                 className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-[11px] font-semibold transition-all ${
-                  joinMethod === 'employee'
-                    ? 'bg-indigo-600 text-white shadow-md'
+                  joinMethod === 'access_code'
+                    ? 'bg-[#0b5cff] text-white shadow-md'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <Briefcase className="h-3.5 w-3.5 mb-1" />
-                <span>Employee/Admin</span>
+                <KeyRound className="h-3.5 w-3.5 mb-1" />
+                <span>Access Code</span>
               </button>
             </div>
 
-            {/* Mandatory Entry Form Card */}
-            <div className="bg-black/40 border border-white/10 rounded-2xl p-3.5 mb-3.5 space-y-2.5 max-h-[360px] overflow-y-auto">
+            {/* Entry Form Card */}
+            <div className="bg-black/40 border border-white/10 rounded-2xl p-3.5 mb-3.5 space-y-3 max-h-[380px] overflow-y-auto">
               
-              <div className="flex items-center justify-between pb-1 border-b border-white/5">
-                <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
-                  Mandatory Attendee Credentials
-                </span>
-                <span className="text-[10px] text-amber-400 font-medium">* All fields required</span>
-              </div>
+              {/* Method 1: Employee / Administrator */}
+              {joinMethod === 'employee' && (
+                <div className="space-y-3">
+                  {isVerified && (verifiedUserType === 'employee' || verifiedUserType === 'admin') ? (
+                    <div className="p-3 bg-indigo-500/15 border border-indigo-500/30 rounded-xl space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-indigo-400" />
+                        <span className="text-xs font-bold text-indigo-200">
+                          {verifiedUserType === 'admin' ? 'Authorized Administrator' : 'Authorized Employee'}
+                        </span>
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-medium ml-auto">
+                          Verified Session
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-300">
+                        Signed in as <strong className="text-white">{fullName}</strong> ({email})
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* One-Click Corporate Sign In Button */}
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          window.location.href = `/auth/admin?redirect=${returnUrl}`;
+                        }}
+                        className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg"
+                      >
+                        <Shield className="h-3.5 w-3.5" />
+                        <span>Sign In with Corporate Account</span>
+                        <ExternalLink className="h-3 w-3 ml-auto opacity-70" />
+                      </Button>
 
-              {/* Method 1: 8-Digit Access Code Field */}
+                      <div className="relative py-0.5 flex items-center justify-center">
+                        <div className="border-t border-white/10 w-full" />
+                        <span className="bg-[#11141c] px-2 text-[10px] text-gray-400 uppercase tracking-wider absolute">
+                          Or Enter Employee Passcode
+                        </span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[11px] text-indigo-300 font-semibold flex items-center gap-1">
+                          <Lock className="h-3 w-3 text-indigo-400" />
+                          <span>Employee Passcode</span>
+                          <span className="text-rose-400">*</span>
+                        </label>
+                        <Input
+                          type="password"
+                          value={employeePasscode}
+                          onChange={(e) => setEmployeePasscode(e.target.value)}
+                          placeholder="Enter meeting or employee passcode"
+                          className={`h-9 bg-black/60 text-xs rounded-xl ${
+                            validationErrors.employeePasscode ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
+                          }`}
+                        />
+                        {validationErrors.employeePasscode && (
+                          <span className="text-[10px] text-rose-400 block">{validationErrors.employeePasscode}</span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Method 2: Intern */}
+              {joinMethod === 'intern' && (
+                <div className="space-y-3">
+                  {isVerified && verifiedUserType === 'intern' ? (
+                    <div className="p-3 bg-purple-500/15 border border-purple-500/30 rounded-xl space-y-1">
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-purple-400" />
+                        <span className="text-xs font-bold text-purple-200">
+                          Authorized VCS Intern
+                        </span>
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-medium ml-auto">
+                          Verified {verifiedInternId}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-300">
+                        Signed in as <strong className="text-white">{fullName}</strong> ({email})
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* One-Click Intern Sign In Button */}
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          window.location.href = `/auth/intern?redirect=${returnUrl}`;
+                        }}
+                        className="w-full h-10 bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg"
+                      >
+                        <GraduationCap className="h-3.5 w-3.5" />
+                        <span>Sign In with Intern Account</span>
+                        <ExternalLink className="h-3 w-3 ml-auto opacity-70" />
+                      </Button>
+
+                      <div className="relative py-0.5 flex items-center justify-center">
+                        <div className="border-t border-white/10 w-full" />
+                        <span className="bg-[#11141c] px-2 text-[10px] text-gray-400 uppercase tracking-wider absolute">
+                          Or Enter Intern ID
+                        </span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] text-purple-300 font-semibold flex items-center gap-1">
+                            <GraduationCap className="h-3 w-3 text-purple-400" />
+                            <span>Assigned Intern ID</span>
+                            <span className="text-rose-400">*</span>
+                          </label>
+                          <span className="text-[10px] font-mono text-purple-400">VCS-INT-XXXX</span>
+                        </div>
+                        <Input
+                          value={internId}
+                          onChange={(e) => setInternId(e.target.value.toUpperCase())}
+                          placeholder="e.g. VCS-INT-1042"
+                          className={`h-9 bg-black/60 font-mono text-xs rounded-xl ${
+                            validationErrors.internId ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
+                          }`}
+                        />
+                        {validationErrors.internId && (
+                          <span className="text-[10px] text-rose-400 block">{validationErrors.internId}</span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Method 3: 8-Digit Access Code */}
               {joinMethod === 'access_code' && (
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
@@ -469,7 +672,6 @@ export function PreJoinLobby({
                     className={`h-9 bg-black/60 font-mono tracking-widest uppercase text-xs rounded-xl ${
                       validationErrors.accessCode ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
                     }`}
-                    required
                   />
                   {validationErrors.accessCode && (
                     <span className="text-[10px] text-rose-400 block">{validationErrors.accessCode}</span>
@@ -477,162 +679,98 @@ export function PreJoinLobby({
                 </div>
               )}
 
-              {/* Method 2: Intern ID Field */}
-              {joinMethod === 'intern' && (
+              {/* Common Details (Full Name, Email, Phone, College) */}
+              <div className="space-y-2 pt-1 border-t border-white/5">
+                
+                {/* Full Name */}
+                <div className="space-y-1">
+                  <label className="text-[11px] text-gray-300 font-medium flex items-center gap-1">
+                    <User className="h-3 w-3 text-blue-400" />
+                    <span>Full Name</span>
+                    <span className="text-rose-400">*</span>
+                  </label>
+                  <Input
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="e.g. Rahul Sharma"
+                    className={`h-9 bg-black/60 text-xs rounded-xl ${
+                      validationErrors.fullName ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
+                    }`}
+                  />
+                  {validationErrors.fullName && (
+                    <span className="text-[10px] text-rose-400 block">{validationErrors.fullName}</span>
+                  )}
+                </div>
+
+                {/* Email */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] text-purple-300 font-semibold flex items-center gap-1">
-                      <GraduationCap className="h-3 w-3 text-purple-400" />
-                      <span>Assigned Intern ID</span>
+                    <label className="text-[11px] text-gray-300 font-medium flex items-center gap-1">
+                      <Mail className="h-3 w-3 text-blue-400" />
+                      <span>{joinMethod === 'employee' ? 'Work Email' : 'Official Email'}</span>
                       <span className="text-rose-400">*</span>
                     </label>
-                    <span className="text-[10px] font-mono text-purple-400">VCS-INT-XXXX</span>
+                    {isCheckingEmail && (
+                      <span className="text-[10px] text-blue-400 flex items-center gap-1">
+                        <Loader2 className="h-2.5 w-2.5 animate-spin" /> Verifying...
+                      </span>
+                    )}
                   </div>
                   <Input
-                    value={internId}
-                    onChange={(e) => setInternId(e.target.value.toUpperCase())}
-                    placeholder="e.g. VCS-INT-1042"
-                    className={`h-9 bg-black/60 font-mono text-xs rounded-xl ${
-                      validationErrors.internId ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
-                    }`}
-                    required
-                  />
-                  {validationErrors.internId && (
-                    <span className="text-[10px] text-rose-400 block">{validationErrors.internId}</span>
-                  )}
-                </div>
-              )}
-
-              {/* Method 3: Employee Passcode Field */}
-              {joinMethod === 'employee' && (
-                <div className="space-y-1">
-                  <label className="text-[11px] text-indigo-300 font-semibold flex items-center gap-1">
-                    <Lock className="h-3 w-3 text-indigo-400" />
-                    <span>Employee Security Passcode</span>
-                    <span className="text-rose-400">*</span>
-                  </label>
-                  <Input
-                    type="password"
-                    value={employeePasscode}
-                    onChange={(e) => setEmployeePasscode(e.target.value)}
-                    placeholder="Enter employee authentication passcode"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onBlur={(e) => handleCheckEmail(e.target.value)}
+                    placeholder={
+                      joinMethod === 'employee'
+                        ? "name@vyntyraconsultancyservices.in"
+                        : "name@email.com (Auto-detects Intern ID)"
+                    }
                     className={`h-9 bg-black/60 text-xs rounded-xl ${
-                      validationErrors.employeePasscode ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
+                      validationErrors.email ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
                     }`}
-                    required
                   />
-                  {validationErrors.employeePasscode && (
-                    <span className="text-[10px] text-rose-400 block">{validationErrors.employeePasscode}</span>
+                  {validationErrors.email && (
+                    <span className="text-[10px] text-rose-400 block">{validationErrors.email}</span>
                   )}
                 </div>
-              )}
 
-              {/* Full Name (Mandatory for all 3 methods) */}
-              <div className="space-y-1">
-                <label className="text-[11px] text-gray-300 font-medium flex items-center gap-1">
-                  <User className="h-3 w-3 text-blue-400" />
-                  <span>Full Name</span>
-                  <span className="text-rose-400">*</span>
-                </label>
-                <Input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Rahul Sharma"
-                  className={`h-9 bg-black/60 text-xs rounded-xl ${
-                    validationErrors.fullName ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
-                  }`}
-                  required
-                />
-                {validationErrors.fullName && (
-                  <span className="text-[10px] text-rose-400 block">{validationErrors.fullName}</span>
-                )}
-              </div>
+                {/* Phone & College/Org */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
+                      <Phone className="h-2.5 w-2.5" />
+                      <span>Phone No.</span>
+                      {!isVerified && <span className="text-rose-400">*</span>}
+                    </label>
+                    <Input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+91..."
+                      className={`h-8 bg-black/60 text-[11px] rounded-xl ${
+                        validationErrors.phone ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
+                      }`}
+                    />
+                  </div>
 
-              {/* Official Email (Mandatory for all 3 methods) */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] text-gray-300 font-medium flex items-center gap-1">
-                    <Mail className="h-3 w-3 text-blue-400" />
-                    <span>{joinMethod === 'employee' ? 'Work Email' : 'Official Email'}</span>
-                    <span className="text-rose-400">*</span>
-                  </label>
-                  {isCheckingEmail && (
-                    <span className="text-[10px] text-blue-400 flex items-center gap-1">
-                      <Loader2 className="h-2.5 w-2.5 animate-spin" /> Verifying...
-                    </span>
-                  )}
-                </div>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onBlur={(e) => handleCheckEmail(e.target.value)}
-                  placeholder={
-                    joinMethod === 'employee'
-                      ? "name@vyntyraconsultancyservices.in"
-                      : "name@email.com (Auto-detects Intern ID)"
-                  }
-                  className={`h-9 bg-black/60 text-xs rounded-xl ${
-                    validationErrors.email ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
-                  }`}
-                  required
-                />
-                {validationErrors.email && (
-                  <span className="text-[10px] text-rose-400 block">{validationErrors.email}</span>
-                )}
-              </div>
-
-              {/* Phone & College/Org (Mandatory) */}
-              <div className="grid grid-cols-2 gap-2 pt-0.5">
-                <div className="space-y-1">
-                  <label className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
-                    <Phone className="h-2.5 w-2.5" />
-                    <span>Phone No.</span>
-                    <span className="text-rose-400">*</span>
-                  </label>
-                  <Input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+91..."
-                    className={`h-8 bg-black/60 text-[11px] rounded-xl ${
-                      validationErrors.phone ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
-                    }`}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
-                    <Building className="h-2.5 w-2.5" />
-                    <span>College/Org</span>
-                    {joinMethod === 'access_code' && <span className="text-rose-400">*</span>}
-                  </label>
-                  <Input
-                    value={collegeOrg}
-                    onChange={(e) => setCollegeOrg(e.target.value)}
-                    placeholder="University/Co."
-                    className={`h-8 bg-black/60 text-[11px] rounded-xl ${
-                      validationErrors.collegeOrg ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
-                    }`}
-                    required={joinMethod === 'access_code'}
-                  />
-                </div>
-              </div>
-
-              {/* Verified Intern Banner */}
-              {isVerified && (
-                <div className="p-2.5 bg-emerald-500/15 border border-emerald-500/40 rounded-xl flex items-center gap-2 text-xs text-emerald-300 animate-in fade-in duration-200">
-                  <BadgeCheck className="h-5 w-5 text-emerald-400 shrink-0" />
-                  <div>
-                    <span className="font-bold block">
-                      {verifiedUserType === 'intern' ? 'Verified Intern Account' : 'Verified Company Member'}
-                    </span>
-                    <span className="text-[11px] font-mono text-emerald-200">
-                      {verifiedInternId ? `Assigned ID: ${verifiedInternId}` : 'VCS Official Workspace'}
-                    </span>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
+                      <Building className="h-2.5 w-2.5" />
+                      <span>College/Org</span>
+                      {joinMethod === 'access_code' && <span className="text-rose-400">*</span>}
+                    </label>
+                    <Input
+                      value={collegeOrg}
+                      onChange={(e) => setCollegeOrg(e.target.value)}
+                      placeholder="University/Co."
+                      className={`h-8 bg-black/60 text-[11px] rounded-xl ${
+                        validationErrors.collegeOrg ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
+                      }`}
+                    />
                   </div>
                 </div>
-              )}
+
+              </div>
 
             </div>
 
