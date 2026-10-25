@@ -832,6 +832,31 @@ function MeetingRoom() {
   );
   const isHostUser = Boolean(data?.isHost || data?.isCoHost || data?.isSuperHost || isSuperHostUser || meeting?.self?.isHost || meeting?.self?.permissions?.canManageRoom);
 
+  // Strict check: only HR or Employee logins have attendance marking authorization
+  const isEmployeeOrHrUser = Boolean(
+    isSuperHostUser ||
+    data?.userType === 'employee' ||
+    data?.userType === 'admin' ||
+    data?.userType === 'super_host' ||
+    (guestCredentials.guestEmail && (
+      guestCredentials.guestEmail.trim().toLowerCase() === 'hr@vyntyraconsultancyservices.in' ||
+      guestCredentials.guestEmail.trim().toLowerCase().endsWith('@vyntyraconsultancyservices.in') ||
+      guestCredentials.guestEmail.trim().toLowerCase().endsWith('@vcs.in')
+    )) ||
+    (data?.email && (
+      data.email.trim().toLowerCase() === 'hr@vyntyraconsultancyservices.in' ||
+      data.email.trim().toLowerCase().endsWith('@vyntyraconsultancyservices.in') ||
+      data.email.trim().toLowerCase().endsWith('@vcs.in')
+    )) ||
+    (meeting?.self?.email && (
+      meeting.self.email.trim().toLowerCase() === 'hr@vyntyraconsultancyservices.in' ||
+      meeting.self.email.trim().toLowerCase().endsWith('@vyntyraconsultancyservices.in') ||
+      meeting.self.email.trim().toLowerCase().endsWith('@vcs.in') ||
+      meeting.self.email.toLowerCase().includes('hr')
+    )) ||
+    (meeting?.self?.name && meeting.self.name.toLowerCase().includes('hr'))
+  );
+
   const activeBgUrl = activeBgPreset?.imageUrl || activeBgPreset?.preview;
 
   return (
@@ -1278,10 +1303,10 @@ function MeetingRoom() {
               variant="ghost"
               onClick={() => setIsAttendanceOpen(true)}
               className="h-7.5 px-3 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/35 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
-              title={isHostUser ? "View Complete Attendance Roster & Export CSV" : "Mark & Verify Your Meeting Attendance"}
+              title={isEmployeeOrHrUser ? "Attendance Management & Roster (HR / Employee Portal)" : "View Verified Attendance Status"}
             >
               <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-400" />
-              <span>{isHostUser ? "Attendance Roster" : "Mark Attendance"}</span>
+              <span>{isEmployeeOrHrUser ? "Attendance Roster" : "Attendance Status"}</span>
             </Button>
 
             {/* Group 3: Host Privilege Controls */}
@@ -1410,7 +1435,7 @@ function MeetingRoom() {
         onClose={() => setIsAttendanceOpen(false)}
         roomId={roomId}
         meetingTitle={data?.title || "Live Meeting"}
-        isHost={isHostUser}
+        isHost={isEmployeeOrHrUser}
         currentUser={{
           name: meeting?.self?.name || submittedGuestName || data?.participantName || "Participant",
           email: guestCredentials.guestEmail || data?.email,
@@ -1486,10 +1511,10 @@ function MeetingRoom() {
             <div className="p-3 bg-emerald-600/15 border border-emerald-500/30 rounded-2xl flex items-center justify-between">
               <div>
                 <span className="font-semibold text-emerald-300 block">
-                  {isHostUser ? "Smart Attendance Roster" : "Mark My Attendance"}
+                  {isEmployeeOrHrUser ? "Smart Attendance Roster" : "Meeting Attendance Status"}
                 </span>
                 <span className="text-[10px] text-gray-400">
-                  {isHostUser ? "Track minutes, intern IDs, export .csv" : "Punch-in and confirm your meeting presence"}
+                  {isEmployeeOrHrUser ? "Manage intern statuses & export .csv roster" : "View logged active minutes & HR verification"}
                 </span>
               </div>
               <Button
@@ -1500,7 +1525,7 @@ function MeetingRoom() {
                 }}
                 className="h-7 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] rounded-xl font-semibold"
               >
-                {isHostUser ? "View" : "Punch In"}
+                {isEmployeeOrHrUser ? "Manage" : "Check Status"}
               </Button>
             </div>
 
