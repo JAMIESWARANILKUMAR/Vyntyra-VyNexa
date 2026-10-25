@@ -25,6 +25,8 @@ import { FloatingReactions } from '@/components/meet/FloatingReactions';
 import { HostControlsModal } from '@/components/meet/HostControlsModal';
 import { MeetingAttendanceModal } from '@/components/meet/MeetingAttendanceModal';
 import { AudioEnhancerModal, AudioMode } from '@/components/meet/AudioEnhancerModal';
+import { AppleHelloGreeting } from '@/components/meet/AppleHelloGreeting';
+import { PostMeetingSummary } from '@/components/meet/PostMeetingSummary';
 
 export const Route = createFileRoute('/meet/$roomId')({
   component: MeetingRoom
@@ -37,6 +39,10 @@ function MeetingRoom() {
   
   // Meeting Life-cycle & Lobby State
   const [hasJoinedMeeting, setHasJoinedMeeting] = useState(false);
+  const [showAppleGreeting, setShowAppleGreeting] = useState(false);
+  const [pendingJoinOptions, setPendingJoinOptions] = useState<any>(null);
+  const [hasLeftMeeting, setHasLeftMeeting] = useState(false);
+  const [sessionDurationMinutes, setSessionDurationMinutes] = useState(1);
   const [meeting, setMeeting] = useState<any>(null);
   const [initError, setInitError] = useState<string | null>(null);
   const [joinTimeout, setJoinTimeout] = useState(false);
@@ -57,7 +63,8 @@ function MeetingRoom() {
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
   const [roomSettings, setRoomSettings] = useState<any>({});
 
-  // Auth & Guest Gatekeeper Credentials
+  // Auth, Access Code & Guest Gatekeeper Credentials
+  const [accessCodeState, setAccessCodeState] = useState<string | undefined>(undefined);
   const [submittedPassword, setSubmittedPassword] = useState<string | undefined>(undefined);
   const [submittedGuestName, setSubmittedGuestName] = useState<string | undefined>(undefined);
   const [guestCredentials, setGuestCredentials] = useState<{
@@ -73,7 +80,7 @@ function MeetingRoom() {
   const sessionStartTimeRef = useRef<number>(Date.now());
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['meet-token', roomId, submittedPassword, submittedGuestName, guestCredentials.guestEmail],
+    queryKey: ['meet-token', roomId, submittedPassword, submittedGuestName, guestCredentials.guestEmail, accessCodeState],
     queryFn: async () => {
       let authToken: string | undefined = undefined;
       try {
@@ -85,7 +92,8 @@ function MeetingRoom() {
       return await fetchToken({ 
         data: { 
           roomId, 
-          password: submittedPassword, 
+          password: submittedPassword,
+          accessCode: accessCodeState,
           guestName: submittedGuestName,
           guestEmail: guestCredentials.guestEmail,
           guestPhone: guestCredentials.guestPhone,
@@ -116,19 +124,28 @@ function MeetingRoom() {
     }
   }, [isLoading, data, hasJoinedMeeting, meeting, initError]);
 
-  // Handle joining from Pre-Join Lobby
+  // Handle joining from Pre-Join Lobby - triggers iconic Apple "hello" animation!
   const handleJoinFromLobby = (options: { 
     isAudioMuted: boolean; 
     isVideoMuted: boolean;
-    guestName?: string;
-    guestEmail?: string;
-    guestPhone?: string;
+    joinMethod?: string;
+    guestName: string;
+    guestEmail: string;
+    guestPhone: string;
     guestOrg?: string;
+    accessCode?: string;
     internId?: string | null;
     isVerified?: boolean;
+    password?: string;
   }) => {
     if (options.guestName) {
       setSubmittedGuestName(options.guestName);
+    }
+    if (options.password) {
+      setSubmittedPassword(options.password);
+    }
+    if (options.accessCode) {
+      setAccessCodeState(options.accessCode);
     }
     setGuestCredentials({
       guestEmail: options.guestEmail,
@@ -138,10 +155,21 @@ function MeetingRoom() {
       isVerified: options.isVerified,
     });
 
+    setPendingJoinOptions(options);
+    // Trigger Apple "hello" text animation before entering conference!
+    setShowAppleGreeting(true);
+  };
+
+  // Called when Apple "hello" animation completes
+  const handleAppleGreetingComplete = () => {
+    setShowAppleGreeting(false);
+    const opts = pendingJoinOptions;
+    if (!opts) return;
+
     if (!data?.token) {
       refetch().then(res => {
         if (res.data?.token) {
-          connectToMeeting(res.data.token, options);
+          connectToMeeting(res.data.token, opts);
         } else {
           toast.error("Connecting credentials... please tap Join again.");
         }
@@ -149,7 +177,7 @@ function MeetingRoom() {
       return;
     }
 
-    connectToMeeting(data.token, options);
+    connectToMeeting(data.token, opts);
   };
 
   const connectToMeeting = (token: string, options: any) => {
@@ -262,12 +290,14 @@ function MeetingRoom() {
     };
   }, [meeting, hasJoinedMeeting, roomId, data]);
 
-  // Listen for room exit to smoothly return to portal
+  // Listen for room exit to smoothly display stylish post-meeting animation
   useEffect(() => {
     if (!meeting?.self) return;
 
     const handleRoomLeft = () => {
-      window.location.href = '/';
+      const duration = Math.max(1, Math.round((Date.now() - sessionStartTimeRef.current) / 60000));
+      setSessionDurationMinutes(duration);
+      setHasLeftMeeting(true);
     };
 
     try {
@@ -458,6 +488,39 @@ function MeetingRoom() {
     );
   }
 
+  // Post-Meeting Thanks for Joining Screen
+  if (hasLeftMeeting) {
+    return (
+      <PostMeetingSummary
+        joineeName={data?.participantName || submittedGuestName || "Attendee"}
+        meetingTitle={data?.title || "Live Conference Session"}
+        roomId={roomId}
+        durationMinutes={sessionDurationMinutes}
+        internId={data?.internId || guestCredentials.internId}
+        audioMode={audioMode === 'dolby' ? 'Dolby Audio (Spatial 3D)' : audioMode === 'stereo' ? 'Studio Stereo' : 'Crisp Mono'}
+        onRejoin={() => {
+          setHasLeftMeeting(false);
+          setHasJoinedMeeting(false);
+          refetch();
+        }}
+        onReturnHome={() => {
+          window.location.href = '/';
+        }}
+      />
+    );
+  }
+
+  // Apple "hello" Typography & Multilingual Welcome Animation
+  if (showAppleGreeting) {
+    return (
+      <AppleHelloGreeting
+        attendeeName={submittedGuestName || data?.participantName || "Attendee"}
+        internId={guestCredentials.internId || data?.internId}
+        onComplete={handleAppleGreetingComplete}
+      />
+    );
+  }
+
   // Pre-Join Green Room / Lobby Preview
   if (!hasJoinedMeeting) {
     return (
@@ -465,6 +528,7 @@ function MeetingRoom() {
         title={data.title}
         roomId={roomId}
         userName={submittedGuestName || ""}
+        defaultAccessCode={accessCodeState || data?.accessCode}
         onJoin={handleJoinFromLobby}
         selectedFilter={selectedFilter}
         selectedBackground={selectedBackground}

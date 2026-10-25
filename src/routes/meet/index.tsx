@@ -196,7 +196,7 @@ function MeetIndexComponent() {
                 <Input
                   value={meetingCode}
                   onChange={(e) => setMeetingCode(e.target.value)}
-                  placeholder="Enter a code or link"
+                  placeholder="Enter 8-digit access code (e.g. VYN89201) or link"
                   className="h-12 pl-10 pr-3 bg-white/5 border-white/10 focus:border-[#0b5cff] text-white text-sm rounded-xl font-mono placeholder:font-sans placeholder:text-gray-500"
                 />
               </div>

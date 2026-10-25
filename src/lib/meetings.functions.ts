@@ -53,6 +53,46 @@ export const generateShortRoomId = () => {
   return `vyn-${part1}-${part2}`;
 };
 
+// 8-character Vyntyra Branding Access Code generator (alphabets from VYNTYRA + numbers)
+export const generateVyntyraAccessCode = (): string => {
+  const brandLetters = "VYNTYRA";
+  const numbers = "23456789";
+  const chars: string[] = [];
+  // 4 letters from VYNTYRA and 4 numbers for balanced 8-character code
+  for (let i = 0; i < 4; i++) {
+    chars.push(brandLetters[Math.floor(Math.random() * brandLetters.length)]);
+    chars.push(numbers[Math.floor(Math.random() * numbers.length)]);
+  }
+  // Shuffle Fisher-Yates
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join("");
+};
+
+// Deterministically derive or return an 8-char Vyntyra access code for ANY room
+export const getOrDeriveAccessCode = (roomId: string, existingCode?: string): string => {
+  if (existingCode && existingCode.trim().length >= 6) {
+    return existingCode.trim().toUpperCase();
+  }
+  const brandLetters = "VYNTYRA";
+  const numbers = "23456789";
+  let hash = 0;
+  for (let i = 0; i < roomId.length; i++) {
+    hash = (hash << 5) - hash + roomId.charCodeAt(i);
+    hash |= 0;
+  }
+  const posHash = Math.abs(hash);
+  let code = "";
+  for (let i = 0; i < 8; i++) {
+    const pool = (i % 2 === 0) ? brandLetters : numbers;
+    const index = (posHash + i * 37) % pool.length;
+    code += pool[index];
+  }
+  return code;
+};
+
 // Creates a new meeting room
 export const createMeetingRoomFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -66,6 +106,7 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
       recordingEnabled: z.boolean().default(false),
       type: z.enum(['internal', 'external']).default('internal'),
       password: z.string().optional(),
+      access_code: z.string().optional(),
       allowedEmails: z.string().optional(), // Comma separated
       superHosts: z.string().optional(), // Comma separated
       hosts: z.string().optional(), // Comma separated
@@ -82,6 +123,10 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
     let roomId = (data.customRoomId && data.customRoomId.trim().length > 0)
       ? data.customRoomId.trim().toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 30)
       : generateShortRoomId();
+
+    const accessCode = (data.settings?.access_code && data.settings.access_code.trim().length >= 6)
+      ? data.settings.access_code.trim().toUpperCase()
+      : generateVyntyraAccessCode();
 
     let cfMeetingId = "";
 
@@ -114,9 +159,10 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
     }
 
     const hostId = context.user.id;
-    // Keep internal Cloudflare meeting ID preserved in settings while exposing the sleek short roomId in the URL
+    // Keep internal Cloudflare meeting ID & 8-digit access code preserved in settings
     const mergedSettings = {
       ...(data.settings || {}),
+      access_code: accessCode,
       cf_room_id: cfMeetingId || roomId
     };
     const settingsStr = JSON.stringify(mergedSettings);
@@ -156,12 +202,12 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
       console.warn("Supabase meet_rooms upsert error:", e);
     }
 
-    // 3. Mirror to Supabase meetings table so it shows up in intern dashboards!
+    // 3. Mirror to Supabase meetings table so it shows up in intern & employee dashboards!
     const meetingUrl = `${getMeetingBaseUrl()}/meet/${roomId}`;
     try {
       const descText = (data.settings?.type === 'external' 
         ? `External Meeting. Password: ${data.settings.password || 'None'}` 
-        : 'Internal Secure Meeting') + ` __SETTINGS:${settingsStr}`;
+        : 'Internal Secure Meeting') + ` [Access Code: ${accessCode}] __SETTINGS:${settingsStr}`;
 
       await adminClient.from('meetings').insert({
         title: data.title,
@@ -178,7 +224,7 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
     }
 
     invalidateCache("active_meetings");
-    return { roomId, title: data.title, url: meetingUrl };
+    return { roomId, title: data.title, url: meetingUrl, accessCode };
   });
 
 // Gets an active meeting token and config
@@ -186,6 +232,7 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
   .validator((d: unknown) => z.object({
     roomId: z.string(),
     password: z.string().optional(),
+    accessCode: z.string().optional(),
     guestName: z.string().optional(),
     guestEmail: z.string().optional(),
     guestPhone: z.string().optional(),
@@ -233,6 +280,7 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
     // Verify room exists and is active
     let room: any = null;
     const cleanRoomId = data.roomId.trim().toLowerCase();
+    const cleanAccessCode = (data.accessCode || data.roomId).trim().toUpperCase();
     const noHyphenId = cleanRoomId.replace(/-/g, '');
 
     if (d1 && typeof d1.prepare === "function") {
@@ -296,7 +344,31 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
       }
     }
 
-    // 3. Tertiary fallback: Verify directly against Cloudflare RealtimeKit API
+    // 3. Fallback: Search by 8-Digit Vyntyra Access Code
+    if (!room) {
+      const adminClient = getAdminClient();
+      try {
+        const { data: supaRooms } = await adminClient
+          .from('meet_rooms')
+          .select('*')
+          .eq('status', 'active');
+        if (supaRooms && supaRooms.length > 0) {
+          for (const sr of supaRooms) {
+            let sObj: any = {};
+            try { sObj = JSON.parse(sr.settings || '{}'); } catch (_) {}
+            const ac = sObj.access_code || getOrDeriveAccessCode(sr.id, sObj.access_code);
+            if (ac.toUpperCase() === cleanAccessCode) {
+              room = sr;
+              break;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Access code room query error:", e);
+      }
+    }
+
+    // 4. Tertiary fallback: Verify directly against Cloudflare RealtimeKit API
     if (!room) {
       const { accountId, appId, apiToken } = getRealtimeCredentials();
       if (accountId && appId && apiToken) {
@@ -324,9 +396,23 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
 
     const settings = room.settings ? JSON.parse(room.settings) : {};
     const isInternal = settings.type !== 'external';
+    const derivedAccessCode = settings.access_code || getOrDeriveAccessCode(room.id, settings.access_code);
+
+    // Check if authorized by 8-digit Vyntyra Access Code
+    const isAccessCodeAuthorized = Boolean(
+      (data.accessCode && data.accessCode.trim().toUpperCase() === derivedAccessCode.toUpperCase()) ||
+      (cleanAccessCode.length >= 6 && cleanAccessCode === derivedAccessCode.toUpperCase())
+    );
+
+    // Mandatory Attendee Details Check for Guests & Access Code joinees
+    if (!userId || isAccessCodeAuthorized) {
+      if (!data.guestName?.trim() || !data.guestEmail?.trim() || !data.guestPhone?.trim()) {
+        throw new Error("MANDATORY_DETAILS_REQUIRED");
+      }
+    }
     
     // Auth & Access Checks
-    if (isInternal) {
+    if (isInternal && !isAccessCodeAuthorized) {
       if (!userId || !userEmail) {
         throw new Error("AUTH_REQUIRED");
       }
@@ -341,8 +427,8 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
       if (!isCreator && !isExplicitHost && allowedEmails.length > 0 && !allowedEmails.includes(userEmail.toLowerCase())) {
         throw new Error("ACCESS_DENIED_GUEST_LIST");
       }
-    } else {
-      // External Meeting: check password
+    } else if (!isAccessCodeAuthorized) {
+      // External Meeting without valid access code: check password
       if (settings.password && settings.password.trim() !== '' && settings.password !== data.password) {
         throw new Error("INVALID_PASSWORD");
       }
@@ -522,6 +608,7 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
     return {
       token: meetingToken,
       roomId: data.roomId,
+      accessCode: derivedAccessCode,
       isHost,
       isCoHost,
       isSuperHost,
@@ -680,7 +767,18 @@ export const getActiveMeetingsFn = createServerFn({ method: "GET" })
         return false;
       });
 
-      return filtered as any[];
+      return filtered.map((room: any) => {
+        let parsed: any = {};
+        try {
+          parsed = room.settings ? JSON.parse(room.settings) : {};
+        } catch (_) {}
+        const accessCode = parsed.access_code || getOrDeriveAccessCode(room.id, parsed.access_code);
+        return {
+          ...room,
+          accessCode,
+          access_code: accessCode,
+        };
+      }) as any[];
     });
   });
 
@@ -717,6 +815,61 @@ export const endMeetingFn = createServerFn({ method: "POST" })
 
     invalidateCache("active_meetings");
     return { success: true };
+  });
+
+// Fast verification of an 8-Digit Vyntyra Access Code
+export const verifyMeetingAccessCodeFn = createServerFn({ method: "POST" })
+  .validator((d: unknown) => z.object({
+    accessCode: z.string().min(6).max(16),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const code = data.accessCode.trim().toUpperCase();
+    const adminClient = getAdminClient();
+    
+    // 1. Check Supabase meet_rooms
+    const { data: supaRooms } = await adminClient
+      .from('meet_rooms')
+      .select('*')
+      .eq('status', 'active');
+    
+    if (supaRooms && supaRooms.length > 0) {
+      for (const r of supaRooms) {
+        let parsed: any = {};
+        try { parsed = JSON.parse(r.settings || '{}'); } catch (_) {}
+        const roomCode = parsed.access_code || getOrDeriveAccessCode(r.id, parsed.access_code);
+        if (roomCode.toUpperCase() === code) {
+          return {
+            valid: true,
+            roomId: r.id,
+            title: r.title,
+            accessCode: roomCode,
+            type: parsed.type || 'internal'
+          };
+        }
+      }
+    }
+
+    // 2. Check Supabase meetings table
+    const { data: supaMeets } = await adminClient
+      .from('meetings')
+      .select('*')
+      .ilike('description', `%${code}%`)
+      .limit(5);
+
+    if (supaMeets && supaMeets.length > 0) {
+      const sm = supaMeets[0];
+      const match = (sm.meeting_link || sm.meeting_url || '').match(/\/meet\/([a-zA-Z0-9_\-]+)/);
+      const rId = match ? match[1] : String(sm.id);
+      return {
+        valid: true,
+        roomId: rId,
+        title: sm.title,
+        accessCode: code,
+        type: sm.description?.includes('External') ? 'external' : 'internal'
+      };
+    }
+
+    return { valid: false, message: "Invalid or expired access code" };
   });
 
 // In-memory translation cache (cleared after 2000 items to bound memory)

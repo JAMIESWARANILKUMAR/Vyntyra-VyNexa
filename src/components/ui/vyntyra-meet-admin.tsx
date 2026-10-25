@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createMeetingRoomFn, getActiveMeetingsFn, endMeetingFn } from "@/lib/meetings.functions";
+import { createMeetingRoomFn, getActiveMeetingsFn, endMeetingFn, generateVyntyraAccessCode } from "@/lib/meetings.functions";
 import { listCbtTargetsFn } from "@/lib/cbt.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Loader2, Shield, Video, Plus, Lock, Users, Clock, Trash2, Copy, Calendar, Edit, Check, CheckCircle2 } from "lucide-react";
+import { Loader2, Shield, Video, Plus, Lock, Users, Clock, Trash2, Copy, Calendar, Edit, Check, CheckCircle2, KeyRound, RotateCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,6 +49,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
   const [scheduledFor, setScheduledFor] = useState("");
 
   const [customRoomId, setCustomRoomId] = useState("");
+  const [accessCode, setAccessCode] = useState(generateVyntyraAccessCode());
   const [targetType, setTargetType] = useState<"all"|"team"|"intern">("all");
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [selectedInterns, setSelectedInterns] = useState<string[]>([]);
@@ -57,6 +58,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
     roomId: string;
     title: string;
     url: string;
+    accessCode: string;
     type: string;
     password?: string;
     scheduledFor?: string;
@@ -92,6 +94,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
             muteOnEntry, 
             disableCameras, 
             scheduledFor,
+            access_code: accessCode.trim().toUpperCase(),
             type,
             password: type === 'external' ? password : '',
             superHosts: superHosts,
@@ -109,6 +112,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
         roomId: data?.roomId,
         title: data?.title || title,
         url: meetUrl,
+        accessCode: data?.accessCode || accessCode,
         type,
         password: type === 'external' ? password : '',
         scheduledFor
@@ -116,6 +120,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
       toast.success(`Meeting room created: ${data?.title || title}`);
       setTitle('');
       setCustomRoomId('');
+      setAccessCode(generateVyntyraAccessCode());
       setPassword('');
       setScheduledFor('');
       setIsCreateOpen(false);
@@ -176,6 +181,34 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                         className="font-mono text-xs" 
                       />
                     </div>
+                  </div>
+
+                  {/* 8-Digit Vyntyra Access Code */}
+                  <div className="p-3 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/30 rounded-xl space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1">
+                        <KeyRound className="h-3.5 w-3.5 text-[#0b5cff]" />
+                        <span>8-Digit Vyntyra Access Code</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setAccessCode(generateVyntyraAccessCode())}
+                        className="text-[11px] text-[#0b5cff] hover:underline font-semibold flex items-center gap-1"
+                        title="Generate random code"
+                      >
+                        <RotateCw className="h-3 w-3" /> Regenerate
+                      </button>
+                    </div>
+                    <Input
+                      value={accessCode}
+                      onChange={e => setAccessCode(e.target.value.toUpperCase().slice(0, 10))}
+                      placeholder="e.g. VYN89201"
+                      className="font-mono text-sm tracking-widest uppercase font-bold text-[#0b5cff] bg-white dark:bg-slate-900 h-9"
+                      required
+                    />
+                    <span className="text-[10px] text-slate-500 block">
+                      Numeric digits & Vyntyra branding alphabets for secure guest & direct entry
+                    </span>
                   </div>
                   
                   <div>
@@ -324,6 +357,27 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                       </Button>
                     </div>
 
+                    {/* 8-Digit Vyntyra Access Code */}
+                    <div className="flex items-center justify-between p-3 bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-900/40 rounded-xl">
+                      <div>
+                        <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                          <KeyRound className="h-3 w-3" /> 8-Digit Vyntyra Access Code
+                        </div>
+                        <div className="font-mono text-base font-bold text-indigo-950 dark:text-indigo-200 mt-0.5 tracking-widest">{createdMeetDetails.accessCode}</div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          copyToClipboard(createdMeetDetails.accessCode);
+                          toast.success(`Access code copied: ${createdMeetDetails.accessCode}`);
+                        }}
+                        className="h-8 gap-1.5 text-xs font-semibold bg-white dark:bg-slate-800 shadow-xs"
+                      >
+                        <Copy className="h-3 w-3" /> Copy Access Code
+                      </Button>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-3 pt-1">
                       <div>
                         <div className="text-xs text-slate-500 font-medium">Security</div>
@@ -357,7 +411,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                       variant="outline"
                       className="w-full sm:w-auto text-xs gap-1.5 h-10"
                       onClick={() => {
-                        const inviteText = `📢 Vyntyra Meet Video Conference\n📌 Topic: ${createdMeetDetails.title}\n🔗 Short Link: ${createdMeetDetails.url}\n🔑 Meeting Code: ${createdMeetDetails.roomId}${createdMeetDetails.password ? `\n🔒 Passcode: ${createdMeetDetails.password}` : ''}${createdMeetDetails.scheduledFor ? `\n📅 Scheduled For: ${new Date(createdMeetDetails.scheduledFor).toLocaleString()}` : ''}`;
+                        const inviteText = `📢 Vyntyra Meet Video Conference\n📌 Topic: ${createdMeetDetails.title}\n🔗 Short Link: ${createdMeetDetails.url}\n🔑 Quick Room Code: ${createdMeetDetails.roomId}\n🛡️ 8-Digit Access Code: ${createdMeetDetails.accessCode}${createdMeetDetails.password ? `\n🔒 Passcode: ${createdMeetDetails.password}` : ''}${createdMeetDetails.scheduledFor ? `\n📅 Scheduled For: ${new Date(createdMeetDetails.scheduledFor).toLocaleString()}` : ''}`;
                         copyToClipboard(inviteText);
                         toast.success("Full meeting invitation copied!");
                       }}
@@ -446,11 +500,25 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                           <tr key={room.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-200">
                               <div className="font-semibold">{room.title}</div>
-                              <div className="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1">
+                              <div className="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1.5 flex-wrap">
                                 <span>Code:</span>
                                 <span className="text-blue-600 dark:text-blue-400 font-semibold" title={room.id}>
                                   {room.id.length > 15 ? `#${room.id.slice(0, 8)}` : room.id}
                                 </span>
+                                <span>·</span>
+                                <span className="text-indigo-600 dark:text-indigo-400 font-bold tracking-wider bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                                  {room.accessCode || room.access_code}
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    copyToClipboard(room.accessCode || room.access_code);
+                                    toast.success(`Access code copied: ${room.accessCode || room.access_code}`);
+                                  }}
+                                  className="text-slate-400 hover:text-indigo-600"
+                                  title="Copy 8-digit access code"
+                                >
+                                  <Copy className="h-2.5 w-2.5" />
+                                </button>
                               </div>
                             </td>
                             <td className="px-4 py-3">
@@ -609,6 +677,9 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                             </button>
                           </div>
                           <div className="flex flex-wrap items-center gap-3 text-[13px] text-slate-500">
+                            <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 flex items-center gap-1">
+                              <KeyRound className="h-3 w-3" /> Access: {room.accessCode || room.access_code}
+                            </span>
                             <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs">
                               {settings.type === 'external' ? 'External' : 'Internal'}
                             </span>

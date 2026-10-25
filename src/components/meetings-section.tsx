@@ -1,8 +1,9 @@
-import { Video, Clock, Calendar, Loader2, AlertCircle, Share2, CalendarPlus, Check, Copy } from "lucide-react";
+import { Video, Clock, Calendar, Loader2, AlertCircle, Share2, CalendarPlus, Check, Copy, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { generateGoogleCalendarUrl, formatMeetingTimeRange } from "@/lib/date-utils";
 import { toast } from "sonner";
+import { getOrDeriveAccessCode } from "@/lib/meetings.functions";
 
 interface Meeting {
   id: string;
@@ -172,6 +173,7 @@ export function MeetingsSection({ meetings, isLoading, isError }: MeetingsSectio
 }
 
 function MeetingCard({ meeting, highlight, onJoin }: { meeting: Meeting; highlight?: boolean; onJoin: (meetingId: string, l: string) => void }) {
+  const accessCode = meeting.description?.match(/Access Code:\s*([A-Z0-9]+)/i)?.[1] || getOrDeriveAccessCode(meeting.id);
   const scheduledTime = meeting.scheduled_at || meeting.start_time || new Date().toISOString();
   const durationMins = meeting.duration_minutes || 30;
   const { dateStr, fromTimeStr, toTimeStr, rangeStr } = formatMeetingTimeRange(scheduledTime, meeting.end_at || meeting.end_time, durationMins);
@@ -249,6 +251,22 @@ ${gcalUrl}
                   {meeting.target_role === "all" ? "Everyone" : meeting.target_role}
                 </span>
               )}
+              <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2 py-0.5 rounded-full">
+                <KeyRound className="h-2.5 w-2.5 text-indigo-500" />
+                <span>Access: {accessCode}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(accessCode);
+                    toast.success(`Access code copied: ${accessCode}`);
+                  }}
+                  className="hover:text-indigo-900 ml-0.5"
+                  title="Copy 8-digit access code"
+                >
+                  <Copy className="h-2.5 w-2.5" />
+                </button>
+              </span>
             </div>
             
             {/* Time Schedule Display: From Time to What Time */}
