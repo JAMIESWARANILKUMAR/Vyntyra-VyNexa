@@ -183,10 +183,13 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
 
 // Gets an active meeting token and config
 export const getMeetingTokenFn = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({
+  .validator((d: unknown) => z.object({
     roomId: z.string(),
     password: z.string().optional(),
     guestName: z.string().optional(),
+    guestEmail: z.string().optional(),
+    guestPhone: z.string().optional(),
+    guestOrg: z.string().optional(),
     authToken: z.string().optional()
   }).parse(d))
   .handler(async ({ data }) => {
@@ -345,10 +348,75 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
       }
     }
 
-    // Role assignment
+    // Check ejected list
+    const ejectedList: string[] = settings.ejectedParticipants || [];
+    if (
+      (userId && ejectedList.includes(userId)) ||
+      (userEmail && ejectedList.includes(userEmail.toLowerCase())) ||
+      (data.guestEmail && ejectedList.includes(data.guestEmail.toLowerCase()))
+    ) {
+      throw new Error("ACCESS_EJECTED");
+    }
+
+    // Query explicit roles from meet_roles table
+    let dbRole: string | null = null;
+    const effectiveEmail = (userEmail || data.guestEmail || "").toLowerCase().trim();
+    if (effectiveEmail) {
+      try {
+        const adminClient = getAdminClient();
+        const { data: roleRow } = await adminClient
+          .from('meet_roles')
+          .select('role')
+          .eq('meeting_id', data.roomId)
+          .eq('user_email', effectiveEmail)
+          .maybeSingle();
+        if (roleRow?.role) {
+          dbRole = roleRow.role;
+        }
+      } catch (_) {}
+    }
+
+    // Role assignment & RBAC Hierarchy
     const isCreator = room.host_id === userId;
-    const isSuperHost = isCreator || (settings.superHosts && userEmail && settings.superHosts.toLowerCase().includes(userEmail.toLowerCase()));
-    const isHost = isSuperHost || (settings.hosts && userEmail && settings.hosts.toLowerCase().includes(userEmail.toLowerCase()));
+    const isSuperHost = isCreator || (settings.superHosts && effectiveEmail && settings.superHosts.toLowerCase().includes(effectiveEmail)) || dbRole === 'super_admin';
+    const isCoHost = (settings.coHosts && Array.isArray(settings.coHosts) && settings.coHosts.some((e: string) => e.toLowerCase() === effectiveEmail)) || dbRole === 'co_host';
+    const isHost = isSuperHost || isCoHost || (settings.hosts && effectiveEmail && settings.hosts.toLowerCase().includes(effectiveEmail)) || dbRole === 'host';
+
+    // Room Lock Check: If meeting is locked by host, only hosts and co-hosts may enter
+    if (settings.isLocked && !isHost) {
+      throw new Error("ROOM_LOCKED");
+    }
+
+    // Intern ID & Employee Auto-Recognition
+    let detectedInternId: string | null = null;
+    let detectedUserType = 'guest';
+
+    if (effectiveEmail) {
+      try {
+        const adminClient = getAdminClient();
+        const { data: prof } = await adminClient
+          .from('profiles')
+          .select('id, intern_id, full_name, department, role, position')
+          .ilike('email', effectiveEmail)
+          .maybeSingle();
+
+        if (prof) {
+          if (prof.intern_id) {
+            detectedInternId = prof.intern_id;
+            detectedUserType = 'intern';
+          } else if (prof.role === 'admin' || prof.role === 'super_admin') {
+            detectedUserType = 'admin';
+          } else {
+            detectedUserType = 'employee';
+          }
+          if (!userFullName && prof.full_name) {
+            userFullName = prof.full_name;
+          }
+        } else if (effectiveEmail.endsWith('@vyntyraconsultancyservices.in')) {
+          detectedUserType = 'employee';
+        }
+      } catch (_) {}
+    }
 
     const { accountId, appId, apiToken } = getRealtimeCredentials();
 
@@ -357,7 +425,10 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
     }
 
     // Generate participant identity
-    const participantName = userFullName || (userEmail ? userEmail.split('@')[0] : (data.guestName || "External Guest"));
+    let participantName = userFullName || (userEmail ? userEmail.split('@')[0] : (data.guestName || "External Guest"));
+    if (detectedInternId && !participantName.includes(detectedInternId)) {
+      participantName = `${participantName} [${detectedInternId}]`;
+    }
     const participantId = userId || `guest_${crypto.randomUUID()}`;
 
     let cfMeetingId = settings.cf_room_id || data.roomId;
@@ -367,7 +438,12 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
         name: participantName,
         client_specific_id: participantId,
         metadata: {
-          avatar_url: userAvatarUrl || null
+          avatar_url: userAvatarUrl || null,
+          intern_id: detectedInternId,
+          user_type: detectedUserType,
+          is_verified: Boolean(detectedInternId || effectiveEmail.endsWith('@vyntyraconsultancyservices.in')),
+          is_host: isHost,
+          is_co_host: isCoHost
         }
       };
       if (withPreset) {
@@ -447,9 +523,21 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
       token: meetingToken,
       roomId: data.roomId,
       isHost,
+      isCoHost,
+      isSuperHost,
       appId: appId,
       title: room.title as string,
-      participantName: participantName || "Guest"
+      participantName: participantName || "Guest",
+      participantId,
+      internId: detectedInternId,
+      userType: detectedUserType,
+      isVerified: Boolean(detectedInternId || effectiveEmail.endsWith('@vyntyraconsultancyservices.in')),
+      permissions: {
+        allowGuestScreenShare: settings.allowGuestScreenShare !== false,
+        allowGuestChat: settings.allowGuestChat !== false,
+        isLocked: Boolean(settings.isLocked),
+        waitingRoom: Boolean(settings.waitingRoom),
+      }
     };
   });
 
@@ -771,4 +859,329 @@ export const translateSpeechFn = createServerFn({ method: "POST" })
       modelUsed: "none",
       provider: "raw",
     };
+  });
+
+/**
+ * Guest Identity Verification & Intern ID Auto-Recognition
+ * Validates external or guest participant email against internal profiles,
+ * assigns Intern ID if registered, and records a visitor gatekeeper entry.
+ */
+export const verifyGuestIdentityFn = createServerFn({ method: "POST" })
+  .validator((d: any) => z.object({
+    roomId: z.string(),
+    email: z.string().email(),
+    fullName: z.string().min(1),
+    phone: z.string().optional(),
+    organization: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
+    const cleanEmail = data.email.trim().toLowerCase();
+
+    let isVerified = false;
+    let userType: 'intern' | 'employee' | 'admin' | 'guest' = 'guest';
+    let internId: string | null = null;
+    let resolvedName = data.fullName.trim();
+    let department: string | null = null;
+
+    try {
+      const { data: prof } = await adminClient
+        .from('profiles')
+        .select('id, intern_id, full_name, department, role, position, phone')
+        .ilike('email', cleanEmail)
+        .maybeSingle();
+
+      if (prof) {
+        isVerified = true;
+        if (prof.intern_id) {
+          internId = prof.intern_id;
+          userType = 'intern';
+        } else if (prof.role === 'admin' || prof.role === 'super_admin') {
+          userType = 'admin';
+        } else {
+          userType = 'employee';
+        }
+        if (prof.full_name) {
+          resolvedName = prof.full_name;
+        }
+        department = prof.department || prof.position || null;
+      } else if (cleanEmail.endsWith('@vyntyraconsultancyservices.in')) {
+        isVerified = true;
+        userType = 'employee';
+      }
+    } catch (err) {
+      console.warn("Guest profile verification lookup error:", err);
+    }
+
+    // Record into visitor logs table
+    try {
+      await adminClient.from('meet_visitor_logs').insert({
+        meeting_id: data.roomId,
+        full_name: resolvedName,
+        email: cleanEmail,
+        phone: data.phone || null,
+        organization: data.organization || (isVerified ? "Vyntyra Consultancy Services" : null),
+        intern_id: internId,
+        is_verified: isVerified,
+        user_type: userType,
+        status: 'admitted',
+      });
+    } catch (err) {
+      console.warn("Failed to insert visitor log:", err);
+    }
+
+    return {
+      isVerified,
+      userType,
+      internId,
+      fullName: resolvedName,
+      department,
+      email: cleanEmail,
+    };
+  });
+
+/**
+ * Detailed Attendance & Connection Telemetry Recorder
+ * Tracks join_time, leave_time, duration, and reconnection attempts.
+ */
+export const recordMeetingTelemetryFn = createServerFn({ method: "POST" })
+  .validator((d: any) => z.object({
+    meetingId: z.string(),
+    participantId: z.string(),
+    userEmail: z.string().optional(),
+    userName: z.string(),
+    phone: z.string().optional(),
+    internId: z.string().optional(),
+    userType: z.string().optional().default('guest'),
+    action: z.enum(['join', 'ping', 'leave']),
+    durationSeconds: z.number().optional().default(0),
+    deviceMetadata: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
+    const nowIso = new Date().toISOString();
+
+    try {
+      if (data.action === 'join') {
+        const { data: existing } = await adminClient
+          .from('meet_attendance_telemetry')
+          .select('id, reconnection_count, duration_seconds')
+          .eq('meeting_id', data.meetingId)
+          .eq('participant_id', data.participantId)
+          .maybeSingle();
+
+        if (existing) {
+          await adminClient
+            .from('meet_attendance_telemetry')
+            .update({
+              reconnection_count: (existing.reconnection_count || 1) + 1,
+              updated_at: nowIso,
+              user_name: data.userName,
+              user_email: data.userEmail || undefined,
+              intern_id: data.internId || undefined,
+            })
+            .eq('id', existing.id);
+        } else {
+          await adminClient
+            .from('meet_attendance_telemetry')
+            .insert({
+              meeting_id: data.meetingId,
+              participant_id: data.participantId,
+              user_email: data.userEmail || null,
+              user_name: data.userName,
+              phone: data.phone || null,
+              intern_id: data.internId || null,
+              user_type: data.userType,
+              join_time: nowIso,
+              reconnection_count: 1,
+              duration_seconds: 0,
+              attendance_status: 'Present',
+              device_metadata: data.deviceMetadata || null,
+              updated_at: nowIso,
+            });
+        }
+      } else if (data.action === 'ping' || data.action === 'leave') {
+        const { data: existing } = await adminClient
+          .from('meet_attendance_telemetry')
+          .select('id, duration_seconds')
+          .eq('meeting_id', data.meetingId)
+          .eq('participant_id', data.participantId)
+          .maybeSingle();
+
+        if (existing) {
+          const newDuration = Math.max(existing.duration_seconds || 0, data.durationSeconds);
+          await adminClient
+            .from('meet_attendance_telemetry')
+            .update({
+              duration_seconds: newDuration,
+              leave_time: data.action === 'leave' ? nowIso : undefined,
+              updated_at: nowIso,
+            })
+            .eq('id', existing.id);
+        }
+      }
+      return { success: true };
+    } catch (err) {
+      console.warn("recordMeetingTelemetry error:", err);
+      return { success: false };
+    }
+  });
+
+/**
+ * Host Attendance & Session Telemetry Fetcher
+ */
+export const getMeetingAttendanceFn = createServerFn({ method: "POST" })
+  .validator((d: any) => z.object({
+    meetingId: z.string(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
+    try {
+      const { data: rows } = await adminClient
+        .from('meet_attendance_telemetry')
+        .select('*')
+        .eq('meeting_id', data.meetingId)
+        .order('join_time', { ascending: true });
+
+      let roomSettings: any = {};
+      const { data: room } = await adminClient
+        .from('meet_rooms')
+        .select('title, settings')
+        .eq('id', data.meetingId)
+        .maybeSingle();
+
+      if (room?.settings) {
+        try { roomSettings = JSON.parse(room.settings); } catch (_) {}
+      }
+
+      return {
+        success: true,
+        meetingTitle: room?.title || "Meeting Session",
+        records: rows || [],
+        settings: {
+          isLocked: Boolean(roomSettings.isLocked),
+          waitingRoom: Boolean(roomSettings.waitingRoom),
+          allowGuestScreenShare: roomSettings.allowGuestScreenShare !== false,
+          allowGuestChat: roomSettings.allowGuestChat !== false,
+          coHosts: roomSettings.coHosts || [],
+          ejectedParticipants: roomSettings.ejectedParticipants || [],
+        }
+      };
+    } catch (err) {
+      console.warn("getMeetingAttendance error:", err);
+      return { success: false, records: [], settings: {} };
+    }
+  });
+
+/**
+ * Host Attendance Status Override (Present, Late, Excused, Absent)
+ */
+export const updateAttendanceStatusFn = createServerFn({ method: "POST" })
+  .validator((d: any) => z.object({
+    recordId: z.string(),
+    status: z.enum(['Present', 'Late', 'Excused', 'Absent']),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
+    try {
+      await adminClient
+        .from('meet_attendance_telemetry')
+        .update({
+          attendance_status: data.status,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', data.recordId);
+      return { success: true };
+    } catch (err) {
+      console.warn("updateAttendanceStatus error:", err);
+      return { success: false };
+    }
+  });
+
+/**
+ * Host Controls & Permissions Manager (Lock, Mute All, Eject, Co-Hosts, Permissions)
+ */
+export const updateHostControlsFn = createServerFn({ method: "POST" })
+  .validator((d: any) => z.object({
+    meetingId: z.string(),
+    isLocked: z.boolean().optional(),
+    waitingRoom: z.boolean().optional(),
+    allowGuestScreenShare: z.boolean().optional(),
+    allowGuestChat: z.boolean().optional(),
+    ejectUserId: z.string().optional(),
+    addCoHostEmail: z.string().optional(),
+    removeCoHostEmail: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const adminClient = getAdminClient();
+    try {
+      const { data: room } = await adminClient
+        .from('meet_rooms')
+        .select('*')
+        .eq('id', data.meetingId)
+        .maybeSingle();
+
+      if (!room) return { success: false, reason: "Room not found" };
+
+      let settings: any = {};
+      try {
+        settings = room.settings ? JSON.parse(room.settings) : {};
+      } catch (_) {}
+
+      if (typeof data.isLocked === 'boolean') settings.isLocked = data.isLocked;
+      if (typeof data.waitingRoom === 'boolean') settings.waitingRoom = data.waitingRoom;
+      if (typeof data.allowGuestScreenShare === 'boolean') settings.allowGuestScreenShare = data.allowGuestScreenShare;
+      if (typeof data.allowGuestChat === 'boolean') settings.allowGuestChat = data.allowGuestChat;
+
+      if (data.ejectUserId) {
+        settings.ejectedParticipants = settings.ejectedParticipants || [];
+        if (!settings.ejectedParticipants.includes(data.ejectUserId)) {
+          settings.ejectedParticipants.push(data.ejectUserId);
+        }
+      }
+
+      if (data.addCoHostEmail) {
+        settings.coHosts = settings.coHosts || [];
+        const clean = data.addCoHostEmail.trim().toLowerCase();
+        if (!settings.coHosts.includes(clean)) {
+          settings.coHosts.push(clean);
+        }
+        try {
+          await adminClient.from('meet_roles').upsert({
+            meeting_id: data.meetingId,
+            user_email: clean,
+            role: 'co_host'
+          }, { onConflict: 'meeting_id,user_email' });
+        } catch (_) {}
+      }
+
+      if (data.removeCoHostEmail) {
+        settings.coHosts = (settings.coHosts || []).filter((e: string) => e !== data.removeCoHostEmail?.toLowerCase());
+        try {
+          await adminClient.from('meet_roles').delete()
+            .eq('meeting_id', data.meetingId)
+            .eq('user_email', data.removeCoHostEmail.toLowerCase());
+        } catch (_) {}
+      }
+
+      const updatedSettingsStr = JSON.stringify(settings);
+      await adminClient
+        .from('meet_rooms')
+        .update({ settings: updatedSettingsStr })
+        .eq('id', data.meetingId);
+
+      // Mirror to Cloudflare D1
+      const d1 = getD1Database();
+      if (d1 && typeof d1.prepare === 'function') {
+        try {
+          await d1.prepare(`UPDATE meet_rooms SET settings = ? WHERE id = ?`)
+            .bind(updatedSettingsStr, data.meetingId).run();
+        } catch (_) {}
+      }
+
+      return { success: true, settings };
+    } catch (err) {
+      console.warn("updateHostControls error:", err);
+      return { success: false };
+    }
   });

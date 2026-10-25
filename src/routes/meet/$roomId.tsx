@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { getMeetingTokenFn } from '@/lib/meetings.functions';
+import { getMeetingTokenFn, recordMeetingTelemetryFn } from '@/lib/meetings.functions';
 import { useServerFn } from '@tanstack/react-start';
 import RealtimeKitClient from '@cloudflare/realtimekit';
 import { RtkUiProvider, RtkMeeting } from '@cloudflare/realtimekit-react-ui';
 import { 
-  Globe, Loader2, AlertCircle, Lock, Copy, RotateCw, CheckCircle2, ShieldCheck, Sparkles, Sliders, X
+  Globe, Loader2, AlertCircle, Lock, Copy, RotateCw, CheckCircle2, 
+  ShieldCheck, Sparkles, Sliders, X, Shield, FileSpreadsheet, Users, UserX
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,8 @@ import { GridLayoutSelector, GRID_LAYOUT_OPTIONS } from '@/components/meet/GridL
 import { IndianLanguageTranslator, INDIAN_LANGUAGES, IndianLanguage } from '@/components/meet/IndianLanguageTranslator';
 import { VideoEnhancerModal, COLOR_FILTERS, BACKGROUND_PRESETS } from '@/components/meet/VideoEnhancerModal';
 import { FloatingReactions } from '@/components/meet/FloatingReactions';
+import { HostControlsModal } from '@/components/meet/HostControlsModal';
+import { MeetingAttendanceModal } from '@/components/meet/MeetingAttendanceModal';
 
 export const Route = createFileRoute('/meet/$roomId')({
   component: MeetingRoom
@@ -47,14 +50,28 @@ function MeetingRoom() {
   const [selectedIndianLanguage, setSelectedIndianLanguage] = useState<IndianLanguage>(INDIAN_LANGUAGES[0]);
   const [isMobileToolsOpen, setIsMobileToolsOpen] = useState(false);
 
-  // Auth States for External Guests
+  // Enterprise Host Controls & Attendance Modals
+  const [isHostControlsOpen, setIsHostControlsOpen] = useState(false);
+  const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
+  const [roomSettings, setRoomSettings] = useState<any>({});
+
+  // Auth & Guest Gatekeeper Credentials
   const [submittedPassword, setSubmittedPassword] = useState<string | undefined>(undefined);
   const [submittedGuestName, setSubmittedGuestName] = useState<string | undefined>(undefined);
+  const [guestCredentials, setGuestCredentials] = useState<{
+    guestEmail?: string;
+    guestPhone?: string;
+    guestOrg?: string;
+    internId?: string | null;
+    isVerified?: boolean;
+  }>({});
   const [passwordInput, setPasswordInput] = useState('');
   const [guestNameInput, setGuestNameInput] = useState('');
 
+  const sessionStartTimeRef = useRef<number>(Date.now());
+
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['meet-token', roomId, submittedPassword, submittedGuestName],
+    queryKey: ['meet-token', roomId, submittedPassword, submittedGuestName, guestCredentials.guestEmail],
     queryFn: async () => {
       let authToken: string | undefined = undefined;
       try {
@@ -68,12 +85,22 @@ function MeetingRoom() {
           roomId, 
           password: submittedPassword, 
           guestName: submittedGuestName,
+          guestEmail: guestCredentials.guestEmail,
+          guestPhone: guestCredentials.guestPhone,
+          guestOrg: guestCredentials.guestOrg,
           authToken 
         } 
       });
     },
     retry: false
   });
+
+  // Sync room settings
+  useEffect(() => {
+    if (data?.permissions) {
+      setRoomSettings(data.permissions);
+    }
+  }, [data]);
 
   // Watch for slow connection / timeout to give immediate actionable feedback
   useEffect(() => {
@@ -88,17 +115,48 @@ function MeetingRoom() {
   }, [isLoading, data, hasJoinedMeeting, meeting, initError]);
 
   // Handle joining from Pre-Join Lobby
-  const handleJoinFromLobby = (options: { isAudioMuted: boolean; isVideoMuted: boolean }) => {
+  const handleJoinFromLobby = (options: { 
+    isAudioMuted: boolean; 
+    isVideoMuted: boolean;
+    guestName?: string;
+    guestEmail?: string;
+    guestPhone?: string;
+    guestOrg?: string;
+    internId?: string | null;
+    isVerified?: boolean;
+  }) => {
+    if (options.guestName) {
+      setSubmittedGuestName(options.guestName);
+    }
+    setGuestCredentials({
+      guestEmail: options.guestEmail,
+      guestPhone: options.guestPhone,
+      guestOrg: options.guestOrg,
+      internId: options.internId,
+      isVerified: options.isVerified,
+    });
+
     if (!data?.token) {
-      toast.error("Meeting credentials not ready. Please try again.");
+      refetch().then(res => {
+        if (res.data?.token) {
+          connectToMeeting(res.data.token, options);
+        } else {
+          toast.error("Connecting credentials... please tap Join again.");
+        }
+      });
       return;
     }
 
+    connectToMeeting(data.token, options);
+  };
+
+  const connectToMeeting = (token: string, options: any) => {
     setHasJoinedMeeting(true);
     setInitError(null);
+    sessionStartTimeRef.current = Date.now();
 
     RealtimeKitClient.init({ 
-      authToken: data.token,
+      authToken: token,
       defaults: {
         audio: !options.isAudioMuted,
         video: !options.isVideoMuted,
@@ -108,6 +166,22 @@ function MeetingRoom() {
         setMeeting(m);
         try {
           await m.join();
+
+          // Record connection telemetry in database
+          recordMeetingTelemetryFn({
+            data: {
+              meetingId: roomId,
+              participantId: data?.participantId || m.self?.id || 'attendee',
+              userName: data?.participantName || options.guestName || "Attendee",
+              userEmail: guestCredentials.guestEmail,
+              phone: guestCredentials.guestPhone,
+              internId: data?.internId || guestCredentials.internId || undefined,
+              userType: data?.userType || (data?.isHost ? 'host' : 'guest'),
+              action: 'join',
+              deviceMetadata: typeof navigator !== 'undefined' ? `${navigator.userAgent}` : undefined,
+            }
+          }).catch(err => console.warn("Join telemetry error:", err));
+
         } catch (joinErr: any) {
           console.warn("RealtimeKit m.join error:", joinErr);
         }
@@ -117,6 +191,74 @@ function MeetingRoom() {
         setInitError(err?.message || "Failed to initialize video call session.");
       });
   };
+
+  // Telemetry Heartbeat & Supabase Realtime Remote Host Actions
+  useEffect(() => {
+    if (!meeting || !hasJoinedMeeting) return;
+
+    // Heartbeat every 25 seconds to record active duration
+    const interval = setInterval(() => {
+      const elapsedSeconds = Math.round((Date.now() - sessionStartTimeRef.current) / 1000);
+      recordMeetingTelemetryFn({
+        data: {
+          meetingId: roomId,
+          participantId: data?.participantId || meeting.self?.id || 'attendee',
+          userName: data?.participantName || 'Attendee',
+          action: 'ping',
+          durationSeconds: elapsedSeconds,
+        }
+      }).catch(() => {});
+    }, 25000);
+
+    // Listen for Host Commands on Realtime Channel
+    const channel = supabase.channel(`meet-controls-${roomId}`)
+      .on('broadcast', { event: 'mute_all' }, () => {
+        if (!data?.isHost && !data?.isCoHost) {
+          try {
+            if (meeting.self?.disableAudio) {
+              meeting.self.disableAudio();
+            }
+          } catch (_) {}
+          toast.info("The host has muted all participants.");
+        }
+      })
+      .on('broadcast', { event: 'meeting_lock_changed' }, ({ payload }: any) => {
+        setRoomSettings((prev: any) => ({ ...prev, isLocked: payload?.isLocked }));
+        toast.info(payload?.isLocked ? "Meeting has been locked by the host." : "Meeting has been unlocked.");
+      })
+      .on('broadcast', { event: 'eject_participant' }, ({ payload }: any) => {
+        const myId = data?.participantId || meeting.self?.id;
+        const myName = data?.participantName;
+        if (payload?.targetId === myId || (myName && payload?.targetName === myName)) {
+          try { meeting.leave?.(); } catch (_) {}
+          toast.error("You have been removed from this meeting by the host.");
+          window.location.href = '/';
+        }
+      })
+      .subscribe();
+
+    // Log leave on window unload
+    const handleBeforeUnload = () => {
+      const elapsedSeconds = Math.round((Date.now() - sessionStartTimeRef.current) / 1000);
+      recordMeetingTelemetryFn({
+        data: {
+          meetingId: roomId,
+          participantId: data?.participantId || meeting.self?.id || 'attendee',
+          userName: data?.participantName || 'Attendee',
+          action: 'leave',
+          durationSeconds: elapsedSeconds,
+        }
+      }).catch(() => {});
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [meeting, hasJoinedMeeting, roomId, data]);
 
   // Listen for room exit to smoothly return to portal
   useEffect(() => {
@@ -147,17 +289,70 @@ function MeetingRoom() {
           <Loader2 className="h-10 w-10 animate-spin text-[#0b5cff] mb-4" />
           <h2 className="text-xl font-medium tracking-tight mb-2">Connecting to Vyntyra Connect...</h2>
           <p className="text-xs text-gray-400">
-            Establishing secure high-speed WebRTC session.
+            Establishing secure high-speed WebRTC session with RBAC authentication.
           </p>
         </div>
       </div>
     );
   }
 
-  // Handle Auth / Passcode errors
+  // Handle Auth / Passcode / Lock / Eject errors
   if (error || !data) {
     const errMsg = error?.message || "";
     
+    if (errMsg.includes("ROOM_LOCKED")) {
+      return (
+        <div className="min-h-screen bg-[#090b0e] flex flex-col items-center justify-center text-white p-6 relative">
+          <div className="bg-[#12151c] border border-amber-500/30 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
+            <div className="w-14 h-14 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/20">
+              <Lock className="h-7 w-7" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2 tracking-tight text-white">Meeting is Locked</h2>
+            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+              The host has locked this meeting room. No new attendees can enter at this time. Please contact the host or try again later.
+            </p>
+            <div className="space-y-3">
+              <Button
+                onClick={() => refetch()}
+                className="w-full h-11 bg-[#0b5cff] hover:bg-[#094bdd] text-white font-medium rounded-xl"
+              >
+                <RotateCw className="h-4 w-4 mr-2" /> Check if Unlocked
+              </Button>
+              <Button
+                onClick={() => window.location.href = '/'}
+                variant="outline"
+                className="w-full h-11 border-white/10 bg-white/5 text-gray-200 font-medium rounded-xl"
+              >
+                Return to Dashboard
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (errMsg.includes("ACCESS_EJECTED")) {
+      return (
+        <div className="min-h-screen bg-[#090b0e] flex flex-col items-center justify-center text-white p-6 relative">
+          <div className="bg-[#12151c] border border-rose-500/30 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
+            <div className="w-14 h-14 bg-rose-500/10 text-rose-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-500/20">
+              <UserX className="h-7 w-7" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2 tracking-tight text-white">Removed from Meeting</h2>
+            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+              You were removed from this meeting session by the host and cannot re-enter.
+            </p>
+            <Button
+              onClick={() => window.location.href = '/'}
+              className="w-full h-11 bg-[#0b5cff] hover:bg-[#094bdd] text-white font-medium rounded-xl"
+            >
+              Return to Dashboard
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     if (errMsg.includes("AUTH_REQUIRED") || errMsg.includes("UNAUTHORIZED_INTERNAL")) {
       const returnUrl = encodeURIComponent(`/meet/${roomId}`);
       return (
@@ -347,6 +542,7 @@ function MeetingRoom() {
 
   const activeColorFilterCss = COLOR_FILTERS.find(f => f.id === selectedFilter)?.filterCss || 'none';
   const activeBgPreset = BACKGROUND_PRESETS.find(b => b.id === selectedBackground);
+  const isHostUser = Boolean(data?.isHost || data?.isCoHost || data?.isSuperHost);
 
   return (
     <div className="fixed inset-0 w-screen h-screen bg-[#080808] text-white flex flex-col font-sans overflow-hidden select-none">
@@ -437,15 +633,52 @@ function MeetingRoom() {
             <Copy className="h-3.5 w-3.5 text-blue-400" />
             <span>Copy Link</span>
           </Button>
+
+          {/* Verified Intern / Employee Tag */}
+          {data?.internId && (
+            <div className="hidden lg:flex items-center gap-1 bg-blue-500/15 border border-blue-500/30 px-2.5 py-1 rounded-full text-[10px] font-mono text-blue-300">
+              <ShieldCheck className="h-3 w-3 text-blue-400" />
+              <span>{data.internId}</span>
+            </div>
+          )}
         </div>
 
-        {/* Right Section: Responsive Controls */}
+        {/* Right Section: Responsive Controls, Host Tools & Attendance */}
         <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
           {/* Live Network Speed & Ping HUD */}
           <MeetingNetworkHUD />
 
-          {/* Desktop Controls (Hidden on narrow mobile screens) */}
+          {/* Desktop Controls */}
           <div className="hidden md:flex items-center gap-2">
+            
+            {/* Host Tools Pill (Only for Hosts / Co-Hosts / Super Admins) */}
+            {isHostUser && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsHostControlsOpen(true)}
+                className="h-8 px-2.5 bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 border border-blue-500/40 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+                title="Enterprise Host Controls & Security"
+              >
+                <Shield className="h-3.5 w-3.5 text-blue-400" />
+                <span className="hidden lg:inline">Host Controls</span>
+              </Button>
+            )}
+
+            {/* Smart Attendance & Session Telemetry Pill */}
+            {isHostUser && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsAttendanceOpen(true)}
+                className="h-8 px-2.5 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/30 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+                title="Smart Attendance & Session Telemetry"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-400" />
+                <span className="hidden lg:inline">Attendance</span>
+              </Button>
+            )}
+
             {/* Dynamic Grid Resizer (4 to 1000 participants) */}
             <GridLayoutSelector
               currentLayout={currentGridLayout}
@@ -481,7 +714,7 @@ function MeetingRoom() {
             />
           </div>
 
-          {/* Smartphone Clean Tools Trigger (Only visible on mobile) */}
+          {/* Smartphone Clean Tools Trigger */}
           <Button
             size="sm"
             variant="ghost"
@@ -509,13 +742,31 @@ function MeetingRoom() {
         </RtkUiProvider>
       </main>
 
-      {/* ─── Bottom Floating Reaction Emoji Launcher (Positioned at bottom with reaction emoji) ─── */}
+      {/* ─── Bottom Floating Reaction Emoji Launcher ─── */}
       <FloatingReactions 
         roomId={roomId}
         userName={data?.participantName || submittedGuestName || "You"}
       />
 
-      {/* ─── Mobile Meeting Controls Drawer (Prevents top bar clumsiness on phones) ─── */}
+      {/* ─── Host Controls Modal ─── */}
+      <HostControlsModal
+        isOpen={isHostControlsOpen}
+        onClose={() => setIsHostControlsOpen(false)}
+        roomId={roomId}
+        meeting={meeting}
+        currentSettings={roomSettings}
+        onSettingsUpdate={(newSettings) => setRoomSettings(newSettings)}
+      />
+
+      {/* ─── Attendance & Telemetry Modal ─── */}
+      <MeetingAttendanceModal
+        isOpen={isAttendanceOpen}
+        onClose={() => setIsAttendanceOpen(false)}
+        roomId={roomId}
+        meetingTitle={data?.title || "Live Meeting"}
+      />
+
+      {/* ─── Mobile Meeting Controls Drawer ─── */}
       <Dialog open={isMobileToolsOpen} onOpenChange={setIsMobileToolsOpen}>
         <DialogContent className="sm:max-w-md bg-[#0e1118]/98 backdrop-blur-2xl border-white/15 text-white rounded-3xl p-5 shadow-2xl">
           <DialogHeader>
@@ -527,8 +778,48 @@ function MeetingRoom() {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-2 text-xs">
+          <div className="space-y-3.5 py-2 text-xs">
             
+            {/* Host Tools Quick Access for Mobile */}
+            {isHostUser && (
+              <div className="p-3 bg-blue-600/15 border border-blue-500/30 rounded-2xl flex items-center justify-between">
+                <div>
+                  <span className="font-semibold text-blue-300 block">Host Security Controls</span>
+                  <span className="text-[10px] text-gray-400">Lock room, mute all, eject participants</span>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setIsMobileToolsOpen(false);
+                    setIsHostControlsOpen(true);
+                  }}
+                  className="h-7 px-3 bg-blue-600 hover:bg-blue-700 text-white text-[11px] rounded-xl font-semibold"
+                >
+                  Manage
+                </Button>
+              </div>
+            )}
+
+            {/* Smart Attendance Quick Access for Mobile */}
+            {isHostUser && (
+              <div className="p-3 bg-emerald-600/15 border border-emerald-500/30 rounded-2xl flex items-center justify-between">
+                <div>
+                  <span className="font-semibold text-emerald-300 block">Smart Attendance & Excel</span>
+                  <span className="text-[10px] text-gray-400">Track minutes, intern IDs, export .csv</span>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setIsMobileToolsOpen(false);
+                    setIsAttendanceOpen(true);
+                  }}
+                  className="h-7 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] rounded-xl font-semibold"
+                >
+                  View
+                </Button>
+              </div>
+            )}
+
             {/* Share Meeting Link & Code */}
             <div className="p-3 bg-black/40 border border-white/10 rounded-2xl space-y-2">
               <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Meeting Details</span>
