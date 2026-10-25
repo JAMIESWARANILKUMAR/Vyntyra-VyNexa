@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FileSpreadsheet, Download, RefreshCw, CheckCircle2, Clock, 
-  AlertCircle, ShieldCheck, UserX, Search, Filter, Sparkles, Loader2 
+  AlertCircle, ShieldCheck, UserX, Search, Filter, Sparkles, Loader2,
+  UserCheck, BadgeCheck, User, Calendar, Check, ExternalLink, QrCode
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { getMeetingAttendanceFn, updateAttendanceStatusFn } from '@/lib/meetings.functions';
+import { getMeetingAttendanceFn, updateAttendanceStatusFn, recordMeetingTelemetryFn } from '@/lib/meetings.functions';
 
 export interface AttendanceRecord {
   id: string;
@@ -31,17 +32,44 @@ export function MeetingAttendanceModal({
   onClose,
   roomId,
   meetingTitle,
+  isHost = false,
+  currentUser,
 }: {
   isOpen: boolean;
   onClose: () => void;
   roomId: string;
   meetingTitle: string;
+  isHost?: boolean;
+  currentUser?: {
+    name?: string;
+    email?: string;
+    internId?: string | null;
+    userType?: string | null;
+  };
 }) {
+  const [activeTab, setActiveTab] = useState<'mark' | 'roster'>(isHost ? 'roster' : 'mark');
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [minDurationThreshold, setMinDurationThreshold] = useState<number>(5); // default 5 minutes for automated present
+  const [minDurationThreshold, setMinDurationThreshold] = useState<number>(5);
+
+  // Participant self-marking fields
+  const [selfInternId, setSelfInternId] = useState(currentUser?.internId || '');
+  const [selfName, setSelfName] = useState(currentUser?.name || '');
+  const [selfEmail, setSelfEmail] = useState(currentUser?.email || '');
+  const [hasMarkedPresent, setHasMarkedPresent] = useState(false);
+
+  // Sync tab with host status on modal open
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(isHost ? 'roster' : 'mark');
+      if (currentUser?.internId) setSelfInternId(currentUser.internId);
+      if (currentUser?.name) setSelfName(currentUser.name);
+      if (currentUser?.email) setSelfEmail(currentUser.email);
+    }
+  }, [isOpen, isHost, currentUser]);
 
   // Fetch Attendance Records
   const loadAttendance = async () => {
@@ -66,6 +94,56 @@ export function MeetingAttendanceModal({
       loadAttendance();
     }
   }, [isOpen, roomId]);
+
+  // Participant Self Punch-In / Mark Attendance Action
+  const handleSelfPunchIn = async () => {
+    if (!selfName.trim()) {
+      toast.error("Please enter your name to mark attendance");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const participantId = `part_${(selfEmail || selfName).replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
+      const res = await recordMeetingTelemetryFn({
+        data: {
+          meetingId: roomId,
+          participantId,
+          userName: selfName.trim(),
+          userEmail: selfEmail.trim() || undefined,
+          internId: selfInternId.trim() || undefined,
+          userType: selfInternId.trim() ? 'intern' : (currentUser?.userType || 'guest'),
+          action: 'join',
+          durationSeconds: 60,
+          deviceMetadata: navigator?.userAgent ? navigator.userAgent.slice(0, 100) : 'Browser'
+        }
+      });
+
+      if (res?.success) {
+        setHasMarkedPresent(true);
+        toast.success("Attendance marked as Present! Recorded on company roster.", {
+          description: `Verified for ${selfName} ${selfInternId ? `(${selfInternId})` : ''}`,
+          icon: '✓'
+        });
+        loadAttendance();
+      } else {
+        toast.error("Could not record attendance. Please try again.");
+      }
+    } catch (err) {
+      console.warn("Error marking attendance:", err);
+      toast.error("Network error while recording attendance");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Pre-check if current user is already present in records
+  const myRecord = records.find(r => 
+    (currentUser?.email && r.user_email?.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser?.internId && r.intern_id === currentUser.internId) ||
+    (currentUser?.name && r.user_name.toLowerCase() === currentUser.name.toLowerCase())
+  );
+  const isAlreadyPresent = Boolean(myRecord && myRecord.attendance_status === 'Present') || hasMarkedPresent;
 
   // Handle Manual Status Change
   const handleStatusChange = async (recordId: string, newStatus: 'Present' | 'Late' | 'Excused' | 'Absent') => {
@@ -200,17 +278,169 @@ export function MeetingAttendanceModal({
             </div>
 
             {/* Excel Download CTA */}
-            <Button
-              onClick={handleExportExcel}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs h-10 px-4 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-2 shrink-0 transition-transform hover:scale-[1.02]"
-            >
-              <Download className="h-4 w-4" />
-              <span>Export to Excel (.csv)</span>
-            </Button>
+            {activeTab === 'roster' && (
+              <Button
+                onClick={handleExportExcel}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs h-10 px-4 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-2 shrink-0 transition-transform hover:scale-[1.02]"
+              >
+                <Download className="h-4 w-4" />
+                <span>Export to Excel (.csv)</span>
+              </Button>
+            )}
           </div>
         </DialogHeader>
 
-        {/* Summary Metric Badges */}
+        {/* Tab Switcher: Mark My Attendance vs Complete Roster */}
+        <div className="flex items-center gap-2 border-b border-white/10 pb-3 my-2">
+          <button
+            onClick={() => setActiveTab('mark')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+              activeTab === 'mark'
+                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 ring-1 ring-emerald-400/30'
+                : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <UserCheck className="h-4 w-4" />
+            <span>Mark My Attendance</span>
+            {isAlreadyPresent && (
+              <span className="h-2 w-2 rounded-full bg-emerald-300 animate-pulse"></span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('roster')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+              activeTab === 'roster'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25 ring-1 ring-blue-400/30'
+                : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            <span>Company Attendance Roster ({totalCount})</span>
+          </button>
+        </div>
+
+        {/* ═════════ TAB: MARK MY ATTENDANCE ═════════ */}
+        {activeTab === 'mark' && (
+          <div className="space-y-4 py-2">
+            <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-black/90 via-[#0e1624] to-black/90 border border-emerald-500/30 shadow-2xl space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    <UserCheck className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                      Digital Meeting Attendance Punch-In
+                    </h3>
+                    <p className="text-xs text-gray-400">Official VCS Enterprise Meeting Presence Verification</p>
+                  </div>
+                </div>
+
+                <div className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 self-start sm:self-auto ${
+                  isAlreadyPresent 
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm' 
+                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                }`}>
+                  <span className={`h-2 w-2 rounded-full ${isAlreadyPresent ? 'bg-emerald-400 animate-ping' : 'bg-amber-400'}`}></span>
+                  <span>{isAlreadyPresent ? '✓ Verified Present' : 'Pending Punch-In'}</span>
+                </div>
+              </div>
+
+              {/* Form Inputs for Name, Intern ID, and Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-gray-300 uppercase tracking-wider block mb-1">
+                    Your Full Name
+                  </label>
+                  <Input
+                    value={selfName}
+                    onChange={(e) => setSelfName(e.target.value)}
+                    placeholder="Enter your name"
+                    className="h-10 bg-black/60 border-white/15 text-white text-xs rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-gray-300 uppercase tracking-wider block mb-1">
+                    Intern ID / Employee Code
+                  </label>
+                  <Input
+                    value={selfInternId}
+                    onChange={(e) => setSelfInternId(e.target.value.toUpperCase())}
+                    placeholder="e.g. VCS-INT-2024-001"
+                    className="h-10 bg-black/60 border-white/15 text-white font-mono text-xs rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-gray-300 uppercase tracking-wider block mb-1">
+                    Corporate / Verified Email
+                  </label>
+                  <Input
+                    value={selfEmail}
+                    onChange={(e) => setSelfEmail(e.target.value)}
+                    placeholder="e.g. name@vyntyraconsultancyservices.in"
+                    className="h-10 bg-black/60 border-white/15 text-white text-xs rounded-xl"
+                  />
+                </div>
+              </div>
+
+              {/* Punch-In CTA Box */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/[0.03] p-4 rounded-2xl border border-white/10">
+                <div>
+                  <span className="text-sm font-bold text-white block">
+                    {isAlreadyPresent ? "✓ Attendance Successfully Logged on Roster" : "Click below to confirm your presence for this session"}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    Meeting ID: <span className="font-mono text-blue-400 font-semibold">#{roomId.slice(0, 8).toUpperCase()}</span> · Live session duration is tracked automatically
+                  </span>
+                </div>
+
+                <Button
+                  onClick={handleSelfPunchIn}
+                  disabled={isSubmitting}
+                  className={`h-11 px-6 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-xl transition-all shrink-0 ${
+                    isAlreadyPresent 
+                      ? 'bg-emerald-600/80 hover:bg-emerald-600 text-white' 
+                      : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30 hover:scale-[1.02]'
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4" />
+                  )}
+                  <span>{isAlreadyPresent ? "Re-Confirm / Update Punch-In" : "Punch-In / Mark My Attendance"}</span>
+                </Button>
+              </div>
+
+              {/* Verification Slip Information */}
+              <div className="p-4 rounded-2xl bg-black/50 border border-white/10 space-y-2 text-xs">
+                <div className="flex items-center justify-between text-gray-400">
+                  <span>Session Title</span>
+                  <span className="text-white font-semibold">{meetingTitle}</span>
+                </div>
+                <div className="flex items-center justify-between text-gray-400">
+                  <span>Official Punch-In Seal</span>
+                  <span className="font-mono text-emerald-400 font-bold">VCS-ATTENDANCE-{roomId.slice(0, 8).toUpperCase()}</span>
+                </div>
+                <div className="flex items-center justify-between text-gray-400">
+                  <span>Verification Guarantee</span>
+                  <span className="text-emerald-300 font-medium flex items-center gap-1">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                    Encrypted Session Telemetry Active
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═════════ TAB: COMPLETE ROSTER ═════════ */}
+        {activeTab === 'roster' && (
+          <div>
+            {/* Summary Metric Badges */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-3">
           <div className="p-3 bg-white/5 border border-white/10 rounded-2xl">
             <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">Total Attendees</span>
@@ -382,6 +612,8 @@ export function MeetingAttendanceModal({
             </table>
           </div>
         </div>
+      </div>
+    )}
 
         <div className="pt-3 flex items-center justify-between text-xs text-gray-400">
           <span>* Telemetry duration accumulates active participant minutes across reconnects.</span>

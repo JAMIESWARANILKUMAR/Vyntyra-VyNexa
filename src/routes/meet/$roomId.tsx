@@ -64,6 +64,7 @@ function MeetingRoom() {
   // Meeting Preferences & Waveform Styling State
   const [meetingPrefs, setMeetingPrefs] = useState<MeetingPreferences>(getSavedPreferences);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
 
   // Indian Languages AI Translation State
   const [translationEnabled, setTranslationEnabled] = useState(false);
@@ -371,6 +372,31 @@ function MeetingRoom() {
         }
       } catch (_) {}
     };
+  }, [meeting]);
+
+  // Monitor RealtimeKit Live Recording Status
+  useEffect(() => {
+    if (!meeting?.recording) return;
+
+    const checkRecordingState = () => {
+      try {
+        const state = meeting.recording?.recordingState;
+        setIsRecording(state === 'RECORDING' || state === 'STARTING');
+      } catch (_) {}
+    };
+
+    checkRecordingState();
+
+    try {
+      meeting.recording.on('recordingUpdate', checkRecordingState);
+      return () => {
+        try {
+          if (typeof meeting.recording.removeListener === 'function') {
+            meeting.recording.removeListener('recordingUpdate', checkRecordingState);
+          }
+        } catch (_) {}
+      };
+    } catch (_) {}
   }, [meeting]);
 
   // Active Color Filter & Virtual Background Presets
@@ -800,9 +826,11 @@ function MeetingRoom() {
     data?.userType === 'super_host' ||
     (guestCredentials.guestEmail && guestCredentials.guestEmail.trim().toLowerCase() === 'hr@vyntyraconsultancyservices.in') ||
     (submittedGuestName && submittedGuestName.toLowerCase().includes('hr')) ||
-    (data?.participantName && data.participantName.toLowerCase().includes('hr'))
+    (data?.participantName && data.participantName.toLowerCase().includes('hr')) ||
+    (meeting?.self?.name && meeting.self.name.toLowerCase().includes('hr')) ||
+    (meeting?.self?.email && meeting.self.email.toLowerCase().includes('hr'))
   );
-  const isHostUser = Boolean(data?.isHost || data?.isCoHost || data?.isSuperHost || isSuperHostUser);
+  const isHostUser = Boolean(data?.isHost || data?.isCoHost || data?.isSuperHost || isSuperHostUser || meeting?.self?.isHost || meeting?.self?.permissions?.canManageRoom);
 
   const activeBgUrl = activeBgPreset?.imageUrl || activeBgPreset?.preview;
 
@@ -1110,12 +1138,20 @@ function MeetingRoom() {
             </button>
           </div>
 
-          {/* Live Meeting Duration Timer Pill */}
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-[10px] font-semibold text-red-300 backdrop-blur-md shadow-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse"></span>
-            <span className="tracking-wider uppercase text-[9px] text-red-400">REC</span>
+          {/* Live Meeting Duration Timer Pill (Emerald LIVE badge) */}
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-semibold text-emerald-300 backdrop-blur-md shadow-sm">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="tracking-wider uppercase text-[9px] text-emerald-400 font-bold">LIVE</span>
             <span className="font-mono text-gray-200">{meetingTimer}</span>
           </div>
+
+          {/* Genuine Active Recording Indicator (ONLY visible when recording is truly triggered!) */}
+          {isRecording && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-[10px] font-bold text-red-300 backdrop-blur-md shadow-sm animate-pulse">
+              <span className="h-2 w-2 rounded-full bg-red-500"></span>
+              <span className="tracking-wider uppercase text-[9px] text-red-400 font-bold">REC</span>
+            </div>
+          )}
 
           {/* Desktop Direct Copy Action */}
           <Button
@@ -1236,6 +1272,18 @@ function MeetingRoom() {
               <span className="font-medium">Settings</span>
             </Button>
 
+            {/* Group 2.6: Attendance Action - Visible to ALL participants! */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsAttendanceOpen(true)}
+              className="h-7.5 px-3 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/35 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+              title={isHostUser ? "View Complete Attendance Roster & Export CSV" : "Mark & Verify Your Meeting Attendance"}
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-400" />
+              <span>{isHostUser ? "Attendance Roster" : "Mark Attendance"}</span>
+            </Button>
+
             {/* Group 3: Host Privilege Controls */}
             {isHostUser && (
               <>
@@ -1253,17 +1301,6 @@ function MeetingRoom() {
                 >
                   <Shield className={`h-3.5 w-3.5 ${isSuperHostUser ? 'text-amber-400' : 'text-blue-400'}`} />
                   <span>{isSuperHostUser ? "Super Host" : "Host"}</span>
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setIsAttendanceOpen(true)}
-                  className="h-7.5 px-2.5 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/30 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all"
-                  title="Smart Attendance & Session Telemetry"
-                >
-                  <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>Attendance</span>
                 </Button>
               </>
             )}
@@ -1373,6 +1410,13 @@ function MeetingRoom() {
         onClose={() => setIsAttendanceOpen(false)}
         roomId={roomId}
         meetingTitle={data?.title || "Live Meeting"}
+        isHost={isHostUser}
+        currentUser={{
+          name: meeting?.self?.name || submittedGuestName || data?.participantName || "Participant",
+          email: guestCredentials.guestEmail || data?.email,
+          internId: guestCredentials.internId || data?.internId,
+          userType: data?.userType
+        }}
       />
 
       {/* ─── Mobile Meeting Controls Drawer ─── */}
@@ -1438,25 +1482,27 @@ function MeetingRoom() {
               </div>
             )}
 
-            {/* Smart Attendance Quick Access for Mobile */}
-            {isHostUser && (
-              <div className="p-3 bg-emerald-600/15 border border-emerald-500/30 rounded-2xl flex items-center justify-between">
-                <div>
-                  <span className="font-semibold text-emerald-300 block">Smart Attendance & Excel</span>
-                  <span className="text-[10px] text-gray-400">Track minutes, intern IDs, export .csv</span>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setIsMobileToolsOpen(false);
-                    setIsAttendanceOpen(true);
-                  }}
-                  className="h-7 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] rounded-xl font-semibold"
-                >
-                  View
-                </Button>
+            {/* Attendance Quick Access for Mobile (Visible to ALL participants!) */}
+            <div className="p-3 bg-emerald-600/15 border border-emerald-500/30 rounded-2xl flex items-center justify-between">
+              <div>
+                <span className="font-semibold text-emerald-300 block">
+                  {isHostUser ? "Smart Attendance Roster" : "Mark My Attendance"}
+                </span>
+                <span className="text-[10px] text-gray-400">
+                  {isHostUser ? "Track minutes, intern IDs, export .csv" : "Punch-in and confirm your meeting presence"}
+                </span>
               </div>
-            )}
+              <Button
+                size="sm"
+                onClick={() => {
+                  setIsMobileToolsOpen(false);
+                  setIsAttendanceOpen(true);
+                }}
+                className="h-7 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] rounded-xl font-semibold"
+              >
+                {isHostUser ? "View" : "Punch In"}
+              </Button>
+            </div>
 
             {/* Share Meeting Link & Code */}
             <div className="p-3 bg-black/40 border border-white/10 rounded-2xl space-y-2">
