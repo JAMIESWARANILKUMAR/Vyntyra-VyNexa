@@ -24,6 +24,7 @@ import { VideoEnhancerModal, COLOR_FILTERS, BACKGROUND_PRESETS } from '@/compone
 import { FloatingReactions } from '@/components/meet/FloatingReactions';
 import { HostControlsModal } from '@/components/meet/HostControlsModal';
 import { MeetingAttendanceModal } from '@/components/meet/MeetingAttendanceModal';
+import { AudioEnhancerModal, AudioMode } from '@/components/meet/AudioEnhancerModal';
 
 export const Route = createFileRoute('/meet/$roomId')({
   component: MeetingRoom
@@ -44,6 +45,7 @@ function MeetingRoom() {
   const [selectedFilter, setSelectedFilter] = useState('natural');
   const [selectedBackground, setSelectedBackground] = useState('none');
   const [currentGridLayout, setCurrentGridLayout] = useState('8');
+  const [audioMode, setAudioMode] = useState<AudioMode>('dolby');
 
   // Indian Languages AI Translation State
   const [translationEnabled, setTranslationEnabled] = useState(false);
@@ -582,11 +584,32 @@ function MeetingRoom() {
           display: none !important;
         }
 
-        /* Ensure RealtimeKit Meeting Component Fills 100% of Screen */
+        /* Ensure RealtimeKit Meeting Component Fills 100% of Screen and adapts cleanly across all devices */
         rtk-meeting {
           display: flex !important;
           width: 100% !important;
           height: 100% !important;
+        }
+
+        /* Responsive layout adaptation for smartphone, laptop, desktop, ultra-wide & projectors */
+        @media (max-width: 640px) {
+          .rtk-meeting-container {
+            padding-bottom: 68px !important;
+            padding-top: 56px !important;
+          }
+          .rtk-control-bar {
+            padding: 6px !important;
+            gap: 4px !important;
+          }
+        }
+
+        @media (min-width: 1920px) {
+          .rtk-video-tile {
+            border-radius: 16px !important;
+          }
+          .rtk-meeting {
+            max-width: 100% !important;
+          }
         }
       `}} />
 
@@ -679,6 +702,12 @@ function MeetingRoom() {
               </Button>
             )}
 
+            {/* Dolby Audio & Hi-Fi Encoding Engine */}
+            <AudioEnhancerModal
+              activeMode={audioMode}
+              onModeChange={(m) => setAudioMode(m)}
+            />
+
             {/* Dynamic Grid Resizer (4 to 1000 participants) */}
             <GridLayoutSelector
               currentLayout={currentGridLayout}
@@ -730,11 +759,12 @@ function MeetingRoom() {
 
       {/* Main Full-Bleed Video Conference Canvas */}
       <main className="flex-1 w-full h-full relative overflow-hidden bg-[#080808]">
-        {/* Official Vyntyra Watermark Badge */}
-        <div className="absolute top-16 left-4 z-20 pointer-events-none select-none flex items-center gap-2 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 opacity-80 transition-opacity">
-          <img src="/icon-512.png" alt="Vyntyra Logo" className="h-4 w-4 object-contain rounded" />
-          <span className="text-[11px] font-bold tracking-wider text-white">VYNTYRA</span>
-          <span className="text-[9px] font-semibold text-blue-400 bg-blue-500/20 px-1.5 py-0.5 rounded uppercase">MEET</span>
+        {/* Transparent Vyntyra Meet Watermark (14px mobile / 16px desktop) */}
+        <div className="absolute bottom-4 left-4 z-20 pointer-events-none select-none flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/25 backdrop-blur-sm border border-white/5 opacity-50 hover:opacity-80 transition-opacity">
+          <img src="/icon-512.png" alt="Vyntyra Logo" className="h-4 w-4 object-contain rounded opacity-75" />
+          <span className="text-[14px] sm:text-[16px] font-semibold tracking-wider text-white/80 font-sans">
+            Vyntyra Meet
+          </span>
         </div>
 
         <RtkUiProvider meeting={meeting}>
@@ -768,7 +798,7 @@ function MeetingRoom() {
 
       {/* ─── Mobile Meeting Controls Drawer ─── */}
       <Dialog open={isMobileToolsOpen} onOpenChange={setIsMobileToolsOpen}>
-        <DialogContent className="sm:max-w-md bg-[#0e1118]/98 backdrop-blur-2xl border-white/15 text-white rounded-3xl p-5 shadow-2xl">
+        <DialogContent className="sm:max-w-md bg-[#0e1118]/98 backdrop-blur-2xl border-white/15 text-white rounded-3xl p-5 shadow-2xl max-h-[88vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center justify-between text-white">
               <span className="flex items-center gap-2">
@@ -850,6 +880,18 @@ function MeetingRoom() {
                   </Button>
                 </div>
               </div>
+            </div>
+
+            {/* Dolby Audio & Encoding Controls */}
+            <div className="p-3 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between">
+              <div>
+                <span className="font-semibold text-white block">Dolby & Audio Encoding</span>
+                <span className="text-[11px] text-gray-400">Dolby 3D, Studio Stereo, Mono & mic/speaker</span>
+              </div>
+              <AudioEnhancerModal
+                activeMode={audioMode}
+                onModeChange={(m) => setAudioMode(m)}
+              />
             </div>
 
             {/* Video Enhancer Controls */}

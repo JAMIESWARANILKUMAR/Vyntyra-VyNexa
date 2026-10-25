@@ -324,39 +324,48 @@ export function FloatingReactions({
               className="mb-3 w-[calc(100vw-32px)] sm:w-84 max-w-sm bg-[#0e1118]/95 backdrop-blur-2xl border border-white/15 rounded-3xl p-3.5 shadow-2xl z-50 text-white font-sans"
             >
               
-              {/* Header with Hand Raise Action */}
+              {/* Header with Hand Raise Action & Close Button */}
               <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-white/10">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-gray-200">
                   <span className="text-base">😊</span>
                   <span>Meeting Reactions</span>
                 </div>
 
-                <Button
-                  size="sm"
-                  variant={isHandRaised ? "default" : "outline"}
-                  onClick={() => sendReaction('✋', 'raise_hand')}
-                  className={`h-7 px-2.5 text-[11px] rounded-full gap-1 transition-all ${
-                    isHandRaised 
-                      ? 'bg-amber-500 hover:bg-amber-600 text-black font-bold shadow-md' 
-                      : 'border-white/10 bg-white/5 hover:bg-white/10 text-gray-200'
-                  }`}
-                >
-                  <span>✋</span>
-                  <span>{isHandRaised ? 'Lower Hand' : 'Raise Hand'}</span>
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant={isHandRaised ? "default" : "outline"}
+                    onClick={() => sendReaction('✋', 'raise_hand')}
+                    className={`h-7 px-2.5 text-[11px] rounded-full gap-1 transition-all ${
+                      isHandRaised 
+                        ? 'bg-amber-500 hover:bg-amber-600 text-black font-bold shadow-md' 
+                        : 'border-white/10 bg-white/5 hover:bg-white/10 text-gray-200'
+                    }`}
+                  >
+                    <span>✋</span>
+                    <span>{isHandRaised ? 'Lower Hand' : 'Raise Hand'}</span>
+                  </Button>
+
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="h-6 w-6 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                    title="Close"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
 
-              {/* Quick Reactions Bar (Always 1-tap accessible) */}
+              {/* Quick Reactions Bar (Always 1-tap accessible, sends repeatedly without closing) */}
               <div className="flex items-center justify-between gap-1 mb-3 p-1.5 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto">
                 {PROFESSIONAL_EMOJIS.quick.map((item) => (
                   <button
                     key={item.emoji + item.label}
                     onClick={() => {
                       sendReaction(item.emoji, (item as any).action);
-                      if (item.emoji !== '✋') setIsOpen(false);
                     }}
-                    title={item.label}
-                    className="h-9 w-9 text-xl flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-transform shrink-0"
+                    title={`${item.label} (Tap repeatedly to burst)`}
+                    className="h-9 w-9 text-xl flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-125 transition-transform shrink-0"
                   >
                     {item.emoji}
                   </button>
@@ -420,17 +429,16 @@ export function FloatingReactions({
                 </div>
               )}
 
-              {/* Emoji Grid */}
+              {/* Emoji Grid (Tap repeatedly to burst animations!) */}
               <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 max-h-44 overflow-y-auto pr-1">
                 {displayedEmojis.map((item) => (
                   <button
                     key={item.emoji + item.label}
                     onClick={() => {
                       sendReaction(item.emoji, (item as any).action);
-                      if (item.emoji !== '✋') setIsOpen(false);
                     }}
-                    title={item.label}
-                    className="h-10 w-full flex flex-col items-center justify-center rounded-xl bg-white/[0.03] hover:bg-white/10 active:scale-90 transition-transform group"
+                    title={`${item.label} (Tap repeatedly)`}
+                    className="h-10 w-full flex flex-col items-center justify-center rounded-xl bg-white/[0.03] hover:bg-white/10 active:scale-125 transition-transform group"
                   >
                     <span className="text-xl">{item.emoji}</span>
                     <span className="text-[8px] text-gray-400 group-hover:text-gray-200 truncate max-w-full px-0.5 line-clamp-1 leading-tight mt-0.5">
@@ -442,10 +450,13 @@ export function FloatingReactions({
 
               {/* Footer Note */}
               <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-400 px-1">
-                <span>Broadcasts to everyone live</span>
+                <span className="flex items-center gap-1 text-blue-300">
+                  <Sparkles className="h-3 w-3 text-blue-400" />
+                  <span>Tap repeatedly to burst</span>
+                </span>
                 <span className="text-emerald-400 flex items-center gap-1 font-mono">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Connected
+                  Live
                 </span>
               </div>
 
