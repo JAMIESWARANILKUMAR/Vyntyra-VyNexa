@@ -517,6 +517,7 @@ function AdminDashboard() {
             window.location.href = "/login";
           }}
           links={[
+            { href: "/admin/interviews", label: "AI Mock Interviews", icon: Sparkles, colorClass: "text-blue-600 font-bold hover:bg-blue-50" },
             { href: "/admin/cbt/generate", label: "AI CBT Engine", icon: BrainCircuit, colorClass: "text-indigo-600 font-bold hover:bg-indigo-50" },
             { href: "/admin/cbt/submissions", label: "CBT Submissions", icon: ClipboardList },
             { href: "/admin/b2b-playbook", label: "B2B Playbook", icon: BookOpen, colorClass: "text-gold hover:bg-gold/10" },

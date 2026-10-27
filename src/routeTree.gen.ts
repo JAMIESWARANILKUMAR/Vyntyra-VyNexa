@@ -25,6 +25,7 @@ import { Route as InterviewIndexRouteImport } from './routes/interview/index'
 import { Route as StatusTokenRouteImport } from './routes/status.$token'
 import { Route as MeetRoomIdRouteImport } from './routes/meet/$roomId'
 import { Route as InterviewSessionIdRouteImport } from './routes/interview/$sessionId'
+import { Route as CandidateInterviewsRouteImport } from './routes/candidate/interviews'
 import { Route as AuthInternRouteImport } from './routes/auth/intern'
 import { Route as AuthEmployeeRouteImport } from './routes/auth/employee'
 import { Route as AuthAdminRouteImport } from './routes/auth/admin'
@@ -34,10 +35,12 @@ import { Route as AuthenticatedEmployeeRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCmsRouteImport } from './routes/_authenticated/cms'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as InterviewReportSessionIdRouteImport } from './routes/interview/report.$sessionId'
+import { Route as AuthenticatedEmployeeInterviewsRouteImport } from './routes/_authenticated/employee/interviews'
 import { Route as AuthenticatedCbtTestIdRouteImport } from './routes/_authenticated/cbt/$testId'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin/security'
 import { Route as AuthenticatedAdminOperationsRouteImport } from './routes/_authenticated/admin/operations'
+import { Route as AuthenticatedAdminInterviewsRouteImport } from './routes/_authenticated/admin/interviews'
 import { Route as AuthenticatedAdminEmailCampaignsRouteImport } from './routes/_authenticated/admin/email-campaigns'
 import { Route as AuthenticatedAdminB2bPlaybookRouteImport } from './routes/_authenticated/admin/b2b-playbook'
 import { Route as AuthenticatedCbtResultsTestIdRouteImport } from './routes/_authenticated/cbt/results/$testId'
@@ -121,6 +124,11 @@ const InterviewSessionIdRoute = InterviewSessionIdRouteImport.update({
   path: '/interview/$sessionId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CandidateInterviewsRoute = CandidateInterviewsRouteImport.update({
+  id: '/candidate/interviews',
+  path: '/candidate/interviews',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthInternRoute = AuthInternRouteImport.update({
   id: '/auth/intern',
   path: '/auth/intern',
@@ -167,6 +175,12 @@ const InterviewReportSessionIdRoute =
     path: '/interview/report/$sessionId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedEmployeeInterviewsRoute =
+  AuthenticatedEmployeeInterviewsRouteImport.update({
+    id: '/interviews',
+    path: '/interviews',
+    getParentRoute: () => AuthenticatedEmployeeRoute,
+  } as any)
 const AuthenticatedCbtTestIdRoute = AuthenticatedCbtTestIdRouteImport.update({
   id: '/cbt/$testId',
   path: '/cbt/$testId',
@@ -188,6 +202,12 @@ const AuthenticatedAdminOperationsRoute =
   AuthenticatedAdminOperationsRouteImport.update({
     id: '/admin/operations',
     path: '/admin/operations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminInterviewsRoute =
+  AuthenticatedAdminInterviewsRouteImport.update({
+    id: '/admin/interviews',
+    path: '/admin/interviews',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminEmailCampaignsRoute =
@@ -221,12 +241,13 @@ export interface FileRoutesByFullPath {
   '/track': typeof TrackRoute
   '/verify': typeof VerifyRoute
   '/cms': typeof AuthenticatedCmsRoute
-  '/employee': typeof AuthenticatedEmployeeRoute
+  '/employee': typeof AuthenticatedEmployeeRouteWithChildren
   '/intern': typeof AuthenticatedInternRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/auth/admin': typeof AuthAdminRoute
   '/auth/employee': typeof AuthEmployeeRoute
   '/auth/intern': typeof AuthInternRoute
+  '/candidate/interviews': typeof CandidateInterviewsRoute
   '/interview/$sessionId': typeof InterviewSessionIdRoute
   '/meet/$roomId': typeof MeetRoomIdRoute
   '/status/$token': typeof StatusTokenRoute
@@ -234,10 +255,12 @@ export interface FileRoutesByFullPath {
   '/meet/': typeof MeetIndexRoute
   '/admin/b2b-playbook': typeof AuthenticatedAdminB2bPlaybookRoute
   '/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
+  '/admin/interviews': typeof AuthenticatedAdminInterviewsRoute
   '/admin/operations': typeof AuthenticatedAdminOperationsRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/cbt/$testId': typeof AuthenticatedCbtTestIdRoute
+  '/employee/interviews': typeof AuthenticatedEmployeeInterviewsRoute
   '/interview/report/$sessionId': typeof InterviewReportSessionIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/cbt/results/$testId': typeof AuthenticatedCbtResultsTestIdRoute
@@ -254,12 +277,13 @@ export interface FileRoutesByTo {
   '/track': typeof TrackRoute
   '/verify': typeof VerifyRoute
   '/cms': typeof AuthenticatedCmsRoute
-  '/employee': typeof AuthenticatedEmployeeRoute
+  '/employee': typeof AuthenticatedEmployeeRouteWithChildren
   '/intern': typeof AuthenticatedInternRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/auth/admin': typeof AuthAdminRoute
   '/auth/employee': typeof AuthEmployeeRoute
   '/auth/intern': typeof AuthInternRoute
+  '/candidate/interviews': typeof CandidateInterviewsRoute
   '/interview/$sessionId': typeof InterviewSessionIdRoute
   '/meet/$roomId': typeof MeetRoomIdRoute
   '/status/$token': typeof StatusTokenRoute
@@ -267,10 +291,12 @@ export interface FileRoutesByTo {
   '/meet': typeof MeetIndexRoute
   '/admin/b2b-playbook': typeof AuthenticatedAdminB2bPlaybookRoute
   '/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
+  '/admin/interviews': typeof AuthenticatedAdminInterviewsRoute
   '/admin/operations': typeof AuthenticatedAdminOperationsRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/cbt/$testId': typeof AuthenticatedCbtTestIdRoute
+  '/employee/interviews': typeof AuthenticatedEmployeeInterviewsRoute
   '/interview/report/$sessionId': typeof InterviewReportSessionIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/cbt/results/$testId': typeof AuthenticatedCbtResultsTestIdRoute
@@ -289,12 +315,13 @@ export interface FileRoutesById {
   '/track': typeof TrackRoute
   '/verify': typeof VerifyRoute
   '/_authenticated/cms': typeof AuthenticatedCmsRoute
-  '/_authenticated/employee': typeof AuthenticatedEmployeeRoute
+  '/_authenticated/employee': typeof AuthenticatedEmployeeRouteWithChildren
   '/_authenticated/intern': typeof AuthenticatedInternRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/auth/admin': typeof AuthAdminRoute
   '/auth/employee': typeof AuthEmployeeRoute
   '/auth/intern': typeof AuthInternRoute
+  '/candidate/interviews': typeof CandidateInterviewsRoute
   '/interview/$sessionId': typeof InterviewSessionIdRoute
   '/meet/$roomId': typeof MeetRoomIdRoute
   '/status/$token': typeof StatusTokenRoute
@@ -302,10 +329,12 @@ export interface FileRoutesById {
   '/meet/': typeof MeetIndexRoute
   '/_authenticated/admin/b2b-playbook': typeof AuthenticatedAdminB2bPlaybookRoute
   '/_authenticated/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
+  '/_authenticated/admin/interviews': typeof AuthenticatedAdminInterviewsRoute
   '/_authenticated/admin/operations': typeof AuthenticatedAdminOperationsRoute
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/cbt/$testId': typeof AuthenticatedCbtTestIdRoute
+  '/_authenticated/employee/interviews': typeof AuthenticatedEmployeeInterviewsRoute
   '/interview/report/$sessionId': typeof InterviewReportSessionIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/cbt/results/$testId': typeof AuthenticatedCbtResultsTestIdRoute
@@ -330,6 +359,7 @@ export interface FileRouteTypes {
     | '/auth/admin'
     | '/auth/employee'
     | '/auth/intern'
+    | '/candidate/interviews'
     | '/interview/$sessionId'
     | '/meet/$roomId'
     | '/status/$token'
@@ -337,10 +367,12 @@ export interface FileRouteTypes {
     | '/meet/'
     | '/admin/b2b-playbook'
     | '/admin/email-campaigns'
+    | '/admin/interviews'
     | '/admin/operations'
     | '/admin/security'
     | '/admin/settings'
     | '/cbt/$testId'
+    | '/employee/interviews'
     | '/interview/report/$sessionId'
     | '/admin/'
     | '/cbt/results/$testId'
@@ -363,6 +395,7 @@ export interface FileRouteTypes {
     | '/auth/admin'
     | '/auth/employee'
     | '/auth/intern'
+    | '/candidate/interviews'
     | '/interview/$sessionId'
     | '/meet/$roomId'
     | '/status/$token'
@@ -370,10 +403,12 @@ export interface FileRouteTypes {
     | '/meet'
     | '/admin/b2b-playbook'
     | '/admin/email-campaigns'
+    | '/admin/interviews'
     | '/admin/operations'
     | '/admin/security'
     | '/admin/settings'
     | '/cbt/$testId'
+    | '/employee/interviews'
     | '/interview/report/$sessionId'
     | '/admin'
     | '/cbt/results/$testId'
@@ -397,6 +432,7 @@ export interface FileRouteTypes {
     | '/auth/admin'
     | '/auth/employee'
     | '/auth/intern'
+    | '/candidate/interviews'
     | '/interview/$sessionId'
     | '/meet/$roomId'
     | '/status/$token'
@@ -404,10 +440,12 @@ export interface FileRouteTypes {
     | '/meet/'
     | '/_authenticated/admin/b2b-playbook'
     | '/_authenticated/admin/email-campaigns'
+    | '/_authenticated/admin/interviews'
     | '/_authenticated/admin/operations'
     | '/_authenticated/admin/security'
     | '/_authenticated/admin/settings'
     | '/_authenticated/cbt/$testId'
+    | '/_authenticated/employee/interviews'
     | '/interview/report/$sessionId'
     | '/_authenticated/admin/'
     | '/_authenticated/cbt/results/$testId'
@@ -428,6 +466,7 @@ export interface RootRouteChildren {
   AuthAdminRoute: typeof AuthAdminRoute
   AuthEmployeeRoute: typeof AuthEmployeeRoute
   AuthInternRoute: typeof AuthInternRoute
+  CandidateInterviewsRoute: typeof CandidateInterviewsRoute
   InterviewSessionIdRoute: typeof InterviewSessionIdRoute
   MeetRoomIdRoute: typeof MeetRoomIdRoute
   InterviewIndexRoute: typeof InterviewIndexRoute
@@ -549,6 +588,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InterviewSessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/candidate/interviews': {
+      id: '/candidate/interviews'
+      path: '/candidate/interviews'
+      fullPath: '/candidate/interviews'
+      preLoaderRoute: typeof CandidateInterviewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/intern': {
       id: '/auth/intern'
       path: '/auth/intern'
@@ -612,6 +658,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InterviewReportSessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/employee/interviews': {
+      id: '/_authenticated/employee/interviews'
+      path: '/interviews'
+      fullPath: '/employee/interviews'
+      preLoaderRoute: typeof AuthenticatedEmployeeInterviewsRouteImport
+      parentRoute: typeof AuthenticatedEmployeeRoute
+    }
     '/_authenticated/cbt/$testId': {
       id: '/_authenticated/cbt/$testId'
       path: '/cbt/$testId'
@@ -640,6 +693,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminOperationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/interviews': {
+      id: '/_authenticated/admin/interviews'
+      path: '/admin/interviews'
+      fullPath: '/admin/interviews'
+      preLoaderRoute: typeof AuthenticatedAdminInterviewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/email-campaigns': {
       id: '/_authenticated/admin/email-campaigns'
       path: '/admin/email-campaigns'
@@ -664,13 +724,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedEmployeeRouteChildren {
+  AuthenticatedEmployeeInterviewsRoute: typeof AuthenticatedEmployeeInterviewsRoute
+}
+
+const AuthenticatedEmployeeRouteChildren: AuthenticatedEmployeeRouteChildren = {
+  AuthenticatedEmployeeInterviewsRoute: AuthenticatedEmployeeInterviewsRoute,
+}
+
+const AuthenticatedEmployeeRouteWithChildren =
+  AuthenticatedEmployeeRoute._addFileChildren(
+    AuthenticatedEmployeeRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCmsRoute: typeof AuthenticatedCmsRoute
-  AuthenticatedEmployeeRoute: typeof AuthenticatedEmployeeRoute
+  AuthenticatedEmployeeRoute: typeof AuthenticatedEmployeeRouteWithChildren
   AuthenticatedInternRoute: typeof AuthenticatedInternRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
   AuthenticatedAdminB2bPlaybookRoute: typeof AuthenticatedAdminB2bPlaybookRoute
   AuthenticatedAdminEmailCampaignsRoute: typeof AuthenticatedAdminEmailCampaignsRoute
+  AuthenticatedAdminInterviewsRoute: typeof AuthenticatedAdminInterviewsRoute
   AuthenticatedAdminOperationsRoute: typeof AuthenticatedAdminOperationsRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
@@ -681,11 +755,12 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCmsRoute: AuthenticatedCmsRoute,
-  AuthenticatedEmployeeRoute: AuthenticatedEmployeeRoute,
+  AuthenticatedEmployeeRoute: AuthenticatedEmployeeRouteWithChildren,
   AuthenticatedInternRoute: AuthenticatedInternRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
   AuthenticatedAdminB2bPlaybookRoute: AuthenticatedAdminB2bPlaybookRoute,
   AuthenticatedAdminEmailCampaignsRoute: AuthenticatedAdminEmailCampaignsRoute,
+  AuthenticatedAdminInterviewsRoute: AuthenticatedAdminInterviewsRoute,
   AuthenticatedAdminOperationsRoute: AuthenticatedAdminOperationsRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
@@ -723,6 +798,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthAdminRoute: AuthAdminRoute,
   AuthEmployeeRoute: AuthEmployeeRoute,
   AuthInternRoute: AuthInternRoute,
+  CandidateInterviewsRoute: CandidateInterviewsRoute,
   InterviewSessionIdRoute: InterviewSessionIdRoute,
   MeetRoomIdRoute: MeetRoomIdRoute,
   InterviewIndexRoute: InterviewIndexRoute,

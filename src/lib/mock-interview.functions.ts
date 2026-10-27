@@ -4,6 +4,7 @@ import { generateAiJson, generateAiText } from "@/lib/ai-gateway";
 import { getAdminClient } from "@/integrations/supabase/admin";
 import { uploadBufferToR2 } from "@/lib/r2";
 import { getD1Database } from "@/lib/cloudflare-d1";
+import { resolveUserInterviewRole, hasInterviewPermission, UserRole } from "@/lib/mock-interview-rbac";
 
 // ═══════════════════════════════════════════════════════════════════
 // Types & Domain Definitions
@@ -829,3 +830,400 @@ export const listMockSessionsFn = createServerFn({ method: "GET" })
 
     return { sessions: sessions || [] };
   });
+
+// ═══════════════════════════════════════════════════════════════════
+// 7. Schedule Mock Interview (Super Admin, Admin, Employee/Mentor)
+// ═══════════════════════════════════════════════════════════════════
+
+export const scheduleMockInterviewFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({
+    candidateName: z.string().min(1),
+    candidateEmail: z.string().email(),
+    internId: z.string().optional(),
+    domain: z.string().default('fullstack'),
+    targetRole: z.string().default('Full-Stack Software Engineer'),
+    difficulty: z.enum(['junior', 'mid', 'senior']).default('mid'),
+    scheduledAt: z.string(), // ISO date string
+    mentorId: z.string().optional(),
+    mentorName: z.string().optional(),
+    department: z.string().default('Engineering'),
+    callerRole: z.enum(['super_admin', 'admin', 'employee', 'candidate']).default('employee'),
+    callerUserId: z.string().optional()
+  }).parse(d))
+  .handler(async ({ data: args }) => {
+    // Permission check
+    if (args.callerRole === 'candidate') {
+      throw new Error("Unauthorized: Candidates cannot schedule interviews for others.");
+    }
+
+    const domainMeta = INTERVIEW_DOMAINS.find(d => d.id === args.domain) || INTERVIEW_DOMAINS[2];
+    const roleTitle = args.targetRole || domainMeta.recommendedRole;
+
+    // Generate Questions Curriculum via OpenRouter
+    const questionPrompt = `You are an elite Staff Technical Interviewer designing a 6-question live mock interview for "${roleTitle}" (${domainMeta.title}) at difficulty "${args.difficulty.toUpperCase()}".
+Return JSON with key "questions" containing 6 objects (id, order, category, question, expectedKeyPoints, initialCodeSnippet, codingLanguage).`;
+
+    let questionsBank: InterviewQuestionItem[] = [];
+    try {
+      const aiRes = await generateAiJson<{ questions: InterviewQuestionItem[] }>({
+        prompt: questionPrompt,
+        provider: "openrouter",
+        openRouterModel: "google/gemini-2.5-flash",
+        temperature: 0.3,
+        responseMimeType: "application/json"
+      });
+      if (aiRes?.data?.questions) questionsBank = aiRes.data.questions;
+    } catch (_) {}
+
+    if (questionsBank.length === 0) {
+      questionsBank = [
+        {
+          id: "q1",
+          order: 1,
+          category: "icebreaker",
+          question: `Hello ${args.candidateName}, welcome to your scheduled mock interview for ${roleTitle}. Tell me about your background and recent projects.`,
+          expectedKeyPoints: ["Background", "Projects"]
+        },
+        {
+          id: "q2",
+          order: 2,
+          category: "architecture",
+          question: `In modern ${domainMeta.title}, how do you tackle high-throughput data processing and system latency?`,
+          expectedKeyPoints: ["Scalability", "Caching", "Performance"]
+        },
+        {
+          id: "q3",
+          order: 3,
+          category: "coding_challenge",
+          question: `Let's switch to the code playground. Implement the solution to the challenge in your editor.`,
+          expectedKeyPoints: ["Algorithm", "Edge cases"],
+          initialCodeSnippet: domainMeta.defaultCode,
+          codingLanguage: domainMeta.defaultLanguage
+        }
+      ];
+    }
+
+    const supabase = getAdminClient();
+    const sessionId = crypto.randomUUID();
+
+    const insertPayload = {
+      id: sessionId,
+      candidate_name: args.candidateName.trim(),
+      candidate_email: args.candidateEmail.trim(),
+      intern_id: args.internId?.trim() || null,
+      domain: args.domain,
+      target_role: roleTitle,
+      difficulty: args.difficulty,
+      status: 'scheduled',
+      scheduled_at: args.scheduledAt,
+      schedule_time: args.scheduledAt,
+      created_by: args.callerUserId || null,
+      mentor_id: args.mentorId || args.callerUserId || null,
+      mentor_name: args.mentorName || null,
+      department: args.department,
+      questions_bank: questionsBank,
+      current_question_index: 0,
+      code_snippet: questionsBank[2]?.initialCodeSnippet || domainMeta.defaultCode,
+      code_language: questionsBank[2]?.codingLanguage || domainMeta.defaultLanguage,
+      created_at: new Date().toISOString()
+    };
+
+    const { data: created, error } = await supabase
+      .from('mock_sessions')
+      .insert(insertPayload)
+      .select('*')
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to schedule interview: ${error.message}`);
+    }
+
+    return {
+      success: true,
+      sessionId,
+      session: created || insertPayload
+    };
+  });
+
+// ═══════════════════════════════════════════════════════════════════
+// 8. Super Admin & Admin Global Monitoring & Analytics Grid
+// ═══════════════════════════════════════════════════════════════════
+
+export const listAdminMockSessionsFn = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => z.object({
+    status: z.string().optional(),
+    domain: z.string().optional(),
+    department: z.string().optional(),
+    search: z.string().optional(),
+    page: z.number().default(1),
+    pageSize: z.number().default(25)
+  }).parse(d))
+  .handler(async ({ data: args }) => {
+    const supabase = getAdminClient();
+
+    let query = supabase
+      .from('mock_sessions')
+      .select('*', { count: 'exact' });
+
+    if (args.status && args.status !== 'all') {
+      query = query.eq('status', args.status);
+    }
+    if (args.domain && args.domain !== 'all') {
+      query = query.eq('domain', args.domain);
+    }
+    if (args.department && args.department !== 'all') {
+      query = query.eq('department', args.department);
+    }
+    if (args.search) {
+      query = query.or(`candidate_name.ilike.%${args.search}%,candidate_email.ilike.%${args.search}%,target_role.ilike.%${args.search}%,intern_id.ilike.%${args.search}%`);
+    }
+
+    const from = (args.page - 1) * args.pageSize;
+    const to = from + args.pageSize - 1;
+
+    const { data: sessions, count, error } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      throw new Error(`Error loading admin sessions: ${error.message}`);
+    }
+
+    // Platform-wide Metrics Calculation
+    const { data: allSessions } = await supabase
+      .from('mock_sessions')
+      .select('status, overall_score, department, hiring_verdict');
+
+    const totalCount = allSessions?.length || 0;
+    const completedList = (allSessions || []).filter(s => s.status === 'completed' && s.overall_score);
+    const activeCount = (allSessions || []).filter(s => s.status === 'in_progress').length;
+    const scheduledCount = (allSessions || []).filter(s => s.status === 'scheduled').length;
+
+    const avgScore = completedList.length > 0 
+      ? Math.round(completedList.reduce((acc, curr) => acc + (Number(curr.overall_score) || 0), 0) / completedList.length)
+      : 0;
+
+    const strongHireCount = (allSessions || []).filter(s => s.hiring_verdict === 'Strong Hire' || s.hiring_verdict === 'Hire').length;
+    const hireRatePercent = completedList.length > 0 ? Math.round((strongHireCount / completedList.length) * 100) : 0;
+
+    return {
+      sessions: sessions || [],
+      totalCount: count || 0,
+      metrics: {
+        totalInterviews: totalCount,
+        activeSessions: activeCount,
+        scheduledSessions: scheduledCount,
+        averageScore: avgScore,
+        hireRatePercent
+      }
+    };
+  });
+
+// ═══════════════════════════════════════════════════════════════════
+// 9. Employee / Mentor Assigned Candidates Dashboard
+// ═══════════════════════════════════════════════════════════════════
+
+export const listMentorMockSessionsFn = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => z.object({
+    mentorId: z.string().optional(),
+    mentorEmail: z.string().optional()
+  }).parse(d))
+  .handler(async ({ data: args }) => {
+    const supabase = getAdminClient();
+
+    let query = supabase
+      .from('mock_sessions')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (args.mentorId) {
+      query = query.or(`mentor_id.eq.${args.mentorId},created_by.eq.${args.mentorId}`);
+    }
+
+    const { data: sessions, error } = await query;
+    if (error) {
+      throw new Error(`Error loading mentor sessions: ${error.message}`);
+    }
+
+    const list = sessions || [];
+    const activeSessions = list.filter(s => s.status === 'in_progress');
+    const scheduledSessions = list.filter(s => s.status === 'scheduled');
+    const completedSessions = list.filter(s => s.status === 'completed');
+
+    return {
+      sessions: list,
+      activeSessions,
+      scheduledSessions,
+      completedSessions,
+      totalAssigned: list.length
+    };
+  });
+
+// ═══════════════════════════════════════════════════════════════════
+// 10. Candidate Scheduled & Historical Interviews Dashboard
+// ═══════════════════════════════════════════════════════════════════
+
+export const listCandidateMockSessionsFn = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => z.object({
+    candidateEmail: z.string().optional(),
+    candidateUserId: z.string().optional(),
+    internId: z.string().optional()
+  }).parse(d))
+  .handler(async ({ data: args }) => {
+    const supabase = getAdminClient();
+
+    let query = supabase
+      .from('mock_sessions')
+      .select('*')
+      .order('scheduled_at', { ascending: true, nullsFirst: false });
+
+    if (args.candidateUserId) {
+      query = query.or(`assigned_to.eq.${args.candidateUserId},user_id.eq.${args.candidateUserId},candidate_email.eq.${args.candidateEmail || ''}`);
+    } else if (args.internId) {
+      query = query.or(`intern_id.eq.${args.internId},candidate_email.eq.${args.candidateEmail || ''}`);
+    } else if (args.candidateEmail) {
+      query = query.eq('candidate_email', args.candidateEmail);
+    }
+
+    const { data: sessions, error } = await query;
+    if (error) {
+      return { upcoming: [], completed: [] };
+    }
+
+    const list = sessions || [];
+    const now = new Date();
+
+    const upcoming = list.filter(s => s.status === 'scheduled' || s.status === 'in_progress');
+    const completed = list.filter(s => s.status === 'completed');
+
+    return {
+      upcoming,
+      completed,
+      totalCount: list.length
+    };
+  });
+
+// ═══════════════════════════════════════════════════════════════════
+// 11. Mentor Evaluation Notes & Grade Overrides
+// ═══════════════════════════════════════════════════════════════════
+
+export const updateMentorNotesAndGradeFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({
+    sessionId: z.string(),
+    mentorNotes: z.string(),
+    mentorGrade: z.number().min(0).max(100).optional(),
+    mentorName: z.string().optional()
+  }).parse(d))
+  .handler(async ({ data: args }) => {
+    const supabase = getAdminClient();
+
+    const updatePayload: any = {
+      mentor_notes: args.mentorNotes,
+      updated_at: new Date().toISOString()
+    };
+    if (typeof args.mentorGrade === 'number') {
+      updatePayload.mentor_grade = args.mentorGrade;
+    }
+    if (args.mentorName) {
+      updatePayload.mentor_name = args.mentorName;
+    }
+
+    const { data: updated, error } = await supabase
+      .from('mock_sessions')
+      .update(updatePayload)
+      .eq('id', args.sessionId)
+      .select('*')
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to save mentor evaluation: ${error.message}`);
+    }
+
+    return { success: true, session: updated };
+  });
+
+// ═══════════════════════════════════════════════════════════════════
+// 12. User Role Assignment Hub (Super Admin & Admin)
+// ═══════════════════════════════════════════════════════════════════
+
+export const assignUserRoleFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({
+    targetUserId: z.string(),
+    targetEmail: z.string().email(),
+    targetName: z.string().optional(),
+    newRole: z.enum(['super_admin', 'admin', 'employee', 'candidate']),
+    department: z.string().default('Engineering'),
+    callerRole: z.enum(['super_admin', 'admin', 'employee', 'candidate']).default('admin')
+  }).parse(d))
+  .handler(async ({ data: args }) => {
+    // Only super_admin or admin can assign roles
+    if (args.callerRole !== 'super_admin' && args.callerRole !== 'admin') {
+      throw new Error("Unauthorized: Only Super Admins and Admins can assign user roles.");
+    }
+
+    // Only super_admin can promote someone to super_admin
+    if (args.newRole === 'super_admin' && args.callerRole !== 'super_admin') {
+      throw new Error("Unauthorized: Only a Super Admin can promote another user to Super Admin.");
+    }
+
+    const supabase = getAdminClient();
+
+    // 1. Update public.profiles
+    await supabase
+      .from('profiles')
+      .update({ role: args.newRole })
+      .eq('id', args.targetUserId);
+
+    // 2. Upsert public.user_roles
+    await supabase
+      .from('user_roles')
+      .upsert({
+        user_id: args.targetUserId,
+        role: args.newRole as any,
+        created_at: new Date().toISOString()
+      }, { onConflict: 'user_id,role' });
+
+    // 3. Update auth.users metadata
+    try {
+      await supabase.auth.admin.updateUserById(args.targetUserId, {
+        user_metadata: { role: args.newRole, userType: args.newRole }
+      });
+    } catch (_) {}
+
+    return { success: true, newRole: args.newRole };
+  });
+
+// ═══════════════════════════════════════════════════════════════════
+// 13. List Manageable Users for Admin User Hub
+// ═══════════════════════════════════════════════════════════════════
+
+export const listManageableUsersFn = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => z.object({
+    search: z.string().optional(),
+    roleFilter: z.string().optional()
+  }).parse(d))
+  .handler(async ({ data: args }) => {
+    const supabase = getAdminClient();
+
+    // Fetch from profiles
+    let query = supabase
+      .from('profiles')
+      .select('id, full_name, email, role, department, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (args.roleFilter && args.roleFilter !== 'all') {
+      query = query.eq('role', args.roleFilter);
+    }
+    if (args.search) {
+      query = query.or(`full_name.ilike.%${args.search}%,email.ilike.%${args.search}%`);
+    }
+
+    const { data: users, error } = await query;
+    if (error) {
+      return { users: [] };
+    }
+
+    return { users: users || [] };
+  });
+

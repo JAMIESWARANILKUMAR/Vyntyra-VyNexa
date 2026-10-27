@@ -59,6 +59,7 @@ function LiveMockInterviewPage() {
 
   const session = data.session;
   const questions = Array.isArray(session.questions_bank) ? session.questions_bank : [];
+  const isObserverMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('observer') === 'true';
 
   // If already completed or user just finished, display the full report
   if (completedReport || (session.status === 'completed' && session.evaluation_report)) {
@@ -91,6 +92,7 @@ function LiveMockInterviewPage() {
       initialQuestionIndex={session.current_question_index || 0}
       initialCode={session.code_snippet}
       initialCodeLanguage={session.code_language || 'javascript'}
+      isObserver={isObserverMode}
       onConcludeInterview={(report) => {
         setCompletedReport(report);
       }}

@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════
--- Cloudflare D1 Compatible SQLite Schema for AI Mock Interviews
+-- Cloudflare D1 Compatible SQLite Schema for AI Mock Interviews & RBAC
 -- ═══════════════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS mock_sessions (
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS mock_sessions (
     domain TEXT NOT NULL DEFAULT 'fullstack',
     target_role TEXT NOT NULL DEFAULT 'Full-Stack Software Engineer',
     difficulty TEXT NOT NULL DEFAULT 'mid',
-    status TEXT NOT NULL DEFAULT 'scheduled',
+    status TEXT NOT NULL DEFAULT 'scheduled', -- 'scheduled', 'in_progress', 'completed', 'cancelled'
     overall_score REAL,
     technical_score REAL,
     communication_score REAL,
@@ -28,6 +28,19 @@ CREATE TABLE IF NOT EXISTS mock_sessions (
     hiring_verdict TEXT,
     recording_r2_url TEXT,
     report_r2_url TEXT,
+    
+    -- RBAC & Multi-Tier Extensions
+    created_by TEXT,
+    assigned_to TEXT,
+    mentor_id TEXT,
+    mentor_name TEXT,
+    mentor_notes TEXT,
+    mentor_grade REAL,
+    department TEXT DEFAULT 'Engineering',
+    scheduled_at TEXT,
+    schedule_time TEXT,
+    is_observer_allowed INTEGER DEFAULT 1,
+    
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
 );
@@ -46,6 +59,18 @@ CREATE TABLE IF NOT EXISTS interview_transcripts (
     FOREIGN KEY(session_id) REFERENCES mock_sessions(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS mock_user_roles (
+    user_id TEXT PRIMARY KEY,
+    email TEXT,
+    name TEXT,
+    role TEXT NOT NULL DEFAULT 'candidate', -- 'super_admin', 'admin', 'employee', 'candidate'
+    department TEXT DEFAULT 'Engineering',
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_d1_mock_sessions_user_id ON mock_sessions(user_id);
-CREATE INDEX IF NOT EXISTS idx_d1_mock_sessions_created_at ON mock_sessions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_d1_mock_sessions_assigned_to ON mock_sessions(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_d1_mock_sessions_mentor_id ON mock_sessions(mentor_id);
+CREATE INDEX IF NOT EXISTS idx_d1_mock_sessions_scheduled_at ON mock_sessions(scheduled_at);
+CREATE INDEX IF NOT EXISTS idx_d1_mock_sessions_status ON mock_sessions(status);
 CREATE INDEX IF NOT EXISTS idx_d1_interview_transcripts_session_id ON interview_transcripts(session_id);

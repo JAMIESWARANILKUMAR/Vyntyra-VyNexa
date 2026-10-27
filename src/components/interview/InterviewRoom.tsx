@@ -29,6 +29,7 @@ interface InterviewRoomProps {
   initialQuestionIndex?: number;
   initialCode?: string;
   initialCodeLanguage?: string;
+  isObserver?: boolean;
   onConcludeInterview: (reportData: any) => void;
 }
 
@@ -42,6 +43,7 @@ export function InterviewRoom({
   initialQuestionIndex = 0,
   initialCode,
   initialCodeLanguage = 'javascript',
+  isObserver = false,
   onConcludeInterview
 }: InterviewRoomProps) {
   // ─── Session State ───
@@ -107,6 +109,11 @@ export function InterviewRoom({
     let isCancelled = false;
 
     async function setupCamera() {
+      if (isObserver) {
+        setIsCameraActive(false);
+        setIsMicActive(false);
+        return;
+      }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
@@ -318,6 +325,7 @@ export function InterviewRoom({
 
   // ─── 4. Speech-to-Text (Continuous Candidate Recognition) ───
   const startSpeechRecognition = () => {
+    if (isObserver) return;
     const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRec) return;
 
@@ -484,6 +492,11 @@ export function InterviewRoom({
               <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
                 {difficulty} Level
               </span>
+              {isObserver && (
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold animate-pulse">
+                  Observer Mode (Silent Audit)
+                </span>
+              )}
             </div>
             <span className="text-[11px] text-gray-400 block -mt-0.5">
               Candidate: <strong className="text-gray-200">{candidateName}</strong>
