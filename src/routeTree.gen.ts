@@ -21,8 +21,10 @@ import { Route as AgreementRouteImport } from './routes/agreement'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MeetIndexRouteImport } from './routes/meet/index'
+import { Route as InterviewIndexRouteImport } from './routes/interview/index'
 import { Route as StatusTokenRouteImport } from './routes/status.$token'
 import { Route as MeetRoomIdRouteImport } from './routes/meet/$roomId'
+import { Route as InterviewSessionIdRouteImport } from './routes/interview/$sessionId'
 import { Route as AuthInternRouteImport } from './routes/auth/intern'
 import { Route as AuthEmployeeRouteImport } from './routes/auth/employee'
 import { Route as AuthAdminRouteImport } from './routes/auth/admin'
@@ -31,6 +33,7 @@ import { Route as AuthenticatedInternRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedEmployeeRouteImport } from './routes/_authenticated/employee'
 import { Route as AuthenticatedCmsRouteImport } from './routes/_authenticated/cms'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as InterviewReportSessionIdRouteImport } from './routes/interview/report.$sessionId'
 import { Route as AuthenticatedCbtTestIdRouteImport } from './routes/_authenticated/cbt/$testId'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin/security'
@@ -98,6 +101,11 @@ const MeetIndexRoute = MeetIndexRouteImport.update({
   path: '/meet/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InterviewIndexRoute = InterviewIndexRouteImport.update({
+  id: '/interview/',
+  path: '/interview/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StatusTokenRoute = StatusTokenRouteImport.update({
   id: '/$token',
   path: '/$token',
@@ -106,6 +114,11 @@ const StatusTokenRoute = StatusTokenRouteImport.update({
 const MeetRoomIdRoute = MeetRoomIdRouteImport.update({
   id: '/meet/$roomId',
   path: '/meet/$roomId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InterviewSessionIdRoute = InterviewSessionIdRouteImport.update({
+  id: '/interview/$sessionId',
+  path: '/interview/$sessionId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthInternRoute = AuthInternRouteImport.update({
@@ -148,6 +161,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const InterviewReportSessionIdRoute =
+  InterviewReportSessionIdRouteImport.update({
+    id: '/interview/report/$sessionId',
+    path: '/interview/report/$sessionId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedCbtTestIdRoute = AuthenticatedCbtTestIdRouteImport.update({
   id: '/cbt/$testId',
   path: '/cbt/$testId',
@@ -208,8 +227,10 @@ export interface FileRoutesByFullPath {
   '/auth/admin': typeof AuthAdminRoute
   '/auth/employee': typeof AuthEmployeeRoute
   '/auth/intern': typeof AuthInternRoute
+  '/interview/$sessionId': typeof InterviewSessionIdRoute
   '/meet/$roomId': typeof MeetRoomIdRoute
   '/status/$token': typeof StatusTokenRoute
+  '/interview/': typeof InterviewIndexRoute
   '/meet/': typeof MeetIndexRoute
   '/admin/b2b-playbook': typeof AuthenticatedAdminB2bPlaybookRoute
   '/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
@@ -217,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/cbt/$testId': typeof AuthenticatedCbtTestIdRoute
+  '/interview/report/$sessionId': typeof InterviewReportSessionIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/cbt/results/$testId': typeof AuthenticatedCbtResultsTestIdRoute
 }
@@ -238,8 +260,10 @@ export interface FileRoutesByTo {
   '/auth/admin': typeof AuthAdminRoute
   '/auth/employee': typeof AuthEmployeeRoute
   '/auth/intern': typeof AuthInternRoute
+  '/interview/$sessionId': typeof InterviewSessionIdRoute
   '/meet/$roomId': typeof MeetRoomIdRoute
   '/status/$token': typeof StatusTokenRoute
+  '/interview': typeof InterviewIndexRoute
   '/meet': typeof MeetIndexRoute
   '/admin/b2b-playbook': typeof AuthenticatedAdminB2bPlaybookRoute
   '/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
@@ -247,6 +271,7 @@ export interface FileRoutesByTo {
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/cbt/$testId': typeof AuthenticatedCbtTestIdRoute
+  '/interview/report/$sessionId': typeof InterviewReportSessionIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/cbt/results/$testId': typeof AuthenticatedCbtResultsTestIdRoute
 }
@@ -270,8 +295,10 @@ export interface FileRoutesById {
   '/auth/admin': typeof AuthAdminRoute
   '/auth/employee': typeof AuthEmployeeRoute
   '/auth/intern': typeof AuthInternRoute
+  '/interview/$sessionId': typeof InterviewSessionIdRoute
   '/meet/$roomId': typeof MeetRoomIdRoute
   '/status/$token': typeof StatusTokenRoute
+  '/interview/': typeof InterviewIndexRoute
   '/meet/': typeof MeetIndexRoute
   '/_authenticated/admin/b2b-playbook': typeof AuthenticatedAdminB2bPlaybookRoute
   '/_authenticated/admin/email-campaigns': typeof AuthenticatedAdminEmailCampaignsRoute
@@ -279,6 +306,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/cbt/$testId': typeof AuthenticatedCbtTestIdRoute
+  '/interview/report/$sessionId': typeof InterviewReportSessionIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/cbt/results/$testId': typeof AuthenticatedCbtResultsTestIdRoute
 }
@@ -302,8 +330,10 @@ export interface FileRouteTypes {
     | '/auth/admin'
     | '/auth/employee'
     | '/auth/intern'
+    | '/interview/$sessionId'
     | '/meet/$roomId'
     | '/status/$token'
+    | '/interview/'
     | '/meet/'
     | '/admin/b2b-playbook'
     | '/admin/email-campaigns'
@@ -311,6 +341,7 @@ export interface FileRouteTypes {
     | '/admin/security'
     | '/admin/settings'
     | '/cbt/$testId'
+    | '/interview/report/$sessionId'
     | '/admin/'
     | '/cbt/results/$testId'
   fileRoutesByTo: FileRoutesByTo
@@ -332,8 +363,10 @@ export interface FileRouteTypes {
     | '/auth/admin'
     | '/auth/employee'
     | '/auth/intern'
+    | '/interview/$sessionId'
     | '/meet/$roomId'
     | '/status/$token'
+    | '/interview'
     | '/meet'
     | '/admin/b2b-playbook'
     | '/admin/email-campaigns'
@@ -341,6 +374,7 @@ export interface FileRouteTypes {
     | '/admin/security'
     | '/admin/settings'
     | '/cbt/$testId'
+    | '/interview/report/$sessionId'
     | '/admin'
     | '/cbt/results/$testId'
   id:
@@ -363,8 +397,10 @@ export interface FileRouteTypes {
     | '/auth/admin'
     | '/auth/employee'
     | '/auth/intern'
+    | '/interview/$sessionId'
     | '/meet/$roomId'
     | '/status/$token'
+    | '/interview/'
     | '/meet/'
     | '/_authenticated/admin/b2b-playbook'
     | '/_authenticated/admin/email-campaigns'
@@ -372,6 +408,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/security'
     | '/_authenticated/admin/settings'
     | '/_authenticated/cbt/$testId'
+    | '/interview/report/$sessionId'
     | '/_authenticated/admin/'
     | '/_authenticated/cbt/results/$testId'
   fileRoutesById: FileRoutesById
@@ -391,8 +428,11 @@ export interface RootRouteChildren {
   AuthAdminRoute: typeof AuthAdminRoute
   AuthEmployeeRoute: typeof AuthEmployeeRoute
   AuthInternRoute: typeof AuthInternRoute
+  InterviewSessionIdRoute: typeof InterviewSessionIdRoute
   MeetRoomIdRoute: typeof MeetRoomIdRoute
+  InterviewIndexRoute: typeof InterviewIndexRoute
   MeetIndexRoute: typeof MeetIndexRoute
+  InterviewReportSessionIdRoute: typeof InterviewReportSessionIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -481,6 +521,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MeetIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/interview/': {
+      id: '/interview/'
+      path: '/interview'
+      fullPath: '/interview/'
+      preLoaderRoute: typeof InterviewIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/status/$token': {
       id: '/status/$token'
       path: '/$token'
@@ -493,6 +540,13 @@ declare module '@tanstack/react-router' {
       path: '/meet/$roomId'
       fullPath: '/meet/$roomId'
       preLoaderRoute: typeof MeetRoomIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/interview/$sessionId': {
+      id: '/interview/$sessionId'
+      path: '/interview/$sessionId'
+      fullPath: '/interview/$sessionId'
+      preLoaderRoute: typeof InterviewSessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/intern': {
@@ -550,6 +604,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/interview/report/$sessionId': {
+      id: '/interview/report/$sessionId'
+      path: '/interview/report/$sessionId'
+      fullPath: '/interview/report/$sessionId'
+      preLoaderRoute: typeof InterviewReportSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/cbt/$testId': {
       id: '/_authenticated/cbt/$testId'
@@ -662,8 +723,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthAdminRoute: AuthAdminRoute,
   AuthEmployeeRoute: AuthEmployeeRoute,
   AuthInternRoute: AuthInternRoute,
+  InterviewSessionIdRoute: InterviewSessionIdRoute,
   MeetRoomIdRoute: MeetRoomIdRoute,
+  InterviewIndexRoute: InterviewIndexRoute,
   MeetIndexRoute: MeetIndexRoute,
+  InterviewReportSessionIdRoute: InterviewReportSessionIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
