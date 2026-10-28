@@ -43,6 +43,7 @@ import { WorldClocks } from "@/components/world-clocks";
 import { InstallPwaButton } from "@/components/install-pwa-button";
 import { CloudflareTurnstile } from "@/components/cloudflare-turnstile";
 import { Header } from "@/components/Header";
+import { AccreditationsRouteMap } from "@/components/accreditations-route-map";
 import { lookupReferralCodePricing } from "@/lib/operations.functions";
 import { listCareerDomains, type DomainItem, DEFAULT_CAREER_DOMAINS } from "@/lib/domains.functions";
 import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
@@ -495,6 +496,7 @@ function ApplicationPage() {
       <Header live={applicationsOpen} />
       <Hero />
       <WhyJoinUs />
+      <AccreditationsRouteMap />
       <TrustStrip />
 
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-6 space-y-4">

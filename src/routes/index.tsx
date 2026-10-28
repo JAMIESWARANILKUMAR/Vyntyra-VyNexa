@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { WorldClocks } from "@/components/world-clocks";
 import { Header } from "@/components/Header";
+import { AccreditationsRouteMap } from "@/components/accreditations-route-map";
 import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
 
 export const Route = createFileRoute("/")({
@@ -54,51 +55,6 @@ export const Route = createFileRoute("/")({
   }),
   component: AboutPage,
 });
-
-const ACCREDITATIONS = [
-  {
-    title: "Great Place to Work®",
-    badge: "Certified 2026–27",
-    desc: "Recognized for high-trust workplace culture, employee development, and leadership excellence.",
-    color: "from-amber-500/20 to-orange-500/10 border-amber-500/40 text-amber-400",
-    iconColor: "text-amber-400",
-  },
-  {
-    title: "NASSCOM FutureSkills Prime",
-    badge: "Recognised Partner",
-    desc: "Empowering technology professionals and students with certified emerging digital competencies.",
-    color: "from-blue-500/20 to-indigo-500/10 border-blue-500/40 text-blue-400",
-    iconColor: "text-blue-400",
-  },
-  {
-    title: "MSME Registered",
-    badge: "Govt. of India",
-    desc: "Accredited Micro, Small & Medium Enterprise under Ministry of MSME (UDYAM-AP-09-0051886).",
-    color: "from-emerald-500/20 to-teal-500/10 border-emerald-500/40 text-emerald-400",
-    iconColor: "text-emerald-400",
-  },
-  {
-    title: "Skill Development of India",
-    badge: "Skill India Mission",
-    desc: "Aligned with national frameworks for technical skill enhancement and industrial job readiness.",
-    color: "from-sky-500/20 to-cyan-500/10 border-sky-500/40 text-sky-400",
-    iconColor: "text-sky-400",
-  },
-  {
-    title: "AmbitionBox",
-    badge: "4.5 / 5.0 ★ Rated",
-    desc: "Top-rated by employees and interns for learning culture, mentorship quality, and work environment.",
-    color: "from-purple-500/20 to-pink-500/10 border-purple-500/40 text-purple-400",
-    iconColor: "text-purple-400",
-  },
-  {
-    title: "Justdial Verified",
-    badge: "4.1 / 5.0 ★ Rated",
-    desc: "High client satisfaction and authentic reviews for IT consultancy, software delivery, and training.",
-    color: "from-rose-500/20 to-red-500/10 border-rose-500/40 text-rose-400",
-    iconColor: "text-rose-400",
-  },
-];
 
 const SERVICES = [
   {
@@ -245,45 +201,8 @@ function AboutPage() {
         </div>
       </section>
 
-      {/* ── Prominent Accreditations & Ratings Grid ── */}
-      <section className="bg-slate-950 text-white border-y border-slate-800 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-gold">
-              Recognitions &amp; Accreditations
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-1.5 tracking-tight">
-              Backed by National Trust, Global Standards
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-2">
-              Our commitment to technical rigor, employee empowerment, and client success is validated by leading industry bodies.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {ACCREDITATIONS.map((acc) => (
-              <div
-                key={acc.title}
-                className={`rounded-2xl p-5 border bg-gradient-to-br ${acc.color} backdrop-blur-sm transition-all hover:scale-[1.01] hover:shadow-lg flex flex-col justify-between`}
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="font-extrabold text-white text-base tracking-tight">{acc.title}</span>
-                    <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-white/10 text-white border border-white/20">
-                      {acc.badge}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed mt-2">{acc.desc}</p>
-                </div>
-                <div className="mt-4 flex items-center gap-1.5 text-[11px] font-semibold text-slate-400">
-                  <CheckCircle2 className={`h-3.5 w-3.5 ${acc.iconColor}`} />
-                  <span>Officially Verified Credential</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── Corporate Accreditations Route Map ── */}
+      <AccreditationsRouteMap />
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 sm:py-20 space-y-20">
         {/* Clocks Component */}
