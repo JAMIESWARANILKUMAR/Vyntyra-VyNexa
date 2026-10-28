@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { 
-  Menu, X, Shield, ArrowRight, Globe2, Mail, Briefcase, GraduationCap, Lock 
+  Menu, X, Shield, ArrowRight, Globe2, Mail, Briefcase, GraduationCap, Lock, ChevronRight 
 } from "lucide-react";
 import { InstallPwaButton } from "./install-pwa-button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface HeaderProps {
   live?: boolean;
@@ -172,124 +180,178 @@ export function Header({ live = true }: HeaderProps) {
                 <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 transition-transform group-hover:translate-x-0.5" />
               </Link>
 
-              {/* Hamburger Toggle button - right beside Apply button on mobile & tablet */}
-              <button
-                type="button"
-                aria-label={menuOpen ? "Close menu" : "Open navigation menu"}
-                aria-expanded={menuOpen}
-                onClick={() => setMenuOpen((v) => !v)}
-                className="lg:hidden inline-flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-sm border border-border bg-card text-primary hover:bg-surface hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shrink-0 shadow-xs"
-              >
-                <span className="relative h-5 w-5 flex items-center justify-center">
-                  <Menu className={`absolute inset-0 h-5 w-5 transition-all duration-300 ${menuOpen ? "rotate-90 opacity-0 scale-75" : "rotate-0 opacity-100 scale-100"}`} />
-                  <X className={`absolute inset-0 h-5 w-5 transition-all duration-300 ${menuOpen ? "rotate-0 opacity-100 scale-100" : "-rotate-90 opacity-0 scale-75"}`} />
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
+              {/* Hamburger Toggle button with Right-Side Drawer (Sheet) */}
+              <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+                <SheetTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Open navigation menu"
+                    className="lg:hidden inline-flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-sm border border-border bg-card text-primary hover:bg-surface hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shrink-0 shadow-xs cursor-pointer"
+                  >
+                    <Menu className="h-5 w-5" />
+                  </button>
+                </SheetTrigger>
 
-        {/* Mobile Menu Panel */}
-        <div
-          className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-            menuOpen ? "max-h-[600px] opacity-100 border-b border-border shadow-lg" : "max-h-0 opacity-0 pointer-events-none"
-          }`}
-        >
-          <div className="border-t border-border bg-card/98 backdrop-blur-md">
-            <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-3.5 flex flex-col gap-1 text-sm">
-              {live ? (
-                <div className="flex items-center justify-between pb-2 mb-1 border-b border-border/50">
-                  <span className="inline-flex items-center gap-1.5 rounded-sm border border-destructive/30 bg-destructive/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-destructive">
-                    <span className="relative flex h-2 w-2">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75"></span>
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive"></span>
-                    </span>
-                    Live · Accepting Applications
-                  </span>
-                  <span className="text-[11px] text-muted-foreground font-medium">VCS Corporate</span>
-                </div>
-              ) : null}
-              
-              <Link 
-                to="/" 
-                onClick={() => setMenuOpen(false)} 
-                className={`px-3 py-2.5 rounded-sm transition-colors flex items-center justify-between ${
-                  pathname === "/" ? "text-primary font-semibold bg-surface" : "text-muted-foreground hover:text-primary hover:bg-surface"
-                }`}
-              >
-                <span>Home</span>
-                {pathname === "/" && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
-              </Link>
-              <Link 
-                to="/about" 
-                onClick={() => setMenuOpen(false)} 
-                className={`px-3 py-2.5 rounded-sm transition-colors flex items-center justify-between ${
-                  pathname === "/about" ? "text-primary font-semibold bg-surface" : "text-muted-foreground hover:text-primary hover:bg-surface"
-                }`}
-              >
-                <span>About Us</span>
-                {pathname === "/about" && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
-              </Link>
-              <Link 
-                to="/careers" 
-                onClick={() => setMenuOpen(false)} 
-                className={`px-3 py-2.5 rounded-sm transition-colors flex items-center justify-between ${
-                  isActive("/careers") ? "text-primary font-semibold bg-surface" : "text-muted-foreground hover:text-primary hover:bg-surface"
-                }`}
-              >
-                <span>Careers</span>
-                {isActive("/careers") && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
-              </Link>
-              <Link 
-                to="/status" 
-                onClick={() => setMenuOpen(false)} 
-                className={`px-3 py-2.5 rounded-sm transition-colors flex items-center justify-between ${
-                  isActive("/status") ? "text-primary font-semibold bg-surface" : "text-muted-foreground hover:text-primary hover:bg-surface"
-                }`}
-              >
-                <span>Track Application Status</span>
-                {isActive("/status") && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
-              </Link>
-              <Link 
-                to="/verify" 
-                search={{ id: undefined, ref: undefined, email: undefined, q: undefined, tab: undefined }}
-                onClick={() => setMenuOpen(false)} 
-                className={`px-3 py-2.5 rounded-sm transition-colors flex items-center justify-between ${
-                  isActive("/verify") ? "text-emerald-500 font-semibold bg-emerald-500/10" : "text-emerald-600 dark:text-emerald-400 hover:bg-surface"
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" /> Verify Intern Credentials
-                </span>
-                {isActive("/verify") && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
-              </Link>
-              
-              <div className="grid grid-cols-2 gap-2 pt-3 mt-1 border-t border-border">
-                <Link 
-                  to="/auth/employee" 
-                  onClick={() => setMenuOpen(false)} 
-                  className="px-3 py-2 text-xs text-center font-medium text-slate-700 dark:text-slate-300 hover:text-primary transition-colors border border-border hover:bg-surface rounded-sm flex items-center justify-center gap-1.5"
+                <SheetContent 
+                  side="right" 
+                  className="w-[85vw] max-w-[340px] sm:max-w-sm p-0 flex flex-col justify-between bg-card border-l border-border shadow-2xl z-50"
                 >
-                  <Briefcase className="h-3.5 w-3.5" /> Employee Portal
-                </Link>
-                <Link 
-                  to="/auth/intern" 
-                  onClick={() => setMenuOpen(false)} 
-                  className="px-3 py-2 text-xs text-center font-medium text-slate-700 dark:text-slate-300 hover:text-primary transition-colors border border-border hover:bg-surface rounded-sm flex items-center justify-center gap-1.5"
-                >
-                  <GraduationCap className="h-3.5 w-3.5" /> Intern Portal
-                </Link>
-              </div>
+                  <div className="flex flex-col h-full overflow-y-auto">
+                    {/* Drawer Header */}
+                    <SheetHeader className="p-4 border-b border-border bg-surface/50 text-left">
+                      <div className="flex items-center justify-between gap-3 pr-6">
+                        <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5">
+                          <img src="/icon-512.png" alt="VCS Logo" className="h-8 w-auto shrink-0 object-contain" />
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-foreground leading-tight tracking-wide">VYNTYRA</span>
+                            <span className="text-[10px] text-muted-foreground tracking-wider uppercase">Consultancy</span>
+                          </div>
+                        </Link>
+                        {live && (
+                          <span className="inline-flex items-center gap-1 rounded-sm border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-destructive shrink-0">
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75"></span>
+                              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-destructive"></span>
+                            </span>
+                            Live
+                          </span>
+                        )}
+                      </div>
+                      <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                      <SheetDescription className="sr-only">Main website navigation and access portals</SheetDescription>
+                    </SheetHeader>
 
-              <div className="pt-2">
-                <Link 
-                  to="/auth/admin" 
-                  onClick={() => setMenuOpen(false)} 
-                  className="w-full px-3 py-2 text-xs text-center font-medium text-gold hover:text-gold transition-colors border border-gold/30 hover:bg-gold/5 rounded-sm flex items-center justify-center gap-1.5"
-                >
-                  <Lock className="h-3.5 w-3.5" /> Super Admin Control
-                </Link>
-              </div>
+                    {/* Navigation Items */}
+                    <div className="p-4 flex flex-col gap-1 flex-1">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70 px-3 py-1 mb-1">
+                        Navigation
+                      </div>
+
+                      <Link 
+                        to="/" 
+                        onClick={() => setMenuOpen(false)} 
+                        className={`px-3 py-2.5 rounded-md transition-colors flex items-center justify-between text-sm ${
+                          pathname === "/" 
+                            ? "text-primary font-semibold bg-primary/10 border-l-2 border-primary" 
+                            : "text-foreground/80 hover:text-primary hover:bg-surface"
+                        }`}
+                      >
+                        <span>Home</span>
+                        <ChevronRight className="h-4 w-4 opacity-40" />
+                      </Link>
+
+                      <Link 
+                        to="/about" 
+                        onClick={() => setMenuOpen(false)} 
+                        className={`px-3 py-2.5 rounded-md transition-colors flex items-center justify-between text-sm ${
+                          pathname === "/about" 
+                            ? "text-primary font-semibold bg-primary/10 border-l-2 border-primary" 
+                            : "text-foreground/80 hover:text-primary hover:bg-surface"
+                        }`}
+                      >
+                        <span>About Us</span>
+                        <ChevronRight className="h-4 w-4 opacity-40" />
+                      </Link>
+
+                      <Link 
+                        to="/careers" 
+                        onClick={() => setMenuOpen(false)} 
+                        className={`px-3 py-2.5 rounded-md transition-colors flex items-center justify-between text-sm ${
+                          isActive("/careers") 
+                            ? "text-primary font-semibold bg-primary/10 border-l-2 border-primary" 
+                            : "text-foreground/80 hover:text-primary hover:bg-surface"
+                        }`}
+                      >
+                        <span>Careers</span>
+                        <ChevronRight className="h-4 w-4 opacity-40" />
+                      </Link>
+
+                      <Link 
+                        to="/status" 
+                        onClick={() => setMenuOpen(false)} 
+                        className={`px-3 py-2.5 rounded-md transition-colors flex items-center justify-between text-sm ${
+                          isActive("/status") 
+                            ? "text-primary font-semibold bg-primary/10 border-l-2 border-primary" 
+                            : "text-foreground/80 hover:text-primary hover:bg-surface"
+                        }`}
+                      >
+                        <span>Track Application Status</span>
+                        <ChevronRight className="h-4 w-4 opacity-40" />
+                      </Link>
+
+                      <Link 
+                        to="/verify" 
+                        search={{ id: undefined, ref: undefined, email: undefined, q: undefined, tab: undefined }}
+                        onClick={() => setMenuOpen(false)} 
+                        className={`px-3 py-2.5 rounded-md transition-colors flex items-center justify-between text-sm ${
+                          isActive("/verify") 
+                            ? "text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 border-l-2 border-emerald-500" 
+                            : "text-emerald-700 dark:text-emerald-400 hover:bg-surface"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" /> Verify Intern Credentials
+                        </span>
+                        <ChevronRight className="h-4 w-4 opacity-40" />
+                      </Link>
+
+                      {/* Corporate Portals Section */}
+                      <div className="mt-4 pt-4 border-t border-border">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70 px-3 py-1 mb-2">
+                          Portals & Access
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                          <Link 
+                            to="/auth/employee" 
+                            onClick={() => setMenuOpen(false)} 
+                            className="px-3 py-2.5 text-xs text-center font-medium text-foreground hover:text-primary transition-colors border border-border hover:bg-surface rounded-md flex flex-col items-center justify-center gap-1.5 shadow-xs"
+                          >
+                            <Briefcase className="h-4 w-4 text-primary" />
+                            <span>Employee</span>
+                          </Link>
+                          <Link 
+                            to="/auth/intern" 
+                            onClick={() => setMenuOpen(false)} 
+                            className="px-3 py-2.5 text-xs text-center font-medium text-foreground hover:text-primary transition-colors border border-border hover:bg-surface rounded-md flex flex-col items-center justify-center gap-1.5 shadow-xs"
+                          >
+                            <GraduationCap className="h-4 w-4 text-primary" />
+                            <span>Intern</span>
+                          </Link>
+                        </div>
+
+                        <Link 
+                          to="/auth/admin" 
+                          onClick={() => setMenuOpen(false)} 
+                          className="w-full px-3 py-2 text-xs font-medium text-gold hover:text-gold transition-colors border border-gold/30 hover:bg-gold/5 rounded-md flex items-center justify-center gap-2 shadow-xs"
+                        >
+                          <Lock className="h-3.5 w-3.5" />
+                          <span>Super Admin Control</span>
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Drawer Footer Action Area */}
+                    <div className="p-4 border-t border-border bg-surface/30 mt-auto flex flex-col gap-3">
+                      <Link
+                        to="/apply"
+                        onClick={handleApplyClick}
+                        className="w-full inline-flex items-center justify-center gap-2 bg-primary hover:bg-secondary text-primary-foreground py-2.5 px-4 rounded-md text-sm font-semibold transition-colors shadow-sm"
+                      >
+                        <span>Apply Now</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+
+                      <div className="flex flex-col gap-1 text-[11px] text-muted-foreground text-center">
+                        <a href="mailto:hr@vyntyraconsultancyservices.in" className="hover:text-gold transition-colors truncate">
+                          hr@vyntyraconsultancyservices.in
+                        </a>
+                        <span className="text-[10px] opacity-70">Vyntyra Consultancy Services Pvt. Ltd.</span>
+                      </div>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </div>
