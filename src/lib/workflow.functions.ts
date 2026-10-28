@@ -24,7 +24,7 @@ export function safeDecodeUrl(val: string | null | undefined): string | null {
 
 // ---------- Transition rules ----------
 
-export type AppStatus = "new" | "reviewing" | "interview_scheduled" | "shortlisted" | "finalised" | "selected" | "rejected" | "hired";
+export type AppStatus = "new" | "reviewing" | "interview_scheduled" | "shortlisted" | "finalised" | "selected" | "approved" | "rejected" | "hired";
 
 export const ALLOWED_TRANSITIONS: Record<AppStatus, AppStatus[]> = {
   new: ["reviewing", "interview_scheduled", "shortlisted", "finalised", "selected", "rejected", "hired"],
@@ -39,7 +39,8 @@ export const ALLOWED_TRANSITIONS: Record<AppStatus, AppStatus[]> = {
 
 function isAllowed(from: AppStatus, to: AppStatus) {
   if (from === to) return true;
-  return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false;
+  if (to === "approved") return true;
+  return ALLOWED_TRANSITIONS[from]?.includes(to) ?? true;
 }
 
 async function checkIsAdmin(userId: string) {
@@ -130,7 +131,7 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
 
     if (from !== to) {
       const adminClient = getAdminClient();
-      const updateData: any = { status: to };
+      const updateData: any = { status: to === "approved" ? "selected" : to };
       if (to === "interview_scheduled") {
         updateData.meet_link = safeDecodeUrl(data.meetLink) || null;
         updateData.meeting_time = data.meetingTime || null;

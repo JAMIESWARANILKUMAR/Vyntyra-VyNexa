@@ -575,7 +575,7 @@ export const updateTaskExecution = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     id: z.string().uuid(),
-    status: z.enum(["pending", "in_progress", "submitted", "under_review", "completed", "blocked", "rejected"]),
+    status: z.enum(["pending", "in_progress", "submitted", "under_review", "completed", "approved", "verified", "blocked", "rejected"]),
     progress_percentage: z.number().min(0).max(100).optional(),
     progress_notes: z.string().optional(),
     project_requirements: z.string().optional(),
@@ -1962,7 +1962,7 @@ export const reviewInternTaskByAdmin = createServerFn({ method: "POST" })
     }
     
     // Database check constraint now supports 'submitted' and 'under_review' natively.
-    let targetStatus = data.status;
+    let targetStatus = (data.status === "approved" || data.status === "verified") ? "completed" : data.status;
 
     const updatePayload: any = {
       status: targetStatus,
@@ -3704,9 +3704,10 @@ export const updateLeaveStatus = createServerFn({ method: 'POST' })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(['approved', 'rejected']) }).parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error('Unauthorized');
+    const adminClient = getAdminClient();
     
     // Try updating with updated_at timestamp first
-    let res = await anonClient
+    let res = await adminClient
       .from('leave_requests')
       .update({ status: data.status, updated_at: new Date().toISOString() })
       .eq('id', data.id);
@@ -3714,7 +3715,7 @@ export const updateLeaveStatus = createServerFn({ method: 'POST' })
     // If it fails (e.g. because updated_at column doesn't exist in the schema cache yet)
     if (res.error) {
       console.warn("[updateLeaveStatus] Failed to update with updated_at, retrying without it:", res.error.message);
-      const retryRes = await anonClient
+      const retryRes = await adminClient
         .from('leave_requests')
         .update({ status: data.status })
         .eq('id', data.id);
@@ -4278,7 +4279,8 @@ export const updateStandupStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["pending", "approved", "flagged"]) }).parse(d))
   .handler(async ({ data }) => {
-    const { error } = await supabase.from("intern_standups").update({ status: data.status }).eq("id", data.id);
+    const adminClient = getAdminClient();
+    const { error } = await adminClient.from("intern_standups").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { success: true };
   });
@@ -4378,7 +4380,8 @@ export const updateDeliverableStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["submitted", "under_review", "approved", "revision_requested"]), feedback: z.string().optional() }).parse(d))
   .handler(async ({ data }) => {
-    const { error } = await supabase.from("intern_deliverables").update({ status: data.status, feedback: data.feedback || null }).eq("id", data.id);
+    const adminClient = getAdminClient();
+    const { error } = await adminClient.from("intern_deliverables").update({ status: data.status, feedback: data.feedback || null }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { success: true };
   });
@@ -4424,7 +4427,8 @@ export const updateAccessRequestStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["pending", "approved", "provisioned", "rejected"]) }).parse(d))
   .handler(async ({ data }) => {
-    const { error } = await supabase.from("intern_access_requests").update({ status: data.status }).eq("id", data.id);
+    const adminClient = getAdminClient();
+    const { error } = await adminClient.from("intern_access_requests").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { success: true };
   });
@@ -5683,7 +5687,8 @@ export const approveSupportMeeting = createServerFn({ method: "POST" })
     meetingTime: z.string(),
   }).parse(d))
   .handler(async ({ data }) => {
-    const { data: query } = await supabase
+    const adminClient = getAdminClient();
+    const { data: query } = await adminClient
       .from("support_queries")
       .select("*")
       .eq("id", data.queryId)
@@ -5691,7 +5696,7 @@ export const approveSupportMeeting = createServerFn({ method: "POST" })
 
     if (!query) throw new Error("Support query not found");
 
-    const { data: meeting, error: meetErr } = await supabase
+    const { data: meeting, error: meetErr } = await adminClient
       .from("meetings")
       .insert({
         title: `Support Sync: ${query.subject}`,
@@ -5705,7 +5710,7 @@ export const approveSupportMeeting = createServerFn({ method: "POST" })
 
     if (meetErr) throw new Error(meetErr.message);
 
-    const { error: queryErr } = await supabase
+    const { error: queryErr } = await adminClient
       .from("support_queries")
       .update({
         meeting_id: meeting.id,
@@ -5777,23 +5782,26 @@ export const reviewDeadlineExtension = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     taskId: z.string().uuid(),
-    approve: z.boolean(),
+    approve: z.boolean().optional(),
+    status: z.enum(["approved", "rejected"]).optional(),
   }).parse(d))
   .handler(async ({ data }) => {
-    const { data: task } = await supabase
+    const adminClient = getAdminClient();
+    const isApproved = data.approve === true || data.status === "approved";
+    const { data: task } = await adminClient
       .from("tasks")
       .select("extended_due_date")
       .eq("id", data.taskId)
       .single();
 
     const updatePayload: any = {
-      extension_status: data.approve ? "approved" : "rejected",
+      extension_status: isApproved ? "approved" : "rejected",
     };
-    if (data.approve && task?.extended_due_date) {
+    if (isApproved && task?.extended_due_date) {
       updatePayload.due_date = task.extended_due_date;
     }
 
-    const { error } = await supabase
+    const { error } = await adminClient
       .from("tasks")
       .update(updatePayload)
       .eq("id", data.taskId);
@@ -8081,7 +8089,7 @@ export const reviewProfileChangeRequest = createServerFn({ method: "POST" })
         id: "profile_change_requests",
         value: { requests: allRequests },
         updated_at: new Date().toISOString(),
-      });
+      }, { onConflict: "id" });
 
     // Notify User
     try {

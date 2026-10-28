@@ -513,8 +513,10 @@ function AdminDashboard() {
       <DashboardHeader 
           panelName="Super Admin Dashboard"
           onSignOut={async () => {
+            await qc.cancelQueries();
+            qc.clear();
             await supabase.auth.signOut();
-            window.location.href = "/login";
+            window.location.href = "/auth/admin";
           }}
           links={[
             { href: "/admin/interviews", label: "AI Mock Interviews", icon: Sparkles, colorClass: "text-blue-600 font-bold hover:bg-blue-50" },

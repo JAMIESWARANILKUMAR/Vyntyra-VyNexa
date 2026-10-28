@@ -16,6 +16,7 @@ import { Route as StatusRouteImport } from './routes/status'
 import { Route as SecurityCheckRouteImport } from './routes/security-check'
 import { Route as RefundsRouteImport } from './routes/refunds'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as CareersRouteImport } from './routes/careers'
 import { Route as AgreementRouteImport } from './routes/agreement'
 import { Route as AboutRouteImport } from './routes/about'
@@ -79,6 +80,11 @@ const RefundsRoute = RefundsRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CareersRoute = CareersRouteImport.update({
@@ -240,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/agreement': typeof AgreementRoute
   '/careers': typeof CareersRoute
+  '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/security-check': typeof SecurityCheckRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/agreement': typeof AgreementRoute
   '/careers': typeof CareersRoute
+  '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/security-check': typeof SecurityCheckRoute
@@ -316,6 +324,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/agreement': typeof AgreementRoute
   '/careers': typeof CareersRoute
+  '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/security-check': typeof SecurityCheckRoute
@@ -355,6 +364,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/agreement'
     | '/careers'
+    | '/login'
     | '/privacy'
     | '/refunds'
     | '/security-check'
@@ -392,6 +402,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/agreement'
     | '/careers'
+    | '/login'
     | '/privacy'
     | '/refunds'
     | '/security-check'
@@ -430,6 +441,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/agreement'
     | '/careers'
+    | '/login'
     | '/privacy'
     | '/refunds'
     | '/security-check'
@@ -469,6 +481,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AgreementRoute: typeof AgreementRoute
   CareersRoute: typeof CareersRoute
+  LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
   RefundsRoute: typeof RefundsRoute
   SecurityCheckRoute: typeof SecurityCheckRoute
@@ -536,6 +549,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/careers': {
@@ -809,6 +829,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AgreementRoute: AgreementRoute,
   CareersRoute: CareersRoute,
+  LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
   RefundsRoute: RefundsRoute,
   SecurityCheckRoute: SecurityCheckRoute,
