@@ -19,10 +19,12 @@ import {
   Video,
   Loader2,
   ExternalLink,
+  Ticket,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { submitAmbassadorApplication } from "@/lib/ambassador.functions";
+import { AmbassadorComingSoonModal } from "@/components/ambassador-coming-soon-modal";
 
 interface InternAmbassadorViewProps {
   profile: any;
@@ -31,6 +33,9 @@ interface InternAmbassadorViewProps {
 
 export function InternAmbassadorView({ profile, application }: InternAmbassadorViewProps) {
   const submitAppFn = useServerFn(submitAmbassadorApplication);
+
+  // Coming Soon Modal State
+  const [comingSoonModalOpen, setComingSoonModalOpen] = useState(false);
 
   const [fullName, setFullName] = useState(profile?.full_name || application?.full_name || "");
   const [email, setEmail] = useState(profile?.email || application?.email || "");
@@ -97,7 +102,15 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
             As an active Vyntyra intern, you receive <strong>priority enrollment</strong> into our flagship Institutional Relations Associate Program. Expand your leadership, lead tech initiatives at your college, and unlock unmatched corporate privileges.
           </p>
 
-          <div className="pt-2 flex items-center gap-3">
+          <div className="pt-2 flex flex-wrap items-center gap-3">
+            <Button
+              onClick={() => setComingSoonModalOpen(true)}
+              className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2"
+            >
+              <Ticket className="h-4 w-4" />
+              <span>Claim Intern VIP Pass (Coming Soon)</span>
+            </Button>
+
             <a
               href="/campus-ambassador"
               target="_blank"
@@ -108,6 +121,73 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
+        </div>
+      </div>
+
+      {/* Visual Product Showcase for Swags, Goodies & Gadgets */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+              <Gift className="h-4 w-4 text-amber-600" /> Swags, Goodies &amp; Gadgets Catalog
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Physical merchandise &amp; electronics awarded to First Cohort associates.
+            </p>
+          </div>
+          <span className="text-[11px] font-mono font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+            Shipped to Campus
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            {
+              name: "IRA Welcome Box",
+              tag: "Executive Kit",
+              img: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=400&auto=format&fit=crop",
+            },
+            {
+              name: "Corporate Hoodie",
+              tag: "3D Crest Fleece",
+              img: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=400&auto=format&fit=crop",
+            },
+            {
+              name: "20k Powerbank",
+              tag: "65W Fast Charge",
+              img: "https://images.unsplash.com/photo-1609592426815-397750868a25?q=80&w=400&auto=format&fit=crop",
+            },
+            {
+              name: "ANC Earbuds",
+              tag: "Noise Canceling",
+              img: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=400&auto=format&fit=crop",
+            },
+            {
+              name: "AMOLED Watch",
+              tag: "Calling & Health",
+              img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop",
+            },
+            {
+              name: "Travel Retreat",
+              tag: "Top 10 Curated",
+              img: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=400&auto=format&fit=crop",
+            },
+          ].map((item, idx) => (
+            <div key={idx} className="group rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex flex-col">
+              <div className="aspect-square w-full overflow-hidden bg-slate-100">
+                <img
+                  src={item.img}
+                  alt={item.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                />
+              </div>
+              <div className="p-2 text-center">
+                <div className="text-xs font-bold text-slate-900 truncate">{item.name}</div>
+                <div className="text-[10px] text-amber-700 font-mono font-medium">{item.tag}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -191,11 +271,22 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
 
       {/* Pre-Registration Card for Interns */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-        <div className="max-w-2xl mb-6">
-          <h3 className="text-lg font-bold text-slate-900">Intern Priority Expression of Interest</h3>
-          <p className="text-xs text-slate-500 mt-1">
-            Confirm your details below to secure priority consideration for Cohort 1.0.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="max-w-2xl">
+            <h3 className="text-lg font-bold text-slate-900">Intern Priority Expression of Interest</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Confirm your details below to secure priority consideration for Cohort 1.0.
+            </p>
+          </div>
+          <Button
+            type="button"
+            onClick={() => setComingSoonModalOpen(true)}
+            variant="outline"
+            className="border-amber-300 bg-amber-50/70 text-amber-900 hover:bg-amber-100 text-xs font-bold rounded-xl shrink-0"
+          >
+            <Ticket className="h-4 w-4 mr-1.5 text-amber-600" />
+            <span>Open VIP Ticket Popup</span>
+          </Button>
         </div>
 
         {submitted ? (
@@ -276,7 +367,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">City & State</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">City &amp; State</label>
                 <Input
                   required
                   placeholder="e.g. Visakhapatnam, AP"
@@ -305,6 +396,16 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
           </form>
         )}
       </div>
+
+      {/* Coming Soon VIP Pass Modal */}
+      <AmbassadorComingSoonModal
+        open={comingSoonModalOpen}
+        onOpenChange={setComingSoonModalOpen}
+        defaultName={fullName}
+        defaultEmail={email}
+        defaultPhone={phone}
+        defaultCollege={collegeName}
+      />
     </div>
   );
 }

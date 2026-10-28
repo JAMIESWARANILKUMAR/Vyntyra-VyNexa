@@ -31,6 +31,7 @@ import {
   Plane,
   FileCheck2,
   Crown,
+  Ticket,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WorldClocks } from "@/components/world-clocks";
@@ -38,6 +39,7 @@ import { Header } from "@/components/Header";
 import { AccreditationsRouteMap } from "@/components/accreditations-route-map";
 import { CareerJourneyRouteMap } from "@/components/career-journey-route-map";
 import { HiringCompaniesMarquee } from "@/components/hiring-companies-marquee";
+import { AmbassadorComingSoonModal } from "@/components/ambassador-coming-soon-modal";
 import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
 
 export const Route = createFileRoute("/careers")({
@@ -109,6 +111,7 @@ const DOMAINS_LIST = [
 function CareersPage() {
   const [applicationsOpen, setApplicationsOpen] = useState(true);
   const [jobPostings, setJobPostings] = useState<any[]>([]);
+  const [ambassadorModalOpen, setAmbassadorModalOpen] = useState(false);
 
   const fetchApplicationsOpen = useServerFn(getApplicationsOpen);
   const fetchJobPostings = useServerFn(listActiveJobPostings);
@@ -190,19 +193,55 @@ function CareersPage() {
               </div>
 
               <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
-                <Button asChild size="lg" className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-slate-950 font-black px-6 py-3 rounded-full text-sm shadow-xl shadow-amber-500/20 hover:scale-105 transition-all cursor-pointer">
+                <Button
+                  onClick={() => setAmbassadorModalOpen(true)}
+                  size="lg"
+                  className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-slate-950 font-black px-6 py-3 rounded-full text-sm shadow-xl shadow-amber-500/20 hover:scale-105 transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Ticket className="h-4 w-4" />
+                  <span>Claim Early-Bird Pass (Coming Soon)</span>
+                </Button>
+                <Button asChild variant="outline" size="sm" className="border-slate-700 bg-slate-900/60 text-slate-300 hover:text-white rounded-full">
                   <Link to="/campus-ambassador">
-                    Explore & Pre-Register <ArrowRight className="ml-2 h-4 w-4" />
+                    Full Program Details <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                   </Link>
                 </Button>
-                <span className="text-[11px] text-amber-300/80 text-center font-mono">
-                  *Announcement Soon · Stay Tuned
+              </div>
+            </div>
+
+            {/* Visual Goodies & Gadgets Row with Photography */}
+            <div className="mt-6 mb-8">
+              <div className="flex items-center justify-between mb-3 text-xs font-mono">
+                <span className="text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5" /> Goodies, Swags & Gadgets Preview
                 </span>
+                <span className="text-slate-500">Shipped Directly to Associates</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {[
+                  { title: "Welcome Box", sub: "Custom Metal ID", img: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=400&auto=format&fit=crop" },
+                  { title: "Embroidered Hoodie", sub: "3D Crest Patch", img: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=400&auto=format&fit=crop" },
+                  { title: "Fast Powerbank", sub: "20,000mAh PD", img: "https://images.unsplash.com/photo-1609592426815-397750868a25?q=80&w=400&auto=format&fit=crop" },
+                  { title: "ANC Earbuds", sub: "Bluetooth 5.4", img: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=400&auto=format&fit=crop" },
+                  { title: "Smartwatch", sub: "AMOLED Touch", img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop" },
+                  { title: "Curated Retreat", sub: "Top 10 Travel", img: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=400&auto=format&fit=crop" },
+                ].map((item, idx) => (
+                  <div key={idx} className="group relative rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden hover:border-amber-400/40 transition-all">
+                    <div className="aspect-square w-full overflow-hidden bg-slate-950">
+                      <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
+                    </div>
+                    <div className="p-2.5 text-center">
+                      <div className="text-xs font-bold text-white truncate">{item.title}</div>
+                      <div className="text-[10px] text-amber-300/80 font-mono">{item.sub}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
             {/* Perks Grid */}
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/50 backdrop-blur hover:border-amber-500/40 transition-colors">
                 <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center mb-3">
                   <Gift className="h-5 w-5" />
@@ -397,6 +436,11 @@ function CareersPage() {
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-6">
         <WorldClocks />
       </div>
+
+      <AmbassadorComingSoonModal
+        open={ambassadorModalOpen}
+        onOpenChange={setAmbassadorModalOpen}
+      />
     </div>
   );
 }

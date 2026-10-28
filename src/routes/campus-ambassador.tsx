@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useId } from "react";
+import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -11,31 +11,29 @@ import {
   Plane,
   FileCheck2,
   Crown,
-  Laptop,
   CheckCircle2,
   ArrowRight,
-  Shield,
-  Clock,
-  MapPin,
-  Building2,
-  GraduationCap,
-  Users,
   ChevronDown,
   ChevronUp,
-  Share2,
-  Send,
   Loader2,
   BatteryCharging,
   Headphones,
   Speaker,
   Watch,
   Video,
+  Ticket,
+  ExternalLink,
+  ShieldCheck,
+  Building2,
+  Layers,
+  HeartHandshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/Header";
 import { submitAmbassadorApplication } from "@/lib/ambassador.functions";
+import { AmbassadorComingSoonModal } from "@/components/ambassador-coming-soon-modal";
 import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
 
 export const Route = createFileRoute("/campus-ambassador")({
@@ -98,36 +96,99 @@ export const Route = createFileRoute("/campus-ambassador")({
   component: CampusAmbassadorPage,
 });
 
+// Rich Product Photography & Swag Catalog
+const SWAGS_AND_GOODIES_GALLERY = [
+  {
+    category: "Welcome Kit",
+    title: "Executive IRA Corporate Welcome Box",
+    subtitle: "Custom IRA Badge & Official Metal ID",
+    image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=800&auto=format&fit=crop",
+    desc: "Luxury unboxing box with personalized institutional associate ID card, custom metallic IRA badge, executive lanyard, pen, notebook, and collectible laptop stickers.",
+    badge: "Guaranteed Upon Onboarding",
+    badgeStyle: "border-amber-400/40 bg-amber-500/20 text-amber-300",
+  },
+  {
+    category: "Apparel",
+    title: "Vyntyra Executive Embroidered Hoodie",
+    subtitle: "Premium Heavyweight Cotton Fleece",
+    image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop",
+    desc: "Ultra-comfortable matte obsidian black hoodie featuring high-density 3D embroidered Vyntyra crest and institutional relations sleeve patch.",
+    badge: "Milestone Milestone Perk",
+    badgeStyle: "border-pink-400/40 bg-pink-500/20 text-pink-300",
+  },
+  {
+    category: "Gear",
+    title: "All-Weather Technical Campus Backpack",
+    subtitle: "Padded Laptop Compartment & USB Port",
+    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=800&auto=format&fit=crop",
+    desc: "Water-resistant ballistic nylon tech backpack with dedicated 16-inch laptop sleeve, hidden anti-theft pockets, and ergonomic airflow back padding.",
+    badge: "Milestone Reward",
+    badgeStyle: "border-indigo-400/40 bg-indigo-500/20 text-indigo-300",
+  },
+  {
+    category: "Apparel",
+    title: "Corporate Technical Polo Shirt",
+    subtitle: "Breathable Piqué Cotton Fabric",
+    image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop",
+    desc: "Official associate polo shirt engineered with moisture-wicking weave and embroidered institutional insignia for campus meetings and conferences.",
+    badge: "Associate Uniform",
+    badgeStyle: "border-sky-400/40 bg-sky-500/20 text-sky-300",
+  },
+  {
+    category: "Gear",
+    title: "Executive Padded Laptop Sleeve",
+    subtitle: "Shockproof Vegan Leather & Suede",
+    image: "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop",
+    desc: "Slimline executive laptop folio lined with microfiber fleece and embossed with the signature metallic Vyntyra seal.",
+    badge: "Executive Gear",
+    badgeStyle: "border-purple-400/40 bg-purple-500/20 text-purple-300",
+  },
+  {
+    category: "Drinkware",
+    title: "Matte Insulated Steel Thermal Flask",
+    subtitle: "Double-Walled 24hr Cold / 12hr Hot",
+    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=800&auto=format&fit=crop",
+    desc: "Food-grade 304 stainless steel flask with temperature retention and laser-etched associate credentials.",
+    badge: "Daily Essential",
+    badgeStyle: "border-emerald-400/40 bg-emerald-500/20 text-emerald-300",
+  },
+];
+
 const GADGETS_LIST = [
   {
     icon: BatteryCharging,
-    title: "High-Capacity Fast-Charge Powerbanks",
-    desc: "20,000mAh dual Type-C PD fast-charging battery packs with metallic laser-engraved Vyntyra badge.",
+    title: "High-Capacity Fast-Charge Powerbank",
+    desc: "20,000mAh dual Type-C PD 65W fast-charging battery packs with metallic laser-engraved Vyntyra badge.",
     tag: "Essential Tech",
+    image: "https://images.unsplash.com/photo-1609592426815-397750868a25?q=80&w=800&auto=format&fit=crop",
   },
   {
     icon: Headphones,
-    title: "True Wireless Active Noise-Canceling Earbuds",
-    desc: "Ultra-low latency Bluetooth 5.4 earbuds with environmental noise cancellation and 40-hour battery life.",
+    title: "Active Noise-Canceling (ANC) Earbuds",
+    desc: "Ultra-low latency Bluetooth 5.4 earbuds with 35dB environmental noise cancellation and 40-hour battery life.",
     tag: "Audio Excellence",
+    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=800&auto=format&fit=crop",
   },
   {
     icon: Speaker,
-    title: "Cinematic Bluetooth Soundbars",
-    desc: "Deep-bass portable soundbars engineered for crystal-clear masterclasses, dorm gaming, and team audio.",
+    title: "Cinematic Bluetooth Soundbar",
+    desc: "Deep-bass dual-driver portable soundbar engineered for clear hackathon pitches, dorm audio, and webinars.",
     tag: "Acoustic Gear",
+    image: "https://images.unsplash.com/photo-1545454675-3531b543be5d?q=80&w=800&auto=format&fit=crop",
   },
   {
     icon: Watch,
-    title: "Next-Gen AMOLED Smartwatches",
-    desc: "Bluetooth calling, sports tracking, heart rate, SPO2 sensors, and custom corporate executive watch faces.",
+    title: "Next-Gen AMOLED Smartwatch",
+    desc: "HD AMOLED touch display, Bluetooth calling, health tracking sensors, and custom corporate executive watch faces.",
     tag: "Wearable Tech",
+    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop",
   },
   {
     icon: Video,
-    title: "Full HD 1080p AI Auto-Focus Webcams",
-    desc: "Dual noise-canceling stereo mics, wide-angle lens, and privacy shutter for hackathons, interviews & webinars.",
+    title: "Full HD 1080p AI Auto-Focus Webcam",
+    desc: "Dual noise-canceling stereo mics, wide-angle glass lens, and hardware privacy shutter for webinars and live interviews.",
     tag: "Remote Setup",
+    image: "https://images.unsplash.com/photo-1588508065123-287b28e013da?q=80&w=800&auto=format&fit=crop",
   },
 ];
 
@@ -138,6 +199,7 @@ const PERKS_PILLARS = [
     highlight: "Custom Associate Badge & ID",
     desc: "Receive the official Institutional Relations Associate physical welcome box with your personalized executive ID card, lanyard, custom IRA pin, welcome stationery, and collectible stickers.",
     badgeColor: "border-amber-500/40 bg-amber-500/10 text-amber-400",
+    image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=800&auto=format&fit=crop",
   },
   {
     icon: Award,
@@ -145,13 +207,15 @@ const PERKS_PILLARS = [
     highlight: "Performance-Based Apparel",
     desc: "Wear the brand with pride: unlock limited-edition embroidered hoodies, cotton tech tees, padded laptop sleeves, sleek steel bottles, and heavy-duty tech backpacks upon milestone completion.",
     badgeColor: "border-pink-500/40 bg-pink-500/10 text-pink-400",
+    image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop",
   },
   {
     icon: TrendingUp,
     title: "Ambassador Rewards: Up to ₹15,000",
     highlight: "Direct Milestone Incentives",
-    desc: "Earn substantial performance-driven milestone stipends, referral bonuses, and institutional project incentives of up to ₹15,000 within the cohort period (*Performance & T&C Apply).",
+    desc: "Earn substantial performance-driven milestone stipends, referral bonuses, and institutional project incentives of up to ₹15,000 within the cohort period (*Performance & Terms and Conditions Apply).",
     badgeColor: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400",
+    image: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?q=80&w=800&auto=format&fit=crop",
   },
   {
     icon: Zap,
@@ -159,6 +223,7 @@ const PERKS_PILLARS = [
     highlight: "Powerbanks, Earbuds & Watches",
     desc: "Top performers are rewarded with cutting-edge electronics: fast-charging Powerbanks, ANC Earbuds, portable Soundbars, AMOLED Smartwatches, and Full HD Webcams.",
     badgeColor: "border-sky-500/40 bg-sky-500/10 text-sky-400",
+    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=800&auto=format&fit=crop",
   },
   {
     icon: Plane,
@@ -166,6 +231,7 @@ const PERKS_PILLARS = [
     highlight: "All-Expenses-Paid Retreat",
     desc: "The Top 10 Associates will earn an exclusive, all-expenses-paid curated travel experience and leadership retreat with co-associates and corporate executives.",
     badgeColor: "border-purple-500/40 bg-purple-500/10 text-purple-400",
+    image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800&auto=format&fit=crop",
   },
   {
     icon: FileCheck2,
@@ -173,6 +239,7 @@ const PERKS_PILLARS = [
     highlight: "Internship & Leadership Credential",
     desc: "Boost your resume with dual verifiable statutory credentials: an official Certificate of Recognition as an Institutional Relations Associate plus an accredited Corporate Internship Letter.",
     badgeColor: "border-cyan-500/40 bg-cyan-500/10 text-cyan-400",
+    image: "https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=800&auto=format&fit=crop",
   },
   {
     icon: Crown,
@@ -180,6 +247,7 @@ const PERKS_PILLARS = [
     highlight: "Free VIP Access to all Events",
     desc: "Enjoy lifetime complimentary VVIP access to all Vyntyra technical & non-technical Workshops, AI Bootcamps, Executive Masterclasses, Hackathons, Learning Portals, and Advanced Courses.",
     badgeColor: "border-amber-400/40 bg-amber-400/10 text-amber-300",
+    image: "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=800&auto=format&fit=crop",
   },
 ];
 
@@ -209,6 +277,9 @@ const FAQS = [
 function CampusAmbassadorPage() {
   const submitApplicationFn = useServerFn(submitAmbassadorApplication);
 
+  // Coming Soon Modal State
+  const [comingSoonModalOpen, setComingSoonModalOpen] = useState(false);
+
   // Form State
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -223,6 +294,7 @@ function CampusAmbassadorPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [selectedGalleryCategory, setSelectedGalleryCategory] = useState<string>("All");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -263,6 +335,11 @@ function CampusAmbassadorPage() {
     }
   };
 
+  const filteredGallery =
+    selectedGalleryCategory === "All"
+      ? SWAGS_AND_GOODIES_GALLERY
+      : SWAGS_AND_GOODIES_GALLERY.filter((item) => item.category === selectedGalleryCategory);
+
   return (
     <div className="min-h-screen bg-[#070b14] text-slate-100 selection:bg-amber-500/30 selection:text-amber-200 font-sans relative overflow-x-hidden">
       {/* Top Global Header */}
@@ -270,7 +347,7 @@ function CampusAmbassadorPage() {
 
       {/* Cyber-Luxe Background Light Effects */}
       <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[450px] bg-gradient-to-b from-indigo-600/15 via-rose-500/10 to-transparent blur-[160px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[500px] bg-gradient-to-b from-indigo-600/20 via-pink-600/10 to-transparent blur-[160px]" />
         <div className="absolute top-[800px] -left-48 w-96 h-96 bg-amber-500/10 rounded-full blur-[140px]" />
         <div className="absolute top-[1800px] -right-48 w-96 h-96 bg-sky-500/10 rounded-full blur-[140px]" />
         <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:32px_32px] opacity-25" />
@@ -305,14 +382,25 @@ function CampusAmbassadorPage() {
             <strong className="text-pink-300 font-semibold">all-expenses-paid curated travel retreat</strong> for the Top 10.
           </p>
 
+          {/* Interactive CTA Buttons */}
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Button
-              onClick={scrollToForm}
+              onClick={() => setComingSoonModalOpen(true)}
               size="lg"
-              className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-black px-8 py-6 rounded-full text-base shadow-xl shadow-amber-500/25 transition-all duration-300 hover:scale-105 cursor-pointer uppercase tracking-wider"
+              className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-black px-8 py-6 rounded-full text-base shadow-xl shadow-amber-500/25 transition-all duration-300 hover:scale-105 cursor-pointer uppercase tracking-wider flex items-center gap-2"
             >
-              <span>Pre-Register for First Cohort</span>
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <Ticket className="h-5 w-5" />
+              <span>Claim Early-Bird VIP Spot (Coming Soon)</span>
+            </Button>
+
+            <Button
+              onClick={scrollToForm}
+              variant="outline"
+              size="lg"
+              className="border-slate-700 bg-slate-900/70 hover:bg-slate-800 text-slate-200 hover:text-white px-7 py-6 rounded-full text-sm font-bold backdrop-blur"
+            >
+              <span>Full Expression of Interest Form</span>
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
 
             <Link
@@ -345,6 +433,91 @@ function CampusAmbassadorPage() {
           </div>
         </section>
 
+        {/* ─── Dedicated Goodies, Swags & Merchandise Showcase with Real Images ─── */}
+        <section className="py-16 sm:py-24 px-4 sm:px-6 max-w-7xl mx-auto border-t border-slate-850">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-pink-500/30 bg-pink-500/10 text-pink-400 text-xs font-mono font-bold tracking-widest uppercase mb-3">
+              <Gift className="h-3.5 w-3.5" />
+              EXCLUSIVE PHYSICAL SWAGS &amp; MERCHANDISE
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+              Goodies, Swags &amp; Corporate Merchandise
+            </h2>
+            <p className="mt-3 text-slate-400 text-sm sm:text-base leading-relaxed">
+              Every Institutional Relations Associate represents the gold standard of Vyntyra. Wear the brand, carry the tech gear, and unpack physical premium merchandise delivered directly to your doorstep.
+            </p>
+
+            {/* Filter Pills */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+              {["All", "Welcome Kit", "Apparel", "Gear", "Drinkware"].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedGalleryCategory(cat)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    selectedGalleryCategory === cat
+                      ? "bg-amber-400 text-slate-950 shadow-md shadow-amber-500/30 scale-105"
+                      : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Goodies Visual Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {filteredGallery.map((item, i) => (
+              <div
+                key={i}
+                className="group relative rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden hover:border-slate-700 transition-all duration-300 hover:shadow-2xl hover:shadow-amber-500/10 flex flex-col justify-between"
+              >
+                {/* Product Photo with Hover Zoom */}
+                <div className="relative aspect-video sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 group-hover:opacity-95"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                  
+                  {/* Category Pill */}
+                  <span className={`absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border backdrop-blur-md ${item.badgeStyle}`}>
+                    {item.badge}
+                  </span>
+                </div>
+
+                {/* Content */}
+                <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-mono text-amber-400 uppercase tracking-widest mb-1">
+                      {item.subtitle}
+                    </div>
+                    <h3 className="text-lg font-bold text-white group-hover:text-amber-300 transition-colors">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
+                      {item.desc}
+                    </p>
+                  </div>
+
+                  <div className="mt-5 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                    <span className="font-mono text-[11px]">First Cohort 2026-27</span>
+                    <button
+                      onClick={() => setComingSoonModalOpen(true)}
+                      className="text-amber-400 hover:text-amber-300 font-semibold text-xs flex items-center gap-1 group/btn"
+                    >
+                      <span>Claim via Waitlist</span>
+                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* ─── Pillars & Perks Showcase ─── */}
         <section className="py-16 sm:py-24 px-4 sm:px-6 max-w-6xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-14">
@@ -368,7 +541,6 @@ function CampusAmbassadorPage() {
                   key={idx}
                   className="group relative rounded-2xl border border-slate-800/90 bg-gradient-to-b from-slate-900/80 to-slate-950/80 p-6 sm:p-7 backdrop-blur hover:border-slate-700 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 flex flex-col justify-between overflow-hidden"
                 >
-                  {/* Subtle hover gradient */}
                   <div className="absolute -right-20 -top-20 w-40 h-40 bg-gradient-to-br from-indigo-500/10 via-amber-500/5 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500 pointer-events-none" />
 
                   <div>
@@ -401,7 +573,7 @@ function CampusAmbassadorPage() {
           </div>
         </section>
 
-        {/* ─── Electronic Gadgets Spotlight ─── */}
+        {/* ─── Electronic Gadgets Spotlight with Real Photography ─── */}
         <section className="py-16 sm:py-20 px-4 sm:px-6 max-w-6xl mx-auto">
           <div className="rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-900/90 via-[#0b1329] to-slate-950 p-8 sm:p-12 relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 right-0 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -419,47 +591,76 @@ function CampusAmbassadorPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {GADGETS_LIST.map((gadget, i) => {
                 const Icon = gadget.icon;
                 return (
                   <div
                     key={i}
-                    className="p-5 rounded-xl border border-slate-800/90 bg-slate-950/60 backdrop-blur hover:border-sky-500/40 transition-colors group"
+                    className="rounded-2xl border border-slate-800/90 bg-slate-950/60 backdrop-blur hover:border-sky-500/40 transition-all group overflow-hidden flex flex-col justify-between"
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Icon className="h-5 w-5" />
+                    <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
+                      <img
+                        src={gadget.image}
+                        alt={gadget.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
+                      <div className="absolute top-3 left-3 w-9 h-9 rounded-lg bg-slate-900/80 backdrop-blur border border-slate-700/60 text-sky-400 flex items-center justify-center">
+                        <Icon className="h-4 w-4" />
                       </div>
-                      <span className="text-[10px] font-mono text-sky-400/80 bg-sky-500/5 px-2 py-0.5 rounded border border-sky-500/20">
+                      <span className="absolute top-3 right-3 text-[10px] font-mono text-sky-300 bg-sky-500/20 backdrop-blur px-2 py-0.5 rounded border border-sky-400/40">
                         {gadget.tag}
                       </span>
                     </div>
-                    <h3 className="font-bold text-sm sm:text-base text-white group-hover:text-sky-300 transition-colors">
-                      {gadget.title}
-                    </h3>
-                    <p className="mt-1.5 text-xs text-slate-400 leading-relaxed">
-                      {gadget.desc}
-                    </p>
+
+                    <div className="p-5 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="font-bold text-sm sm:text-base text-white group-hover:text-sky-300 transition-colors">
+                          {gadget.title}
+                        </h3>
+                        <p className="mt-1.5 text-xs text-slate-400 leading-relaxed">
+                          {gadget.desc}
+                        </p>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-slate-850 flex items-center justify-between text-xs">
+                        <span className="text-[11px] text-slate-500 font-mono">Performance Tier</span>
+                        <span className="text-emerald-400 font-semibold flex items-center gap-1 text-[11px]">
+                          Eligible in Cohort 1.0 <CheckCircle2 className="h-3 w-3" />
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
 
               {/* Special Gadget Callout */}
-              <div className="p-5 rounded-xl border border-dashed border-amber-500/30 bg-amber-500/5 backdrop-blur flex flex-col justify-between">
+              <div className="p-6 rounded-2xl border border-dashed border-amber-500/40 bg-gradient-to-br from-amber-500/10 via-slate-950 to-slate-950 backdrop-blur flex flex-col justify-between">
                 <div>
-                  <div className="text-amber-400 text-xs font-bold uppercase tracking-wider mb-1">
-                    Complete Set Eligibility
+                  <div className="text-amber-400 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Sparkles className="h-4 w-4" /> Complete Ecosystem
                   </div>
-                  <h4 className="text-sm font-bold text-white">
-                    Unlock All 5 Gadgets in Cohort 1.0
+                  <h4 className="text-lg font-black text-white">
+                    Unlock All 5 Electronic Gadgets
                   </h4>
-                  <p className="mt-1 text-xs text-slate-400">
-                    High achievers who fulfill regional outreach goals qualify for the full executive device ecosystem.
+                  <p className="mt-2 text-xs text-slate-300 leading-relaxed">
+                    Institutional Relations Associates who fulfill comprehensive college outreach &amp; workshop benchmarks qualify for the full branded workstation ecosystem.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-amber-500/20 text-[11px] text-amber-300/80 font-mono">
-                  *Terms & Criteria Announced at Launch
+
+                <div className="mt-6 pt-4 border-t border-amber-500/20 flex flex-col gap-3">
+                  <Button
+                    onClick={() => setComingSoonModalOpen(true)}
+                    size="sm"
+                    className="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-lg text-xs"
+                  >
+                    Reserve Priority Spot &rarr;
+                  </Button>
+                  <div className="text-[11px] text-amber-300/80 font-mono text-center">
+                    *Performance Criteria Announced at Launch
+                  </div>
                 </div>
               </div>
             </div>
@@ -488,42 +689,49 @@ function CampusAmbassadorPage() {
                 <div className="mt-6 grid grid-cols-2 gap-3 text-xs text-slate-300">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-pink-400 shrink-0" />
-                    <span>Flight & Luxury Stay Included</span>
+                    <span>Flight &amp; Luxury Resort Stay Included</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-pink-400 shrink-0" />
-                    <span>Executive Networking Dinner</span>
+                    <span>Executive Networking Gala</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-pink-400 shrink-0" />
-                    <span>Team Building & Retreat Activities</span>
+                    <span>Team Building &amp; Adventure Sports</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-pink-400 shrink-0" />
-                    <span>Exclusive Trophy & Honors Night</span>
+                    <span>Exclusive Trophy &amp; Honors Night</span>
                   </div>
                 </div>
               </div>
 
               <div className="lg:col-span-5 flex justify-center">
-                <div className="relative p-6 rounded-2xl border border-pink-500/30 bg-slate-900/90 shadow-xl max-w-sm w-full text-center">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-pink-500 to-amber-400 mx-auto flex items-center justify-center text-slate-950 font-black shadow-lg mb-4">
-                    <Plane className="h-8 w-8" />
+                <div className="relative rounded-2xl border border-pink-500/30 bg-slate-900/95 shadow-xl max-w-sm w-full overflow-hidden text-center">
+                  <div className="aspect-video w-full overflow-hidden bg-slate-950">
+                    <img
+                      src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800&auto=format&fit=crop"
+                      alt="Curated Travel Retreat"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                  <div className="text-lg font-bold text-white">First Cohort Retreat</div>
-                  <div className="text-xs text-pink-300 mt-1 uppercase tracking-wider font-mono">
-                    Top 10 Associates Qualifier
+                  <div className="p-6">
+                    <div className="text-lg font-bold text-white">First Cohort Leadership Retreat</div>
+                    <div className="text-xs text-pink-300 mt-1 uppercase tracking-wider font-mono">
+                      Top 10 Associates Qualifier
+                    </div>
+                    <p className="mt-3 text-xs text-slate-400 leading-relaxed">
+                      Evaluated based on institutional engagement, student community growth, and overall leadership performance.
+                    </p>
+                    <Button
+                      onClick={() => setComingSoonModalOpen(true)}
+                      size="sm"
+                      className="mt-5 w-full bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-lg shadow-md flex items-center justify-center gap-2"
+                    >
+                      <Ticket className="h-4 w-4" />
+                      <span>Claim Early-Bird Waitlist Pass</span>
+                    </Button>
                   </div>
-                  <p className="mt-3 text-xs text-slate-400 leading-relaxed">
-                    Evaluated based on institutional engagement, student community growth, and overall leadership performance.
-                  </p>
-                  <Button
-                    onClick={scrollToForm}
-                    size="sm"
-                    className="mt-5 w-full bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-lg shadow-md"
-                  >
-                    Register Your Interest &rarr;
-                  </Button>
                 </div>
               </div>
             </div>
@@ -533,10 +741,32 @@ function CampusAmbassadorPage() {
         {/* ─── Pre-Registration Expression of Interest Form ─── */}
         <section id="pre-register-form" className="py-16 sm:py-24 px-4 sm:px-6 max-w-4xl mx-auto scroll-mt-20">
           <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-b from-slate-900/95 via-slate-950 to-[#070b14] p-6 sm:p-10 lg:p-12 shadow-2xl relative">
+            {/* Quick VIP Pass Shortcut Banner */}
+            <div className="mb-8 p-4 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-pink-500/10 to-indigo-500/15 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 font-bold">
+                  <Ticket className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">Prefer Quick 1-Minute VIP Pass?</h4>
+                  <p className="text-xs text-slate-300">
+                    Get an instant numbered ticket code &amp; VIP waitlist confirmation popup.
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                onClick={() => setComingSoonModalOpen(true)}
+                className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl shrink-0"
+              >
+                Open Coming Soon Popup &rarr;
+              </Button>
+            </div>
+
             <div className="text-center max-w-2xl mx-auto mb-8">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-400 text-xs font-mono font-bold tracking-widest uppercase mb-3">
                 <Sparkles className="h-3 w-3" />
-                EARLY ACCESS EXPRESSION OF INTEREST
+                FULL EXPRESSION OF INTEREST FORM
               </div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
                 Pre-Register for the First Cohort
@@ -629,7 +859,7 @@ function CampusAmbassadorPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                      Degree & Branch *
+                      Degree &amp; Branch *
                     </label>
                     <Input
                       required
@@ -655,7 +885,7 @@ function CampusAmbassadorPage() {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                      City & State *
+                      City &amp; State *
                     </label>
                     <Input
                       required
@@ -710,7 +940,7 @@ function CampusAmbassadorPage() {
                     )}
                   </Button>
                   <p className="mt-2.5 text-center text-[11px] text-slate-500">
-                    By submitting, you agree to receive communications regarding First Cohort selection & onboarding.
+                    By submitting, you agree to receive communications regarding First Cohort selection &amp; onboarding.
                   </p>
                 </div>
               </form>
@@ -757,6 +987,12 @@ function CampusAmbassadorPage() {
           </div>
         </section>
       </main>
+
+      {/* ─── Coming Soon VIP Pass Modal ─── */}
+      <AmbassadorComingSoonModal
+        open={comingSoonModalOpen}
+        onOpenChange={setComingSoonModalOpen}
+      />
     </div>
   );
 }
