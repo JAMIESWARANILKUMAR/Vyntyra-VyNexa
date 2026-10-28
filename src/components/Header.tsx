@@ -102,12 +102,22 @@ export function Header({ live = true }: HeaderProps) {
               <Link 
                 to="/" 
                 className={`px-3 py-2 rounded-sm transition-colors ${
-                  isActive("/") 
+                  pathname === "/" 
                     ? "text-primary font-medium bg-surface" 
                     : "text-muted-foreground hover:text-primary hover:bg-surface"
                 }`}
               >
-                About
+                Home
+              </Link>
+              <Link 
+                to="/about" 
+                className={`px-3 py-2 rounded-sm transition-colors ${
+                  pathname === "/about" 
+                    ? "text-primary font-medium bg-surface" 
+                    : "text-muted-foreground hover:text-primary hover:bg-surface"
+                }`}
+              >
+                About Us
               </Link>
               <Link 
                 to="/careers" 
@@ -217,10 +227,19 @@ export function Header({ live = true }: HeaderProps) {
                 to="/" 
                 onClick={() => setMenuOpen(false)} 
                 className={`px-2 py-2.5 border-b border-border hover:bg-surface rounded-sm transition-colors ${
-                  isActive("/") ? "text-primary font-semibold" : "text-muted-foreground"
+                  pathname === "/" ? "text-primary font-semibold" : "text-muted-foreground"
                 }`}
               >
-                About
+                Home
+              </Link>
+              <Link 
+                to="/about" 
+                onClick={() => setMenuOpen(false)} 
+                className={`px-2 py-2.5 border-b border-border hover:bg-surface rounded-sm transition-colors ${
+                  pathname === "/about" ? "text-primary font-semibold" : "text-muted-foreground"
+                }`}
+              >
+                About Us
               </Link>
               <Link 
                 to="/careers" 

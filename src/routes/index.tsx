@@ -33,6 +33,7 @@ import {
   Lock,
   Headphones,
   FileCheck2,
+  Flag,
 } from "lucide-react";
 import { WorldClocks } from "@/components/world-clocks";
 import { Header } from "@/components/Header";
@@ -40,11 +41,12 @@ import { AccreditationsRouteMap } from "@/components/accreditations-route-map";
 import { CareerJourneyRouteMap } from "@/components/career-journey-route-map";
 import { HiringCompaniesMarquee } from "@/components/hiring-companies-marquee";
 import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
+import { Footer } from "@/components/footer";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "About Vyntyra Consultancy Services Pvt. Ltd. — Enterprise Technology & Talent Ecosystem" },
+      { title: "Vyntyra Consultancy Services Pvt. Ltd. — Enterprise Technology, AI Engineering & Talent Ecosystem" },
       {
         name: "description",
         content:
@@ -61,7 +63,7 @@ export const Route = createFileRoute("/")({
       ...GLOBAL_SEO_META_TAGS,
     ],
   }),
-  component: AboutPage,
+  component: HomePage,
 });
 
 const DIVISIONS = [
@@ -224,7 +226,7 @@ const LEADERSHIP = [
   },
 ];
 
-function AboutPage() {
+function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
       <Header />
@@ -257,12 +259,18 @@ function AboutPage() {
               Explore Careers &amp; Internships <ArrowRight className="h-4 w-4" />
             </a>
             <a
+              href="/about"
+              className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-[1.02]"
+            >
+              About Our Company <ArrowRight className="h-4 w-4" />
+            </a>
+            <a
               href="https://vyntyraconsultancyservices.in"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 border border-slate-300 hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
             >
-              Visit Corporate Portal <ExternalLink className="h-3.5 w-3.5" />
+              Corporate Portal <ExternalLink className="h-3.5 w-3.5" />
             </a>
             <a
               href="/verify"
@@ -623,6 +631,7 @@ function AboutPage() {
           ))}
         </section>
       </main>
+          <Footer />
     </div>
   );
 }
