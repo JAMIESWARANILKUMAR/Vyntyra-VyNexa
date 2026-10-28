@@ -40,6 +40,11 @@ import { AccreditationsRouteMap } from "@/components/accreditations-route-map";
 import { CareerJourneyRouteMap } from "@/components/career-journey-route-map";
 import { HiringCompaniesMarquee } from "@/components/hiring-companies-marquee";
 import { AmbassadorComingSoonModal } from "@/components/ambassador-coming-soon-modal";
+import {
+  getAmbassadorProgramSettings,
+  DEFAULT_AMBASSADOR_SETTINGS,
+  type AmbassadorProgramSettings,
+} from "@/lib/ambassador.functions";
 import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
 
 export const Route = createFileRoute("/careers")({
@@ -112,16 +117,21 @@ function CareersPage() {
   const [applicationsOpen, setApplicationsOpen] = useState(true);
   const [jobPostings, setJobPostings] = useState<any[]>([]);
   const [ambassadorModalOpen, setAmbassadorModalOpen] = useState(false);
+  const [ambassadorSettings, setAmbassadorSettings] = useState<AmbassadorProgramSettings>(DEFAULT_AMBASSADOR_SETTINGS);
 
   const fetchApplicationsOpen = useServerFn(getApplicationsOpen);
   const fetchJobPostings = useServerFn(listActiveJobPostings);
   const incrementVisitors = useServerFn(incrementVisitorCount);
+  const fetchAmbassadorSettings = useServerFn(getAmbassadorProgramSettings);
 
   useEffect(() => {
     fetchApplicationsOpen().then((r) => setApplicationsOpen(r?.open ?? true)).catch(() => {});
     fetchJobPostings()
       .then((r: any) => setJobPostings(Array.isArray(r) ? r : (r?.postings ?? [])))
       .catch(() => setJobPostings([]));
+    fetchAmbassadorSettings()
+      .then((s) => s && setAmbassadorSettings(s))
+      .catch(() => {});
     incrementVisitors().catch(() => {});
   }, []);
 
@@ -218,25 +228,21 @@ function CareersPage() {
                 <span className="text-slate-500">Shipped Directly to Associates</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                {[
-                  { title: "Welcome Box", sub: "Custom Metal ID", img: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=400&auto=format&fit=crop" },
-                  { title: "Embroidered Hoodie", sub: "3D Crest Patch", img: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=400&auto=format&fit=crop" },
-                  { title: "Fast Powerbank", sub: "20,000mAh PD", img: "https://images.unsplash.com/photo-1609592426815-397750868a25?q=80&w=400&auto=format&fit=crop" },
-                  { title: "ANC Earbuds", sub: "Bluetooth 5.4", img: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=400&auto=format&fit=crop" },
-                  { title: "Smartwatch", sub: "AMOLED Touch", img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop" },
-                  { title: "Curated Retreat", sub: "Top 10 Travel", img: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=400&auto=format&fit=crop" },
-                ].map((item, idx) => (
-                  <div key={idx} className="group relative rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden hover:border-amber-400/40 transition-all">
-                    <div className="aspect-square w-full overflow-hidden bg-slate-950">
-                      <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
+                {(ambassadorSettings?.products || [])
+                  .filter((p) => p.is_active)
+                  .slice(0, 6)
+                  .map((item) => (
+                    <div key={item.id} className="group relative rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden hover:border-amber-400/40 transition-all">
+                      <div className="aspect-square w-full overflow-hidden bg-slate-950">
+                        <img src={item.image_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
+                      </div>
+                      <div className="p-2.5 text-center">
+                        <div className="text-xs font-bold text-white truncate">{item.title}</div>
+                        <div className="text-[10px] text-amber-300/80 font-mono truncate">{item.subtitle || item.badge}</div>
+                      </div>
                     </div>
-                    <div className="p-2.5 text-center">
-                      <div className="text-xs font-bold text-white truncate">{item.title}</div>
-                      <div className="text-[10px] text-amber-300/80 font-mono">{item.sub}</div>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
 
@@ -440,6 +446,7 @@ function CareersPage() {
       <AmbassadorComingSoonModal
         open={ambassadorModalOpen}
         onOpenChange={setAmbassadorModalOpen}
+        settings={ambassadorSettings}
       />
     </div>
   );

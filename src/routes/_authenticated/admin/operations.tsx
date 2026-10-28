@@ -54,6 +54,7 @@ import { AdminProfileChangeApprovals } from "@/components/admin-profile-change-a
 import { VyntyraMeetAdmin } from "@/components/ui/vyntyra-meet-admin";
 import { CbtOperationsTab } from "@/components/admin-cbt-operations";
 import { AdminMockInterviewsOperationsView } from "@/components/admin-mock-interviews-operations";
+import { AdminAmbassadorOperations } from "@/components/admin-ambassador-operations";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { toast } from "sonner";
 import { TaskRichDescription } from "@/components/task-rich-description";
@@ -1268,6 +1269,7 @@ function OperationsDashboard() {
               { id: "ai-interviews", label: "AI Mock Interviews", icon: Sparkles, count: null },
             { id: "support", label: "Support & Feedback", icon: LifeBuoy, count: (supportQueries || []).filter((q: any) => q.status === "open").length || null },
             { id: "profile_approvals", label: "Profile Approvals", icon: UserCheck, count: null },
+            { id: "ambassador", label: "Campus Ambassador", icon: Award, count: null },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1323,6 +1325,7 @@ function OperationsDashboard() {
                   { id: "vyntyra-meet", title: "Vyntyra Meet", desc: "Enterprise-grade, E2EE secure video meeting rooms and controls.", icon: ShieldCheck, color: "text-blue-600 bg-blue-50 border-blue-200", badge: "Secure" },
                   { id: "support", title: "Helpdesk & Resolution Hub", desc: "Assign customer and intern support tickets to employee resolvers and approve syncs.", icon: LifeBuoy, color: "text-cyan-600 bg-cyan-50 border-cyan-200", badge: `${(supportQueries || []).filter((q: any) => q.status === "open").length} Open` },
                   { id: "profile_approvals", title: "Profile Change Approvals", desc: "Review and approve/reject sensitive profile updates (Email, Phone, Photo, Address) requested by interns and employees.", icon: UserCheck, color: "text-indigo-600 bg-indigo-50 border-indigo-200", badge: "Identity Approval" },
+                  { id: "ambassador", title: "Campus Ambassador Program Controls", desc: "Manage product photography, swags/gadgets catalog, toggle application entry (open/closed), and customize coming soon popup messages.", icon: Award, color: "text-amber-600 bg-amber-50 border-amber-200", badge: "Cohort 1.0" },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
@@ -3539,6 +3542,13 @@ function OperationsDashboard() {
         {activeTab === "ai-interviews" && (
           <section id="ai-interviews-section">
             <AdminMockInterviewsOperationsView />
+          </section>
+        )}
+
+        {/* 🏆 TAB: CAMPUS AMBASSADOR OPERATIONS */}
+        {activeTab === "ambassador" && (
+          <section id="ambassador-section">
+            <AdminAmbassadorOperations />
           </section>
         )}
       </main>

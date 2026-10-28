@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Sparkles,
@@ -20,10 +21,16 @@ import {
   Loader2,
   ExternalLink,
   Ticket,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { submitAmbassadorApplication } from "@/lib/ambassador.functions";
+import {
+  submitAmbassadorApplication,
+  getAmbassadorProgramSettings,
+  DEFAULT_AMBASSADOR_SETTINGS,
+  type AmbassadorProgramSettings,
+} from "@/lib/ambassador.functions";
 import { AmbassadorComingSoonModal } from "@/components/ambassador-coming-soon-modal";
 
 interface InternAmbassadorViewProps {
@@ -33,6 +40,15 @@ interface InternAmbassadorViewProps {
 
 export function InternAmbassadorView({ profile, application }: InternAmbassadorViewProps) {
   const submitAppFn = useServerFn(submitAmbassadorApplication);
+  const fetchSettingsFn = useServerFn(getAmbassadorProgramSettings);
+
+  const settingsQ = useQuery({
+    queryKey: ["ambassador-settings"],
+    queryFn: () => fetchSettingsFn(),
+  });
+
+  const settings: AmbassadorProgramSettings = settingsQ.data || DEFAULT_AMBASSADOR_SETTINGS;
+  const isEnabled = settings.applications_enabled !== false;
 
   // Coming Soon Modal State
   const [comingSoonModalOpen, setComingSoonModalOpen] = useState(false);
@@ -49,6 +65,11 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isEnabled) {
+      toast.error(settings.disabled_notice || "Applications are currently paused.");
+      return;
+    }
+
     if (!fullName || !email || !phone || !collegeName) {
       toast.error("Please fill in your name, email, phone, and college name.");
       return;
@@ -65,7 +86,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
           degree_branch: degreeBranch,
           graduation_year: graduationYear,
           city_state: cityState || "Campus Resident",
-          motivation: "Registered Intern applying for First Cohort Campus Ambassador",
+          motivation: `Registered Intern applying for ${settings.cohort_name || "First Cohort"} Campus Ambassador`,
         },
       });
 
@@ -78,6 +99,10 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
     }
   };
 
+  const previewProducts = (settings.products || DEFAULT_AMBASSADOR_SETTINGS.products)
+    .filter((p) => p.is_active)
+    .slice(0, 6);
+
   return (
     <div className="space-y-6">
       {/* Hero Card */}
@@ -88,7 +113,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
         <div className="relative z-10 max-w-3xl space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-3.5 py-1 text-xs font-mono font-bold text-amber-300 uppercase tracking-widest">
             <Sparkles className="h-3 w-3 text-amber-400" />
-            FIRST COHORT 2026-27 · LAUNCHING SOON
+            {settings.cohort_name || "FIRST COHORT 2026-27"} · {isEnabled ? "LAUNCHING SOON" : "PREVIEW MODE"}
           </div>
 
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
@@ -105,7 +130,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
           <div className="pt-2 flex flex-wrap items-center gap-3">
             <Button
               onClick={() => setComingSoonModalOpen(true)}
-              className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2"
+              className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer"
             >
               <Ticket className="h-4 w-4" />
               <span>Claim Intern VIP Pass (Coming Soon)</span>
@@ -132,7 +157,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
               <Gift className="h-4 w-4 text-amber-600" /> Swags, Goodies &amp; Gadgets Catalog
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Physical merchandise &amp; electronics awarded to First Cohort associates.
+              Physical merchandise &amp; electronics awarded to {settings.cohort_name || "First Cohort"} associates.
             </p>
           </div>
           <span className="text-[11px] font-mono font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
@@ -141,50 +166,21 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            {
-              name: "IRA Welcome Box",
-              tag: "Executive Kit",
-              img: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=400&auto=format&fit=crop",
-            },
-            {
-              name: "Corporate Hoodie",
-              tag: "3D Crest Fleece",
-              img: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=400&auto=format&fit=crop",
-            },
-            {
-              name: "20k Powerbank",
-              tag: "65W Fast Charge",
-              img: "https://images.unsplash.com/photo-1609592426815-397750868a25?q=80&w=400&auto=format&fit=crop",
-            },
-            {
-              name: "ANC Earbuds",
-              tag: "Noise Canceling",
-              img: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=400&auto=format&fit=crop",
-            },
-            {
-              name: "AMOLED Watch",
-              tag: "Calling & Health",
-              img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop",
-            },
-            {
-              name: "Travel Retreat",
-              tag: "Top 10 Curated",
-              img: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=400&auto=format&fit=crop",
-            },
-          ].map((item, idx) => (
-            <div key={idx} className="group rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex flex-col">
+          {previewProducts.map((item) => (
+            <div key={item.id} className="group rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex flex-col">
               <div className="aspect-square w-full overflow-hidden bg-slate-100">
                 <img
-                  src={item.img}
-                  alt={item.name}
+                  src={item.image_url}
+                  alt={item.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   loading="lazy"
                 />
               </div>
               <div className="p-2 text-center">
-                <div className="text-xs font-bold text-slate-900 truncate">{item.name}</div>
-                <div className="text-[10px] text-amber-700 font-mono font-medium">{item.tag}</div>
+                <div className="text-xs font-bold text-slate-900 truncate">{item.title}</div>
+                <div className="text-[10px] text-amber-700 font-mono font-medium truncate">
+                  {item.subtitle || item.badge}
+                </div>
               </div>
             </div>
           ))}
@@ -217,7 +213,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
             <TrendingUp className="h-5 w-5" />
           </div>
-          <h4 className="font-bold text-slate-900 text-sm">Earn Up to ₹15,000 Rewards</h4>
+          <h4 className="font-bold text-slate-900 text-sm">Earn Up to {settings.target_rewards || "₹15,000"}</h4>
           <p className="text-xs text-slate-500 leading-relaxed">
             Stipends and performance milestone payouts (*Performance &amp; T&amp;C Apply).
           </p>
@@ -275,26 +271,36 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
           <div className="max-w-2xl">
             <h3 className="text-lg font-bold text-slate-900">Intern Priority Expression of Interest</h3>
             <p className="text-xs text-slate-500 mt-1">
-              Confirm your details below to secure priority consideration for Cohort 1.0.
+              Confirm your details below to secure priority consideration for {settings.cohort_name || "Cohort 1.0"}.
             </p>
           </div>
           <Button
             type="button"
             onClick={() => setComingSoonModalOpen(true)}
             variant="outline"
-            className="border-amber-300 bg-amber-50/70 text-amber-900 hover:bg-amber-100 text-xs font-bold rounded-xl shrink-0"
+            className="border-amber-300 bg-amber-50/70 text-amber-900 hover:bg-amber-100 text-xs font-bold rounded-xl shrink-0 cursor-pointer"
           >
             <Ticket className="h-4 w-4 mr-1.5 text-amber-600" />
             <span>Open VIP Ticket Popup</span>
           </Button>
         </div>
 
+        {!isEnabled && (
+          <div className="mb-6 p-4 rounded-2xl border border-rose-200 bg-rose-50 text-rose-800 text-xs flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0" />
+            <div>
+              <strong className="block">Applications Paused</strong>
+              {settings.disabled_notice || "Pre-registrations are temporarily paused."}
+            </div>
+          </div>
+        )}
+
         {submitted ? (
           <div className="p-6 text-center rounded-2xl border border-emerald-300 bg-emerald-50 max-w-md mx-auto">
             <CheckCircle2 className="h-10 w-10 text-emerald-600 mx-auto mb-2" />
             <h4 className="font-bold text-slate-900 text-base">Priority Interest Registered!</h4>
             <p className="text-xs text-slate-600 mt-1">
-              You are on the First Cohort priority list. We will send updates to <strong>{email}</strong>.
+              You are on the {settings.cohort_name || "First Cohort"} priority list. We will send updates to <strong>{email}</strong>.
             </p>
           </div>
         ) : (
@@ -304,6 +310,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
                 <Input
                   required
+                  disabled={!isEnabled}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="h-9 text-xs"
@@ -314,6 +321,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
                 <Input
                   required
+                  disabled={!isEnabled}
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -327,6 +335,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
                 <label className="block text-xs font-semibold text-slate-700 mb-1">WhatsApp / Phone</label>
                 <Input
                   required
+                  disabled={!isEnabled}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="h-9 text-xs"
@@ -337,6 +346,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
                 <label className="block text-xs font-semibold text-slate-700 mb-1">College / University</label>
                 <Input
                   required
+                  disabled={!isEnabled}
                   placeholder="Your college full name"
                   value={collegeName}
                   onChange={(e) => setCollegeName(e.target.value)}
@@ -350,6 +360,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Degree / Branch</label>
                 <Input
                   required
+                  disabled={!isEnabled}
                   value={degreeBranch}
                   onChange={(e) => setDegreeBranch(e.target.value)}
                   className="h-9 text-xs"
@@ -360,6 +371,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Graduation Year</label>
                 <Input
                   required
+                  disabled={!isEnabled}
                   value={graduationYear}
                   onChange={(e) => setGraduationYear(e.target.value)}
                   className="h-9 text-xs"
@@ -370,6 +382,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
                 <label className="block text-xs font-semibold text-slate-700 mb-1">City &amp; State</label>
                 <Input
                   required
+                  disabled={!isEnabled}
                   placeholder="e.g. Visakhapatnam, AP"
                   value={cityState}
                   onChange={(e) => setCityState(e.target.value)}
@@ -380,13 +393,15 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
 
             <Button
               type="submit"
-              disabled={loading}
-              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-6 h-10 rounded-xl shadow-md cursor-pointer"
+              disabled={loading || !isEnabled}
+              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-6 h-10 rounded-xl shadow-md cursor-pointer disabled:opacity-50"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" /> Submitting...
                 </span>
+              ) : !isEnabled ? (
+                <span>Applications Currently Paused</span>
               ) : (
                 <span className="flex items-center gap-2">
                   Confirm First Cohort Priority Interest <ArrowRight className="h-4 w-4" />
@@ -405,6 +420,7 @@ export function InternAmbassadorView({ profile, application }: InternAmbassadorV
         defaultEmail={email}
         defaultPhone={phone}
         defaultCollege={collegeName}
+        settings={settings}
       />
     </div>
   );

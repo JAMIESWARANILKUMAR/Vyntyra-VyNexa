@@ -24,8 +24,13 @@ import {
   ShieldCheck,
   Loader2,
   X,
+  AlertTriangle,
 } from "lucide-react";
-import { submitAmbassadorApplication } from "@/lib/ambassador.functions";
+import {
+  submitAmbassadorApplication,
+  type AmbassadorProgramSettings,
+  DEFAULT_AMBASSADOR_SETTINGS,
+} from "@/lib/ambassador.functions";
 
 interface AmbassadorComingSoonModalProps {
   open: boolean;
@@ -34,6 +39,7 @@ interface AmbassadorComingSoonModalProps {
   defaultName?: string;
   defaultPhone?: string;
   defaultCollege?: string;
+  settings?: AmbassadorProgramSettings;
 }
 
 export function AmbassadorComingSoonModal({
@@ -43,6 +49,7 @@ export function AmbassadorComingSoonModal({
   defaultName = "",
   defaultPhone = "",
   defaultCollege = "",
+  settings = DEFAULT_AMBASSADOR_SETTINGS,
 }: AmbassadorComingSoonModalProps) {
   const submitAppFn = useServerFn(submitAmbassadorApplication);
 
@@ -55,8 +62,15 @@ export function AmbassadorComingSoonModal({
   const [confirmed, setConfirmed] = useState(false);
   const [passNumber, setPassNumber] = useState("");
 
+  const isEnabled = settings.applications_enabled !== false;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isEnabled) {
+      toast.error(settings.disabled_notice || "Applications are currently paused.");
+      return;
+    }
+
     if (!fullName || !email || !phone || !collegeName) {
       toast.error("Please fill in all fields to reserve your priority spot.");
       return;
@@ -90,7 +104,7 @@ export function AmbassadorComingSoonModal({
 
   const shareOnWhatsApp = () => {
     const text = encodeURIComponent(
-      `🚀 *I just reserved my VIP Priority Spot for the Vyntyra Campus Ambassador First Cohort 2026-27!*\n\nExclusive Welcome Kits, Branded Gadgets (Earbuds, Powerbanks, Watches), Rewards up to ₹15,000, and a Curated Travel Retreat for Top 10.\n\nPre-register before official applications open:\n👉 https://vyntyraconsultancyservices.in/campus-ambassador`
+      `🚀 *I just reserved my VIP Priority Spot for the ${settings.popup_title} (${settings.cohort_name || "First Cohort 2026-27"})!*\n\nExclusive Welcome Kits, Branded Gadgets (Earbuds, Powerbanks, Watches), Rewards up to ₹15,000, and a Curated Travel Retreat for Top 10.\n\nPre-register before official applications close:\n👉 https://vyntyraconsultancyservices.in/campus-ambassador`
     );
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
@@ -109,20 +123,21 @@ export function AmbassadorComingSoonModal({
         <div className="p-6 sm:p-8 space-y-6 max-h-[88vh] overflow-y-auto">
           {/* Header */}
           <DialogHeader className="text-center space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300 text-[11px] font-mono font-bold tracking-widest uppercase mx-auto animate-pulse">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300 text-[11px] font-mono font-bold tracking-widest uppercase mx-auto animate-pulse">
               <Sparkles className="h-3 w-3 text-amber-400" />
-              OFFICIAL APPLICATIONS OPENING SOON
+              {settings.popup_badge || "OFFICIAL APPLICATIONS OPENING SOON"}
             </div>
 
             <DialogTitle className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-              Vyntyra Institutional Relations Associate
+              {settings.popup_title || "Vyntyra Institutional Relations Associate"}
             </DialogTitle>
             <div className="text-xs sm:text-sm font-semibold text-amber-400">
-              Campus Ambassador Program · First Cohort (2026-27)
+              {settings.popup_subtitle || "Campus Ambassador Program · First Cohort (2026-27)"}
             </div>
 
             <DialogDescription className="text-xs text-slate-300 leading-relaxed max-w-sm mx-auto">
-              The application portal is currently in its priority preview phase. Lock in your <strong>VIP Priority Pass</strong> to get screened before public rollout!
+              {settings.popup_announcement_message ||
+                "The application portal is currently in its priority preview phase. Lock in your VIP Priority Pass to get screened before public rollout!"}
             </DialogDescription>
           </DialogHeader>
 
@@ -132,7 +147,7 @@ export function AmbassadorComingSoonModal({
               <span className="flex items-center gap-1.5 font-bold">
                 <Ticket className="h-4 w-4 text-amber-400" /> VIP ADMISSION PASS
               </span>
-              <span>COHORT 1.0</span>
+              <span>{settings.cohort_name || "COHORT 1.0"}</span>
             </div>
 
             <div className="mt-3 flex items-center justify-between gap-4">
@@ -165,15 +180,26 @@ export function AmbassadorComingSoonModal({
                 <span>Reserved Welcome Kit</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3 w-3 text-amber-400 shrink-0" />
-                <span>Rewards up to ₹15,000*</span>
+                <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />
+                <span>{settings.popup_rewards_text || "Rewards up to ₹15,000*"}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3 w-3 text-amber-400 shrink-0" />
+                <CheckCircle2 className="h-3 w-3 text-pink-400 shrink-0" />
                 <span>Top 10 Travel Retreat</span>
               </div>
             </div>
           </div>
+
+          {/* Applications Paused Banner */}
+          {!isEnabled && (
+            <div className="p-4 rounded-2xl border border-rose-500/40 bg-rose-500/10 text-rose-200 text-xs flex items-start gap-2.5">
+              <AlertTriangle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-white block">Applications Paused</span>
+                {settings.disabled_notice || "Pre-registrations are temporarily closed."}
+              </div>
+            </div>
+          )}
 
           {confirmed ? (
             /* Confirmation State */
@@ -184,7 +210,7 @@ export function AmbassadorComingSoonModal({
               <div>
                 <h3 className="text-lg font-black text-white">VIP Pass #{passNumber} Confirmed!</h3>
                 <p className="mt-1 text-xs text-slate-300 leading-relaxed">
-                  Congratulations <strong>{fullName}</strong>! You have secured priority early-bird access for the First Cohort.
+                  Congratulations <strong>{fullName}</strong>! You have secured priority early-bird access for the {settings.cohort_name || "First Cohort"}.
                 </p>
                 <p className="mt-2 text-[11px] text-slate-400">
                   We will dispatch the official application link and welcome kit allocation instructions to <strong>{email}</strong> upon launch.
@@ -219,6 +245,7 @@ export function AmbassadorComingSoonModal({
                   </label>
                   <Input
                     required
+                    disabled={!isEnabled}
                     placeholder="e.g. Ananya Reddy"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
@@ -232,6 +259,7 @@ export function AmbassadorComingSoonModal({
                   </label>
                   <Input
                     required
+                    disabled={!isEnabled}
                     type="email"
                     placeholder="name@college.edu"
                     value={email}
@@ -248,6 +276,7 @@ export function AmbassadorComingSoonModal({
                   </label>
                   <Input
                     required
+                    disabled={!isEnabled}
                     placeholder="+91 98765 43210"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
@@ -261,6 +290,7 @@ export function AmbassadorComingSoonModal({
                   </label>
                   <Input
                     required
+                    disabled={!isEnabled}
                     placeholder="e.g. IIT Madras, BITS, Andhra Univ"
                     value={collegeName}
                     onChange={(e) => setCollegeName(e.target.value)}
@@ -274,6 +304,7 @@ export function AmbassadorComingSoonModal({
                   Degree & Branch
                 </label>
                 <Input
+                  disabled={!isEnabled}
                   placeholder="e.g. B.Tech Computer Science / ECE / MBA"
                   value={degreeBranch}
                   onChange={(e) => setDegreeBranch(e.target.value)}
@@ -283,13 +314,15 @@ export function AmbassadorComingSoonModal({
 
               <Button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-black h-11 rounded-xl text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-amber-500/25 cursor-pointer mt-2"
+                disabled={loading || !isEnabled}
+                className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-black h-11 rounded-xl text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-amber-500/25 cursor-pointer mt-2 disabled:opacity-50"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" /> Securing VIP Priority Pass...
                   </span>
+                ) : !isEnabled ? (
+                  <span>Applications Currently Paused</span>
                 ) : (
                   <span className="flex items-center gap-2">
                     Claim VIP Early-Bird Pass <ArrowRight className="h-4 w-4" />
@@ -298,7 +331,7 @@ export function AmbassadorComingSoonModal({
               </Button>
 
               <p className="text-[10px] text-center text-slate-500">
-                ⚡ Strictly limited priority allocations for First Cohort 2026-27.
+                ⚡ Strictly limited priority allocations for {settings.cohort_name || "First Cohort 2026-27"}.
               </p>
             </form>
           )}
