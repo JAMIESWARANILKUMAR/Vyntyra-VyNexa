@@ -8,7 +8,7 @@ import {
   RefreshCw, FileText, Tag, Percent, Plus, Search, Users, CheckCircle2, 
   Trash2, Edit3, TrendingUp, Sparkles, AlertCircle, DollarSign, Check,
   Mail, MessageSquare, Send, Award, Image, Upload, ExternalLink, Globe2,
-  CheckCheck, Layers, Download, Eye, EyeOff, FileCheck
+  CheckCheck, Layers, Download, Eye, EyeOff, FileCheck, Mic
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -36,9 +36,10 @@ import {
 } from "@/lib/notifications-omni.functions";
 import { generateNocPdf, urlToBase64 } from "@/lib/nocGenerator";
 import { saveNocPdf, updateNocUrl } from "@/lib/noc.functions";
+import { AdminVoiceTrainingStudio } from "@/components/interview/AdminVoiceTrainingStudio";
 import { localDateTimeToIso, isoToLocalDateTimeInput, formatDateTimeDisplay } from "@/lib/date-utils";
 
-type SettingsTab = "referrals" | "intern_fees" | "system_modules" | "branding" | "career_tracks" | "noc_controls";
+type SettingsTab = "referrals" | "intern_fees" | "system_modules" | "branding" | "career_tracks" | "noc_controls" | "ai_voice";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   validateSearch: (search: Record<string, unknown>): { tab?: SettingsTab } => {
@@ -985,6 +986,7 @@ function AdminSettingsPage() {
               { id: "branding", label: "Certificates & Branding", icon: Image, count: null },
               { id: "career_tracks", label: "Career Tracks & Domains", icon: Layers, count: (domainsQ.data || []).length },
               { id: "noc_controls", label: "NOC Generation & Access", icon: FileCheck, count: null },
+              { id: "ai_voice", label: "AI Voice Training Studio", icon: Mic, count: null },
             ].map((tabItem) => {
               const Icon = tabItem.icon;
               const isActive = activeTab === tabItem.id;
@@ -2500,6 +2502,12 @@ function AdminSettingsPage() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+        {/* ─── AI VOICE TRAINING STUDIO ─── */}
+        {activeTab === "ai_voice" && (
+          <div className="pt-2">
+            <AdminVoiceTrainingStudio />
           </div>
         )}
       </main>

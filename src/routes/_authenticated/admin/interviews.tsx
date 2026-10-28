@@ -6,7 +6,7 @@ import {
   Sparkles, Users, Award, Clock, Search, Filter, Eye, ShieldCheck, 
   UserCheck, AlertCircle, Calendar, Plus, RefreshCw, CheckCircle2, 
   ExternalLink, ArrowUpRight, BarChart3, TrendingUp, Radio, Laptop, 
-  ShieldAlert, Settings, FileSpreadsheet, Lock
+  ShieldAlert, Settings, FileSpreadsheet, Lock, Mic
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ import {
   INTERVIEW_DOMAINS 
 } from '@/lib/mock-interview.functions';
 import { supabase } from '@/integrations/supabase/client';
+import { AdminVoiceTrainingStudio } from '@/components/interview/AdminVoiceTrainingStudio';
 
 export const Route = createFileRoute('/_authenticated/admin/interviews')({
   component: AdminMockInterviewsDashboard
@@ -35,7 +36,7 @@ function AdminMockInterviewsDashboard() {
   const scheduleSession = useServerFn(scheduleMockInterviewFn);
 
   // Filters & Tabs
-  const [activeTab, setActiveTab] = useState<'sessions' | 'users' | 'scheduler'>('sessions');
+  const [activeTab, setActiveTab] = useState<'sessions' | 'users' | 'scheduler' | 'voice_studio'>('sessions');
   const [statusFilter, setStatusFilter] = useState('all');
   const [deptFilter, setDeptFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -168,6 +169,15 @@ function AdminMockInterviewsDashboard() {
         <div className="flex items-center gap-2">
           <Button
             size="sm"
+            onClick={() => setActiveTab('voice_studio')}
+            className="h-9 px-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs rounded-xl flex items-center gap-1.5 shadow-lg shadow-emerald-600/20"
+          >
+            <Mic className="h-4 w-4" />
+            <span>Voice Studio &amp; Training</span>
+          </Button>
+
+          <Button
+            size="sm"
             onClick={() => setActiveTab('scheduler')}
             className="h-9 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl flex items-center gap-1.5 shadow-lg shadow-blue-600/25"
           >
@@ -258,6 +268,18 @@ function AdminMockInterviewsDashboard() {
         >
           <Calendar className="h-4 w-4" />
           <span>Schedule Candidate Interview</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('voice_studio')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+            activeTab === 'voice_studio'
+              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+              : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+          }`}
+        >
+          <Mic className="h-4 w-4" />
+          <span>AI Voice Training Studio</span>
         </button>
       </div>
 
@@ -606,6 +628,13 @@ function AdminMockInterviewsDashboard() {
             </Button>
           </form>
         </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          TAB 4: AI VOICE STUDIO & CUSTOM VOICE TRAINING
+         ═══════════════════════════════════════════════════════════════════ */}
+      {activeTab === 'voice_studio' && (
+        <AdminVoiceTrainingStudio />
       )}
 
       {/* ─── Role Assignment Dialog ─── */}

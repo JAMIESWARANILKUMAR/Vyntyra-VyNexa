@@ -18,6 +18,8 @@ import {
 import * as faceDetection from '@tensorflow-models/face-detection';
 import '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs-core';
+import { getAiVoiceSettings, AiVoiceSettings } from '@/lib/settings.functions';
+import { cleanTextForSpeech, resolveBestSpeechVoice } from '@/lib/speech-clarity';
 
 interface InterviewRoomProps {
   sessionId: string;
@@ -68,6 +70,24 @@ export function InterviewRoom({
   const [code, setCode] = useState<string>(initialCode || questions[3]?.initialCodeSnippet || '// Implement your solution here');
   const [codeLanguage, setCodeLanguage] = useState<string>(initialCodeLanguage || 'javascript');
   const [viewMode, setViewMode] = useState<'video' | 'split' | 'code'>('video');
+
+  // ─── Voice & Clarity State ───
+  const [activeVoiceSettings, setActiveVoiceSettings] = useState<AiVoiceSettings | null>(null);
+  const [speechPace, setSpeechPace] = useState<number>(0.94);
+  const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  // Sanitize targetRole to avoid duplicate title text like "Technology & Software Software Engineer"
+  const displayRole = React.useMemo(() => {
+    if (!targetRole) return 'Software Engineer';
+    let r = targetRole.trim();
+    if (r.toLowerCase().includes('technology & software software engineer')) {
+      return r.replace(/technology & software software engineer/gi, 'Software Engineer');
+    }
+    if (r.toLowerCase().includes('software software engineer')) {
+      return r.replace(/software software engineer/gi, 'Software Engineer');
+    }
+    return r;
+  }, [targetRole]);
 
   // ─── Media Controls & Streams ───
   const [isCameraActive, setIsCameraActive] = useState(true);
@@ -272,25 +292,53 @@ export function InterviewRoom({
     return () => clearInterval(syncInterval);
   }, [sessionId, eyeContactScore, headStabilityScore]);
 
-  // ─── 3. Text-to-Speech (AI Speaking Voice & Visualizer Sync) ───
+  // ─── 3. Load Admin Voice Profile & Synthesizer Voices ───
+  useEffect(() => {
+    // 1. Fetch trained voice profile from settings
+    getAiVoiceSettings()
+      .then((settings) => {
+        if (settings) {
+          setActiveVoiceSettings(settings);
+          if (settings.rate) setSpeechPace(settings.rate);
+        }
+      })
+      .catch((err) => console.warn("Could not load AI voice settings:", err));
+
+    // 2. Load available browser voices & listen for changes
+    if ('speechSynthesis' in window) {
+      const updateVoices = () => {
+        const v = window.speechSynthesis.getVoices();
+        if (v && v.length > 0) {
+          setBrowserVoices(v);
+        }
+      };
+      updateVoices();
+      window.speechSynthesis.onvoiceschanged = updateVoices;
+      return () => {
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+    }
+  }, []);
+
+  // ─── 4. Text-to-Speech (Crystal-Clear AI Voice & Visualizer Sync) ───
   const speakAiResponse = (text: string) => {
     if (!('speechSynthesis' in window)) return;
 
     window.speechSynthesis.cancel(); // Stop any pending speech
     setIsAiSpeaking(true);
 
-    const cleanSpokenText = text.replace(/```[\s\S]*?```/g, 'Here is the relevant code challenge in your editor.');
+    // Phonetic & enunciation clarity preprocessor (removes markdown, expands acronyms, adds breath pauses)
+    const cleanSpokenText = cleanTextForSpeech(text);
     const utterance = new SpeechSynthesisUtterance(cleanSpokenText);
-    utterance.rate = 1.05;
-    utterance.pitch = 1.0;
-    utterance.volume = ttsVolume;
+    
+    // Pace: use calibrated pace (0.94x default for distinct articulation)
+    utterance.rate = speechPace || activeVoiceSettings?.rate || 0.94;
+    utterance.pitch = activeVoiceSettings?.pitch || 1.0;
+    utterance.volume = ttsVolume * (activeVoiceSettings?.volume ?? 1.0);
 
-    // Pick best English voice
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => 
-      (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('David')) &&
-      v.lang.startsWith('en')
-    ) || voices.find(v => v.lang.startsWith('en'));
+    // Pick highest clarity neural/natural voice
+    const allVoices = browserVoices.length > 0 ? browserVoices : window.speechSynthesis.getVoices();
+    const preferredVoice = resolveBestSpeechVoice(allVoices, activeVoiceSettings || undefined);
 
     if (preferredVoice) {
       utterance.voice = preferredVoice;
@@ -307,7 +355,8 @@ export function InterviewRoom({
       startSpeechRecognition();
     };
 
-    utterance.onerror = () => {
+    utterance.onerror = (e) => {
+      console.warn("Speech synthesis notice:", e);
       setIsAiSpeaking(false);
     };
 
@@ -318,7 +367,7 @@ export function InterviewRoom({
   useEffect(() => {
     const timer = setTimeout(() => {
       speakAiResponse(aiSpokenText);
-    }, 800);
+    }, 1000);
     return () => {
       clearTimeout(timer);
       if ('speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -517,7 +566,7 @@ export function InterviewRoom({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-sm text-white tracking-tight">{targetRole}</span>
+              <span className="font-bold text-sm text-white tracking-tight">{displayRole}</span>
               <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
                 {difficulty} Level
               </span>
@@ -571,6 +620,19 @@ export function InterviewRoom({
 
         {/* Right: View Mode Toggle & End Button */}
         <div className="flex items-center gap-2.5">
+
+          {/* AI Voice Indicator & Repeat Question Button */}
+          <button
+            type="button"
+            onClick={() => speakAiResponse(aiSpokenText)}
+            title="Click to replay AI question with calibrated acoustic clarity"
+            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/25 text-xs transition cursor-pointer"
+          >
+            <Volume2 className="h-3.5 w-3.5 text-blue-400" />
+            <span className="font-mono text-[11px] truncate max-w-[130px]">{activeVoiceSettings?.voice_name || 'VyNexa Voice'}</span>
+            <span className="text-[10px] text-blue-400 font-bold bg-blue-500/20 px-1 py-0.2 rounded font-mono">{speechPace}x</span>
+            <RotateCcw className="h-3 w-3 ml-0.5 text-blue-400 hover:text-white" />
+          </button>
           
           {/* View Mode Switcher */}
           <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-0.5 text-xs">
@@ -868,15 +930,21 @@ export function InterviewRoom({
                   </Button>
                 </div>
 
-                {/* Helper hint */}
-                <div className="flex items-center justify-between text-[11px] text-gray-400">
-                  <span>Speak clearly; our speech engine auto-detects fluency & pacing.</span>
-                  <button 
-                    onClick={() => speakAiResponse(aiSpokenText)}
-                    className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium"
-                  >
-                    <RotateCcw className="h-3 w-3" /> Replay Question
-                  </button>
+                {/* Helper hint & Audio Replay */}
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Live Audio: {activeVoiceSettings?.voice_name || "VyNexa Neural Voice"} ({speechPace}x pace)</span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => speakAiResponse(aiSpokenText)}
+                      className="px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 hover:text-white border border-blue-500/30 flex items-center gap-1 font-semibold text-[11px] transition cursor-pointer"
+                    >
+                      <RotateCcw className="h-3 w-3" /> Replay Question
+                    </button>
+                  </div>
                 </div>
 
               </div>

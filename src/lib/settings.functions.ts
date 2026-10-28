@@ -155,3 +155,107 @@ export const updateBrandingSettings = createServerFn({ method: "POST" })
 
     return { success: true, ...data };
   });
+
+export interface AiVoiceSettings {
+  voice_id: string;
+  voice_name: string;
+  speaker_identity: string;
+  speaker_gender: "female" | "male" | "neutral";
+  accent: "en-IN" | "en-US" | "en-GB" | "en-AU";
+  rate: number;
+  pitch: number;
+  volume: number;
+  clarity_boost: boolean;
+  custom_audio_url?: string;
+  custom_voice_script?: string;
+  trained_date?: string;
+  preferred_browser_voices: string[];
+}
+
+export const DEFAULT_AI_VOICE_SETTINGS: AiVoiceSettings = {
+  voice_id: "natural_in_female",
+  voice_name: "Dr. Sarah - Executive Tech Lead (Natural)",
+  speaker_identity: "Admin (VCS Bar Raiser)",
+  speaker_gender: "female",
+  accent: "en-IN",
+  rate: 0.94,
+  pitch: 1.0,
+  volume: 1.0,
+  clarity_boost: true,
+  custom_audio_url: "",
+  custom_voice_script: "Welcome to your 1:1 technical interview. Today we will explore clean code principles and system design.",
+  trained_date: "",
+  preferred_browser_voices: [
+    "Google UK English Female",
+    "Microsoft Neerja Online (Natural) - English (India)",
+    "Microsoft Aria Online (Natural)",
+    "Google US English",
+    "Samantha",
+    "Karen",
+    "Victoria",
+    "Daniel",
+    "Google UK English Male"
+  ]
+};
+
+export const getAiVoiceSettings = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const { data } = await supabase
+      .from("site_settings")
+      .select("*")
+      .eq("id", "ai_interview_voice_settings")
+      .maybeSingle();
+
+    if (data && data.value) {
+      return {
+        ...DEFAULT_AI_VOICE_SETTINGS,
+        ...(typeof data.value === "string" ? JSON.parse(data.value) : data.value),
+      } as AiVoiceSettings;
+    }
+  } catch (e) {
+    console.warn("[getAiVoiceSettings] error:", e);
+  }
+  return DEFAULT_AI_VOICE_SETTINGS;
+});
+
+export const updateAiVoiceSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    voice_id: z.string(),
+    voice_name: z.string(),
+    speaker_identity: z.string(),
+    speaker_gender: z.enum(["female", "male", "neutral"]),
+    accent: z.enum(["en-IN", "en-US", "en-GB", "en-AU"]),
+    rate: z.number().min(0.7).max(1.5),
+    pitch: z.number().min(0.7).max(1.5),
+    volume: z.number().min(0.1).max(1.0),
+    clarity_boost: z.boolean(),
+    custom_audio_url: z.string().optional(),
+    custom_voice_script: z.string().optional(),
+    preferred_browser_voices: z.array(z.string()).optional()
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");
+
+    const settingsData = {
+      ...data,
+      trained_date: new Date().toISOString(),
+      preferred_browser_voices: data.preferred_browser_voices || DEFAULT_AI_VOICE_SETTINGS.preferred_browser_voices
+    };
+
+    const payload = {
+      id: "ai_interview_voice_settings",
+      value: settingsData,
+      updated_at: new Date().toISOString(),
+      updated_by: context.userId
+    };
+
+    try {
+      await supabase.from("site_settings").upsert(payload);
+    } catch (e: any) {
+      console.warn("[updateAiVoiceSettings] error:", e);
+      throw new Error("Failed to save voice settings");
+    }
+
+    return { success: true, settings: settingsData };
+  });

@@ -496,7 +496,11 @@ export function EmployeeMockInterviewsView({
                     setFormCandidateName(intern.name || intern.full_name || "");
                     setFormCandidateEmail(intern.email || "");
                     if (intern.department) {
-                      setFormRole(`${intern.department} Software Engineer`);
+                      const dept = intern.department.trim();
+                      const cleanRole = dept.toLowerCase().includes("software")
+                        ? (dept.toLowerCase().includes("engineer") ? dept : "Software Engineer")
+                        : `${dept} Engineer`;
+                      setFormRole(cleanRole);
                     }
                   }
                 }}

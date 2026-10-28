@@ -204,7 +204,8 @@ function RootComponent() {
     pathname.startsWith("/cms") ||
     pathname.startsWith("/templates") ||
     pathname.startsWith("/cbt") ||
-    pathname.startsWith("/meet");
+    pathname.startsWith("/meet") ||
+    pathname.startsWith("/interview");
 
   return (
     <QueryClientProvider client={queryClient}>

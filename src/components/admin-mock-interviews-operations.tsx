@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   Sparkles, Video, Calendar, Clock, Award, Shield, Users,
   Search, RefreshCw, Eye, CheckCircle2, AlertCircle, Plus,
-  FileText, ExternalLink, ChevronRight, UserCheck, Play, ArrowUpRight
+  FileText, ExternalLink, ChevronRight, UserCheck, Play, ArrowUpRight, Mic
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ import {
   listInternsForMockInterviewFn,
   INTERVIEW_DOMAINS
 } from "@/lib/mock-interview.functions";
+import { AdminVoiceTrainingStudio } from "@/components/interview/AdminVoiceTrainingStudio";
 
 export function AdminMockInterviewsOperationsView() {
   const qc = useQueryClient();
@@ -41,6 +42,7 @@ export function AdminMockInterviewsOperationsView() {
   // Modals
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [roleModalOpen, setRoleModalOpen] = useState(false);
+  const [voiceStudioModalOpen, setVoiceStudioModalOpen] = useState(false);
 
   // Schedule Form State
   const [scheduleMode, setScheduleMode] = useState<"intern" | "manual">("intern");
@@ -208,6 +210,16 @@ export function AdminMockInterviewsOperationsView() {
           >
             <Shield className="h-3.5 w-3.5 text-indigo-400" />
             Manage Roles
+          </Button>
+
+          <Button
+            onClick={() => setVoiceStudioModalOpen(true)}
+            variant="outline"
+            size="sm"
+            className="border-emerald-500/40 bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 text-xs font-bold rounded-xl gap-1.5"
+          >
+            <Mic className="h-3.5 w-3.5 text-emerald-400" />
+            Voice Training Studio
           </Button>
 
           <Button
@@ -550,7 +562,11 @@ export function AdminMockInterviewsOperationsView() {
                       setFormCandidateEmail(intern.email);
                       setFormInternId(intern.intern_id || "");
                       if (intern.department) {
-                        setFormRole(`${intern.department} Software Engineer`);
+                        const dept = intern.department.trim();
+                        const cleanRole = dept.toLowerCase().includes("software")
+                          ? (dept.toLowerCase().includes("engineer") ? dept : "Software Engineer")
+                          : `${dept} Engineer`;
+                        setFormRole(cleanRole);
                       }
                     }
                   }}
@@ -816,6 +832,13 @@ export function AdminMockInterviewsOperationsView() {
               {roleMut.isPending ? "Saving..." : "Update Role"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Voice Studio Dialog ── */}
+      <Dialog open={voiceStudioModalOpen} onOpenChange={setVoiceStudioModalOpen}>
+        <DialogContent className="max-w-4xl p-0 bg-transparent border-0 shadow-none overflow-hidden max-h-[90vh] overflow-y-auto">
+          <AdminVoiceTrainingStudio onSaved={() => setVoiceStudioModalOpen(false)} />
         </DialogContent>
       </Dialog>
     </div>
