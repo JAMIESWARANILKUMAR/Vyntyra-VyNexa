@@ -1,7 +1,3 @@
--- ═══════════════════════════════════════════════════════════════════
--- Cloudflare D1 Compatible SQLite Schema for AI Mock Interviews & RBAC
--- ═══════════════════════════════════════════════════════════════════
-
 CREATE TABLE IF NOT EXISTS mock_sessions (
     id TEXT PRIMARY KEY,
     user_id TEXT,
@@ -11,7 +7,7 @@ CREATE TABLE IF NOT EXISTS mock_sessions (
     domain TEXT NOT NULL DEFAULT 'fullstack',
     target_role TEXT NOT NULL DEFAULT 'Full-Stack Software Engineer',
     difficulty TEXT NOT NULL DEFAULT 'mid',
-    status TEXT NOT NULL DEFAULT 'scheduled', -- 'scheduled', 'in_progress', 'completed', 'cancelled'
+    status TEXT NOT NULL DEFAULT 'scheduled',
     overall_score REAL,
     technical_score REAL,
     communication_score REAL,
@@ -28,8 +24,6 @@ CREATE TABLE IF NOT EXISTS mock_sessions (
     hiring_verdict TEXT,
     recording_r2_url TEXT,
     report_r2_url TEXT,
-    
-    -- RBAC & Multi-Tier Extensions
     created_by TEXT,
     assigned_to TEXT,
     mentor_id TEXT,
@@ -40,7 +34,6 @@ CREATE TABLE IF NOT EXISTS mock_sessions (
     scheduled_at TEXT,
     schedule_time TEXT,
     is_observer_allowed INTEGER DEFAULT 1,
-    
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
 );
@@ -63,7 +56,7 @@ CREATE TABLE IF NOT EXISTS mock_user_roles (
     user_id TEXT PRIMARY KEY,
     email TEXT,
     name TEXT,
-    role TEXT NOT NULL DEFAULT 'candidate', -- 'super_admin', 'admin', 'employee', 'candidate'
+    role TEXT NOT NULL DEFAULT 'candidate',
     department TEXT DEFAULT 'Engineering',
     updated_at TEXT DEFAULT (datetime('now'))
 );
