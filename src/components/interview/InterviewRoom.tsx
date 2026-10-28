@@ -30,6 +30,7 @@ interface InterviewRoomProps {
   initialCode?: string;
   initialCodeLanguage?: string;
   isObserver?: boolean;
+  isDemoMode?: boolean;
   onConcludeInterview: (reportData: any) => void;
 }
 
@@ -44,6 +45,7 @@ export function InterviewRoom({
   initialCode,
   initialCodeLanguage = 'javascript',
   isObserver = false,
+  isDemoMode = false,
   onConcludeInterview
 }: InterviewRoomProps) {
   // ─── Session State ───
@@ -478,6 +480,33 @@ export function InterviewRoom({
   return (
     <div className="fixed inset-0 w-screen h-screen bg-[#07090e] text-white flex flex-col font-sans overflow-hidden select-none">
       
+      {/* ─── Demo Mode Watermark Banner ─── */}
+      {isDemoMode && (
+        <div className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 px-4 py-1.5 flex items-center justify-between text-xs font-bold text-white shadow-md z-40">
+          <span className="flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-amber-300" />
+            🎮 DEMO / PRACTICE MODE — Unofficial Simulation • AI Speech &amp; Camera HUD Active • Not Graded by Mentor
+          </span>
+          <div className="flex items-center gap-2">
+            {currentQuestionIndex < questions.length - 1 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const nextIdx = currentQuestionIndex + 1;
+                  setCurrentQuestionIndex(nextIdx);
+                  setAiSpokenText(questions[nextIdx]?.question || "Next question...");
+                  toast.info(`Switched to Demo Question ${nextIdx + 1}`);
+                }}
+                className="bg-white/20 hover:bg-white/30 text-white text-[11px] px-2.5 py-0.5 rounded font-mono transition cursor-pointer"
+              >
+                Skip Question &rarr;
+              </button>
+            )}
+            <span className="bg-white/20 px-2 py-0.5 rounded text-[11px] font-mono">5-Min Demo Preview</span>
+          </div>
+        </div>
+      )}
+
       {/* ─── Top Bar: Session HUD & Controls ─── */}
       <header className="h-14 bg-[#0d111a]/95 backdrop-blur-xl border-b border-white/10 px-4 flex items-center justify-between shrink-0 z-30">
         
@@ -492,6 +521,11 @@ export function InterviewRoom({
               <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
                 {difficulty} Level
               </span>
+              {isDemoMode && (
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold animate-pulse">
+                  🎮 Demo Practice
+                </span>
+              )}
               {isObserver && (
                 <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold animate-pulse">
                   Observer Mode (Silent Audit)

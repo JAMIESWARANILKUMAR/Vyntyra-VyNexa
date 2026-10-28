@@ -63,6 +63,37 @@ export function InternMockInterviewsView({
   const upcomingSessions = sessionData?.upcoming || [];
   const completedSessions = sessionData?.completed || [];
 
+  // Start Demo Mode Simulation
+  const handleStartDemoMode = async (track = "fullstack") => {
+    setIsStarting(true);
+    toast.info("Initializing 5-Minute Demo Practice Simulation...", { duration: 3000 });
+
+    try {
+      const meta = INTERVIEW_DOMAINS.find(d => d.id === track) || INTERVIEW_DOMAINS[2];
+      const res = await createSession({
+        data: {
+          candidateName: candidateName.trim() || currentUserEmail || "Intern (Demo)",
+          candidateEmail: currentUserEmail || undefined,
+          internId: internId || undefined,
+          domain: track,
+          targetRole: `${meta.recommendedRole} (Demo Mode)`,
+          difficulty: 'junior'
+        }
+      });
+
+      if (res?.sessionId) {
+        toast.success("Demo Mode Ready! Connecting with demo watermark...");
+        window.location.href = `/interview/${res.sessionId}?demo=true`;
+      } else {
+        throw new Error("Failed to generate demo session ID");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to start demo mode.");
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
   // Start Instant Practice Interview
   const handleStartInstantPractice = async () => {
     setIsStarting(true);
@@ -117,10 +148,19 @@ export function InternMockInterviewsView({
 
           <div className="pt-2 flex flex-wrap items-center gap-3">
             <Button
+              onClick={() => handleStartDemoMode(selectedDomain)}
+              disabled={isStarting}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-10 px-5 rounded-xl shadow-lg shadow-emerald-600/30 flex items-center gap-2 cursor-pointer"
+            >
+              <Play className="h-3.5 w-3.5 fill-white" />
+              <span>Launch 5-Min Demo Mode</span>
+            </Button>
+
+            <Button
               onClick={() => setPracticeModalOpen(true)}
               className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs h-10 px-5 rounded-xl shadow-lg shadow-blue-600/30 flex items-center gap-2"
             >
-              <Sparkles className="h-4 w-4" /> Start Practice Interview Now
+              <Sparkles className="h-4 w-4" /> Start Practice Interview
             </Button>
 
             <Button
@@ -131,11 +171,64 @@ export function InternMockInterviewsView({
               disabled={isFetching}
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
-              Refresh Status
+              Refresh
             </Button>
 
             <span className="text-xs text-slate-400">Takes ~15–20 minutes • Instant PDF &amp; R2 Report</span>
           </div>
+        </div>
+      </div>
+
+      {/* ── Demo Mode Card ── */}
+      <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-950/50 via-teal-950/40 to-slate-900 border border-emerald-500/40 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold uppercase tracking-wider">
+              🎮 Zero-Pressure Demo Simulation
+            </span>
+            <Badge variant="outline" className="border-teal-500/40 text-teal-300 text-[10px]">
+              Not Graded • Unlimited Retries
+            </Badge>
+          </div>
+          <h4 className="text-base font-extrabold text-white">Experience AI Mock Interview in Demo Mode</h4>
+          <p className="text-xs text-slate-300 max-w-xl">
+            Test your webcam, microphone, real-time speech recognition, voice synthesis, and interactive code playground with guided questions before taking your mentor-scheduled rounds.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            onClick={() => handleStartDemoMode("frontend")}
+            disabled={isStarting}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl h-9"
+          >
+            Demo Frontend
+          </Button>
+          <Button
+            onClick={() => handleStartDemoMode("fullstack")}
+            disabled={isStarting}
+            size="sm"
+            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl h-9"
+          >
+            Demo Full-Stack
+          </Button>
+          <Button
+            onClick={() => handleStartDemoMode("aiml")}
+            disabled={isStarting}
+            size="sm"
+            className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl h-9"
+          >
+            Demo AI/ML
+          </Button>
+          <Button
+            onClick={() => handleStartDemoMode("hr_behavioral")}
+            disabled={isStarting}
+            size="sm"
+            className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl h-9"
+          >
+            Demo HR Round
+          </Button>
         </div>
       </div>
 

@@ -60,6 +60,11 @@ function LiveMockInterviewPage() {
   const session = data.session;
   const questions = Array.isArray(session.questions_bank) ? session.questions_bank : [];
   const isObserverMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('observer') === 'true';
+  const isDemoMode = typeof window !== 'undefined' && (
+    new URLSearchParams(window.location.search).get('demo') === 'true' ||
+    session.target_role?.includes('(Demo') ||
+    session.difficulty === 'demo'
+  );
 
   // If already completed or user just finished, display the full report
   if (completedReport || (session.status === 'completed' && session.evaluation_report)) {
@@ -93,6 +98,7 @@ function LiveMockInterviewPage() {
       initialCode={session.code_snippet}
       initialCodeLanguage={session.code_language || 'javascript'}
       isObserver={isObserverMode}
+      isDemoMode={isDemoMode}
       onConcludeInterview={(report) => {
         setCompletedReport(report);
       }}

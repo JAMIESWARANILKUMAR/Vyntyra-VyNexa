@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -21,6 +21,7 @@ import {
   scheduleMockInterviewFn,
   assignUserRoleFn,
   listManageableUsersFn,
+  listInternsForMockInterviewFn,
   INTERVIEW_DOMAINS
 } from "@/lib/mock-interview.functions";
 
@@ -30,6 +31,7 @@ export function AdminMockInterviewsOperationsView() {
   const scheduleSession = useServerFn(scheduleMockInterviewFn);
   const assignRole = useServerFn(assignUserRoleFn);
   const listUsers = useServerFn(listManageableUsersFn);
+  const listInterns = useServerFn(listInternsForMockInterviewFn);
 
   // Filter & Search states
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,6 +43,9 @@ export function AdminMockInterviewsOperationsView() {
   const [roleModalOpen, setRoleModalOpen] = useState(false);
 
   // Schedule Form State
+  const [scheduleMode, setScheduleMode] = useState<"intern" | "manual">("intern");
+  const [selectedInternId, setSelectedInternId] = useState("");
+  const [internSearchFilter, setInternSearchFilter] = useState("");
   const [formCandidateName, setFormCandidateName] = useState("");
   const [formCandidateEmail, setFormCandidateEmail] = useState("");
   const [formInternId, setFormInternId] = useState("");
@@ -70,12 +75,33 @@ export function AdminMockInterviewsOperationsView() {
     refetchInterval: 10000 // Polling for live status
   });
 
-  // Query users for staff selection
-  const { data: usersData } = useQuery({
+  // Query users for staff selection & role assignment
+  const { data: usersData, isLoading: isLoadingUsers } = useQuery({
     queryKey: ["manageable_users_for_interviews"],
-    queryFn: () => listUsers(),
+    queryFn: () => listUsers({ data: {} }),
     enabled: scheduleModalOpen || roleModalOpen
   });
+
+  // Query registered interns for interview assignment
+  const { data: internsData, isLoading: isLoadingInterns } = useQuery({
+    queryKey: ["interns_for_mock_interview_ops"],
+    queryFn: () => listInterns({ data: {} }),
+    enabled: scheduleModalOpen
+  });
+
+  const internsList = internsData?.interns || [];
+
+  // Filtered interns for quick pick
+  const filteredInterns = useMemo(() => {
+    if (!internSearchFilter.trim()) return internsList;
+    const q = internSearchFilter.toLowerCase();
+    return internsList.filter(
+      (i: any) =>
+        i.name?.toLowerCase().includes(q) ||
+        i.email?.toLowerCase().includes(q) ||
+        i.intern_id?.toLowerCase().includes(q)
+    );
+  }, [internsList, internSearchFilter]);
 
   // Mutation: Schedule interview
   const scheduleMut = useMutation({
@@ -89,7 +115,8 @@ export function AdminMockInterviewsOperationsView() {
         difficulty: formDifficulty,
         scheduledAt: formScheduledAt ? new Date(formScheduledAt).toISOString() : new Date().toISOString(),
         mentorId: formMentorId || undefined,
-        mentorName: formMentorName || undefined
+        mentorName: formMentorName || undefined,
+        callerRole: "super_admin"
       }
     }),
     onSuccess: () => {
@@ -98,6 +125,7 @@ export function AdminMockInterviewsOperationsView() {
       setFormCandidateName("");
       setFormCandidateEmail("");
       setFormInternId("");
+      setSelectedInternId("");
       qc.invalidateQueries({ queryKey: ["admin_mock_interviews_ops"] });
     },
     onError: (err: any) => {
@@ -110,7 +138,9 @@ export function AdminMockInterviewsOperationsView() {
     mutationFn: () => assignRole({
       data: {
         targetUserEmail: selectedUserEmail.trim(),
-        newRole: selectedRole
+        targetEmail: selectedUserEmail.trim(),
+        newRole: selectedRole,
+        callerRole: "super_admin"
       }
     }),
     onSuccess: (res: any) => {
@@ -120,7 +150,8 @@ export function AdminMockInterviewsOperationsView() {
       qc.invalidateQueries({ queryKey: ["manageable_users_for_interviews"] });
     },
     onError: (err: any) => {
-      toast.error(err.message || "Failed to assign role.");
+      console.error("Assign role error:", err);
+      toast.error(err?.message || "Failed to assign role.");
     }
   });
 
@@ -468,6 +499,76 @@ export function AdminMockInterviewsOperationsView() {
           </DialogHeader>
 
           <div className="space-y-4 py-2 text-xs">
+            {/* Quick Pick Registered Intern or Manual Entry Tabs */}
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+              <Button
+                type="button"
+                variant={scheduleMode === "intern" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setScheduleMode("intern")}
+                className={`text-xs h-8 rounded-xl font-bold cursor-pointer ${
+                  scheduleMode === "intern" ? "bg-blue-600 text-white" : "border-slate-200 text-slate-600"
+                }`}
+              >
+                <Users className="h-3.5 w-3.5 mr-1" />
+                Select Registered Intern ({internsList.length})
+              </Button>
+              <Button
+                type="button"
+                variant={scheduleMode === "manual" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setScheduleMode("manual")}
+                className={`text-xs h-8 rounded-xl font-bold cursor-pointer ${
+                  scheduleMode === "manual" ? "bg-blue-600 text-white" : "border-slate-200 text-slate-600"
+                }`}
+              >
+                Manual Candidate Entry
+              </Button>
+            </div>
+
+            {scheduleMode === "intern" && (
+              <div className="space-y-1.5 p-3 rounded-2xl bg-blue-50/60 border border-blue-200">
+                <Label className="text-xs font-bold text-blue-900 flex items-center justify-between">
+                  <span>Pick Registered Intern *</span>
+                  <span className="text-[10px] text-blue-600 font-normal">Auto-fills name, email &amp; intern ID</span>
+                </Label>
+                <Select
+                  value={selectedInternId}
+                  onValueChange={(val) => {
+                    setSelectedInternId(val);
+                    const intern = internsList.find(
+                      (i: any) => i.id === val || i.intern_id === val || i.email === val
+                    );
+                    if (intern) {
+                      setFormCandidateName(intern.name);
+                      setFormCandidateEmail(intern.email);
+                      setFormInternId(intern.intern_id || "");
+                      if (intern.department) {
+                        setFormRole(`${intern.department} Software Engineer`);
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-9 text-xs rounded-xl bg-white border-blue-200">
+                    <SelectValue placeholder={isLoadingInterns ? "Loading interns list..." : "Choose intern..."} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {internsList.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        No registered interns found
+                      </SelectItem>
+                    ) : (
+                      internsList.map((i: any) => (
+                        <SelectItem key={i.id} value={i.id}>
+                          {i.name} — {i.email} {i.intern_id ? `(${i.intern_id})` : ""}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs font-bold">Candidate Name *</Label>
@@ -621,6 +722,25 @@ export function AdminMockInterviewsOperationsView() {
           </DialogHeader>
 
           <div className="space-y-4 py-2 text-xs">
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-slate-700">Quick-Pick Registered Staff / User</Label>
+              <Select
+                value={selectedUserEmail}
+                onValueChange={(val) => setSelectedUserEmail(val)}
+              >
+                <SelectTrigger className="h-9 text-xs rounded-xl bg-slate-50 border-slate-200">
+                  <SelectValue placeholder={isLoadingUsers ? "Loading user list..." : "Choose staff / user from platform..."} />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {(usersData?.users || []).map((u: any) => (
+                    <SelectItem key={u.id} value={u.email}>
+                      {u.full_name || u.email} ({u.email}) — [{u.role || "candidate"}]
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-1">
               <Label className="text-xs font-bold">User Email *</Label>
               <Input

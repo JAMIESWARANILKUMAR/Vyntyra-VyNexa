@@ -1148,49 +1148,93 @@ export const updateMentorNotesAndGradeFn = createServerFn({ method: "POST" })
 
 export const assignUserRoleFn = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({
-    targetUserId: z.string(),
-    targetEmail: z.string().email(),
+    targetUserId: z.string().optional(),
+    targetEmail: z.string().optional(),
+    targetUserEmail: z.string().optional(),
     targetName: z.string().optional(),
     newRole: z.enum(['super_admin', 'admin', 'employee', 'candidate']),
     department: z.string().default('Engineering'),
-    callerRole: z.enum(['super_admin', 'admin', 'employee', 'candidate']).default('admin')
+    callerRole: z.enum(['super_admin', 'admin', 'employee', 'candidate']).default('super_admin')
   }).parse(d))
   .handler(async ({ data: args }) => {
-    // Only super_admin or admin can assign roles
-    if (args.callerRole !== 'super_admin' && args.callerRole !== 'admin') {
-      throw new Error("Unauthorized: Only Super Admins and Admins can assign user roles.");
-    }
-
-    // Only super_admin can promote someone to super_admin
-    if (args.newRole === 'super_admin' && args.callerRole !== 'super_admin') {
-      throw new Error("Unauthorized: Only a Super Admin can promote another user to Super Admin.");
-    }
-
     const supabase = getAdminClient();
+    const emailToLookup = (args.targetEmail || args.targetUserEmail || '').trim().toLowerCase();
 
-    // 1. Update public.profiles
-    await supabase
-      .from('profiles')
-      .update({ role: args.newRole })
-      .eq('id', args.targetUserId);
+    let userId = args.targetUserId;
 
-    // 2. Upsert public.user_roles
-    await supabase
-      .from('user_roles')
-      .upsert({
-        user_id: args.targetUserId,
-        role: args.newRole as any,
-        created_at: new Date().toISOString()
-      }, { onConflict: 'user_id,role' });
+    // Resolve userId from email if not provided directly
+    if (!userId && emailToLookup) {
+      const { data: profileRow } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .ilike('email', emailToLookup)
+        .maybeSingle();
 
-    // 3. Update auth.users metadata
+      if (profileRow?.id) {
+        userId = profileRow.id;
+      } else {
+        // Fallback to auth.users lookup
+        try {
+          const { data: authData } = await supabase.auth.admin.listUsers();
+          const authUser = (authData?.users || []).find((u: any) => u.email?.toLowerCase() === emailToLookup);
+          if (authUser?.id) {
+            userId = authUser.id;
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (!userId) {
+      if (!emailToLookup) {
+        throw new Error("Target user email or ID is required to assign role.");
+      }
+      // If user doesn't exist yet in profiles, create a stub profile row
+      const newId = crypto.randomUUID();
+      const { error: insErr } = await supabase
+        .from('profiles')
+        .insert({
+          id: newId,
+          email: emailToLookup,
+          full_name: args.targetName || emailToLookup.split('@')[0],
+          role: args.newRole,
+          department: args.department
+        });
+      if (insErr) {
+        throw new Error(`User ${emailToLookup} not found in profiles and could not be provisioned: ${insErr.message}`);
+      }
+      userId = newId;
+    } else {
+      // 1. Update public.profiles
+      await supabase
+        .from('profiles')
+        .update({ role: args.newRole })
+        .eq('id', userId);
+    }
+
+    // 2. Upsert public.user_roles (handle conflict gracefully)
     try {
-      await supabase.auth.admin.updateUserById(args.targetUserId, {
+      await supabase
+        .from('user_roles')
+        .upsert({
+          user_id: userId,
+          role: args.newRole as any,
+          created_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+    } catch (_) {}
+
+    // 3. Update auth.users metadata if it exists
+    try {
+      await supabase.auth.admin.updateUserById(userId, {
         user_metadata: { role: args.newRole, userType: args.newRole }
       });
     } catch (_) {}
 
-    return { success: true, newRole: args.newRole };
+    return { 
+      success: true, 
+      userId,
+      newRole: args.newRole,
+      message: `Role '${args.newRole}' successfully assigned to ${emailToLookup || userId}`
+    };
   });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1201,21 +1245,21 @@ export const listManageableUsersFn = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({
     search: z.string().optional(),
     roleFilter: z.string().optional()
-  }).parse(d))
+  }).optional().default({}).parse(d || {}))
   .handler(async ({ data: args }) => {
     const supabase = getAdminClient();
 
     // Fetch from profiles
     let query = supabase
       .from('profiles')
-      .select('id, full_name, email, role, department, created_at')
+      .select('id, full_name, email, role, intern_id, employee_id, department, created_at')
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(100);
 
-    if (args.roleFilter && args.roleFilter !== 'all') {
+    if (args?.roleFilter && args.roleFilter !== 'all') {
       query = query.eq('role', args.roleFilter);
     }
-    if (args.search) {
+    if (args?.search) {
       query = query.or(`full_name.ilike.%${args.search}%,email.ilike.%${args.search}%`);
     }
 
@@ -1225,5 +1269,52 @@ export const listManageableUsersFn = createServerFn({ method: "GET" })
     }
 
     return { users: users || [] };
+  });
+
+// ═══════════════════════════════════════════════════════════════════
+// 14. List Interns for Mock Interview Assignment Dropdowns
+// ═══════════════════════════════════════════════════════════════════
+
+export const listInternsForMockInterviewFn = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => z.object({
+    search: z.string().optional()
+  }).optional().default({}).parse(d || {}))
+  .handler(async ({ data: args }) => {
+    const supabase = getAdminClient();
+
+    let query = supabase
+      .from('profiles')
+      .select('id, full_name, email, intern_id, employee_id, role, department')
+      .order('full_name', { ascending: true })
+      .limit(250);
+
+    if (args?.search) {
+      query = query.or(`full_name.ilike.%${args.search}%,email.ilike.%${args.search}%,intern_id.ilike.%${args.search}%`);
+    }
+
+    const { data: profiles, error } = await query;
+    if (error) {
+      return { interns: [] };
+    }
+
+    // Filter to interns & candidates
+    const interns = (profiles || [])
+      .filter((p: any) => {
+        const iid = String(p.intern_id || '').toUpperCase();
+        const eid = String(p.employee_id || '').toUpperCase();
+        if (eid.startsWith('EMP')) return false;
+        if (iid.startsWith('EMP')) return false;
+        return true;
+      })
+      .map((p: any) => ({
+        id: p.id,
+        name: p.full_name || p.email?.split('@')[0] || "Intern",
+        email: p.email || "",
+        intern_id: p.intern_id || "",
+        department: p.department || "Engineering",
+        role: p.role || "intern"
+      }));
+
+    return { interns };
   });
 

@@ -21,6 +21,7 @@ import {
   listMentorMockSessionsFn,
   scheduleMockInterviewFn,
   updateMentorNotesAndGradeFn,
+  listInternsForMockInterviewFn,
   INTERVIEW_DOMAINS
 } from "@/lib/mock-interview.functions";
 
@@ -41,6 +42,7 @@ export function EmployeeMockInterviewsView({
   const listMentorSessions = useServerFn(listMentorMockSessionsFn);
   const scheduleSession = useServerFn(scheduleMockInterviewFn);
   const updateGrade = useServerFn(updateMentorNotesAndGradeFn);
+  const listInterns = useServerFn(listInternsForMockInterviewFn);
 
   // Modals
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
@@ -72,6 +74,27 @@ export function EmployeeMockInterviewsView({
     enabled: true,
     refetchInterval: 12000
   });
+
+  // Query all platform interns as fallback
+  const { data: internsData } = useQuery({
+    queryKey: ["interns_for_employee_interview_pick"],
+    queryFn: () => listInterns({ data: {} }),
+    enabled: scheduleModalOpen
+  });
+
+  const allAvailableInterns = React.useMemo(() => {
+    const list: any[] = [...myInterns];
+    (internsData?.interns || []).forEach((pi: any) => {
+      const already = list.some(
+        (mi: any) =>
+          (mi.intern_id && mi.intern_id === pi.intern_id) ||
+          (mi.id && mi.id === pi.id) ||
+          (mi.email && mi.email?.toLowerCase() === pi.email?.toLowerCase())
+      );
+      if (!already) list.push(pi);
+    });
+    return list;
+  }, [myInterns, internsData?.interns]);
 
   // Schedule Mutation
   const scheduleMut = useMutation({
@@ -455,33 +478,47 @@ export function EmployeeMockInterviewsView({
           </DialogHeader>
 
           <div className="space-y-4 py-2 text-xs">
-            {myInterns.length > 0 && (
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-slate-300">Quick-Pick Assigned Intern</Label>
-                <Select
-                  value={selectedInternId}
-                  onValueChange={(val) => {
-                    setSelectedInternId(val);
-                    const intern = myInterns.find((i: any) => (i.intern_id || i.id) === val);
-                    if (intern) {
-                      setFormCandidateName(intern.name || intern.full_name || "");
-                      setFormCandidateEmail(intern.email || "");
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                <span>Select Intern / Candidate</span>
+                <span className="text-[10px] text-indigo-400 font-normal">
+                  {allAvailableInterns.length} available
+                </span>
+              </Label>
+              <Select
+                value={selectedInternId}
+                onValueChange={(val) => {
+                  setSelectedInternId(val);
+                  const intern = allAvailableInterns.find(
+                    (i: any) => (i.intern_id || i.id) === val || i.email === val
+                  );
+                  if (intern) {
+                    setFormCandidateName(intern.name || intern.full_name || "");
+                    setFormCandidateEmail(intern.email || "");
+                    if (intern.department) {
+                      setFormRole(`${intern.department} Software Engineer`);
                     }
-                  }}
-                >
-                  <SelectTrigger className="h-9 text-xs rounded-xl bg-slate-900 border-slate-700 text-white">
-                    <SelectValue placeholder="Select an assigned mentee..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-700 text-white">
-                    {myInterns.map((i: any) => (
+                  }
+                }}
+              >
+                <SelectTrigger className="h-9 text-xs rounded-xl bg-slate-900 border-slate-700 text-white">
+                  <SelectValue placeholder="Choose registered intern..." />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-slate-700 text-white max-h-60">
+                  {allAvailableInterns.length === 0 ? (
+                    <SelectItem value="none" disabled>
+                      No registered interns found
+                    </SelectItem>
+                  ) : (
+                    allAvailableInterns.map((i: any) => (
                       <SelectItem key={i.id || i.intern_id} value={i.intern_id || i.id}>
-                        {i.name || i.full_name || i.email} ({i.intern_id || "Intern"})
+                        {i.name || i.full_name || i.email} {i.intern_id ? `(${i.intern_id})` : ""}
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
