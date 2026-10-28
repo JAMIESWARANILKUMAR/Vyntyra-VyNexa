@@ -109,14 +109,16 @@ function CareersPage() {
   const incrementVisitors = useServerFn(incrementVisitorCount);
 
   useEffect(() => {
-    fetchApplicationsOpen().then((r) => setApplicationsOpen(r.open));
-    fetchJobPostings().then((r) => setJobPostings(r.postings));
-    incrementVisitors();
+    fetchApplicationsOpen().then((r) => setApplicationsOpen(r?.open ?? true)).catch(() => {});
+    fetchJobPostings()
+      .then((r: any) => setJobPostings(Array.isArray(r) ? r : (r?.postings ?? [])))
+      .catch(() => setJobPostings([]));
+    incrementVisitors().catch(() => {});
   }, []);
 
   return (
     <div className="min-h-screen bg-background">
-      {jobPostings.map((job) => (
+      {(jobPostings || []).map((job) => (
         <script
           type="application/ld+json"
           key={`ld-${job.id}`}

@@ -472,7 +472,7 @@ function ApplicationPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {jobPostings.map((job) => (
+      {(jobPostings || []).map((job) => (
          <script type="application/ld+json" key={`ld-${job.id}`} dangerouslySetInnerHTML={{ __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "JobPosting",
@@ -629,7 +629,7 @@ function ApplicationPage() {
                       }}>
                         <SelectTrigger><SelectValue placeholder="-- Select from Live Posted Openings (Optional) --" /></SelectTrigger>
                         <SelectContent className="max-h-80">
-                          {jobPostings.map((j: any) => (
+                          {(jobPostings || []).map((j: any) => (
                             <SelectItem key={j.id} value={j.id}>
                               <div className="flex items-center justify-between gap-4 w-full">
                                 <span className="font-semibold text-foreground">{j.title}</span>
@@ -656,7 +656,7 @@ function ApplicationPage() {
                     >
                       <SelectTrigger><SelectValue placeholder="Select Primary Domain" /></SelectTrigger>
                       <SelectContent>
-                        {careerDomains.map((d) => (
+                        {(careerDomains || []).map((d) => (
                           <SelectItem key={d.id || d.name} value={d.name}>
                             <div className="flex items-center justify-between gap-2 w-full">
                               <span>{d.name}</span>
