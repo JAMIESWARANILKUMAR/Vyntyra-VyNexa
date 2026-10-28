@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Mic, MicOff, Volume2, Play, Square, RotateCcw, Upload, Sparkles, 
   CheckCircle2, Radio, Sliders, AudioWaveform as Waveform, AlertCircle, 
-  HelpCircle, ShieldCheck, UserCheck, RefreshCw, VolumeX, Save, Check
+  HelpCircle, ShieldCheck, UserCheck, RefreshCw, VolumeX, Save, Check,
+  ListMusic, Trash2, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,7 +28,7 @@ const PRESET_VOICES = [
     name: "Admin / Custom Trained Voice",
     gender: "neutral" as const,
     accent: "en-IN" as const,
-    desc: "Uses your own recorded voice audio for greetings and matches dynamic questions to your cadence.",
+    desc: "Uses your own recorded voice audio for greetings and questions, matching dynamic speech to your cadence.",
     preferred: []
   },
   {
@@ -66,6 +67,45 @@ const PRESET_VOICES = [
 
 const CALIBRATION_SCRIPT = "Hello and welcome to your 1:1 technical mock interview with Vyntyra Consultancy Services. We are going to review software architecture, problem-solving depth, and clean coding methodologies. Take your time, explain your trade-offs clearly, and let's begin.";
 
+const STANDARD_CURRICULUM_QUESTIONS = [
+  {
+    key: "q1",
+    title: "Question 1: Candidate Introduction & Background",
+    category: "Icebreaker & Background",
+    script: "Hello, welcome to your 1:1 technical mock interview for the position. To get started, please introduce yourself and summarize a recent project you engineered that you are particularly proud of."
+  },
+  {
+    key: "q2",
+    title: "Question 2: Core Architecture & Performance Bottlenecks",
+    category: "Architecture & Optimization",
+    script: "In modern software applications, how do you approach performance optimization, caching strategies, and preventing latency bottlenecks?"
+  },
+  {
+    key: "q3",
+    title: "Question 3: Critical Production Bug & Concurrency Issue",
+    category: "Technical Depth & Edge Cases",
+    script: "Can you walk me through a critical production bug or unexpected concurrency issue you diagnosed in the past? What was your debugging methodology?"
+  },
+  {
+    key: "q4",
+    title: "Question 4: Live Code Challenge Playground",
+    category: "Interactive Live Coding",
+    script: "Let's shift to our interactive code playground. I've populated the editor with a challenge. Take a look at the problem statement, talk through your thought process out loud, and implement your solution."
+  },
+  {
+    key: "q5",
+    title: "Question 5: Distributed Scaling & Resilient Event Pipeline",
+    category: "System Design",
+    script: "How would you architect a distributed, resilient notification or event pipeline that handles millions of active updates with minimal infrastructure cost?"
+  },
+  {
+    key: "q6",
+    title: "Question 6: Behavioral & Technical Disagreements",
+    category: "Behavioral & STAR",
+    script: "Tell me about a time you strongly disagreed with a peer or lead on an architectural design decision. How did you advocate for your point of view while keeping the team aligned?"
+  }
+];
+
 export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) {
   const queryClient = useQueryClient();
   const getSettingsFn = useServerFn(getAiVoiceSettings);
@@ -84,6 +124,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
   const [customAudioUrl, setCustomAudioUrl] = useState<string>("");
   const [useCustomAudio, setUseCustomAudio] = useState<boolean>(true);
   const [customVoiceScript, setCustomVoiceScript] = useState<string>(CALIBRATION_SCRIPT);
+  const [questionAudioClips, setQuestionAudioClips] = useState<Record<string, string>>({});
 
   // Available client browser voices
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -91,6 +132,8 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
 
   // Audio Recording State for Custom Voice Training
   const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [recordingTargetKey, setRecordingTargetKey] = useState<string | null>(null); // null = main intro, 'q1'..'q6'
+  const targetKeyRef = useRef<string | null>(null);
   const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
   const [micAudioLevel, setMicAudioLevel] = useState<number>(0);
   const [isSavingAudio, setIsSavingAudio] = useState<boolean>(false);
@@ -102,8 +145,8 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
 
   // Audition / Testing State
   const [isAuditionSpeaking, setIsAuditionSpeaking] = useState<boolean>(false);
-  const [isPlayingRecordedSample, setIsPlayingRecordedSample] = useState<boolean>(false);
-  const recordedAudioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  const [playingClipKey, setPlayingClipKey] = useState<string | null>(null); // 'intro' | 'q1'..'q6'
+  const activeAudioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const speechSpeakerCancelRef = useRef<(() => void) | null>(null);
   const [auditionText, setAuditionText] = useState<string>(
     "Can you walk me through a critical production bug you diagnosed? How do you approach caching and latency bottlenecks in REST APIs?"
@@ -136,6 +179,9 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
       }
       if (initialSettings.selected_voice_name) {
         setSelectedBrowserVoiceName(initialSettings.selected_voice_name);
+      }
+      if (initialSettings.question_audio_clips) {
+        setQuestionAudioClips(initialSettings.question_audio_clips);
       }
     }
   }, [initialSettings]);
@@ -185,13 +231,14 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
         custom_voice_script: customVoiceScript,
         selected_voice_name: selectedBrowserVoiceName,
         use_custom_audio: useCustomAudio,
+        question_audio_clips: questionAudioClips,
         preferred_browser_voices: selectedBrowserVoiceName 
           ? [selectedBrowserVoiceName, ...(initialSettings?.preferred_browser_voices || [])]
           : initialSettings?.preferred_browser_voices
       }
     }),
     onSuccess: () => {
-      toast.success("AI Interviewer voice profile permanently saved & deployed to all interviews!");
+      toast.success("AI Interviewer voice profile & question audio bank saved globally!");
       queryClient.invalidateQueries({ queryKey: ['admin_ai_voice_settings'] });
       if (onSaved) onSaved();
     },
@@ -200,41 +247,42 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
     }
   });
 
-  // ─── Playback Recorded Voice Sample ───
-  const togglePlayRecordedSample = () => {
-    if (!customAudioUrl) {
-      toast.error("No recorded audio sample found. Please record your voice first.");
+  // ─── Playback Audio Clip (Sample or Question) ───
+  const togglePlayAudioClip = (key: string, audioUrl?: string) => {
+    const url = audioUrl || (key === 'intro' ? customAudioUrl : questionAudioClips[key]);
+    if (!url) {
+      toast.error("No recorded audio sample found for this item.");
       return;
     }
 
-    if (isPlayingRecordedSample) {
-      if (recordedAudioPlayerRef.current) {
-        recordedAudioPlayerRef.current.pause();
-        recordedAudioPlayerRef.current.currentTime = 0;
+    if (playingClipKey === key) {
+      if (activeAudioPlayerRef.current) {
+        activeAudioPlayerRef.current.pause();
+        activeAudioPlayerRef.current.currentTime = 0;
       }
-      setIsPlayingRecordedSample(false);
+      setPlayingClipKey(null);
       return;
     }
 
-    if (recordedAudioPlayerRef.current) {
-      recordedAudioPlayerRef.current.pause();
+    if (activeAudioPlayerRef.current) {
+      activeAudioPlayerRef.current.pause();
     }
 
-    const audio = new Audio(customAudioUrl);
-    recordedAudioPlayerRef.current = audio;
+    const audio = new Audio(url);
+    activeAudioPlayerRef.current = audio;
     audio.volume = volume;
 
-    audio.onplay = () => setIsPlayingRecordedSample(true);
-    audio.onended = () => setIsPlayingRecordedSample(false);
+    audio.onplay = () => setPlayingClipKey(key);
+    audio.onended = () => setPlayingClipKey(null);
     audio.onerror = (e) => {
       console.warn("Audio playback error:", e);
-      setIsPlayingRecordedSample(false);
+      setPlayingClipKey(null);
       toast.error("Could not play recorded audio sample.");
     };
 
     audio.play().catch(err => {
       console.warn("Audio play blocked:", err);
-      setIsPlayingRecordedSample(false);
+      setPlayingClipKey(null);
     });
   };
 
@@ -277,12 +325,14 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
   };
 
   // ─── Persistent Voice Recording Handlers ───
-  const startRecording = async () => {
+  const startRecording = async (targetKey: string | null = null) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
+      targetKeyRef.current = targetKey;
+      setRecordingTargetKey(targetKey);
 
       // Audio level analyser for live VU meter
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -316,6 +366,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
 
       mediaRecorder.onstop = async () => {
         setIsSavingAudio(true);
+        const currentTarget = targetKeyRef.current;
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         
         // 1. Convert to persistent Base64 Data URL (guaranteed to work across all sessions & browsers)
@@ -326,7 +377,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
 
           // 2. Also try uploading to Supabase Storage for high-speed CDN URL
           try {
-            const fileName = `voice_training/admin_voice_${Date.now()}.webm`;
+            const fileName = `voice_training/admin_${currentTarget || 'intro'}_${Date.now()}.webm`;
             const { error: upErr } = await supabase.storage.from("default").upload(fileName, blob, {
               contentType: "audio/webm",
               upsert: true
@@ -341,12 +392,25 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
             console.warn("Storage upload optional fallback to base64:", storageErr);
           }
 
-          setCustomAudioUrl(persistentUrl);
-          setVoiceId("custom_admin");
-          setVoiceName("Admin Custom Voice (Calibrated)");
-          setUseCustomAudio(true);
+          if (currentTarget) {
+            // Save to specific question audio clip
+            setQuestionAudioClips(prev => ({
+              ...prev,
+              [currentTarget]: persistentUrl
+            }));
+            toast.success(`Voice recording for ${currentTarget.toUpperCase()} saved & ready! Click 'Deploy Voice Globally' to apply.`);
+          } else {
+            // Save as main intro/welcome audio
+            setCustomAudioUrl(persistentUrl);
+            setVoiceId("custom_admin");
+            setVoiceName("Admin Custom Voice (Calibrated)");
+            setUseCustomAudio(true);
+            toast.success("Main interview greeting voice sample recorded & ready! Click 'Deploy Voice Globally' to apply.");
+          }
+
           setIsSavingAudio(false);
-          toast.success("Voice sample recorded, calibrated, and permanently saved! Click 'Deploy Voice Globally' to apply.");
+          setRecordingTargetKey(null);
+          targetKeyRef.current = null;
         };
 
         // Stop audio tracks
@@ -360,10 +424,11 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
         setRecordingSeconds(s => s + 1);
       }, 1000);
 
-      toast.info("Recording voice training sample. Please read the calibration script aloud.");
+      toast.info(`Recording ${targetKey ? targetKey.toUpperCase() : 'Welcome Greeting'}. Read the prompt aloud into your microphone.`);
     } catch (err: any) {
       console.error("Microphone access error:", err);
       toast.error("Could not access microphone for voice training.");
+      setRecordingTargetKey(null);
     }
   };
 
@@ -375,7 +440,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, targetKey: string | null = null) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -392,7 +457,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
 
       try {
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const fileName = `voice_training/admin_upload_${Date.now()}_${safeName}`;
+        const fileName = `voice_training/admin_${targetKey || 'upload'}_${Date.now()}_${safeName}`;
         const { error: upErr } = await supabase.storage.from("default").upload(fileName, file, {
           contentType: file.type || "audio/mpeg",
           upsert: true
@@ -407,12 +472,21 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
         console.warn("Storage upload fallback to base64:", e);
       }
 
-      setCustomAudioUrl(persistentUrl);
-      setVoiceId("custom_admin");
-      setVoiceName(`Custom Voice (${file.name.replace(/\.[^/.]+$/, "")})`);
-      setUseCustomAudio(true);
+      if (targetKey) {
+        setQuestionAudioClips(prev => ({
+          ...prev,
+          [targetKey]: persistentUrl
+        }));
+        toast.success(`Voice file for ${targetKey.toUpperCase()} uploaded successfully!`);
+      } else {
+        setCustomAudioUrl(persistentUrl);
+        setVoiceId("custom_admin");
+        setVoiceName(`Custom Voice (${file.name.replace(/\.[^/.]+$/, "")})`);
+        setUseCustomAudio(true);
+        toast.success(`Main greeting voice file "${file.name}" uploaded successfully!`);
+      }
+
       setIsSavingAudio(false);
-      toast.success(`Voice file "${file.name}" uploaded, calibrated, and permanently stored!`);
     };
   };
 
@@ -430,7 +504,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
             AI Voice Studio &amp; Custom Voice Training
           </h2>
           <p className="text-xs sm:text-sm text-gray-400 mt-1 max-w-2xl">
-            Train the AI Interlocutor with your own recorded voice audio and calibrate neural pacing, pronunciation, and accuracy so candidates experience crystal-clear audio during technical interviews.
+            Train the AI Interlocutor with your own recorded voice for opening greetings and specific curriculum questions. Unrecorded dynamic questions are spoken using your calibrated neural voice settings.
           </p>
         </div>
 
@@ -514,21 +588,21 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
             </div>
           </div>
 
-          {/* Section 2: Custom Voice Training Module (Record or Upload) */}
+          {/* Section 2: Main Welcome Greeting Voice Recording */}
           <div className="rounded-2xl bg-white/[0.02] border border-white/10 p-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <Mic className="h-4 w-4 text-emerald-400" />
-                  <span>Admin Voice Calibration &amp; Training Recorder</span>
+                  <span>Main Interview Welcome &amp; Opening Greeting Voice</span>
                 </h3>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Record 15–30 seconds of your voice reading the script below. The system converts it into permanent audio and trains the interview persona.
+                  This audio plays when the candidate enters the interview room to welcome them in your real voice.
                 </p>
               </div>
               {customAudioUrl && (
                 <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-semibold self-start sm:self-auto">
-                  <CheckCircle2 className="h-3 w-3" /> Voice Sample Ready
+                  <CheckCircle2 className="h-3 w-3" /> Welcome Voice Ready
                 </span>
               )}
             </div>
@@ -543,15 +617,15 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
 
             {/* Live Recording Controls */}
             <div className="flex flex-wrap items-center gap-3">
-              {!isRecording ? (
+              {!(isRecording && recordingTargetKey === null) ? (
                 <Button
                   type="button"
-                  onClick={startRecording}
-                  disabled={isSavingAudio}
+                  onClick={() => startRecording(null)}
+                  disabled={isSavingAudio || isRecording}
                   className="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-600/20"
                 >
                   <Mic className="h-4 w-4" />
-                  <span>Record Admin Voice</span>
+                  <span>Record Welcome Voice</span>
                 </Button>
               ) : (
                 <Button
@@ -568,16 +642,16 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
               <div className="relative">
                 <input
                   type="file"
-                  id="voice-file-upload"
+                  id="voice-file-upload-main"
                   accept="audio/*"
-                  onChange={handleFileUpload}
+                  onChange={(e) => handleFileUpload(e, null)}
                   className="hidden"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   disabled={isSavingAudio || isRecording}
-                  onClick={() => document.getElementById('voice-file-upload')?.click()}
+                  onClick={() => document.getElementById('voice-file-upload-main')?.click()}
                   className="h-9 px-4 border-white/10 hover:bg-white/10 text-gray-300 text-xs rounded-xl flex items-center gap-2"
                 >
                   <Upload className="h-3.5 w-3.5" />
@@ -585,16 +659,8 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
                 </Button>
               </div>
 
-              {/* Saving Indicator */}
-              {isSavingAudio && (
-                <div className="flex items-center gap-1.5 text-xs text-blue-400 font-mono">
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  <span>Persisting audio data...</span>
-                </div>
-              )}
-
               {/* VU Meter when recording */}
-              {isRecording && (
+              {isRecording && recordingTargetKey === null && (
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-950/40 border border-red-500/30">
                   <div className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
                   <span className="text-xs font-mono text-red-300">Listening:</span>
@@ -615,18 +681,18 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
                   <Button
                     type="button"
                     size="sm"
-                    onClick={togglePlayRecordedSample}
+                    onClick={() => togglePlayAudioClip('intro')}
                     className="h-8 px-3 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 text-xs flex items-center gap-1.5 font-semibold"
                   >
-                    {isPlayingRecordedSample ? (
+                    {playingClipKey === 'intro' ? (
                       <>
                         <Square className="h-3.5 w-3.5 fill-current" />
-                        <span>Stop Voice Playback</span>
+                        <span>Stop Welcome Audio</span>
                       </>
                     ) : (
                       <>
                         <Play className="h-3.5 w-3.5 fill-current" />
-                        <span>Play Recorded Sample</span>
+                        <span>Play Welcome Audio</span>
                       </>
                     )}
                   </Button>
@@ -649,10 +715,156 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
             )}
           </div>
 
-          {/* Section 3: Browser Voice Hardware Resolution */}
+          {/* Section 3: Questions Audio Bank (Record per question) */}
+          <div className="rounded-2xl bg-white/[0.02] border border-white/10 p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <ListMusic className="h-4 w-4 text-indigo-400" />
+                  <span>Interview Questions Voice Bank (Record Your Voice per Question)</span>
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Record your voice asking each interview question. If a question has your recorded voice, the AI plays your voice clip; otherwise it speaks the question text via your calibrated neural voice.
+                </p>
+              </div>
+              <span className="text-[11px] font-mono text-indigo-300 bg-indigo-500/20 px-2.5 py-1 rounded-full border border-indigo-500/30 font-semibold shrink-0">
+                {Object.keys(questionAudioClips).length} / {STANDARD_CURRICULUM_QUESTIONS.length} Questions Recorded
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {STANDARD_CURRICULUM_QUESTIONS.map((q) => {
+                const hasClip = Boolean(questionAudioClips[q.key]);
+                const isRecordingThis = isRecording && recordingTargetKey === q.key;
+                const isPlayingThis = playingClipKey === q.key;
+
+                return (
+                  <div 
+                    key={q.key}
+                    className={`p-3.5 rounded-xl border transition-all ${
+                      hasClip
+                        ? "bg-indigo-950/20 border-indigo-500/30"
+                        : "bg-black/30 border-white/5"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs text-white">{q.title}</span>
+                        <span className="text-[10px] font-mono uppercase px-2 py-0.2 rounded-full bg-white/10 text-gray-300">
+                          {q.category}
+                        </span>
+                      </div>
+                      {hasClip && (
+                        <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1 font-semibold">
+                          <CheckCircle2 className="h-3 w-3" /> Voice Clip Active
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-gray-300 italic mb-3 font-mono leading-relaxed bg-black/40 p-2 rounded-lg border border-white/5">
+                      "{q.script}"
+                    </p>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-white/5">
+                      <div className="flex items-center gap-2">
+                        {!isRecordingThis ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={isRecording || isSavingAudio}
+                            onClick={() => startRecording(q.key)}
+                            className="h-7 px-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold rounded-lg flex items-center gap-1.5"
+                          >
+                            <Mic className="h-3 w-3" />
+                            <span>{hasClip ? "Re-Record Voice" : "Record Voice for Question"}</span>
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={stopRecording}
+                            className="h-7 px-2.5 bg-red-600 hover:bg-red-500 text-white text-[11px] font-semibold rounded-lg flex items-center gap-1.5 animate-pulse"
+                          >
+                            <Square className="h-3 w-3 fill-white" />
+                            <span>Stop ({recordingSeconds}s)</span>
+                          </Button>
+                        )}
+
+                        {/* Upload per question */}
+                        <div className="relative">
+                          <input
+                            type="file"
+                            id={`file-upload-${q.key}`}
+                            accept="audio/*"
+                            onChange={(e) => handleFileUpload(e, q.key)}
+                            className="hidden"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={isRecording || isSavingAudio}
+                            onClick={() => document.getElementById(`file-upload-${q.key}`)?.click()}
+                            className="h-7 px-2 text-gray-400 hover:text-white text-[11px]"
+                          >
+                            <Upload className="h-3 w-3 mr-1" />
+                            Upload Audio
+                          </Button>
+                        </div>
+                      </div>
+
+                      {hasClip && (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => togglePlayAudioClip(q.key)}
+                            className="h-7 px-2.5 border-indigo-500/40 text-indigo-300 hover:bg-indigo-950/40 text-[11px] flex items-center gap-1 rounded-lg"
+                          >
+                            {isPlayingThis ? (
+                              <>
+                                <Square className="h-3 w-3 fill-current" />
+                                Stop
+                              </>
+                            ) : (
+                              <>
+                                <Play className="h-3 w-3 fill-current" />
+                                Play Question Voice
+                              </>
+                            )}
+                          </Button>
+
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setQuestionAudioClips(prev => {
+                                const copy = { ...prev };
+                                delete copy[q.key];
+                                return copy;
+                              });
+                              toast.info(`Removed voice clip for ${q.key.toUpperCase()}`);
+                            }}
+                            className="h-7 w-7 p-0 text-gray-500 hover:text-red-400"
+                            title="Delete this question audio clip"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Section 4: Browser Voice Hardware Resolution */}
           <div className="space-y-2">
             <Label className="text-xs font-bold text-gray-300 flex items-center justify-between">
-              <span>Synthesizer Neural Voice Binding (for Dynamic Questions)</span>
+              <span>Synthesizer Neural Voice Binding (for Dynamic Unrecorded Questions)</span>
               <span className="text-[10px] text-gray-400 font-normal">
                 {availableVoices.length} local engines detected
               </span>
@@ -755,7 +967,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
             </h3>
 
             <p className="text-[11px] text-gray-300">
-              Listen to how the AI Interlocutor will deliver questions to candidates with your current acoustic settings:
+              Listen to how unrecorded questions will be asked using your calibrated neural speech engine:
             </p>
 
             <textarea

@@ -172,6 +172,7 @@ export interface AiVoiceSettings {
   preferred_browser_voices: string[];
   selected_voice_name?: string;
   use_custom_audio?: boolean;
+  question_audio_clips?: Record<string, string>;
 }
 
 export const DEFAULT_AI_VOICE_SETTINGS: AiVoiceSettings = {
@@ -199,7 +200,8 @@ export const DEFAULT_AI_VOICE_SETTINGS: AiVoiceSettings = {
     "Google UK English Male"
   ],
   selected_voice_name: "",
-  use_custom_audio: true
+  use_custom_audio: true,
+  question_audio_clips: {}
 };
 
 export const getAiVoiceSettings = createServerFn({ method: "GET" }).handler(async () => {
@@ -238,7 +240,8 @@ export const updateAiVoiceSettings = createServerFn({ method: "POST" })
     custom_voice_script: z.string().optional(),
     preferred_browser_voices: z.array(z.string()).optional(),
     selected_voice_name: z.string().optional(),
-    use_custom_audio: z.boolean().optional()
+    use_custom_audio: z.boolean().optional(),
+    question_audio_clips: z.record(z.string()).optional()
   }).parse(d))
   .handler(async ({ data, context }) => {
     if (!await checkIsAdmin(context.userId)) throw new Error("Forbidden");

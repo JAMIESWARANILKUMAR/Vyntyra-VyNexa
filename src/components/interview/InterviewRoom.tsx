@@ -340,14 +340,25 @@ export function InterviewRoom({
 
     setIsAiSpeaking(true);
 
-    const hasCustomAudio = Boolean(activeVoiceSettings?.custom_audio_url);
-    const shouldUseRecordedAudio = !forceSynthesizer && hasCustomAudio && 
+    // 2. Check if there is specific recorded voice audio for THIS question!
+    const currentQ = questions[currentQuestionIndex];
+    const qKey = `q${currentQuestionIndex + 1}`;
+    const questionSpecificAudio = 
+      currentQ?.audioUrl || 
+      activeVoiceSettings?.question_audio_clips?.[qKey] || 
+      activeVoiceSettings?.question_audio_clips?.[currentQ?.id || ''];
+
+    // Only use the global custom_audio_url for the introductory question (Q1).
+    // Subsequent questions (Q2, Q3, etc.) must NEVER replay the greeting audio!
+    const audioUrlToPlay = questionSpecificAudio || (currentQuestionIndex === 0 ? activeVoiceSettings?.custom_audio_url : null);
+    const hasAudioForThisQuestion = Boolean(audioUrlToPlay);
+    const shouldUseRecordedAudio = !forceSynthesizer && hasAudioForThisQuestion && 
       (activeVoiceSettings?.voice_id === 'custom_admin' || activeVoiceSettings?.use_custom_audio);
 
-    // If recorded voice audio exists and is enabled, play the actual recorded voice audio!
-    if (shouldUseRecordedAudio && (currentQuestionIndex === 0 || activeVoiceSettings?.use_custom_audio)) {
+    // If recorded voice audio exists for this specific question, play it!
+    if (shouldUseRecordedAudio && audioUrlToPlay) {
       try {
-        const audio = new Audio(activeVoiceSettings!.custom_audio_url);
+        const audio = new Audio(audioUrlToPlay);
         customAudioPlayerRef.current = audio;
         audio.volume = ttsVolume * (activeVoiceSettings?.volume ?? 1.0);
 
@@ -364,23 +375,23 @@ export function InterviewRoom({
         };
 
         audio.onerror = (e) => {
-          console.warn("Recorded voice playback notice, falling back to sequential speech synthesis:", e);
+          console.warn("Recorded voice playback notice, speaking question via neural synthesis:", e);
           setIsPlayingRecordedAudio(false);
           speakSequentialSynthesizer(text);
         };
 
         audio.play().catch(err => {
-          console.warn("Audio autoplay blocked by browser policy, falling back to speech synthesis:", err);
+          console.warn("Audio autoplay blocked by browser policy, speaking question via neural synthesis:", err);
           setIsPlayingRecordedAudio(false);
           speakSequentialSynthesizer(text);
         });
         return;
       } catch (e) {
-        console.warn("Custom audio initialization error, falling back to synthesis:", e);
+        console.warn("Custom audio initialization error, speaking question via synthesis:", e);
       }
     }
 
-    // Otherwise, use sequential sentence-by-sentence crystal-clear neural synthesis
+    // 3. Otherwise, for all questions, SPEAK THE ACTUAL QUESTION TEXT using the calibrated neural voice profile!
     speakSequentialSynthesizer(text);
   };
 
@@ -1007,23 +1018,23 @@ export function InterviewRoom({
                     </span>
                   </span>
                   <div className="flex items-center gap-2">
-                    {activeVoiceSettings?.custom_audio_url && (
+                    {(currentQuestionIndex === 0 && activeVoiceSettings?.custom_audio_url) && (
                       <button
                         type="button"
                         onClick={() => speakAiResponse(aiSpokenText, false)}
                         className="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 hover:text-white border border-emerald-500/30 flex items-center gap-1 font-semibold text-[11px] transition cursor-pointer"
-                        title="Replay with Admin Recorded Audio"
+                        title="Replay opening greeting in Admin Recorded Voice"
                       >
-                        <Play className="h-3 w-3 fill-current" /> Play Recorded Voice
+                        <Play className="h-3 w-3 fill-current" /> Play Recorded Greeting
                       </button>
                     )}
                     <button 
                       type="button"
                       onClick={() => speakAiResponse(aiSpokenText, true)}
                       className="px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 hover:text-white border border-blue-500/30 flex items-center gap-1 font-semibold text-[11px] transition cursor-pointer"
-                      title="Replay with Calibrated Neural Synthesizer"
+                      title="Replay question with calibrated AI voice"
                     >
-                      <RotateCcw className="h-3 w-3" /> Replay Speech
+                      <RotateCcw className="h-3 w-3" /> Replay Question
                     </button>
                   </div>
                 </div>
