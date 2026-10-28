@@ -1324,6 +1324,48 @@ function Hero() {
   );
 }
 
+
+function WhyJoinUs() {
+  return (
+    <section className="py-20 sm:py-24 px-4 sm:px-6 max-w-6xl mx-auto border-t border-border bg-background">
+      <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="space-y-6">
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">Why Join Vyntyra</span>
+          <h2 className="text-3xl sm:text-4xl font-bold text-primary tracking-tight">Accelerating Careers through Real-World Engineering</h2>
+          <p className="text-muted-foreground leading-relaxed text-sm sm:text-base">
+            At Vyntyra Consultancy Services, we build full-stack web architectures, cross-platform mobile apps, and enterprise AI automation systems. Our interns and engineers collaborate with certified mentors, complete verifiable deliverables, and prepare for premier placements.
+          </p>
+          <ul className="space-y-3.5 pt-2">
+            {[
+              "Great Place to Work® Certified Culture (2026–27)",
+              "NASSCOM FutureSkills Prime & MSME Aligned Framework",
+              "1:1 Live AI Mock Interviews & Executive Placement Coaching",
+              "Dedicated LMS Portal with 6 to 12 ISO-Graded Tasks"
+            ].map((item, i) => (
+              <li key={i} className="flex items-center gap-3 text-foreground font-medium text-sm">
+                <CheckCircle2 className="h-5 w-5 text-secondary shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+        
+        <div className="relative group">
+          <div className="absolute inset-0 bg-secondary/10 rounded-2xl blur-2xl transition-all duration-500" />
+          <div className="relative rounded-2xl overflow-hidden bg-card border border-border aspect-[4/3] flex items-center justify-center p-8">
+             <div className="absolute inset-0 corporate-grid opacity-50" />
+             <div className="relative z-10 w-full h-full border border-border rounded-xl bg-surface flex items-center justify-center shadow-corp overflow-hidden">
+                <div className="w-32 h-32 rounded-full border-4 border-t-gold border-r-primary border-b-secondary border-l-transparent animate-spin" style={{ animationDuration: '8s' }} />
+                <div className="absolute w-24 h-24 rounded-full border-4 border-b-gold/70 border-l-primary/70 border-t-secondary/70 border-r-transparent animate-spin" style={{ animationDuration: '4s', animationDirection: 'reverse' }} />
+             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
 function TrustStrip() {
   const items: Array<{ icon: typeof Globe2; label: string; value: string }> = [
     { icon: Shield, label: "Confidential Process", value: "Your application is visible only to authorised HR personnel." },
