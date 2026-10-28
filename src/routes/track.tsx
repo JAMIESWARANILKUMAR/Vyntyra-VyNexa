@@ -17,7 +17,7 @@ export const Route = createFileRoute("/track")({
       {
         name: "description",
         content:
-          "Instantly track your Project VyNexa application status using your reference ID and registered email.",
+          "Instantly track your Vyntyra application status using your reference ID and registered email.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -231,7 +231,7 @@ function TrackPage() {
           )}
 
           <p className="text-center text-xs text-muted-foreground">
-            Vyntyra Consultancy Services · Project VyNexa
+            Vyntyra Consultancy Services · Vyntyra Careers
           </p>
         </div>
       </main>

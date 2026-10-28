@@ -45,8 +45,7 @@ export function Footer() {
               </div>
             </div>
             <p className="text-xs text-primary-foreground/60 leading-relaxed">
-              Engineering the next generation of intelligent search infrastructure and enterprise AI solutions. 
-              Pioneering tomorrow's digital capabilities today.
+              Enterprise software engineering, custom AI solutions, cloud infrastructure, and certified industrial internships. Great Place to Work® Certified (2026–27) & NASSCOM FutureSkills Prime Recognised.
             </p>
             
             <div className="flex flex-wrap gap-2.5 mt-2">

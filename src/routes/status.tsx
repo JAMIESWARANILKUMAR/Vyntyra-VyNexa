@@ -17,7 +17,7 @@ export const Route = createFileRoute("/status")({
       {
         name: "description",
         content:
-          "Check the status of your Project VyNexa application. Enter your email to receive a secure one-time link.",
+          "Check the status of your Vyntyra application. Enter your email to receive a secure one-time link.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -100,7 +100,7 @@ function StatusRequestPage() {
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-6">
-            Vyntyra Consultancy Services · Project VyNexa
+            Vyntyra Consultancy Services · Vyntyra Careers
           </p>
         </div>
       </main>

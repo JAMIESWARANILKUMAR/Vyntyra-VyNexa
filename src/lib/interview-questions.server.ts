@@ -35,7 +35,7 @@ function generateMockInterviewQuestions(fullName: string, roleApplied: string, y
 2. **Core Competency:** "Can you describe a challenging scenario you solved in your past experiences that matches the technical scope of this role?"
 3. **Collaboration:** "How do you coordinate code reviews, handoffs, or architectural alignment with team members?"
 4. **Project Delivery:** "Describe a time you had to meet a tight deadline. How did you prioritize tasks to deliver high-quality work?"
-5. **Technical Interest:** "Vyntyra is building a next-generation search engine (Project VyNexa). What is your experience with search indexing, scalability, or performance optimization?"
+5. **Technical Interest:** "Vyntyra delivers enterprise software and custom AI solutions. What is your experience with system architecture, scalability, or real-time performance optimization?"
 
 ---
 

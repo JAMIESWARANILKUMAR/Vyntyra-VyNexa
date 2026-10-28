@@ -7,7 +7,7 @@ export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
       { title: "Terms and Conditions — Vyntyra Careers" },
-      { name: "description", content: "Terms of use for the Vyntyra Careers applicant portal and Project VyNexa application form." },
+      { name: "description", content: "Terms of use for the Vyntyra Careers applicant portal and Vyntyra application form." },
       { property: "og:title", content: "Terms and Conditions — Vyntyra Careers" },
       { property: "og:description", content: "Terms and Conditions aligned with DPDPA 2023." },
       { name: "robots", content: "index,follow" },

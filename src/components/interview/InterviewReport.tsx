@@ -70,7 +70,7 @@ export function InterviewReport({
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Official Executive Scorecard - Project VyNexa LMS`, 14, 28);
+      doc.text(`Official Executive Scorecard - Vyntyra Consultancy Services LMS`, 14, 28);
       doc.text(`Date: ${new Date().toLocaleDateString('en-US')}`, pageWidth - 55, 28);
 
       // Candidate Metadata Section

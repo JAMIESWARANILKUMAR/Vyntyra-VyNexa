@@ -222,44 +222,46 @@ export function AdminMockInterviewsOperationsView() {
       </div>
 
       {/* ── KPI Metrics Grid ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Rounds</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">{metrics.totalSessions}</div>
-          <div className="text-[10px] text-slate-400 mt-0.5">All time sessions</div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-3.5">
+        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-slate-200 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Total Rounds</div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 my-1">{metrics.totalSessions}</div>
+          <div className="text-[10px] text-slate-400 truncate">All-time sessions</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-emerald-200 bg-emerald-50/20 shadow-xs">
-          <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-emerald-200/80 bg-emerald-50/30 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
+          <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5 truncate">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
             Active Live
           </div>
-          <div className="text-2xl font-black text-emerald-700 mt-1">{metrics.activeLive}</div>
-          <div className="text-[10px] text-emerald-600/80 mt-0.5">In room right now</div>
+          <div className="text-2xl sm:text-3xl font-black text-emerald-700 my-1">{metrics.activeLive}</div>
+          <div className="text-[10px] text-emerald-600/80 truncate">In room right now</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-blue-200 bg-blue-50/20 shadow-xs">
-          <div className="text-xs font-bold text-blue-700 uppercase tracking-wider">Scheduled</div>
-          <div className="text-2xl font-black text-blue-700 mt-1">{metrics.scheduled}</div>
-          <div className="text-[10px] text-blue-600/80 mt-0.5">Upcoming slots</div>
+        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-blue-200/80 bg-blue-50/30 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
+          <div className="text-[11px] font-bold text-blue-700 uppercase tracking-wider truncate">Scheduled</div>
+          <div className="text-2xl sm:text-3xl font-black text-blue-700 my-1">{metrics.scheduled}</div>
+          <div className="text-[10px] text-blue-600/80 truncate">Upcoming slots</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-purple-200 bg-purple-50/20 shadow-xs">
-          <div className="text-xs font-bold text-purple-700 uppercase tracking-wider">Completed</div>
-          <div className="text-2xl font-black text-purple-700 mt-1">{metrics.completed}</div>
-          <div className="text-[10px] text-purple-600/80 mt-0.5">Evaluations ready</div>
+        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-purple-200/80 bg-purple-50/30 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
+          <div className="text-[11px] font-bold text-purple-700 uppercase tracking-wider truncate">Completed</div>
+          <div className="text-2xl sm:text-3xl font-black text-purple-700 my-1">{metrics.completed}</div>
+          <div className="text-[10px] text-purple-600/80 truncate">Evaluations ready</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-amber-200 bg-amber-50/20 shadow-xs">
-          <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Avg Score</div>
-          <div className="text-2xl font-black text-amber-700 mt-1">{metrics.averageScore}<span className="text-xs font-medium text-slate-400">/100</span></div>
-          <div className="text-[10px] text-amber-600/80 mt-0.5">Across all domains</div>
+        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-amber-200/80 bg-amber-50/30 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
+          <div className="text-[11px] font-bold text-amber-700 uppercase tracking-wider truncate">Avg Score</div>
+          <div className="text-2xl sm:text-3xl font-black text-amber-700 my-1">
+            {metrics.averageScore}<span className="text-xs font-semibold text-slate-400">/100</span>
+          </div>
+          <div className="text-[10px] text-amber-600/80 truncate">Across all domains</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pass Rate</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">{metrics.passRate}%</div>
-          <div className="text-[10px] text-slate-400 mt-0.5">Score &ge; 70</div>
+        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-slate-200 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Pass Rate</div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 my-1">{metrics.passRate}%</div>
+          <div className="text-[10px] text-slate-400 truncate">Score &ge; 70</div>
         </div>
       </div>
 
@@ -487,10 +489,10 @@ export function AdminMockInterviewsOperationsView() {
 
       {/* ── Modal: Schedule Candidate Mock Interview ── */}
       <Dialog open={scheduleModalOpen} onOpenChange={setScheduleModalOpen}>
-        <DialogContent className="max-w-lg rounded-3xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-blue-600" />
+        <DialogContent className="max-w-lg w-[95vw] rounded-3xl bg-white text-slate-900 border border-slate-200 shadow-2xl p-6 sm:p-7 max-h-[92vh] overflow-y-auto">
+          <DialogHeader className="space-y-1.5 pb-2 border-b border-slate-100">
+            <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2 text-slate-900">
+              <Calendar className="h-5 w-5 text-blue-600 shrink-0" />
               Schedule Candidate Mock Interview
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
@@ -498,16 +500,18 @@ export function AdminMockInterviewsOperationsView() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2 text-xs">
+          <div className="space-y-4 py-3 text-xs">
             {/* Quick Pick Registered Intern or Manual Entry Tabs */}
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <Button
                 type="button"
                 variant={scheduleMode === "intern" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setScheduleMode("intern")}
-                className={`text-xs h-8 rounded-xl font-bold cursor-pointer ${
-                  scheduleMode === "intern" ? "bg-blue-600 text-white" : "border-slate-200 text-slate-600"
+                className={`text-xs h-8 sm:h-9 rounded-xl font-bold cursor-pointer transition-all ${
+                  scheduleMode === "intern"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
                 }`}
               >
                 <Users className="h-3.5 w-3.5 mr-1" />
@@ -518,8 +522,10 @@ export function AdminMockInterviewsOperationsView() {
                 variant={scheduleMode === "manual" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setScheduleMode("manual")}
-                className={`text-xs h-8 rounded-xl font-bold cursor-pointer ${
-                  scheduleMode === "manual" ? "bg-blue-600 text-white" : "border-slate-200 text-slate-600"
+                className={`text-xs h-8 sm:h-9 rounded-xl font-bold cursor-pointer transition-all ${
+                  scheduleMode === "manual"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
                 }`}
               >
                 Manual Candidate Entry
@@ -527,7 +533,7 @@ export function AdminMockInterviewsOperationsView() {
             </div>
 
             {scheduleMode === "intern" && (
-              <div className="space-y-1.5 p-3 rounded-2xl bg-blue-50/60 border border-blue-200">
+              <div className="space-y-1.5 p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200/80">
                 <Label className="text-xs font-bold text-blue-900 flex items-center justify-between">
                   <span>Pick Registered Intern *</span>
                   <span className="text-[10px] text-blue-600 font-normal">Auto-fills name, email &amp; intern ID</span>
@@ -549,10 +555,10 @@ export function AdminMockInterviewsOperationsView() {
                     }
                   }}
                 >
-                  <SelectTrigger className="h-9 text-xs rounded-xl bg-white border-blue-200">
+                  <SelectTrigger className="h-10 text-xs rounded-xl bg-white border-blue-300 text-slate-900 shadow-xs">
                     <SelectValue placeholder={isLoadingInterns ? "Loading interns list..." : "Choose intern..."} />
                   </SelectTrigger>
-                  <SelectContent className="max-h-60">
+                  <SelectContent className="max-h-60 bg-white border-slate-200 text-slate-900 shadow-xl rounded-xl z-50">
                     {internsList.length === 0 ? (
                       <SelectItem value="none" disabled>
                         No registered interns found
@@ -569,46 +575,46 @@ export function AdminMockInterviewsOperationsView() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-bold">Candidate Name *</Label>
+                <Label className="text-xs font-bold text-slate-800">Candidate Name *</Label>
                 <Input
                   value={formCandidateName}
                   onChange={(e) => setFormCandidateName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
-                  className="h-9 text-xs rounded-xl"
+                  className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs font-bold">Candidate Email *</Label>
+                <Label className="text-xs font-bold text-slate-800">Candidate Email *</Label>
                 <Input
                   type="email"
                   value={formCandidateEmail}
                   onChange={(e) => setFormCandidateEmail(e.target.value)}
                   placeholder="candidate@example.com"
-                  className="h-9 text-xs rounded-xl"
+                  className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-bold">Intern ID (Optional)</Label>
+                <Label className="text-xs font-bold text-slate-800">Intern ID (Optional)</Label>
                 <Input
                   value={formInternId}
                   onChange={(e) => setFormInternId(e.target.value)}
                   placeholder="VCS-INT-2026-..."
-                  className="h-9 text-xs rounded-xl"
+                  className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-bold">Difficulty Level</Label>
+                <Label className="text-xs font-bold text-slate-800">Difficulty Level</Label>
                 <Select value={formDifficulty} onValueChange={(v: any) => setFormDifficulty(v)}>
-                  <SelectTrigger className="h-9 text-xs rounded-xl">
+                  <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border-slate-200 text-slate-900 shadow-xl rounded-xl z-50">
                     <SelectItem value="junior">Junior (Foundations)</SelectItem>
                     <SelectItem value="mid">Mid-Level (Standard)</SelectItem>
                     <SelectItem value="senior">Senior (Architecture/Lead)</SelectItem>
@@ -618,7 +624,7 @@ export function AdminMockInterviewsOperationsView() {
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-bold">Interview Domain</Label>
+              <Label className="text-xs font-bold text-slate-800">Interview Domain</Label>
               <Select
                 value={formDomain}
                 onValueChange={(val) => {
@@ -627,10 +633,10 @@ export function AdminMockInterviewsOperationsView() {
                   if (meta) setFormRole(meta.recommendedRole);
                 }}
               >
-                <SelectTrigger className="h-9 text-xs rounded-xl">
+                <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-slate-200 text-slate-900 shadow-xl rounded-xl z-50 max-h-60">
                   {INTERVIEW_DOMAINS.map(d => (
                     <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>
                   ))}
@@ -639,28 +645,28 @@ export function AdminMockInterviewsOperationsView() {
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-bold">Target Role Title</Label>
+              <Label className="text-xs font-bold text-slate-800">Target Role Title</Label>
               <Input
                 value={formRole}
                 onChange={(e) => setFormRole(e.target.value)}
                 placeholder="e.g. Senior Full-Stack Engineer"
-                className="h-9 text-xs rounded-xl"
+                className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-bold">Date &amp; Time Slot</Label>
+                <Label className="text-xs font-bold text-slate-800">Date &amp; Time Slot</Label>
                 <Input
                   type="datetime-local"
                   value={formScheduledAt}
                   onChange={(e) => setFormScheduledAt(e.target.value)}
-                  className="h-9 text-xs rounded-xl"
+                  className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-bold">Assign Staff / Mentor</Label>
+                <Label className="text-xs font-bold text-slate-800">Assign Staff / Mentor</Label>
                 <Select
                   value={formMentorId}
                   onValueChange={(val) => {
@@ -669,10 +675,10 @@ export function AdminMockInterviewsOperationsView() {
                     if (user) setFormMentorName(user.name || user.email);
                   }}
                 >
-                  <SelectTrigger className="h-9 text-xs rounded-xl">
+                  <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
                     <SelectValue placeholder="Select staff..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border-slate-200 text-slate-900 shadow-xl rounded-xl z-50 max-h-60">
                     <SelectItem value="unassigned">-- No Mentor Assigned --</SelectItem>
                     {(usersData?.users || [])
                       .filter((u: any) => u.role === "employee" || u.role === "admin" || u.role === "super_admin")
@@ -687,12 +693,12 @@ export function AdminMockInterviewsOperationsView() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setScheduleModalOpen(false)}
-              className="text-xs rounded-xl"
+              className="text-xs rounded-xl border-slate-200 text-slate-700 hover:bg-slate-100 h-9 px-4 font-semibold"
             >
               Cancel
             </Button>
@@ -700,7 +706,7 @@ export function AdminMockInterviewsOperationsView() {
               size="sm"
               onClick={() => scheduleMut.mutate()}
               disabled={scheduleMut.isPending || !formCandidateName || !formCandidateEmail}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl gap-1.5"
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl gap-1.5 h-9 px-5 shadow-md shadow-blue-600/20"
             >
               {scheduleMut.isPending ? "Scheduling..." : "Confirm & Schedule"}
             </Button>
@@ -710,70 +716,94 @@ export function AdminMockInterviewsOperationsView() {
 
       {/* ── Modal: Manage User Roles ── */}
       <Dialog open={roleModalOpen} onOpenChange={setRoleModalOpen}>
-        <DialogContent className="max-w-md rounded-3xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <Shield className="h-5 w-5 text-indigo-600" />
+        <DialogContent className="max-w-md w-[95vw] rounded-3xl bg-white text-slate-900 border border-slate-200 shadow-2xl p-6 sm:p-7">
+          <DialogHeader className="space-y-1.5 pb-2 border-b border-slate-100">
+            <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2 text-slate-900">
+              <Shield className="h-5 w-5 text-indigo-600 shrink-0" />
               Manage User Interview Access Role
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Assign permission tier for the AI Mock Interview Suite.
+              Assign permission tier for the AI Mock Interview Suite &amp; Dashboards.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2 text-xs">
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-slate-700">Quick-Pick Registered Staff / User</Label>
+          <div className="space-y-4 py-3 text-xs">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-slate-800">Quick-Pick Registered Staff / User</Label>
               <Select
                 value={selectedUserEmail}
                 onValueChange={(val) => setSelectedUserEmail(val)}
               >
-                <SelectTrigger className="h-9 text-xs rounded-xl bg-slate-50 border-slate-200">
+                <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600">
                   <SelectValue placeholder={isLoadingUsers ? "Loading user list..." : "Choose staff / user from platform..."} />
                 </SelectTrigger>
-                <SelectContent className="max-h-60">
+                <SelectContent className="max-h-60 bg-white border-slate-200 text-slate-900 shadow-xl rounded-xl z-50">
                   {(usersData?.users || []).map((u: any) => (
                     <SelectItem key={u.id} value={u.email}>
-                      {u.full_name || u.email} ({u.email}) — [{u.role || "candidate"}]
+                      <span className="font-semibold text-slate-900">{u.full_name || u.email}</span>
+                      <span className="text-slate-500 text-[11px] ml-1">({u.email})</span>
+                      <span className="ml-1 text-[10px] uppercase font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+                        {u.role || "candidate"}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs font-bold">User Email *</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-slate-800">User Email *</Label>
               <Input
                 type="email"
                 value={selectedUserEmail}
                 onChange={(e) => setSelectedUserEmail(e.target.value)}
                 placeholder="staff@vyntyraconsultancyservices.in"
-                className="h-9 text-xs rounded-xl"
+                className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
               />
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs font-bold">Select Role Tier</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-slate-800">Select Role Tier</Label>
               <Select value={selectedRole} onValueChange={(v: any) => setSelectedRole(v)}>
-                <SelectTrigger className="h-9 text-xs rounded-xl">
+                <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="super_admin">Super Admin (Global Full Access)</SelectItem>
-                  <SelectItem value="admin">Admin (Org-wide Monitoring &amp; Scheduling)</SelectItem>
-                  <SelectItem value="employee">Employee / Mentor (Assigned Mentees &amp; Grading)</SelectItem>
-                  <SelectItem value="candidate">Candidate (User / Intern Practice)</SelectItem>
+                <SelectContent className="bg-white border-slate-200 text-slate-900 shadow-xl rounded-xl z-50">
+                  <SelectItem value="super_admin">
+                    <div className="py-0.5">
+                      <div className="font-bold text-indigo-700">Super Admin</div>
+                      <div className="text-[10px] text-slate-500">Global Full Access &amp; Operations Command</div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="admin">
+                    <div className="py-0.5">
+                      <div className="font-bold text-blue-700">Admin</div>
+                      <div className="text-[10px] text-slate-500">Org-wide Live Monitoring &amp; Scheduling</div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="employee">
+                    <div className="py-0.5">
+                      <div className="font-bold text-emerald-700">Employee / Mentor</div>
+                      <div className="text-[10px] text-slate-500">Assigned Mentees &amp; Manual Grading</div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="candidate">
+                    <div className="py-0.5">
+                      <div className="font-bold text-slate-700">Candidate</div>
+                      <div className="text-[10px] text-slate-500">Student &amp; Intern Practice Dashboard</div>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setRoleModalOpen(false)}
-              className="text-xs rounded-xl"
+              className="text-xs rounded-xl border-slate-200 text-slate-700 hover:bg-slate-100 h-9 px-4 font-semibold"
             >
               Cancel
             </Button>
@@ -781,7 +811,7 @@ export function AdminMockInterviewsOperationsView() {
               size="sm"
               onClick={() => roleMut.mutate()}
               disabled={roleMut.isPending || !selectedUserEmail}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl h-9 px-5 shadow-md shadow-indigo-600/20"
             >
               {roleMut.isPending ? "Saving..." : "Update Role"}
             </Button>

@@ -50,11 +50,11 @@ import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
 export const Route = createFileRoute("/careers")({
   head: () => ({
     meta: [
-      { title: "Careers at Project VyNexa — Vyntyra Consultancy Services" },
+      { title: "Careers & Internships — Vyntyra Consultancy Services" },
       {
         name: "description",
         content:
-          "Apply to Project VyNexa — next-generation search engine & AI solutions by Vyntyra Consultancy Services. Careers in Next.js, Flutter, Python AI, Cloud & DevOps across US, UK, UAE, Singapore, Canada, Australia, Germany, and Global.",
+          "Apply to Vyntyra Consultancy Services — Great Place to Work Certified 2026-27, NASSCOM FutureSkills Prime Recognised, MSME Registered, Skill Development of India. Careers and certified student internships in Next.js, Flutter, Enterprise AI, Cloud & DevOps.",
       },
       ...GLOBAL_SEO_META_TAGS,
     ],
@@ -63,8 +63,8 @@ export const Route = createFileRoute("/careers")({
 });
 
 const ROLES = [
-  "Software Engineer — Search Infrastructure",
-  "Machine Learning Engineer — Ranking",
+  "Software Engineer — Full-Stack & Cloud",
+  "Machine Learning Engineer — Enterprise AI & NLP",
   "Frontend Engineer",
   "Backend Engineer",
   "DevOps / SRE",
@@ -439,7 +439,7 @@ function ApplicationPage() {
                 </div>
                 <h1 className="text-3xl font-semibold text-primary tracking-tight">Application Received</h1>
                 <p className="mt-3 text-muted-foreground max-w-lg mx-auto">
-                  Thank you for applying to <span className="font-medium text-foreground">Project VyNexa</span>.
+                  Thank you for applying to <span className="font-medium text-foreground">Vyntyra Consultancy Services</span>.
                   A confirmation has been dispatched to <span className="font-medium text-foreground">{form.email}</span>.
                 </p>
                 <div className="mt-6 inline-flex items-center gap-3 rounded-sm border border-border bg-background px-5 py-2.5 text-sm">
@@ -543,7 +543,7 @@ function ApplicationPage() {
               <div className="flex items-center gap-3">
                 <div className="h-1 w-10 bg-secondary rounded-full" />
                 <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-secondary">
-                  Careers · Project VyNexa
+                  Careers & Internships · Vyntyra Consultancy Services
                 </span>
               </div>
               <h2 className="mt-3 text-xl sm:text-2xl font-semibold text-primary tracking-tight">Submit Your Application</h2>
@@ -897,7 +897,7 @@ function ApplicationPage() {
               </Section>
 
               <Section title="Cover Message" step="06">
-                <Field label="Why do you want to join Project VyNexa?">
+                <Field label="Why do you want to join Vyntyra Consultancy Services?">
                   <Textarea rows={5} value={form.message} onChange={(e) => update("message")(e.target.value)}
                     placeholder="Tell us briefly about your motivation, relevant experience, and what you'd bring to the team…" />
                 </Field>
@@ -1251,12 +1251,12 @@ function Hero() {
             </div>
             
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight">
-              The Future of <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gold to-white">Intelligent Search.</span>
+              Enterprise Tech, AI & <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gold to-white">Next-Gen Talent.</span>
             </h1>
             
             <p className="text-lg lg:text-xl text-primary-foreground/75 max-w-2xl leading-relaxed font-light">
-              Experience the next generation of search powered by Vyntyra. We build highly intelligent, ambient systems that cut through the noise. Apply securely through our corporate careers portal.
+              Join Vyntyra Consultancy Services — Great Place to Work® Certified 2026–27, NASSCOM FutureSkills Prime Recognised, and MSME Registered. Work on live enterprise client software, AI pipelines, and accredited internship cohorts with 1:1 AI Mock Interview mentorship.
             </p>
             
             <div className="flex flex-wrap gap-4 pt-4">
@@ -1320,15 +1320,15 @@ function WhyJoinUs() {
       <div className="grid lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
           <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-secondary">Innovation Labs</span>
-          <h2 className="text-3xl font-semibold text-primary tracking-tight">Redefining Search through Deep Intelligence</h2>
+          <h2 className="text-3xl font-semibold text-primary tracking-tight">Accelerating Careers through Real-World Engineering</h2>
           <p className="text-muted-foreground leading-relaxed">
-            At Vyntyra, we navigate the boundary between pure research and practical engineering. Our systems are built on principles of optical precision and atmospheric depth, ensuring that every interaction feels effortless yet authoritative.
+            At Vyntyra Consultancy Services, we build full-stack web architectures, cross-platform mobile apps, and enterprise AI automation systems. Our interns and engineers collaborate with certified mentors, complete verifiable deliverables, and prepare for premier placements.
           </p>
           <ul className="space-y-4 pt-4">
             {[
-              "Rigorous Technical Grids",
-              "Ambient Neural Architectures",
-              "Ultra-low Latency Retrieval"
+              "Great Place to Work® Certified Culture (2026–27)",
+              "NASSCOM FutureSkills Prime & MSME Aligned Framework",
+              "1:1 Live AI Mock Interviews & Executive Placement Coaching"
             ].map((item, i) => (
               <li key={i} className="flex items-center gap-3 text-foreground font-medium text-sm">
                 <CheckCircle2 className="h-5 w-5 text-secondary shrink-0" />
@@ -1406,7 +1406,7 @@ function OperationsStrip() {
     {
       icon: Shield,
       label: "Data Handling",
-      value: "Secured by Cloudflare · ISO-aligned · NASSCOM Verified · MSME Registered",
+      value: "Great Place to Work® 2026–27 · NASSCOM FutureSkills Prime · MSME Registered · AmbitionBox 4.5★",
     },
   ];
   return (
