@@ -19,7 +19,7 @@ import * as faceDetection from '@tensorflow-models/face-detection';
 import '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs-core';
 import { getAiVoiceSettings, AiVoiceSettings } from '@/lib/settings.functions';
-import { cleanTextForSpeech, resolveBestSpeechVoice } from '@/lib/speech-clarity';
+import { cleanTextForSpeech, resolveBestSpeechVoice, speakSentenceSequence } from '@/lib/speech-clarity';
 
 interface InterviewRoomProps {
   sessionId: string;
@@ -75,6 +75,9 @@ export function InterviewRoom({
   const [activeVoiceSettings, setActiveVoiceSettings] = useState<AiVoiceSettings | null>(null);
   const [speechPace, setSpeechPace] = useState<number>(0.94);
   const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [isPlayingRecordedAudio, setIsPlayingRecordedAudio] = useState<boolean>(false);
+  const customAudioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  const speechSpeakerCancelRef = useRef<(() => void) | null>(null);
 
   // Sanitize targetRole to avoid duplicate title text like "Technology & Software Software Engineer"
   const displayRole = React.useMemo(() => {
@@ -321,46 +324,98 @@ export function InterviewRoom({
   }, []);
 
   // ─── 4. Text-to-Speech (Crystal-Clear AI Voice & Visualizer Sync) ───
-  const speakAiResponse = (text: string) => {
-    if (!('speechSynthesis' in window)) return;
+  const speakAiResponse = (text: string, forceSynthesizer = false) => {
+    // 1. Stop any currently active speech synthesis or recorded audio
+    if (speechSpeakerCancelRef.current) {
+      speechSpeakerCancelRef.current();
+      speechSpeakerCancelRef.current = null;
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    if (customAudioPlayerRef.current) {
+      customAudioPlayerRef.current.pause();
+      customAudioPlayerRef.current.currentTime = 0;
+    }
 
-    window.speechSynthesis.cancel(); // Stop any pending speech
     setIsAiSpeaking(true);
 
-    // Phonetic & enunciation clarity preprocessor (removes markdown, expands acronyms, adds breath pauses)
-    const cleanSpokenText = cleanTextForSpeech(text);
-    const utterance = new SpeechSynthesisUtterance(cleanSpokenText);
-    
-    // Pace: use calibrated pace (0.94x default for distinct articulation)
-    utterance.rate = speechPace || activeVoiceSettings?.rate || 0.94;
-    utterance.pitch = activeVoiceSettings?.pitch || 1.0;
-    utterance.volume = ttsVolume * (activeVoiceSettings?.volume ?? 1.0);
+    const hasCustomAudio = Boolean(activeVoiceSettings?.custom_audio_url);
+    const shouldUseRecordedAudio = !forceSynthesizer && hasCustomAudio && 
+      (activeVoiceSettings?.voice_id === 'custom_admin' || activeVoiceSettings?.use_custom_audio);
+
+    // If recorded voice audio exists and is enabled, play the actual recorded voice audio!
+    if (shouldUseRecordedAudio && (currentQuestionIndex === 0 || activeVoiceSettings?.use_custom_audio)) {
+      try {
+        const audio = new Audio(activeVoiceSettings!.custom_audio_url);
+        customAudioPlayerRef.current = audio;
+        audio.volume = ttsVolume * (activeVoiceSettings?.volume ?? 1.0);
+
+        audio.onplay = () => {
+          setIsAiSpeaking(true);
+          setIsPlayingRecordedAudio(true);
+        };
+
+        audio.onended = () => {
+          setIsAiSpeaking(false);
+          setIsPlayingRecordedAudio(false);
+          turnStartTimeRef.current = Date.now();
+          startSpeechRecognition();
+        };
+
+        audio.onerror = (e) => {
+          console.warn("Recorded voice playback notice, falling back to sequential speech synthesis:", e);
+          setIsPlayingRecordedAudio(false);
+          speakSequentialSynthesizer(text);
+        };
+
+        audio.play().catch(err => {
+          console.warn("Audio autoplay blocked by browser policy, falling back to speech synthesis:", err);
+          setIsPlayingRecordedAudio(false);
+          speakSequentialSynthesizer(text);
+        });
+        return;
+      } catch (e) {
+        console.warn("Custom audio initialization error, falling back to synthesis:", e);
+      }
+    }
+
+    // Otherwise, use sequential sentence-by-sentence crystal-clear neural synthesis
+    speakSequentialSynthesizer(text);
+  };
+
+  const speakSequentialSynthesizer = (text: string) => {
+    setIsPlayingRecordedAudio(false);
+    if (!('speechSynthesis' in window)) {
+      setIsAiSpeaking(false);
+      return;
+    }
 
     // Pick highest clarity neural/natural voice
     const allVoices = browserVoices.length > 0 ? browserVoices : window.speechSynthesis.getVoices();
     const preferredVoice = resolveBestSpeechVoice(allVoices, activeVoiceSettings || undefined);
 
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-    }
+    const controller = speakSentenceSequence({
+      text,
+      voice: preferredVoice,
+      rate: speechPace || activeVoiceSettings?.rate || 0.94,
+      pitch: activeVoiceSettings?.pitch || 1.0,
+      volume: ttsVolume * (activeVoiceSettings?.volume ?? 1.0),
+      onStart: () => {
+        setIsAiSpeaking(true);
+      },
+      onEnd: () => {
+        setIsAiSpeaking(false);
+        turnStartTimeRef.current = Date.now();
+        startSpeechRecognition();
+      },
+      onError: (e) => {
+        console.warn("Sequential synthesis notice:", e);
+        setIsAiSpeaking(false);
+      }
+    });
 
-    utterance.onstart = () => {
-      setIsAiSpeaking(true);
-    };
-
-    utterance.onend = () => {
-      setIsAiSpeaking(false);
-      turnStartTimeRef.current = Date.now();
-      // Resume listening to candidate automatically
-      startSpeechRecognition();
-    };
-
-    utterance.onerror = (e) => {
-      console.warn("Speech synthesis notice:", e);
-      setIsAiSpeaking(false);
-    };
-
-    window.speechSynthesis.speak(utterance);
+    speechSpeakerCancelRef.current = controller.cancel;
   };
 
   // Speak initial question on room entry
@@ -370,9 +425,16 @@ export function InterviewRoom({
     }, 1000);
     return () => {
       clearTimeout(timer);
+      if (customAudioPlayerRef.current) {
+        customAudioPlayerRef.current.pause();
+        customAudioPlayerRef.current.currentTime = 0;
+      }
+      if (speechSpeakerCancelRef.current) {
+        speechSpeakerCancelRef.current();
+      }
       if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     };
-  }, []);
+  }, [activeVoiceSettings]);
 
   // ─── 4. Speech-to-Text (Continuous Candidate Recognition) ───
   const startSpeechRecognition = () => {
@@ -625,11 +687,15 @@ export function InterviewRoom({
           <button
             type="button"
             onClick={() => speakAiResponse(aiSpokenText)}
-            title="Click to replay AI question with calibrated acoustic clarity"
+            title="Click to replay AI question"
             className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/25 text-xs transition cursor-pointer"
           >
             <Volume2 className="h-3.5 w-3.5 text-blue-400" />
-            <span className="font-mono text-[11px] truncate max-w-[130px]">{activeVoiceSettings?.voice_name || 'VyNexa Voice'}</span>
+            <span className="font-mono text-[11px] truncate max-w-[140px]">
+              {isPlayingRecordedAudio
+                ? "🎙️ Playing Recorded Audio"
+                : (activeVoiceSettings?.voice_name || 'VyNexa Voice')}
+            </span>
             <span className="text-[10px] text-blue-400 font-bold bg-blue-500/20 px-1 py-0.2 rounded font-mono">{speechPace}x</span>
             <RotateCcw className="h-3 w-3 ml-0.5 text-blue-400 hover:text-white" />
           </button>
@@ -934,15 +1000,30 @@ export function InterviewRoom({
                 <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400">
                   <span className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>Live Audio: {activeVoiceSettings?.voice_name || "VyNexa Neural Voice"} ({speechPace}x pace)</span>
+                    <span>
+                      {isPlayingRecordedAudio
+                        ? "🎙️ Playing Admin Recorded Audio Sample"
+                        : `Live Audio: ${activeVoiceSettings?.voice_name || "VyNexa Neural Voice"} (${speechPace}x)`}
+                    </span>
                   </span>
                   <div className="flex items-center gap-2">
+                    {activeVoiceSettings?.custom_audio_url && (
+                      <button
+                        type="button"
+                        onClick={() => speakAiResponse(aiSpokenText, false)}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 hover:text-white border border-emerald-500/30 flex items-center gap-1 font-semibold text-[11px] transition cursor-pointer"
+                        title="Replay with Admin Recorded Audio"
+                      >
+                        <Play className="h-3 w-3 fill-current" /> Play Recorded Voice
+                      </button>
+                    )}
                     <button 
                       type="button"
-                      onClick={() => speakAiResponse(aiSpokenText)}
+                      onClick={() => speakAiResponse(aiSpokenText, true)}
                       className="px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 hover:text-white border border-blue-500/30 flex items-center gap-1 font-semibold text-[11px] transition cursor-pointer"
+                      title="Replay with Calibrated Neural Synthesizer"
                     >
-                      <RotateCcw className="h-3 w-3" /> Replay Question
+                      <RotateCcw className="h-3 w-3" /> Replay Speech
                     </button>
                   </div>
                 </div>

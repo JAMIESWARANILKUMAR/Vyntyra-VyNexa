@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Mic, MicOff, Volume2, Play, Square, RotateCcw, Upload, Sparkles, 
   CheckCircle2, Radio, Sliders, AudioWaveform as Waveform, AlertCircle, 
-  HelpCircle, ShieldCheck, UserCheck, RefreshCw, VolumeX, Save
+  HelpCircle, ShieldCheck, UserCheck, RefreshCw, VolumeX, Save, Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,16 +18,25 @@ import {
   AiVoiceSettings, 
   DEFAULT_AI_VOICE_SETTINGS 
 } from '@/lib/settings.functions';
-import { cleanTextForSpeech, resolveBestSpeechVoice } from '@/lib/speech-clarity';
+import { cleanTextForSpeech, resolveBestSpeechVoice, speakSentenceSequence } from '@/lib/speech-clarity';
+import { supabase } from '@/integrations/supabase/client';
 
 const PRESET_VOICES = [
+  {
+    id: "custom_admin",
+    name: "Admin / Custom Trained Voice",
+    gender: "neutral" as const,
+    accent: "en-IN" as const,
+    desc: "Uses your own recorded voice audio for greetings and matches dynamic questions to your cadence.",
+    preferred: []
+  },
   {
     id: "natural_in_female",
     name: "Dr. Sarah - Executive Tech Lead",
     gender: "female" as const,
     accent: "en-IN" as const,
     desc: "Natural cadence, crisp enunciation, tailored for Indian and global technical candidates.",
-    preferred: ["Google UK English Female", "Microsoft Neerja Online (Natural) - English (India)", "Samantha", "Victoria"]
+    preferred: ["Microsoft Neerja Online (Natural)", "Google UK English Female", "Samantha", "Victoria"]
   },
   {
     id: "natural_in_male",
@@ -35,7 +44,7 @@ const PRESET_VOICES = [
     gender: "male" as const,
     accent: "en-IN" as const,
     desc: "Authoritative, calm, clear acoustic tone with natural Indian English cadence.",
-    preferred: ["Microsoft Prabhat Online (Natural) - English (India)", "Google UK English Male", "Daniel", "David"]
+    preferred: ["Microsoft Prabhat Online (Natural)", "Google UK English Male", "Daniel", "David"]
   },
   {
     id: "natural_us_female",
@@ -51,19 +60,11 @@ const PRESET_VOICES = [
     gender: "male" as const,
     accent: "en-GB" as const,
     desc: "Refined British technical tone with deliberate pacing and distinct consonants.",
-    preferred: ["Google UK English Male", "Microsoft Ryan Online (Natural)", "Daniel", "Oliver"]
-  },
-  {
-    id: "custom_admin",
-    name: "Admin / Custom Trained Voice",
-    gender: "neutral" as const,
-    accent: "en-IN" as const,
-    desc: "Personalized voice calibrated with your own audio sample or microphone recording.",
-    preferred: []
+    preferred: ["Microsoft Ryan Online (Natural)", "Google UK English Male", "Daniel", "Oliver"]
   }
 ];
 
-const CALIBRATION_SCRIPT = "Hello and welcome to your VyNexa technical mock interview. Today we will explore clean software architecture, problem-solving depth, and data structures. Speak clearly, explain your trade-offs, and let's begin.";
+const CALIBRATION_SCRIPT = "Hello and welcome to your 1:1 technical mock interview with Vyntyra Consultancy Services. We are going to review software architecture, problem-solving depth, and clean coding methodologies. Take your time, explain your trade-offs clearly, and let's begin.";
 
 export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) {
   const queryClient = useQueryClient();
@@ -71,8 +72,8 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
   const updateSettingsFn = useServerFn(updateAiVoiceSettings);
 
   // Settings State
-  const [voiceId, setVoiceId] = useState<string>("natural_in_female");
-  const [voiceName, setVoiceName] = useState<string>("Dr. Sarah - Executive Tech Lead");
+  const [voiceId, setVoiceId] = useState<string>("custom_admin");
+  const [voiceName, setVoiceName] = useState<string>("Admin Custom Trained Voice");
   const [speakerIdentity, setSpeakerIdentity] = useState<string>("Admin (Lead Bar Raiser)");
   const [speakerGender, setSpeakerGender] = useState<"female" | "male" | "neutral">("female");
   const [accent, setAccent] = useState<"en-IN" | "en-US" | "en-GB" | "en-AU">("en-IN");
@@ -81,6 +82,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
   const [volume, setVolume] = useState<number>(1.0);
   const [clarityBoost, setClarityBoost] = useState<boolean>(true);
   const [customAudioUrl, setCustomAudioUrl] = useState<string>("");
+  const [useCustomAudio, setUseCustomAudio] = useState<boolean>(true);
   const [customVoiceScript, setCustomVoiceScript] = useState<string>(CALIBRATION_SCRIPT);
 
   // Available client browser voices
@@ -89,10 +91,9 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
 
   // Audio Recording State for Custom Voice Training
   const [isRecording, setIsRecording] = useState<boolean>(false);
-  const [recordedAudioBlob, setRecordedAudioBlob] = useState<Blob | null>(null);
-  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string>("");
   const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
   const [micAudioLevel, setMicAudioLevel] = useState<number>(0);
+  const [isSavingAudio, setIsSavingAudio] = useState<boolean>(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordTimerRef = useRef<any>(null);
@@ -101,6 +102,9 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
 
   // Audition / Testing State
   const [isAuditionSpeaking, setIsAuditionSpeaking] = useState<boolean>(false);
+  const [isPlayingRecordedSample, setIsPlayingRecordedSample] = useState<boolean>(false);
+  const recordedAudioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  const speechSpeakerCancelRef = useRef<(() => void) | null>(null);
   const [auditionText, setAuditionText] = useState<string>(
     "Can you walk me through a critical production bug you diagnosed? How do you approach caching and latency bottlenecks in REST APIs?"
   );
@@ -114,8 +118,8 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
   // Populate state on load
   useEffect(() => {
     if (initialSettings) {
-      setVoiceId(initialSettings.voice_id || "natural_in_female");
-      setVoiceName(initialSettings.voice_name || "Dr. Sarah - Executive Tech Lead");
+      setVoiceId(initialSettings.voice_id || "custom_admin");
+      setVoiceName(initialSettings.voice_name || "Admin Custom Trained Voice");
       setSpeakerIdentity(initialSettings.speaker_identity || "Admin");
       setSpeakerGender(initialSettings.speaker_gender || "female");
       setAccent(initialSettings.accent || "en-IN");
@@ -123,12 +127,15 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
       setPitch(initialSettings.pitch ?? 1.0);
       setVolume(initialSettings.volume ?? 1.0);
       setClarityBoost(initialSettings.clarity_boost ?? true);
-      setCustomAudioUrl(initialSettings.custom_audio_url || "");
+      setUseCustomAudio(initialSettings.use_custom_audio !== false);
       if (initialSettings.custom_audio_url) {
-        setRecordedAudioUrl(initialSettings.custom_audio_url);
+        setCustomAudioUrl(initialSettings.custom_audio_url);
       }
       if (initialSettings.custom_voice_script) {
         setCustomVoiceScript(initialSettings.custom_voice_script);
+      }
+      if (initialSettings.selected_voice_name) {
+        setSelectedBrowserVoiceName(initialSettings.selected_voice_name);
       }
     }
   }, [initialSettings]);
@@ -141,12 +148,15 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
       const voices = window.speechSynthesis.getVoices();
       if (voices.length > 0) {
         setAvailableVoices(voices);
-        const best = resolveBestSpeechVoice(voices, {
-          preferred_browser_voices: initialSettings?.preferred_browser_voices,
-          accent,
-          speaker_gender: speakerGender
-        });
-        if (best) setSelectedBrowserVoiceName(best.name);
+        if (!selectedBrowserVoiceName) {
+          const best = resolveBestSpeechVoice(voices, {
+            selected_voice_name: initialSettings?.selected_voice_name,
+            preferred_browser_voices: initialSettings?.preferred_browser_voices,
+            accent,
+            speaker_gender: speakerGender
+          });
+          if (best) setSelectedBrowserVoiceName(best.name);
+        }
       }
     };
 
@@ -156,7 +166,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
     return () => {
       window.speechSynthesis.onvoiceschanged = null;
     };
-  }, [accent, speakerGender, initialSettings]);
+  }, [accent, speakerGender, initialSettings, selectedBrowserVoiceName]);
 
   // Save Voice Settings Mutation
   const saveMutation = useMutation({
@@ -171,15 +181,17 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
         pitch,
         volume,
         clarity_boost: clarityBoost,
-        custom_audio_url: recordedAudioUrl || customAudioUrl || undefined,
+        custom_audio_url: customAudioUrl || undefined,
         custom_voice_script: customVoiceScript,
+        selected_voice_name: selectedBrowserVoiceName,
+        use_custom_audio: useCustomAudio,
         preferred_browser_voices: selectedBrowserVoiceName 
           ? [selectedBrowserVoiceName, ...(initialSettings?.preferred_browser_voices || [])]
           : initialSettings?.preferred_browser_voices
       }
     }),
     onSuccess: () => {
-      toast.success("AI Interviewer voice model saved & deployed globally!");
+      toast.success("AI Interviewer voice profile permanently saved & deployed to all interviews!");
       queryClient.invalidateQueries({ queryKey: ['admin_ai_voice_settings'] });
       if (onSaved) onSaved();
     },
@@ -188,7 +200,45 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
     }
   });
 
-  // ─── Audition / Voice Testing ───
+  // ─── Playback Recorded Voice Sample ───
+  const togglePlayRecordedSample = () => {
+    if (!customAudioUrl) {
+      toast.error("No recorded audio sample found. Please record your voice first.");
+      return;
+    }
+
+    if (isPlayingRecordedSample) {
+      if (recordedAudioPlayerRef.current) {
+        recordedAudioPlayerRef.current.pause();
+        recordedAudioPlayerRef.current.currentTime = 0;
+      }
+      setIsPlayingRecordedSample(false);
+      return;
+    }
+
+    if (recordedAudioPlayerRef.current) {
+      recordedAudioPlayerRef.current.pause();
+    }
+
+    const audio = new Audio(customAudioUrl);
+    recordedAudioPlayerRef.current = audio;
+    audio.volume = volume;
+
+    audio.onplay = () => setIsPlayingRecordedSample(true);
+    audio.onended = () => setIsPlayingRecordedSample(false);
+    audio.onerror = (e) => {
+      console.warn("Audio playback error:", e);
+      setIsPlayingRecordedSample(false);
+      toast.error("Could not play recorded audio sample.");
+    };
+
+    audio.play().catch(err => {
+      console.warn("Audio play blocked:", err);
+      setIsPlayingRecordedSample(false);
+    });
+  };
+
+  // ─── Audition / Voice Testing via Sequential Clarity Synthesizer ───
   const handleTestSpeech = () => {
     if (!('speechSynthesis' in window)) {
       toast.error("Browser does not support Speech Synthesis");
@@ -196,6 +246,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
     }
 
     if (isAuditionSpeaking) {
+      if (speechSpeakerCancelRef.current) speechSpeakerCancelRef.current();
       window.speechSynthesis.cancel();
       setIsAuditionSpeaking(false);
       return;
@@ -203,35 +254,33 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
 
     window.speechSynthesis.cancel();
 
-    // Prepare speech text with clarity engine
-    const textToSpeak = clarityBoost ? cleanTextForSpeech(auditionText) : auditionText;
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-
-    utterance.rate = rate;
-    utterance.pitch = pitch;
-    utterance.volume = volume;
-
     // Pick voice
     const matchedVoice = availableVoices.find(v => v.name === selectedBrowserVoiceName) || 
-                         resolveBestSpeechVoice(availableVoices, { accent, speaker_gender: speakerGender });
+                         resolveBestSpeechVoice(availableVoices, { accent, speaker_gender: speakerGender, selected_voice_name: selectedBrowserVoiceName });
 
-    if (matchedVoice) {
-      utterance.voice = matchedVoice;
-    }
+    // Use sentence-by-sentence clarity engine
+    const textToSpeak = clarityBoost ? cleanTextForSpeech(auditionText) : auditionText;
 
-    utterance.onstart = () => setIsAuditionSpeaking(true);
-    utterance.onend = () => setIsAuditionSpeaking(false);
-    utterance.onerror = () => setIsAuditionSpeaking(false);
+    const controller = speakSentenceSequence({
+      text: textToSpeak,
+      voice: matchedVoice,
+      rate,
+      pitch,
+      volume,
+      onStart: () => setIsAuditionSpeaking(true),
+      onEnd: () => setIsAuditionSpeaking(false),
+      onError: () => setIsAuditionSpeaking(false)
+    });
 
-    window.speechSynthesis.speak(utterance);
-    toast.info("Auditioning voice with clarity tuning...");
+    speechSpeakerCancelRef.current = controller.cancel;
+    toast.info("Auditioning sequential speech enunciation...");
   };
 
-  // ─── Voice Recording Handlers ───
+  // ─── Persistent Voice Recording Handlers ───
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -265,12 +314,41 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
         }
       };
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
+        setIsSavingAudio(true);
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        setRecordedAudioBlob(blob);
-        const url = URL.createObjectURL(blob);
-        setRecordedAudioUrl(url);
-        toast.success("Voice sample recorded successfully! Listening available below.");
+        
+        // 1. Convert to persistent Base64 Data URL (guaranteed to work across all sessions & browsers)
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = async () => {
+          let persistentUrl = reader.result as string;
+
+          // 2. Also try uploading to Supabase Storage for high-speed CDN URL
+          try {
+            const fileName = `voice_training/admin_voice_${Date.now()}.webm`;
+            const { error: upErr } = await supabase.storage.from("default").upload(fileName, blob, {
+              contentType: "audio/webm",
+              upsert: true
+            });
+            if (!upErr) {
+              const { data: pubData } = supabase.storage.from("default").getPublicUrl(fileName);
+              if (pubData?.publicUrl) {
+                persistentUrl = pubData.publicUrl;
+              }
+            }
+          } catch (storageErr) {
+            console.warn("Storage upload optional fallback to base64:", storageErr);
+          }
+
+          setCustomAudioUrl(persistentUrl);
+          setVoiceId("custom_admin");
+          setVoiceName("Admin Custom Voice (Calibrated)");
+          setUseCustomAudio(true);
+          setIsSavingAudio(false);
+          toast.success("Voice sample recorded, calibrated, and permanently saved! Click 'Deploy Voice Globally' to apply.");
+        };
+
         // Stop audio tracks
         stream.getTracks().forEach(track => track.stop());
       };
@@ -306,11 +384,36 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
       return;
     }
 
-    const url = URL.createObjectURL(file);
-    setRecordedAudioUrl(url);
-    setVoiceId("custom_admin");
-    setVoiceName(`Custom Voice (${file.name.replace(/\.[^/.]+$/, "")})`);
-    toast.success(`Voice sample "${file.name}" loaded for acoustic calibration!`);
+    setIsSavingAudio(true);
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = async () => {
+      let persistentUrl = reader.result as string;
+
+      try {
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const fileName = `voice_training/admin_upload_${Date.now()}_${safeName}`;
+        const { error: upErr } = await supabase.storage.from("default").upload(fileName, file, {
+          contentType: file.type || "audio/mpeg",
+          upsert: true
+        });
+        if (!upErr) {
+          const { data: pubData } = supabase.storage.from("default").getPublicUrl(fileName);
+          if (pubData?.publicUrl) {
+            persistentUrl = pubData.publicUrl;
+          }
+        }
+      } catch (e) {
+        console.warn("Storage upload fallback to base64:", e);
+      }
+
+      setCustomAudioUrl(persistentUrl);
+      setVoiceId("custom_admin");
+      setVoiceName(`Custom Voice (${file.name.replace(/\.[^/.]+$/, "")})`);
+      setUseCustomAudio(true);
+      setIsSavingAudio(false);
+      toast.success(`Voice file "${file.name}" uploaded, calibrated, and permanently stored!`);
+    };
   };
 
   return (
@@ -327,17 +430,17 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
             AI Voice Studio &amp; Custom Voice Training
           </h2>
           <p className="text-xs sm:text-sm text-gray-400 mt-1 max-w-2xl">
-            Train the AI Interlocutor with your own voice (or any team member's voice) and calibrate neural pacing, pronunciation, and clarity so candidates experience crystal-clear audio during technical interviews.
+            Train the AI Interlocutor with your own recorded voice audio and calibrate neural pacing, pronunciation, and accuracy so candidates experience crystal-clear audio during technical interviews.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Button
             onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
+            disabled={saveMutation.isPending || isSavingAudio}
             className="h-10 px-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/25 flex items-center gap-2"
           >
-            {saveMutation.isPending ? (
+            {saveMutation.isPending || isSavingAudio ? (
               <RefreshCw className="h-4 w-4 animate-spin" />
             ) : (
               <Save className="h-4 w-4" />
@@ -372,6 +475,9 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
                       setVoiceName(p.name);
                       setSpeakerGender(p.gender);
                       setAccent(p.accent);
+                      if (p.id === 'custom_admin') {
+                        setUseCustomAudio(true);
+                      }
                       // Auto-select preferred browser voice if available
                       if (p.preferred.length > 0) {
                         for (const pref of p.preferred) {
@@ -399,7 +505,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
                     {isSelected && (
                       <div className="mt-2.5 flex items-center gap-1.5 text-[11px] font-semibold text-blue-400">
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span>Active Selected Model</span>
+                        <span>Active Selected Profile</span>
                       </div>
                     )}
                   </button>
@@ -410,19 +516,19 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
 
           {/* Section 2: Custom Voice Training Module (Record or Upload) */}
           <div className="rounded-2xl bg-white/[0.02] border border-white/10 p-5 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <Mic className="h-4 w-4 text-emerald-400" />
                   <span>Admin Voice Calibration &amp; Training Recorder</span>
                 </h3>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Record 15–30 seconds of your voice reading the calibration script below so the AI matches your acoustic cadence.
+                  Record 15–30 seconds of your voice reading the script below. The system converts it into permanent audio and trains the interview persona.
                 </p>
               </div>
-              {recordedAudioUrl && (
-                <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-semibold">
-                  <CheckCircle2 className="h-3 w-3" /> Voice Calibrated
+              {customAudioUrl && (
+                <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-semibold self-start sm:self-auto">
+                  <CheckCircle2 className="h-3 w-3" /> Voice Sample Ready
                 </span>
               )}
             </div>
@@ -441,6 +547,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
                 <Button
                   type="button"
                   onClick={startRecording}
+                  disabled={isSavingAudio}
                   className="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-600/20"
                 >
                   <Mic className="h-4 w-4" />
@@ -469,6 +576,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
                 <Button
                   type="button"
                   variant="outline"
+                  disabled={isSavingAudio || isRecording}
                   onClick={() => document.getElementById('voice-file-upload')?.click()}
                   className="h-9 px-4 border-white/10 hover:bg-white/10 text-gray-300 text-xs rounded-xl flex items-center gap-2"
                 >
@@ -476,6 +584,14 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
                   <span>Upload Audio File (.wav/.mp3)</span>
                 </Button>
               </div>
+
+              {/* Saving Indicator */}
+              {isSavingAudio && (
+                <div className="flex items-center gap-1.5 text-xs text-blue-400 font-mono">
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  <span>Persisting audio data...</span>
+                </div>
+              )}
 
               {/* VU Meter when recording */}
               {isRecording && (
@@ -493,21 +609,42 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
             </div>
 
             {/* Playback of Recorded Sample */}
-            {recordedAudioUrl && (
-              <div className="pt-2 flex items-center gap-3">
-                <audio src={recordedAudioUrl} controls className="h-8 max-w-sm rounded-lg" />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    setRecordedAudioUrl("");
-                    setRecordedAudioBlob(null);
-                  }}
-                  className="text-xs text-gray-400 hover:text-red-400 h-8 px-2"
-                >
-                  Reset
-                </Button>
+            {customAudioUrl && (
+              <div className="pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={togglePlayRecordedSample}
+                    className="h-8 px-3 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 text-xs flex items-center gap-1.5 font-semibold"
+                  >
+                    {isPlayingRecordedSample ? (
+                      <>
+                        <Square className="h-3.5 w-3.5 fill-current" />
+                        <span>Stop Voice Playback</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-3.5 w-3.5 fill-current" />
+                        <span>Play Recorded Sample</span>
+                      </>
+                    )}
+                  </Button>
+                  <span className="text-[11px] text-gray-400 font-mono">
+                    Sample permanently linked
+                  </span>
+                </div>
+
+                {/* Direct audio use toggle */}
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={useCustomAudio}
+                    onCheckedChange={setUseCustomAudio}
+                  />
+                  <span className="text-xs text-gray-300 font-medium">
+                    Play recorded audio during interviews
+                  </span>
+                </div>
               </div>
             )}
           </div>
@@ -515,9 +652,9 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
           {/* Section 3: Browser Voice Hardware Resolution */}
           <div className="space-y-2">
             <Label className="text-xs font-bold text-gray-300 flex items-center justify-between">
-              <span>Synthesizer Neural Voice Binding</span>
+              <span>Synthesizer Neural Voice Binding (for Dynamic Questions)</span>
               <span className="text-[10px] text-gray-400 font-normal">
-                {availableVoices.length} local speech engines detected
+                {availableVoices.length} local engines detected
               </span>
             </Label>
             <select
@@ -527,7 +664,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
             >
               {availableVoices.map((v) => (
                 <option key={v.name} value={v.name} className="bg-slate-900 text-white">
-                  {v.name} ({v.lang}) {v.name.includes('Natural') || v.name.includes('Online') ? '★ Natural HD' : ''}
+                  {v.name} ({v.lang}) {v.name.includes('Natural') || v.name.includes('Online') ? '★ Natural HD Neural' : ''}
                 </option>
               ))}
             </select>
@@ -553,7 +690,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
               <Slider
                 value={[rate]}
                 min={0.80}
-                max={1.20}
+                max={1.15}
                 step={0.02}
                 onValueChange={(val) => setRate(val[0])}
                 className="py-1"
@@ -600,7 +737,7 @@ export function AdminVoiceTrainingStudio({ onSaved }: { onSaved?: () => void }) 
               <div>
                 <span className="text-xs font-bold text-white block">Phonetic Clarity Boost</span>
                 <span className="text-[10px] text-gray-400 block max-w-[180px]">
-                  Expands technical acronyms (e.g. CI/CD, SQL, REST) &amp; prevents robotic stutter.
+                  Sentence-by-sentence enunciation &amp; acronym expansion.
                 </span>
               </div>
               <Switch
