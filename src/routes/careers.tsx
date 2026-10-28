@@ -1240,82 +1240,68 @@ function TopBar({ live = true }: { live?: boolean }) {
 
 function Hero() {
   return (
-    <section className="relative min-h-[700px] flex flex-col justify-center overflow-hidden bg-gradient-hero text-primary-foreground">
-      <div className="absolute inset-0 corporate-grid" />
-      {/* Animated Background Orbs (Corporate Theme) */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/30 blur-[120px] animate-pulse" style={{ animationDuration: '4s' }} />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gold/15 blur-[120px] animate-pulse" style={{ animationDuration: '6s' }} />
-      <div className="absolute top-[40%] right-[-20%] w-[30%] h-[30%] rounded-full bg-secondary/20 blur-[120px] animate-pulse" style={{ animationDuration: '5s' }} />
-      
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+    <section className="relative overflow-hidden bg-white border-b border-slate-100 text-slate-900 py-16 sm:py-24">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_-10%,rgba(37,99,235,0.08),rgba(255,255,255,0))]" />
 
       <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6 z-10">
-        <div className="grid lg:grid-cols-[1.5fr_1fr] gap-12 lg:gap-16 items-center">
-          <div className="space-y-8 animate-fade-in-up" style={{ animation: 'fadeInUp 0.8s ease-out forwards' }}>
-            <div className="inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[11px] font-medium text-gold uppercase tracking-[0.18em]">
-              Now Hiring · Founding Team
+        <div className="grid lg:grid-cols-[1.5fr_1fr] gap-10 lg:gap-14 items-center">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-3.5 py-1 text-[11px] font-bold text-blue-700 uppercase tracking-widest shadow-2xs">
+              <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+              Now Hiring · Certified Careers &amp; Internships
             </div>
             
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight">
-              Enterprise Tech, AI & <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gold to-white">Next-Gen Talent.</span>
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black leading-[1.12] tracking-tight text-slate-900">
+              Enterprise Tech, AI &amp; <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700">
+                Next-Gen Talent.
+              </span>
             </h1>
             
-            <p className="text-lg lg:text-xl text-primary-foreground/75 max-w-2xl leading-relaxed font-light">
+            <p className="text-sm sm:text-base lg:text-lg text-slate-600 max-w-2xl leading-relaxed">
               Join Vyntyra Consultancy Services — Great Place to Work® Certified 2026–27, NASSCOM FutureSkills Prime Recognised, and MSME Registered. Work on live enterprise client software, AI pipelines, and accredited internship cohorts with 1:1 AI Mock Interview mentorship.
             </p>
             
-            <div className="flex flex-wrap gap-4 pt-4">
-              <a href="#form" className="inline-flex items-center gap-2 bg-gold hover:bg-gold/90 text-gold-foreground px-6 py-3 rounded-sm text-sm font-semibold transition-colors">
+            <div className="flex flex-wrap gap-3 pt-2">
+              <a href="#form" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-blue-600/25 transition-all hover:scale-[1.02]">
                 Apply Now <ArrowRight className="h-4 w-4" />
               </a>
-              <a href="/" className="inline-flex items-center gap-2 border border-primary-foreground/30 hover:bg-primary-foreground/10 text-primary-foreground px-6 py-3 rounded-sm text-sm font-medium transition-colors">
+              <a href="/" className="inline-flex items-center gap-2 border border-slate-300 hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-xl text-sm font-semibold transition-colors">
                 About Vyntyra
               </a>
             </div>
           </div>
 
-          {/* Right-side Glassmorphism Info Card */}
-          <div className="hidden lg:block animate-fade-in-up" style={{ animation: 'fadeInUp 1s ease-out forwards' }}>
-            <div className="backdrop-blur-md bg-card/10 border border-primary-foreground/10 rounded-sm shadow-2xl p-8 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-foreground/5 via-transparent to-transparent pointer-events-none" />
-              
-              <div className="relative z-10">
-                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold mb-6 flex items-center gap-2">
-                  <Shield className="h-4 w-4" /> At a Glance
-                </div>
-                
-                <dl className="space-y-6">
-                  <div className="pb-4 border-b border-primary-foreground/10 group-hover:border-gold/30 transition-colors">
-                    <dt className="text-[10px] uppercase tracking-widest text-primary-foreground/60 mb-1.5">Locations</dt>
-                    <dd className="text-sm font-medium text-primary-foreground/90 leading-relaxed">
-                      India — Visakhapatnam, Bengaluru, Hyderabad, Uttar Pradesh
-                      <span className="text-gold block mt-1">· Remote Available</span>
-                    </dd>
-                  </div>
-                  <div className="flex justify-between items-baseline pb-4 border-b border-primary-foreground/10 group-hover:border-gold/30 transition-colors">
-                    <dt className="text-[10px] uppercase tracking-widest text-primary-foreground/60">Response Time</dt>
-                    <dd className="text-3xl font-semibold text-primary-foreground tracking-tight">5–7 <span className="text-sm font-normal text-primary-foreground/60">days</span></dd>
-                  </div>
-                  <div>
-                    <dt className="text-[10px] uppercase tracking-widest text-primary-foreground/60 mb-1.5">Data Handling</dt>
-                    <dd className="text-sm font-medium text-primary-foreground/90 leading-relaxed">
-                      Secured by Cloudflare Technologies
-                      <span className="block text-xs text-primary-foreground/60 mt-2 font-mono">ISO-aligned · NASSCOM Verified</span>
-                    </dd>
-                  </div>
-                </dl>
+          {/* Right-side Corporate White Info Card */}
+          <div className="hidden lg:block">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-xl p-7 relative overflow-hidden">
+              <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-blue-600 mb-5 flex items-center gap-2">
+                <Shield className="h-4 w-4 text-blue-600" /> Corporate Credentials
               </div>
+              
+              <dl className="space-y-5">
+                <div className="pb-4 border-b border-slate-100">
+                  <dt className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-1">Locations</dt>
+                  <dd className="text-sm font-bold text-slate-900 leading-relaxed">
+                    India — Visakhapatnam, Bengaluru, Hyderabad, UP
+                    <span className="text-blue-600 block text-xs font-semibold mt-0.5">· Global Remote Available</span>
+                  </dd>
+                </div>
+                <div className="flex justify-between items-baseline pb-4 border-b border-slate-100">
+                  <dt className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Response Time</dt>
+                  <dd className="text-2xl font-black text-slate-900 tracking-tight">3–5 <span className="text-xs font-normal text-slate-500">business days</span></dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-1">Compliance &amp; Accreditation</dt>
+                  <dd className="text-xs font-mono font-semibold text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                    MSME UDYAM-AP-09-0051886 · GPTW 2026–27 · NASSCOM Verified
+                  </dd>
+                </div>
+              </dl>
             </div>
           </div>
         </div>
       </div>
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}} />
     </section>
   );
 }
