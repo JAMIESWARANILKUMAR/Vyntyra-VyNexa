@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { 
-  Menu, X, Shield, ArrowRight, Globe2, Mail, Briefcase, GraduationCap, Lock, ChevronRight 
+  Menu, X, Shield, ArrowRight, Globe2, Mail, Briefcase, GraduationCap, Lock, ChevronRight, Sparkles 
 } from "lucide-react";
 import { InstallPwaButton } from "./install-pwa-button";
 import {
@@ -57,6 +57,16 @@ export function Header({ live = true }: HeaderProps) {
             </a>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 ml-auto shrink-0">
+            {/* Campus Ambassador Highlight Pill */}
+            <Link 
+              to="/campus-ambassador" 
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 via-pink-500/20 to-indigo-500/20 border border-amber-500/40 text-[10px] font-extrabold text-amber-300 hover:text-white transition-all shadow-xs animate-pulse"
+            >
+              <Sparkles className="h-3 w-3 text-amber-400" />
+              <span>Ambassador Cohort 1.0</span>
+            </Link>
+
+            <span className="opacity-40 hidden sm:inline">|</span>
             <a href="https://vyntyraconsultancyservices.in" target="_blank" rel="noreferrer" className="hover:text-gold hidden sm:inline">
               Vyntyra.in
             </a>
@@ -133,6 +143,20 @@ export function Header({ live = true }: HeaderProps) {
               >
                 Careers
               </Link>
+
+              {/* Ambassador Link in Desktop Nav */}
+              <Link 
+                to="/campus-ambassador" 
+                className={`px-2.5 py-1 text-xs font-bold rounded-full transition-all flex items-center gap-1 shrink-0 ${
+                  isActive("/campus-ambassador")
+                    ? "bg-amber-500 text-slate-950 font-black shadow-sm"
+                    : "text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30"
+                }`}
+              >
+                <Sparkles className="h-3 w-3" />
+                <span>Ambassador</span>
+              </Link>
+
               <Link 
                 to="/status" 
                 className={`px-3 py-2 rounded-sm transition-colors ${
@@ -223,6 +247,28 @@ export function Header({ live = true }: HeaderProps) {
 
                     {/* Navigation Items */}
                     <div className="p-4 flex flex-col gap-1 flex-1">
+                      {/* Special Ambassador Drawer Card */}
+                      <Link
+                        to="/campus-ambassador"
+                        onClick={() => setMenuOpen(false)}
+                        className="p-3 mb-2 rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-pink-500/10 to-indigo-500/15 text-left block transition-all hover:scale-[1.02] shadow-xs"
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-500 flex items-center gap-1">
+                            <Sparkles className="h-3 w-3" /> First Cohort 2026-27
+                          </span>
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 uppercase">
+                            Soon
+                          </span>
+                        </div>
+                        <div className="text-xs font-bold text-foreground">
+                          Campus Ambassador Program
+                        </div>
+                        <div className="text-[11px] text-muted-foreground mt-0.5">
+                          Earn up to ₹15k, gadgets & travel retreat &rarr;
+                        </div>
+                      </Link>
+
                       <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70 px-3 py-1 mb-1">
                         Navigation
                       </div>

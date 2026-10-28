@@ -1,23 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
 import { 
-  ShieldCheck, Mail, Clock, Award, Search, Trash2, 
-  AlertCircle, CheckCircle2, RefreshCw, X, ArrowLeft
+  Mail, ArrowLeft, Sparkles, MessageSquare
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { 
   listAutomatedEmailLogs, 
   deleteAutomatedEmailLog, 
-  getEmailQuotaStats, 
-  getPromotionalEmailConversionStats,
   sendPromotionalInternshipEmail 
 } from "@/lib/operations.functions";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import EmailAutomationHub from "@/components/email-automation-hub";
+import { AdminAmbassadorCampaign } from "@/components/admin-ambassador-campaign";
 
 export const Route = createFileRoute("/_authenticated/admin/email-campaigns")({
   component: EmailCampaignsPage,
@@ -28,6 +22,8 @@ function EmailCampaignsPage() {
   const fetchEmailLogs = useServerFn(listAutomatedEmailLogs);
   const doDeleteAutomatedEmailLog = useServerFn(deleteAutomatedEmailLog);
   const doSendPromotionalEmail = useServerFn(sendPromotionalInternshipEmail);
+
+  const [activeTab, setActiveTab] = useState<"ambassador" | "standard">("ambassador");
 
   const emailLogsQ = useQuery({
     queryKey: ["admin-automated-email-logs"],
@@ -46,20 +42,47 @@ function EmailCampaignsPage() {
           <div>
             <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
               <Mail className="h-5 w-5 text-emerald-600" />
-              Email Campaign Hub
+              Campaign & Outreach Hub
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">Automate and track bulk promotional emails</p>
+            <p className="text-xs text-slate-500 mt-0.5">Automate and track bulk promotional emails & WhatsApp outreach</p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <button
+            onClick={() => setActiveTab("ambassador")}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              activeTab === "ambassador"
+                ? "bg-amber-500 text-slate-950 shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5" /> First Cohort Ambassador
+          </button>
+          <button
+            onClick={() => setActiveTab("standard")}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              activeTab === "standard"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Mail className="h-3.5 w-3.5" /> General Internship Engine
+          </button>
         </div>
       </header>
 
       <main className="flex-1 p-6 overflow-y-auto w-full max-w-7xl mx-auto">
-        <EmailAutomationHub 
-          emailLogsQ={emailLogsQ} 
-          doSendPromotionalEmail={doSendPromotionalEmail} 
-          doDeleteAutomatedEmailLog={doDeleteAutomatedEmailLog} 
-          qc={qc} 
-        />
+        {activeTab === "ambassador" ? (
+          <AdminAmbassadorCampaign />
+        ) : (
+          <EmailAutomationHub 
+            emailLogsQ={emailLogsQ} 
+            doSendPromotionalEmail={doSendPromotionalEmail} 
+            doDeleteAutomatedEmailLog={doDeleteAutomatedEmailLog} 
+            qc={qc} 
+          />
+        )}
       </main>
     </div>
   );

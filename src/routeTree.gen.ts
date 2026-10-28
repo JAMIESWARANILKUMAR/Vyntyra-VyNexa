@@ -18,6 +18,7 @@ import { Route as RefundsRouteImport } from './routes/refunds'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CareersRouteImport } from './routes/careers'
+import { Route as CampusAmbassadorRouteImport } from './routes/campus-ambassador'
 import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as AgreementRouteImport } from './routes/agreement'
 import { Route as AboutRouteImport } from './routes/about'
@@ -91,6 +92,11 @@ const LoginRoute = LoginRouteImport.update({
 const CareersRoute = CareersRouteImport.update({
   id: '/careers',
   path: '/careers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CampusAmbassadorRoute = CampusAmbassadorRouteImport.update({
+  id: '/campus-ambassador',
+  path: '/campus-ambassador',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApplyRoute = ApplyRouteImport.update({
@@ -252,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/agreement': typeof AgreementRoute
   '/apply': typeof ApplyRoute
+  '/campus-ambassador': typeof CampusAmbassadorRoute
   '/careers': typeof CareersRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -291,6 +298,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/agreement': typeof AgreementRoute
   '/apply': typeof ApplyRoute
+  '/campus-ambassador': typeof CampusAmbassadorRoute
   '/careers': typeof CareersRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -332,6 +340,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/agreement': typeof AgreementRoute
   '/apply': typeof ApplyRoute
+  '/campus-ambassador': typeof CampusAmbassadorRoute
   '/careers': typeof CareersRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -373,6 +382,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/agreement'
     | '/apply'
+    | '/campus-ambassador'
     | '/careers'
     | '/login'
     | '/privacy'
@@ -412,6 +422,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/agreement'
     | '/apply'
+    | '/campus-ambassador'
     | '/careers'
     | '/login'
     | '/privacy'
@@ -452,6 +463,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/agreement'
     | '/apply'
+    | '/campus-ambassador'
     | '/careers'
     | '/login'
     | '/privacy'
@@ -493,6 +505,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AgreementRoute: typeof AgreementRoute
   ApplyRoute: typeof ApplyRoute
+  CampusAmbassadorRoute: typeof CampusAmbassadorRoute
   CareersRoute: typeof CareersRoute
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -576,6 +589,13 @@ declare module '@tanstack/react-router' {
       path: '/careers'
       fullPath: '/careers'
       preLoaderRoute: typeof CareersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/campus-ambassador': {
+      id: '/campus-ambassador'
+      path: '/campus-ambassador'
+      fullPath: '/campus-ambassador'
+      preLoaderRoute: typeof CampusAmbassadorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/apply': {
@@ -849,6 +869,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AgreementRoute: AgreementRoute,
   ApplyRoute: ApplyRoute,
+  CampusAmbassadorRoute: CampusAmbassadorRoute,
   CareersRoute: CareersRoute,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,

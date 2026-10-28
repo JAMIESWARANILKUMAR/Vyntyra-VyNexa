@@ -38,6 +38,7 @@ import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { EmployeeReferEarn } from "@/components/employee-refer-earn";
 import { FeedbackPopupModal } from "@/components/feedback-popup-modal";
 import { InternMockInterviewsView } from "@/components/intern-mock-interviews-view";
+import { InternAmbassadorView } from "@/components/intern-ambassador-view";
 import { 
   listTasks, listMeetings, listSchedules, listAnnouncements, listResources, 
   listNotes, createNote, deleteNote, createFeedback, claimPoolTask,
@@ -257,7 +258,7 @@ function CbtResultsSection() {
 
 function InternDashboard() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "browser" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements" | "leaves" | "support" | "refer" | "cbt" | "mock_interview">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "browser" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements" | "leaves" | "support" | "refer" | "cbt" | "mock_interview" | "ambassador">("overview");
   const [newNote, setNewNote] = useState("");
   const [feedback, setFeedback] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
@@ -1091,6 +1092,7 @@ function InternDashboard() {
     { id: "refer",          label: "Refer & Earn", shortLabel: "Refer", icon: DollarSign, category: "Connect & Support", enabled: isModuleEnabled("refer") },
     { id: "cbt", label: "AI CBT Exams", shortLabel: "CBT", icon: BrainCircuit, category: "Connect & Support", enabled: true, isNew: true },
     { id: "mock_interview", label: "AI Mock Interview", shortLabel: "AI Interview", icon: Sparkles, category: "Core Work", enabled: true, isNew: true },
+    { id: "ambassador", label: "Campus Ambassador", shortLabel: "Ambassador", icon: Award, category: "Connect & Support", enabled: true, isNew: true },
     { id: "notes",          label: "Notes", shortLabel: "Notes", icon: FileText, category: "Connect & Support", enabled: isModuleEnabled("notes") },
     { id: "feedback",       label: "Feedback", shortLabel: "Feedback", icon: MessageCircle, category: "Connect & Support", enabled: isModuleEnabled("feedback") },
   ].filter(t => t.enabled);
@@ -1812,6 +1814,67 @@ function InternDashboard() {
                 </div>
               </div>
             </div>
+
+
+            {/* ─── CAMPUS AMBASSADOR FIRST COHORT LAUNCHING SOON BANNER ─── */}
+            <div className="relative overflow-hidden rounded-3xl border border-amber-500/40 bg-gradient-to-r from-slate-950 via-[#0f172a] to-slate-950 p-6 sm:p-8 shadow-xl text-white">
+              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-amber-500/15 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-20 left-10 h-64 w-64 rounded-full bg-pink-500/15 blur-3xl" />
+              
+              <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="space-y-2 max-w-2xl">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[11px] font-bold text-amber-300">
+                    <Sparkles className="h-3 w-3 text-amber-400" />
+                    <span>FIRST COHORT 2026-27 · LAUNCHING SOON</span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black text-white">
+                    Vyntyra Institutional Relations Associate (Campus Ambassador)
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-light">
+                    Exclusive IRA welcome kit, performance corporate merchandise, ambassador rewards up to ₹15,000 (*T&C apply), branded electronic gadgets (Powerbanks, Earbuds, Soundbars, Smartwatches, Webcams), and top 10 curated travel experience retreat!
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 flex-wrap shrink-0 w-full lg:w-auto">
+                  <Button
+                    onClick={() => setActiveTab("ambassador")}
+                    className="flex-1 lg:flex-none bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs h-11 px-6 rounded-2xl shadow-lg shadow-amber-500/20 cursor-pointer"
+                  >
+                    View Program & Perks &rarr;
+                  </Button>
+                  <a
+                    href="/campus-ambassador"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex-1 lg:flex-none inline-flex items-center justify-center gap-1.5 px-4 h-11 rounded-2xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold transition-colors"
+                  >
+                    <span>Public Landing Page</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Quick Perks Strip */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-800/80 text-xs text-slate-300">
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-400">🎁</span>
+                  <span>IRA Welcome Kit</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-400">💰</span>
+                  <span>Up to ₹15k Rewards*</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sky-400">⚡</span>
+                  <span>5+ Branded Gadgets</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-pink-400">✈️</span>
+                  <span>Top 10 Travel Retreat</span>
+                </div>
+              </div>
+            </div>
+
 
             {/* ─── INTERN PROFILE CARD ─── */}
             <div className="rounded-3xl border border-emerald-200/80 bg-white/95 shadow-xl shadow-emerald-950/5 backdrop-blur-xl overflow-hidden">

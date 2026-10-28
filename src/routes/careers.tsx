@@ -25,6 +25,12 @@ import {
   Cpu,
   Award,
   Users,
+  Gift,
+  TrendingUp,
+  Zap,
+  Plane,
+  FileCheck2,
+  Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WorldClocks } from "@/components/world-clocks";
@@ -153,6 +159,130 @@ function CareersPage() {
       <AccreditationsRouteMap />
       <CareerJourneyRouteMap />
       <HiringCompaniesMarquee />
+
+      {/* ── Vyntyra Institutional Relations Associate (Campus Ambassador) Spotlight ── */}
+      <section className="py-12 sm:py-16 px-4 sm:px-6 max-w-7xl mx-auto">
+        <div className="relative rounded-3xl border border-amber-500/30 bg-gradient-to-br from-[#0a0f24] via-[#0d1633] to-[#080d1e] p-6 sm:p-10 lg:p-12 shadow-2xl overflow-hidden">
+          {/* Ambient Lighting */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-[130px] pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-500/10 rounded-full blur-[130px] pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none" />
+
+          <div className="relative z-10">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-slate-800">
+              <div className="max-w-3xl">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300 text-xs font-mono font-bold tracking-widest uppercase mb-3">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400"></span>
+                  </span>
+                  FIRST COHORT 2026-27 · LAUNCHING SOON
+                </div>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
+                  Vyntyra Institutional Relations Associate{" "}
+                  <span className="bg-gradient-to-r from-amber-400 via-rose-400 to-indigo-300 bg-clip-text text-transparent">
+                    (Campus Ambassador Program)
+                  </span>
+                </h2>
+                <p className="mt-3 text-xs sm:text-sm md:text-base text-slate-300 leading-relaxed max-w-2xl font-light">
+                  Lead enterprise tech initiatives, represent Vyntyra at your institution, unlock rewards up to ₹15,000, win branded electronic gadgets, and qualify for an all-expenses-paid curated travel retreat for the Top 10.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
+                <Button asChild size="lg" className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-slate-950 font-black px-6 py-3 rounded-full text-sm shadow-xl shadow-amber-500/20 hover:scale-105 transition-all cursor-pointer">
+                  <Link to="/campus-ambassador">
+                    Explore & Pre-Register <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <span className="text-[11px] text-amber-300/80 text-center font-mono">
+                  *Announcement Soon · Stay Tuned
+                </span>
+              </div>
+            </div>
+
+            {/* Perks Grid */}
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/50 backdrop-blur hover:border-amber-500/40 transition-colors">
+                <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center mb-3">
+                  <Gift className="h-5 w-5" />
+                </div>
+                <h4 className="text-sm font-bold text-white">Exclusive IRA Welcome Kit</h4>
+                <p className="mt-1 text-xs text-slate-400 leading-relaxed">
+                  Personalized associate ID, custom badge, welcome stationery & corporate swag.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/50 backdrop-blur hover:border-pink-500/40 transition-colors">
+                <div className="w-9 h-9 rounded-lg bg-pink-500/10 text-pink-400 flex items-center justify-center mb-3">
+                  <Award className="h-5 w-5" />
+                </div>
+                <h4 className="text-sm font-bold text-white">Corporate Merchandise</h4>
+                <p className="mt-1 text-xs text-slate-400 leading-relaxed">
+                  Performance-based branded hoodies, t-shirts, laptop sleeves, and bottles.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/50 backdrop-blur hover:border-emerald-500/40 transition-colors">
+                <div className="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-3">
+                  <TrendingUp className="h-5 w-5" />
+                </div>
+                <h4 className="text-sm font-bold text-white">Earn Up to ₹15,000 Rewards</h4>
+                <p className="mt-1 text-xs text-slate-400 leading-relaxed">
+                  Generous milestone incentives (*Performance & Terms and Conditions apply).
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/50 backdrop-blur hover:border-sky-500/40 transition-colors">
+                <div className="w-9 h-9 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center mb-3">
+                  <Zap className="h-5 w-5" />
+                </div>
+                <h4 className="text-sm font-bold text-white">Branded Tech Gadgets</h4>
+                <p className="mt-1 text-xs text-slate-400 leading-relaxed">
+                  Powerbanks, Wireless Earbuds, Soundbars, Smartwatches, and HD Webcams.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/50 backdrop-blur hover:border-purple-500/40 transition-colors">
+                <div className="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center mb-3">
+                  <Plane className="h-5 w-5" />
+                </div>
+                <h4 className="text-sm font-bold text-white">Curated Travel Experience</h4>
+                <p className="mt-1 text-xs text-slate-400 leading-relaxed">
+                  Top 10 win an all-expenses-paid curated corporate retreat with co-associates.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/50 backdrop-blur hover:border-cyan-500/40 transition-colors">
+                <div className="w-9 h-9 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-3">
+                  <FileCheck2 className="h-5 w-5" />
+                </div>
+                <h4 className="text-sm font-bold text-white">Dual Certification</h4>
+                <p className="mt-1 text-xs text-slate-400 leading-relaxed">
+                  Certificate of Recognition & accredited Corporate Internship Experience letter.
+                </p>
+              </div>
+
+              <div className="sm:col-span-2 p-4 rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-indigo-500/10 backdrop-blur flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-400/20 text-amber-300 flex items-center justify-center shrink-0">
+                    <Crown className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Exclusive VVIP Access Pass</h4>
+                    <p className="text-xs text-slate-300">
+                      Free unlimited entry to all Vyntyra Workshops, AI Bootcamps, Masterclasses, Sessions, Learning Modules & Courses.
+                    </p>
+                  </div>
+                </div>
+                <Link to="/campus-ambassador" className="shrink-0 text-xs font-bold text-amber-300 hover:text-white flex items-center gap-1">
+                  Details &rarr;
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ── Open Roles & Domain Tracks Directory ── */}
       <section id="roles" className="py-20 sm:py-24 px-4 sm:px-6 max-w-7xl mx-auto">
