@@ -195,46 +195,89 @@ function AboutPage() {
       {/* ── Hero Section (Signature Corporate Navy/Blue Theme) ── */}
       <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground py-16 sm:py-24 lg:py-28">
         <div className="absolute inset-0 corporate-grid" />
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/20 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gold/15 blur-[120px] pointer-events-none" />
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3.5 py-1 text-[11px] font-semibold text-gold uppercase tracking-[0.18em] shadow-sm backdrop-blur-md mb-4">
-            <Sparkles className="h-3 w-3 text-gold" />
-            About Vyntyra Consultancy Services Pvt. Ltd.
-          </div>
+        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-gold/10 to-transparent hidden lg:block" />
+        <div className="absolute top-[20%] right-[10%] w-[450px] h-[450px] rounded-full bg-blue-600/15 blur-[120px] pointer-events-none" />
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black leading-[1.12] tracking-tight max-w-4xl text-white">
-            Pioneering Enterprise Software, AI Engineering &amp;{" "}
-            <span className="text-gold">
-              Frontier Talent Ecosystems.
-            </span>
-          </h1>
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-10">
+          <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 lg:gap-12 items-center">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[11px] font-medium text-gold uppercase tracking-[0.18em]">
+                <Sparkles className="h-3 w-3 text-gold" />
+                About Vyntyra Consultancy Services Pvt. Ltd.
+              </div>
 
-          <p className="mt-6 text-sm sm:text-base lg:text-lg text-primary-foreground/85 max-w-3xl leading-relaxed">
-            Headquartered in Visakhapatnam, Andhra Pradesh, Vyntyra Consultancy Services Pvt. Ltd. is an accredited technology consulting firm and digital talent incubator. We partner with fast-growing ventures and large-scale enterprises across India, North America, the UK, UAE, and Singapore to architect resilient software platforms while empowering the next generation of engineers through rigorous industrial mentorship.
-          </p>
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black leading-[1.12] tracking-tight text-white">
+                Pioneering Enterprise Software, AI Engineering &{" "}
+                <span className="text-gold">
+                  Frontier Talent Ecosystems.
+                </span>
+              </h1>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <a
-              href="/careers"
-              className="inline-flex items-center gap-2 bg-gold hover:bg-gold/90 text-gold-foreground px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-gold/25 transition-all hover:scale-[1.02]"
-            >
-              Explore Careers &amp; Internships <ArrowRight className="h-4 w-4" />
-            </a>
-            <a
-              href="https://vyntyraconsultancyservices.in"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 border border-primary-foreground/30 hover:bg-primary-foreground/10 text-primary-foreground px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
-            >
-              Visit Corporate Portal <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-            <a
-              href="/verify"
-              className="inline-flex items-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 px-5 py-3 rounded-xl text-sm font-semibold transition-colors backdrop-blur-sm"
-            >
-              <Shield className="h-4 w-4 text-emerald-400" /> Verify Credentials
-            </a>
+              <p className="text-base lg:text-lg text-primary-foreground/75 max-w-2xl leading-relaxed">
+                Headquartered in Visakhapatnam, Andhra Pradesh, Vyntyra Consultancy Services Pvt. Ltd. is an accredited technology consulting firm and digital talent incubator. We partner with fast-growing ventures and large-scale enterprises across India, North America, the UK, UAE, and Singapore to architect resilient software platforms while empowering the next generation of engineers through rigorous industrial mentorship.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <a
+                  href="/careers"
+                  className="inline-flex items-center gap-2 bg-gold hover:bg-gold/90 text-gold-foreground font-semibold px-6 py-3 rounded-full text-sm shadow-md transition-all hover:scale-[1.02]"
+                >
+                  Explore Careers & Internships <ArrowRight className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://vyntyraconsultancyservices.in"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 border border-primary-foreground/30 hover:bg-primary-foreground/10 text-primary-foreground px-5 py-3 rounded-full text-sm font-medium transition-colors"
+                >
+                  Visit Corporate Portal <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+                <a
+                  href="/verify"
+                  className="inline-flex items-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 px-5 py-3 rounded-full text-sm font-semibold transition-colors backdrop-blur-sm"
+                >
+                  <Shield className="h-4 w-4 text-emerald-400" /> Verify Credentials
+                </a>
+              </div>
+            </div>
+
+            {/* Right-side Corporate Overview Glass Card */}
+            <div className="hidden lg:block">
+              <div className="rounded-sm border border-primary-foreground/15 bg-primary-foreground/[0.04] backdrop-blur-md p-6 shadow-2xl">
+                <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold mb-5">
+                  AT A GLANCE
+                </div>
+
+                <dl className="space-y-5">
+                  <div className="pb-3.5 border-b border-primary-foreground/10">
+                    <dt className="text-xs uppercase tracking-wider text-primary-foreground/60 mb-1.5 font-medium">
+                      HEADQUARTERS & GLOBAL REACH
+                    </dt>
+                    <dd className="text-sm font-medium leading-relaxed text-white">
+                      Visakhapatnam, Andhra Pradesh
+                      <span className="text-primary-foreground/60 block text-xs mt-0.5">Offices/Hubs in Bengaluru, Hyderabad & Remote Globally</span>
+                    </dd>
+                  </div>
+                  <div className="flex justify-between items-baseline pb-3.5 border-b border-primary-foreground/10">
+                    <dt className="text-xs uppercase tracking-wider text-primary-foreground/60 font-medium">
+                      INDUSTRY RATINGS
+                    </dt>
+                    <dd className="text-2xl font-bold text-white tracking-tight">4.5★ <span className="text-xs font-normal text-slate-400">AmbitionBox</span> · 4.1★ <span className="text-xs font-normal text-slate-400">Justdial</span></dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-wider text-primary-foreground/60 mb-1.5 font-medium">
+                      GOVERNMENT & INDUSTRY RECOGNITION
+                    </dt>
+                    <dd className="text-sm font-medium leading-relaxed text-white">
+                      Great Place to Work® Certified 2026–27
+                      <span className="block text-primary-foreground/70 mt-1 text-xs font-normal">
+                        NASSCOM FutureSkills Prime · MSME Registered UDYAM-AP-09-0051886
+                      </span>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
           </div>
         </div>
       </section>

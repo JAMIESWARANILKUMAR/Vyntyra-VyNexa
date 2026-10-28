@@ -1242,129 +1242,81 @@ function Hero() {
   return (
     <section className="relative min-h-[580px] sm:min-h-[640px] flex flex-col justify-center overflow-hidden bg-gradient-hero text-primary-foreground py-16 sm:py-24">
       <div className="absolute inset-0 corporate-grid" />
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/20 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gold/15 blur-[120px] pointer-events-none" />
-      <div className="absolute top-[40%] right-[-10%] w-[35%] h-[35%] rounded-full bg-indigo-500/15 blur-[120px] pointer-events-none" />
+      <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-gold/10 to-transparent hidden lg:block" />
+      <div className="absolute top-[20%] right-[10%] w-[450px] h-[450px] rounded-full bg-blue-600/15 blur-[120px] pointer-events-none" />
 
       <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6 z-10">
-        <div className="grid lg:grid-cols-[1.5fr_1fr] gap-10 lg:gap-14 items-center">
+        <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 lg:gap-12 items-center">
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3.5 py-1 text-[11px] font-semibold text-gold uppercase tracking-[0.18em] shadow-sm backdrop-blur-md">
-              <Sparkles className="h-3.5 w-3.5 text-gold" />
-              Now Hiring · Certified Careers &amp; Internships
+            <div className="inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[11px] font-medium text-gold uppercase tracking-[0.18em]">
+              NOW HIRING · FOUNDING TEAM
             </div>
             
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black leading-[1.12] tracking-tight text-white">
-              Enterprise Tech, AI &amp; <br/>
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight text-white">
+              Build the next <br className="hidden sm:inline" />
+              generation of{" "}
               <span className="text-gold">
-                Next-Gen Talent.
+                intelligent search.
               </span>
             </h1>
             
-            <p className="text-sm sm:text-base lg:text-lg text-primary-foreground/85 max-w-2xl leading-relaxed font-normal">
-              Join Vyntyra Consultancy Services — Great Place to Work® Certified 2026–27, NASSCOM FutureSkills Prime Recognised, and MSME Registered. Work on live enterprise client software, AI pipelines, and accredited internship cohorts with 1:1 AI Mock Interview mentorship.
+            <p className="text-base lg:text-lg text-primary-foreground/75 max-w-2xl leading-relaxed">
+              Vyntyra Consultancy Services is assembling a founding team for{" "}
+              <strong className="text-white font-medium">Project VyNexa</strong> — a private, intelligent search engine designed for how people actually find things today. Apply securely through our corporate careers portal.
             </p>
             
-            <div className="flex flex-wrap gap-3 pt-2">
-              <a href="#form" className="inline-flex items-center gap-2 bg-gold hover:bg-gold/90 text-gold-foreground px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-gold/25 transition-all hover:scale-[1.02]">
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <a
+                href="#form"
+                className="inline-flex items-center gap-2 bg-gold hover:bg-gold/90 text-gold-foreground font-semibold px-6 py-3 rounded-full text-sm shadow-md transition-all hover:scale-[1.02]"
+              >
                 Apply Now <ArrowRight className="h-4 w-4" />
               </a>
-              <a href="/about" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-6 py-3 rounded-xl text-sm font-semibold transition-all backdrop-blur-sm">
+              <a
+                href="/about"
+                className="inline-flex items-center gap-2 border border-primary-foreground/20 bg-primary-foreground/5 hover:bg-primary-foreground/10 text-primary-foreground font-medium px-6 py-3 rounded-full text-sm transition-all backdrop-blur-sm"
+              >
                 About Vyntyra
               </a>
             </div>
           </div>
 
-          {/* Right-side Corporate Credentials Card */}
+          {/* Right-side At a Glance Glass Card */}
           <div className="hidden lg:block">
-            <div className="bg-card/90 backdrop-blur-md border border-border/60 rounded-2xl shadow-2xl p-7 relative overflow-hidden">
-              <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold mb-5 flex items-center gap-2">
-                <Shield className="h-4 w-4 text-gold" /> Corporate Credentials
+            <div className="rounded-sm border border-primary-foreground/15 bg-primary-foreground/[0.04] backdrop-blur-md p-6 shadow-2xl">
+              <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold mb-5">
+                AT A GLANCE
               </div>
 
-              <div className="space-y-3.5 text-xs text-muted-foreground">
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-                  <span>
-                    <strong className="text-primary font-semibold">Great Place to Work® Certified</strong>: Assessed and certified for 2026–2027.
-                  </span>
+              <dl className="space-y-5">
+                <div className="pb-3.5 border-b border-primary-foreground/10">
+                  <dt className="text-xs uppercase tracking-wider text-primary-foreground/60 mb-1.5 font-medium">
+                    LOCATIONS
+                  </dt>
+                  <dd className="text-sm font-medium leading-relaxed text-white">
+                    India — Visakhapatnam, Bengaluru, Hyderabad, Uttar Pradesh{" "}
+                    <span className="text-primary-foreground/60">· Remote</span>
+                  </dd>
                 </div>
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-                  <span>
-                    <strong className="text-primary font-semibold">NASSCOM FutureSkills Prime</strong>: Institutional industry curriculum alignment.
-                  </span>
+                <div className="flex justify-between items-baseline pb-3.5 border-b border-primary-foreground/10">
+                  <dt className="text-xs uppercase tracking-wider text-primary-foreground/60 font-medium">
+                    RESPONSE TIME
+                  </dt>
+                  <dd className="text-3xl font-bold text-white tracking-tight">5–7 days</dd>
                 </div>
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-                  <span>
-                    <strong className="text-primary font-semibold">MSME Registered Entity</strong>: Reg UDYAM-AP-09-0051886 (Govt. of India).
-                  </span>
+                <div>
+                  <dt className="text-xs uppercase tracking-wider text-primary-foreground/60 mb-1.5 font-medium">
+                    DATA HANDLING
+                  </dt>
+                  <dd className="text-sm font-medium leading-relaxed text-white">
+                    Secured by Cloudflare Technologies
+                    <span className="block text-primary-foreground/70 mt-1 text-xs font-normal">
+                      ISO-aligned · NASSCOM Verified · Registered under MSME
+                    </span>
+                  </dd>
                 </div>
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-                  <span>
-                    <strong className="text-primary font-semibold">4.5★ AmbitionBox · 4.1★ Justdial</strong>: Highly rated by talent and enterprise clients.
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-6 pt-5 border-t border-border/60 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Response SLA</span>
-                <span className="font-bold text-primary">24 – 48 Hours</span>
-              </div>
+              </dl>
             </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function WhyJoinUs() {
-  return (
-    <section className="py-24 px-4 sm:px-6 max-w-6xl mx-auto border-t border-border bg-background">
-      <div className="grid lg:grid-cols-2 gap-12 items-center">
-        <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
-          <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-secondary">Innovation Labs</span>
-          <h2 className="text-3xl font-semibold text-primary tracking-tight">Accelerating Careers through Real-World Engineering</h2>
-          <p className="text-muted-foreground leading-relaxed">
-            At Vyntyra Consultancy Services, we build full-stack web architectures, cross-platform mobile apps, and enterprise AI automation systems. Our interns and engineers collaborate with certified mentors, complete verifiable deliverables, and prepare for premier placements.
-          </p>
-          <ul className="space-y-4 pt-4">
-            {[
-              "Great Place to Work® Certified Culture (2026–27)",
-              "NASSCOM FutureSkills Prime & MSME Aligned Framework",
-              "1:1 Live AI Mock Interviews & Executive Placement Coaching"
-            ].map((item, i) => (
-              <li key={i} className="flex items-center gap-3 text-foreground font-medium text-sm">
-                <CheckCircle2 className="h-5 w-5 text-secondary shrink-0" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-        
-        <div className="relative group animate-fade-in-up" style={{ animationDelay: '0.4s', animationFillMode: 'both' }}>
-          <div className="absolute inset-0 bg-secondary/10 rounded-sm blur-2xl transition-all duration-500" />
-          <div className="relative rounded-sm overflow-hidden bg-card border border-border aspect-[4/3] flex items-center justify-center p-8">
-             <div className="absolute inset-0 corporate-grid opacity-50" />
-             <div className="relative z-10 w-full h-full border border-border rounded-sm bg-surface flex items-center justify-center shadow-corp overflow-hidden">
-                <div className="w-32 h-32 rounded-full border-4 border-t-gold border-r-primary border-b-secondary border-l-transparent animate-spin" style={{ animationDuration: '8s' }} />
-                <div className="absolute w-24 h-24 rounded-full border-4 border-b-gold/70 border-l-primary/70 border-t-secondary/70 border-r-transparent animate-spin" style={{ animationDuration: '4s', animationDirection: 'reverse' }} />
-                
-                {/* Positive Core Element */}
-                <div className="absolute flex flex-col items-center justify-center animate-pulse" style={{ animationDuration: '3s' }}>
-                  <div className="h-12 w-12 rounded-full bg-gradient-to-tr from-gold/20 to-secondary/20 flex items-center justify-center backdrop-blur-sm border border-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.3)]">
-                    <Sparkles className="h-6 w-6 text-gold drop-shadow-md" />
-                  </div>
-                </div>
-                
-                {/* Floating Particles for a magical/creative feel */}
-                <div className="absolute top-1/4 left-1/4 w-1.5 h-1.5 bg-secondary rounded-full animate-ping" style={{ animationDuration: '3s' }} />
-                <div className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-gold rounded-full animate-pulse" style={{ animationDuration: '2s' }} />
-                <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-primary rounded-full animate-ping" style={{ animationDuration: '4s', animationDelay: '1s' }} />
-             </div>
           </div>
         </div>
       </div>
