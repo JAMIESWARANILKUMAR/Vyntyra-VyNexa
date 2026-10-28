@@ -27,6 +27,12 @@ import {
   Layers,
   Server,
   Zap,
+  Target,
+  Compass,
+  Milestone,
+  Lock,
+  Headphones,
+  FileCheck2,
 } from "lucide-react";
 import { WorldClocks } from "@/components/world-clocks";
 import { Header } from "@/components/Header";
@@ -38,13 +44,13 @@ import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Vyntyra Consultancy Services — Custom Web, Mobile, AI Solutions & Certified Internships" },
+      { title: "About Vyntyra Consultancy Services Pvt. Ltd. — Enterprise Technology & Talent Ecosystem" },
       {
         name: "description",
         content:
-          "Vyntyra Consultancy Services Pvt. Ltd. — Great Place to Work Certified 2026-27, NASSCOM FutureSkills Prime Recognised, MSME Registered, Skill Development of India. AmbitionBox 4.5★ & Justdial 4.1★ Rated. Custom Software, Enterprise AI, Cloud DevOps, and Verified Student Internships.",
+          "Vyntyra Consultancy Services Pvt. Ltd. — Great Place to Work Certified 2026-27, NASSCOM FutureSkills Prime Recognised, MSME Registered (UDYAM-AP-09-0051886), Skill Development of India. 4.5★ on AmbitionBox, 4.1★ on Justdial. Enterprise Software, Custom AI Labs, Cloud DevOps, and Verified Industrial Internships.",
       },
-      { property: "og:title", content: "Vyntyra Consultancy Services — Global Technology, AI & Talent Development" },
+      { property: "og:title", content: "About Vyntyra Consultancy Services Pvt. Ltd. — Innovation, AI & Excellence" },
       {
         property: "og:description",
         content:
@@ -57,6 +63,88 @@ export const Route = createFileRoute("/")({
   }),
   component: AboutPage,
 });
+
+const DIVISIONS = [
+  {
+    icon: Code2,
+    badge: "Enterprise Engineering",
+    title: "VCS Enterprise Platforms & Cloud Architecture",
+    desc: "Architecting high-concurrency web applications, cross-platform mobile apps (Flutter / React Native), and distributed microservices with zero-downtime CI/CD and Cloudflare edge computing.",
+    tags: ["React / Next.js", "Flutter", "Node.js", "Docker / K8s", "Cloudflare Workers"],
+  },
+  {
+    icon: Cpu,
+    badge: "Artificial Intelligence",
+    title: "VCS AI & Autonomous Systems Labs",
+    desc: "Production GenAI integrations, reasoning LLMs via OpenRouter, automated evaluation pipelines, multimodal speech & vision models, and retrieval-augmented generation (RAG) architectures.",
+    tags: ["LangChain", "OpenRouter", "Computer Vision", "Realtime WebRTC", "Predictive Analytics"],
+  },
+  {
+    icon: BookOpen,
+    badge: "Education & Academy",
+    title: "Vyntyra Academy & Industrial Internships",
+    desc: "Empowering university graduates and career switchers with live industrial projects, 1:1 Live AI Mock Interviews, verified cryptographically-signed credentials, and direct placement assistance.",
+    tags: ["9 Tech Domains", "Live AI Mock Interviews", "Verified Credentials", "500+ Hiring Network"],
+  },
+  {
+    icon: Briefcase,
+    badge: "Consultancy & Advisory",
+    title: "VCS Strategic Advisory & Fractional CTO",
+    desc: "Guiding enterprise digital transformation, security posture hardening, technical due diligence, stack modernization, and executive technology leadership for fast-growing ventures.",
+    tags: ["Tech Architecture Audits", "CTO Advisory", "SLA Optimization", "Cloud Cost Governance"],
+  },
+];
+
+const UNIQUE_ADVANTAGES = [
+  {
+    icon: Headphones,
+    title: "1:1 Live AI Mock Interview Studio",
+    desc: "Our proprietary WebRTC interview suite connects candidates with dynamic AI interlocutors, scoring real-time speech fluency, facial attention stability, and live coding performance.",
+  },
+  {
+    icon: FileCheck2,
+    title: "Cryptographically Verified Credentials",
+    desc: "Every NOC, Offer Letter, and Certificate of Completion issued by Vyntyra features a unique cryptographic verification hash verifiable 24/7 on our public portal (/verify).",
+  },
+  {
+    icon: Shield,
+    title: "Enterprise Edge Security & Bot Protection",
+    desc: "Every enterprise client platform is backed by Cloudflare Enterprise, TLS 1.3 encryption, automatic DDoS defense, and 1 year of complimentary deployment care.",
+  },
+  {
+    icon: Award,
+    title: "Great Place to Work® Certified (2026–27)",
+    desc: "Recognized as a certified high-trust workplace with an outstanding 4.5★ AmbitionBox and 4.1★ Justdial rating from employees, mentees, and business clients alike.",
+  },
+  {
+    icon: Flag,
+    title: "National Statutory & Skill Accreditations",
+    desc: "Central Government MSME Registered (UDYAM-AP-09-0051886), NASSCOM FutureSkills Prime Recognised Partner, and officially aligned with the Skill India Mission.",
+  },
+  {
+    icon: Globe2,
+    title: "Global Delivery & Strategic Scalability",
+    desc: "Headquartered in Visakhapatnam with delivery centers across Bengaluru, Hyderabad, and Uttar Pradesh, serving premier clients across India, US, UK, UAE, and Singapore.",
+  },
+];
+
+const MILESTONES = [
+  {
+    year: "September 2024",
+    title: "Statutory Incorporation & MSME Accreditation",
+    desc: "Vyntyra Consultancy Services Pvt. Ltd. was incorporated (ROC Vijayawada) and registered under Ministry of MSME (UDYAM-AP-09-0051886), establishing our core delivery center in Visakhapatnam.",
+  },
+  {
+    year: "2025",
+    title: "Vyntyra Academy Launch & National Alliances",
+    desc: "Established Vyntyra Academy, launched accredited student internships across 9 domains, achieved NASSCOM FutureSkills Prime partnership, and trained over 500+ successful engineers.",
+  },
+  {
+    year: "2026 – 2027",
+    title: "Great Place to Work® Certification & AI Studio Rollout",
+    desc: "Certified by Great Place to Work® Institute. Launched our proprietary 1:1 Live AI Mock Interview Studio and expanded enterprise consultancy across international markets.",
+  },
+];
 
 const SERVICES = [
   {
@@ -118,25 +206,6 @@ const INTERNSHIP_DOMAINS = [
   { title: "Digital Marketing & Growth", tech: "SEO, Performance Marketing, Analytics, Social Ads", duration: "1 – 6 Months" },
 ];
 
-const WHY = [
-  {
-    title: "Zero-Compromise Engineering",
-    desc: "Robust architecture, high-availability deployments, and clean, maintainable codebases delivered on schedule.",
-  },
-  {
-    title: "Transparent Value for Investment",
-    desc: "Clear delivery milestones, complete IP handover, and transparent cost structures with no hidden surprises.",
-  },
-  {
-    title: "Secure & Cloud-Native Deployments",
-    desc: "Production deployments secured with Cloudflare Enterprise, TLS 1.3 encryption, and advanced BOT mitigation.",
-  },
-  {
-    title: "Continuous Maintenance & SLA",
-    desc: "Dedicated support, day-to-day bug fixes, and continuous performance telemetry for worry-free operations.",
-  },
-];
-
 const LEADERSHIP = [
   {
     name: "Jami Eswar Anil Kumar",
@@ -174,8 +243,8 @@ function AboutPage() {
             <span className="text-gold">Next-Gen Talent Development.</span>
           </h1>
 
-          <p className="mt-6 text-sm sm:text-base lg:text-lg text-primary-foreground/80 max-w-3xl leading-relaxed">
-            Vyntyra Consultancy Services delivers end-to-end IT consulting, custom software, enterprise AI integrations, and industry-accredited student internship programs. Certified by Great Place to Work® and recognized across national innovation bodies, we bridge enterprise technology needs with tomorrow’s top talent.
+          <p className="mt-6 text-sm sm:text-base lg:text-lg text-primary-foreground/85 max-w-3xl leading-relaxed">
+            Vyntyra Consultancy Services Pvt. Ltd. is a premier Indian technology consultancy and talent enablement firm. Headquartered in Visakhapatnam, we deliver custom web &amp; mobile architectures, enterprise AI integrations, and industry-accredited student internship programs. Certified by Great Place to Work® and recognized by NASSCOM FutureSkills Prime and MSME Govt. of India.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -210,59 +279,63 @@ function AboutPage() {
         {/* Clocks Component */}
         <WorldClocks />
 
-        {/* ── Mission & Corporate Snapshot ── */}
+        {/* ── Corporate Mission & Snapshot ── */}
         <section className="grid lg:grid-cols-[1.3fr_1fr] gap-8 lg:gap-12 items-start">
           <div className="space-y-4">
             <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">
-              Corporate Mission
+              Corporate Mission &amp; Heritage
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary tracking-tight">
-              Real-World Engineering. Measurable Impact. Long-Term Trust.
+              Engineering with Integrity. Delivering at Scale.
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              Vyntyra Consultancy Services Pvt. Ltd. is an innovation-driven software engineering and digital transformation firm. We empower startups, growing enterprises, and established institutions with reliable web platforms, cross-platform mobile apps, cloud infrastructure, and enterprise AI integrations.
+              Founded on the belief that software excellence and talent acceleration should go hand-in-hand, Vyntyra Consultancy Services Pvt. Ltd. connects enterprise technology demands with elite engineering talent.
             </p>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              Through our education and talent arm, <strong>Vyntyra Academy</strong>, we run structured student internship programs that prepare the next generation of engineers with real production experience, automated 1:1 AI mock interview evaluations, and verified credentials.
+              From developing mission-critical platforms for businesses across India, North America, UAE, and Singapore to pioneering the 1:1 Live AI Mock Interview suite for student developers, we stand as an innovation-driven force recognized by statutory bodies and top rating platforms.
             </p>
 
-            <div className="pt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="rounded-xl border border-border bg-card p-4 text-center">
                 <div className="text-2xl font-black text-primary">500+</div>
-                <div className="text-xs text-muted-foreground mt-0.5">Students Trained</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Engineers Trained</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4 text-center">
                 <div className="text-2xl font-black text-primary">99.8%</div>
-                <div className="text-xs text-muted-foreground mt-0.5">Uptime &amp; SLA</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Uptime SLA</div>
               </div>
-              <div className="rounded-xl border border-border bg-card p-4 text-center col-span-2 sm:col-span-1">
+              <div className="rounded-xl border border-border bg-card p-4 text-center">
                 <div className="text-2xl font-black text-primary">4.5★</div>
                 <div className="text-xs text-muted-foreground mt-0.5">AmbitionBox Rating</div>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4 text-center">
+                <div className="text-2xl font-black text-primary">4.1★</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Justdial Verified</div>
               </div>
             </div>
           </div>
 
-          {/* Snapshot Card */}
+          {/* Corporate Snapshot Card */}
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
             <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary pb-2 border-b border-border">
-              Corporate Headquarters &amp; Compliance
+              Statutory Details &amp; Headquarters
             </div>
             <dl className="space-y-4 text-xs sm:text-sm">
               <div>
                 <dt className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">
-                  Registered Headquarters
+                  Registered Corporate Headquarters
                 </dt>
                 <dd className="font-medium text-primary flex items-start gap-2">
                   <MapPin className="h-4 w-4 mt-0.5 text-secondary shrink-0" />
                   <span>
-                    Unit 601, 5th Floor, Grand Palace, Plot 238 &amp; 239, Dwaraka Nagar, Visakhapatnam, Andhra Pradesh – 530016
+                    Unit 601, 5th Floor, Grand Palace, Plot 238 &amp; 239, Dwaraka Nagar, Visakhapatnam, Andhra Pradesh – 530016, India
                   </span>
                 </dd>
               </div>
 
               <div className="pt-3 border-t border-border">
                 <dt className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">
-                  Operating Hours
+                  Operating Hours &amp; Delivery Shifts
                 </dt>
                 <dd className="font-medium text-primary">
                   Mon – Fri: 9:00 AM – 11:00 PM · Sat: 10:00 AM – 2:00 PM IST
@@ -271,7 +344,7 @@ function AboutPage() {
 
               <div className="pt-3 border-t border-border">
                 <dt className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">
-                  Official Communication
+                  Direct Line &amp; Corporate Email
                 </dt>
                 <dd className="font-medium text-primary space-y-1">
                   <div className="flex items-center gap-2">
@@ -285,13 +358,120 @@ function AboutPage() {
 
               <div className="pt-3 border-t border-border">
                 <dt className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">
-                  Legal &amp; Accreditation ID
+                  Compliance, Registrations &amp; Audit
                 </dt>
                 <dd className="font-mono text-xs text-primary bg-surface p-2.5 rounded-lg border border-border">
-                  MSME UDYAM-AP-09-0051886 · ISO-aligned · NASSCOM Verified
+                  MSME UDYAM-AP-09-0051886 · Great Place to Work® 2026-27 · NASSCOM Verified
                 </dd>
               </div>
             </dl>
+          </div>
+        </section>
+
+        {/* ── Four Specialized Operating Divisions ── */}
+        <section>
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">
+              Organizational Architecture
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary tracking-tight mt-1">
+              Four Core Operating Divisions
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+              Structured to deliver specialized excellence across enterprise platforms, applied AI labs, industrial internships, and executive consulting.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {DIVISIONS.map((div) => (
+              <div
+                key={div.title}
+                className="rounded-2xl border border-border bg-card p-6 hover:border-secondary/60 hover:shadow-lg transition-all group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <div className="h-11 w-11 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-primary-foreground transition-colors">
+                      <div.icon className="h-5 w-5" />
+                    </div>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-surface border border-border text-primary">
+                      {div.badge}
+                    </span>
+                  </div>
+
+                  <h3 className="font-bold text-lg text-primary tracking-tight">{div.title}</h3>
+                  <p className="mt-2 text-xs sm:text-sm text-muted-foreground leading-relaxed">{div.desc}</p>
+                </div>
+
+                <div className="mt-5 pt-4 border-t border-border flex flex-wrap gap-1.5">
+                  {div.tags.map((t) => (
+                    <span
+                      key={t}
+                      className="text-[10px] font-medium px-2 py-0.5 rounded bg-surface border border-border/70 text-slate-600 dark:text-slate-300"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── What Makes Vyntyra Unique ── */}
+        <section className="rounded-3xl border border-border bg-gradient-to-br from-surface via-card to-surface p-6 sm:p-10 lg:p-12 shadow-sm">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">
+              Distinctive Value Proposition
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-primary tracking-tight mt-1">
+              What Makes Vyntyra Unique
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+              Combining world-class engineering discipline with an empowering, certified learning environment.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {UNIQUE_ADVANTAGES.map((adv) => (
+              <div
+                key={adv.title}
+                className="rounded-2xl border border-border bg-background p-6 hover:border-primary/40 hover:shadow-md transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <div className="h-10 w-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center mb-4">
+                    <adv.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-base text-primary tracking-tight">{adv.title}</h3>
+                  <p className="mt-2 text-xs sm:text-sm text-muted-foreground leading-relaxed">{adv.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Corporate Milestones Trajectory ── */}
+        <section>
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">
+              Evolution &amp; Milestones
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-bold text-primary tracking-tight mt-1">
+              Our Journey of Continuous Innovation
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {MILESTONES.map((m) => (
+              <div key={m.year} className="rounded-2xl border border-border bg-card p-6 flex flex-col justify-between">
+                <div>
+                  <div className="text-xs font-mono font-bold text-secondary uppercase tracking-widest mb-1.5">
+                    {m.year}
+                  </div>
+                  <h3 className="font-bold text-base text-primary tracking-tight">{m.title}</h3>
+                  <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{m.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -299,14 +479,11 @@ function AboutPage() {
         <section>
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">
-              What We Do
+              Services Portfolio
             </span>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary tracking-tight mt-1">
-              End-to-End Enterprise Services
+              Full-Spectrum Technology Delivery
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-              From ideation to high-scale production, we deliver full-cycle software engineering, AI enablement, and talent ecosystems.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -387,30 +564,6 @@ function AboutPage() {
 
         {/* ── Trusted by 500+ Hiring Companies Infinite Marquee ── */}
         <HiringCompaniesMarquee />
-
-        {/* ── Why Choose Us ── */}
-        <section>
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">
-              Core Commitments
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-primary tracking-tight mt-1">
-              Why Forward-Thinking Clients Choose Vyntyra
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {WHY.map((w) => (
-              <div key={w.title} className="rounded-2xl border border-border bg-card p-5 shadow-xs">
-                <div className="h-9 w-9 rounded-xl bg-primary/5 text-primary flex items-center justify-center mb-3">
-                  <CheckCircle2 className="h-5 w-5 text-secondary" />
-                </div>
-                <div className="font-bold text-sm text-primary">{w.title}</div>
-                <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{w.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
 
         {/* ── Leadership Team ── */}
         <section>
