@@ -41,7 +41,6 @@ import { AccreditationsRouteMap } from "@/components/accreditations-route-map";
 import { CareerJourneyRouteMap } from "@/components/career-journey-route-map";
 import { HiringCompaniesMarquee } from "@/components/hiring-companies-marquee";
 import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
-import { Footer } from "@/components/footer";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -231,36 +230,38 @@ function HomePage() {
     <div className="min-h-screen bg-background text-foreground font-sans">
       <Header />
 
-      {/* ── Hero Section ── */}
-      <section className="relative overflow-hidden bg-white border-b border-slate-100 text-slate-900">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_-10%,rgba(37,99,235,0.08),rgba(255,255,255,0))]" />
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-28">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-3.5 py-1 text-[11px] font-bold text-blue-700 uppercase tracking-widest mb-4 shadow-2xs">
-            <Sparkles className="h-3 w-3 text-blue-600" />
+      {/* ── Hero Section (Signature Corporate Navy/Blue Theme) ── */}
+      <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground py-16 sm:py-24 lg:py-28">
+        <div className="absolute inset-0 corporate-grid" />
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/20 blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gold/15 blur-[120px] pointer-events-none" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3.5 py-1 text-[11px] font-semibold text-gold uppercase tracking-[0.18em] shadow-sm backdrop-blur-md mb-4">
+            <Sparkles className="h-3 w-3 text-gold" />
             Vyntyra Consultancy Services Pvt. Ltd.
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black leading-[1.12] tracking-tight max-w-4xl text-slate-900">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black leading-[1.12] tracking-tight max-w-4xl text-white">
             Enterprise Technology, AI Solutions &amp;{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700">
+            <span className="text-gold">
               Next-Gen Talent Development.
             </span>
           </h1>
 
-          <p className="mt-6 text-sm sm:text-base lg:text-lg text-slate-600 max-w-3xl leading-relaxed">
+          <p className="mt-6 text-sm sm:text-base lg:text-lg text-primary-foreground/85 max-w-3xl leading-relaxed">
             Vyntyra Consultancy Services Pvt. Ltd. is a premier Indian technology consultancy and talent enablement firm headquartered in Visakhapatnam. We deliver custom web &amp; mobile architectures, enterprise AI integrations, and industry-accredited student internship programs. Certified by Great Place to Work® and recognized by NASSCOM FutureSkills Prime and MSME Govt. of India.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a
               href="/careers"
-              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-blue-600/25 transition-all hover:scale-[1.02]"
+              className="inline-flex items-center gap-2 bg-gold hover:bg-gold/90 text-gold-foreground px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-gold/25 transition-all hover:scale-[1.02]"
             >
               Explore Careers &amp; Internships <ArrowRight className="h-4 w-4" />
             </a>
             <a
               href="/about"
-              className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-[1.02]"
+              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-6 py-3 rounded-xl text-sm font-semibold transition-all backdrop-blur-sm"
             >
               About Our Company <ArrowRight className="h-4 w-4" />
             </a>
@@ -268,15 +269,15 @@ function HomePage() {
               href="https://vyntyraconsultancyservices.in"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 border border-slate-300 hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
+              className="inline-flex items-center gap-2 border border-primary-foreground/30 hover:bg-primary-foreground/10 text-primary-foreground px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
             >
               Corporate Portal <ExternalLink className="h-3.5 w-3.5" />
             </a>
             <a
               href="/verify"
-              className="inline-flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 px-5 py-3 rounded-xl text-sm font-semibold transition-colors"
+              className="inline-flex items-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 px-5 py-3 rounded-xl text-sm font-semibold transition-colors backdrop-blur-sm"
             >
-              <Shield className="h-4 w-4 text-emerald-600" /> Verify Intern Credential
+              <Shield className="h-4 w-4 text-emerald-400" /> Verify Credentials
             </a>
           </div>
         </div>
@@ -631,7 +632,6 @@ function HomePage() {
           ))}
         </section>
       </main>
-          <Footer />
-    </div>
+</div>
   );
 }

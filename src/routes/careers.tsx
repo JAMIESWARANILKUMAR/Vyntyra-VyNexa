@@ -1240,64 +1240,79 @@ function TopBar({ live = true }: { live?: boolean }) {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-white border-b border-slate-100 text-slate-900 py-16 sm:py-24">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_-10%,rgba(37,99,235,0.08),rgba(255,255,255,0))]" />
+    <section className="relative min-h-[580px] sm:min-h-[640px] flex flex-col justify-center overflow-hidden bg-gradient-hero text-primary-foreground py-16 sm:py-24">
+      <div className="absolute inset-0 corporate-grid" />
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/20 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gold/15 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[40%] right-[-10%] w-[35%] h-[35%] rounded-full bg-indigo-500/15 blur-[120px] pointer-events-none" />
 
       <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6 z-10">
         <div className="grid lg:grid-cols-[1.5fr_1fr] gap-10 lg:gap-14 items-center">
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-3.5 py-1 text-[11px] font-bold text-blue-700 uppercase tracking-widest shadow-2xs">
-              <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3.5 py-1 text-[11px] font-semibold text-gold uppercase tracking-[0.18em] shadow-sm backdrop-blur-md">
+              <Sparkles className="h-3.5 w-3.5 text-gold" />
               Now Hiring · Certified Careers &amp; Internships
             </div>
             
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black leading-[1.12] tracking-tight text-slate-900">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black leading-[1.12] tracking-tight text-white">
               Enterprise Tech, AI &amp; <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700">
+              <span className="text-gold">
                 Next-Gen Talent.
               </span>
             </h1>
             
-            <p className="text-sm sm:text-base lg:text-lg text-slate-600 max-w-2xl leading-relaxed">
+            <p className="text-sm sm:text-base lg:text-lg text-primary-foreground/85 max-w-2xl leading-relaxed font-normal">
               Join Vyntyra Consultancy Services — Great Place to Work® Certified 2026–27, NASSCOM FutureSkills Prime Recognised, and MSME Registered. Work on live enterprise client software, AI pipelines, and accredited internship cohorts with 1:1 AI Mock Interview mentorship.
             </p>
             
             <div className="flex flex-wrap gap-3 pt-2">
-              <a href="#form" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-blue-600/25 transition-all hover:scale-[1.02]">
+              <a href="#form" className="inline-flex items-center gap-2 bg-gold hover:bg-gold/90 text-gold-foreground px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-gold/25 transition-all hover:scale-[1.02]">
                 Apply Now <ArrowRight className="h-4 w-4" />
               </a>
-              <a href="/" className="inline-flex items-center gap-2 border border-slate-300 hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-xl text-sm font-semibold transition-colors">
+              <a href="/about" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-6 py-3 rounded-xl text-sm font-semibold transition-all backdrop-blur-sm">
                 About Vyntyra
               </a>
             </div>
           </div>
 
-          {/* Right-side Corporate White Info Card */}
+          {/* Right-side Corporate Credentials Card */}
           <div className="hidden lg:block">
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-xl p-7 relative overflow-hidden">
-              <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-blue-600 mb-5 flex items-center gap-2">
-                <Shield className="h-4 w-4 text-blue-600" /> Corporate Credentials
+            <div className="bg-card/90 backdrop-blur-md border border-border/60 rounded-2xl shadow-2xl p-7 relative overflow-hidden">
+              <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold mb-5 flex items-center gap-2">
+                <Shield className="h-4 w-4 text-gold" /> Corporate Credentials
               </div>
-              
-              <dl className="space-y-5">
-                <div className="pb-4 border-b border-slate-100">
-                  <dt className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-1">Locations</dt>
-                  <dd className="text-sm font-bold text-slate-900 leading-relaxed">
-                    India — Visakhapatnam, Bengaluru, Hyderabad, UP
-                    <span className="text-blue-600 block text-xs font-semibold mt-0.5">· Global Remote Available</span>
-                  </dd>
+
+              <div className="space-y-3.5 text-xs text-muted-foreground">
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                  <span>
+                    <strong className="text-primary font-semibold">Great Place to Work® Certified</strong>: Assessed and certified for 2026–2027.
+                  </span>
                 </div>
-                <div className="flex justify-between items-baseline pb-4 border-b border-slate-100">
-                  <dt className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Response Time</dt>
-                  <dd className="text-2xl font-black text-slate-900 tracking-tight">3–5 <span className="text-xs font-normal text-slate-500">business days</span></dd>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                  <span>
+                    <strong className="text-primary font-semibold">NASSCOM FutureSkills Prime</strong>: Institutional industry curriculum alignment.
+                  </span>
                 </div>
-                <div>
-                  <dt className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-1">Compliance &amp; Accreditation</dt>
-                  <dd className="text-xs font-mono font-semibold text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                    MSME UDYAM-AP-09-0051886 · GPTW 2026–27 · NASSCOM Verified
-                  </dd>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                  <span>
+                    <strong className="text-primary font-semibold">MSME Registered Entity</strong>: Reg UDYAM-AP-09-0051886 (Govt. of India).
+                  </span>
                 </div>
-              </dl>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                  <span>
+                    <strong className="text-primary font-semibold">4.5★ AmbitionBox · 4.1★ Justdial</strong>: Highly rated by talent and enterprise clients.
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-5 border-t border-border/60 flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Response SLA</span>
+                <span className="font-bold text-primary">24 – 48 Hours</span>
+              </div>
             </div>
           </div>
         </div>
