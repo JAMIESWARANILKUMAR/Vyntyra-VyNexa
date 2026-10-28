@@ -51,7 +51,7 @@ const STEPS: JourneyStep[] = [
     icon: Laptop,
     highlights: ["Dedicated LMS Portal", "Curated Tech Stacks", "Premium Dev Resources"],
     isTop: true,
-    accentColor: "from-blue-500 to-cyan-400",
+    accentColor: "from-blue-600 to-cyan-500",
   },
   {
     step: 2,
@@ -64,7 +64,7 @@ const STEPS: JourneyStep[] = [
     icon: Users,
     highlights: ["1:1 Senior Mentors", "Agile Standups & Sprints", "Corporate Workspaces"],
     isTop: false,
-    accentColor: "from-cyan-400 to-teal-400",
+    accentColor: "from-blue-600 to-indigo-600",
   },
   {
     step: 3,
@@ -77,7 +77,7 @@ const STEPS: JourneyStep[] = [
     icon: ShieldCheck,
     highlights: ["ISO Graded Standards", "Live Client Architectures", "High Availability Systems"],
     isTop: true,
-    accentColor: "from-blue-500 to-indigo-500",
+    accentColor: "from-indigo-600 to-blue-700",
   },
   {
     step: 4,
@@ -90,7 +90,7 @@ const STEPS: JourneyStep[] = [
     icon: Layers,
     highlights: ["6–12 Real-World Tasks", "Multi-Domain Experience", "Practical Problem Solving"],
     isTop: false,
-    accentColor: "from-indigo-500 to-purple-500",
+    accentColor: "from-blue-700 to-purple-600",
   },
   {
     step: 5,
@@ -103,7 +103,7 @@ const STEPS: JourneyStep[] = [
     icon: FileCheck2,
     highlights: ["CBT Based Task Validation", "Task-to-Task PR Reviews", "Transparent Grade Cards"],
     isTop: true,
-    accentColor: "from-purple-500 to-pink-500",
+    accentColor: "from-purple-600 to-indigo-600",
   },
   {
     step: 6,
@@ -116,7 +116,7 @@ const STEPS: JourneyStep[] = [
     icon: Presentation,
     highlights: ["Tech & Soft Skills Workshops", "Industry Expert Bootcamps", "Live Interactive Q&A"],
     isTop: false,
-    accentColor: "from-amber-400 to-orange-500",
+    accentColor: "from-amber-500 to-orange-500",
   },
   {
     step: 7,
@@ -129,7 +129,7 @@ const STEPS: JourneyStep[] = [
     icon: Bot,
     highlights: ["Conversational Voice AI", "Real-Time Scoring Rubrics", "ATS Resume Optimizer"],
     isTop: true,
-    accentColor: "from-emerald-400 to-teal-500",
+    accentColor: "from-emerald-600 to-teal-600",
   },
   {
     step: 8,
@@ -142,7 +142,7 @@ const STEPS: JourneyStep[] = [
     icon: Globe2,
     highlights: ["Verified Corporate LOR", "LinkedIn Profile Hardening", "500+ Hiring Companies"],
     isTop: false,
-    accentColor: "from-blue-600 to-cyan-500",
+    accentColor: "from-blue-600 to-cyan-600",
   },
 ];
 
@@ -155,30 +155,27 @@ export function CareerJourneyRouteMap() {
   const currentStepData = STEPS.find((s) => s.step === activeStep) || STEPS[0];
 
   return (
-    <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#071224] text-white border-t border-blue-900/40 relative overflow-hidden">
-      {/* ── Corporate Blueprint Grid & Atmospheric Glow ── */}
-      <div className="absolute inset-0 corporate-grid opacity-25 pointer-events-none" />
-      <div className="absolute top-1/4 -left-48 w-96 h-96 bg-blue-600/15 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-10 -right-48 w-96 h-96 bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-blue-500/5 rounded-full blur-[160px] pointer-events-none" />
+    <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-white text-slate-900 border-t border-slate-200/80 relative overflow-hidden">
+      {/* ── Subtle Background Corporate Grid Texture ── */}
+      <div className="absolute inset-0 corporate-grid opacity-10 pointer-events-none" />
 
       <div className="mx-auto max-w-7xl relative z-10">
         {/* ── Section Header ── */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12 sm:mb-16">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-500/10 px-3.5 py-1 text-xs font-mono font-bold text-cyan-300 uppercase tracking-widest mb-3 backdrop-blur-md shadow-[0_0_15px_rgba(56,189,248,0.15)]">
-              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-600/20 bg-blue-50 px-3.5 py-1 text-xs font-mono font-bold text-blue-700 uppercase tracking-widest mb-3 shadow-xs">
+              <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
               YOUR CAREER ACCELERATOR ROUTE MAP
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.12]">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.12]">
               Build your career,{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-amber-300">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-800">
                 not just a resume.
               </span>
             </h2>
 
-            <p className="mt-4 text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl font-light">
+            <p className="mt-4 text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl font-normal">
               More than an internship — our 8-step Career Accelerator equips you with dedicated LMS access, ISO-graded industry projects, CBT-based task evaluations, live expert bootcamps, and AI-driven interview readiness.
             </p>
           </div>
@@ -186,7 +183,7 @@ export function CareerJourneyRouteMap() {
           {/* Controls: Category Filter + View Switcher */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             {/* Filter Tabs */}
-            <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-900/90 border border-slate-700/60 rounded-xl backdrop-blur-md">
+            <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-xl">
               {[
                 { id: "all", label: "All 8 Steps" },
                 { id: "foundation", label: "LMS & Mentorship" },
@@ -199,8 +196,8 @@ export function CareerJourneyRouteMap() {
                   onClick={() => setActiveFilter(f.id as typeof activeFilter)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     activeFilter === f.id
-                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
                   }`}
                 >
                   {f.label}
@@ -209,11 +206,11 @@ export function CareerJourneyRouteMap() {
             </div>
 
             {/* View Mode Toggle */}
-            <div className="hidden xl:flex items-center gap-1 p-1 bg-slate-900/90 border border-slate-700/60 rounded-xl">
+            <div className="hidden xl:flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-xl">
               <button
                 onClick={() => setViewMode("route")}
                 className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                  viewMode === "route" ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"
+                  viewMode === "route" ? "bg-blue-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
                 }`}
                 title="Interactive Zig-Zag Route View"
               >
@@ -223,7 +220,7 @@ export function CareerJourneyRouteMap() {
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                  viewMode === "grid" ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"
+                  viewMode === "grid" ? "bg-blue-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
                 }`}
                 title="Matrix Grid View"
               >
@@ -235,36 +232,36 @@ export function CareerJourneyRouteMap() {
         </div>
 
         {/* ── Active Milestone Quick Inspector Strip (Interactive Highlight) ── */}
-        <div className="mb-10 rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-950/70 via-slate-900/80 to-blue-950/70 p-4 sm:p-5 backdrop-blur-xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="mb-10 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-400/40 text-cyan-300 flex items-center justify-center font-black text-lg shrink-0 shadow-[0_0_15px_rgba(56,189,248,0.25)]">
+            <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-lg shrink-0 shadow-md shadow-blue-600/20">
               0{currentStepData.step}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-cyan-400 font-bold">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-blue-600 font-bold">
                   {currentStepData.phase}
                 </span>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/30">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                   {currentStepData.badge}
                 </span>
               </div>
-              <h3 className="font-bold text-sm sm:text-base text-white truncate mt-0.5">
+              <h3 className="font-bold text-sm sm:text-base text-slate-900 truncate mt-0.5">
                 {currentStepData.title}
               </h3>
             </div>
           </div>
 
           <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
-            <span className="text-xs text-slate-400 hidden sm:inline">Navigate:</span>
+            <span className="text-xs text-slate-500 hidden sm:inline font-medium">Navigate:</span>
             {STEPS.map((s) => (
               <button
                 key={s.step}
                 onClick={() => setActiveStep(s.step)}
                 className={`w-7 h-7 rounded-lg text-xs font-mono font-bold transition-all ${
                   activeStep === s.step
-                    ? "bg-cyan-400 text-slate-950 shadow-[0_0_10px_rgba(56,189,248,0.5)] scale-110"
-                    : "bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-700"
+                    ? "bg-blue-600 text-white shadow-sm scale-110"
+                    : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                 }`}
               >
                 {s.step}
@@ -276,36 +273,30 @@ export function CareerJourneyRouteMap() {
         {/* ── DESKTOP VIEW 1: Creative Zig-Zag Highway Route Map ── */}
         {viewMode === "route" && (
           <div className="hidden xl:block relative select-none" style={{ height: "700px" }}>
-            {/* SVG Connecting Zig-Zag Neon Highway (Coordinates strictly pass through node centers!) */}
+            {/* SVG Connecting Zig-Zag Corporate Highway (Coordinates strictly pass through node centers!) */}
             <div className="absolute inset-0 pointer-events-none z-0">
               <svg className="w-full h-full" viewBox="0 0 1200 700" fill="none" preserveAspectRatio="none">
                 <defs>
-                  <linearGradient id="neonGlowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.8" />
-                    <stop offset="50%" stopColor="#818CF8" stopOpacity="0.9" />
-                    <stop offset="100%" stopColor="#F59E0B" stopOpacity="0.8" />
+                  <linearGradient id="routeGlowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#2563EB" />
+                    <stop offset="50%" stopColor="#4F46E5" />
+                    <stop offset="100%" stopColor="#2563EB" />
                   </linearGradient>
-                  <filter id="roadBlur" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="6" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                  </filter>
                 </defs>
 
-                {/* Outer Ambient Glow Tube */}
+                {/* Outer Ambient Track Line */}
                 <path
                   d="M 80 270 L 230 430 L 375 270 L 525 430 L 675 270 L 825 430 L 970 270 L 1120 430"
-                  stroke="#38BDF8"
+                  stroke="#DBEAFE"
                   strokeWidth="8"
-                  strokeOpacity="0.25"
-                  filter="url(#roadBlur)"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
 
-                {/* Main Neon Highway Path */}
+                {/* Main Vibrant Blue Dashed Highway Path */}
                 <path
                   d="M 80 270 L 230 430 L 375 270 L 525 430 L 675 270 L 825 430 L 970 270 L 1120 430"
-                  stroke="url(#neonGlowGrad)"
+                  stroke="url(#routeGlowGrad)"
                   strokeWidth="3.5"
                   strokeDasharray="10 8"
                   strokeLinecap="round"
@@ -314,20 +305,20 @@ export function CareerJourneyRouteMap() {
 
                 {/* Vertical Connector Stems from Nodes to Cards (Never intersects text!) */}
                 {/* Odd Steps (Top): Stem from node (y=245) upwards to bottom of card (y=210) */}
-                <line x1="80" y1="245" x2="80" y2="210" stroke="#38BDF8" strokeWidth="2" strokeDasharray="3 3" />
-                <line x1="375" y1="245" x2="375" y2="210" stroke="#818CF8" strokeWidth="2" strokeDasharray="3 3" />
-                <line x1="675" y1="245" x2="675" y2="210" stroke="#A855F7" strokeWidth="2" strokeDasharray="3 3" />
-                <line x1="970" y1="245" x2="970" y2="210" stroke="#10B981" strokeWidth="2" strokeDasharray="3 3" />
+                <line x1="80" y1="245" x2="80" y2="210" stroke="#93C5FD" strokeWidth="2" strokeDasharray="3 3" />
+                <line x1="375" y1="245" x2="375" y2="210" stroke="#93C5FD" strokeWidth="2" strokeDasharray="3 3" />
+                <line x1="675" y1="245" x2="675" y2="210" stroke="#93C5FD" strokeWidth="2" strokeDasharray="3 3" />
+                <line x1="970" y1="245" x2="970" y2="210" stroke="#93C5FD" strokeWidth="2" strokeDasharray="3 3" />
 
                 {/* Even Steps (Bottom): Stem from node (y=455) downwards to top of card (y=490) */}
-                <line x1="230" y1="455" x2="230" y2="490" stroke="#2DD4BF" strokeWidth="2" strokeDasharray="3 3" />
-                <line x1="525" y1="455" x2="525" y2="490" stroke="#6366F1" strokeWidth="2" strokeDasharray="3 3" />
-                <line x1="825" y1="455" x2="825" y2="490" stroke="#F59E0B" strokeWidth="2" strokeDasharray="3 3" />
-                <line x1="1120" y1="455" x2="1120" y2="490" stroke="#3B82F6" strokeWidth="2" strokeDasharray="3 3" />
+                <line x1="230" y1="455" x2="230" y2="490" stroke="#93C5FD" strokeWidth="2" strokeDasharray="3 3" />
+                <line x1="525" y1="455" x2="525" y2="490" stroke="#93C5FD" strokeWidth="2" strokeDasharray="3 3" />
+                <line x1="825" y1="455" x2="825" y2="490" stroke="#93C5FD" strokeWidth="2" strokeDasharray="3 3" />
+                <line x1="1120" y1="455" x2="1120" y2="490" stroke="#93C5FD" strokeWidth="2" strokeDasharray="3 3" />
               </svg>
             </div>
 
-            {/* 8 Columns: Nodes and Cards placed with absolute mathematical clearance */}
+            {/* 8 Columns: Nodes and Cards placed with absolute clearance */}
             <div className="grid grid-cols-8 gap-3 h-full relative z-10">
               {STEPS.map((s) => {
                 const isSelected = activeStep === s.step;
@@ -341,31 +332,31 @@ export function CareerJourneyRouteMap() {
                     {/* Top Cards (Odd Steps: 1, 3, 5, 7) */}
                     {s.isTop && (
                       <div
-                        className={`absolute top-0 w-full max-w-[155px] rounded-xl p-3 border transition-all duration-300 backdrop-blur-md ${
+                        className={`absolute top-0 w-full max-w-[155px] rounded-xl p-3 border transition-all duration-300 bg-white ${
                           isSelected
-                            ? "bg-slate-900/95 border-cyan-400 shadow-[0_0_25px_rgba(56,189,248,0.35)] -translate-y-1.5"
-                            : "bg-slate-900/75 border-slate-700/60 hover:border-slate-500 hover:bg-slate-900/90"
+                            ? "border-blue-600 shadow-xl ring-2 ring-blue-100 -translate-y-1.5"
+                            : "border-slate-200 shadow-xs hover:border-blue-300 hover:shadow-md"
                         }`}
                         style={{ height: "210px" }}
                       >
                         <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[9px] font-mono font-bold text-cyan-300 uppercase truncate">
+                          <span className="text-[9px] font-mono font-bold text-blue-600 uppercase truncate">
                             {s.categoryLabel}
                           </span>
-                          <span className="text-[8px] font-semibold px-1 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                          <span className="text-[8px] font-semibold px-1 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
                             {s.badge}
                           </span>
                         </div>
-                        <h4 className="font-bold text-white text-[11px] leading-snug line-clamp-2 mb-1.5">
+                        <h4 className="font-bold text-slate-900 text-[11px] leading-snug line-clamp-2 mb-1.5">
                           {s.title}
                         </h4>
-                        <p className="text-[10px] text-slate-300 leading-tight line-clamp-3">
+                        <p className="text-[10px] text-slate-600 leading-tight line-clamp-3">
                           {s.desc}
                         </p>
-                        <div className="mt-2 pt-1.5 border-t border-slate-800 flex flex-col gap-0.5">
+                        <div className="mt-2 pt-1.5 border-t border-slate-100 flex flex-col gap-0.5">
                           {s.highlights.slice(0, 2).map((h, i) => (
-                            <span key={i} className="text-[9px] text-slate-300 flex items-center gap-1 truncate">
-                              <Check className="h-2.5 w-2.5 text-cyan-400 shrink-0" />
+                            <span key={i} className="text-[9px] text-slate-700 flex items-center gap-1 truncate">
+                              <Check className="h-2.5 w-2.5 text-emerald-600 shrink-0" />
                               <span className="truncate">{h}</span>
                             </span>
                           ))}
@@ -373,16 +364,16 @@ export function CareerJourneyRouteMap() {
                       </div>
                     )}
 
-                    {/* Milestone Node Circle on the Neon Highway (Y = 270 for Top, Y = 430 for Bottom) */}
+                    {/* Milestone Node Circle on the Route (Y = 245 for Top, Y = 405 for Bottom) */}
                     <div
                       className="absolute flex flex-col items-center"
                       style={{ top: s.isTop ? "245px" : "405px" }}
                     >
                       <div
-                        className={`w-13 h-13 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-xl select-none ${
+                        className={`w-13 h-13 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-md select-none ${
                           isSelected
-                            ? "bg-gradient-to-br from-cyan-400 to-blue-600 text-slate-950 scale-115 shadow-[0_0_25px_rgba(56,189,248,0.6)] ring-4 ring-cyan-400/30"
-                            : "bg-slate-900/90 border-2 border-cyan-500/50 text-cyan-300 group-hover:scale-105 group-hover:border-cyan-400 group-hover:text-white"
+                            ? "bg-blue-600 text-white scale-115 shadow-lg shadow-blue-600/30 ring-4 ring-blue-100"
+                            : "bg-white border-2 border-blue-600 text-blue-600 group-hover:scale-105 group-hover:bg-blue-50"
                         }`}
                       >
                         <IconComponent className="h-6 w-6" />
@@ -390,8 +381,8 @@ export function CareerJourneyRouteMap() {
                       <span
                         className={`mt-1.5 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded transition-colors ${
                           isSelected
-                            ? "bg-cyan-400 text-slate-950"
-                            : "bg-slate-800 text-slate-400 group-hover:text-cyan-300"
+                            ? "bg-blue-600 text-white"
+                            : "bg-slate-100 text-slate-600 group-hover:text-blue-600"
                         }`}
                       >
                         Step 0{s.step}
@@ -401,31 +392,31 @@ export function CareerJourneyRouteMap() {
                     {/* Bottom Cards (Even Steps: 2, 4, 6, 8) */}
                     {!s.isTop && (
                       <div
-                        className={`absolute bottom-0 w-full max-w-[155px] rounded-xl p-3 border transition-all duration-300 backdrop-blur-md ${
+                        className={`absolute bottom-0 w-full max-w-[155px] rounded-xl p-3 border transition-all duration-300 bg-white ${
                           isSelected
-                            ? "bg-slate-900/95 border-cyan-400 shadow-[0_0_25px_rgba(56,189,248,0.35)] translate-y-1.5"
-                            : "bg-slate-900/75 border-slate-700/60 hover:border-slate-500 hover:bg-slate-900/90"
+                            ? "border-blue-600 shadow-xl ring-2 ring-blue-100 translate-y-1.5"
+                            : "border-slate-200 shadow-xs hover:border-blue-300 hover:shadow-md"
                         }`}
                         style={{ height: "210px" }}
                       >
                         <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[9px] font-mono font-bold text-cyan-300 uppercase truncate">
+                          <span className="text-[9px] font-mono font-bold text-blue-600 uppercase truncate">
                             {s.categoryLabel}
                           </span>
-                          <span className="text-[8px] font-semibold px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          <span className="text-[8px] font-semibold px-1 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
                             {s.badge}
                           </span>
                         </div>
-                        <h4 className="font-bold text-white text-[11px] leading-snug line-clamp-2 mb-1.5">
+                        <h4 className="font-bold text-slate-900 text-[11px] leading-snug line-clamp-2 mb-1.5">
                           {s.title}
                         </h4>
-                        <p className="text-[10px] text-slate-300 leading-tight line-clamp-3">
+                        <p className="text-[10px] text-slate-600 leading-tight line-clamp-3">
                           {s.desc}
                         </p>
-                        <div className="mt-2 pt-1.5 border-t border-slate-800 flex flex-col gap-0.5">
+                        <div className="mt-2 pt-1.5 border-t border-slate-100 flex flex-col gap-0.5">
                           {s.highlights.slice(0, 2).map((h, i) => (
-                            <span key={i} className="text-[9px] text-slate-300 flex items-center gap-1 truncate">
-                              <Check className="h-2.5 w-2.5 text-cyan-400 shrink-0" />
+                            <span key={i} className="text-[9px] text-slate-700 flex items-center gap-1 truncate">
+                              <Check className="h-2.5 w-2.5 text-emerald-600 shrink-0" />
                               <span className="truncate">{h}</span>
                             </span>
                           ))}
@@ -449,39 +440,39 @@ export function CareerJourneyRouteMap() {
                 <div
                   key={s.step}
                   onClick={() => setActiveStep(s.step)}
-                  className={`rounded-2xl p-5 border transition-all duration-300 cursor-pointer flex flex-col justify-between backdrop-blur-md ${
+                  className={`rounded-2xl p-5 border transition-all duration-300 cursor-pointer flex flex-col justify-between bg-white ${
                     isSelected
-                      ? "bg-slate-900/95 border-cyan-400 shadow-[0_0_30px_rgba(56,189,248,0.25)] -translate-y-1"
-                      : "bg-slate-900/60 border-slate-800 hover:border-slate-600 hover:bg-slate-900/80"
+                      ? "border-blue-600 shadow-lg ring-2 ring-blue-100 -translate-y-1"
+                      : "border-slate-200 hover:border-blue-300 hover:shadow-md"
                   }`}
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-400/30 text-cyan-400 flex items-center justify-center font-bold text-sm">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center font-bold text-sm">
                         <IconComponent className="h-5 w-5" />
                       </div>
-                      <span className="text-xs font-mono font-bold text-cyan-300 bg-blue-500/20 px-2.5 py-0.5 rounded-full border border-blue-400/30">
+                      <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
                         Step 0{s.step}
                       </span>
                     </div>
 
-                    <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400 mb-1">
+                    <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-blue-600 mb-1">
                       {s.phase}
                     </div>
 
-                    <h4 className="font-bold text-white text-sm leading-snug mb-2">
+                    <h4 className="font-bold text-slate-900 text-sm leading-snug mb-2">
                       {s.title}
                     </h4>
 
-                    <p className="text-xs text-slate-300 leading-relaxed font-light">
+                    <p className="text-xs text-slate-600 leading-relaxed font-normal">
                       {s.desc}
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-1.5">
+                  <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
                     {s.highlights.map((h, i) => (
-                      <div key={i} className="flex items-center gap-1.5 text-xs text-slate-300">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                      <div key={i} className="flex items-center gap-1.5 text-xs text-slate-700">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                         <span>{h}</span>
                       </div>
                     ))}
@@ -501,35 +492,35 @@ export function CareerJourneyRouteMap() {
                 <div
                   key={s.step}
                   onClick={() => setActiveStep(s.step)}
-                  className="rounded-2xl p-5 border border-slate-800 bg-slate-900/80 backdrop-blur-md shadow-md hover:border-cyan-400 transition-all flex flex-col justify-between group cursor-pointer"
+                  className="rounded-2xl p-5 border border-slate-200 bg-white shadow-xs hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/40 text-cyan-300 flex items-center justify-center font-bold text-sm group-hover:bg-cyan-400 group-hover:text-slate-950 transition-colors">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center font-bold text-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
                         <IconComponent className="h-5 w-5" />
                       </div>
-                      <span className="text-xs font-mono font-bold text-cyan-300 bg-blue-900/60 px-2 py-0.5 rounded-full border border-blue-500/40">
+                      <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
                         Step 0{s.step}
                       </span>
                     </div>
 
-                    <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400 mb-1">
-                      {s.categoryLabel} · <span className="text-amber-300">{s.badge}</span>
+                    <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-blue-600 mb-1">
+                      {s.categoryLabel} · <span className="text-amber-700">{s.badge}</span>
                     </div>
 
-                    <h4 className="font-bold text-white text-sm leading-snug group-hover:text-cyan-300 transition-colors">
+                    <h4 className="font-bold text-slate-900 text-sm leading-snug group-hover:text-blue-600 transition-colors">
                       {s.title}
                     </h4>
 
-                    <p className="mt-2 text-xs text-slate-300 leading-relaxed font-light">
+                    <p className="mt-2 text-xs text-slate-600 leading-relaxed font-normal">
                       {s.desc}
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-800 space-y-1.5">
+                  <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
                     {s.highlights.map((h, i) => (
-                      <div key={i} className="flex items-center gap-1.5 text-xs text-slate-300">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                      <div key={i} className="flex items-center gap-1.5 text-xs text-slate-700">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                         <span>{h}</span>
                       </div>
                     ))}
@@ -542,8 +533,8 @@ export function CareerJourneyRouteMap() {
 
         {/* ── MOBILE VIEW: Vertical Metro Highway Route Map ── */}
         <div className="block md:hidden relative pl-8 space-y-5 pt-2">
-          {/* Vertical Glowing Neon Highway Line */}
-          <div className="absolute left-[15px] top-4 bottom-4 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-amber-400 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
+          {/* Vertical Highway Line */}
+          <div className="absolute left-[15px] top-4 bottom-4 w-1 bg-gradient-to-b from-blue-600 via-indigo-600 to-blue-700 rounded-full" />
 
           {filteredSteps.map((s) => {
             const IconComponent = s.icon;
@@ -556,10 +547,10 @@ export function CareerJourneyRouteMap() {
               >
                 {/* Number Circle Node on Line */}
                 <div
-                  className={`absolute -left-[32px] top-2 w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs transition-all z-10 shadow-lg ${
+                  className={`absolute -left-[32px] top-2 w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs transition-all z-10 shadow-sm ${
                     isSelected
-                      ? "bg-cyan-400 text-slate-950 ring-4 ring-cyan-400/30 scale-110"
-                      : "bg-slate-900 border-2 border-cyan-400 text-cyan-300"
+                      ? "bg-blue-600 text-white ring-4 ring-blue-100 scale-110"
+                      : "bg-white border-2 border-blue-600 text-blue-600"
                   }`}
                 >
                   <IconComponent className="h-4 w-4" />
@@ -567,28 +558,28 @@ export function CareerJourneyRouteMap() {
 
                 {/* Content Card */}
                 <div
-                  className={`rounded-xl border p-4 backdrop-blur-md transition-all ${
+                  className={`rounded-xl border p-4 transition-all bg-white ${
                     isSelected
-                      ? "bg-slate-900/95 border-cyan-400 shadow-[0_0_20px_rgba(56,189,248,0.25)]"
-                      : "bg-slate-900/70 border-slate-800"
+                      ? "border-blue-600 shadow-md ring-2 ring-blue-50"
+                      : "border-slate-200 shadow-xs"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-blue-600">
                       Step 0{s.step} · {s.categoryLabel}
                     </span>
-                    <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/30">
+                    <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                       {s.badge}
                     </span>
                   </div>
 
-                  <h4 className="font-bold text-white text-sm leading-snug">{s.title}</h4>
-                  <p className="mt-1 text-xs text-slate-300 leading-relaxed font-light">{s.desc}</p>
+                  <h4 className="font-bold text-slate-900 text-sm leading-snug">{s.title}</h4>
+                  <p className="mt-1 text-xs text-slate-600 leading-relaxed font-normal">{s.desc}</p>
 
-                  <div className="mt-3 pt-2.5 border-t border-slate-800 space-y-1">
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 space-y-1">
                     {s.highlights.map((h, i) => (
-                      <div key={i} className="flex items-center gap-1.5 text-[11px] text-slate-300">
-                        <Check className="h-3 w-3 text-cyan-400 shrink-0" />
+                      <div key={i} className="flex items-center gap-1.5 text-[11px] text-slate-700">
+                        <Check className="h-3 w-3 text-emerald-600 shrink-0" />
                         <span>{h}</span>
                       </div>
                     ))}
@@ -600,7 +591,7 @@ export function CareerJourneyRouteMap() {
         </div>
 
         {/* ── Bottom Feature Highlights Matrix Bar ── */}
-        <div className="mt-14 sm:mt-18 pt-8 border-t border-blue-900/40 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="mt-14 sm:mt-18 pt-8 border-t border-slate-200 grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             {
               icon: Laptop,
@@ -627,14 +618,14 @@ export function CareerJourneyRouteMap() {
             return (
               <div
                 key={idx}
-                className="rounded-xl border border-slate-800 bg-slate-900/60 p-4.5 shadow-md flex items-start gap-3 backdrop-blur-sm hover:border-cyan-500/40 transition-colors"
+                className="rounded-xl border border-slate-200 bg-slate-50/80 p-4.5 shadow-xs flex items-start gap-3 hover:border-blue-300 transition-colors"
               >
-                <div className="w-9 h-9 rounded-lg bg-blue-500/20 text-cyan-300 flex items-center justify-center shrink-0 border border-blue-400/30">
+                <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
                   <Icon className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-white leading-tight">{item.title}</h4>
-                  <p className="text-[11px] text-slate-400 mt-1 leading-normal font-light">{item.desc}</p>
+                  <h4 className="text-xs font-bold text-slate-900 leading-tight">{item.title}</h4>
+                  <p className="text-[11px] text-slate-600 mt-1 leading-normal font-normal">{item.desc}</p>
                 </div>
               </div>
             );
