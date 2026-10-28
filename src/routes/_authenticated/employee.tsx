@@ -38,6 +38,7 @@ import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { EmployeeReferEarn } from "@/components/employee-refer-earn";
 import { FeedbackPopupModal } from "@/components/feedback-popup-modal";
 import { ProfileChangeRequestModal } from "@/components/profile-change-request-modal";
+import { EmployeeMockInterviewsView } from "@/components/employee-mock-interviews-view";
 import EmailAutomationHub from "@/components/email-automation-hub";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1358,7 +1359,7 @@ function EmployeeDashboard() {
     { id: "support", label: "Helpdesk Tickets", badge: tickets.filter((t: any) => t.status === "open").length, enabled: isModuleEnabled("support") },
     { id: "resolver_support", label: "Intern Queries", badge: assignedSupportQueries.filter((q: any) => q.status !== "resolved").length, enabled: isModuleEnabled("resolver_support") },
     { id: "meetings", label: "Meetings", enabled: isModuleEnabled("meetings") },
-    { id: "interviews", label: "Interviews", badge: assignedInterviews.length, enabled: isModuleEnabled("interviews") },
+    { id: "interviews", label: "AI Mock & Interviews", badge: assignedInterviews.length, enabled: true },
     { id: "my_interns", label: "My Interns & Mentorship", badge: myInterns.length, enabled: isModuleEnabled("my_interns") },
     { id: "campaigns", label: "Email Campaigns", enabled: true },
     { id: "announcements", label: `News`, badge: announcements.length, enabled: isModuleEnabled("announcements") },
@@ -2714,25 +2715,13 @@ function EmployeeDashboard() {
           {/* ─── INTERVIEWS ─── */}
           {activeTab === "interviews" && (
             <motion.div {...pageVariants} className="space-y-6 max-w-7xl mx-auto">
-              {/* AI Mock Interview Studio Quick Access */}
-              <div className="p-6 rounded-3xl bg-gradient-to-r from-blue-900/40 via-indigo-900/40 to-purple-900/40 border border-blue-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-                <div className="space-y-1">
-                  <span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] font-mono font-bold uppercase">
-                    Mentor AI Command Desk
-                  </span>
-                  <h3 className="text-base font-bold text-white">AI-Powered 1:1 Mock Interview Studio</h3>
-                  <p className="text-xs text-slate-300 max-w-xl">
-                    Schedule mock technical rounds for your assigned interns, audit live WebRTC rooms, review AI reports, and submit custom mentor grades &amp; remarks.
-                  </p>
-                </div>
-                <Button
-                  onClick={() => window.location.href = '/employee/interviews'}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs h-10 px-5 rounded-xl shadow-lg shadow-blue-600/30 flex items-center gap-2 shrink-0"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  <span>Open Mentor Studio</span>
-                </Button>
-              </div>
+              {/* Full In-Dashboard Mentor AI Mock Interview Console */}
+              <EmployeeMockInterviewsView
+                currentUserId={session?.user?.id}
+                currentUserEmail={session?.user?.email}
+                currentUserName={profile?.full_name || displayName}
+                myInterns={myInterns}
+              />
 
               <div className="bg-[#0E131F]/90 rounded-3xl border border-slate-800/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>

@@ -37,6 +37,7 @@ import { IntegratedChromeBrowser } from "@/components/integrated-chrome-browser"
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { EmployeeReferEarn } from "@/components/employee-refer-earn";
 import { FeedbackPopupModal } from "@/components/feedback-popup-modal";
+import { InternMockInterviewsView } from "@/components/intern-mock-interviews-view";
 import { 
   listTasks, listMeetings, listSchedules, listAnnouncements, listResources, 
   listNotes, createNote, deleteNote, createFeedback, claimPoolTask,
@@ -4198,7 +4199,7 @@ function InternDashboard() {
 
           {activeTab === "mock_interview" && (
             <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500 pb-12">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl shadow-lg shadow-blue-500/20">
                     <Sparkles className="h-6 w-6" />
@@ -4208,79 +4209,14 @@ function InternDashboard() {
                     <p className="text-slate-500 text-sm">Real-time video/audio mock interviews powered by OpenRouter reasoning &amp; multi-modal telemetry.</p>
                   </div>
                 </div>
-
-                <Button 
-                  onClick={() => window.location.href = '/interview'}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl h-10 px-4 shadow-md shadow-blue-600/20 flex items-center gap-2"
-                >
-                  <Play className="h-3.5 w-3.5 fill-white" />
-                  <span>Launch 1:1 Interview Studio</span>
-                </Button>
               </div>
 
-              {/* Feature Hero Card */}
-              <div className="relative rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 text-white p-6 sm:p-8 overflow-hidden shadow-xl border border-indigo-500/30">
-                <div className="relative z-10 max-w-2xl space-y-3">
-                  <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-mono font-semibold">
-                    Multi-Modal AI Bar Raiser
-                  </span>
-                  <h3 className="text-2xl font-black text-white">
-                    Master FAANG-Grade Technical Rounds
-                  </h3>
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    Practice with an intelligent AI interviewer that speaks and listens live. Features real-time speech recognition, natural TTS, eye contact &amp; posture tracking, an embedded Monaco code playground with test execution, and comprehensive debrief reports.
-                  </p>
-                  <div className="pt-2 flex flex-wrap items-center gap-3">
-                    <Button 
-                      onClick={() => window.location.href = '/interview'}
-                      className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs h-10 px-5 rounded-xl shadow-lg shadow-blue-600/30 flex items-center gap-2"
-                    >
-                      <Sparkles className="h-4 w-4" /> Start Practice Interview Now
-                    </Button>
-                    <span className="text-xs text-slate-400">Takes ~15–20 minutes • Instant PDF &amp; R2 Report</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Engineering Tracks Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition space-y-2">
-                  <div className="flex items-center gap-2 text-blue-600 font-bold text-sm">
-                    <Code2 className="h-4 w-4" />
-                    <span>Frontend Engineering</span>
-                  </div>
-                  <p className="text-xs text-slate-600">React, TypeScript, Next.js, state management, and real-time DOM optimization challenges.</p>
-                  <Button variant="ghost" size="sm" onClick={() => window.location.href = '/interview'} className="text-xs text-blue-600 p-0 h-auto font-semibold hover:bg-transparent">
-                    Practice Frontend &rarr;
-                  </Button>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition space-y-2">
-                  <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">
-                    <Cpu className="h-4 w-4" />
-                    <span>Full-Stack &amp; Systems</span>
-                  </div>
-                  <p className="text-xs text-slate-600">End-to-end architectures, distributed APIs, Cloudflare Workers, and database query tuning.</p>
-                  <Button variant="ghost" size="sm" onClick={() => window.location.href = '/interview'} className="text-xs text-indigo-600 p-0 h-auto font-semibold hover:bg-transparent">
-                    Practice Full-Stack &rarr;
-                  </Button>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition space-y-2">
-                  <div className="flex items-center gap-2 text-purple-600 font-bold text-sm">
-                    <BrainCircuit className="h-4 w-4" />
-                    <span>AI / LLM Engineering</span>
-                  </div>
-                  <p className="text-xs text-slate-600">RAG architectures, vector embeddings, prompt engineering, and GenAI agent orchestration.</p>
-                  <Button variant="ghost" size="sm" onClick={() => window.location.href = '/interview'} className="text-xs text-purple-600 p-0 h-auto font-semibold hover:bg-transparent">
-                    Practice AI/ML &rarr;
-                  </Button>
-                </div>
-              </div>
-
-
-
-
+              <InternMockInterviewsView
+                currentUserId={session?.user?.id}
+                currentUserEmail={email}
+                internId={profile?.intern_id}
+                candidateName={profile?.full_name || displayName}
+              />
             </div>
           )}
 

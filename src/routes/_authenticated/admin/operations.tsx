@@ -10,7 +10,7 @@ import {
   Video, FileText, UploadCloud, MessageSquare, CreditCard, LifeBuoy, Award,
   Play, Pause, Square, Search, ExternalLink, ShieldCheck, Download, Send, MessageCircle, Key,
   PartyPopper, LayoutDashboard, BrainCircuit, Layers, FolderOpen, Megaphone, DollarSign,
-  CalendarPlus, Share2, Copy, Check, Pencil, Edit, Bell
+  CalendarPlus, Share2, Copy, Check, Pencil, Edit, Bell, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +53,7 @@ import { AdminLmsManager } from "@/components/admin-lms-manager";
 import { AdminProfileChangeApprovals } from "@/components/admin-profile-change-approvals";
 import { VyntyraMeetAdmin } from "@/components/ui/vyntyra-meet-admin";
 import { CbtOperationsTab } from "@/components/admin-cbt-operations";
+import { AdminMockInterviewsOperationsView } from "@/components/admin-mock-interviews-operations";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { toast } from "sonner";
 import { TaskRichDescription } from "@/components/task-rich-description";
@@ -1264,6 +1265,7 @@ function OperationsDashboard() {
               { id: "finances", label: "Finances & Payouts", icon: DollarSign, count: null },
               { id: "cbt", label: "AI CBT Engine", icon: BrainCircuit, count: null },
               { id: "vyntyra-meet", label: "Vyntyra Meet", icon: ShieldCheck, count: null },
+              { id: "ai-interviews", label: "AI Mock Interviews", icon: Sparkles, count: null },
             { id: "support", label: "Support & Feedback", icon: LifeBuoy, count: (supportQueries || []).filter((q: any) => q.status === "open").length || null },
             { id: "profile_approvals", label: "Profile Approvals", icon: UserCheck, count: null },
           ].map((tab) => {
@@ -3530,6 +3532,13 @@ function OperationsDashboard() {
         {activeTab === "vyntyra-meet" && (
           <section id="vyntyra-meet-section">
             <VyntyraMeetAdmin />
+          </section>
+        )}
+
+        {/* 🎙️ TAB: AI MOCK INTERVIEWS */}
+        {activeTab === "ai-interviews" && (
+          <section id="ai-interviews-section">
+            <AdminMockInterviewsOperationsView />
           </section>
         )}
       </main>
