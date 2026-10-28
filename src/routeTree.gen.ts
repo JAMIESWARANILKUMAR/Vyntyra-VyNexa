@@ -18,6 +18,7 @@ import { Route as RefundsRouteImport } from './routes/refunds'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CareersRouteImport } from './routes/careers'
+import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as AgreementRouteImport } from './routes/agreement'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -90,6 +91,11 @@ const LoginRoute = LoginRouteImport.update({
 const CareersRoute = CareersRouteImport.update({
   id: '/careers',
   path: '/careers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplyRoute = ApplyRouteImport.update({
+  id: '/apply',
+  path: '/apply',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AgreementRoute = AgreementRouteImport.update({
@@ -245,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/agreement': typeof AgreementRoute
+  '/apply': typeof ApplyRoute
   '/careers': typeof CareersRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -283,6 +290,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/agreement': typeof AgreementRoute
+  '/apply': typeof ApplyRoute
   '/careers': typeof CareersRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -323,6 +331,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/agreement': typeof AgreementRoute
+  '/apply': typeof ApplyRoute
   '/careers': typeof CareersRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -363,6 +372,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/agreement'
+    | '/apply'
     | '/careers'
     | '/login'
     | '/privacy'
@@ -401,6 +411,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/agreement'
+    | '/apply'
     | '/careers'
     | '/login'
     | '/privacy'
@@ -440,6 +451,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/agreement'
+    | '/apply'
     | '/careers'
     | '/login'
     | '/privacy'
@@ -480,6 +492,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AgreementRoute: typeof AgreementRoute
+  ApplyRoute: typeof ApplyRoute
   CareersRoute: typeof CareersRoute
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -563,6 +576,13 @@ declare module '@tanstack/react-router' {
       path: '/careers'
       fullPath: '/careers'
       preLoaderRoute: typeof CareersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apply': {
+      id: '/apply'
+      path: '/apply'
+      fullPath: '/apply'
+      preLoaderRoute: typeof ApplyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/agreement': {
@@ -828,6 +848,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AgreementRoute: AgreementRoute,
+  ApplyRoute: ApplyRoute,
   CareersRoute: CareersRoute,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,

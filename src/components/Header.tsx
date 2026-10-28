@@ -21,17 +21,8 @@ export function Header({ live = true }: HeaderProps) {
     return false;
   };
 
-  const handleApplyClick = (e: React.MouseEvent) => {
-    if (pathname === "/careers") {
-      e.preventDefault();
-      setMenuOpen(false);
-      const el = document.getElementById("form");
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-      } else {
-        window.location.hash = "form";
-      }
-    }
+  const handleApplyClick = () => {
+    setMenuOpen(false);
   };
 
   return (
@@ -163,8 +154,7 @@ export function Header({ live = true }: HeaderProps) {
               <div className="w-px h-5 bg-border mx-2" />
               
               <Link 
-                to="/careers" 
-                hash="form"
+                to="/apply"
                 onClick={handleApplyClick}
                 className="group relative inline-flex items-center gap-1.5 bg-primary hover:bg-secondary text-primary-foreground px-4 py-2 rounded-sm text-sm font-medium transition-colors overflow-hidden"
               >
@@ -176,8 +166,7 @@ export function Header({ live = true }: HeaderProps) {
 
             {/* Mobile Actions: Apply Now button + Hamburger Trigger */}
             <Link
-              to="/careers"
-              hash="form"
+              to="/apply"
               onClick={handleApplyClick}
               className="group relative md:hidden inline-flex items-center gap-1 bg-primary hover:bg-secondary text-primary-foreground px-3 py-1.5 rounded-sm text-xs font-medium overflow-hidden max-w-[62vw]"
             >

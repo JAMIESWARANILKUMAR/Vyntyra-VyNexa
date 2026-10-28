@@ -106,7 +106,7 @@ export async function generateInterviewQuestions(args: Args): Promise<string> {
     }
   }
 
-  const instruction = `You are a senior technical recruiter at Vyntyra Consultancy Services, hiring for **Project VyNexa** (a next-generation search engine).
+  const instruction = `You are a senior technical recruiter at Vyntyra Consultancy Services, evaluating candidates for enterprise technology, cloud engineering, and AI solutions positions.
 
 Candidate: ${args.fullName}
 Role applied: ${args.roleApplied}

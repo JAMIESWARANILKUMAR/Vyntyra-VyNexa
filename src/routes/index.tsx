@@ -592,7 +592,7 @@ function HomePage() {
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <a
-                href="/careers"
+                href="/apply"
                 className="bg-primary hover:bg-secondary text-primary-foreground text-xs font-bold px-5 py-2.5 rounded-xl transition-colors inline-flex items-center gap-1.5"
               >
                 Apply for Internship <ArrowRight className="h-3.5 w-3.5" />
