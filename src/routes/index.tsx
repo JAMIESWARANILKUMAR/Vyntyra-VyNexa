@@ -31,6 +31,8 @@ import {
 import { WorldClocks } from "@/components/world-clocks";
 import { Header } from "@/components/Header";
 import { AccreditationsRouteMap } from "@/components/accreditations-route-map";
+import { CareerJourneyRouteMap } from "@/components/career-journey-route-map";
+import { HiringCompaniesMarquee } from "@/components/hiring-companies-marquee";
 import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
 
 export const Route = createFileRoute("/")({
@@ -379,6 +381,12 @@ function AboutPage() {
             </div>
           </div>
         </section>
+
+        {/* ── 8-Step Career Accelerator Journey Route Map ── */}
+        <CareerJourneyRouteMap />
+
+        {/* ── Trusted by 500+ Hiring Companies Infinite Marquee ── */}
+        <HiringCompaniesMarquee />
 
         {/* ── Why Choose Us ── */}
         <section>

@@ -44,6 +44,8 @@ import { InstallPwaButton } from "@/components/install-pwa-button";
 import { CloudflareTurnstile } from "@/components/cloudflare-turnstile";
 import { Header } from "@/components/Header";
 import { AccreditationsRouteMap } from "@/components/accreditations-route-map";
+import { CareerJourneyRouteMap } from "@/components/career-journey-route-map";
+import { HiringCompaniesMarquee } from "@/components/hiring-companies-marquee";
 import { lookupReferralCodePricing } from "@/lib/operations.functions";
 import { listCareerDomains, type DomainItem, DEFAULT_CAREER_DOMAINS } from "@/lib/domains.functions";
 import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
@@ -497,6 +499,8 @@ function ApplicationPage() {
       <Hero />
       <WhyJoinUs />
       <AccreditationsRouteMap />
+      <CareerJourneyRouteMap />
+      <HiringCompaniesMarquee />
       <TrustStrip />
 
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-6 space-y-4">
