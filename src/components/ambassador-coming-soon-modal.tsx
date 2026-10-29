@@ -63,6 +63,24 @@ export function AmbassadorComingSoonModal({
   const [passNumber, setPassNumber] = useState("");
 
   const isEnabled = settings.applications_enabled !== false;
+  const theme = settings.theme || DEFAULT_AMBASSADOR_SETTINGS.theme;
+
+  // Resolve popup settings with deep fallback
+  const popupBadge =
+    settings.popup?.badge || settings.popup_badge || "OFFICIAL APPLICATIONS OPENING SOON";
+  const popupTitle =
+    settings.popup?.title || settings.popup_title || "Vyntyra Institutional Relations Associate";
+  const popupSubtitle =
+    settings.popup?.subtitle ||
+    settings.popup_subtitle ||
+    "Campus Ambassador Program · First Cohort (2026-27)";
+  const popupAnnouncement =
+    settings.popup?.announcement_message ||
+    settings.popup_announcement_message ||
+    "The application portal is currently in its priority preview phase. Lock in your VIP Priority Pass to get screened before public rollout!";
+  const popupRewards =
+    settings.popup?.rewards_text || settings.popup_rewards_text || "Rewards up to ₹15,000*";
+  const ticketBadge = settings.popup?.ticket_badge || "VIP ADMISSION PASS";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +122,7 @@ export function AmbassadorComingSoonModal({
 
   const shareOnWhatsApp = () => {
     const text = encodeURIComponent(
-      `🚀 *I just reserved my VIP Priority Spot for the ${settings.popup_title} (${settings.cohort_name || "First Cohort 2026-27"})!*\n\nExclusive Welcome Kits, Branded Gadgets (Earbuds, Powerbanks, Watches), Rewards up to ₹15,000, and a Curated Travel Retreat for Top 10.\n\nPre-register before official applications close:\n👉 https://vyntyraconsultancyservices.in/campus-ambassador`
+      `🚀 *I just reserved my VIP Priority Spot for the ${popupTitle} (${settings.cohort_name || "First Cohort 2026-27"})!*\n\nExclusive Welcome Kits, Branded Gadgets (Earbuds, Powerbanks, Watches), Rewards up to ₹15,000, and a Curated Travel Retreat for Top 10.\n\nPre-register before official applications close:\n👉 https://vyntyraconsultancyservices.in/campus-ambassador`
     );
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
@@ -116,36 +134,46 @@ export function AmbassadorComingSoonModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg w-[95vw] p-0 border border-amber-500/40 bg-gradient-to-b from-[#0b1124] via-[#090d1a] to-[#060810] text-white shadow-2xl rounded-3xl overflow-hidden z-50">
-        {/* Top Accent Gradient Stripe */}
-        <div className="h-2 w-full bg-gradient-to-r from-amber-400 via-rose-500 to-indigo-500 shrink-0" />
+      <DialogContent
+        style={{
+          backgroundColor: theme.card_bg_color || "#090d1a",
+          borderColor: theme.card_border_color || "#1e293b",
+        }}
+        className="max-w-lg w-[95vw] p-0 border text-white shadow-2xl rounded-3xl overflow-hidden z-50"
+      >
+        {/* Top Accent Dynamic Gradient Stripe */}
+        <div
+          style={{
+            background: `linear-gradient(to right, ${theme.hero_heading_gradient_start || "#fbbf24"}, ${theme.hero_heading_gradient_mid || "#f43f5e"}, ${theme.hero_heading_gradient_end || "#818cf8"})`,
+          }}
+          className="h-2 w-full shrink-0"
+        />
 
         <div className="p-6 sm:p-8 space-y-6 max-h-[88vh] overflow-y-auto">
           {/* Header */}
           <DialogHeader className="text-center space-y-2">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300 text-[11px] font-mono font-bold tracking-widest uppercase mx-auto animate-pulse">
               <Sparkles className="h-3 w-3 text-amber-400" />
-              {settings.popup_badge || "OFFICIAL APPLICATIONS OPENING SOON"}
+              {popupBadge}
             </div>
 
             <DialogTitle className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-              {settings.popup_title || "Vyntyra Institutional Relations Associate"}
+              {popupTitle}
             </DialogTitle>
             <div className="text-xs sm:text-sm font-semibold text-amber-400">
-              {settings.popup_subtitle || "Campus Ambassador Program · First Cohort (2026-27)"}
+              {popupSubtitle}
             </div>
 
             <DialogDescription className="text-xs text-slate-300 leading-relaxed max-w-sm mx-auto">
-              {settings.popup_announcement_message ||
-                "The application portal is currently in its priority preview phase. Lock in your VIP Priority Pass to get screened before public rollout!"}
+              {popupAnnouncement}
             </DialogDescription>
           </DialogHeader>
 
-          {/* Golden VIP Ticket Card */}
+          {/* Golden VIP Ticket Card with Perforated Look */}
           <div className="relative rounded-2xl border border-dashed border-amber-500/50 bg-gradient-to-r from-amber-500/10 via-slate-900 to-indigo-500/10 p-5 shadow-inner">
             <div className="flex items-center justify-between text-xs font-mono text-amber-300 pb-2 border-b border-amber-500/20">
               <span className="flex items-center gap-1.5 font-bold">
-                <Ticket className="h-4 w-4 text-amber-400" /> VIP ADMISSION PASS
+                <Ticket className="h-4 w-4 text-amber-400" /> {ticketBadge}
               </span>
               <span>{settings.cohort_name || "COHORT 1.0"}</span>
             </div>
@@ -181,7 +209,7 @@ export function AmbassadorComingSoonModal({
               </div>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />
-                <span>{settings.popup_rewards_text || "Rewards up to ₹15,000*"}</span>
+                <span>{popupRewards}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3 w-3 text-pink-400 shrink-0" />
@@ -312,10 +340,14 @@ export function AmbassadorComingSoonModal({
                 />
               </div>
 
-              <Button
+              <button
                 type="submit"
                 disabled={loading || !isEnabled}
-                className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-black h-11 rounded-xl text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-amber-500/25 cursor-pointer mt-2 disabled:opacity-50"
+                style={{
+                  background: `linear-gradient(to right, ${theme.primary_btn_bg_start || "#f59e0b"}, ${theme.primary_btn_bg_end || "#eab308"})`,
+                  color: theme.primary_btn_text || "#020617",
+                }}
+                className="w-full font-black h-11 rounded-xl text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-amber-500/25 cursor-pointer mt-2 disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.01] transition-transform"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -328,7 +360,7 @@ export function AmbassadorComingSoonModal({
                     Claim VIP Early-Bird Pass <ArrowRight className="h-4 w-4" />
                   </span>
                 )}
-              </Button>
+              </button>
 
               <p className="text-[10px] text-center text-slate-500">
                 ⚡ Strictly limited priority allocations for {settings.cohort_name || "First Cohort 2026-27"}.

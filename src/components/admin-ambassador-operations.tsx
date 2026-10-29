@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Award,
@@ -20,15 +20,18 @@ import {
   Loader2,
   Image as ImageIcon,
   ExternalLink,
-  ShieldAlert,
-  MessageSquare,
+  Sliders,
+  Palette,
+  Layout,
+  HelpCircle,
+  FileText,
   Mail,
   Copy,
-  Share2,
-  Sliders,
-  Layers,
-  Tag,
-  Check,
+  TrendingUp,
+  FileCheck2,
+  Crown,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,11 +60,109 @@ import {
   listAmbassadorRegistrations,
   DEFAULT_AMBASSADOR_PRODUCTS,
   DEFAULT_AMBASSADOR_SETTINGS,
+  DEFAULT_AMBASSADOR_THEME,
+  DEFAULT_AMBASSADOR_PILLARS,
+  DEFAULT_AMBASSADOR_FAQS,
   type AmbassadorProgramSettings,
   type AmbassadorProductItem,
+  type AmbassadorPillarItem,
+  type AmbassadorFaqItem,
+  type AmbassadorThemeSettings,
 } from "@/lib/ambassador.functions";
 import { AmbassadorComingSoonModal } from "@/components/ambassador-coming-soon-modal";
 import { AdminAmbassadorCampaign } from "@/components/admin-ambassador-campaign";
+
+// Preset Luxury Palettes
+const LUXURY_PALETTES: Array<{ name: string; theme: Partial<AmbassadorThemeSettings> }> = [
+  {
+    name: "Obsidian Gold Luxe (Default)",
+    theme: {
+      page_bg_color: "#070b14",
+      page_bg_secondary: "#0d1527",
+      glow_primary: "#6366f1",
+      glow_secondary: "#ec4899",
+      glow_accent: "#f59e0b",
+      hero_badge_bg: "rgba(245, 158, 11, 0.15)",
+      hero_badge_border: "rgba(245, 158, 11, 0.4)",
+      hero_badge_text: "#fbbf24",
+      hero_heading_gradient_start: "#fbbf24",
+      hero_heading_gradient_mid: "#fb7185",
+      hero_heading_gradient_end: "#818cf8",
+      card_bg_color: "#0b1226",
+      card_border_color: "#1e293b",
+      primary_btn_bg_start: "#f59e0b",
+      primary_btn_bg_end: "#eab308",
+      primary_btn_text: "#020617",
+      accent_text_color: "#fbbf24",
+    },
+  },
+  {
+    name: "Cyber Neon & Deep Space",
+    theme: {
+      page_bg_color: "#050811",
+      page_bg_secondary: "#0a1026",
+      glow_primary: "#06b6d4",
+      glow_secondary: "#a855f7",
+      glow_accent: "#38bdf8",
+      hero_badge_bg: "rgba(6, 182, 212, 0.15)",
+      hero_badge_border: "rgba(6, 182, 212, 0.4)",
+      hero_badge_text: "#22d3ee",
+      hero_heading_gradient_start: "#38bdf8",
+      hero_heading_gradient_mid: "#c084fc",
+      hero_heading_gradient_end: "#f472b6",
+      card_bg_color: "#0a1228",
+      card_border_color: "#1e293b",
+      primary_btn_bg_start: "#06b6d4",
+      primary_btn_bg_end: "#3b82f6",
+      primary_btn_text: "#ffffff",
+      accent_text_color: "#38bdf8",
+    },
+  },
+  {
+    name: "Royal Emerald Velvet",
+    theme: {
+      page_bg_color: "#04100c",
+      page_bg_secondary: "#071e17",
+      glow_primary: "#10b981",
+      glow_secondary: "#059669",
+      glow_accent: "#34d399",
+      hero_badge_bg: "rgba(16, 185, 129, 0.15)",
+      hero_badge_border: "rgba(16, 185, 129, 0.4)",
+      hero_badge_text: "#34d399",
+      hero_heading_gradient_start: "#34d399",
+      hero_heading_gradient_mid: "#fbbf24",
+      hero_heading_gradient_end: "#10b981",
+      card_bg_color: "#081d16",
+      card_border_color: "#134e4a",
+      primary_btn_bg_start: "#10b981",
+      primary_btn_bg_end: "#059669",
+      primary_btn_text: "#ffffff",
+      accent_text_color: "#34d399",
+    },
+  },
+  {
+    name: "Velvet Rose & Platinum",
+    theme: {
+      page_bg_color: "#12050e",
+      page_bg_secondary: "#1f0a18",
+      glow_primary: "#ec4899",
+      glow_secondary: "#f43f5e",
+      glow_accent: "#f59e0b",
+      hero_badge_bg: "rgba(236, 72, 153, 0.15)",
+      hero_badge_border: "rgba(236, 72, 153, 0.4)",
+      hero_badge_text: "#f472b6",
+      hero_heading_gradient_start: "#fb7185",
+      hero_heading_gradient_mid: "#f43f5e",
+      hero_heading_gradient_end: "#fbbf24",
+      card_bg_color: "#1c0c17",
+      card_border_color: "#4a1532",
+      primary_btn_bg_start: "#ec4899",
+      primary_btn_bg_end: "#f43f5e",
+      primary_btn_text: "#ffffff",
+      accent_text_color: "#f472b6",
+    },
+  },
+];
 
 export function AdminAmbassadorOperations() {
   const qc = useQueryClient();
@@ -84,7 +185,9 @@ export function AdminAmbassadorOperations() {
 
   // Local Form State
   const [settings, setSettings] = useState<AmbassadorProgramSettings>(DEFAULT_AMBASSADOR_SETTINGS);
-  const [activeSubTab, setActiveSubTab] = useState<"controls" | "popup" | "products" | "applicants">("controls");
+  const [activeTab, setActiveTab] = useState<
+    "theme" | "hero" | "pillars" | "products" | "gadgets_retreat" | "faqs" | "form" | "popup" | "applicants"
+  >("theme");
   const [isSaving, setIsSaving] = useState(false);
   const [testModalOpen, setTestModalOpen] = useState(false);
 
@@ -92,6 +195,14 @@ export function AdminAmbassadorOperations() {
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AmbassadorProductItem | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Pillar Add / Edit Modal State
+  const [pillarModalOpen, setPillarModalOpen] = useState(false);
+  const [editingPillar, setEditingPillar] = useState<AmbassadorPillarItem | null>(null);
+
+  // FAQ Add / Edit Modal State
+  const [faqModalOpen, setFaqModalOpen] = useState(false);
+  const [editingFaq, setEditingFaq] = useState<AmbassadorFaqItem | null>(null);
 
   // Sync state from query
   useEffect(() => {
@@ -105,7 +216,7 @@ export function AdminAmbassadorOperations() {
     setIsSaving(true);
     try {
       await saveSettingsFn({ data: settings });
-      toast.success("Ambassador program controls & photography settings saved successfully!");
+      toast.success("All Ambassador Program settings & styling published successfully!");
       qc.invalidateQueries({ queryKey: ["admin-ambassador-settings"] });
       qc.invalidateQueries({ queryKey: ["ambassador-settings"] });
     } catch (err: any) {
@@ -116,7 +227,10 @@ export function AdminAmbassadorOperations() {
   };
 
   // Image Upload Handler
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    onSuccess: (url: string) => void
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -144,9 +258,9 @@ export function AdminAmbassadorOperations() {
             },
           });
 
-          if (res?.publicUrl && editingProduct) {
-            setEditingProduct({ ...editingProduct, image_url: res.publicUrl });
-            toast.success("Product photography uploaded to Supabase Storage!");
+          if (res?.publicUrl) {
+            onSuccess(res.publicUrl);
+            toast.success("Image uploaded to Supabase Storage!");
           }
         } catch (uploadErr: any) {
           toast.error(uploadErr.message || "Upload failed.");
@@ -161,7 +275,19 @@ export function AdminAmbassadorOperations() {
     }
   };
 
-  // Open Create Product
+  // Preset Palette Apply
+  const applyPalette = (palette: Partial<AmbassadorThemeSettings>) => {
+    setSettings({
+      ...settings,
+      theme: {
+        ...settings.theme,
+        ...palette,
+      },
+    });
+    toast.success("Palette applied to draft. Click 'Save All Changes' to publish!");
+  };
+
+  // Product Handlers
   const openCreateProduct = () => {
     setEditingProduct({
       id: `prod-${Date.now()}`,
@@ -170,7 +296,7 @@ export function AdminAmbassadorOperations() {
       category: "Welcome Kit",
       image_url: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=800&auto=format&fit=crop",
       desc: "",
-      badge: "Included in Cohort",
+      badge: "Guaranteed Upon Onboarding",
       badge_style: "border-amber-400/40 bg-amber-500/20 text-amber-300",
       is_active: true,
       featured_in_gadgets: false,
@@ -178,13 +304,11 @@ export function AdminAmbassadorOperations() {
     setProductModalOpen(true);
   };
 
-  // Open Edit Product
   const openEditProduct = (prod: AmbassadorProductItem) => {
     setEditingProduct({ ...prod });
     setProductModalOpen(true);
   };
 
-  // Save Product
   const handleSaveProduct = () => {
     if (!editingProduct) return;
     if (!editingProduct.title || !editingProduct.image_url) {
@@ -193,38 +317,103 @@ export function AdminAmbassadorOperations() {
     }
 
     const exists = settings.products.some((p) => p.id === editingProduct.id);
-    let updatedProducts: AmbassadorProductItem[];
-    if (exists) {
-      updatedProducts = settings.products.map((p) =>
-        p.id === editingProduct.id ? editingProduct : p
-      );
-    } else {
-      updatedProducts = [editingProduct, ...settings.products];
-    }
+    const updatedProducts = exists
+      ? settings.products.map((p) => (p.id === editingProduct.id ? editingProduct : p))
+      : [editingProduct, ...settings.products];
 
     setSettings({ ...settings, products: updatedProducts });
     setProductModalOpen(false);
-    toast.success(`Product "${editingProduct.title}" updated in local draft. Remember to click "Save All Changes"!`);
+    toast.success(`Product "${editingProduct.title}" updated in draft.`);
   };
 
-  // Delete Product
   const handleDeleteProduct = (id: string) => {
-    const updated = settings.products.filter((p) => p.id !== id);
-    setSettings({ ...settings, products: updated });
-    toast.info("Product removed from draft. Click 'Save All Changes' to persist.");
+    setSettings({
+      ...settings,
+      products: settings.products.filter((p) => p.id !== id),
+    });
+    toast.info("Product removed from draft.");
   };
 
-  // Toggle Product Active
-  const toggleProductActive = (id: string) => {
-    const updated = settings.products.map((p) =>
-      p.id === id ? { ...p, is_active: !p.is_active } : p
-    );
-    setSettings({ ...settings, products: updated });
+  // Pillar Handlers
+  const openCreatePillar = () => {
+    setEditingPillar({
+      id: `pillar-${Date.now()}`,
+      title: "",
+      highlight: "Special Perk",
+      desc: "",
+      badgeColor: "border-amber-500/40 bg-amber-500/10 text-amber-400",
+      image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=800&auto=format&fit=crop",
+      icon_name: "Gift",
+    });
+    setPillarModalOpen(true);
+  };
+
+  const openEditPillar = (pillar: AmbassadorPillarItem) => {
+    setEditingPillar({ ...pillar });
+    setPillarModalOpen(true);
+  };
+
+  const handleSavePillar = () => {
+    if (!editingPillar) return;
+    const list = settings.pillars_section.pillars || [];
+    const exists = list.some((p) => p.id === editingPillar.id);
+    const updated = exists
+      ? list.map((p) => (p.id === editingPillar.id ? editingPillar : p))
+      : [...list, editingPillar];
+
+    setSettings({
+      ...settings,
+      pillars_section: {
+        ...settings.pillars_section,
+        pillars: updated,
+      },
+    });
+    setPillarModalOpen(false);
+    toast.success("Pillar updated in draft.");
+  };
+
+  const handleDeletePillar = (id: string) => {
+    setSettings({
+      ...settings,
+      pillars_section: {
+        ...settings.pillars_section,
+        pillars: settings.pillars_section.pillars.filter((p) => p.id !== id),
+      },
+    });
+  };
+
+  // FAQ Handlers
+  const openCreateFaq = () => {
+    setEditingFaq({
+      id: `faq-${Date.now()}`,
+      q: "",
+      a: "",
+    });
+    setFaqModalOpen(true);
+  };
+
+  const handleSaveFaq = () => {
+    if (!editingFaq || !editingFaq.q || !editingFaq.a) {
+      toast.error("Question and answer are required.");
+      return;
+    }
+    const list = settings.faqs || [];
+    const exists = list.some((f) => f.id === editingFaq.id);
+    const updated = exists
+      ? list.map((f) => (f.id === editingFaq.id ? editingFaq : f))
+      : [...list, editingFaq];
+
+    setSettings({ ...settings, faqs: updated });
+    setFaqModalOpen(false);
+  };
+
+  const handleDeleteFaq = (id: string) => {
+    setSettings({ ...settings, faqs: settings.faqs.filter((f) => f.id !== id) });
   };
 
   // Reset to Factory Default
   const handleResetDefaults = () => {
-    if (confirm("Reset products and popup messages to official high-res factory defaults?")) {
+    if (confirm("Reset ALL Ambassador styling, text, and catalog to official factory defaults?")) {
       setSettings(DEFAULT_AMBASSADOR_SETTINGS);
       toast.info("Settings reset to defaults. Click 'Save All Changes' to publish.");
     }
@@ -232,7 +421,7 @@ export function AdminAmbassadorOperations() {
 
   return (
     <div className="space-y-6">
-      {/* ─── Hero / Header Strip ─── */}
+      {/* ─── Super Admin Control Header ─── */}
       <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-r from-slate-950 via-[#0d1633] to-slate-950 p-6 sm:p-8 text-white shadow-xl">
         <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-amber-500/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-pink-500/15 blur-3xl" />
@@ -241,13 +430,13 @@ export function AdminAmbassadorOperations() {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-mono font-bold text-amber-300 uppercase tracking-wider">
               <Award className="h-3.5 w-3.5 text-amber-400" />
-              SUPER ADMIN OPERATIONS · CAMPUS AMBASSADOR ENGINE
+              PIN-TO-PIN SUPER ADMIN OPERATIONS ENGINE
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Institutional Relations Associate (Ambassador) Control
+              Campus Ambassador Ultra-Control Hub
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl font-light">
-              Manage product photography, upload branded merchandise imagery, toggle student application entries, and customize the Coming Soon VIP popup messages in real-time.
+              Customize every pixel: background colors, text gradients, hero typography, metrics, perks, swags, gadgets, travel retreat, FAQs, and popup tickets.
             </p>
           </div>
 
@@ -258,7 +447,7 @@ export function AdminAmbassadorOperations() {
               className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-black px-6 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 cursor-pointer flex items-center gap-2"
             >
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              <span>{isSaving ? "Saving..." : "Save All Changes"}</span>
+              <span>{isSaving ? "Publishing..." : "Save All Changes"}</span>
             </Button>
 
             <Button
@@ -267,7 +456,7 @@ export function AdminAmbassadorOperations() {
               className="border-slate-700 bg-slate-900/70 text-slate-200 hover:text-white rounded-xl text-xs flex items-center gap-1.5"
             >
               <Eye className="h-4 w-4 text-amber-400" />
-              <span>Preview Live Popup</span>
+              <span>Test Live VIP Popup</span>
             </Button>
           </div>
         </div>
@@ -275,17 +464,21 @@ export function AdminAmbassadorOperations() {
         {/* Live Status Indicators */}
         <div className="mt-6 pt-5 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 rounded-full ${settings.applications_enabled ? "bg-emerald-400 animate-pulse" : "bg-rose-500"}`} />
+            <div
+              className={`w-3 h-3 rounded-full ${
+                settings.applications_enabled ? "bg-emerald-400 animate-pulse" : "bg-rose-500"
+              }`}
+            />
             <div>
-              <div className="text-xs text-slate-400 uppercase font-mono">Application Status</div>
+              <div className="text-xs text-slate-400 uppercase font-mono">Applications</div>
               <div className="text-sm font-bold text-white">
-                {settings.applications_enabled ? "Accepting Entries" : "Applications Paused"}
+                {settings.applications_enabled ? "Accepting Entries" : "Paused"}
               </div>
             </div>
           </div>
 
           <div>
-            <div className="text-xs text-slate-400 uppercase font-mono">Catalog Items</div>
+            <div className="text-xs text-slate-400 uppercase font-mono">Products in Catalog</div>
             <div className="text-sm font-bold text-amber-400">
               {settings.products.filter((p) => p.is_active).length} Active / {settings.products.length} Total
             </div>
@@ -307,31 +500,36 @@ export function AdminAmbassadorOperations() {
         </div>
       </div>
 
-      {/* ─── Sub-Tab Navigation Bar ─── */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
+      {/* ─── Pin-to-Pin Tab Navigation ─── */}
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 pb-3 overflow-x-auto scrollbar-none">
         {[
-          { id: "controls", label: "Application & Program Controls", icon: Sliders },
-          { id: "popup", label: "Coming Soon Popup Customizer", icon: Sparkles },
-          { id: "products", label: "Product Photography & Catalog", icon: ImageIcon, count: settings.products.length },
-          { id: "applicants", label: "Applicants & Marketing Broadcast", icon: Mail, count: (registrationsQ.data || []).length },
+          { id: "theme", label: "🎨 Colors & Themes", icon: Palette },
+          { id: "hero", label: "🚀 Hero & Metrics", icon: Layout },
+          { id: "pillars", label: "💎 Perks & Pillars", icon: Sparkles, count: settings.pillars_section.pillars.length },
+          { id: "products", label: "📸 Product Photography", icon: ImageIcon, count: settings.products.length },
+          { id: "gadgets_retreat", label: "⚡ Gadgets & Retreat", icon: Zap },
+          { id: "faqs", label: "❓ FAQs", icon: HelpCircle, count: settings.faqs.length },
+          { id: "form", label: "📝 Application Form", icon: FileText },
+          { id: "popup", label: "🎟️ Coming Soon VIP Popup", icon: Eye },
+          { id: "applicants", label: "👥 Applicants & Broadcast", icon: Mail, count: (registrationsQ.data || []).length },
         ].map((tab) => {
           const Icon = tab.icon;
-          const isActive = activeSubTab === tab.id;
+          const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveSubTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs shrink-0 transition-all cursor-pointer ${
                 isActive
                   ? "bg-slate-900 text-white shadow-md"
                   : "bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200"
               }`}
             >
-              <Icon className={`h-4 w-4 ${isActive ? "text-amber-400" : "text-slate-500"}`} />
+              <Icon className={`h-3.5 w-3.5 ${isActive ? "text-amber-400" : "text-slate-500"}`} />
               <span>{tab.label}</span>
               {tab.count !== undefined && (
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
                     isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-700"
                   }`}
                 >
@@ -343,305 +541,670 @@ export function AdminAmbassadorOperations() {
         })}
       </div>
 
-      {/* ─── SUB-TAB 1: Application & Program Controls ─── */}
-      {activeSubTab === "controls" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Application Entry Status</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Toggle whether students and interns can submit pre-registrations for the First Cohort.
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={`text-xs font-bold ${settings.applications_enabled ? "text-emerald-600" : "text-rose-600"}`}>
-                    {settings.applications_enabled ? "ENABLED" : "DISABLED"}
-                  </span>
-                  <Switch
-                    checked={settings.applications_enabled}
-                    onCheckedChange={(val) => setSettings({ ...settings, applications_enabled: val })}
-                  />
-                </div>
-              </div>
-
-              {!settings.applications_enabled && (
-                <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/70 space-y-2">
-                  <div className="flex items-center gap-2 text-rose-800 text-xs font-bold">
-                    <AlertTriangle className="h-4 w-4 text-rose-600" />
-                    <span>Applications Currently Paused Message</span>
-                  </div>
-                  <Textarea
-                    rows={2}
-                    value={settings.disabled_notice}
-                    onChange={(e) => setSettings({ ...settings, disabled_notice: e.target.value })}
-                    className="bg-white text-xs text-slate-800"
-                    placeholder="Message shown when student attempts to register..."
-                  />
-                  <p className="text-[11px] text-rose-600">
-                    This message will be displayed on the landing page, careers section, and popup when registration is paused.
-                  </p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Cohort Name / Label
-                  </label>
-                  <Input
-                    value={settings.cohort_name}
-                    onChange={(e) => setSettings({ ...settings, cohort_name: e.target.value })}
-                    placeholder="e.g. First Cohort 2026-27"
-                    className="h-10 text-xs font-semibold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Target Rewards Headline
-                  </label>
-                  <Input
-                    value={settings.target_rewards}
-                    onChange={(e) => setSettings({ ...settings, target_rewards: e.target.value })}
-                    placeholder="e.g. ₹15,000"
-                    className="h-10 text-xs font-semibold"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Actions Card */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-              <h4 className="text-sm font-bold text-slate-900">Program Management Actions</h4>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button
-                  onClick={handleSaveSettings}
-                  disabled={isSaving}
-                  className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl"
-                >
-                  <Save className="h-4 w-4 mr-1.5" />
-                  <span>Save Configuration</span>
-                </Button>
-                <Button
-                  onClick={handleResetDefaults}
-                  variant="outline"
-                  className="border-slate-300 text-slate-700 hover:bg-slate-100 text-xs rounded-xl"
-                >
-                  <RotateCcw className="h-4 w-4 mr-1.5 text-slate-500" />
-                  <span>Reset to Factory Defaults</span>
-                </Button>
-                <a
-                  href="/campus-ambassador"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors"
-                >
-                  <span>Open Public Page</span>
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Help Card */}
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 shadow-sm space-y-3">
-              <div className="flex items-center gap-2 text-amber-900 font-bold text-xs uppercase tracking-wider">
-                <Sparkles className="h-4 w-4 text-amber-600" />
-                <span>Super Admin Tip</span>
-              </div>
-              <p className="text-xs text-amber-950 leading-relaxed">
-                Changes saved here reflect <strong>instantly across all student surfaces</strong> including the public landing page (<code>/campus-ambassador</code>), the Careers spotlight, and the Intern Dashboard.
-              </p>
-              <div className="pt-2 text-[11px] text-amber-800">
-                • <strong>Disable applications</strong> before screening rounds start to avoid late submissions.<br/>
-                • <strong>Upload original brand photos</strong> in the catalog tab for maximum trust.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── SUB-TAB 2: Coming Soon Popup Customizer ─── */}
-      {activeSubTab === "popup" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 space-y-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      {/* ═════════ TAB 1: 🎨 THEME & COLORS (PIN-TO-PIN) ═════════ */}
+      {activeTab === "theme" && (
+        <div className="space-y-6">
+          {/* Preset Palettes Bar */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-slate-900">Coming Soon Modal Popup Settings</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Customize the title, badges, announcement message, and rewards copy shown inside the VIP Ticket pass dialog.
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                  <Palette className="h-4 w-4 text-amber-500" /> One-Click Luxury Color Palettes
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Select a designer palette or customize each individual color below.
                 </p>
               </div>
-
-              <div className="space-y-3 pt-2">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Popup Badge Text
-                  </label>
-                  <Input
-                    value={settings.popup_badge}
-                    onChange={(e) => setSettings({ ...settings, popup_badge: e.target.value })}
-                    placeholder="e.g. EXCLUSIVE VIP PASS"
-                    className="h-10 text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Popup Main Title
-                  </label>
-                  <Input
-                    value={settings.popup_title}
-                    onChange={(e) => setSettings({ ...settings, popup_title: e.target.value })}
-                    placeholder="e.g. Vyntyra Institutional Relations Associate"
-                    className="h-10 text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Popup Subtitle
-                  </label>
-                  <Input
-                    value={settings.popup_subtitle}
-                    onChange={(e) => setSettings({ ...settings, popup_subtitle: e.target.value })}
-                    placeholder="e.g. First Cohort 2026-27 · Launching Soon"
-                    className="h-10 text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Popup Announcement Message
-                  </label>
-                  <Textarea
-                    rows={3}
-                    value={settings.popup_announcement_message}
-                    onChange={(e) =>
-                      setSettings({ ...settings, popup_announcement_message: e.target.value })
-                    }
-                    placeholder="Enter the message displayed to applicants..."
-                    className="text-xs leading-relaxed"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Rewards Headline Text
-                  </label>
-                  <Input
-                    value={settings.popup_rewards_text}
-                    onChange={(e) => setSettings({ ...settings, popup_rewards_text: e.target.value })}
-                    placeholder="e.g. Rewards Earn up to ₹15,000 (*Performance & T&C Apply)"
-                    className="h-10 text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Perks Summary Line
-                  </label>
-                  <Input
-                    value={settings.popup_perks_summary}
-                    onChange={(e) => setSettings({ ...settings, popup_perks_summary: e.target.value })}
-                    placeholder="e.g. Branded Gadgets · Top 10 Retreat · Dual Certificates"
-                    className="h-10 text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                <Button
-                  onClick={handleSaveSettings}
-                  disabled={isSaving}
-                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl"
-                >
-                  <Save className="h-4 w-4 mr-1.5" />
-                  <span>Save Popup Copy</span>
-                </Button>
-                <Button
-                  onClick={() => setTestModalOpen(true)}
-                  variant="outline"
-                  className="text-xs font-bold rounded-xl"
-                >
-                  <Eye className="h-4 w-4 mr-1.5 text-amber-500" />
-                  <span>Test Open Popup</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Live Preview Column */}
-          <div className="lg:col-span-5">
-            <div className="rounded-2xl border border-slate-800 bg-[#070b14] p-5 text-white shadow-xl space-y-4">
-              <div className="flex items-center justify-between text-xs font-mono text-amber-400">
-                <span>LIVE PREVIEW CARD</span>
-                <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-300">
-                  {settings.popup_badge}
-                </Badge>
-              </div>
-
-              <div className="p-4 rounded-xl border border-amber-500/30 bg-slate-900/80 space-y-2">
-                <div className="text-sm font-bold text-white">{settings.popup_title}</div>
-                <div className="text-xs text-amber-400 font-mono">{settings.popup_subtitle}</div>
-                <p className="text-xs text-slate-300 leading-relaxed pt-1">
-                  {settings.popup_announcement_message}
-                </p>
-                <div className="pt-2 border-t border-slate-800 text-[11px] text-emerald-400 font-semibold">
-                  💰 {settings.popup_rewards_text}
-                </div>
-                <div className="text-[11px] text-slate-400">
-                  🎁 {settings.popup_perks_summary}
-                </div>
-              </div>
-
               <Button
-                onClick={() => setTestModalOpen(true)}
-                className="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl"
+                variant="outline"
+                size="sm"
+                onClick={handleResetDefaults}
+                className="text-xs text-slate-600 rounded-xl"
               >
-                Click to Test Interactive Dialog &rarr;
+                <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset All Defaults
               </Button>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {LUXURY_PALETTES.map((pal) => (
+                <button
+                  key={pal.name}
+                  onClick={() => applyPalette(pal.theme)}
+                  className="p-3 rounded-xl border border-slate-200 hover:border-amber-400 bg-slate-50 hover:bg-white text-left transition-all group"
+                >
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span
+                      className="w-4 h-4 rounded-full border border-black/20"
+                      style={{ backgroundColor: pal.theme.page_bg_color }}
+                    />
+                    <span
+                      className="w-4 h-4 rounded-full border border-black/20"
+                      style={{ backgroundColor: pal.theme.hero_heading_gradient_start }}
+                    />
+                    <span
+                      className="w-4 h-4 rounded-full border border-black/20"
+                      style={{ backgroundColor: pal.theme.primary_btn_bg_start }}
+                    />
+                    <span
+                      className="w-4 h-4 rounded-full border border-black/20"
+                      style={{ backgroundColor: pal.theme.glow_primary }}
+                    />
+                  </div>
+                  <div className="text-xs font-bold text-slate-800 group-hover:text-amber-600">
+                    {pal.name}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Granular Color Controls */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Background & Ambient Glow Colors */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+              <h4 className="text-sm font-bold text-slate-900 pb-2 border-b">
+                Page Background &amp; Ambient Lights
+              </h4>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Primary Page Background
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.theme.page_bg_color}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, page_bg_color: e.target.value },
+                      })
+                    }
+                    className="w-9 h-9 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={settings.theme.page_bg_color}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, page_bg_color: e.target.value },
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Secondary Section Background
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.theme.page_bg_secondary}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, page_bg_secondary: e.target.value },
+                      })
+                    }
+                    className="w-9 h-9 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={settings.theme.page_bg_secondary}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, page_bg_secondary: e.target.value },
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Ambient Glow Light (Top Center)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.theme.glow_primary}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, glow_primary: e.target.value },
+                      })
+                    }
+                    className="w-9 h-9 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={settings.theme.glow_primary}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, glow_primary: e.target.value },
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Accent Light (Left Orb)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.theme.glow_secondary}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, glow_secondary: e.target.value },
+                      })
+                    }
+                    className="w-9 h-9 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={settings.theme.glow_secondary}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, glow_secondary: e.target.value },
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Typography & Heading Gradient Colors */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+              <h4 className="text-sm font-bold text-slate-900 pb-2 border-b">
+                Typography &amp; Gradient Colors
+              </h4>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Heading Gradient (Start Color)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.theme.hero_heading_gradient_start}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, hero_heading_gradient_start: e.target.value },
+                      })
+                    }
+                    className="w-9 h-9 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={settings.theme.hero_heading_gradient_start}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, hero_heading_gradient_start: e.target.value },
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Heading Gradient (Mid Color)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.theme.hero_heading_gradient_mid}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, hero_heading_gradient_mid: e.target.value },
+                      })
+                    }
+                    className="w-9 h-9 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={settings.theme.hero_heading_gradient_mid}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, hero_heading_gradient_mid: e.target.value },
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Heading Gradient (End Color)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.theme.hero_heading_gradient_end}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, hero_heading_gradient_end: e.target.value },
+                      })
+                    }
+                    className="w-9 h-9 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={settings.theme.hero_heading_gradient_end}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, hero_heading_gradient_end: e.target.value },
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Hero Description Text Color
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.theme.hero_description_color}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, hero_description_color: e.target.value },
+                      })
+                    }
+                    className="w-9 h-9 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={settings.theme.hero_description_color}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, hero_description_color: e.target.value },
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Buttons & Cards Styling */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+              <h4 className="text-sm font-bold text-slate-900 pb-2 border-b">
+                Buttons &amp; Cards
+              </h4>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Primary CTA Button (Start Gradient)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.theme.primary_btn_bg_start}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, primary_btn_bg_start: e.target.value },
+                      })
+                    }
+                    className="w-9 h-9 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={settings.theme.primary_btn_bg_start}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, primary_btn_bg_start: e.target.value },
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Primary CTA Button (End Gradient)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.theme.primary_btn_bg_end}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, primary_btn_bg_end: e.target.value },
+                      })
+                    }
+                    className="w-9 h-9 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={settings.theme.primary_btn_bg_end}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, primary_btn_bg_end: e.target.value },
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Primary Button Text Color
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.theme.primary_btn_text}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, primary_btn_text: e.target.value },
+                      })
+                    }
+                    className="w-9 h-9 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={settings.theme.primary_btn_text}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, primary_btn_text: e.target.value },
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Card Background Color
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.theme.card_bg_color}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, card_bg_color: e.target.value },
+                      })
+                    }
+                    className="w-9 h-9 rounded cursor-pointer border"
+                  />
+                  <Input
+                    value={settings.theme.card_bg_color}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        theme: { ...settings.theme, card_bg_color: e.target.value },
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ─── SUB-TAB 3: Product Photography & Catalog ─── */}
-      {activeSubTab === "products" && (
+      {/* ═════════ TAB 2: 🚀 HERO & METRICS ═════════ */}
+      {activeTab === "hero" && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <h3 className="text-base font-bold text-slate-900">Hero Section Content</h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Hero Top Badge Text
+                </label>
+                <Input
+                  value={settings.hero.badge_text}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      hero: { ...settings.hero, badge_text: e.target.value },
+                    })
+                  }
+                  className="h-10 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Primary CTA Button Label
+                </label>
+                <Input
+                  value={settings.hero.primary_cta_label}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      hero: { ...settings.hero, primary_cta_label: e.target.value },
+                    })
+                  }
+                  className="h-10 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Main Title (White Text)
+                </label>
+                <Input
+                  value={settings.hero.title_prefix}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      hero: { ...settings.hero, title_prefix: e.target.value },
+                    })
+                  }
+                  className="h-10 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Gradient Title (Highlighted Text)
+                </label>
+                <Input
+                  value={settings.hero.title_gradient}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      hero: { ...settings.hero, title_gradient: e.target.value },
+                    })
+                  }
+                  className="h-10 text-xs"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Hero Description Text
+              </label>
+              <Textarea
+                rows={3}
+                value={settings.hero.description}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    hero: { ...settings.hero, description: e.target.value },
+                  })
+                }
+                className="text-xs leading-relaxed"
+              />
+            </div>
+          </div>
+
+          {/* Metrics Editor */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <h3 className="text-base font-bold text-slate-900">4 Key Metrics Bar</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {settings.hero.metrics.map((metric, i) => (
+                <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                  <div className="text-xs font-bold text-slate-600 uppercase">Metric #{i + 1}</div>
+                  <div>
+                    <label className="text-[10px] text-slate-500 uppercase">Value / Number</label>
+                    <Input
+                      value={metric.value}
+                      onChange={(e) => {
+                        const updated = [...settings.hero.metrics];
+                        updated[i] = { ...updated[i], value: e.target.value };
+                        setSettings({
+                          ...settings,
+                          hero: { ...settings.hero, metrics: updated },
+                        });
+                      }}
+                      className="h-8 text-xs font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-500 uppercase">Label</label>
+                    <Input
+                      value={metric.label}
+                      onChange={(e) => {
+                        const updated = [...settings.hero.metrics];
+                        updated[i] = { ...updated[i], label: e.target.value };
+                        setSettings({
+                          ...settings,
+                          hero: { ...settings.hero, metrics: updated },
+                        });
+                      }}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="color"
+                      value={metric.color}
+                      onChange={(e) => {
+                        const updated = [...settings.hero.metrics];
+                        updated[i] = { ...updated[i], color: e.target.value };
+                        setSettings({
+                          ...settings,
+                          hero: { ...settings.hero, metrics: updated },
+                        });
+                      }}
+                      className="w-6 h-6 rounded cursor-pointer border"
+                    />
+                    <span className="text-[10px] text-slate-600 font-mono">{metric.color}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═════════ TAB 3: 💎 PERKS & PILLARS (CRUD) ═════════ */}
+      {activeTab === "pillars" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                Exclusive Privileges &amp; Pillars ({settings.pillars_section.pillars.length})
+              </h3>
+              <p className="text-xs text-slate-500">
+                Add, edit, reorder or customize the perk pillar cards displayed to candidates.
+              </p>
+            </div>
+            <Button
+              onClick={openCreatePillar}
+              className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl"
+            >
+              <Plus className="h-4 w-4 mr-1.5" /> Add Pillar
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {settings.pillars_section.pillars.map((pillar) => (
+              <div
+                key={pillar.id}
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between hover:border-amber-400/50 transition-all"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                      {pillar.highlight}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        onClick={() => openEditPillar(pillar)}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-slate-600"
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        onClick={() => handleDeletePillar(pillar.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-rose-500"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                  <h4 className="font-bold text-sm text-slate-900">{pillar.title}</h4>
+                  <p className="mt-1.5 text-xs text-slate-500 leading-relaxed">{pillar.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ═════════ TAB 4: 📸 PRODUCT PHOTOGRAPHY & CATALOG ═════════ */}
+      {activeTab === "products" && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-base font-bold text-slate-900">
-                Product Photography &amp; Merchandise Catalog ({settings.products.length} Items)
+                Product Photography &amp; Swags Catalog ({settings.products.length} Items)
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Upload real product photos for goodies, swags, corporate apparel, electronic gadgets, and travel retreat.
+                Upload real photography for swags, merchandise, gadgets, and retreat.
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={openCreateProduct}
-                className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add Product Photography</span>
-              </Button>
-              <Button
-                onClick={handleSaveSettings}
-                disabled={isSaving}
-                className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs rounded-xl"
-              >
-                <Save className="h-4 w-4 mr-1.5" />
-                <span>Save Catalog</span>
-              </Button>
-            </div>
+            <Button
+              onClick={openCreateProduct}
+              className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl"
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              <span>Add Product Photography</span>
+            </Button>
           </div>
 
-          {/* Products Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {settings.products.map((item) => (
               <div
@@ -658,19 +1221,9 @@ export function AdminAmbassadorOperations() {
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
-                    <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                    <div className="absolute top-2 left-2">
                       <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-900/80 text-white backdrop-blur-md">
                         {item.category}
-                      </span>
-                    </div>
-
-                    <div className="absolute top-2 right-2">
-                      <span
-                        className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border backdrop-blur-md ${
-                          item.badge_style || "border-amber-400/40 bg-amber-500/20 text-amber-300"
-                        }`}
-                      >
-                        {item.badge}
                       </span>
                     </div>
                   </div>
@@ -692,7 +1245,12 @@ export function AdminAmbassadorOperations() {
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={item.is_active}
-                      onCheckedChange={() => toggleProductActive(item.id)}
+                      onCheckedChange={() => {
+                        const updated = settings.products.map((p) =>
+                          p.id === item.id ? { ...p, is_active: !p.is_active } : p
+                        );
+                        setSettings({ ...settings, products: updated });
+                      }}
                     />
                     <span className="text-[11px] font-medium text-slate-600">
                       {item.is_active ? "Visible" : "Hidden"}
@@ -704,7 +1262,7 @@ export function AdminAmbassadorOperations() {
                       onClick={() => openEditProduct(item)}
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-slate-600 hover:text-slate-900"
+                      className="h-8 w-8 p-0 text-slate-600"
                     >
                       <Edit className="h-3.5 w-3.5" />
                     </Button>
@@ -712,7 +1270,7 @@ export function AdminAmbassadorOperations() {
                       onClick={() => handleDeleteProduct(item.id)}
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+                      className="h-8 w-8 p-0 text-rose-500"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -724,25 +1282,466 @@ export function AdminAmbassadorOperations() {
         </div>
       )}
 
-      {/* ─── SUB-TAB 4: Applicants & Marketing Broadcast Hub ─── */}
-      {activeSubTab === "applicants" && (
+      {/* ═════════ TAB 5: ⚡ GADGETS & TRAVEL RETREAT ═════════ */}
+      {activeTab === "gadgets_retreat" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Gadgets Section Settings */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Zap className="h-4 w-4 text-sky-500" /> Electronic Gadgets Showcase
+            </h3>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Badge Text
+              </label>
+              <Input
+                value={settings.gadgets_section.badge_text}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    gadgets_section: { ...settings.gadgets_section, badge_text: e.target.value },
+                  })
+                }
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Heading</label>
+              <Input
+                value={settings.gadgets_section.heading}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    gadgets_section: { ...settings.gadgets_section, heading: e.target.value },
+                  })
+                }
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Description
+              </label>
+              <Textarea
+                rows={2}
+                value={settings.gadgets_section.description}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    gadgets_section: { ...settings.gadgets_section, description: e.target.value },
+                  })
+                }
+                className="text-xs"
+              />
+            </div>
+
+            <div className="pt-2 border-t">
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Callout Box Title
+              </label>
+              <Input
+                value={settings.gadgets_section.callout_title}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    gadgets_section: { ...settings.gadgets_section, callout_title: e.target.value },
+                  })
+                }
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Callout Box Description
+              </label>
+              <Textarea
+                rows={2}
+                value={settings.gadgets_section.callout_desc}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    gadgets_section: { ...settings.gadgets_section, callout_desc: e.target.value },
+                  })
+                }
+                className="text-xs"
+              />
+            </div>
+          </div>
+
+          {/* Travel Retreat Settings */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Plane className="h-4 w-4 text-pink-500" /> Curated Travel Retreat (Top 10)
+            </h3>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Badge Text
+              </label>
+              <Input
+                value={settings.retreat_section.badge_text}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    retreat_section: { ...settings.retreat_section, badge_text: e.target.value },
+                  })
+                }
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Heading</label>
+              <Input
+                value={settings.retreat_section.heading}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    retreat_section: { ...settings.retreat_section, heading: e.target.value },
+                  })
+                }
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Retreat Photo URL
+              </label>
+              <Input
+                value={settings.retreat_section.image_url}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    retreat_section: { ...settings.retreat_section, image_url: e.target.value },
+                  })
+                }
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Description
+              </label>
+              <Textarea
+                rows={3}
+                value={settings.retreat_section.description}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    retreat_section: { ...settings.retreat_section, description: e.target.value },
+                  })
+                }
+                className="text-xs"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═════════ TAB 6: ❓ FAQS ═════════ */}
+      {activeTab === "faqs" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                Frequently Asked Questions ({settings.faqs.length})
+              </h3>
+              <p className="text-xs text-slate-500">
+                Add, edit, or remove candidate FAQ items.
+              </p>
+            </div>
+            <Button
+              onClick={openCreateFaq}
+              className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl"
+            >
+              <Plus className="h-4 w-4 mr-1.5" /> Add FAQ
+            </Button>
+          </div>
+
+          <div className="space-y-3">
+            {settings.faqs.map((faq, i) => (
+              <div
+                key={faq.id || i}
+                className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs flex items-start justify-between gap-4"
+              >
+                <div className="space-y-1">
+                  <div className="font-bold text-sm text-slate-900">{faq.q}</div>
+                  <div className="text-xs text-slate-500 leading-relaxed">{faq.a}</div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    onClick={() => {
+                      setEditingFaq({ ...faq });
+                      setFaqModalOpen(true);
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-slate-600"
+                  >
+                    <Edit className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    onClick={() => handleDeleteFaq(faq.id)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-rose-500"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ═════════ TAB 7: 📝 FORM & APPLICATION CONTROLS ═════════ */}
+      {activeTab === "form" && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Application Intake Control</h3>
+                <p className="text-xs text-slate-500">Enable or pause pre-registration submissions.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-xs font-bold ${settings.applications_enabled ? "text-emerald-600" : "text-rose-600"}`}>
+                  {settings.applications_enabled ? "ACCEPTING" : "PAUSED"}
+                </span>
+                <Switch
+                  checked={settings.applications_enabled}
+                  onCheckedChange={(val) => setSettings({ ...settings, applications_enabled: val })}
+                />
+              </div>
+            </div>
+
+            {!settings.applications_enabled && (
+              <div className="p-4 rounded-xl border border-rose-200 bg-rose-50 space-y-2">
+                <label className="text-xs font-bold text-rose-800">Custom Paused Notice</label>
+                <Textarea
+                  rows={2}
+                  value={settings.disabled_notice}
+                  onChange={(e) => setSettings({ ...settings, disabled_notice: e.target.value })}
+                  className="bg-white text-xs"
+                />
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Active Cohort Name
+                </label>
+                <Input
+                  value={settings.cohort_name}
+                  onChange={(e) => setSettings({ ...settings, cohort_name: e.target.value })}
+                  className="h-10 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Target Rewards Headline
+                </label>
+                <Input
+                  value={settings.target_rewards}
+                  onChange={(e) => setSettings({ ...settings, target_rewards: e.target.value })}
+                  className="h-10 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Form Heading Title
+                </label>
+                <Input
+                  value={settings.form_section.heading}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      form_section: { ...settings.form_section, heading: e.target.value },
+                    })
+                  }
+                  className="h-10 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Submit Button Text
+                </label>
+                <Input
+                  value={settings.form_section.submit_btn_text}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      form_section: { ...settings.form_section, submit_btn_text: e.target.value },
+                    })
+                  }
+                  className="h-10 text-xs"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═════════ TAB 8: 🎟️ COMING SOON VIP POPUP ═════════ */}
+      {activeTab === "popup" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-7 space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+              <h3 className="text-base font-bold text-slate-900">VIP Ticket Dialog Copy</h3>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Popup Badge Text
+                </label>
+                <Input
+                  value={settings.popup.badge}
+                  onChange={(e) =>
+                    setSettings({ ...settings, popup: { ...settings.popup, badge: e.target.value } })
+                  }
+                  className="h-10 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Popup Main Title
+                </label>
+                <Input
+                  value={settings.popup.title}
+                  onChange={(e) =>
+                    setSettings({ ...settings, popup: { ...settings.popup, title: e.target.value } })
+                  }
+                  className="h-10 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Popup Subtitle
+                </label>
+                <Input
+                  value={settings.popup.subtitle}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      popup: { ...settings.popup, subtitle: e.target.value },
+                    })
+                  }
+                  className="h-10 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Announcement Message
+                </label>
+                <Textarea
+                  rows={3}
+                  value={settings.popup.announcement_message}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      popup: { ...settings.popup, announcement_message: e.target.value },
+                    })
+                  }
+                  className="text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Rewards Headline Text
+                </label>
+                <Input
+                  value={settings.popup.rewards_text}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      popup: { ...settings.popup, rewards_text: e.target.value },
+                    })
+                  }
+                  className="h-10 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Perks Summary
+                </label>
+                <Input
+                  value={settings.popup.perks_summary}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      popup: { ...settings.popup, perks_summary: e.target.value },
+                    })
+                  }
+                  className="h-10 text-xs"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Popup Preview Card */}
+          <div className="lg:col-span-5">
+            <div className="rounded-2xl border border-slate-800 bg-[#070b14] p-5 text-white shadow-xl space-y-4">
+              <div className="flex items-center justify-between text-xs font-mono text-amber-400">
+                <span>POPUP PREVIEW</span>
+                <Badge variant="outline" className="border-amber-400/40 text-amber-300">
+                  {settings.popup.badge}
+                </Badge>
+              </div>
+
+              <div className="p-4 rounded-xl border border-amber-500/30 bg-slate-900/80 space-y-2">
+                <div className="text-sm font-bold text-white">{settings.popup.title}</div>
+                <div className="text-xs text-amber-400 font-mono">{settings.popup.subtitle}</div>
+                <p className="text-xs text-slate-300 leading-relaxed pt-1">
+                  {settings.popup.announcement_message}
+                </p>
+                <div className="pt-2 border-t border-slate-800 text-[11px] text-emerald-400 font-semibold">
+                  💰 {settings.popup.rewards_text}
+                </div>
+              </div>
+
+              <Button
+                onClick={() => setTestModalOpen(true)}
+                className="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl"
+              >
+                Open Real Interactive Dialog &rarr;
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═════════ TAB 9: 👥 APPLICANTS & BROADCAST ═════════ */}
+      {activeTab === "applicants" && (
         <div className="space-y-6">
           <AdminAmbassadorCampaign />
         </div>
       )}
 
-      {/* ─── Add/Edit Product Photography Modal ─── */}
+      {/* ─── Product Edit/Add Modal ─── */}
       <Dialog open={productModalOpen} onOpenChange={setProductModalOpen}>
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900">
               {editingProduct && settings.products.some((p) => p.id === editingProduct.id)
-                ? "Edit Product Photography & Merchandise"
+                ? "Edit Product Photography Item"
                 : "Add New Product Photography Item"}
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500">
-              Upload product photo to Supabase Storage or specify a CDN image URL.
-            </DialogDescription>
           </DialogHeader>
 
           {editingProduct && (
@@ -750,13 +1749,11 @@ export function AdminAmbassadorOperations() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                    Product Title *
+                    Title *
                   </label>
                   <Input
-                    required
                     value={editingProduct.title}
                     onChange={(e) => setEditingProduct({ ...editingProduct, title: e.target.value })}
-                    placeholder="e.g. Executive Corporate Welcome Box"
                     className="h-9 text-xs"
                   />
                 </div>
@@ -770,7 +1767,6 @@ export function AdminAmbassadorOperations() {
                     onChange={(e) =>
                       setEditingProduct({ ...editingProduct, subtitle: e.target.value })
                     }
-                    placeholder="e.g. 20,000mAh PD Fast Charge"
                     className="h-9 text-xs"
                   />
                 </div>
@@ -788,7 +1784,7 @@ export function AdminAmbassadorOperations() {
                     }
                   >
                     <SelectTrigger className="h-9 text-xs">
-                      <SelectValue placeholder="Select Category" />
+                      <SelectValue placeholder="Category" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Welcome Kit">Welcome Kit</SelectItem>
@@ -808,14 +1804,13 @@ export function AdminAmbassadorOperations() {
                   <Input
                     value={editingProduct.badge}
                     onChange={(e) => setEditingProduct({ ...editingProduct, badge: e.target.value })}
-                    placeholder="e.g. Guaranteed Upon Onboarding"
                     className="h-9 text-xs"
                   />
                 </div>
               </div>
 
-              {/* Photo Upload & Preview Section */}
-              <div className="space-y-2 p-3.5 rounded-xl border border-slate-200 bg-slate-50/70">
+              {/* Photo Upload & Preview */}
+              <div className="space-y-2 p-3.5 rounded-xl border border-slate-200 bg-slate-50">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
                     <ImageIcon className="h-4 w-4 text-amber-600" />
@@ -828,7 +1823,6 @@ export function AdminAmbassadorOperations() {
                   )}
                 </div>
 
-                {/* Image Preview */}
                 {editingProduct.image_url && (
                   <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-slate-200 bg-slate-900">
                     <img
@@ -839,15 +1833,18 @@ export function AdminAmbassadorOperations() {
                   </div>
                 )}
 
-                {/* Upload File Input */}
                 <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
-                  <label className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs cursor-pointer transition-colors shrink-0">
+                  <label className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs cursor-pointer shrink-0">
                     <UploadCloud className="h-4 w-4" />
                     <span>Upload Image File</span>
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={handleFileUpload}
+                      onChange={(e) =>
+                        handleFileUpload(e, (url) =>
+                          setEditingProduct({ ...editingProduct, image_url: url })
+                        )
+                      }
                       className="hidden"
                     />
                   </label>
@@ -857,7 +1854,7 @@ export function AdminAmbassadorOperations() {
                     onChange={(e) =>
                       setEditingProduct({ ...editingProduct, image_url: e.target.value })
                     }
-                    placeholder="Or enter direct HTTPS image URL..."
+                    placeholder="Or enter direct image URL..."
                     className="h-9 text-xs flex-1 bg-white"
                   />
                 </div>
@@ -871,7 +1868,6 @@ export function AdminAmbassadorOperations() {
                   rows={2}
                   value={editingProduct.desc}
                   onChange={(e) => setEditingProduct({ ...editingProduct, desc: e.target.value })}
-                  placeholder="Describe the product specifications, material, and qualification..."
                   className="text-xs"
                 />
               </div>
@@ -884,7 +1880,7 @@ export function AdminAmbassadorOperations() {
                       setEditingProduct({ ...editingProduct, is_active: val })
                     }
                   />
-                  <span className="text-xs font-medium text-slate-700">Display in Public Catalog</span>
+                  <span className="text-xs font-medium text-slate-700">Display in Catalog</span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -900,21 +1896,123 @@ export function AdminAmbassadorOperations() {
             </div>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setProductModalOpen(false)}
-              className="text-xs"
-            >
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProductModalOpen(false)} className="text-xs">
               Cancel
             </Button>
-            <Button
-              type="button"
-              onClick={handleSaveProduct}
-              className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs"
-            >
+            <Button onClick={handleSaveProduct} className="bg-amber-400 text-slate-950 font-bold text-xs">
               Update Product Draft
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Pillar Edit/Add Modal ─── */}
+      <Dialog open={pillarModalOpen} onOpenChange={setPillarModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-slate-900">
+              {editingPillar && settings.pillars_section.pillars.some((p) => p.id === editingPillar.id)
+                ? "Edit Pillar"
+                : "Add New Pillar"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {editingPillar && (
+            <div className="space-y-3 py-2">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Pillar Title *
+                </label>
+                <Input
+                  value={editingPillar.title}
+                  onChange={(e) => setEditingPillar({ ...editingPillar, title: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Highlight Badge Text
+                </label>
+                <Input
+                  value={editingPillar.highlight}
+                  onChange={(e) =>
+                    setEditingPillar({ ...editingPillar, highlight: e.target.value })
+                  }
+                  className="h-9 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Description
+                </label>
+                <Textarea
+                  rows={3}
+                  value={editingPillar.desc}
+                  onChange={(e) => setEditingPillar({ ...editingPillar, desc: e.target.value })}
+                  className="text-xs"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPillarModalOpen(false)} className="text-xs">
+              Cancel
+            </Button>
+            <Button onClick={handleSavePillar} className="bg-amber-400 text-slate-950 font-bold text-xs">
+              Save Pillar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── FAQ Edit/Add Modal ─── */}
+      <Dialog open={faqModalOpen} onOpenChange={setFaqModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-slate-900">
+              {editingFaq && settings.faqs.some((f) => f.id === editingFaq.id)
+                ? "Edit FAQ"
+                : "Add New FAQ"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {editingFaq && (
+            <div className="space-y-3 py-2">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Question *
+                </label>
+                <Input
+                  value={editingFaq.q}
+                  onChange={(e) => setEditingFaq({ ...editingFaq, q: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Answer *
+                </label>
+                <Textarea
+                  rows={4}
+                  value={editingFaq.a}
+                  onChange={(e) => setEditingFaq({ ...editingFaq, a: e.target.value })}
+                  className="text-xs"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFaqModalOpen(false)} className="text-xs">
+              Cancel
+            </Button>
+            <Button onClick={handleSaveFaq} className="bg-amber-400 text-slate-950 font-bold text-xs">
+              Save FAQ
             </Button>
           </DialogFooter>
         </DialogContent>
