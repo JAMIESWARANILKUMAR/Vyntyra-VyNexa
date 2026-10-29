@@ -36,6 +36,7 @@ import {
   ExternalLink,
   Check,
   X,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -267,11 +268,43 @@ function CampusAmbassadorPage() {
     return getDistrictsForState(state);
   }, [state]);
 
-  // Colleges for selected state
-  const availableColleges = useMemo(() => {
-    const list = (COLLEGES as Record<string, string[]>)[state] || [];
-    return list.slice(0, 300); // safety slice
+  // College search & selection state
+  const [collegeSearch, setCollegeSearch] = useState("");
+  const [isCollegeFocused, setIsCollegeFocused] = useState(false);
+
+  // All Colleges for selected state (Full directory without slice truncation)
+  const stateCollegesList = useMemo(() => {
+    if (!state) return [];
+    return (COLLEGES as Record<string, string[]>)[state] || [];
   }, [state]);
+
+  // Filtered colleges matching search query across state (or all 14,682 colleges nationally if no state selected)
+  const filteredColleges = useMemo(() => {
+    const q = collegeSearch.toLowerCase().trim();
+    if (state && stateCollegesList.length > 0) {
+      if (!q) {
+        return stateCollegesList.slice(0, 100);
+      }
+      return stateCollegesList.filter((c) => c.toLowerCase().includes(q));
+    }
+
+    // If state is not selected yet, enable global search across all 14,682 colleges
+    if (q.length >= 2) {
+      const results: { name: string; state: string }[] = [];
+      for (const [stName, colleges] of Object.entries(COLLEGES)) {
+        for (const c of colleges) {
+          if (c.toLowerCase().includes(q)) {
+            results.push({ name: c, state: stName });
+            if (results.length >= 100) break;
+          }
+        }
+        if (results.length >= 100) break;
+      }
+      return results;
+    }
+
+    return [];
+  }, [state, stateCollegesList, collegeSearch]);
 
   // Handle State Change
   const handleStateChange = (newState: string) => {
@@ -280,6 +313,7 @@ function CampusAmbassadorPage() {
     setDistrict(districts[0] || "");
     setCollegeName("");
     setCustomCollege("");
+    setCollegeSearch("");
   };
 
   // Toggle Language
@@ -514,7 +548,7 @@ function CampusAmbassadorPage() {
               </span>
               <span className="hidden sm:inline text-slate-400">|</span>
               <span className="hidden sm:inline text-slate-300">
-                Official Welcome Kits, ₹15,000 Rewards &amp; Top 10 Curated Retreat
+                Official Welcome Kits (Dispatched upon 1st Milestone), ₹15,000 Rewards &amp; Top 10 Curated Retreat
               </span>
             </div>
             <button
@@ -560,7 +594,7 @@ function CampusAmbassadorPage() {
             {settings.hero?.description || (
               <>
                 Become the official student leader representing Vyntyra Consultancy Services at your institution.
-                Unlock <strong className="text-amber-300 font-semibold">exclusive welcome kits</strong>,{" "}
+                Unlock <strong className="text-amber-300 font-semibold">exclusive welcome kits (dispatched after reaching 1st milestone only)</strong>,{" "}
                 <strong className="text-emerald-300 font-semibold">rewards up to {settings.target_rewards || "₹15,000"}</strong>,{" "}
                 <strong className="text-sky-300 font-semibold">branded electronic gadgets</strong>, and qualify for an{" "}
                 <strong className="text-pink-300 font-semibold">all-expenses-paid curated travel retreat</strong> for the Top 10.
@@ -639,6 +673,11 @@ function CampusAmbassadorPage() {
               Every Institutional Relations Associate represents the gold standard of Vyntyra. Wear the brand, carry the tech gear, and unpack physical premium merchandise delivered directly to your doorstep.
             </p>
 
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold shadow-lg shadow-amber-500/5">
+              <Sparkles className="h-4 w-4 shrink-0 text-amber-400" />
+              <span>⭐ Important Dispatch Policy: Physical swags, goodies, and executive welcome kits will be dispatched after reaching 1st milestone only.</span>
+            </div>
+
             <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
               {galleryCategories.map((cat) => (
                 <button
@@ -679,7 +718,7 @@ function CampusAmbassadorPage() {
                       item.badge_style || "border-amber-400/40 bg-amber-500/20 text-amber-300"
                     }`}
                   >
-                    {item.badge}
+                    {item.badge === "Guaranteed Upon Onboarding" ? "Dispatched After 1st Milestone" : item.badge}
                   </span>
                 </div>
 
@@ -1117,7 +1156,7 @@ function CampusAmbassadorPage() {
                       className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
                     />
                     <p className="text-[11px] text-slate-500 mt-1">
-                      Required for courier delivery of your official IRA Executive Welcome Kit &amp; physical corporate merchandise.
+                      Required for courier delivery of your official IRA Executive Welcome Kit &amp; physical corporate merchandise (dispatched after reaching 1st milestone only).
                     </p>
                   </div>
                 </div>
@@ -1186,35 +1225,194 @@ function CampusAmbassadorPage() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                        College / Institution Name *
-                      </label>
-                      <Select
-                        disabled={!isEnabled}
-                        value={collegeName}
-                        onValueChange={setCollegeName}
-                      >
-                        <SelectTrigger className="bg-slate-900/80 border-slate-800 text-white h-11 rounded-lg text-left">
-                          <SelectValue placeholder={state ? "Select from approved colleges" : "Select state first"} />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-72">
-                          {availableColleges.map((col, idx) => (
-                            <SelectItem key={idx} value={col}>
-                              {col}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value="OTHER">Other / Institution Not Listed</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="relative">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          College / Institution Name *
+                        </label>
+                        {state && (
+                          <span className="text-[10px] text-amber-400 font-mono font-medium">
+                            {stateCollegesList.length} Colleges in {state}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* If a college is selected (not OTHER), display selected badge */}
+                      {collegeName && collegeName !== "OTHER" ? (
+                        <div className="p-3 rounded-xl border border-amber-500/40 bg-amber-500/10 flex items-center justify-between gap-3 text-xs">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Building2 className="h-4 w-4 text-amber-400 shrink-0" />
+                            <div className="min-w-0">
+                              <div className="font-bold text-white truncate" title={collegeName}>
+                                {collegeName}
+                              </div>
+                              <div className="text-[10px] text-amber-300/80">
+                                Approved Institution ({state || "India"})
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCollegeName("");
+                              setCollegeSearch("");
+                              setIsCollegeFocused(true);
+                            }}
+                            className="px-2.5 py-1 rounded bg-slate-900/80 hover:bg-slate-800 text-amber-300 hover:text-white text-[11px] font-bold border border-amber-500/30 shrink-0 cursor-pointer"
+                          >
+                            Change
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                            <Input
+                              disabled={!isEnabled}
+                              placeholder={
+                                state
+                                  ? `Type to search all ${stateCollegesList.length} colleges in ${state}...`
+                                  : "Type to search 14,682 colleges across India..."
+                              }
+                              value={collegeSearch}
+                              onChange={(e) => {
+                                setCollegeSearch(e.target.value);
+                                setIsCollegeFocused(true);
+                              }}
+                              onFocus={() => setIsCollegeFocused(true)}
+                              className="pl-9 pr-8 bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11 text-xs"
+                            />
+                            {collegeSearch && (
+                              <button
+                                type="button"
+                                onClick={() => setCollegeSearch("")}
+                                className="absolute right-2.5 top-3.5 text-slate-400 hover:text-white"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Live search matches dropdown */}
+                          {isCollegeFocused && (
+                            <div className="rounded-xl border border-slate-800 bg-slate-950/95 backdrop-blur-md shadow-2xl p-2 max-h-64 overflow-y-auto space-y-1 text-xs">
+                              <div className="flex items-center justify-between px-2 py-1 text-[10px] text-slate-400 border-b border-slate-800/80">
+                                <span>
+                                  {state
+                                    ? collegeSearch
+                                      ? `Found ${(filteredColleges as string[]).length} matches in ${state}`
+                                      : `Showing first 100 of ${stateCollegesList.length} colleges in ${state}`
+                                    : collegeSearch.length >= 2
+                                    ? `National search: ${(filteredColleges as any[]).length} matches found`
+                                    : "Select state or type 2+ letters to search across India"}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setIsCollegeFocused(false)}
+                                  className="text-slate-400 hover:text-white underline cursor-pointer"
+                                >
+                                  Close
+                                </button>
+                              </div>
+
+                              {/* Manual "Other" option always at top */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCollegeName("OTHER");
+                                  setIsCollegeFocused(false);
+                                }}
+                                className="w-full text-left px-3 py-2 rounded-lg text-amber-300 hover:bg-amber-500/10 font-bold flex items-center justify-between transition-colors border border-dashed border-amber-500/30"
+                              >
+                                <span>➕ Other / Can't find your college? (Enter manually)</span>
+                                <span className="text-[10px] bg-amber-500/20 px-1.5 py-0.5 rounded text-amber-200">
+                                  Custom
+                                </span>
+                              </button>
+
+                              {/* Render matching colleges */}
+                              {state ? (
+                                (filteredColleges as string[]).length === 0 ? (
+                                  <div className="p-4 text-center text-slate-400 text-xs">
+                                    No institution matching "{collegeSearch}" in {state}.<br />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCollegeName("OTHER");
+                                        setCustomCollege(collegeSearch);
+                                        setIsCollegeFocused(false);
+                                      }}
+                                      className="mt-2 text-amber-400 hover:underline font-bold"
+                                    >
+                                      Use "{collegeSearch}" as custom institution name &rarr;
+                                    </button>
+                                  </div>
+                                ) : (
+                                  (filteredColleges as string[]).map((c, idx) => (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => {
+                                        setCollegeName(c);
+                                        setCustomCollege("");
+                                        setIsCollegeFocused(false);
+                                      }}
+                                      className="w-full text-left px-3 py-2 rounded-lg text-slate-200 hover:text-white hover:bg-slate-900 transition-colors flex items-center justify-between group cursor-pointer"
+                                    >
+                                      <span className="truncate pr-2">{c}</span>
+                                      <Check className="h-3.5 w-3.5 text-amber-400 opacity-0 group-hover:opacity-100 shrink-0" />
+                                    </button>
+                                  ))
+                                )
+                              ) : (
+                                (filteredColleges as { name: string; state: string }[]).map((item, idx) => (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => {
+                                      setState(item.state);
+                                      const districts = getDistrictsForState(item.state);
+                                      setDistrict(districts[0] || "");
+                                      setCollegeName(item.name);
+                                      setCustomCollege("");
+                                      setIsCollegeFocused(false);
+                                    }}
+                                    className="w-full text-left px-3 py-2 rounded-lg text-slate-200 hover:text-white hover:bg-slate-900 transition-colors flex items-center justify-between group cursor-pointer"
+                                  >
+                                    <span className="truncate pr-2">{item.name}</span>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-sky-400 shrink-0">
+                                      {item.state}
+                                    </span>
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Custom College Input if OTHER */}
                       {collegeName === "OTHER" && (
-                        <Input
-                          required
-                          placeholder="Enter your college / university full name..."
-                          value={customCollege}
-                          onChange={(e) => setCustomCollege(e.target.value)}
-                          className="bg-slate-900/80 border-slate-800 text-white h-10 mt-2 text-xs"
-                        />
+                        <div className="mt-2 space-y-1">
+                          <Input
+                            required
+                            placeholder="Enter your college / university full name..."
+                            value={customCollege}
+                            onChange={(e) => setCustomCollege(e.target.value)}
+                            className="bg-slate-900/80 border-slate-800 text-white h-11 text-xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCollegeName("");
+                              setCustomCollege("");
+                              setIsCollegeFocused(true);
+                            }}
+                            className="text-[11px] text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            &larr; Back to college directory search
+                          </button>
+                        </div>
                       )}
                     </div>
 
@@ -1531,7 +1729,8 @@ function CampusAmbassadorPage() {
                   </div>
 
                   <p className="text-xs text-slate-300 leading-relaxed">
-                    The appointment as a <strong>Vyntyra Institutional Relations Associate</strong> is applicable for a <strong>formal 6-month tenure</strong>. Following internal screening and shortlisting, the official <strong>6-Month Association Agreement &amp; Terms Document</strong> will be transmitted directly via email to your registered address for digital signing prior to cohort onboarding and welcome kit dispatch.
+                    The appointment as a <strong>Vyntyra Institutional Relations Associate</strong> is applicable for a <strong>formal 6-month tenure</strong>. Following internal screening and shortlisting, the official <strong>6-Month Association Agreement &amp; Terms Document</strong> will be transmitted directly via email to your registered address for digital signing prior to cohort onboarding.<br/>
+                    <strong className="text-amber-300">📦 Important Dispatch Notice:</strong> Official Swags, Goodies, and Executive Welcome Kits will be dispatched <strong>after reaching 1st milestone only</strong>.
                   </p>
 
                   <div className="space-y-3 pt-2">
@@ -1544,7 +1743,7 @@ function CampusAmbassadorPage() {
                         className="mt-0.5 h-4 w-4 rounded border-amber-500/50 bg-slate-900 text-amber-500 focus:ring-amber-400"
                       />
                       <span className="text-xs text-slate-200 group-hover:text-white leading-relaxed">
-                        I understand and agree that the Institutional Relations Associate appointment is for a <strong>6-month tenure</strong>. I agree to review and digitally sign the formal 6-month agreement document sent to my email upon shortlisting. *
+                        I understand and agree that the appointment is for a <strong>6-month tenure</strong>, and that <strong>swags and welcome kits will be dispatched after reaching 1st milestone only</strong>. I agree to review and digitally sign the formal 6-month agreement document sent to my email upon shortlisting. *
                       </span>
                     </label>
 
@@ -1587,7 +1786,8 @@ function CampusAmbassadorPage() {
                     )}
                   </button>
                   <p className="mt-3 text-center text-[11px] text-slate-500">
-                    ⚡ An automated confirmation email will be dispatched to your email and the admin team at ambassadorprogram@vyntyraconsultancyservices.in upon submission.
+                    ⚡ An automated confirmation email will be dispatched to your email and the admin team at ambassadorprogram@vyntyraconsultancyservices.in upon submission.<br/>
+                    <span className="text-amber-400 font-medium">📦 Note: Official Swags and Welcome Kits will be dispatched after reaching 1st milestone only.</span>
                   </p>
                 </div>
               </form>

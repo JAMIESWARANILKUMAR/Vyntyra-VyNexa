@@ -296,7 +296,7 @@ export function AdminAmbassadorOperations() {
       category: "Welcome Kit",
       image_url: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=800&auto=format&fit=crop",
       desc: "",
-      badge: "Guaranteed Upon Onboarding",
+      badge: "Dispatched After 1st Milestone",
       badge_style: "border-amber-400/40 bg-amber-500/20 text-amber-300",
       is_active: true,
       featured_in_gadgets: false,

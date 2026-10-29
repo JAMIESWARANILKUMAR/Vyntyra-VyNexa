@@ -180,8 +180,8 @@ export const DEFAULT_AMBASSADOR_PRODUCTS: AmbassadorProductItem[] = [
     title: "Executive IRA Corporate Welcome Box",
     subtitle: "Custom IRA Badge & Official Metal ID",
     image_url: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=800&auto=format&fit=crop",
-    desc: "Luxury unboxing box with personalized institutional associate ID card, custom metallic IRA badge, executive lanyard, pen, notebook, and collectible laptop stickers.",
-    badge: "Guaranteed Upon Onboarding",
+    desc: "Luxury unboxing box with personalized institutional associate ID card, custom metallic IRA badge, executive lanyard, pen, notebook, and collectible laptop stickers (dispatched after reaching 1st milestone only).",
+    badge: "Dispatched After 1st Milestone",
     badge_style: "border-amber-400/40 bg-amber-500/20 text-amber-300",
     is_active: true,
   },
@@ -319,8 +319,8 @@ export const DEFAULT_AMBASSADOR_PILLARS: AmbassadorPillarItem[] = [
     id: "pillar-welcome-kit",
     icon_name: "Gift",
     title: "Exclusive IRA Welcome Kit",
-    highlight: "Custom Associate Badge & ID",
-    desc: "Receive the official Institutional Relations Associate physical welcome box with your personalized executive ID card, lanyard, custom IRA pin, welcome stationery, and collectible stickers.",
+    highlight: "Dispatched After 1st Milestone",
+    desc: "Receive the official Institutional Relations Associate physical welcome box with your personalized executive ID card, lanyard, custom IRA pin, welcome stationery, and collectible stickers (dispatched after reaching 1st milestone only).",
     badgeColor: "border-amber-500/40 bg-amber-500/10 text-amber-400",
     image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=800&auto=format&fit=crop",
   },
@@ -328,8 +328,8 @@ export const DEFAULT_AMBASSADOR_PILLARS: AmbassadorPillarItem[] = [
     id: "pillar-merch",
     icon_name: "Award",
     title: "Corporate Branded Merchandise",
-    highlight: "Performance-Based Apparel",
-    desc: "Wear the brand with pride: unlock limited-edition embroidered hoodies, cotton tech tees, padded laptop sleeves, sleek steel bottles, and heavy-duty tech backpacks upon milestone completion.",
+    highlight: "Dispatched After 1st Milestone",
+    desc: "Wear the brand with pride: unlock limited-edition embroidered hoodies, cotton tech tees, padded laptop sleeves, sleek steel bottles, and heavy-duty tech backpacks (dispatched after reaching 1st milestone only).",
     badgeColor: "border-pink-500/40 bg-pink-500/10 text-pink-400",
     image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop",
   },
@@ -382,6 +382,11 @@ export const DEFAULT_AMBASSADOR_PILLARS: AmbassadorPillarItem[] = [
 
 export const DEFAULT_AMBASSADOR_FAQS: AmbassadorFaqItem[] = [
   {
+    id: "faq-welcome-kit",
+    q: "When will I receive my Welcome Kit & Swags?",
+    a: "Official Welcome Kits, personalized Executive IRA ID Badges, goodies, and corporate swags will be dispatched after reaching 1st milestone only. Once your Milestone 1 achievements are verified, the physical kit is couriered directly to your residential address with active tracking.",
+  },
+  {
     id: "faq-1",
     q: "Who is eligible to apply for the First Cohort?",
     a: "Any undergraduate or postgraduate student enrolled in recognized colleges or universities across India (B.Tech, B.E., BCA, MCA, MBA, BBA, B.Sc, etc.) passionate about technology, event leadership, and institutional growth is eligible.",
@@ -394,7 +399,7 @@ export const DEFAULT_AMBASSADOR_FAQS: AmbassadorFaqItem[] = [
   {
     id: "faq-3",
     q: "When will the First Cohort officially launch?",
-    a: "The First Cohort 2026-27 is currently in its pre-registration phase. Candidates who pre-register now will receive priority screening, interview invitations, and early welcome kit dispatches as soon as selection rounds begin.",
+    a: "The First Cohort 2026-27 is currently in its pre-registration phase. Candidates who pre-register now receive priority screening, interview invitations, and early cohort onboarding as soon as selection rounds begin. Please note that swags and welcome kits are dispatched after reaching 1st milestone only.",
   },
   {
     id: "faq-4",
@@ -764,7 +769,8 @@ async function sendAmbassadorAutomatedEmails(record: AmbassadorRegistration) {
                       📋 Mandatory 6-Month Tenure Agreement Notice
                     </div>
                     <div style="font-size: 13px; color: #cbd5e1; line-height: 1.6;">
-                      The Institutional Relations Associate appointment is applicable for a <strong>formal 6-month tenure</strong>. Following internal candidate shortlisting and interview rounds, the official <strong>6-Month Association Agreement & Terms Document</strong> will be dispatched directly to your registered email for digital signing prior to cohort onboarding and welcome kit dispatch.
+                      The Institutional Relations Associate appointment is applicable for a <strong>formal 6-month tenure</strong>. Following internal candidate shortlisting and interview rounds, the official <strong>6-Month Association Agreement & Terms Document</strong> will be dispatched directly to your registered email for digital signing.<br/>
+                      <strong style="color: #fbbf24;">📦 Important Dispatch Policy:</strong> Official Swags, Goodies, and Executive Welcome Kits will be dispatched <strong>after reaching 1st milestone only</strong>.
                     </div>
                   </td>
                 </tr>
@@ -830,8 +836,8 @@ async function sendAmbassadorAutomatedEmails(record: AmbassadorRegistration) {
                 </tr>
                 <tr>
                   <td style="font-size: 12px; color: #cbd5e1; line-height: 1.8;">
-                    🎁 <strong>IRA Executive Welcome Kit:</strong> Personalized ID Card, Lanyard, Pin & Stationery.<br/>
-                    👕 <strong>Corporate Merchandise:</strong> Performance-based hoodies, tees, laptop sleeves & bottles.<br/>
+                    🎁 <strong>IRA Executive Welcome Kit:</strong> Personalized ID Card, Lanyard, Pin & Stationery (<em>Dispatched after reaching 1st milestone only</em>).<br/>
+                    👕 <strong>Corporate Merchandise:</strong> Performance hoodies, tees, laptop sleeves & bottles (<em>Dispatched after reaching 1st milestone only</em>).<br/>
                     💰 <strong>Ambassador Rewards:</strong> Earn up to <strong>₹15,000</strong> milestone stipends (*T&C Apply).<br/>
                     ⚡ <strong>Electronic Gadgets:</strong> Powerbanks, ANC Earbuds, Soundbars, Smartwatches & Webcams.<br/>
                     ✈️ <strong>Top 10 Travel Retreat:</strong> All-expenses-paid curated corporate & leisure experience.<br/>
@@ -1707,7 +1713,7 @@ export const DEFAULT_AMBASSADOR_EMAIL_TEMPLATES: AmbassadorEmailTemplate[] = [
 <p><strong>Action Required - 6-Month Agreement:</strong><br/>
 Please download, review, and digitally sign your official <strong>6-Month Association Agreement Document</strong> using the link below:</p>
 <p><a href="{{agreement_link}}" style="display:inline-block;padding:12px 24px;background:#f59e0b;color:#0b1120;font-weight:bold;text-decoration:none;border-radius:6px;">Review &amp; Sign 6-Month Agreement &rarr;</a></p>
-<p>Upon digital acceptance, your personalized Executive IRA Welcome Kit &amp; ID Badge will be dispatched to your courier address.</p>
+<p><strong>📦 Dispatch Policy Notice:</strong> Please note that as per company policy, your personalized Executive IRA Welcome Kit, ID Badge, and corporate swags will be dispatched <strong>after reaching your 1st milestone only</strong>.</p>
 <p>Warm congratulations,<br/><strong>Board of Directors · Vyntyra Consultancy Services Pvt. Ltd.</strong></p>`,
     agreement_url: "https://vyntyraconsultancyservices.in/campus-ambassador/agreement-sample.pdf",
     is_enabled: true,
@@ -1715,11 +1721,11 @@ Please download, review, and digitally sign your official <strong>6-Month Associ
   {
     id: "tmpl_agreement_sent",
     status_trigger: "agreement_sent",
-    title: "Welcome Kit & Community Onboarding Notice",
-    subject: "🚀 Welcome Onboard! Official Onboarding & Welcome Kit Dispatch — Vyntyra IRA",
+    title: "Onboarding & 1st Milestone Welcome Kit Dispatch Notice",
+    subject: "🚀 Welcome Onboard! Official Onboarding Active — Vyntyra IRA",
     body_html: `<p>Dear <strong>{{full_name}}</strong>,</p>
 <p>Your 6-month agreement has been recorded. You are officially an active <strong>Institutional Relations Associate</strong> representing Vyntyra at <strong>{{college_name}}</strong>!</p>
-<p>📦 <strong>Welcome Kit Status:</strong> Packed &amp; assigned for courier dispatch.<br/>
+<p>📦 <strong>Welcome Kit &amp; Swags Policy:</strong> Scheduled for priority packaging &amp; courier dispatch <strong>immediately upon reaching your 1st milestone</strong>.<br/>
 💼 <strong>Rewards Portal:</strong> Milestone stipends up to ₹15,000 are now active.<br/>
 📲 <strong>Ambassador Community:</strong> You will be added to the private Cohort 1.0 Executive Slack &amp; WhatsApp group.</p>
 <p>Welcome to the family!<br/><strong>Vyntyra Corporate Leadership Team</strong></p>`,

@@ -122,7 +122,7 @@ export function AmbassadorComingSoonModal({
 
   const shareOnWhatsApp = () => {
     const text = encodeURIComponent(
-      `🚀 *I just reserved my VIP Priority Spot for the ${popupTitle} (${settings.cohort_name || "First Cohort 2026-27"})!*\n\nExclusive Welcome Kits, Branded Gadgets (Earbuds, Powerbanks, Watches), Rewards up to ₹15,000, and a Curated Travel Retreat for Top 10.\n\nPre-register before official applications close:\n👉 https://vyntyraconsultancyservices.in/campus-ambassador`
+      `🚀 *I just reserved my VIP Priority Spot for the ${popupTitle} (${settings.cohort_name || "First Cohort 2026-27"})!*\n\nExclusive Welcome Kits (Dispatched after 1st milestone only), Branded Gadgets (Earbuds, Powerbanks, Watches), Rewards up to ₹15,000, and a Curated Travel Retreat for Top 10.\n\nPre-register before official applications close:\n👉 https://vyntyraconsultancyservices.in/campus-ambassador`
     );
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
@@ -205,7 +205,7 @@ export function AmbassadorComingSoonModal({
               </div>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3 w-3 text-amber-400 shrink-0" />
-                <span>Reserved Welcome Kit</span>
+                <span>Welcome Kit (After 1st Milestone)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />
@@ -241,7 +241,8 @@ export function AmbassadorComingSoonModal({
                   Congratulations <strong>{fullName}</strong>! You have secured priority early-bird access for the {settings.cohort_name || "First Cohort"}.
                 </p>
                 <p className="mt-2 text-[11px] text-slate-400">
-                  We will dispatch the official application link and welcome kit allocation instructions to <strong>{email}</strong> upon launch.
+                  We will dispatch the official application link and onboarding instructions to <strong>{email}</strong> upon launch.<br/>
+                  <span className="text-amber-400 font-medium">⭐ Note: Official Welcome Kits &amp; Swags will be dispatched after reaching 1st milestone only.</span>
                 </p>
               </div>
 

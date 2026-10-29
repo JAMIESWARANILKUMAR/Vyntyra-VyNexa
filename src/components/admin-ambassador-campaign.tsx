@@ -334,8 +334,8 @@ export function AdminAmbassadorCampaign() {
 Hi *${name || "Associate"}*, represent Vyntyra Consultancy Services at *${college || "your campus"}*!
 
 🎁 *Exclusive Perks for First Cohort:*
-• 📦 *Official IRA Welcome Kit:* Personalized Associate ID, Custom Badge, Stationery & Swag
-• 👕 *Corporate Merchandise:* Branded Hoodies, Tees, Laptop Sleeves & Bottles
+• 📦 *Official IRA Welcome Kit:* (Dispatched after 1st milestone only) Personalized Associate ID, Custom Badge, Stationery & Swag
+• 👕 *Corporate Merchandise:* (Dispatched after 1st milestone only) Branded Hoodies, Tees, Laptop Sleeves & Bottles
 • 💰 *Ambassador Rewards:* Earn up to *₹15,000* (*T&C Apply)
 • ⚡ *Branded Electronic Gadgets:* Powerbanks, Wireless Earbuds, Soundbars, Smartwatches & Webcams
 • ✈️ *Top 10 Travel Retreat:* All-expenses-paid curated corporate retreat with co-associates
@@ -1207,16 +1207,19 @@ Hi *${name || "Associate"}*, represent Vyntyra Consultancy Services at *${colleg
                   Vyntyra Institutional Relations Associate (Campus Ambassador Program)
                 </div>
                 <p className="text-slate-300 text-xs leading-relaxed">
-                  Hi [Candidate Name], represent Vyntyra at your institution. Unlock exclusive welcome kits, earn rewards up to ₹15,000, win branded electronic gadgets, and qualify for an all-expenses-paid curated travel retreat for Top 10.
+                  Hi [Candidate Name], represent Vyntyra at your institution. Unlock exclusive welcome kits (dispatched after 1st milestone only), earn rewards up to ₹15,000, win branded electronic gadgets, and qualify for an all-expenses-paid curated travel retreat for Top 10.
                 </p>
 
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800 text-[11px] text-slate-300">
-                  <div>🎁 Exclusive IRA Welcome Kit</div>
-                  <div>👕 Corporate Branded Merchandise</div>
+                  <div>🎁 IRA Welcome Kit (After 1st Milestone)</div>
+                  <div>👕 Corporate Swags (After 1st Milestone)</div>
                   <div className="text-emerald-400">💰 Earn up to ₹15,000 Rewards*</div>
                   <div className="text-sky-400">⚡ Branded Electronic Gadgets</div>
                   <div className="text-pink-400">✈️ Top 10 Curated Travel Retreat</div>
                   <div>📜 Dual Certificate of Recognition</div>
+                  <div className="col-span-2 text-amber-400 font-semibold text-[10px] pt-1 border-t border-slate-800/80">
+                    ⭐ Official swags and welcome kits will be dispatched after reaching 1st milestone only.
+                  </div>
                 </div>
 
                 <div className="pt-2 text-center">
