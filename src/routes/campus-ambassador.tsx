@@ -26,18 +26,38 @@ import {
   Flame,
   Star,
   Users,
+  Video,
+  UploadCloud,
+  FileText,
+  MapPin,
+  GraduationCap,
+  Globe,
+  Camera,
+  ExternalLink,
+  Check,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Header } from "@/components/Header";
 import {
   submitAmbassadorApplication,
+  uploadAmbassadorPortraitImage,
   getAmbassadorProgramSettings,
   DEFAULT_AMBASSADOR_SETTINGS,
   type AmbassadorProgramSettings,
   type AmbassadorProductItem,
 } from "@/lib/ambassador.functions";
+import { STATES, COLLEGES, type StateName } from "@/lib/colleges";
+import { getDistrictsForState } from "@/lib/districts";
 import { AmbassadorComingSoonModal } from "@/components/ambassador-coming-soon-modal";
 import { GLOBAL_SEO_META_TAGS } from "@/lib/seo-metadata";
 
@@ -91,7 +111,7 @@ export const Route = createFileRoute("/campus-ambassador")({
             url: "https://vyntyraconsultancyservices.in",
             logo: "https://vyntyraconsultancyservices.in/icon-512.png",
           },
-          timeToComplete: "P3M",
+          timeToComplete: "P6M",
           occupationalCategory: "Institutional Relations, Brand Advocacy, Student Leadership",
           educationalProgramMode: "hybrid",
         }),
@@ -121,8 +141,54 @@ const ICON_MAP: Record<string, any> = {
   Users,
 };
 
+const COMMON_BRANCHES = [
+  "Computer Science & Engineering (CSE)",
+  "Artificial Intelligence & Machine Learning (AI/ML)",
+  "Data Science & Big Data Analytics",
+  "Information Technology (IT)",
+  "Electronics & Communication Engineering (ECE)",
+  "Electrical & Electronics Engineering (EEE)",
+  "Mechanical Engineering",
+  "Civil Engineering",
+  "Master of Business Administration (MBA)",
+  "Bachelor of Business Administration (BBA)",
+  "Master of Computer Applications (MCA)",
+  "Bachelor of Computer Applications (BCA)",
+  "Other / Multidisciplinary",
+];
+
+const COMMON_DEPARTMENTS = [
+  "Department of Engineering & Technology",
+  "Department of Computer Applications & IT",
+  "Department of Management Studies & Commerce",
+  "Department of Sciences & Humanities",
+  "Department of Institutional Affairs / Student Affairs",
+  "Other Department",
+];
+
+const PRESET_LANGUAGES = [
+  "English",
+  "Hindi",
+  "Telugu",
+  "Tamil",
+  "Kannada",
+  "Malayalam",
+  "Marathi",
+  "Bengali",
+  "Gujarati",
+  "Punjabi",
+  "Odia",
+  "Urdu",
+];
+
+function isGoogleDriveUrl(url: string): boolean {
+  if (!url) return false;
+  return /(drive\.google\.com|docs\.google\.com)/i.test(url.trim());
+}
+
 function CampusAmbassadorPage() {
   const submitApplicationFn = useServerFn(submitAmbassadorApplication);
+  const uploadPortraitFn = useServerFn(uploadAmbassadorPortraitImage);
   const fetchSettingsFn = useServerFn(getAmbassadorProgramSettings);
 
   // Dynamic Admin Settings
@@ -135,7 +201,7 @@ function CampusAmbassadorPage() {
   const theme = settings.theme || DEFAULT_AMBASSADOR_SETTINGS.theme;
   const isEnabled = settings.applications_enabled !== false;
 
-  // Products from Settings
+  // Active products
   const allActiveProducts = useMemo(() => {
     const list = settings.products || DEFAULT_AMBASSADOR_SETTINGS.products;
     return list.filter((p) => p.is_active);
@@ -153,22 +219,131 @@ function CampusAmbassadorPage() {
   // Coming Soon Modal State
   const [comingSoonModalOpen, setComingSoonModalOpen] = useState(false);
 
-  // Form State
+  // ─── Comprehensive Application Form State ───
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [fullAddress, setFullAddress] = useState("");
+  
+  // Location
+  const [state, setState] = useState<string>("Andhra Pradesh");
+  const [district, setDistrict] = useState<string>("Visakhapatnam");
+  const [customDistrict, setCustomDistrict] = useState("");
   const [collegeName, setCollegeName] = useState("");
-  const [degreeBranch, setDegreeBranch] = useState("");
+  const [customCollege, setCustomCollege] = useState("");
+  const [collegeLocation, setCollegeLocation] = useState("");
+
+  // Education
+  const [branch, setBranch] = useState("Computer Science & Engineering (CSE)");
+  const [customBranch, setCustomBranch] = useState("");
+  const [department, setDepartment] = useState("Department of Engineering & Technology");
   const [graduationYear, setGraduationYear] = useState("2026");
-  const [cityState, setCityState] = useState("");
-  const [linkedinProfile, setLinkedinProfile] = useState("");
-  const [motivation, setMotivation] = useState("");
+  const [languages, setLanguages] = useState<string[]>(["English", "Hindi"]);
+  const [otherLanguage, setOtherLanguage] = useState("");
+
+  // Video Pitch (Mandatory Google Drive Link)
+  const [videoPitchUrl, setVideoPitchUrl] = useState("");
+  const [videoTouched, setVideoTouched] = useState(false);
+
+  // Professional Portrait Image (White Background)
+  const [portraitUrl, setPortraitUrl] = useState("");
+  const [uploadingPortrait, setUploadingPortrait] = useState(false);
+
+  // Social Links
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+
+  // Mandatory 6-Month Agreement & Terms Checkboxes
+  const [agreementAccepted, setAgreementAccepted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submittedApp, setSubmittedApp] = useState<{ id: string; name: string; email: string } | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [selectedGalleryCategory, setSelectedGalleryCategory] = useState<string>("All");
 
+  // Districts for selected state
+  const availableDistricts = useMemo(() => {
+    return getDistrictsForState(state);
+  }, [state]);
+
+  // Colleges for selected state
+  const availableColleges = useMemo(() => {
+    const list = (COLLEGES as Record<string, string[]>)[state] || [];
+    return list.slice(0, 300); // safety slice
+  }, [state]);
+
+  // Handle State Change
+  const handleStateChange = (newState: string) => {
+    setState(newState);
+    const districts = getDistrictsForState(newState);
+    setDistrict(districts[0] || "");
+    setCollegeName("");
+    setCustomCollege("");
+  };
+
+  // Toggle Language
+  const toggleLanguage = (lang: string) => {
+    if (languages.includes(lang)) {
+      if (languages.length > 1) {
+        setLanguages(languages.filter((l) => l !== lang));
+      }
+    } else {
+      setLanguages([...languages, lang]);
+    }
+  };
+
+  const addCustomLanguage = () => {
+    if (otherLanguage.trim() && !languages.includes(otherLanguage.trim())) {
+      setLanguages([...languages, otherLanguage.trim()]);
+      setOtherLanguage("");
+    }
+  };
+
+  // Portrait Photo Upload Handler
+  const handlePortraitUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (JPEG, PNG, or WebP).");
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Image file size must be less than 8MB.");
+      return;
+    }
+
+    setUploadingPortrait(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result as string;
+          const res = await uploadPortraitFn({
+            data: {
+              base64Data: base64,
+              fileName: file.name,
+              contentType: file.type,
+            },
+          });
+          setPortraitUrl(res.publicUrl);
+          toast.success("Professional portrait uploaded successfully!");
+        } catch (err: any) {
+          toast.error(err.message || "Failed to upload portrait photo.");
+        } finally {
+          setUploadingPortrait(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      toast.error("Error reading file.");
+      setUploadingPortrait(false);
+    }
+  };
+
+  // Form Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isEnabled) {
@@ -176,38 +351,99 @@ function CampusAmbassadorPage() {
       return;
     }
 
-    if (!fullName || !email || !phone || !collegeName || !degreeBranch || !cityState) {
-      toast.error("Please fill in all required fields.");
+    // Required fields check
+    if (!fullName.trim() || !email.trim() || !phone.trim() || !fullAddress.trim()) {
+      toast.error("Please fill in your personal contact details and residential address.");
+      return;
+    }
+
+    const finalCollege = collegeName === "OTHER" ? customCollege.trim() : collegeName.trim();
+    if (!finalCollege) {
+      toast.error("Please select or enter your college / institution name.");
+      return;
+    }
+
+    if (!collegeLocation.trim()) {
+      toast.error("Please specify your college campus location / city.");
+      return;
+    }
+
+    const finalBranch = branch === "Other / Multidisciplinary" ? customBranch.trim() : branch;
+    if (!finalBranch) {
+      toast.error("Please provide your academic branch / discipline.");
+      return;
+    }
+
+    // Video Pitch validation: Strict Google Drive check
+    if (!videoPitchUrl.trim()) {
+      toast.error("5 to 10 min Video Pitch link is mandatory to apply.");
+      return;
+    }
+
+    if (!isGoogleDriveUrl(videoPitchUrl)) {
+      toast.error("Invalid Video Pitch Link! Rather than Google Drive links, no other links are acceptable (must be https://drive.google.com/...).");
+      return;
+    }
+
+    // Portrait image check
+    if (!portraitUrl.trim()) {
+      toast.error("Please upload your professional portrait image with a white background.");
+      return;
+    }
+
+    // 6-Month Agreement & Terms check
+    if (!agreementAccepted) {
+      toast.error("You must acknowledge that this appointment is for a 6-month tenure and agree to sign the formal agreement upon shortlisting.");
+      return;
+    }
+
+    if (!termsAccepted) {
+      toast.error("Please accept the Campus Ambassador Terms & Conditions to proceed.");
       return;
     }
 
     setLoading(true);
     try {
-      await submitApplicationFn({
+      const finalDistrict = district === "OTHER" ? customDistrict.trim() : district;
+
+      const res = await submitApplicationFn({
         data: {
-          full_name: fullName,
-          email,
-          phone,
-          college_name: collegeName,
-          degree_branch: degreeBranch,
-          graduation_year: graduationYear,
-          city_state: cityState,
-          linkedin_profile: linkedinProfile,
-          motivation,
+          full_name: fullName.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          full_address: fullAddress.trim(),
+          state,
+          district: finalDistrict || "Visakhapatnam",
+          college_name: finalCollege,
+          college_location: collegeLocation.trim(),
+          branch: finalBranch,
+          department,
+          expected_graduation_year: graduationYear,
+          languages_known: languages,
+          video_pitch_url: videoPitchUrl.trim(),
+          portrait_photo_url: portraitUrl.trim(),
+          linkedin_url: linkedinUrl.trim(),
+          instagram_url: instagramUrl.trim(),
+          agreement_accepted: true,
+          terms_accepted: true,
         },
       });
 
-      setSubmitted(true);
-      toast.success("Pre-registration successful! Welcome to First Cohort priority list.");
+      setSubmittedApp({
+        id: res.id,
+        name: fullName.trim(),
+        email: email.trim(),
+      });
+      toast.success("Application submitted successfully! Confirmation email dispatched to your inbox and the admin desk.");
     } catch (err: any) {
-      toast.error(err.message || "Failed to submit pre-registration. Please try again.");
+      toast.error(err.message || "Failed to submit application. Please check your entries.");
     } finally {
       setLoading(false);
     }
   };
 
   const scrollToForm = () => {
-    const el = document.getElementById("pre-register-form");
+    const el = document.getElementById("ambassador-application-form");
     if (el) {
       el.scrollIntoView({ behavior: "smooth" });
     }
@@ -227,10 +463,7 @@ function CampusAmbassadorPage() {
     return swagsAndGoodies.filter((item) => item.category === selectedGalleryCategory);
   }, [selectedGalleryCategory, swagsAndGoodies]);
 
-  // Dynamic Pillars
   const pillarsList = settings.pillars_section?.pillars || DEFAULT_AMBASSADOR_SETTINGS.pillars_section.pillars;
-
-  // Dynamic FAQs
   const faqsList = settings.faqs || DEFAULT_AMBASSADOR_SETTINGS.faqs;
 
   return (
@@ -246,31 +479,24 @@ function CampusAmbassadorPage() {
 
       {/* Cyber-Luxe Dynamic Background Ambient Light Effects */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        {/* Glow Light 1 (Top Primary) */}
         <div
           style={{
             background: `radial-gradient(circle, ${theme.glow_primary || "#6366f1"}33 0%, transparent 70%)`,
           }}
           className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1200px] h-[650px] blur-[150px] opacity-80"
         />
-
-        {/* Glow Light 2 (Mid Secondary) */}
         <div
           style={{
             background: `radial-gradient(circle, ${theme.glow_secondary || "#ec4899"}26 0%, transparent 70%)`,
           }}
           className="absolute top-[800px] -left-48 w-[600px] h-[600px] rounded-full blur-[160px] opacity-70"
         />
-
-        {/* Glow Light 3 (Lower Accent) */}
         <div
           style={{
             background: `radial-gradient(circle, ${theme.glow_accent || "#f59e0b"}26 0%, transparent 70%)`,
           }}
           className="absolute top-[1800px] -right-48 w-[600px] h-[600px] rounded-full blur-[160px] opacity-70"
         />
-
-        {/* Subtle Cyber Grid */}
         <div className="absolute inset-0 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:32px_32px] opacity-20" />
       </div>
 
@@ -288,7 +514,7 @@ function CampusAmbassadorPage() {
               </span>
               <span className="hidden sm:inline text-slate-400">|</span>
               <span className="hidden sm:inline text-slate-300">
-                Official Welcome Kits, ₹15,000 Rewards & Top 10 Curated Retreat
+                Official Welcome Kits, ₹15,000 Rewards &amp; Top 10 Curated Retreat
               </span>
             </div>
             <button
@@ -303,7 +529,6 @@ function CampusAmbassadorPage() {
 
         {/* ─── Hero Section ─── */}
         <section className="pt-14 pb-20 sm:pt-20 sm:pb-28 px-4 sm:px-6 max-w-6xl mx-auto text-center">
-          {/* Animated Cohort Launch Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-amber-500/40 bg-gradient-to-r from-amber-500/20 via-pink-500/15 to-indigo-500/20 backdrop-blur-md shadow-lg shadow-amber-500/10 mb-8 animate-pulse">
             <span className="relative flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
@@ -314,7 +539,6 @@ function CampusAmbassadorPage() {
             </span>
           </div>
 
-          {/* Main Hero Heading with Dynamic Gradient Stops */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.08] max-w-5xl mx-auto">
             {settings.hero?.title_prefix || "Vyntyra Institutional Relations Associate"}{" "}
             <span
@@ -344,28 +568,27 @@ function CampusAmbassadorPage() {
             )}
           </p>
 
-          {/* Interactive CTA Buttons with Dynamic Theme Colors */}
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <button
-              onClick={() => setComingSoonModalOpen(true)}
+              onClick={scrollToForm}
               style={{
                 background: `linear-gradient(to right, ${theme.primary_btn_bg_start || "#f59e0b"}, ${theme.primary_btn_bg_end || "#eab308"})`,
                 color: theme.primary_btn_text || "#020617",
               }}
               className="font-black px-8 py-5 rounded-full text-base shadow-xl shadow-amber-500/25 transition-all duration-300 hover:scale-105 cursor-pointer uppercase tracking-wider flex items-center gap-2"
             >
-              <Ticket className="h-5 w-5" />
-              <span>{settings.hero?.primary_cta || "Claim Early-Bird VIP Spot (Coming Soon)"}</span>
+              <FileText className="h-5 w-5" />
+              <span>Fill Official Application Form</span>
             </button>
 
             <Button
-              onClick={scrollToForm}
+              onClick={() => setComingSoonModalOpen(true)}
               variant="outline"
               size="lg"
-              className="border-slate-700 bg-slate-900/70 hover:bg-slate-800 text-slate-200 hover:text-white px-7 py-6 rounded-full text-sm font-bold backdrop-blur"
+              className="border-slate-700 bg-slate-900/70 hover:bg-slate-800 text-slate-200 hover:text-white px-7 py-6 rounded-full text-sm font-bold backdrop-blur cursor-pointer"
             >
-              <span>{settings.hero?.secondary_cta || "Full Expression of Interest Form"}</span>
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <Ticket className="mr-2 h-4 w-4 text-amber-400" />
+              <span>Quick VIP Pass (Coming Soon)</span>
             </Button>
 
             <Link
@@ -377,7 +600,7 @@ function CampusAmbassadorPage() {
             </Link>
           </div>
 
-          {/* Quick Metrics Bar (Pin-to-pin customizable in Admin) */}
+          {/* Quick Metrics Bar */}
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
             {(settings.hero?.metrics || DEFAULT_AMBASSADOR_SETTINGS.hero.metrics).map((metric, i) => (
               <div
@@ -402,46 +625,6 @@ function CampusAmbassadorPage() {
           </div>
         </section>
 
-        {/* ─── Ultra Holographic VIP Pass Teaser Ticket ─── */}
-        <section className="px-4 sm:px-6 max-w-4xl mx-auto mb-16">
-          <div className="relative rounded-3xl p-1 bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-500 shadow-2xl shadow-amber-500/10">
-            <div
-              style={{ backgroundColor: theme.card_bg_color || "#0b1224" }}
-              className="rounded-[22px] p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/30">
-                  <Ticket className="h-7 w-7" />
-                </div>
-                <div>
-                  <div className="inline-flex items-center gap-1.5 text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400 mb-1">
-                    <Sparkles className="h-3 w-3" /> OFFICIAL VIP ADMISSION PASS
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-black text-white">
-                    {settings.popup?.title || "Vyntyra Institutional Relations Associate"}
-                  </h3>
-                  <p className="text-xs text-slate-300 mt-1 max-w-md">
-                    {settings.popup?.announcement_message ||
-                      "Lock in early-bird priority interview rounds, welcome kit reservations, and direct rewards tracking."}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setComingSoonModalOpen(true)}
-                style={{
-                  background: `linear-gradient(to right, ${theme.primary_btn_bg_start || "#f59e0b"}, ${theme.primary_btn_bg_end || "#eab308"})`,
-                  color: theme.primary_btn_text || "#020617",
-                }}
-                className="w-full md:w-auto px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 shrink-0 cursor-pointer flex items-center justify-center gap-2 hover:scale-105 transition-transform"
-              >
-                <span>Generate Instant VIP Pass</span>
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </section>
-
         {/* ─── Dedicated Goodies, Swags & Merchandise Showcase with Real Images ─── */}
         <section className="py-16 sm:py-24 px-4 sm:px-6 max-w-7xl mx-auto border-t border-slate-800/80">
           <div className="text-center max-w-3xl mx-auto mb-12">
@@ -456,7 +639,6 @@ function CampusAmbassadorPage() {
               Every Institutional Relations Associate represents the gold standard of Vyntyra. Wear the brand, carry the tech gear, and unpack physical premium merchandise delivered directly to your doorstep.
             </p>
 
-            {/* Filter Pills */}
             <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
               {galleryCategories.map((cat) => (
                 <button
@@ -474,7 +656,6 @@ function CampusAmbassadorPage() {
             </div>
           </div>
 
-          {/* Goodies Visual Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {filteredGallery.map((item) => (
               <div
@@ -485,7 +666,6 @@ function CampusAmbassadorPage() {
                 }}
                 className="group relative rounded-2xl border overflow-hidden hover:border-amber-500/40 transition-all duration-300 hover:shadow-2xl hover:shadow-amber-500/10 flex flex-col justify-between"
               >
-                {/* Product Photo with Hover Zoom */}
                 <div className="relative aspect-video sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
                   <img
                     src={item.image_url}
@@ -494,8 +674,6 @@ function CampusAmbassadorPage() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-
-                  {/* Category Pill */}
                   <span
                     className={`absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border backdrop-blur-md ${
                       item.badge_style || "border-amber-400/40 bg-amber-500/20 text-amber-300"
@@ -505,7 +683,6 @@ function CampusAmbassadorPage() {
                   </span>
                 </div>
 
-                {/* Content */}
                 <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
                   <div>
                     <div className="text-[11px] font-mono text-amber-400 uppercase tracking-widest mb-1">
@@ -522,10 +699,10 @@ function CampusAmbassadorPage() {
                   <div className="mt-5 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
                     <span className="font-mono text-[11px]">{settings.cohort_name || "First Cohort"}</span>
                     <button
-                      onClick={() => setComingSoonModalOpen(true)}
+                      onClick={scrollToForm}
                       className="text-amber-400 hover:text-amber-300 font-semibold text-xs flex items-center gap-1 group/btn cursor-pointer"
                     >
-                      <span>Claim via Waitlist</span>
+                      <span>Apply Now</span>
                       <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1" />
                     </button>
                   </div>
@@ -535,7 +712,7 @@ function CampusAmbassadorPage() {
           </div>
         </section>
 
-        {/* ─── Pillars & Perks Showcase (Pin-to-pin customizable in Admin) ─── */}
+        {/* ─── Pillars & Perks Showcase ─── */}
         <section className="py-16 sm:py-24 px-4 sm:px-6 max-w-6xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-400 text-xs font-mono font-bold tracking-widest uppercase mb-3">
@@ -595,7 +772,7 @@ function CampusAmbassadorPage() {
           </div>
         </section>
 
-        {/* ─── Electronic Gadgets Spotlight (Pin-to-pin customizable in Admin) ─── */}
+        {/* ─── Electronic Gadgets Spotlight ─── */}
         <section className="py-16 sm:py-20 px-4 sm:px-6 max-w-6xl mx-auto">
           <div
             style={{
@@ -665,7 +842,6 @@ function CampusAmbassadorPage() {
                 </div>
               ))}
 
-              {/* Special Gadget Callout */}
               <div className="p-6 rounded-2xl border border-dashed border-amber-500/40 bg-gradient-to-br from-amber-500/10 via-slate-950 to-slate-950 backdrop-blur flex flex-col justify-between">
                 <div>
                   <div className="text-amber-400 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -681,14 +857,14 @@ function CampusAmbassadorPage() {
 
                 <div className="mt-6 pt-4 border-t border-amber-500/20 flex flex-col gap-3">
                   <button
-                    onClick={() => setComingSoonModalOpen(true)}
+                    onClick={scrollToForm}
                     style={{
                       background: `linear-gradient(to right, ${theme.primary_btn_bg_start || "#f59e0b"}, ${theme.primary_btn_bg_end || "#eab308"})`,
                       color: theme.primary_btn_text || "#020617",
                     }}
                     className="w-full font-black py-2.5 rounded-lg text-xs cursor-pointer uppercase tracking-wider hover:scale-[1.02] transition-transform"
                   >
-                    Reserve Priority Spot &rarr;
+                    Apply for First Cohort &rarr;
                   </button>
                   <div className="text-[11px] text-amber-300/80 font-mono text-center">
                     *Performance Criteria Announced at Launch
@@ -699,7 +875,7 @@ function CampusAmbassadorPage() {
           </div>
         </section>
 
-        {/* ─── Top 10 Curated Travel Experience (Pin-to-pin customizable in Admin) ─── */}
+        {/* ─── Top 10 Curated Travel Experience ─── */}
         <section className="py-16 sm:py-20 px-4 sm:px-6 max-w-6xl mx-auto">
           <div className="rounded-3xl border border-pink-500/30 bg-gradient-to-r from-pink-950/30 via-slate-900 to-indigo-950/40 p-8 sm:p-12 relative overflow-hidden shadow-2xl">
             <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -718,7 +894,6 @@ function CampusAmbassadorPage() {
                     "Work hard, lead your campus, and travel in style. The Top 10 Institutional Relations Associates will be awarded an all-expenses-paid curated corporate and leisure retreat with co-associates and company executives."}
                 </p>
 
-                {/* Retreat Highlights Bullets */}
                 <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-300">
                   {(
                     settings.retreat_section?.bullets || [
@@ -760,11 +935,11 @@ function CampusAmbassadorPage() {
                         "Evaluated based on institutional engagement, student community growth, and overall leadership performance."}
                     </p>
                     <button
-                      onClick={() => setComingSoonModalOpen(true)}
+                      onClick={scrollToForm}
                       className="mt-5 w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-2.5 rounded-lg shadow-md flex items-center justify-center gap-2 cursor-pointer text-xs uppercase tracking-wider transition-colors"
                     >
-                      <Ticket className="h-4 w-4" />
-                      <span>Claim Early-Bird Waitlist Pass</span>
+                      <FileText className="h-4 w-4" />
+                      <span>Submit Candidate Application</span>
                     </button>
                   </div>
                 </div>
@@ -773,8 +948,11 @@ function CampusAmbassadorPage() {
           </div>
         </section>
 
-        {/* ─── Pre-Registration Expression of Interest Form (Pin-to-pin customizable in Admin) ─── */}
-        <section id="pre-register-form" className="py-16 sm:py-24 px-4 sm:px-6 max-w-4xl mx-auto scroll-mt-20">
+        {/* ─── OFFICIAL AMBASSADOR APPLICATION FORM ─── */}
+        <section
+          id="ambassador-application-form"
+          className="py-16 sm:py-24 px-4 sm:px-6 max-w-5xl mx-auto scroll-mt-14"
+        >
           <div
             style={{
               backgroundColor: `${theme.card_bg_color || "#070b14"}`,
@@ -789,7 +967,7 @@ function CampusAmbassadorPage() {
                   <Ticket className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white">Prefer Quick 1-Minute VIP Pass?</h4>
+                  <h4 className="text-sm font-bold text-white">Want a Quick 1-Minute VIP Preview Pass?</h4>
                   <p className="text-xs text-slate-300">
                     Get an instant numbered ticket code &amp; VIP waitlist confirmation popup.
                   </p>
@@ -813,187 +991,579 @@ function CampusAmbassadorPage() {
               <div className="mb-8 p-5 rounded-2xl border border-rose-500/40 bg-rose-500/10 text-rose-200 text-xs flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold text-white text-sm block">Registration Currently Paused</span>
+                  <span className="font-bold text-white text-sm block">Applications Currently Paused</span>
                   <p className="mt-1 leading-relaxed text-slate-300">
-                    {settings.disabled_notice || "Pre-registrations for this cohort are temporarily paused."}
+                    {settings.disabled_notice || "Applications for this cohort are temporarily paused."}
                   </p>
                 </div>
               </div>
             )}
 
-            <div className="text-center max-w-2xl mx-auto mb-8">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-400 text-xs font-mono font-bold tracking-widest uppercase mb-3">
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-400 text-xs font-mono font-bold tracking-widest uppercase mb-3">
                 <Sparkles className="h-3 w-3" />
-                {settings.form_section?.badge || "FULL EXPRESSION OF INTEREST FORM"}
+                OFFICIAL FIRST COHORT APPLICATION
               </div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
-                {settings.form_section?.heading || `Pre-Register for the ${settings.cohort_name || "First Cohort"}`}
+                Vyntyra Institutional Relations Associate Application
               </h2>
               <p className="mt-2 text-xs sm:text-sm text-slate-400">
-                {settings.form_section?.description ||
-                  "Official announcement launching soon. Pre-registered candidates receive priority screening, interview invites, and early allocation of Welcome Kits."}
+                Submit your official application, campus credentials, professional portrait, and 5-10 minute video pitch. An automated confirmation email will be delivered to your inbox and the admin desk.
               </p>
             </div>
 
-            {submitted ? (
-              <div className="py-12 px-6 text-center rounded-2xl border border-emerald-500/40 bg-emerald-500/10 max-w-md mx-auto">
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 mx-auto flex items-center justify-center mb-4">
+            {submittedApp ? (
+              /* Success Confirmation Card */
+              <div className="py-12 px-6 sm:px-10 text-center rounded-2xl border border-emerald-500/40 bg-emerald-500/10 max-w-xl mx-auto space-y-5">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 mx-auto flex items-center justify-center">
                   <CheckCircle2 className="h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-bold text-white">
-                  {settings.form_section?.confirmation_heading || "Pre-Registration Confirmed!"}
-                </h3>
-                <p className="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  Thank you, <strong>{fullName}</strong>.{" "}
-                  {settings.form_section?.confirmation_subtext ||
-                    `You are officially on the ${settings.cohort_name || "First Cohort"} Priority List for Vyntyra Institutional Relations Associates.`}
-                </p>
-                <div className="mt-6 p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-400">
-                  We will reach out to <strong>{email}</strong> as soon as selection rounds and welcome kit dispatches begin.
+                <div>
+                  <div className="inline-block px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-mono font-bold mb-2">
+                    REF ID: {submittedApp.id}
+                  </div>
+                  <h3 className="text-2xl font-black text-white">Application Confirmed!</h3>
+                  <p className="mt-2 text-xs sm:text-sm text-slate-200 leading-relaxed">
+                    Thank you, <strong>{submittedApp.name}</strong>. Your application for <strong>Vyntyra Institutional Relations Associate ({settings.cohort_name || "First Cohort 2026-27"})</strong> has been officially recorded in our institutional database.
+                  </p>
                 </div>
+
+                <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-left space-y-2 text-slate-300">
+                  <div className="flex items-center gap-2 text-amber-400 font-bold text-[11px] uppercase tracking-wider">
+                    <ShieldCheck className="h-4 w-4" /> Automated Confirmation Dispatched
+                  </div>
+                  <p>
+                    A comprehensive confirmation receipt has been sent to <strong>{submittedApp.email}</strong> and the program management team at <strong>ambassadorprogram@vyntyraconsultancyservices.in</strong>.
+                  </p>
+                  <p className="text-slate-400 text-[11px] pt-1 border-t border-slate-800">
+                    📋 <strong>Tenure &amp; Agreement:</strong> Appointment is for a 6-month period. Following review and shortlisting, the official 6-Month Association Agreement document will be issued to your email for digital acceptance.
+                  </p>
+                </div>
+
                 <Button
-                  onClick={() => setSubmitted(false)}
+                  onClick={() => setSubmittedApp(null)}
                   variant="outline"
                   size="sm"
-                  className="mt-6 border-slate-700 text-slate-300 hover:text-white cursor-pointer"
+                  className="mt-4 border-slate-700 text-slate-300 hover:text-white cursor-pointer"
                 >
-                  Submit Another Response
+                  Submit Another Application
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                      Full Name *
-                    </label>
-                    <Input
-                      required
-                      disabled={!isEnabled}
-                      placeholder="e.g. Rahul Sharma"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
-                    />
+              /* The Comprehensive Application Form */
+              <form onSubmit={handleSubmit} className="space-y-8">
+                {/* ── Section 1: Candidate Identity & Contact Details ── */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-800 text-amber-400 text-xs font-mono font-bold tracking-wider uppercase">
+                    <Users className="h-4 w-4" />
+                    <span>01. Personal Identity &amp; Contact Information</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                        Full Name *
+                      </label>
+                      <Input
+                        required
+                        disabled={!isEnabled}
+                        placeholder="e.g. Ananya Sharma"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                        Email Address *
+                      </label>
+                      <Input
+                        required
+                        disabled={!isEnabled}
+                        type="email"
+                        placeholder="e.g. ananya@college.edu / personal"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                        WhatsApp Number *
+                      </label>
+                      <Input
+                        required
+                        disabled={!isEnabled}
+                        placeholder="e.g. +91 98765 43210"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
+                      />
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                      Email Address *
+                      Full Residential Address (Door No, Street/Locality &amp; Pincode) *
                     </label>
                     <Input
                       required
                       disabled={!isEnabled}
-                      type="email"
-                      placeholder="e.g. rahul@college.edu / personal"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="e.g. Flat 402, Sai Residency, MVP Colony, Visakhapatnam - 530017"
+                      value={fullAddress}
+                      onChange={(e) => setFullAddress(e.target.value)}
                       className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
                     />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                      WhatsApp / Phone Number *
-                    </label>
-                    <Input
-                      required
-                      disabled={!isEnabled}
-                      placeholder="e.g. +91 98765 43210"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                      College / University Full Name *
-                    </label>
-                    <Input
-                      required
-                      disabled={!isEnabled}
-                      placeholder="e.g. Andhra University, Vizag"
-                      value={collegeName}
-                      onChange={(e) => setCollegeName(e.target.value)}
-                      className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                      Degree &amp; Branch *
-                    </label>
-                    <Input
-                      required
-                      disabled={!isEnabled}
-                      placeholder="e.g. B.Tech CSE / ECE / MBA"
-                      value={degreeBranch}
-                      onChange={(e) => setDegreeBranch(e.target.value)}
-                      className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                      Graduation Year *
-                    </label>
-                    <Input
-                      required
-                      disabled={!isEnabled}
-                      placeholder="e.g. 2026 / 2027"
-                      value={graduationYear}
-                      onChange={(e) => setGraduationYear(e.target.value)}
-                      className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                      City &amp; State *
-                    </label>
-                    <Input
-                      required
-                      disabled={!isEnabled}
-                      placeholder="e.g. Visakhapatnam, AP"
-                      value={cityState}
-                      onChange={(e) => setCityState(e.target.value)}
-                      className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
-                    />
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Required for courier delivery of your official IRA Executive Welcome Kit &amp; physical corporate merchandise.
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                    LinkedIn / Portfolio URL (Optional)
-                  </label>
-                  <Input
-                    disabled={!isEnabled}
-                    placeholder="https://linkedin.com/in/username"
-                    value={linkedinProfile}
-                    onChange={(e) => setLinkedinProfile(e.target.value)}
-                    className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
-                  />
+                {/* ── Section 2: College & Geographic Location ── */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-800 text-sky-400 text-xs font-mono font-bold tracking-wider uppercase">
+                    <MapPin className="h-4 w-4" />
+                    <span>02. Institution, State &amp; District</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                        State *
+                      </label>
+                      <Select
+                        disabled={!isEnabled}
+                        value={state}
+                        onValueChange={handleStateChange}
+                      >
+                        <SelectTrigger className="bg-slate-900/80 border-slate-800 text-white h-11 rounded-lg">
+                          <SelectValue placeholder="Select State" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                          {STATES.map((st) => (
+                            <SelectItem key={st} value={st}>
+                              {st}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                        District *
+                      </label>
+                      <Select
+                        disabled={!isEnabled}
+                        value={district}
+                        onValueChange={setDistrict}
+                      >
+                        <SelectTrigger className="bg-slate-900/80 border-slate-800 text-white h-11 rounded-lg">
+                          <SelectValue placeholder="Select District" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                          {availableDistricts.map((dist) => (
+                            <SelectItem key={dist} value={dist}>
+                              {dist}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="OTHER">Other / Enter District</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {district === "OTHER" && (
+                        <Input
+                          required
+                          placeholder="Type your district..."
+                          value={customDistrict}
+                          onChange={(e) => setCustomDistrict(e.target.value)}
+                          className="bg-slate-900/80 border-slate-800 text-white h-10 mt-2 text-xs"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                        College / Institution Name *
+                      </label>
+                      <Select
+                        disabled={!isEnabled}
+                        value={collegeName}
+                        onValueChange={setCollegeName}
+                      >
+                        <SelectTrigger className="bg-slate-900/80 border-slate-800 text-white h-11 rounded-lg text-left">
+                          <SelectValue placeholder={state ? "Select from approved colleges" : "Select state first"} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                          {availableColleges.map((col, idx) => (
+                            <SelectItem key={idx} value={col}>
+                              {col}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="OTHER">Other / Institution Not Listed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {collegeName === "OTHER" && (
+                        <Input
+                          required
+                          placeholder="Enter your college / university full name..."
+                          value={customCollege}
+                          onChange={(e) => setCustomCollege(e.target.value)}
+                          className="bg-slate-900/80 border-slate-800 text-white h-10 mt-2 text-xs"
+                        />
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                        College Campus Location / City *
+                      </label>
+                      <Input
+                        required
+                        disabled={!isEnabled}
+                        placeholder="e.g. Madhurawada Campus, Visakhapatnam"
+                        value={collegeLocation}
+                        onChange={(e) => setCollegeLocation(e.target.value)}
+                        className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                    Why do you want to represent Vyntyra at your institution?
-                  </label>
-                  <Textarea
-                    disabled={!isEnabled}
-                    rows={3}
-                    placeholder="Tell us briefly about your campus presence, student club involvement, or leadership interests..."
-                    value={motivation}
-                    onChange={(e) => setMotivation(e.target.value)}
-                    className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg"
-                  />
+                {/* ── Section 3: Academic & Education Details ── */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-800 text-purple-400 text-xs font-mono font-bold tracking-wider uppercase">
+                    <GraduationCap className="h-4 w-4" />
+                    <span>03. Education &amp; Linguistic Profile</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                        Branch / Discipline *
+                      </label>
+                      <Select
+                        disabled={!isEnabled}
+                        value={branch}
+                        onValueChange={setBranch}
+                      >
+                        <SelectTrigger className="bg-slate-900/80 border-slate-800 text-white h-11 rounded-lg">
+                          <SelectValue placeholder="Select Branch" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-64">
+                          {COMMON_BRANCHES.map((b) => (
+                            <SelectItem key={b} value={b}>
+                              {b}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {branch === "Other / Multidisciplinary" && (
+                        <Input
+                          required
+                          placeholder="Specify branch name..."
+                          value={customBranch}
+                          onChange={(e) => setCustomBranch(e.target.value)}
+                          className="bg-slate-900/80 border-slate-800 text-white h-10 mt-2 text-xs"
+                        />
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                        Department *
+                      </label>
+                      <Select
+                        disabled={!isEnabled}
+                        value={department}
+                        onValueChange={setDepartment}
+                      >
+                        <SelectTrigger className="bg-slate-900/80 border-slate-800 text-white h-11 rounded-lg">
+                          <SelectValue placeholder="Select Department" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-64">
+                          {COMMON_DEPARTMENTS.map((d) => (
+                            <SelectItem key={d} value={d}>
+                              {d}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                        Expected Year of Graduation *
+                      </label>
+                      <Select
+                        disabled={!isEnabled}
+                        value={graduationYear}
+                        onValueChange={setGraduationYear}
+                      >
+                        <SelectTrigger className="bg-slate-900/80 border-slate-800 text-white h-11 rounded-lg">
+                          <SelectValue placeholder="Graduation Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["2024", "2025", "2026", "2027", "2028", "2029"].map((yr) => (
+                            <SelectItem key={yr} value={yr}>
+                              {yr}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Languages Known Checkable Chips */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                      <Globe className="h-3.5 w-3.5 text-purple-400" />
+                      <span>Languages Known (Select all applicable) *</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {PRESET_LANGUAGES.map((lang) => {
+                        const isSelected = languages.includes(lang);
+                        return (
+                          <button
+                            type="button"
+                            key={lang}
+                            onClick={() => toggleLanguage(lang)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                              isSelected
+                                ? "bg-purple-600 text-white border border-purple-400 shadow-sm shadow-purple-500/30"
+                                : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
+                            }`}
+                          >
+                            {isSelected ? <Check className="h-3 w-3" /> : null}
+                            <span>{lang}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Add Custom Language */}
+                    <div className="mt-3 flex items-center gap-2 max-w-sm">
+                      <Input
+                        placeholder="Add other language (e.g. French, Sanskrit)..."
+                        value={otherLanguage}
+                        onChange={(e) => setOtherLanguage(e.target.value)}
+                        className="bg-slate-900/80 border-slate-800 text-white h-9 text-xs"
+                      />
+                      <Button
+                        type="button"
+                        onClick={addCustomLanguage}
+                        size="sm"
+                        variant="outline"
+                        className="border-slate-700 text-slate-300 text-xs shrink-0"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
+                {/* ── Section 4: Video Pitch & Professional Portrait (MANDATORY) ── */}
+                <div className="space-y-5 p-5 sm:p-6 rounded-2xl border border-amber-500/40 bg-gradient-to-b from-amber-500/5 via-slate-900/60 to-slate-950">
+                  <div className="flex items-center gap-2 pb-2 border-b border-amber-500/20 text-amber-400 text-xs font-mono font-bold tracking-wider uppercase">
+                    <Video className="h-4 w-4" />
+                    <span>04. Video Pitch &amp; Professional Portrait (Mandatory)</span>
+                  </div>
+
+                  {/* 5 to 10 min Video Pitch (Google Drive Only Validation) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <span>5 to 10 Min Video Pitch Link (Google Drive Public Link) *</span>
+                      </label>
+                      {videoPitchUrl && (
+                        <span
+                          className={`text-[11px] font-mono flex items-center gap-1 ${
+                            isGoogleDriveUrl(videoPitchUrl)
+                              ? "text-emerald-400 font-bold"
+                              : "text-rose-400 font-bold"
+                          }`}
+                        >
+                          {isGoogleDriveUrl(videoPitchUrl) ? (
+                            <>
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Valid Google Drive Link
+                            </>
+                          ) : (
+                            <>
+                              <X className="h-3.5 w-3.5" /> Google Drive Link Required Only
+                            </>
+                          )}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="relative">
+                      <Input
+                        required
+                        disabled={!isEnabled}
+                        placeholder="https://drive.google.com/file/d/YOUR_VIDEO_ID/view?usp=sharing"
+                        value={videoPitchUrl}
+                        onChange={(e) => {
+                          setVideoPitchUrl(e.target.value);
+                          setVideoTouched(true);
+                        }}
+                        className={`bg-slate-900/90 text-white placeholder:text-slate-500 rounded-lg h-11 pr-10 ${
+                          videoTouched && !isGoogleDriveUrl(videoPitchUrl)
+                            ? "border-rose-500/80 focus-visible:ring-rose-500"
+                            : "border-slate-800"
+                        }`}
+                      />
+                      {videoPitchUrl && isGoogleDriveUrl(videoPitchUrl) && (
+                        <a
+                          href={videoPitchUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="absolute right-3 top-3 text-sky-400 hover:text-sky-300"
+                          title="Test Link"
+                        >
+                          <ExternalLink className="h-5 w-5" />
+                        </a>
+                      )}
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 leading-relaxed">
+                      💡 <strong>Video Pitch Guidelines:</strong> Record a 5-10 minute video introducing yourself, your campus network, why you are enthusiastic to represent Vyntyra, and how you will drive workshop &amp; student engagements. Upload to Google Drive and ensure permissions are set to <strong>&ldquo;Anyone with the link can view&rdquo;</strong>. <em>Note: Rather than Google Drive links, no other platform links are acceptable.</em>
+                    </div>
+                  </div>
+
+                  {/* Professional Portrait Image (White Background) */}
+                  <div className="space-y-3 pt-3 border-t border-slate-800">
+                    <label className="block text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <Camera className="h-4 w-4 text-amber-400" />
+                      <span>Professional Portrait Photo (White Background) *</span>
+                    </label>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {portraitUrl ? (
+                        <div className="relative w-24 h-28 rounded-xl overflow-hidden border-2 border-emerald-500 shadow-lg bg-white shrink-0">
+                          <img
+                            src={portraitUrl}
+                            alt="Portrait Preview"
+                            className="w-full h-full object-cover"
+                          />
+                          <span className="absolute bottom-0 inset-x-0 bg-emerald-600 text-white text-[9px] text-center font-bold py-0.5">
+                            Uploaded
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="w-24 h-28 rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 flex flex-col items-center justify-center text-slate-500 shrink-0">
+                          <Camera className="h-6 w-6 mb-1" />
+                          <span className="text-[10px] text-center">White BG Headshot</span>
+                        </div>
+                      )}
+
+                      <div className="flex-1 space-y-2 w-full">
+                        <label className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs cursor-pointer shadow-md transition-all">
+                          {uploadingPortrait ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" /> Uploading to Supabase...
+                            </>
+                          ) : (
+                            <>
+                              <UploadCloud className="h-4 w-4" /> Upload Portrait Image (White Background)
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            disabled={uploadingPortrait || !isEnabled}
+                            onChange={handlePortraitUpload}
+                            className="hidden"
+                          />
+                        </label>
+                        <p className="text-[11px] text-slate-400">
+                          Used for your official physical Associate ID badge, welcome box credential, and official website listing.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Section 5: Professional & Social Profiles ── */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-800 text-emerald-400 text-xs font-mono font-bold tracking-wider uppercase">
+                    <Globe className="h-4 w-4" />
+                    <span>05. Professional &amp; Social Links (Optional)</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                        LinkedIn Profile URL
+                      </label>
+                      <Input
+                        disabled={!isEnabled}
+                        placeholder="https://linkedin.com/in/username"
+                        value={linkedinUrl}
+                        onChange={(e) => setLinkedinUrl(e.target.value)}
+                        className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                        Instagram Profile / Handle
+                      </label>
+                      <Input
+                        disabled={!isEnabled}
+                        placeholder="https://instagram.com/handle or @handle"
+                        value={instagramUrl}
+                        onChange={(e) => setInstagramUrl(e.target.value)}
+                        className="bg-slate-900/80 border-slate-800 text-white placeholder:text-slate-500 rounded-lg h-11"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Section 6: 6-Month Tenure Agreement & Statutory Terms (MANDATORY) ── */}
+                <div className="p-5 sm:p-6 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-slate-900 to-indigo-500/10 space-y-4">
+                  <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                    <ShieldCheck className="h-5 w-5" />
+                    <span>6-Month Tenure Agreement &amp; Statutory Terms Notice</span>
+                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    The appointment as a <strong>Vyntyra Institutional Relations Associate</strong> is applicable for a <strong>formal 6-month tenure</strong>. Following internal screening and shortlisting, the official <strong>6-Month Association Agreement &amp; Terms Document</strong> will be transmitted directly via email to your registered address for digital signing prior to cohort onboarding and welcome kit dispatch.
+                  </p>
+
+                  <div className="space-y-3 pt-2">
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        required
+                        checked={agreementAccepted}
+                        onChange={(e) => setAgreementAccepted(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-amber-500/50 bg-slate-900 text-amber-500 focus:ring-amber-400"
+                      />
+                      <span className="text-xs text-slate-200 group-hover:text-white leading-relaxed">
+                        I understand and agree that the Institutional Relations Associate appointment is for a <strong>6-month tenure</strong>. I agree to review and digitally sign the formal 6-month agreement document sent to my email upon shortlisting. *
+                      </span>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        required
+                        checked={termsAccepted}
+                        onChange={(e) => setTermsAccepted(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-amber-500/50 bg-slate-900 text-amber-500 focus:ring-amber-400"
+                      />
+                      <span className="text-xs text-slate-200 group-hover:text-white leading-relaxed">
+                        I accept the Vyntyra Campus Ambassador Program Terms &amp; Conditions and certify that all details, college affiliation, professional portrait, and video pitch submitted are accurate and my own. *
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
                 <div className="pt-2">
                   <button
                     type="submit"
@@ -1002,22 +1572,22 @@ function CampusAmbassadorPage() {
                       background: `linear-gradient(to right, ${theme.primary_btn_bg_start || "#f59e0b"}, ${theme.primary_btn_bg_end || "#eab308"})`,
                       color: theme.primary_btn_text || "#020617",
                     }}
-                    className="w-full font-black h-12 rounded-xl text-sm sm:text-base shadow-lg shadow-amber-500/20 cursor-pointer uppercase tracking-wider disabled:opacity-50 flex items-center justify-center gap-2 transition-transform hover:scale-[1.01]"
+                    className="w-full font-black h-13 rounded-xl text-base shadow-xl shadow-amber-500/25 cursor-pointer uppercase tracking-wider disabled:opacity-50 flex items-center justify-center gap-2 transition-transform hover:scale-[1.01]"
                   >
                     {loading ? (
                       <span className="flex items-center gap-2">
-                        <Loader2 className="h-5 w-5 animate-spin" /> Submitting Priority Pre-Registration...
+                        <Loader2 className="h-5 w-5 animate-spin" /> Submitting Application &amp; Sending Confirmation Email...
                       </span>
                     ) : !isEnabled ? (
                       <span>Applications Currently Paused</span>
                     ) : (
                       <span className="flex items-center gap-2">
-                        {settings.form_section?.submit_btn_text || "Submit Priority Pre-Registration"} <ArrowRight className="h-5 w-5" />
+                        {settings.form_section?.submit_btn_text || "Submit Official Ambassador Application"} <ArrowRight className="h-5 w-5" />
                       </span>
                     )}
                   </button>
-                  <p className="mt-2.5 text-center text-[11px] text-slate-500">
-                    By submitting, you agree to receive communications regarding {settings.cohort_name || "First Cohort"} selection &amp; onboarding.
+                  <p className="mt-3 text-center text-[11px] text-slate-500">
+                    ⚡ An automated confirmation email will be dispatched to your email and the admin team at ambassadorprogram@vyntyraconsultancyservices.in upon submission.
                   </p>
                 </div>
               </form>
@@ -1025,7 +1595,7 @@ function CampusAmbassadorPage() {
           </div>
         </section>
 
-        {/* ─── Frequently Asked Questions (Pin-to-pin customizable in Admin) ─── */}
+        {/* ─── Frequently Asked Questions ─── */}
         <section className="py-16 sm:py-20 px-4 sm:px-6 max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-2xl sm:text-3xl font-black text-white">Frequently Asked Questions</h2>
@@ -1048,7 +1618,7 @@ function CampusAmbassadorPage() {
                 >
                   <button
                     onClick={() => setOpenFaq(isOpen ? null : i)}
-                    className="w-full text-left p-4 sm:p-5 flex items-center justify-between gap-4 font-semibold text-sm sm:text-base text-white hover:text-amber-400 transition-colors"
+                    className="w-full text-left p-4 sm:p-5 flex items-center justify-between gap-4 font-semibold text-sm sm:text-base text-white hover:text-amber-400 transition-colors cursor-pointer"
                   >
                     <span>{faq.q}</span>
                     {isOpen ? (

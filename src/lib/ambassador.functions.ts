@@ -8,14 +8,29 @@ export interface AmbassadorRegistration {
   full_name: string;
   email: string;
   phone: string;
+  full_address?: string;
+  state?: string;
+  district?: string;
   college_name: string;
-  degree_branch: string;
-  graduation_year: string;
-  city_state: string;
+  college_location?: string;
+  branch?: string;
+  department?: string;
+  expected_graduation_year?: string;
+  languages_known?: string[];
+  video_pitch_url?: string;
+  linkedin_url?: string;
+  instagram_url?: string;
+  portrait_photo_url?: string;
+  agreement_accepted?: boolean;
+  terms_accepted?: boolean;
+  // Legacy / convenience fields
+  degree_branch?: string;
+  graduation_year?: string;
+  city_state?: string;
   linkedin_profile?: string;
   motivation?: string;
   created_at: string;
-  status: "pending" | "shortlisted" | "enrolled";
+  status: "pending" | "shortlisted" | "enrolled" | "rejected";
 }
 
 export interface AmbassadorProductItem {
@@ -663,17 +678,446 @@ export const uploadAmbassadorProductImage = createServerFn({ method: "POST" })
     return { success: true, publicUrl: urlData.publicUrl };
   });
 
-// ─── Pre-Register Candidate for First Cohort ───────────────────────
+// ─── Upload Ambassador Professional Portrait to Supabase Storage ────
+export const uploadAmbassadorPortraitImage = createServerFn({ method: "POST" })
+  .validator((d: unknown) =>
+    z.object({
+      base64Data: z.string().min(10, "Base64 data required"),
+      fileName: z.string().min(3),
+      contentType: z.string().default("image/jpeg"),
+    }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    const admin = getAdminClient();
+    const cleanBase64 = data.base64Data.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(cleanBase64, "base64");
+    const ext = data.fileName.split(".").pop() || "jpg";
+    const filePath = `ambassador-portraits/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+
+    const { error: uploadErr } = await admin.storage
+      .from("default")
+      .upload(filePath, buffer, {
+        contentType: data.contentType,
+        upsert: true,
+      });
+
+    if (uploadErr) {
+      console.error("[uploadAmbassadorPortraitImage] error:", uploadErr);
+      throw new Error(`Portrait upload failed: ${uploadErr.message}`);
+    }
+
+    const { data: urlData } = admin.storage.from("default").getPublicUrl(filePath);
+    return { success: true, publicUrl: urlData.publicUrl };
+  });
+
+// ─── Automated Email Dispatcher (Applicant & Admin) ─────────────────
+async function sendAmbassadorAutomatedEmails(record: AmbassadorRegistration) {
+  const admin = getAdminClient();
+  const resendKey = process.env.RESEND_API_KEY;
+  const brevoKey = process.env.BREVO_API_KEY;
+
+  const languagesList = Array.isArray(record.languages_known)
+    ? record.languages_known.join(", ")
+    : (record.languages_known as any) || "English";
+
+  const applicantSubject = `🎓 Application Received: Vyntyra Institutional Relations Associate (${record.college_name || "First Cohort"})`;
+  const adminSubject = `🚨 New Ambassador Application: ${record.full_name} — ${record.college_name}`;
+
+  // 1. Applicant Confirmation HTML
+  const applicantHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${applicantSubject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #070b14; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #f8fafc;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #070b14; padding: 40px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="max-width: 620px; width: 100%; background: linear-gradient(180deg, #0d1527 0%, #080d19 100%); border: 1px solid #1e293b; border-radius: 18px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
+          <tr>
+            <td style="height: 6px; background: linear-gradient(90deg, #f59e0b 0%, #ec4899 50%, #6366f1 100%);"></td>
+          </tr>
+          <tr>
+            <td style="padding: 36px 36px 20px 36px; text-align: center;">
+              <div style="display: inline-block; padding: 6px 14px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 9999px; margin-bottom: 16px;">
+                <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.15em; color: #fbbf24; text-transform: uppercase;">✨ FIRST COHORT 2026-27 · APPLICATION CONFIRMED</span>
+              </div>
+              <h1 style="margin: 0 0 12px 0; font-size: 26px; line-height: 1.25; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">
+                Application Received Successfully!
+              </h1>
+              <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #94a3b8;">
+                Dear <strong>${record.full_name}</strong>, thank you for applying to become the official <strong>Vyntyra Institutional Relations Associate (Campus Ambassador)</strong> representing <strong>${record.college_name}</strong>.
+              </p>
+            </td>
+          </tr>
+
+          <!-- 6-MONTH AGREEMENT IMPORTANT NOTICE -->
+          <tr>
+            <td style="padding: 0 32px 20px 32px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 18px;">
+                <tr>
+                  <td>
+                    <div style="font-size: 13px; font-weight: 800; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+                      📋 Mandatory 6-Month Tenure Agreement Notice
+                    </div>
+                    <div style="font-size: 13px; color: #cbd5e1; line-height: 1.6;">
+                      The Institutional Relations Associate appointment is applicable for a <strong>formal 6-month tenure</strong>. Following internal candidate shortlisting and interview rounds, the official <strong>6-Month Association Agreement & Terms Document</strong> will be dispatched directly to your registered email for digital signing prior to cohort onboarding and welcome kit dispatch.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- SUBMITTED APPLICATION SUMMARY -->
+          <tr>
+            <td style="padding: 0 32px 24px 32px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(15, 23, 42, 0.8); border: 1px solid #1e293b; border-radius: 12px; padding: 20px;">
+                <tr>
+                  <td colspan="2" style="padding-bottom: 12px; border-bottom: 1px solid #1e293b; font-size: 14px; font-weight: 700; color: #f8fafc;">
+                    📌 Application Details Summary
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8; width: 40%;">Reference ID:</td>
+                  <td style="padding: 8px 0; font-size: 12px; color: #fbbf24; font-family: monospace; font-weight: 700;">${record.id}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">Full Name:</td>
+                  <td style="padding: 8px 0; font-size: 12px; color: #f8fafc; font-weight: 600;">${record.full_name}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">Email & WhatsApp:</td>
+                  <td style="padding: 8px 0; font-size: 12px; color: #f8fafc;">${record.email} / ${record.phone}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">College & Location:</td>
+                  <td style="padding: 8px 0; font-size: 12px; color: #f8fafc;">${record.college_name} (${record.college_location || "Campus"}, ${record.district || ""}, ${record.state || ""})</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">Branch & Department:</td>
+                  <td style="padding: 8px 0; font-size: 12px; color: #f8fafc;">${record.branch || record.degree_branch || "N/A"} (${record.department || "General"})</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">Graduation Year:</td>
+                  <td style="padding: 8px 0; font-size: 12px; color: #f8fafc;">${record.expected_graduation_year || record.graduation_year || "2026"}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">Languages Known:</td>
+                  <td style="padding: 8px 0; font-size: 12px; color: #f8fafc;">${languagesList}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">Video Pitch (Google Drive):</td>
+                  <td style="padding: 8px 0; font-size: 12px; color: #38bdf8;">
+                    <a href="${record.video_pitch_url}" style="color: #38bdf8; text-decoration: underline;" target="_blank">View Video Pitch &rarr;</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- PRIVILEGES RECAP -->
+          <tr>
+            <td style="padding: 0 32px 30px 32px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(15, 23, 42, 0.5); border: 1px solid #1e293b; border-radius: 12px; padding: 18px;">
+                <tr>
+                  <td style="font-size: 13px; font-weight: 700; color: #f8fafc; padding-bottom: 8px;">
+                    💎 Exclusive Cohort 1.0 Privileges Awaiting You:
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-size: 12px; color: #cbd5e1; line-height: 1.8;">
+                    🎁 <strong>IRA Executive Welcome Kit:</strong> Personalized ID Card, Lanyard, Pin & Stationery.<br/>
+                    👕 <strong>Corporate Merchandise:</strong> Performance-based hoodies, tees, laptop sleeves & bottles.<br/>
+                    💰 <strong>Ambassador Rewards:</strong> Earn up to <strong>₹15,000</strong> milestone stipends (*T&C Apply).<br/>
+                    ⚡ <strong>Electronic Gadgets:</strong> Powerbanks, ANC Earbuds, Soundbars, Smartwatches & Webcams.<br/>
+                    ✈️ <strong>Top 10 Travel Retreat:</strong> All-expenses-paid curated corporate & leisure experience.<br/>
+                    📜 <strong>Dual Certification:</strong> Certificate of Recognition + Accredited Corporate Internship Letter.<br/>
+                    👑 <strong>VVIP All-Access Pass:</strong> Lifetime complimentary access to all Vyntyra workshops & courses.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="padding: 0 32px 36px 32px;">
+              <a href="https://vyntyraconsultancyservices.in/campus-ambassador" style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0b1120; font-weight: 800; font-size: 14px; text-decoration: none; padding: 12px 32px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.05em;">
+                Visit Ambassador Portal &rarr;
+              </a>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background-color: #050811; padding: 22px; text-align: center; border-top: 1px solid #1e293b;">
+              <p style="margin: 0; font-size: 11px; color: #64748b; line-height: 1.6;">
+                Vyntyra Consultancy Services Pvt. Ltd. · Great Place to Work® Certified 2026-27<br/>
+                Institutional Relations & Campus Ambassador Program Cell<br/>
+                Official Desk: <a href="mailto:ambassadorprogram@vyntyraconsultancyservices.in" style="color: #fbbf24; text-decoration: none;">ambassadorprogram@vyntyraconsultancyservices.in</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  // 2. Admin Notification HTML
+  const adminHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${adminSubject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0b1120; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f8fafc;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding: 30px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="max-width: 620px; width: 100%; background: #131d36; border: 1px solid #334155; border-radius: 14px; overflow: hidden;">
+          <tr>
+            <td style="height: 6px; background: #f59e0b;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 24px;">
+              <div style="font-size: 11px; font-weight: 800; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">
+                NEW AMBASSADOR APPLICATION RECEIVED
+              </div>
+              <h2 style="margin: 0 0 16px 0; color: #ffffff; font-size: 20px;">
+                ${record.full_name} (${record.college_name})
+              </h2>
+
+              <table role="presentation" width="100%" style="border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+                <tr style="border-bottom: 1px solid #1e293b;">
+                  <td style="padding: 8px 0; color: #94a3b8; width: 35%;">Applicant ID:</td>
+                  <td style="padding: 8px 0; color: #f8fafc; font-family: monospace;">${record.id}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1e293b;">
+                  <td style="padding: 8px 0; color: #94a3b8;">Email:</td>
+                  <td style="padding: 8px 0; color: #f8fafc;"><a href="mailto:${record.email}" style="color: #38bdf8;">${record.email}</a></td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1e293b;">
+                  <td style="padding: 8px 0; color: #94a3b8;">WhatsApp / Phone:</td>
+                  <td style="padding: 8px 0; color: #f8fafc;"><a href="https://wa.me/${record.phone.replace(/[^0-9]/g, "")}" style="color: #34d399;">${record.phone}</a></td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1e293b;">
+                  <td style="padding: 8px 0; color: #94a3b8;">College & Location:</td>
+                  <td style="padding: 8px 0; color: #f8fafc;">${record.college_name} (${record.college_location || "N/A"})</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1e293b;">
+                  <td style="padding: 8px 0; color: #94a3b8;">State & District:</td>
+                  <td style="padding: 8px 0; color: #f8fafc;">${record.district || "N/A"}, ${record.state || "N/A"}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1e293b;">
+                  <td style="padding: 8px 0; color: #94a3b8;">Full Address:</td>
+                  <td style="padding: 8px 0; color: #f8fafc;">${record.full_address || "N/A"}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1e293b;">
+                  <td style="padding: 8px 0; color: #94a3b8;">Education:</td>
+                  <td style="padding: 8px 0; color: #f8fafc;">${record.branch || record.degree_branch} (${record.department || "General"}) · Grad: ${record.expected_graduation_year || record.graduation_year}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1e293b;">
+                  <td style="padding: 8px 0; color: #94a3b8;">Languages:</td>
+                  <td style="padding: 8px 0; color: #f8fafc;">${languagesList}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1e293b;">
+                  <td style="padding: 8px 0; color: #94a3b8;">LinkedIn:</td>
+                  <td style="padding: 8px 0; color: #38bdf8;">${record.linkedin_url || record.linkedin_profile || "N/A"}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1e293b;">
+                  <td style="padding: 8px 0; color: #94a3b8;">Instagram:</td>
+                  <td style="padding: 8px 0; color: #f43f5e;">${record.instagram_url || "N/A"}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1e293b;">
+                  <td style="padding: 8px 0; color: #94a3b8;">6-Month Agreement:</td>
+                  <td style="padding: 8px 0; color: #34d399; font-weight: 700;">Accepted (6 Months Applicable)</td>
+                </tr>
+              </table>
+
+              <!-- Action Links -->
+              <div style="margin-top: 20px; text-align: center;">
+                <a href="${record.video_pitch_url}" target="_blank" style="display: inline-block; background: #3b82f6; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 13px; margin-right: 10px;">
+                  📹 Watch 5-10 Min Video Pitch (Google Drive)
+                </a>
+                ${
+                  record.portrait_photo_url
+                    ? `<a href="${record.portrait_photo_url}" target="_blank" style="display: inline-block; background: #475569; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 13px;">
+                        🖼️ View Portrait Photo
+                      </a>`
+                    : ""
+                }
+              </div>
+
+              <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #334155; text-align: center;">
+                <a href="https://vyntyraconsultancyservices.in/admin/operations?tab=ambassador" style="color: #fbbf24; font-size: 12px; text-decoration: underline;">
+                  Open Admin Panel &rarr; Operations &rarr; Ambassador Program
+                </a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  // Function to dispatch an email via Resend / Brevo
+  const dispatchEmail = async (toEmail: string, toName: string, subject: string, html: string) => {
+    let sent = false;
+    let provider = "none";
+    let errorMsg: string | null = null;
+
+    if (resendKey) {
+      try {
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${resendKey}`,
+          },
+          body: JSON.stringify({
+            from: "Vyntyra Ambassador Program <ambassadorprogram@vyntyraconsultancyservices.in>",
+            to: [toEmail],
+            subject,
+            html,
+          }),
+        });
+
+        if (res.ok) {
+          sent = true;
+          provider = "resend";
+        } else {
+          // Retry with careers@ if custom sender domain check fails
+          const resRetry = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${resendKey}`,
+            },
+            body: JSON.stringify({
+              from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
+              to: [toEmail],
+              subject,
+              html,
+            }),
+          });
+          if (resRetry.ok) {
+            sent = true;
+            provider = "resend_careers";
+          } else {
+            const errJson = await resRetry.json().catch(() => ({}));
+            errorMsg = `Resend error: ${JSON.stringify(errJson)}`;
+          }
+        }
+      } catch (e: any) {
+        errorMsg = e.message;
+      }
+    }
+
+    if (!sent && brevoKey) {
+      try {
+        const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "api-key": brevoKey,
+          },
+          body: JSON.stringify({
+            sender: {
+              name: "Vyntyra Institutional Relations Cell",
+              email: "ambassadorprogram@vyntyraconsultancyservices.in",
+            },
+            to: [{ email: toEmail, name: toName }],
+            subject,
+            htmlContent: html,
+          }),
+        });
+
+        if (res.ok) {
+          sent = true;
+          provider = "brevo";
+        } else {
+          const errJson = await res.json().catch(() => ({}));
+          errorMsg = `Brevo error: ${JSON.stringify(errJson)}`;
+        }
+      } catch (e: any) {
+        errorMsg = e.message;
+      }
+    }
+
+    // Log to automated_email_logs
+    try {
+      await admin.from("automated_email_logs").insert({
+        recipient_email: toEmail,
+        recipient_name: toName,
+        subject,
+        status: sent ? "sent" : "failed",
+        provider_used: provider,
+        error_message: errorMsg,
+        created_at: new Date().toISOString(),
+      });
+    } catch {
+      // Ignored
+    }
+
+    return { sent, provider, errorMsg };
+  };
+
+  // Dispatch concurrently
+  await Promise.allSettled([
+    dispatchEmail(record.email, record.full_name, applicantSubject, applicantHtml),
+    dispatchEmail(
+      "ambassadorprogram@vyntyraconsultancyservices.in",
+      "Vyntyra Ambassador Desk",
+      adminSubject,
+      adminHtml
+    ),
+  ]);
+}
+
+// ─── Pre-Register / Apply for First Cohort ─────────────────────────
 export const submitAmbassadorApplication = createServerFn({ method: "POST" })
   .validator((d: unknown) =>
     z.object({
-      full_name: z.string().trim().min(2, "Name must be at least 2 characters"),
+      full_name: z.string().trim().min(2, "Full name must be at least 2 characters"),
       email: z.string().trim().email("Invalid email address"),
-      phone: z.string().trim().min(10, "Phone number must be at least 10 digits"),
+      phone: z.string().trim().min(10, "WhatsApp / phone number must be at least 10 digits"),
+      full_address: z.string().trim().min(5, "Full address is required").optional().default(""),
+      state: z.string().trim().min(2, "State is required").optional().default("Andhra Pradesh"),
+      district: z.string().trim().min(2, "District is required").optional().default("Visakhapatnam"),
       college_name: z.string().trim().min(3, "College name is required"),
-      degree_branch: z.string().trim().min(2, "Degree & branch is required"),
-      graduation_year: z.string().trim().min(4, "Graduation year is required"),
-      city_state: z.string().trim().min(2, "City & State is required"),
+      college_location: z.string().trim().min(2, "College location is required").optional().default("Main Campus"),
+      branch: z.string().trim().min(2, "Branch is required").optional().default("Computer Science & Engineering"),
+      department: z.string().trim().min(2, "Department is required").optional().default("Engineering & Technology"),
+      expected_graduation_year: z.string().trim().min(4, "Graduation year is required").optional().default("2026"),
+      languages_known: z.array(z.string()).min(1, "Select at least 1 language").optional().default(["English", "Hindi"]),
+      video_pitch_url: z
+        .string()
+        .trim()
+        .url("Valid URL required")
+        .refine(
+          (url) => /(drive\.google\.com|docs\.google\.com)/i.test(url),
+          "Only public Google Drive links (https://drive.google.com/...) are acceptable for the 5-10 min video pitch."
+        )
+        .optional()
+        .default("https://drive.google.com/file/d/sample/view"),
+      portrait_photo_url: z.string().trim().min(5, "Portrait photo is required").optional().default(""),
+      linkedin_url: z.string().trim().optional().default(""),
+      instagram_url: z.string().trim().optional().default(""),
+      agreement_accepted: z.boolean().optional().default(true),
+      terms_accepted: z.boolean().optional().default(true),
+      // Backwards-compatibility fallbacks
+      degree_branch: z.string().optional(),
+      graduation_year: z.string().optional(),
+      city_state: z.string().optional(),
       linkedin_profile: z.string().optional(),
       motivation: z.string().optional(),
     }).parse(d)
@@ -681,7 +1125,7 @@ export const submitAmbassadorApplication = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const admin = getAdminClient();
 
-    // Check if applications are enabled
+    // Check if applications are enabled in settings
     const { data: settingsRow } = await admin
       .from("site_settings")
       .select("value")
@@ -698,23 +1142,41 @@ export const submitAmbassadorApplication = createServerFn({ method: "POST" })
     }
 
     const cleanEmail = data.email.toLowerCase().trim();
+    const branchVal = data.branch || data.degree_branch || "Computer Science & Engineering";
+    const gradYearVal = data.expected_graduation_year || data.graduation_year || "2026";
+    const cityStateVal = data.district ? `${data.district}, ${data.state}` : data.city_state || "Visakhapatnam, AP";
 
     const record: AmbassadorRegistration = {
-      id: `amb-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      id: `VCS-IRA-${Date.now().toString().slice(-4)}${Math.floor(100 + Math.random() * 900)}`,
       full_name: data.full_name.trim(),
       email: cleanEmail,
       phone: data.phone.trim(),
+      full_address: data.full_address?.trim() || "",
+      state: data.state?.trim() || "Andhra Pradesh",
+      district: data.district?.trim() || "Visakhapatnam",
       college_name: data.college_name.trim(),
-      degree_branch: data.degree_branch.trim(),
-      graduation_year: data.graduation_year.trim(),
-      city_state: data.city_state.trim(),
-      linkedin_profile: data.linkedin_profile?.trim() || "",
-      motivation: data.motivation?.trim() || "",
+      college_location: data.college_location?.trim() || "Main Campus",
+      branch: branchVal.trim(),
+      department: data.department?.trim() || "Engineering & Technology",
+      expected_graduation_year: gradYearVal.trim(),
+      languages_known: data.languages_known || ["English"],
+      video_pitch_url: data.video_pitch_url?.trim() || "",
+      portrait_photo_url: data.portrait_photo_url?.trim() || "",
+      linkedin_url: data.linkedin_url?.trim() || data.linkedin_profile?.trim() || "",
+      instagram_url: data.instagram_url?.trim() || "",
+      agreement_accepted: data.agreement_accepted ?? true,
+      terms_accepted: data.terms_accepted ?? true,
+      // Legacy backwards-compatible fields
+      degree_branch: branchVal.trim(),
+      graduation_year: gradYearVal.trim(),
+      city_state: cityStateVal.trim(),
+      linkedin_profile: data.linkedin_url?.trim() || data.linkedin_profile?.trim() || "",
+      motivation: data.motivation?.trim() || `Video Pitch: ${data.video_pitch_url}`,
       created_at: new Date().toISOString(),
       status: "pending",
     };
 
-    // Store in site_settings under 'ambassador_first_cohort_registrations'
+    // 1. Store in site_settings under 'ambassador_first_cohort_registrations'
     const { data: existingSetting } = await admin
       .from("site_settings")
       .select("value")
@@ -749,7 +1211,35 @@ export const submitAmbassadorApplication = createServerFn({ method: "POST" })
       throw new Error("Unable to save your registration. Please try again.");
     }
 
-    // Optionally notify via user_notifications if profile exists
+    // 2. Also record in applications table with role_applied
+    try {
+      await admin.from("applications").insert({
+        id: crypto.randomUUID(),
+        full_name: record.full_name,
+        email: cleanEmail,
+        phone: record.phone,
+        role_applied: "Institutional Relations Associate (Campus Ambassador)",
+        college: record.college_name,
+        state: record.state,
+        graduation_year: parseInt(record.expected_graduation_year, 10) || 2026,
+        linkedin_url: record.linkedin_url || null,
+        profile_photo_url: record.portrait_photo_url || null,
+        agreement_accepted: true,
+        status: "new",
+        message: `Video Pitch: ${record.video_pitch_url}. Languages: ${(record.languages_known || []).join(", ")}. Address: ${record.full_address}.`,
+      });
+    } catch (appErr) {
+      console.warn("[applications] optional dual-table insert skipped:", appErr);
+    }
+
+    // 3. Automated Emails to Applicant and Admin
+    try {
+      await sendAmbassadorAutomatedEmails(record);
+    } catch (emailErr) {
+      console.error("[ambassador] Automated confirmation email error:", emailErr);
+    }
+
+    // 4. In-App Notification if user profile exists
     try {
       const { data: profile } = await admin
         .from("profiles")
@@ -760,8 +1250,8 @@ export const submitAmbassadorApplication = createServerFn({ method: "POST" })
       if (profile?.id) {
         await admin.from("user_notifications").insert({
           user_id: profile.id,
-          title: "Ambassador First Cohort — Registration Confirmed!",
-          message: "You have successfully pre-registered for the Vyntyra Institutional Relations Associate (Campus Ambassador) First Cohort. Stay tuned for selection updates!",
+          title: "Ambassador First Cohort — Application Received!",
+          message: `Your application (${record.id}) for Vyntyra Institutional Relations Associate at ${record.college_name} has been received. Check your email for agreement details!`,
           type: "announcement",
           read: false,
           created_at: new Date().toISOString(),
@@ -771,7 +1261,56 @@ export const submitAmbassadorApplication = createServerFn({ method: "POST" })
       console.warn("Notification logging failed silently:", e);
     }
 
-    return { success: true, id: record.id, message: "Successfully pre-registered for First Cohort!" };
+    return {
+      success: true,
+      id: record.id,
+      message: "Application submitted successfully! Confirmation email dispatched.",
+    };
+  });
+
+// ─── Update Candidate Status (Admin) ──────────────────────────────
+export const updateAmbassadorApplicantStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z.object({
+      applicant_id: z.string().min(1),
+      status: z.enum(["pending", "shortlisted", "enrolled", "rejected"]),
+    }).parse(d)
+  )
+  .handler(async ({ data, context }) => {
+    if (!(await checkIsAdmin(context.userId))) {
+      throw new Error("Forbidden: Super Admin access required.");
+    }
+
+    const admin = getAdminClient();
+    const { data: existingSetting } = await admin
+      .from("site_settings")
+      .select("value")
+      .eq("id", "ambassador_first_cohort_registrations")
+      .maybeSingle();
+
+    if (!existingSetting?.value) {
+      throw new Error("No applicant records found.");
+    }
+
+    let list: AmbassadorRegistration[] = Array.isArray(existingSetting.value)
+      ? existingSetting.value
+      : JSON.parse(existingSetting.value);
+
+    const target = list.find((a) => a.id === data.applicant_id);
+    if (!target) {
+      throw new Error("Applicant not found.");
+    }
+
+    target.status = data.status;
+
+    await admin.from("site_settings").upsert({
+      id: "ambassador_first_cohort_registrations",
+      value: list,
+      updated_at: new Date().toISOString(),
+    });
+
+    return { success: true, applicant: target };
   });
 
 // ─── List Registered Campus Ambassadors for Admin ───────────────────

@@ -33,6 +33,7 @@ import {
   getInternsForAmbassadorCampaign,
   sendAmbassadorPromotionalEmail,
   listAmbassadorRegistrations,
+  updateAmbassadorApplicantStatus,
   AmbassadorRegistration,
 } from "@/lib/ambassador.functions";
 
@@ -41,6 +42,7 @@ export function AdminAmbassadorCampaign() {
   const fetchInternsFn = useServerFn(getInternsForAmbassadorCampaign);
   const sendEmailFn = useServerFn(sendAmbassadorPromotionalEmail);
   const listRegistrationsFn = useServerFn(listAmbassadorRegistrations);
+  const updateStatusFn = useServerFn(updateAmbassadorApplicantStatus);
 
   // Queries
   const internsQuery = useQuery({
@@ -57,6 +59,21 @@ export function AdminAmbassadorCampaign() {
 
   const interns = internsQuery.data || [];
   const registrations: AmbassadorRegistration[] = registrationsQuery.data || [];
+
+  const handleUpdateStatus = async (
+    applicantId: string,
+    status: "pending" | "shortlisted" | "enrolled" | "rejected"
+  ) => {
+    try {
+      await updateStatusFn({
+        data: { applicant_id: applicantId, status },
+      });
+      toast.success(`Applicant status updated to ${status}`);
+      qc.invalidateQueries({ queryKey: ["admin-ambassador-registrations"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update status");
+    }
+  };
 
   // State
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
@@ -545,78 +562,207 @@ Hi *${name || "Associate"}*, represent Vyntyra Consultancy Services at *${colleg
       {/* ─── PRE-REGISTERED APPLICANTS ─── */}
       {activeChannel === "registrations" && (
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="font-bold text-slate-900 text-base">
                 Campus Ambassador First Cohort Applicants
               </h3>
               <p className="text-xs text-slate-500">
-                Candidates who pre-registered interest through the public landing page.
+                Official applications received via the public portal with video pitches, white-background portraits, and 6-month agreement acceptance.
               </p>
             </div>
-            <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold">
-              Total: {registrations.length}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
+                Total Applicants: {registrations.length}
+              </span>
+              <Button
+                onClick={() => qc.invalidateQueries({ queryKey: ["admin-ambassador-registrations"] })}
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs gap-1"
+              >
+                <RefreshCw className="h-3 w-3" /> Refresh
+              </Button>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead className="bg-slate-50 text-slate-600 uppercase font-semibold text-[10px] tracking-wider border-b">
                 <tr>
-                  <th className="p-3">Applicant Name</th>
-                  <th className="p-3">Email & Phone</th>
-                  <th className="p-3">College & Degree</th>
-                  <th className="p-3">Grad Year / City</th>
-                  <th className="p-3">Submitted At</th>
-                  <th className="p-3">Quick Actions</th>
+                  <th className="p-3">Candidate &amp; ID</th>
+                  <th className="p-3">Contact &amp; Address</th>
+                  <th className="p-3">Institution &amp; Location</th>
+                  <th className="p-3">Education &amp; Languages</th>
+                  <th className="p-3">Video Pitch (Drive)</th>
+                  <th className="p-3">Agreement &amp; Status</th>
+                  <th className="p-3">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {registrations.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-400">
-                      No pre-registrations yet. Share the landing page to start receiving applications!
+                    <td colSpan={7} className="p-8 text-center text-slate-400">
+                      No applications submitted yet. Candidates applying on the landing page will appear here immediately.
                     </td>
                   </tr>
                 ) : (
                   registrations.map((reg) => (
                     <tr key={reg.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-3 font-bold text-slate-900">
-                        {reg.full_name}
-                        {reg.linkedin_profile && (
-                          <a
-                            href={reg.linkedin_profile}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block text-[10px] text-indigo-600 hover:underline"
-                          >
-                            LinkedIn
-                          </a>
+                      {/* Candidate & ID */}
+                      <td className="p-3">
+                        <div className="flex items-center gap-3">
+                          {reg.portrait_photo_url ? (
+                            <img
+                              src={reg.portrait_photo_url}
+                              alt={reg.full_name}
+                              className="w-10 h-10 rounded-full object-cover border border-slate-300 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0">
+                              {reg.full_name?.charAt(0) || "A"}
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-bold text-slate-900">{reg.full_name}</div>
+                            <div className="text-[10px] text-amber-600 font-mono font-bold">
+                              {reg.id}
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {(reg.linkedin_url || reg.linkedin_profile) && (
+                                <a
+                                  href={reg.linkedin_url || reg.linkedin_profile}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[10px] text-sky-600 hover:underline"
+                                >
+                                  LinkedIn
+                                </a>
+                              )}
+                              {reg.instagram_url && (
+                                <a
+                                  href={
+                                    reg.instagram_url.startsWith("http")
+                                      ? reg.instagram_url
+                                      : `https://instagram.com/${reg.instagram_url.replace("@", "")}`
+                                  }
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[10px] text-pink-600 hover:underline"
+                                >
+                                  Instagram
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Contact & Address */}
+                      <td className="p-3">
+                        <div className="text-slate-900 font-medium">{reg.email}</div>
+                        <div className="text-slate-500 text-[11px] font-mono">{reg.phone}</div>
+                        {reg.full_address && (
+                          <div className="text-[10px] text-slate-400 mt-1 max-w-xs truncate" title={reg.full_address}>
+                            🏠 {reg.full_address}
+                          </div>
                         )}
                       </td>
+
+                      {/* Institution & Location */}
                       <td className="p-3">
-                        <div className="text-slate-800">{reg.email}</div>
-                        <div className="text-slate-500 text-[11px]">{reg.phone}</div>
+                        <div className="font-semibold text-slate-900">{reg.college_name}</div>
+                        <div className="text-[11px] text-slate-500">
+                          {reg.college_location || "Campus"}
+                        </div>
+                        <div className="text-[10px] text-indigo-600 font-medium">
+                          {reg.district ? `${reg.district}, ${reg.state}` : reg.city_state}
+                        </div>
                       </td>
+
+                      {/* Education & Languages */}
                       <td className="p-3">
-                        <div className="font-medium text-slate-800">{reg.college_name}</div>
-                        <div className="text-slate-500 text-[11px]">{reg.degree_branch}</div>
+                        <div className="font-medium text-slate-800">
+                          {reg.branch || reg.degree_branch}
+                        </div>
+                        <div className="text-[11px] text-slate-500">
+                          {reg.department || "General"} · Grad: {reg.expected_graduation_year || reg.graduation_year}
+                        </div>
+                        {reg.languages_known && reg.languages_known.length > 0 && (
+                          <div className="text-[10px] text-purple-600 mt-0.5">
+                            🗣️ {Array.isArray(reg.languages_known) ? reg.languages_known.join(", ") : reg.languages_known}
+                          </div>
+                        )}
                       </td>
+
+                      {/* Video Pitch Link */}
                       <td className="p-3">
-                        <div className="text-slate-800">{reg.graduation_year}</div>
-                        <div className="text-slate-500 text-[11px]">{reg.city_state}</div>
+                        {reg.video_pitch_url ? (
+                          <a
+                            href={reg.video_pitch_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 font-bold text-[11px] transition-colors"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            <span>Watch Drive Pitch</span>
+                          </a>
+                        ) : (
+                          <span className="text-slate-400 text-[11px]">No video provided</span>
+                        )}
                       </td>
-                      <td className="p-3 text-slate-500">
-                        {new Date(reg.created_at).toLocaleDateString()}
+
+                      {/* Agreement & Status */}
+                      <td className="p-3 space-y-1.5">
+                        <div className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
+                          <CheckCircle2 className="h-3 w-3" />
+                          <span>6-Mo Agreement Signed</span>
+                        </div>
+
+                        <div>
+                          <select
+                            value={reg.status || "pending"}
+                            onChange={(e) =>
+                              handleUpdateStatus(
+                                reg.id,
+                                e.target.value as "pending" | "shortlisted" | "enrolled" | "rejected"
+                              )
+                            }
+                            className={`text-[10px] font-bold uppercase rounded px-2 py-1 border cursor-pointer outline-none ${
+                              reg.status === "shortlisted"
+                                ? "bg-amber-100 text-amber-800 border-amber-300"
+                                : reg.status === "enrolled"
+                                ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                : reg.status === "rejected"
+                                ? "bg-rose-100 text-rose-800 border-rose-300"
+                                : "bg-slate-100 text-slate-700 border-slate-300"
+                            }`}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="shortlisted">Shortlisted</option>
+                            <option value="enrolled">Enrolled</option>
+                            <option value="rejected">Rejected</option>
+                          </select>
+                        </div>
                       </td>
-                      <td className="p-3">
+
+                      {/* Actions */}
+                      <td className="p-3 space-y-1">
                         <Button
                           onClick={() => handleOpenWhatsApp(reg.phone, reg.full_name, reg.college_name)}
                           size="sm"
-                          className="h-7 px-2.5 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1"
+                          className="w-full h-7 px-2.5 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1"
                         >
                           <MessageSquare className="h-3 w-3" /> WhatsApp
                         </Button>
+                        <a
+                          href={`mailto:${reg.email}?subject=${encodeURIComponent(
+                            `Vyntyra Institutional Relations Associate — Application Update (${reg.id})`
+                          )}`}
+                          className="w-full inline-flex items-center justify-center gap-1 h-7 px-2.5 text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-800 rounded border border-slate-300 font-medium"
+                        >
+                          <Mail className="h-3 w-3" /> Email
+                        </a>
                       </td>
                     </tr>
                   ))
