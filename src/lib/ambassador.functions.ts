@@ -1176,7 +1176,50 @@ export const submitAmbassadorApplication = createServerFn({ method: "POST" })
       status: "pending",
     };
 
+    // 0. Primary dedicated table: ambassador_applications (if migrated)
+    try {
+      await admin.from("ambassador_applications").upsert({
+        id: record.id,
+        full_name: record.full_name,
+        email: record.email,
+        phone: record.phone,
+        full_address: record.full_address,
+        state: record.state,
+        district: record.district,
+        college_name: record.college_name,
+        college_location: record.college_location,
+        branch: record.branch,
+        department: record.department,
+        expected_graduation_year: record.expected_graduation_year,
+        languages_known: record.languages_known,
+        video_pitch_url: record.video_pitch_url,
+        portrait_photo_url: record.portrait_photo_url,
+        linkedin_url: record.linkedin_url || null,
+        instagram_url: record.instagram_url || null,
+        agreement_accepted: record.agreement_accepted,
+        terms_accepted: record.terms_accepted,
+        status: record.status,
+        cohort_name: "First Cohort 2026-27",
+        applicant_email_confirmed: true,
+        admin_notified: true,
+        created_at: record.created_at,
+        updated_at: record.created_at,
+      });
+    } catch (tblErr) {
+      console.warn("[ambassador_applications] table insert skipped (run SQL migration to create table):", tblErr);
+    }
+
     // 1. Store in site_settings under 'ambassador_first_cohort_registrations'
+    // Try updating in ambassador_applications table if migrated
+    try {
+      await admin
+        .from("ambassador_applications")
+        .update({ status: data.status, updated_at: new Date().toISOString() })
+        .eq("id", data.applicant_id);
+    } catch {
+      // Table may not exist yet
+    }
+
     const { data: existingSetting } = await admin
       .from("site_settings")
       .select("value")
@@ -1283,6 +1326,16 @@ export const updateAmbassadorApplicantStatus = createServerFn({ method: "POST" }
     }
 
     const admin = getAdminClient();
+    // Try updating in ambassador_applications table if migrated
+    try {
+      await admin
+        .from("ambassador_applications")
+        .update({ status: data.status, updated_at: new Date().toISOString() })
+        .eq("id", data.applicant_id);
+    } catch {
+      // Table may not exist yet
+    }
+
     const { data: existingSetting } = await admin
       .from("site_settings")
       .select("value")
@@ -1318,6 +1371,21 @@ export const listAmbassadorRegistrations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const admin = getAdminClient();
+
+    // Check dedicated ambassador_applications table first
+    try {
+      const { data: rows, error: tblErr } = await admin
+        .from("ambassador_applications")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!tblErr && rows && rows.length > 0) {
+        return rows as AmbassadorRegistration[];
+      }
+    } catch {
+      // Table may not exist yet, fallback to site_settings
+    }
+
     const { data: setting } = await admin
       .from("site_settings")
       .select("value")
