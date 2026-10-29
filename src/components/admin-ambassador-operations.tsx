@@ -511,7 +511,7 @@ export function AdminAmbassadorOperations() {
           { id: "faqs", label: "❓ FAQs", icon: HelpCircle, count: settings.faqs.length },
           { id: "form", label: "📝 Application Form", icon: FileText },
           { id: "popup", label: "🎟️ Coming Soon VIP Popup", icon: Eye },
-          { id: "applicants", label: "👥 Applicants & Broadcast", icon: Mail, count: (registrationsQ.data || []).length },
+          { id: "applicants", label: "👥 Applications, Lifecycle & Email Automation", icon: Mail, count: (registrationsQ.data || []).length },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;

@@ -1652,3 +1652,656 @@ export const sendAmbassadorPromotionalEmail = createServerFn({ method: "POST" })
 
     return { success: true, provider, recipient: recipientEmail };
   });
+
+// ═════════════════════════════════════════════════════════════════════
+// ─── AMBASSADOR APPLICATION LIFECYCLE & AUTOMATED EMAIL TEMPLATES ────
+// ═════════════════════════════════════════════════════════════════════
+
+export interface AmbassadorEmailTemplate {
+  id: string;
+  status_trigger: "under_review" | "shortlisted" | "selected" | "agreement_sent" | "rejected";
+  title: string;
+  subject: string;
+  body_html: string;
+  body_text?: string;
+  is_enabled: boolean;
+  sender_name?: string;
+  sender_email?: string;
+  agreement_url?: string;
+  updated_at?: string;
+}
+
+export const DEFAULT_AMBASSADOR_EMAIL_TEMPLATES: AmbassadorEmailTemplate[] = [
+  {
+    id: "tmpl_under_review",
+    status_trigger: "under_review",
+    title: "Application Under Review Notification",
+    subject: "🔍 Application Under Review: Vyntyra Institutional Relations Associate — {{cohort_name}}",
+    body_html: `<p>Dear <strong>{{full_name}}</strong>,</p>
+<p>Your application for <strong>Vyntyra Institutional Relations Associate (Campus Ambassador)</strong> representing <strong>{{college_name}}</strong> is officially <strong>under committee review</strong>.</p>
+<p>Our selection panel is currently reviewing your academic background, campus leadership profile, and your 5-10 minute video pitch.</p>
+<p>We will notify you shortly regarding candidate shortlisting and interview rounds.</p>
+<p>Best regards,<br/><strong>Vyntyra Institutional Relations Committee</strong></p>`,
+    is_enabled: true,
+  },
+  {
+    id: "tmpl_shortlisted",
+    status_trigger: "shortlisted",
+    title: "Candidate Shortlisted Notification",
+    subject: "🎉 Congratulations! You are Shortlisted for Vyntyra Institutional Relations Associate",
+    body_html: `<p>Dear <strong>{{full_name}}</strong>,</p>
+<p>We are delighted to inform you that you have been <strong>Shortlisted</strong> for the <strong>First Cohort 2026-27</strong> of the Vyntyra Institutional Relations Associate Program representing <strong>{{college_name}}</strong>!</p>
+<p>Your video pitch and academic track record demonstrated exemplary leadership potential.</p>
+<p><strong>Next Steps:</strong> You will receive an interview slot invitation and identity verification schedule within the next 48 hours.</p>
+<p>Warm regards,<br/><strong>Vyntyra Campus Leadership Cell</strong></p>`,
+    is_enabled: true,
+  },
+  {
+    id: "tmpl_selected",
+    status_trigger: "selected",
+    title: "Selection Letter & 6-Month Agreement Dispatched",
+    subject: "🏆 Official Selection: Vyntyra Institutional Relations Associate & 6-Month Agreement",
+    body_html: `<p>Dear <strong>{{full_name}}</strong>,</p>
+<p>Heartiest congratulations! You have been officially <strong>SELECTED</strong> as the <strong>Vyntyra Institutional Relations Associate (Campus Ambassador)</strong> for <strong>{{college_name}}</strong> in Cohort 1.0!</p>
+<p>As outlined in our program terms, your appointment is for a <strong>formal 6-month tenure</strong>.</p>
+<p><strong>Action Required - 6-Month Agreement:</strong><br/>
+Please download, review, and digitally sign your official <strong>6-Month Association Agreement Document</strong> using the link below:</p>
+<p><a href="{{agreement_link}}" style="display:inline-block;padding:12px 24px;background:#f59e0b;color:#0b1120;font-weight:bold;text-decoration:none;border-radius:6px;">Review &amp; Sign 6-Month Agreement &rarr;</a></p>
+<p>Upon digital acceptance, your personalized Executive IRA Welcome Kit &amp; ID Badge will be dispatched to your courier address.</p>
+<p>Warm congratulations,<br/><strong>Board of Directors · Vyntyra Consultancy Services Pvt. Ltd.</strong></p>`,
+    agreement_url: "https://vyntyraconsultancyservices.in/campus-ambassador/agreement-sample.pdf",
+    is_enabled: true,
+  },
+  {
+    id: "tmpl_agreement_sent",
+    status_trigger: "agreement_sent",
+    title: "Welcome Kit & Community Onboarding Notice",
+    subject: "🚀 Welcome Onboard! Official Onboarding & Welcome Kit Dispatch — Vyntyra IRA",
+    body_html: `<p>Dear <strong>{{full_name}}</strong>,</p>
+<p>Your 6-month agreement has been recorded. You are officially an active <strong>Institutional Relations Associate</strong> representing Vyntyra at <strong>{{college_name}}</strong>!</p>
+<p>📦 <strong>Welcome Kit Status:</strong> Packed &amp; assigned for courier dispatch.<br/>
+💼 <strong>Rewards Portal:</strong> Milestone stipends up to ₹15,000 are now active.<br/>
+📲 <strong>Ambassador Community:</strong> You will be added to the private Cohort 1.0 Executive Slack &amp; WhatsApp group.</p>
+<p>Welcome to the family!<br/><strong>Vyntyra Corporate Leadership Team</strong></p>`,
+    is_enabled: true,
+  },
+  {
+    id: "tmpl_rejected",
+    status_trigger: "rejected",
+    title: "Application Status Update (Not Shortlisted)",
+    subject: "Update regarding your Vyntyra Campus Ambassador Application (First Cohort)",
+    body_html: `<p>Dear <strong>{{full_name}}</strong>,</p>
+<p>Thank you very much for your interest and the time you invested in applying for the Vyntyra Institutional Relations Associate First Cohort from <strong>{{college_name}}</strong>.</p>
+<p>Due to exceptional application volumes and strictly limited allocations per institution, we are unable to advance your application for Cohort 1.0 at this time.</p>
+<p>We thoroughly enjoyed reviewing your profile and invite you to participate in upcoming Vyntyra technical hackathons, bootcamps, and future cohort cycles.</p>
+<p>Wishing you the very best in your academic and professional endeavors.<br/><strong>Vyntyra Talent Acquisition &amp; Student Relations</strong></p>`,
+    is_enabled: true,
+  },
+];
+
+// Helper to replace template tokens
+function renderEmailTemplateText(
+  templateText: string,
+  variables: Record<string, string>
+): string {
+  let rendered = templateText;
+  Object.entries(variables).forEach(([k, v]) => {
+    const regex = new RegExp(`\\{\\{\\s*${k}\\s*\\}\\}`, "g");
+    rendered = rendered.replace(regex, v || "");
+  });
+  return rendered;
+}
+
+// ─── Fetch Automated Email Templates (Admin) ────────────────────────
+export const getAmbassadorEmailTemplates = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if (!(await checkIsAdmin(context.userId))) {
+      throw new Error("Forbidden: Super Admin access required.");
+    }
+    const admin = getAdminClient();
+
+    // 1. Try fetching from public.ambassador_email_templates table
+    try {
+      const { data: rows, error } = await admin
+        .from("ambassador_email_templates")
+        .select("*")
+        .order("created_at", { ascending: true });
+
+      if (!error && rows && rows.length > 0) {
+        return rows as AmbassadorEmailTemplate[];
+      }
+    } catch {
+      // Table may not exist yet
+    }
+
+    // 2. Try fetching from site_settings
+    try {
+      const { data: setting } = await admin
+        .from("site_settings")
+        .select("value")
+        .eq("id", "ambassador_automated_email_templates")
+        .maybeSingle();
+
+      if (setting?.value) {
+        const parsed = Array.isArray(setting.value)
+          ? setting.value
+          : JSON.parse(setting.value);
+        if (parsed && parsed.length > 0) {
+          return parsed as AmbassadorEmailTemplate[];
+        }
+      }
+    } catch {
+      // Fallback
+    }
+
+    return DEFAULT_AMBASSADOR_EMAIL_TEMPLATES;
+  });
+
+// ─── Update an Automated Email Template (Admin) ─────────────────────
+export const updateAmbassadorEmailTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z.object({
+      id: z.string().min(1),
+      status_trigger: z.enum([
+        "under_review",
+        "shortlisted",
+        "selected",
+        "agreement_sent",
+        "rejected",
+      ]),
+      title: z.string().min(1),
+      subject: z.string().min(1),
+      body_html: z.string().min(1),
+      agreement_url: z.string().optional().nullable(),
+      is_enabled: z.boolean(),
+    }).parse(d)
+  )
+  .handler(async ({ data, context }) => {
+    if (!(await checkIsAdmin(context.userId))) {
+      throw new Error("Forbidden: Super Admin access required.");
+    }
+    const admin = getAdminClient();
+
+    // Update in table if exists
+    try {
+      await admin.from("ambassador_email_templates").upsert({
+        id: data.id,
+        status_trigger: data.status_trigger,
+        title: data.title,
+        subject: data.subject,
+        body_html: data.body_html,
+        agreement_url: data.agreement_url || null,
+        is_enabled: data.is_enabled,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn("ambassador_email_templates table update skipped:", e);
+    }
+
+    // Also update in site_settings for fail-safe persistence
+    try {
+      const { data: setting } = await admin
+        .from("site_settings")
+        .select("value")
+        .eq("id", "ambassador_automated_email_templates")
+        .maybeSingle();
+
+      let list: AmbassadorEmailTemplate[] = [];
+      if (setting?.value) {
+        list = Array.isArray(setting.value)
+          ? setting.value
+          : JSON.parse(setting.value);
+      } else {
+        list = [...DEFAULT_AMBASSADOR_EMAIL_TEMPLATES];
+      }
+
+      const idx = list.findIndex(
+        (t) => t.status_trigger === data.status_trigger || t.id === data.id
+      );
+      const updatedItem: AmbassadorEmailTemplate = {
+        id: data.id,
+        status_trigger: data.status_trigger,
+        title: data.title,
+        subject: data.subject,
+        body_html: data.body_html,
+        agreement_url: data.agreement_url || undefined,
+        is_enabled: data.is_enabled,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (idx >= 0) {
+        list[idx] = updatedItem;
+      } else {
+        list.push(updatedItem);
+      }
+
+      await admin.from("site_settings").upsert({
+        id: "ambassador_automated_email_templates",
+        value: list,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn("site_settings template update skipped:", e);
+    }
+
+    return { success: true };
+  });
+
+// ─── Update Application Status with Automated Email Trigger (Admin) ─
+export const updateAmbassadorApplicationStatusWithEmail = createServerFn({
+  method: "POST",
+})
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z.object({
+      application_id: z.string().min(1),
+      new_status: z.enum([
+        "pending",
+        "under_review",
+        "shortlisted",
+        "selected",
+        "accepted",
+        "agreement_sent",
+        "enrolled",
+        "rejected",
+      ]),
+      notes: z.string().optional().default(""),
+      send_email: z.boolean().default(true),
+      custom_email_subject: z.string().optional(),
+      custom_email_body: z.string().optional(),
+      agreement_document_url: z.string().optional(),
+    }).parse(d)
+  )
+  .handler(async ({ data, context }) => {
+    if (!(await checkIsAdmin(context.userId))) {
+      throw new Error("Forbidden: Super Admin access required.");
+    }
+    const admin = getAdminClient();
+
+    // 1. Fetch current application record
+    let applicant: AmbassadorRegistration | null = null;
+
+    try {
+      const { data: row } = await admin
+        .from("ambassador_applications")
+        .select("*")
+        .eq("id", data.application_id)
+        .maybeSingle();
+      if (row) applicant = row as AmbassadorRegistration;
+    } catch {
+      // Fallback to site_settings
+    }
+
+    const { data: setting } = await admin
+      .from("site_settings")
+      .select("value")
+      .eq("id", "ambassador_first_cohort_registrations")
+      .maybeSingle();
+
+    let list: AmbassadorRegistration[] = [];
+    if (setting?.value) {
+      list = Array.isArray(setting.value)
+        ? setting.value
+        : JSON.parse(setting.value);
+    }
+
+    const target = list.find((a) => a.id === data.application_id);
+    if (!applicant && target) {
+      applicant = target;
+    }
+
+    if (!applicant) {
+      throw new Error("Candidate application not found.");
+    }
+
+    const previousStatus = applicant.status;
+    const nowIso = new Date().toISOString();
+
+    // Update timestamps based on status
+    const updatePayload: Record<string, any> = {
+      status: data.new_status,
+      updated_at: nowIso,
+      review_notes: data.notes || (applicant as any).review_notes,
+      reviewed_by: context.userId,
+    };
+
+    if (data.new_status === "under_review") {
+      updatePayload.under_review_at = nowIso;
+    } else if (data.new_status === "shortlisted") {
+      updatePayload.shortlisted_at = nowIso;
+    } else if (data.new_status === "selected" || data.new_status === "accepted") {
+      updatePayload.selected_at = nowIso;
+      if (data.agreement_document_url) {
+        updatePayload.agreement_document_url = data.agreement_document_url;
+      }
+    } else if (data.new_status === "agreement_sent" || data.new_status === "enrolled") {
+      updatePayload.agreement_sent_at = nowIso;
+    } else if (data.new_status === "rejected") {
+      updatePayload.rejected_at = nowIso;
+    }
+
+    // 2. Persist in ambassador_applications table
+    try {
+      await admin
+        .from("ambassador_applications")
+        .update(updatePayload)
+        .eq("id", data.application_id);
+    } catch (e) {
+      console.warn("ambassador_applications update skipped:", e);
+    }
+
+    // 3. Persist in site_settings list
+    if (target) {
+      target.status = data.new_status as any;
+      (target as any).review_notes = data.notes;
+      (target as any).updated_at = nowIso;
+      await admin.from("site_settings").upsert({
+        id: "ambassador_first_cohort_registrations",
+        value: list,
+        updated_at: nowIso,
+      });
+    }
+
+    // 4. Handle Automated Email Dispatch if enabled
+    let emailSent = false;
+    let emailError: string | null = null;
+    let emailProvider = "none";
+
+    if (data.send_email) {
+      try {
+        // Resolve status trigger for template lookup
+        const triggerKey =
+          data.new_status === "accepted"
+            ? "selected"
+            : data.new_status === "enrolled"
+            ? "agreement_sent"
+            : data.new_status;
+
+        // Fetch template
+        let template: AmbassadorEmailTemplate | undefined;
+        try {
+          const { data: tRow } = await admin
+            .from("ambassador_email_templates")
+            .select("*")
+            .eq("status_trigger", triggerKey)
+            .maybeSingle();
+          if (tRow) template = tRow as AmbassadorEmailTemplate;
+        } catch {
+          // Fallback
+        }
+
+        if (!template) {
+          template = DEFAULT_AMBASSADOR_EMAIL_TEMPLATES.find(
+            (t) => t.status_trigger === triggerKey
+          );
+        }
+
+        if (template && (template.is_enabled || data.custom_email_body)) {
+          const agreementLink =
+            data.agreement_document_url ||
+            template.agreement_url ||
+            "https://vyntyraconsultancyservices.in/campus-ambassador/agreement-sample.pdf";
+
+          const variables: Record<string, string> = {
+            full_name: applicant.full_name,
+            email: applicant.email,
+            phone: applicant.phone,
+            college_name: applicant.college_name,
+            id: applicant.id,
+            branch: applicant.branch || applicant.degree_branch || "Technology",
+            cohort_name: "First Cohort 2026-27",
+            agreement_link: agreementLink,
+          };
+
+          const finalSubject = renderEmailTemplateText(
+            data.custom_email_subject || template.subject,
+            variables
+          );
+          const rawBody = data.custom_email_body || template.body_html;
+          const renderedInnerHtml = renderEmailTemplateText(rawBody, variables);
+
+          // Wrap in Luxury Shell
+          const finalHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background-color:#070b14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#f8fafc;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:40px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="max-width:620px;width:100%;background:#0d1527;border:1px solid #1e293b;border-radius:16px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+          <tr><td style="height:6px;background:linear-gradient(90deg, #f59e0b, #ec4899, #6366f1);"></td></tr>
+          <tr>
+            <td style="padding:32px 32px 10px 32px;text-align:center;">
+              <div style="display:inline-block;padding:5px 12px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:9999px;font-size:11px;font-weight:800;color:#fbbf24;text-transform:uppercase;margin-bottom:12px;">
+                ✨ VYNTYRA CAMPUS AMBASSADOR PROGRAM · COHORT 1.0
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:10px 32px 30px 32px;font-size:14px;line-height:1.7;color:#cbd5e1;">
+              ${renderedInnerHtml}
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#050811;padding:20px;text-align:center;border-top:1px solid #1e293b;">
+              <p style="margin:0;font-size:11px;color:#64748b;line-height:1.6;">
+                Vyntyra Consultancy Services Pvt. Ltd. · Great Place to Work® Certified<br/>
+                Institutional Relations & Campus Ambassador Cell<br/>
+                Desk: <a href="mailto:ambassadorprogram@vyntyraconsultancyservices.in" style="color:#fbbf24;text-decoration:none;">ambassadorprogram@vyntyraconsultancyservices.in</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+          // Send via Resend / Brevo
+          const resendKey = process.env.RESEND_API_KEY;
+          if (resendKey) {
+            try {
+              const res = await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${resendKey}`,
+                },
+                body: JSON.stringify({
+                  from: "Vyntyra Ambassador Program <careers@vyntyraconsultancyservices.in>",
+                  to: [applicant.email],
+                  subject: finalSubject,
+                  html: finalHtml,
+                }),
+              });
+              if (res.ok) {
+                emailSent = true;
+                emailProvider = "resend";
+              }
+            } catch (err: any) {
+              emailError = err.message;
+            }
+          }
+
+          if (!emailSent && process.env.BREVO_API_KEY) {
+            try {
+              const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "api-key": process.env.BREVO_API_KEY,
+                },
+                body: JSON.stringify({
+                  sender: {
+                    name: "Vyntyra Institutional Relations Cell",
+                    email: "ambassadorprogram@vyntyraconsultancyservices.in",
+                  },
+                  to: [{ email: applicant.email, name: applicant.full_name }],
+                  subject: finalSubject,
+                  htmlContent: finalHtml,
+                }),
+              });
+              if (res.ok) {
+                emailSent = true;
+                emailProvider = "brevo";
+              }
+            } catch (err: any) {
+              emailError = err.message;
+            }
+          }
+
+          // Record in automated_email_logs
+          try {
+            await admin.from("automated_email_logs").insert({
+              recipient_email: applicant.email,
+              recipient_name: applicant.full_name,
+              subject: finalSubject,
+              status: emailSent ? "sent" : "failed",
+              provider_used: emailProvider,
+              error_message: emailError,
+              created_at: nowIso,
+            });
+          } catch {
+            // Ignored
+          }
+        }
+      } catch (err: any) {
+        emailError = err.message;
+      }
+    }
+
+    // 5. Record Audit Log in ambassador_application_logs
+    try {
+      await admin.from("ambassador_application_logs").insert({
+        application_id: data.application_id,
+        previous_status: previousStatus,
+        new_status: data.new_status,
+        changed_by: context.userId,
+        notes: data.notes || null,
+        email_dispatched: emailSent,
+        email_provider: emailProvider,
+        email_error: emailError,
+        created_at: nowIso,
+      });
+    } catch {
+      // Ignored
+    }
+
+    return {
+      success: true,
+      application_id: data.application_id,
+      new_status: data.new_status,
+      email_dispatched: emailSent,
+      email_provider: emailProvider,
+      email_error: emailError,
+    };
+  });
+
+// ─── Send Test Status Email (Admin) ─────────────────────────────────
+export const sendTestAmbassadorStatusEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z.object({
+      target_email: z.string().email(),
+      status_trigger: z.enum([
+        "under_review",
+        "shortlisted",
+        "selected",
+        "agreement_sent",
+        "rejected",
+      ]),
+      custom_subject: z.string().optional(),
+      custom_body: z.string().optional(),
+      agreement_url: z.string().optional(),
+    }).parse(d)
+  )
+  .handler(async ({ data, context }) => {
+    if (!(await checkIsAdmin(context.userId))) {
+      throw new Error("Forbidden: Super Admin access required.");
+    }
+
+    const triggerKey = data.status_trigger;
+    const template =
+      DEFAULT_AMBASSADOR_EMAIL_TEMPLATES.find(
+        (t) => t.status_trigger === triggerKey
+      ) || DEFAULT_AMBASSADOR_EMAIL_TEMPLATES[0];
+
+    const variables: Record<string, string> = {
+      full_name: "Sample Applicant (Test Preview)",
+      email: data.target_email,
+      phone: "+91 98765 43210",
+      college_name: "Indian Institute of Technology, Madras",
+      id: "VCS-IRA-TEST-001",
+      branch: "Computer Science & Engineering",
+      cohort_name: "First Cohort 2026-27",
+      agreement_link:
+        data.agreement_url ||
+        template.agreement_url ||
+        "https://vyntyraconsultancyservices.in/campus-ambassador/agreement-sample.pdf",
+    };
+
+    const finalSubject = `[TEST PREVIEW] ${renderEmailTemplateText(
+      data.custom_subject || template.subject,
+      variables
+    )}`;
+    const rawBody = data.custom_body || template.body_html;
+    const renderedBody = renderEmailTemplateText(rawBody, variables);
+
+    const finalHtml = `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:20px;background-color:#070b14;font-family:sans-serif;color:#f8fafc;">
+  <div style="max-width:600px;margin:auto;background:#0d1527;border:1px solid #1e293b;border-radius:12px;padding:24px;">
+    <div style="background:#f59e0b;color:#000;font-weight:bold;font-size:11px;padding:4px 8px;border-radius:4px;display:inline-block;margin-bottom:12px;">
+      PREVIEW EMAIL
+    </div>
+    ${renderedBody}
+  </div>
+</body>
+</html>`;
+
+    let sent = false;
+    const resendKey = process.env.RESEND_API_KEY;
+    if (resendKey) {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${resendKey}`,
+        },
+        body: JSON.stringify({
+          from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
+          to: [data.target_email],
+          subject: finalSubject,
+          html: finalHtml,
+        }),
+      });
+      if (res.ok) sent = true;
+    }
+
+    if (!sent && process.env.BREVO_API_KEY) {
+      const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": process.env.BREVO_API_KEY,
+        },
+        body: JSON.stringify({
+          sender: {
+            name: "Vyntyra Institutional Relations Cell",
+            email: "ambassadorprogram@vyntyraconsultancyservices.in",
+          },
+          to: [{ email: data.target_email, name: "Admin Preview" }],
+          subject: finalSubject,
+          htmlContent: finalHtml,
+        }),
+      });
+      if (res.ok) sent = true;
+    }
+
+    return { success: sent, recipient: data.target_email };
+  });
