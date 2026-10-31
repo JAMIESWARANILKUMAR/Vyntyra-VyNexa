@@ -32,6 +32,7 @@ import {
   Crown,
   ChevronDown,
   ChevronUp,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,11 +64,15 @@ import {
   DEFAULT_AMBASSADOR_THEME,
   DEFAULT_AMBASSADOR_PILLARS,
   DEFAULT_AMBASSADOR_FAQS,
+  DEFAULT_AMBASSADOR_PROGRESSION,
+  DEFAULT_AMBASSADOR_TIERS,
   type AmbassadorProgramSettings,
   type AmbassadorProductItem,
   type AmbassadorPillarItem,
   type AmbassadorFaqItem,
   type AmbassadorThemeSettings,
+  type AmbassadorRewardTier,
+  type AmbassadorProgressionSettings,
 } from "@/lib/ambassador.functions";
 import { AmbassadorComingSoonModal } from "@/components/ambassador-coming-soon-modal";
 import { AdminAmbassadorCampaign } from "@/components/admin-ambassador-campaign";
@@ -186,10 +191,15 @@ export function AdminAmbassadorOperations() {
   // Local Form State
   const [settings, setSettings] = useState<AmbassadorProgramSettings>(DEFAULT_AMBASSADOR_SETTINGS);
   const [activeTab, setActiveTab] = useState<
-    "theme" | "hero" | "pillars" | "products" | "gadgets_retreat" | "faqs" | "form" | "popup" | "applicants"
+    "theme" | "hero" | "pillars" | "products" | "rewards_tiers" | "gadgets_retreat" | "faqs" | "form" | "popup" | "applicants"
   >("theme");
   const [isSaving, setIsSaving] = useState(false);
   const [testModalOpen, setTestModalOpen] = useState(false);
+
+  // Progression Tiers Add / Edit Modal State
+  const [tierModalOpen, setTierModalOpen] = useState(false);
+  const [editingTier, setEditingTier] = useState<AmbassadorRewardTier | null>(null);
+  const [newNoteInput, setNewNoteInput] = useState("");
 
   // Product Add / Edit Modal State
   const [productModalOpen, setProductModalOpen] = useState(false);
@@ -411,6 +421,112 @@ export function AdminAmbassadorOperations() {
     setSettings({ ...settings, faqs: settings.faqs.filter((f) => f.id !== id) });
   };
 
+  // ─── Progression Tiers & Rewards Handlers ───
+  const currentProgression = settings.progression_table || DEFAULT_AMBASSADOR_PROGRESSION;
+  const currentTiers = Array.isArray(currentProgression.tiers) && currentProgression.tiers.length > 0
+    ? currentProgression.tiers
+    : DEFAULT_AMBASSADOR_TIERS;
+  const currentNotes = Array.isArray(currentProgression.notes) && currentProgression.notes.length > 0
+    ? currentProgression.notes
+    : DEFAULT_AMBASSADOR_PROGRESSION.notes;
+
+  const handleUpdateProgression = (updates: Partial<AmbassadorProgressionSettings>) => {
+    setSettings((prev) => ({
+      ...prev,
+      progression_table: {
+        ...(prev.progression_table || DEFAULT_AMBASSADOR_PROGRESSION),
+        ...updates,
+      },
+    }));
+  };
+
+  const openCreateTier = () => {
+    const nextPoints = currentTiers.length > 0 ? Math.max(...currentTiers.map((t) => t.points)) + 200 : 400;
+    setEditingTier({
+      id: `tier-${nextPoints}-${Date.now()}`,
+      category: `Level ${currentTiers.length + 1}`,
+      points: nextPoints,
+      voucher_amount: 1000,
+      rewards_text: `₹1,000 E-Voucher + Milestone Swag / Gear`,
+      digital_rewards: "Digital Badge",
+      highlight: false,
+    });
+    setTierModalOpen(true);
+  };
+
+  const openEditTier = (tier: AmbassadorRewardTier) => {
+    setEditingTier({ ...tier });
+    setTierModalOpen(true);
+  };
+
+  const handleSaveTier = () => {
+    if (!editingTier) return;
+    if (!editingTier.category.trim()) {
+      toast.error("Tier category / title is required.");
+      return;
+    }
+    const list = [...currentTiers];
+    const existsIdx = list.findIndex((t) => t.id === editingTier.id);
+    if (existsIdx >= 0) {
+      list[existsIdx] = editingTier;
+    } else {
+      list.push(editingTier);
+    }
+    list.sort((a, b) => a.points - b.points);
+    handleUpdateProgression({ tiers: list });
+    setTierModalOpen(false);
+    setEditingTier(null);
+    toast.success("Progression tier updated in draft.");
+  };
+
+  const handleDeleteTier = (id: string) => {
+    if (currentTiers.length <= 1) {
+      toast.error("At least one progression tier must remain.");
+      return;
+    }
+    const updated = currentTiers.filter((t) => t.id !== id);
+    handleUpdateProgression({ tiers: updated });
+    toast.info("Progression tier removed from draft.");
+  };
+
+  const handleMoveTier = (index: number, direction: "up" | "down") => {
+    const targetIdx = direction === "up" ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= currentTiers.length) return;
+    const updated = [...currentTiers];
+    const temp = updated[index];
+    updated[index] = updated[targetIdx];
+    updated[targetIdx] = temp;
+    handleUpdateProgression({ tiers: updated });
+  };
+
+  const handleAddProgressionNote = () => {
+    if (!newNoteInput.trim()) return;
+    const updated = [...currentNotes, newNoteInput.trim()];
+    handleUpdateProgression({ notes: updated });
+    setNewNoteInput("");
+    toast.success("Progression note added.");
+  };
+
+  const handleDeleteProgressionNote = (idx: number) => {
+    const updated = currentNotes.filter((_, i) => i !== idx);
+    handleUpdateProgression({ notes: updated });
+    toast.info("Progression note removed.");
+  };
+
+  const handleResetToDefaultProgression = () => {
+    if (confirm("Reset Progression Tiers & Notes to official defaults (400 to 2000 pts, ₹15,000 cap)?")) {
+      handleUpdateProgression({
+        heading: DEFAULT_AMBASSADOR_PROGRESSION.heading,
+        description: DEFAULT_AMBASSADOR_PROGRESSION.description,
+        max_reward_amount: DEFAULT_AMBASSADOR_PROGRESSION.max_reward_amount,
+        badge_text: DEFAULT_AMBASSADOR_PROGRESSION.badge_text,
+        tiers: DEFAULT_AMBASSADOR_TIERS,
+        notes: DEFAULT_AMBASSADOR_PROGRESSION.notes,
+      });
+      toast.info("Progression reset to default. Click 'Save All Changes' to publish.");
+    }
+  };
+
   // Reset to Factory Default
   const handleResetDefaults = () => {
     if (confirm("Reset ALL Ambassador styling, text, and catalog to official factory defaults?")) {
@@ -506,6 +622,7 @@ export function AdminAmbassadorOperations() {
           { id: "theme", label: "🎨 Colors & Themes", icon: Palette },
           { id: "hero", label: "🚀 Hero & Metrics", icon: Layout },
           { id: "pillars", label: "💎 Perks & Pillars", icon: Sparkles, count: settings.pillars_section.pillars.length },
+          { id: "rewards_tiers", label: "🏆 Progression Tiers & Rewards", icon: Trophy, count: (settings.progression_table?.tiers || DEFAULT_AMBASSADOR_TIERS).length },
           { id: "products", label: "📸 Product Photography", icon: ImageIcon, count: settings.products.length },
           { id: "gadgets_retreat", label: "⚡ Gadgets & Retreat", icon: Zap },
           { id: "faqs", label: "❓ FAQs", icon: HelpCircle, count: settings.faqs.length },
@@ -1282,6 +1399,259 @@ export function AdminAmbassadorOperations() {
         </div>
       )}
 
+      {/* ═════════ TAB: 🏆 PROGRESSION TIERS & REWARDS ═════════ */}
+      {activeTab === "rewards_tiers" && (
+        <div className="space-y-6">
+          {/* Section Overview Card */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 text-[11px] font-mono font-bold uppercase mb-1.5">
+                <Trophy className="h-3 w-3 text-amber-500" /> Progression Milestones Engine
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">
+                Ambassador Progression Tiers &amp; E-Vouchers Studio
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 max-w-2xl">
+                Configure milestone points (400, 600, 800, 1000 ... 2000 pts), adjust e-vouchers/incentives capped up to ₹15,000, physical perks (Welcome Kit, Hoodies, Backpacks, Powerbanks, Earbuds, Watches), and digital recognition.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetToDefaultProgression}
+                className="text-xs border-slate-300 text-slate-700 hover:bg-slate-100"
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1 text-slate-500" />
+                Reset Defaults
+              </Button>
+              <Button
+                size="sm"
+                onClick={openCreateTier}
+                className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-sm"
+              >
+                <Plus className="h-3.5 w-3.5 mr-1 text-amber-400" />
+                Add New Tier
+              </Button>
+            </div>
+          </div>
+
+          {/* Section Header & Max Reward Settings */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Section Heading
+              </label>
+              <Input
+                value={currentProgression.heading}
+                onChange={(e) => handleUpdateProgression({ heading: e.target.value })}
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Badge / Sub-header
+              </label>
+              <Input
+                value={currentProgression.badge_text}
+                onChange={(e) => handleUpdateProgression({ badge_text: e.target.value })}
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Max Cohort Reward Cap
+              </label>
+              <Input
+                value={currentProgression.max_reward_amount}
+                onChange={(e) => handleUpdateProgression({ max_reward_amount: e.target.value })}
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <div className="md:col-span-3">
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Section Description
+              </label>
+              <Input
+                value={currentProgression.description}
+                onChange={(e) => handleUpdateProgression({ description: e.target.value })}
+                className="h-9 text-xs"
+              />
+            </div>
+          </div>
+
+          {/* Structured Tiers List */}
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Active Progression Tiers ({currentTiers.length})
+              </span>
+              <span className="text-[11px] text-slate-500 font-mono">
+                Sorted by Milestone Points
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-100/60 text-[11px] font-bold uppercase text-slate-600">
+                    <th className="py-3 px-4 w-12 text-center">#</th>
+                    <th className="py-3 px-4 w-40">Tier Category</th>
+                    <th className="py-3 px-4 w-28 text-center">Points</th>
+                    <th className="py-3 px-4 w-32 text-center">Milestone Voucher</th>
+                    <th className="py-3 px-4">E-Vouchers &amp; Physical Rewards</th>
+                    <th className="py-3 px-4">Digital Rewards</th>
+                    <th className="py-3 px-4 w-24 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {currentTiers.map((tier, idx) => (
+                    <tr
+                      key={tier.id}
+                      className={`hover:bg-slate-50/80 transition-colors ${
+                        tier.highlight ? "bg-amber-50/40" : ""
+                      }`}
+                    >
+                      <td className="py-3.5 px-4 text-center font-mono text-slate-400">
+                        {idx + 1}
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-slate-900">
+                        <div className="flex items-center gap-1.5">
+                          {tier.highlight && <Crown className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
+                          <span>{tier.category}</span>
+                          {tier.highlight && (
+                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold uppercase">
+                              Apex
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="inline-block px-2.5 py-1 rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-mono font-bold text-xs">
+                          {tier.points.toLocaleString()} pts
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="inline-block px-2 py-0.5 rounded font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 text-xs">
+                          ₹{tier.voucher_amount ? tier.voucher_amount.toLocaleString() : "0"}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-700 max-w-xs leading-relaxed text-[11px]">
+                        {tier.rewards_text}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-600 max-w-xs leading-relaxed text-[11px]">
+                        {tier.digital_rewards}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveTier(idx, "up")}
+                            disabled={idx === 0}
+                            className="p-1 rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:pointer-events-none"
+                            title="Move Up"
+                          >
+                            <ChevronUp className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveTier(idx, "down")}
+                            disabled={idx === currentTiers.length - 1}
+                            className="p-1 rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:pointer-events-none"
+                            title="Move Down"
+                          >
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openEditTier(tier)}
+                            className="p-1 rounded text-slate-600 hover:text-blue-600"
+                            title="Edit Tier"
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteTier(tier.id)}
+                            className="p-1 rounded text-slate-400 hover:text-rose-600"
+                            title="Delete Tier"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Important Progression Notes Editor */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-bold text-slate-900">
+                  Progression Guidelines &amp; Milestone Dispatch Notes
+                </h4>
+                <p className="text-xs text-slate-500">
+                  These notices appear under the progression table (e.g. 1st milestone dispatch rule, certificate terms).
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {currentNotes.map((note, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-start justify-between gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-800"
+                >
+                  <div className="flex items-start gap-2">
+                    <span className="font-mono text-slate-400 shrink-0 font-bold">{idx + 1}.</span>
+                    <span>{note}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteProgressionNote(idx)}
+                    className="text-slate-400 hover:text-rose-600 shrink-0 p-1"
+                    title="Remove Note"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <Input
+                placeholder="Add another progression note or milestone policy..."
+                value={newNoteInput}
+                onChange={(e) => setNewNoteInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddProgressionNote();
+                  }
+                }}
+                className="text-xs h-9"
+              />
+              <Button
+                type="button"
+                onClick={handleAddProgressionNote}
+                size="sm"
+                className="bg-slate-900 text-white shrink-0 text-xs"
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add Note
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═════════ TAB 5: ⚡ GADGETS & TRAVEL RETREAT ═════════ */}
       {activeTab === "gadgets_retreat" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -2013,6 +2383,136 @@ export function AdminAmbassadorOperations() {
             </Button>
             <Button onClick={handleSaveFaq} className="bg-amber-400 text-slate-950 font-bold text-xs">
               Save FAQ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Progression Tier Edit/Add Modal ─── */}
+      <Dialog open={tierModalOpen} onOpenChange={setTierModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-amber-500" />
+              {editingTier && currentTiers.some((t) => t.id === editingTier.id)
+                ? "Edit Progression Tier"
+                : "Add New Progression Tier"}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Customize the milestone points, voucher amount, physical perks, and digital rewards for this progression tier.
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingTier && (
+            <div className="space-y-4 py-2 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                    Tier Category Name *
+                  </label>
+                  <Input
+                    placeholder="e.g. The Spark, The Pioneer"
+                    value={editingTier.category}
+                    onChange={(e) => setEditingTier({ ...editingTier, category: e.target.value })}
+                    className="h-9 text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                    Milestone Points *
+                  </label>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 400, 600, 800"
+                    value={editingTier.points}
+                    onChange={(e) =>
+                      setEditingTier({
+                        ...editingTier,
+                        points: parseInt(e.target.value, 10) || 0,
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 items-center">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                    Milestone Voucher / Incentive (₹)
+                  </label>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 500, 1000, 15000"
+                    value={editingTier.voucher_amount ?? 0}
+                    onChange={(e) =>
+                      setEditingTier({
+                        ...editingTier,
+                        voucher_amount: parseInt(e.target.value, 10) || 0,
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+
+                <div className="pt-4 flex items-center gap-2">
+                  <Switch
+                    checked={editingTier.highlight || false}
+                    onCheckedChange={(val) => setEditingTier({ ...editingTier, highlight: val })}
+                  />
+                  <span className="text-xs font-bold text-slate-700">
+                    Apex Tier Highlight (Gold Crown)
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                  E-Vouchers &amp; Physical Rewards (Welcome Kit, Hoodies, Tech Gear)
+                </label>
+                <Textarea
+                  rows={3}
+                  placeholder="e.g. ₹500 E-Voucher + Exclusive IRA Welcome Kit (Dispatched after 1st milestone...)"
+                  value={editingTier.rewards_text}
+                  onChange={(e) => setEditingTier({ ...editingTier, rewards_text: e.target.value })}
+                  className="text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                  Digital Rewards &amp; Certificates
+                </label>
+                <Textarea
+                  rows={2}
+                  placeholder="e.g. Digital Badge + Certificate of Perseverance / Completion"
+                  value={editingTier.digital_rewards}
+                  onChange={(e) => setEditingTier({ ...editingTier, digital_rewards: e.target.value })}
+                  className="text-xs"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setTierModalOpen(false);
+                setEditingTier(null);
+              }}
+              className="text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSaveTier}
+              className="bg-slate-900 text-white font-bold text-xs"
+            >
+              Save Tier
             </Button>
           </DialogFooter>
         </DialogContent>

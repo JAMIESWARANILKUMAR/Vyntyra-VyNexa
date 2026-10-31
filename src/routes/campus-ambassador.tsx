@@ -55,8 +55,11 @@ import {
   uploadAmbassadorPortraitImage,
   getAmbassadorProgramSettings,
   DEFAULT_AMBASSADOR_SETTINGS,
+  DEFAULT_AMBASSADOR_PROGRESSION,
+  DEFAULT_AMBASSADOR_TIERS,
   type AmbassadorProgramSettings,
   type AmbassadorProductItem,
+  type AmbassadorRewardTier,
 } from "@/lib/ambassador.functions";
 import { STATES, COLLEGES, type StateName } from "@/lib/colleges";
 import { getDistrictsForState } from "@/lib/districts";
@@ -202,6 +205,19 @@ function CampusAmbassadorPage() {
   const settings: AmbassadorProgramSettings = settingsQ.data || DEFAULT_AMBASSADOR_SETTINGS;
   const theme = settings.theme || DEFAULT_AMBASSADOR_SETTINGS.theme;
   const isEnabled = settings.applications_enabled !== false;
+
+  // Dynamic Progression Milestones & Tiers
+  const progressionData = settings.progression_table || DEFAULT_AMBASSADOR_PROGRESSION;
+  const progressionTiers = useMemo(() => {
+    return Array.isArray(progressionData.tiers) && progressionData.tiers.length > 0
+      ? progressionData.tiers
+      : DEFAULT_AMBASSADOR_TIERS;
+  }, [progressionData.tiers]);
+  const progressionNotes = useMemo(() => {
+    return Array.isArray(progressionData.notes) && progressionData.notes.length > 0
+      ? progressionData.notes
+      : DEFAULT_AMBASSADOR_PROGRESSION.notes;
+  }, [progressionData.notes]);
 
   // Active products
   const allActiveProducts = useMemo(() => {
@@ -1000,10 +1016,10 @@ function CampusAmbassadorPage() {
                 <Trophy className="h-8 w-8 text-amber-300 drop-shadow-md" />
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-                Ambassador Tiered Reward Structure
+                {progressionData.heading || "Ambassador Tiered Reward Structure"}
               </h2>
               <p className="mt-3 text-base sm:text-lg text-blue-100/90 font-medium">
-                Progression tiers based on total points accumulated throughout the program duration.
+                {progressionData.description || "Progression tiers based on total points accumulated throughout the program duration."}
               </p>
             </div>
 
@@ -1020,83 +1036,36 @@ function CampusAmbassadorPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/80 text-xs sm:text-sm">
-                    <tr className="hover:bg-slate-900/60 transition-colors">
-                      <td className="py-4 px-6 font-bold text-white">The Spark</td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/40 text-sky-300 font-mono font-bold text-xs">
-                          900 pts
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-slate-200">Branded Bottle + ₹500 E-voucher</td>
-                      <td className="py-4 px-6 text-slate-300">Digital Badge</td>
-                    </tr>
-                    <tr className="hover:bg-slate-900/60 transition-colors">
-                      <td className="py-4 px-6 font-bold text-white">The Trailblazer</td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/40 text-sky-300 font-mono font-bold text-xs">
-                          1,650 pts
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-slate-200">₹500 E-voucher</td>
-                      <td className="py-4 px-6 text-slate-300">Digital Badge</td>
-                    </tr>
-                    <tr className="hover:bg-slate-900/60 transition-colors">
-                      <td className="py-4 px-6 font-bold text-white">The Changemaker</td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/40 text-sky-300 font-mono font-bold text-xs">
-                          2,400 pts
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-slate-200">Power Bank + ₹1,000 E-voucher</td>
-                      <td className="py-4 px-6 text-slate-300">
-                        Digital Badge + Certificate of Perseverance / Certificate of Completion
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-slate-900/60 transition-colors">
-                      <td className="py-4 px-6 font-bold text-white">The Powerhouse</td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/40 text-sky-300 font-mono font-bold text-xs">
-                          3,150 pts
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-slate-200">₹1,000 E-voucher</td>
-                      <td className="py-4 px-6 text-slate-300">Digital Badge</td>
-                    </tr>
-                    <tr className="hover:bg-slate-900/60 transition-colors">
-                      <td className="py-4 px-6 font-bold text-white">The Luminary</td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/40 text-sky-300 font-mono font-bold text-xs">
-                          3,900 pts
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-slate-200">Bluetooth Speaker + ₹2,500 E-voucher</td>
-                      <td className="py-4 px-6 text-slate-300">Digital Badge + Certificate of Prominence</td>
-                    </tr>
-                    <tr className="hover:bg-slate-900/60 transition-colors">
-                      <td className="py-4 px-6 font-bold text-white">The Vanguard</td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/40 text-sky-300 font-mono font-bold text-xs">
-                          4,650 pts
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-amber-300 font-semibold">₹5,000 Performance Incentive</td>
-                      <td className="py-4 px-6 text-slate-300">Digital Badge</td>
-                    </tr>
-                    <tr className="hover:bg-slate-900/60 transition-colors bg-gradient-to-r from-amber-500/10 via-slate-900/60 to-indigo-500/10">
-                      <td className="py-4 px-6 font-black text-amber-300 flex items-center gap-1.5">
-                        <Crown className="h-4 w-4 text-amber-400 shrink-0" />
-                        The Legend
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-block px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/50 text-amber-300 font-mono font-bold text-xs">
-                          5,400 pts
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-emerald-400 font-bold">₹10,000 Performance Incentive</td>
-                      <td className="py-4 px-6 text-slate-200 font-medium">
-                        Digital Badge + Certificate of Ascendancy
-                      </td>
-                    </tr>
+                    {progressionTiers.map((tier) => (
+                      <tr
+                        key={tier.id}
+                        className={`hover:bg-slate-900/60 transition-colors ${
+                          tier.highlight ? "bg-gradient-to-r from-amber-500/10 via-slate-900/60 to-indigo-500/10" : ""
+                        }`}
+                      >
+                        <td className={`py-4 px-6 font-bold ${tier.highlight ? "font-black text-amber-300 flex items-center gap-1.5" : "text-white"}`}>
+                          {tier.highlight && <Crown className="h-4 w-4 text-amber-400 shrink-0" />}
+                          {tier.category}
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <span
+                            className={`inline-block px-3 py-1 rounded-full font-mono font-bold text-xs ${
+                              tier.highlight
+                                ? "bg-amber-500/20 border border-amber-400/50 text-amber-300"
+                                : "bg-blue-500/15 border border-blue-400/40 text-sky-300"
+                            }`}
+                          >
+                            {tier.points.toLocaleString()} pts
+                          </span>
+                        </td>
+                        <td className={`py-4 px-6 ${tier.highlight ? "text-emerald-400 font-bold" : "text-slate-200"}`}>
+                          {tier.rewards_text}
+                        </td>
+                        <td className={`py-4 px-6 ${tier.highlight ? "text-slate-200 font-medium" : "text-slate-300"}`}>
+                          {tier.digital_rewards}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -1109,18 +1078,11 @@ function CampusAmbassadorPage() {
                 Important Progression Notes:
               </div>
               <ul className="space-y-2 pl-4 list-disc text-blue-100/90 leading-relaxed">
-                <li>
-                  <strong className="text-white">Swag &amp; Welcome Kit Dispatch:</strong> Everywhere swags, branded hoodies, customized stationery, and official welcome kits will be dispatched after reaching the 1st milestone only.
-                </li>
-                <li>
-                  The <strong className="text-white">Certificate of Perseverance</strong> is for Semester 1 ambassadors continuing into Semester 2.
-                </li>
-                <li>
-                  The <strong className="text-white">Certificate of Completion</strong> is for newly onboarded ambassadors who successfully complete the programme.
-                </li>
-                <li>
-                  Certificates will be given upon the completion of the programme.
-                </li>
+                {progressionNotes.map((note, idx) => (
+                  <li key={idx} className="leading-relaxed">
+                    {note}
+                  </li>
+                ))}
               </ul>
             </div>
           </div>

@@ -171,7 +171,119 @@ export interface AmbassadorProgramSettings {
 
   // Physical Swags, Goodies & Gadgets Photography
   products: AmbassadorProductItem[];
+
+  // Dynamic Progression Milestones & Reward Tiers (Editable in Admin Panel)
+  progression_table: AmbassadorProgressionSettings;
 }
+
+export interface AmbassadorRewardTier {
+  id: string;
+  category: string;
+  points: number;
+  voucher_amount?: number;
+  rewards_text: string;
+  digital_rewards: string;
+  highlight?: boolean;
+}
+
+export interface AmbassadorProgressionSettings {
+  badge_text: string;
+  heading: string;
+  description: string;
+  max_reward_amount: string;
+  notes: string[];
+  tiers: AmbassadorRewardTier[];
+}
+
+export const DEFAULT_AMBASSADOR_TIERS: AmbassadorRewardTier[] = [
+  {
+    id: "tier-400",
+    category: "The Spark",
+    points: 400,
+    voucher_amount: 500,
+    rewards_text: "₹500 E-Voucher + Exclusive IRA Welcome Kit (Dispatched after 1st milestone: Executive ID Card, Lanyard, Custom Metallic IRA Pin, Welcome Stationery & Collectibles)",
+    digital_rewards: "Digital Badge + Certificate of Enrolment",
+  },
+  {
+    id: "tier-600",
+    category: "The Pioneer",
+    points: 600,
+    voucher_amount: 1000,
+    rewards_text: "₹1,000 E-Voucher + Sleek Stainless Steel Water Bottle & Cotton Tech Tee",
+    digital_rewards: "Digital Badge",
+  },
+  {
+    id: "tier-800",
+    category: "The Trailblazer",
+    points: 800,
+    voucher_amount: 1500,
+    rewards_text: "₹1,500 E-Voucher + Fast-Charging Powerbank",
+    digital_rewards: "Digital Badge",
+  },
+  {
+    id: "tier-1000",
+    category: "The Catalyst",
+    points: 1000,
+    voucher_amount: 2000,
+    rewards_text: "₹2,000 E-Voucher + Padded Laptop Sleeve & Hardcover Tech Notebook",
+    digital_rewards: "Digital Badge",
+  },
+  {
+    id: "tier-1200",
+    category: "The Changemaker",
+    points: 1200,
+    voucher_amount: 2500,
+    rewards_text: "₹2,500 E-Voucher + Active Noise Cancelling (ANC) Wireless Earbuds",
+    digital_rewards: "Digital Badge + Certificate of Perseverance / Certificate of Completion",
+  },
+  {
+    id: "tier-1400",
+    category: "The Powerhouse",
+    points: 1400,
+    voucher_amount: 3000,
+    rewards_text: "₹3,000 E-Voucher + Limited-Edition Embroidered Corporate Hoodie",
+    digital_rewards: "Digital Badge",
+  },
+  {
+    id: "tier-1600",
+    category: "The Luminary",
+    points: 1600,
+    voucher_amount: 4000,
+    rewards_text: "₹4,000 E-Voucher + Portable Bluetooth Soundbar & Heavy-Duty Tech Backpack",
+    digital_rewards: "Digital Badge + Certificate of Prominence",
+  },
+  {
+    id: "tier-1800",
+    category: "The Vanguard",
+    points: 1800,
+    voucher_amount: 6000,
+    rewards_text: "₹6,000 Direct Milestone Incentive + Full HD Executive Webcam",
+    digital_rewards: "Digital Badge + Executive Recommendation Letter",
+  },
+  {
+    id: "tier-2000",
+    category: "The Apex Legend",
+    points: 2000,
+    voucher_amount: 15000,
+    rewards_text: "Grand ₹15,000 Milestone Incentive / E-Voucher Package + AMOLED Smartwatch & Complete Merch Ecosystem",
+    digital_rewards: "Digital Badge + Certificate of Ascendancy & Letter of Recommendation",
+    highlight: true,
+  },
+];
+
+export const DEFAULT_AMBASSADOR_PROGRESSION: AmbassadorProgressionSettings = {
+  badge_text: "PERFORMANCE MILESTONES & REWARDS",
+  heading: "Ambassador Tiered Reward Structure",
+  description: "Progression tiers based on total points accumulated throughout the program duration.",
+  max_reward_amount: "₹15,000",
+  notes: [
+    "Milestone Dispatch Notice: Everywhere swags, branded hoodies, customized stationery, and official welcome kits will be dispatched after reaching the 1st milestone only.",
+    "The Certificate of Perseverance is for Semester 1 ambassadors continuing into Semester 2.",
+    "The Certificate of Completion is for newly onboarded ambassadors who successfully complete the programme.",
+    "Certificates will be given upon the completion of the programme.",
+  ],
+  tiers: DEFAULT_AMBASSADOR_TIERS,
+};
 
 export const DEFAULT_AMBASSADOR_PRODUCTS: AmbassadorProductItem[] = [
   {
@@ -522,6 +634,7 @@ export const DEFAULT_AMBASSADOR_SETTINGS: AmbassadorProgramSettings = {
   popup_perks_summary: "Branded Gadgets · Top 10 Retreat · Dual Certificates · 100% Free VVIP Events Pass",
 
   products: DEFAULT_AMBASSADOR_PRODUCTS,
+  progression_table: DEFAULT_AMBASSADOR_PROGRESSION,
 };
 
 async function checkIsAdmin(userId: string) {
@@ -607,6 +720,18 @@ export const getAmbassadorProgramSettings = createServerFn({ method: "GET" }).ha
           Array.isArray(parsed?.products) && parsed.products.length > 0
             ? parsed.products
             : DEFAULT_AMBASSADOR_PRODUCTS,
+        progression_table: {
+          ...DEFAULT_AMBASSADOR_PROGRESSION,
+          ...(parsed?.progression_table || {}),
+          tiers:
+            Array.isArray(parsed?.progression_table?.tiers) && parsed.progression_table.tiers.length > 0
+              ? parsed.progression_table.tiers
+              : DEFAULT_AMBASSADOR_TIERS,
+          notes:
+            Array.isArray(parsed?.progression_table?.notes) && parsed.progression_table.notes.length > 0
+              ? parsed.progression_table.notes
+              : DEFAULT_AMBASSADOR_PROGRESSION.notes,
+        },
       } as AmbassadorProgramSettings;
     }
   } catch (err) {
