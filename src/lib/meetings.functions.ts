@@ -613,7 +613,60 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
     }
     const participantId = userId || `guest_${crypto.randomUUID()}`;
 
-    let cfMeetingId = settings.cf_room_id || data.roomId;
+    const UUID_FORMAT = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    let cfMeetingId = settings.cf_room_id && UUID_FORMAT.test(settings.cf_room_id)
+      ? settings.cf_room_id
+      : (UUID_FORMAT.test(data.roomId) ? data.roomId : null);
+
+    const provisionCloudflareMeeting = async (): Promise<string | null> => {
+      try {
+        const createRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/realtime/kit/${appId}/meetings`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            title: (room.title as string) || "Live Meeting"
+          })
+        });
+
+        if (createRes.ok) {
+          const createData = await createRes.json() as any;
+          const newCfId = createData.data?.id;
+          if (newCfId) {
+            settings.cf_room_id = newCfId;
+            const updatedSettingsStr = JSON.stringify(settings);
+
+            // Persist the mapped cf_room_id so all subsequent users join the same room
+            const adminClient = getAdminClient();
+            try {
+              await adminClient.from('meet_rooms').update({ settings: updatedSettingsStr }).eq('id', cleanRoomId);
+            } catch (_) {}
+            try {
+              if (isUuid) {
+                await adminClient.from('meetings').update({ description: (room.description || '') + ` __SETTINGS:${updatedSettingsStr}` }).or(`id.eq.${cleanRoomId},meeting_link.ilike.%${cleanRoomId}%,meeting_url.ilike.%${cleanRoomId}%`);
+              } else {
+                await adminClient.from('meetings').update({ description: (room.description || '') + ` __SETTINGS:${updatedSettingsStr}` }).or(`meeting_link.ilike.%${cleanRoomId}%,meeting_url.ilike.%${cleanRoomId}%`);
+              }
+            } catch (_) {}
+
+            return newCfId;
+          }
+        }
+      } catch (err) {
+        console.error("Cloudflare auto-provision error:", err);
+      }
+      return null;
+    };
+
+    // If we don't have a valid Cloudflare meeting UUID yet, provision one on Cloudflare!
+    if (!cfMeetingId) {
+      cfMeetingId = await provisionCloudflareMeeting();
+      if (!cfMeetingId) {
+        throw new Error("Unable to initialize Cloudflare RealtimeKit meeting session. Please try again.");
+      }
+    }
 
     const addParticipant = async (targetMeetingId: string, withPreset = true) => {
       const bodyPayload: any = {
@@ -645,55 +698,30 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
 
     let response = await addParticipant(cfMeetingId, true);
 
-    // If custom preset is missing or invalid, retry with default preset
+    // If response failed with 400, inspect or retry with default preset or re-provision
     if (!response.ok && response.status === 400) {
-      response = await addParticipant(cfMeetingId, false);
+      const errClone = response.clone();
+      const errText = await errClone.text();
+      if (errText.includes("meeting_id") || errText.includes("invalid_string") || errText.includes("Invalid uuid")) {
+        const freshCfId = await provisionCloudflareMeeting();
+        if (freshCfId) {
+          cfMeetingId = freshCfId;
+          response = await addParticipant(freshCfId, true);
+        }
+      } else {
+        response = await addParticipant(cfMeetingId, false);
+      }
     }
 
     // Auto-heal: If meeting was not found on Cloudflare RealtimeKit (404), provision it on-demand!
-    if (!response.ok && response.status === 404) {
-      try {
-        const createRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/realtime/kit/${appId}/meetings`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${apiToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            title: (room.title as string) || "Live Meeting"
-          })
-        });
-
-        if (createRes.ok) {
-          const createData = await createRes.json() as any;
-          const newCfId = createData.data?.id;
-          if (newCfId) {
-            cfMeetingId = newCfId;
-            settings.cf_room_id = newCfId;
-            const updatedSettingsStr = JSON.stringify(settings);
-
-            // Persist the mapped cf_room_id so all subsequent users join the same room
-            const adminClient = getAdminClient();
-            try {
-              await adminClient.from('meet_rooms').update({ settings: updatedSettingsStr }).eq('id', cleanRoomId);
-            } catch (_) {}
-            try {
-              if (isUuid) {
-                await adminClient.from('meetings').update({ description: (room.description || '') + ` __SETTINGS:${updatedSettingsStr}` }).or(`id.eq.${cleanRoomId},meeting_link.ilike.%${cleanRoomId}%,meeting_url.ilike.%${cleanRoomId}%`);
-              } else {
-                await adminClient.from('meetings').update({ description: (room.description || '') + ` __SETTINGS:${updatedSettingsStr}` }).or(`meeting_link.ilike.%${cleanRoomId}%,meeting_url.ilike.%${cleanRoomId}%`);
-              }
-            } catch (_) {}
-
-            // Now add participant to the newly created Cloudflare meeting!
-            response = await addParticipant(newCfId, true);
-            if (!response.ok && response.status === 400) {
-              response = await addParticipant(newCfId, false);
-            }
-          }
+    if (!response.ok && (response.status === 404 || response.status === 400)) {
+      const freshCfId = await provisionCloudflareMeeting();
+      if (freshCfId) {
+        cfMeetingId = freshCfId;
+        response = await addParticipant(freshCfId, true);
+        if (!response.ok && response.status === 400) {
+          response = await addParticipant(freshCfId, false);
         }
-      } catch (err) {
-        console.error("Cloudflare auto-provision error:", err);
       }
     }
 
