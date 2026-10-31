@@ -300,7 +300,7 @@ function OperationsDashboard() {
     to_time: "10:45",
     target_role: "all" as "employee" | "intern" | "all" | "individual",
     target_user_id: "",
-    send_email_notification: false,
+    send_email_notification: true,
     reminder_lead_time_minutes: 15,
   });
   const [isUpdatingMeeting, setIsUpdatingMeeting] = useState(false);
@@ -836,7 +836,7 @@ function OperationsDashboard() {
       to_time: toTime,
       target_role: meeting.target_role || "all",
       target_user_id: meeting.target_user_id || "",
-      send_email_notification: false,
+      send_email_notification: true,
       reminder_lead_time_minutes: meeting.reminder_lead_time_minutes || 15,
     });
     setEditMeetingModalOpen(true);
@@ -2411,12 +2411,12 @@ function OperationsDashboard() {
                       });
 
                       const handleWhatsAppNotice = () => {
-                        const text = `📢 *OFFICIAL MEETING NOTICE · PROJECT VYNEXA*\n\n📌 *Topic:* ${m.title}\n📅 *Date:* ${dateStr}\n⏰ *Time:* ${rangeStr} (${durationMins} Mins)\n🔗 *Meeting Link:* ${m.meeting_link}\n\n📝 *Agenda:*\n${m.description || "General sync and sprint review."}\n\n🗓️ *Google Calendar:*\n${gcalUrl}\n\n— *Vyntyra Directorate*`;
+                        const text = `📢 *OFFICIAL MEETING NOTICE · PROJECT VYNEXA*\n\n📌 *Topic:* ${m.title}\n📅 *Date:* ${dateStr}\n⏰ *Time:* ${rangeStr} (${durationMins} Mins)\n🔗 *Meeting Link:* ${m.meeting_link}\n\n📝 *Agenda:*\n${m.description || "General sync and sprint review."}\n\n⚠️ *MANDATORY ATTENDANCE NOTICE:*\n*Attendance is strictly mandatory for all designated participants. The meeting platform will automatically verify your identity and live attendance duration, and update your official attendance record in the portal.*\n\n🗓️ *Google Calendar:*\n${gcalUrl}\n\n_Please join 5 minutes prior to start time._\n— *Vyntyra Directorate*`;
                         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
                       };
 
                       const handleCopyNotice = () => {
-                        const text = `📢 OFFICIAL MEETING NOTICE · PROJECT VYNEXA\nTopic: ${m.title}\nDate: ${dateStr}\nTime: ${rangeStr} (${durationMins} Mins)\nMeeting Link: ${m.meeting_link}\nAgenda: ${m.description || "General sync."}\nCalendar: ${gcalUrl}`;
+                        const text = `📢 OFFICIAL MEETING NOTICE · PROJECT VYNEXA\nTopic: ${m.title}\nDate: ${dateStr}\nTime: ${rangeStr} (${durationMins} Mins)\nMeeting Link: ${m.meeting_link}\nAgenda: ${m.description || "General sync."}\n\n⚠️ MANDATORY ATTENDANCE NOTICE:\nAttendance is strictly mandatory for all designated participants. The meeting platform will automatically verify your identity and live attendance duration, and update your official attendance record in the portal.\n\nCalendar: ${gcalUrl}`;
                         navigator.clipboard.writeText(text);
                         toast.success("Meeting details copied!");
                       };

@@ -207,9 +207,13 @@ function MeetingCard({ meeting, highlight, onJoin }: { meeting: Meeting; highlig
 📝 *Agenda:*
 ${meeting.description || "General sync and milestone review."}
 
+⚠️ *MANDATORY ATTENDANCE NOTICE:*
+*Attendance is strictly mandatory for all designated participants. The meeting platform will automatically verify your identity and live attendance duration, and update your official attendance record in the portal.*
+
 🗓️ *Google Calendar:*
 ${gcalUrl}
 
+_Please join 5 minutes prior to the scheduled start time._
 — *Vyntyra Directorate*`;
 
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
@@ -217,7 +221,7 @@ ${gcalUrl}
   }
 
   function handleCopyAnnouncement() {
-    const text = `📢 OFFICIAL MEETING NOTICE · PROJECT VYNEXA\nTopic: ${meeting.title}\nDate: ${dateStr}\nTime: ${rangeStr} (${durationMins} Mins)\nMeeting Link: ${meeting.meeting_link}\nAgenda: ${meeting.description || "General sync and milestone review."}\nCalendar Link: ${gcalUrl}`;
+    const text = `📢 OFFICIAL MEETING NOTICE · PROJECT VYNEXA\nTopic: ${meeting.title}\nDate: ${dateStr}\nTime: ${rangeStr} (${durationMins} Mins)\nMeeting Link: ${meeting.meeting_link}\nAgenda: ${meeting.description || "General sync and milestone review."}\n\n⚠️ MANDATORY ATTENDANCE NOTICE:\nAttendance is strictly mandatory for all designated participants. The meeting platform will automatically verify your identity and live attendance duration, and update your official attendance record in the portal.\n\nCalendar Link: ${gcalUrl}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     toast.success("Meeting announcement copied to clipboard!");

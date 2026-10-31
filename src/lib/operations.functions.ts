@@ -2135,7 +2135,10 @@ export const listMeetings = createServerFn({ method: 'GET' })
 
 export const createMeeting = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => meetingSchema.parse(d))
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return meetingSchema.parse(input);
+  })
   .handler(async ({ data, context }) => {
     const adminClient = getAdminClient();
     async function getValidUrl(url: string | null, client: any) {
@@ -2269,12 +2272,15 @@ const updateMeetingSchema = z.object({
   duration_minutes: z.number().optional(),
   target_role: z.enum(['employee', 'intern', 'all', 'individual']).optional(),
   target_user_id: z.string().optional().nullable(),
-  send_email_notification: z.boolean().optional().default(false),
+  send_email_notification: z.boolean().optional().default(true),
 });
 
 export const updateMeeting = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => updateMeetingSchema.parse(d))
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return updateMeetingSchema.parse(input);
+  })
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
     async function getValidUrl(url: string | null, client: any) {

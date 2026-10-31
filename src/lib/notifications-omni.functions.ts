@@ -632,20 +632,20 @@ export const generateTaskWhatsApp = createServerFn({ method: "POST" })
 // ─── 4. Send Meeting Schedule Email & In-App Notification ──────────────────
 export const sendMeetingScheduleNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(
-    (d: unknown) =>
-      z.object({
-        title: z.string().min(1),
-        description: z.string().optional().nullable(),
-        meeting_link: z.string().min(1),
-        scheduled_at: z.string(), // start time ISO
-        end_at: z.string().optional().nullable(), // end time ISO
-        duration_minutes: z.number().optional().default(30),
-        target_role: z.enum(["all", "employee", "intern", "individual"]).default("all"),
-        target_user_id: z.string().optional().nullable(),
-        organizer_name: z.string().optional(),
-      }).parse(d)
-  )
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
+      title: z.string().min(1),
+      description: z.string().optional().nullable(),
+      meeting_link: z.string().min(1),
+      scheduled_at: z.string(), // start time ISO
+      end_at: z.string().optional().nullable(), // end time ISO
+      duration_minutes: z.number().optional().default(30),
+      target_role: z.enum(["all", "employee", "intern", "individual"]).default("all"),
+      target_user_id: z.string().optional().nullable(),
+      organizer_name: z.string().optional(),
+    }).parse(input);
+  })
   .handler(async ({ data, context }) => {
     const adminClient = getAdminClient();
 
@@ -730,11 +730,14 @@ export const sendMeetingScheduleNotification = createServerFn({ method: "POST" }
 📝 *Agenda & Discussion Topics:*
 ${data.description || "General sync, milestone sprint review and interactive Q&A."}
 
+⚠️ *MANDATORY ATTENDANCE NOTICE:*
+*Attendance is strictly mandatory for all designated participants. The meeting platform will automatically verify your identity and live participation duration, and automatically update your attendance record in the portal.*
+
 🗓️ *Add to Google Calendar:*
 ${gcalUrl}
 
-_All attendees are requested to join 5 minutes prior to the scheduled start time._
-— *Vyntyra Directorate*`;
+_All attendees are requested to join 5 minutes prior to the scheduled start time with their camera and mic ready._
+— *Vyntyra Directorate of Operations*`;
 
     // 2. Dispatch in-app notifications
     const notifPayloads = recipients.map((r) => ({
@@ -842,6 +845,23 @@ _All attendees are requested to join 5 minutes prior to the scheduled start time
                 </tr>` : ""}
               </table>
 
+              <!-- Mandatory Attendance Auto-Verification Alert Box -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background:linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%);border:2px solid #ef4444;border-radius:14px;margin:22px 0;overflow:hidden;box-shadow:0 4px 6px -1px rgba(239,68,68,0.12);">
+                <tr>
+                  <td style="padding:18px 22px;">
+                    <div style="font-size:11px;font-weight:900;color:#991b1b;letter-spacing:0.08em;text-transform:uppercase;">
+                      🚨 MANDATORY ATTENDANCE NOTICE
+                    </div>
+                    <div style="font-size:14px;font-weight:700;color:#7f1d1d;margin-top:4px;line-height:1.5;">
+                      Attendance is strictly mandatory for all designated participants.
+                    </div>
+                    <div style="font-size:13px;color:#991b1b;margin-top:6px;line-height:1.6;">
+                      The meeting platform will <strong>automatically verify your identity and live attendance duration</strong>, and automatically log &amp; update your official attendance records in the portal database.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
               <!-- Action Buttons: Join Meeting & Google Calendar -->
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin:28px 0 22px 0;">
                 <tr>
@@ -868,6 +888,7 @@ _All attendees are requested to join 5 minutes prior to the scheduled start time
                       🛡️ Meeting Guidelines & Protocols:
                     </div>
                     <ul style="margin:0;padding-left:18px;font-size:12px;color:#64748b;line-height:1.7;">
+                      <li><strong style="color:#b91c1c;">Attendance is Mandatory:</strong> The meeting platform automatically verifies attendee presence and updates your official portal attendance logs in real-time.</li>
                       <li>Please ensure your audio/camera are configured and connect <strong>5 minutes prior</strong>.</li>
                       <li>Keep your session microphone muted when not addressing the conference.</li>
                       <li>Use your official registered corporate email profile for meeting admission.</li>
@@ -899,12 +920,29 @@ _All attendees are requested to join 5 minutes prior to the scheduled start time
 </html>`;
 
         try {
-          await resend.emails.send({
+          let mailRes = await resend.emails.send({
             from: `Vyntyra Directorate <directorate@${FROM_DOMAIN}>`,
             to: recipient.email,
             subject: `Meeting Invitation: ${data.title} (${fromTimeStr} IST)`,
             html: emailHtml,
           });
+          if (mailRes.error) {
+            console.warn("[sendMeetingScheduleNotification] Fallback from directorate to noreply:", mailRes.error);
+            mailRes = await resend.emails.send({
+              from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+              to: recipient.email,
+              subject: `Meeting Invitation: ${data.title} (${fromTimeStr} IST)`,
+              html: emailHtml,
+            });
+            if (mailRes.error) {
+              await resend.emails.send({
+                from: `${SITE_NAME} <careers@${FROM_DOMAIN}>`,
+                to: recipient.email,
+                subject: `Meeting Invitation: ${data.title} (${fromTimeStr} IST)`,
+                html: emailHtml,
+              });
+            }
+          }
           emailsSent++;
         } catch (mailErr) {
           console.warn("[sendMeetingScheduleNotification] Resend email dispatch failed for", recipient.email, mailErr);
@@ -924,17 +962,17 @@ _All attendees are requested to join 5 minutes prior to the scheduled start time
 
 export const generateMeetingWhatsApp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(
-    (d: unknown) =>
-      z.object({
-        title: z.string(),
-        description: z.string().optional(),
-        meeting_link: z.string(),
-        scheduled_at: z.string(),
-        end_at: z.string().optional().nullable(),
-        duration_minutes: z.number().optional().default(30),
-      }).parse(d)
-  )
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
+      title: z.string(),
+      description: z.string().optional(),
+      meeting_link: z.string(),
+      scheduled_at: z.string(),
+      end_at: z.string().optional().nullable(),
+      duration_minutes: z.number().optional().default(30),
+    }).parse(input);
+  })
   .handler(async ({ data }) => {
     const startDate = new Date(data.scheduled_at);
     const durationMins = data.duration_minutes || 30;
@@ -979,11 +1017,14 @@ export const generateMeetingWhatsApp = createServerFn({ method: "POST" })
 📝 *Agenda & Discussion Topics:*
 ${data.description || "General sync, milestone sprint review and interactive Q&A."}
 
+⚠️ *MANDATORY ATTENDANCE NOTICE:*
+*Attendance is strictly mandatory for all designated participants. The meeting platform will automatically verify your identity and live participation duration, and automatically update your attendance record in the portal.*
+
 🗓️ *Add to Google Calendar:*
 ${gcalUrl}
 
-_All attendees are requested to join 5 minutes prior to the scheduled start time._
-— *Vyntyra Directorate*`;
+_All attendees are requested to join 5 minutes prior to the scheduled start time with their camera and mic ready._
+— *Vyntyra Directorate of Operations*`;
 
     const whatsappGroupUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
 
@@ -998,21 +1039,21 @@ _All attendees are requested to join 5 minutes prior to the scheduled start time
 // ─── 5. Send Dedicated Meeting Reminder Email & Notification ───────────────
 export const sendMeetingReminderEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(
-    (d: unknown) =>
-      z.object({
-        meetingId: z.string().optional(),
-        title: z.string().min(1),
-        description: z.string().optional().nullable(),
-        meeting_link: z.string().min(1),
-        scheduled_at: z.string(),
-        end_at: z.string().optional().nullable(),
-        duration_minutes: z.number().optional().default(30),
-        target_role: z.enum(["all", "employee", "intern", "individual"]).default("all"),
-        target_user_id: z.string().optional().nullable(),
-        lead_time_text: z.string().optional().default("15 Minutes"),
-      }).parse(d)
-  )
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
+      meetingId: z.string().optional(),
+      title: z.string().min(1),
+      description: z.string().optional().nullable(),
+      meeting_link: z.string().min(1),
+      scheduled_at: z.string(),
+      end_at: z.string().optional().nullable(),
+      duration_minutes: z.number().optional().default(30),
+      target_role: z.enum(["all", "employee", "intern", "individual"]).default("all"),
+      target_user_id: z.string().optional().nullable(),
+      lead_time_text: z.string().optional().default("15 Minutes"),
+    }).parse(input);
+  })
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
 
@@ -1214,6 +1255,23 @@ export const sendMeetingReminderEmail = createServerFn({ method: "POST" })
                 </tr>` : ""}
               </table>
 
+              <!-- Mandatory Attendance Auto-Verification Alert Box -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background:linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%);border:2px solid #ef4444;border-radius:14px;margin:22px 0;overflow:hidden;box-shadow:0 4px 6px -1px rgba(239,68,68,0.12);">
+                <tr>
+                  <td style="padding:18px 22px;">
+                    <div style="font-size:11px;font-weight:900;color:#991b1b;letter-spacing:0.08em;text-transform:uppercase;">
+                      🚨 MANDATORY ATTENDANCE NOTICE
+                    </div>
+                    <div style="font-size:14px;font-weight:700;color:#7f1d1d;margin-top:4px;line-height:1.5;">
+                      Attendance is strictly mandatory for all designated participants.
+                    </div>
+                    <div style="font-size:13px;color:#991b1b;margin-top:6px;line-height:1.6;">
+                      The meeting platform will <strong>automatically verify your identity and live attendance duration</strong>, and automatically log &amp; update your official attendance records in the portal database.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
               <!-- Primary Action CTAs -->
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin:28px 0 22px 0;">
                 <tr>
@@ -1240,6 +1298,7 @@ export const sendMeetingReminderEmail = createServerFn({ method: "POST" })
                       🛡️ Meeting Guidelines & Protocols:
                     </div>
                     <ul style="margin:0;padding-left:18px;font-size:12px;color:#64748b;line-height:1.7;">
+                      <li><strong style="color:#b91c1c;">Attendance is Mandatory:</strong> The meeting platform automatically verifies attendee presence and updates your official portal attendance logs in real-time.</li>
                       <li>Please ensure your audio/camera are configured and connect <strong>5 minutes prior</strong>.</li>
                       <li>Keep your session microphone muted when not addressing the conference.</li>
                       <li>Use your official registered corporate email profile for meeting admission.</li>
@@ -1271,12 +1330,29 @@ export const sendMeetingReminderEmail = createServerFn({ method: "POST" })
 </html>`;
 
         try {
-          await resend.emails.send({
+          let mailRes = await resend.emails.send({
             from: `Vyntyra Directorate <directorate@${FROM_DOMAIN}>`,
             to: recipient.email,
             subject: `⏰ [REMINDER] Starting at ${fromTimeStr}: ${data.title}`,
             html: emailHtml,
           });
+          if (mailRes.error) {
+            console.warn("[sendMeetingReminderEmail] Fallback from directorate to noreply:", mailRes.error);
+            mailRes = await resend.emails.send({
+              from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+              to: recipient.email,
+              subject: `⏰ [REMINDER] Starting at ${fromTimeStr}: ${data.title}`,
+              html: emailHtml,
+            });
+            if (mailRes.error) {
+              await resend.emails.send({
+                from: `${SITE_NAME} <careers@${FROM_DOMAIN}>`,
+                to: recipient.email,
+                subject: `⏰ [REMINDER] Starting at ${fromTimeStr}: ${data.title}`,
+                html: emailHtml,
+              });
+            }
+          }
           emailsSent++;
         } catch (mailErr) {
           console.warn("[sendMeetingReminderEmail] Resend reminder email failed for", recipient.email, mailErr);
