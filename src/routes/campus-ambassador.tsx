@@ -37,6 +37,7 @@ import {
   Check,
   X,
   Search,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -983,6 +984,263 @@ function CampusAmbassadorPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── AMBASSADOR TIERED REWARD STRUCTURE ─── */}
+        <section className="py-16 sm:py-20 px-4 sm:px-6 max-w-6xl mx-auto">
+          <div className="rounded-3xl border border-blue-500/30 bg-gradient-to-b from-[#1d4ed8] via-[#1e40af] to-[#0f172a] p-8 sm:p-12 relative overflow-hidden shadow-2xl text-white">
+            {/* Background Floating Glows */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-sky-400/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="text-center max-w-3xl mx-auto mb-12 relative">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-amber-300 shadow-xl mb-4">
+                <Trophy className="h-8 w-8 text-amber-300 drop-shadow-md" />
+              </div>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+                Ambassador Tiered Reward Structure
+              </h2>
+              <p className="mt-3 text-base sm:text-lg text-blue-100/90 font-medium">
+                Progression tiers based on total points accumulated throughout the program duration.
+              </p>
+            </div>
+
+            {/* Structured Progression Table */}
+            <div className="rounded-2xl border border-white/15 bg-slate-950/80 backdrop-blur-md overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[700px]">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs sm:text-sm tracking-wide border-b border-white/10">
+                      <th className="py-4 px-6">Tier Category</th>
+                      <th className="py-4 px-6 text-center">Points</th>
+                      <th className="py-4 px-6">E-Vouchers &amp; Physical Rewards</th>
+                      <th className="py-4 px-6">Digital Rewards</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/80 text-xs sm:text-sm">
+                    <tr className="hover:bg-slate-900/60 transition-colors">
+                      <td className="py-4 px-6 font-bold text-white">The Spark</td>
+                      <td className="py-4 px-6 text-center">
+                        <span className="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/40 text-sky-300 font-mono font-bold text-xs">
+                          900 pts
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-slate-200">Branded Bottle + ₹500 E-voucher</td>
+                      <td className="py-4 px-6 text-slate-300">Digital Badge</td>
+                    </tr>
+                    <tr className="hover:bg-slate-900/60 transition-colors">
+                      <td className="py-4 px-6 font-bold text-white">The Trailblazer</td>
+                      <td className="py-4 px-6 text-center">
+                        <span className="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/40 text-sky-300 font-mono font-bold text-xs">
+                          1,650 pts
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-slate-200">₹500 E-voucher</td>
+                      <td className="py-4 px-6 text-slate-300">Digital Badge</td>
+                    </tr>
+                    <tr className="hover:bg-slate-900/60 transition-colors">
+                      <td className="py-4 px-6 font-bold text-white">The Changemaker</td>
+                      <td className="py-4 px-6 text-center">
+                        <span className="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/40 text-sky-300 font-mono font-bold text-xs">
+                          2,400 pts
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-slate-200">Power Bank + ₹1,000 E-voucher</td>
+                      <td className="py-4 px-6 text-slate-300">
+                        Digital Badge + Certificate of Perseverance / Certificate of Completion
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-slate-900/60 transition-colors">
+                      <td className="py-4 px-6 font-bold text-white">The Powerhouse</td>
+                      <td className="py-4 px-6 text-center">
+                        <span className="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/40 text-sky-300 font-mono font-bold text-xs">
+                          3,150 pts
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-slate-200">₹1,000 E-voucher</td>
+                      <td className="py-4 px-6 text-slate-300">Digital Badge</td>
+                    </tr>
+                    <tr className="hover:bg-slate-900/60 transition-colors">
+                      <td className="py-4 px-6 font-bold text-white">The Luminary</td>
+                      <td className="py-4 px-6 text-center">
+                        <span className="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/40 text-sky-300 font-mono font-bold text-xs">
+                          3,900 pts
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-slate-200">Bluetooth Speaker + ₹2,500 E-voucher</td>
+                      <td className="py-4 px-6 text-slate-300">Digital Badge + Certificate of Prominence</td>
+                    </tr>
+                    <tr className="hover:bg-slate-900/60 transition-colors">
+                      <td className="py-4 px-6 font-bold text-white">The Vanguard</td>
+                      <td className="py-4 px-6 text-center">
+                        <span className="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/40 text-sky-300 font-mono font-bold text-xs">
+                          4,650 pts
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-amber-300 font-semibold">₹5,000 Performance Incentive</td>
+                      <td className="py-4 px-6 text-slate-300">Digital Badge</td>
+                    </tr>
+                    <tr className="hover:bg-slate-900/60 transition-colors bg-gradient-to-r from-amber-500/10 via-slate-900/60 to-indigo-500/10">
+                      <td className="py-4 px-6 font-black text-amber-300 flex items-center gap-1.5">
+                        <Crown className="h-4 w-4 text-amber-400 shrink-0" />
+                        The Legend
+                      </td>
+                      <td className="py-4 px-6 text-center">
+                        <span className="inline-block px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/50 text-amber-300 font-mono font-bold text-xs">
+                          5,400 pts
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-emerald-400 font-bold">₹10,000 Performance Incentive</td>
+                      <td className="py-4 px-6 text-slate-200 font-medium">
+                        Digital Badge + Certificate of Ascendancy
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Notes Section */}
+            <div className="mt-8 pt-6 border-t border-white/15 text-slate-200 text-xs sm:text-sm space-y-2.5">
+              <div className="font-bold text-white flex items-center gap-2 mb-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block"></span>
+                Important Progression Notes:
+              </div>
+              <ul className="space-y-2 pl-4 list-disc text-blue-100/90 leading-relaxed">
+                <li>
+                  <strong className="text-white">Swag &amp; Welcome Kit Dispatch:</strong> Everywhere swags, branded hoodies, customized stationery, and official welcome kits will be dispatched after reaching the 1st milestone only.
+                </li>
+                <li>
+                  The <strong className="text-white">Certificate of Perseverance</strong> is for Semester 1 ambassadors continuing into Semester 2.
+                </li>
+                <li>
+                  The <strong className="text-white">Certificate of Completion</strong> is for newly onboarded ambassadors who successfully complete the programme.
+                </li>
+                <li>
+                  Certificates will be given upon the completion of the programme.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── ARE YOU THE NEXT VYNTYRA INDIA CAMPUS AMBASSADOR? ─── */}
+        <section className="py-16 sm:py-20 px-4 sm:px-6 max-w-4xl mx-auto">
+          <div className="rounded-3xl border border-slate-700/60 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 p-8 sm:p-12 relative overflow-hidden shadow-2xl">
+            {/* Top-Left Glowing 4-Point Star Badge */}
+            <div className="absolute top-6 left-6">
+              <div className="relative">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-400 via-blue-500 to-indigo-600 p-0.5 shadow-lg shadow-sky-500/30 flex items-center justify-center animate-pulse">
+                  <div className="w-full h-full bg-slate-950 rounded-2xl flex items-center justify-center">
+                    <Sparkles className="h-6 w-6 text-sky-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center max-w-2xl mx-auto pt-4 mb-10">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+                Are You the Next
+              </h2>
+              <div className="text-3xl sm:text-4xl md:text-5xl font-black mt-1 tracking-tight">
+                <span className="text-rose-500">Vyn</span>
+                <span className="text-amber-400">tyra </span>
+                <span className="text-sky-400">India </span>
+                <span className="text-emerald-400">Ambassador?</span>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {/* Eligibility Criteria Card */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur p-6 sm:p-8 hover:border-slate-700 transition-colors">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
+                  Eligibility Criteria
+                </h3>
+                <ul className="space-y-3 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-slate-500 shrink-0 mt-1">•</span>
+                    <span>An Indian citizen aged <strong className="text-white">18–25</strong> as of April 1, 2026.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-slate-500 shrink-0 mt-1">•</span>
+                    <span>Must not be an alumnus of previous student ambassador cohorts.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-slate-500 shrink-0 mt-1">•</span>
+                    <span>
+                      Must be an active student (B.Tech / Degree / Diploma / PG) at an Indian university or college, from any major or semester, and <strong className="text-white font-bold underline decoration-amber-400/60 decoration-2">must not be graduating before December 31, 2026</strong>, allowing for the Semester 2 programme period and the additional 10–15 days required for final validation and programme closure.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-slate-500 shrink-0 mt-1">•</span>
+                    <span>Curious about AI, passionate about technology, and an active learner/innovator.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-slate-500 shrink-0 mt-1">•</span>
+                    <span>Eager to explore and apply AI in meaningful, practical ways.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-slate-500 shrink-0 mt-1">•</span>
+                    <span>Must have an active Instagram presence and LinkedIn profile and be willing to share content about Vyntyra initiatives.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-slate-500 shrink-0 mt-1">•</span>
+                    <span>Willing to dedicate time and commitment to ambassador activities.</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* What Sets You Apart Card */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur p-6 sm:p-8 hover:border-slate-700 transition-colors">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-sky-400 inline-block"></span>
+                  What Sets You Apart:
+                </h3>
+                <ul className="space-y-3 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-slate-500 shrink-0 mt-1">•</span>
+                    <span>You simplify complex ideas with clarity and confidence.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-slate-500 shrink-0 mt-1">•</span>
+                    <span>You're comfortable leading sessions and guiding peers.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-slate-500 shrink-0 mt-1">•</span>
+                    <span>You think originally and bring fresh perspectives.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-slate-500 shrink-0 mt-1">•</span>
+                    <span>You experiment, take initiative, and find creative solutions.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-slate-500 shrink-0 mt-1">•</span>
+                    <span>You're active on campus and naturally connect communities.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-slate-500 shrink-0 mt-1">•</span>
+                    <span>You have experience in or a strong interest in learning AI / machine learning &amp; modern software development.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-8 text-center">
+              <button
+                type="button"
+                onClick={scrollToForm}
+                style={{
+                  background: `linear-gradient(to right, ${theme.primary_btn_bg_start || "#f59e0b"}, ${theme.primary_btn_bg_end || "#eab308"})`,
+                  color: theme.primary_btn_text || "#020617",
+                }}
+                className="font-black px-8 py-3.5 rounded-xl shadow-lg cursor-pointer uppercase tracking-wider text-xs sm:text-sm hover:scale-105 transition-transform inline-flex items-center gap-2"
+              >
+                <span>Proceed to Official Ambassador Application</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </section>

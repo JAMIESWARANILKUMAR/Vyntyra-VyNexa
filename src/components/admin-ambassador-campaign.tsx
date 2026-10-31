@@ -310,16 +310,20 @@ export function AdminAmbassadorCampaign() {
 
     setIsSendingTemplateTest(true);
     try {
-      await sendTestStatusEmailFn({
+      const res = await sendTestStatusEmailFn({
         data: {
           target_email: testTemplateEmail,
           status_trigger: editingTemplate.status_trigger,
           custom_subject: editingTemplate.subject,
           custom_body: editingTemplate.body_html,
-          agreement_url: editingTemplate.agreement_url,
+          agreement_url: editingTemplate.agreement_url || null,
         },
       });
-      toast.success(`Test email for "${editingTemplate.status_trigger}" sent to ${testTemplateEmail}!`);
+      if (res && (res as any).success === false) {
+        toast.error((res as any).error || "Failed to dispatch test email. Please check provider credentials.");
+      } else {
+        toast.success(`Test email for "${editingTemplate.status_trigger}" sent to ${testTemplateEmail}!`);
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to send test email.");
     } finally {

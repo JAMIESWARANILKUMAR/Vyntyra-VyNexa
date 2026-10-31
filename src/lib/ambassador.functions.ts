@@ -619,11 +619,12 @@ export const getAmbassadorProgramSettings = createServerFn({ method: "GET" }).ha
 export const updateAmbassadorProgramSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
     // Permissive object validation so any pin-to-pin field can be saved
-    if (typeof d !== "object" || d === null) {
+    if (typeof input !== "object" || input === null) {
       throw new Error("Invalid payload: object required");
     }
-    return d as AmbassadorProgramSettings;
+    return input as AmbassadorProgramSettings;
   })
   .handler(async ({ data, context }) => {
     if (!(await checkIsAdmin(context.userId))) {
@@ -649,13 +650,14 @@ export const updateAmbassadorProgramSettings = createServerFn({ method: "POST" }
 // ─── Upload Ambassador Product Image to Supabase Storage ────────────
 export const uploadAmbassadorProductImage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) =>
-    z.object({
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
       base64Data: z.string().min(10),
       fileName: z.string().min(3),
       contentType: z.string().default("image/jpeg"),
-    }).parse(d)
-  )
+    }).parse(input);
+  })
   .handler(async ({ data, context }) => {
     if (!(await checkIsAdmin(context.userId))) {
       throw new Error("Forbidden: Super Admin access required.");
@@ -685,13 +687,14 @@ export const uploadAmbassadorProductImage = createServerFn({ method: "POST" })
 
 // ─── Upload Ambassador Professional Portrait to Supabase Storage ────
 export const uploadAmbassadorPortraitImage = createServerFn({ method: "POST" })
-  .validator((d: unknown) =>
-    z.object({
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
       base64Data: z.string().min(10, "Base64 data required"),
       fileName: z.string().min(3),
       contentType: z.string().default("image/jpeg"),
-    }).parse(d)
-  )
+    }).parse(input);
+  })
   .handler(async ({ data }) => {
     const admin = getAdminClient();
     const cleanBase64 = data.base64Data.replace(/^data:image\/\w+;base64,/, "");
@@ -1091,8 +1094,9 @@ async function sendAmbassadorAutomatedEmails(record: AmbassadorRegistration) {
 
 // ─── Pre-Register / Apply for First Cohort ─────────────────────────
 export const submitAmbassadorApplication = createServerFn({ method: "POST" })
-  .validator((d: unknown) =>
-    z.object({
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
       full_name: z.string().trim().min(2, "Full name must be at least 2 characters"),
       email: z.string().trim().email("Invalid email address"),
       phone: z.string().trim().min(10, "WhatsApp / phone number must be at least 10 digits"),
@@ -1126,8 +1130,8 @@ export const submitAmbassadorApplication = createServerFn({ method: "POST" })
       city_state: z.string().optional(),
       linkedin_profile: z.string().optional(),
       motivation: z.string().optional(),
-    }).parse(d)
-  )
+    }).parse(input);
+  })
   .handler(async ({ data }) => {
     const admin = getAdminClient();
 
@@ -1320,12 +1324,13 @@ export const submitAmbassadorApplication = createServerFn({ method: "POST" })
 // ─── Update Candidate Status (Admin) ──────────────────────────────
 export const updateAmbassadorApplicantStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) =>
-    z.object({
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
       applicant_id: z.string().min(1),
       status: z.enum(["pending", "shortlisted", "enrolled", "rejected"]),
-    }).parse(d)
-  )
+    }).parse(input);
+  })
   .handler(async ({ data, context }) => {
     if (!(await checkIsAdmin(context.userId))) {
       throw new Error("Forbidden: Super Admin access required.");
@@ -1457,14 +1462,15 @@ export const getInternsForAmbassadorCampaign = createServerFn({ method: "GET" })
 // ─── Send Campus Ambassador Promotional Email (1-Click) ────────────
 export const sendAmbassadorPromotionalEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) =>
-    z.object({
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
       recipient_email: z.string().trim().email(),
-      recipient_name: z.string().optional(),
-      college_name: z.string().optional(),
-      custom_subject: z.string().optional(),
-    }).parse(d)
-  )
+      recipient_name: z.string().optional().nullable(),
+      college_name: z.string().optional().nullable(),
+      custom_subject: z.string().optional().nullable(),
+    }).parse(input);
+  })
   .handler(async ({ data }) => {
     const admin = getAdminClient();
     const recipientEmail = data.recipient_email.trim().toLowerCase();
@@ -1807,8 +1813,9 @@ export const getAmbassadorEmailTemplates = createServerFn({ method: "GET" })
 // ─── Update an Automated Email Template (Admin) ─────────────────────
 export const updateAmbassadorEmailTemplate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) =>
-    z.object({
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
       id: z.string().min(1),
       status_trigger: z.enum([
         "under_review",
@@ -1822,8 +1829,8 @@ export const updateAmbassadorEmailTemplate = createServerFn({ method: "POST" })
       body_html: z.string().min(1),
       agreement_url: z.string().optional().nullable(),
       is_enabled: z.boolean(),
-    }).parse(d)
-  )
+    }).parse(input);
+  })
   .handler(async ({ data, context }) => {
     if (!(await checkIsAdmin(context.userId))) {
       throw new Error("Forbidden: Super Admin access required.");
@@ -1900,8 +1907,9 @@ export const updateAmbassadorApplicationStatusWithEmail = createServerFn({
   method: "POST",
 })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) =>
-    z.object({
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
       application_id: z.string().min(1),
       new_status: z.enum([
         "pending",
@@ -1913,13 +1921,13 @@ export const updateAmbassadorApplicationStatusWithEmail = createServerFn({
         "enrolled",
         "rejected",
       ]),
-      notes: z.string().optional().default(""),
+      notes: z.string().optional().nullable().default(""),
       send_email: z.boolean().default(true),
-      custom_email_subject: z.string().optional(),
-      custom_email_body: z.string().optional(),
-      agreement_document_url: z.string().optional(),
-    }).parse(d)
-  )
+      custom_email_subject: z.string().optional().nullable(),
+      custom_email_body: z.string().optional().nullable(),
+      agreement_document_url: z.string().optional().nullable(),
+    }).parse(input);
+  })
   .handler(async ({ data, context }) => {
     if (!(await checkIsAdmin(context.userId))) {
       throw new Error("Forbidden: Super Admin access required.");
@@ -2210,8 +2218,9 @@ export const updateAmbassadorApplicationStatusWithEmail = createServerFn({
 // ─── Send Test Status Email (Admin) ─────────────────────────────────
 export const sendTestAmbassadorStatusEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) =>
-    z.object({
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
       target_email: z.string().email(),
       status_trigger: z.enum([
         "under_review",
@@ -2220,11 +2229,11 @@ export const sendTestAmbassadorStatusEmail = createServerFn({ method: "POST" })
         "agreement_sent",
         "rejected",
       ]),
-      custom_subject: z.string().optional(),
-      custom_body: z.string().optional(),
-      agreement_url: z.string().optional(),
-    }).parse(d)
-  )
+      custom_subject: z.string().optional().nullable(),
+      custom_body: z.string().optional().nullable(),
+      agreement_url: z.string().optional().nullable(),
+    }).parse(input);
+  })
   .handler(async ({ data, context }) => {
     if (!(await checkIsAdmin(context.userId))) {
       throw new Error("Forbidden: Super Admin access required.");
@@ -2271,43 +2280,66 @@ export const sendTestAmbassadorStatusEmail = createServerFn({ method: "POST" })
 </html>`;
 
     let sent = false;
+    let lastError = "";
     const resendKey = process.env.RESEND_API_KEY;
     if (resendKey) {
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${resendKey}`,
-        },
-        body: JSON.stringify({
-          from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
-          to: [data.target_email],
-          subject: finalSubject,
-          html: finalHtml,
-        }),
-      });
-      if (res.ok) sent = true;
+      try {
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${resendKey}`,
+          },
+          body: JSON.stringify({
+            from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
+            to: [data.target_email],
+            subject: finalSubject,
+            html: finalHtml,
+          }),
+        });
+        if (res.ok) {
+          sent = true;
+        } else {
+          const errData: any = await res.json().catch(() => ({}));
+          lastError = errData?.message || `Resend HTTP ${res.status}`;
+        }
+      } catch (err: any) {
+        lastError = err.message;
+      }
     }
 
     if (!sent && process.env.BREVO_API_KEY) {
-      const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "api-key": process.env.BREVO_API_KEY,
-        },
-        body: JSON.stringify({
-          sender: {
-            name: "Vyntyra Institutional Relations Cell",
-            email: "ambassadorprogram@vyntyraconsultancyservices.in",
+      try {
+        const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "api-key": process.env.BREVO_API_KEY,
           },
-          to: [{ email: data.target_email, name: "Admin Preview" }],
-          subject: finalSubject,
-          htmlContent: finalHtml,
-        }),
-      });
-      if (res.ok) sent = true;
+          body: JSON.stringify({
+            sender: {
+              name: "Vyntyra Institutional Relations Cell",
+              email: "ambassadorprogram@vyntyraconsultancyservices.in",
+            },
+            to: [{ email: data.target_email, name: "Admin Preview" }],
+            subject: finalSubject,
+            htmlContent: finalHtml,
+          }),
+        });
+        if (res.ok) {
+          sent = true;
+        } else {
+          const errData: any = await res.json().catch(() => ({}));
+          lastError = errData?.message || `Brevo HTTP ${res.status}`;
+        }
+      } catch (err: any) {
+        lastError = err.message;
+      }
     }
 
-    return { success: sent, recipient: data.target_email };
+    if (!sent && !resendKey && !process.env.BREVO_API_KEY) {
+      lastError = "No email provider credentials found (RESEND_API_KEY / BREVO_API_KEY).";
+    }
+
+    return { success: sent, recipient: data.target_email, error: lastError || undefined };
   });
