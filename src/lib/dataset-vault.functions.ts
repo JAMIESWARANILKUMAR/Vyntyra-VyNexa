@@ -124,8 +124,9 @@ export const getDatasetVaultSettings = createServerFn({ method: "GET" })
 // ─── Settings: Update Settings (Admin Only) ────────────────────────
 export const updateDatasetVaultSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z
       .object({
         employee_access_enabled: z.boolean(),
         passcode_required: z.boolean(),
@@ -134,8 +135,8 @@ export const updateDatasetVaultSettings = createServerFn({ method: "POST" })
         allowed_categories: z.array(z.string()),
         authorized_employee_emails: z.array(z.string()).optional(),
       })
-      .parse(d)
-  )
+      .parse(input);
+  })
   .handler(async ({ data, context }) => {
     const access = await checkUserAccess(context.userId);
     if (!access.isAdmin) {
@@ -171,9 +172,10 @@ export const updateDatasetVaultSettings = createServerFn({ method: "POST" })
 // ─── Passcode Verification (Employee) ──────────────────────────────
 export const verifyEmployeeVaultPasscode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z.object({ passcode: z.string().min(1, "Passcode is required") }).parse(d)
-  )
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({ passcode: z.string().min(1, "Passcode is required") }).parse(input);
+  })
   .handler(async ({ data, context }) => {
     const access = await checkUserAccess(context.userId);
     if (!access.isEmployee && !access.isAdmin) {
@@ -223,8 +225,9 @@ export const verifyEmployeeVaultPasscode = createServerFn({ method: "POST" })
 // ─── Query Records: List Dataset Records ───────────────────────────
 export const getDatasetRecords = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z
       .object({
         category: z.string().optional(),
         search: z.string().optional(),
@@ -234,8 +237,8 @@ export const getDatasetRecords = createServerFn({ method: "POST" })
         role: z.string().optional(),
         limit: z.number().optional().default(1000),
       })
-      .parse(d)
-  )
+      .parse(input || {});
+  })
   .handler(async ({ data, context }) => {
     const access = await checkUserAccess(context.userId);
     if (!access.isEmployee && !access.isAdmin) {
@@ -412,14 +415,15 @@ export const getDatasetRecords = createServerFn({ method: "POST" })
 // ─── Store Records: Save / Import Extracted Dataset (Admin Only) ────
 export const saveExtractedDataset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z
       .object({
         category: z.string().min(1, "Category is required"),
         source_filename: z.string().optional(),
         records: z.array(
           z.object({
-            title: z.string().min(1, "Title/Name is required"),
+            title: z.string().optional().default("Untitled Record"),
             location_country: z.string().optional(),
             location_state: z.string().optional(),
             location_district: z.string().optional(),
@@ -436,8 +440,8 @@ export const saveExtractedDataset = createServerFn({ method: "POST" })
           })
         ),
       })
-      .parse(d)
-  )
+      .parse(input);
+  })
   .handler(async ({ data, context }) => {
     const access = await checkUserAccess(context.userId);
     if (!access.isAdmin) {
@@ -450,7 +454,7 @@ export const saveExtractedDataset = createServerFn({ method: "POST" })
     const preparedRecords: EnterpriseDatasetRecord[] = data.records.map((r, idx) => ({
       id: `ds_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 7)}`,
       category: data.category.toLowerCase().trim(),
-      title: r.title.trim(),
+      title: (r.title || "Untitled Record").trim(),
       location_country: r.location_country?.trim() || "India",
       location_state: r.location_state?.trim() || "",
       location_district: r.location_district?.trim() || "",
@@ -502,7 +506,7 @@ export const saveExtractedDataset = createServerFn({ method: "POST" })
       }
 
       // Append new records to the front
-      const updatedList = [...preparedRecords, ...currentList].slice(0, 5000); // retain recent 5000 in fallback
+      const updatedList = [...preparedRecords, ...currentList].slice(0, 5000);
 
       await admin.from("site_settings").upsert({
         id: "dataset_vault_master",
@@ -517,22 +521,6 @@ export const saveExtractedDataset = createServerFn({ method: "POST" })
       }
     }
 
-    // Log the import event
-    try {
-      await admin.from("site_settings").upsert({
-        id: `dataset_import_log_${Date.now()}`,
-        value: JSON.stringify({
-          category: data.category,
-          count: preparedRecords.length,
-          filename: data.source_filename,
-          imported_by: access.email,
-          timestamp: now,
-        }),
-        updated_at: now,
-        updated_by: context.userId,
-      });
-    } catch (_) {}
-
     return {
       success: true,
       storedCount: preparedRecords.length,
@@ -544,7 +532,10 @@ export const saveExtractedDataset = createServerFn({ method: "POST" })
 // ─── Delete Record: Delete Single Record (Admin Only) ───────────────
 export const deleteDatasetRecord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string() }).parse(d))
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({ id: z.string() }).parse(input);
+  })
   .handler(async ({ data, context }) => {
     const access = await checkUserAccess(context.userId);
     if (!access.isAdmin) {
@@ -585,7 +576,10 @@ export const deleteDatasetRecord = createServerFn({ method: "POST" })
 // ─── Bulk Delete Records (Admin Only) ──────────────────────────────
 export const bulkDeleteDatasetRecords = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ ids: z.array(z.string()) }).parse(d))
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({ ids: z.array(z.string()) }).parse(input);
+  })
   .handler(async ({ data, context }) => {
     const access = await checkUserAccess(context.userId);
     if (!access.isAdmin) {
@@ -625,8 +619,9 @@ export const bulkDeleteDatasetRecords = createServerFn({ method: "POST" })
 // ─── Log Export Event ───────────────────────────────────────────────
 export const logDatasetExportEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z
       .object({
         format: z.enum(["xlsx", "csv", "pdf", "txt"]),
         recordCount: z.number(),
@@ -634,8 +629,8 @@ export const logDatasetExportEvent = createServerFn({ method: "POST" })
         passwordProtected: z.boolean(),
         selectedOnly: z.boolean(),
       })
-      .parse(d)
-  )
+      .parse(input);
+  })
   .handler(async ({ data, context }) => {
     const access = await checkUserAccess(context.userId);
     const admin = getAdminClient();

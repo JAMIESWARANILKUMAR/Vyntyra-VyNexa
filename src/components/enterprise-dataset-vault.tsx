@@ -165,7 +165,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
 
   const recordsQ = useQuery({
     queryKey: ["dataset-vault-records", activeCategory],
-    queryFn: () => fetchRecords({ category: activeCategory, limit: 2000 }),
+    queryFn: () => fetchRecords({ data: { category: activeCategory, limit: 2000 } }),
     enabled: isSuperAdmin || vaultUnlocked || !settingsQ.data?.passcode_required,
     refetchInterval: 30_000,
   });
@@ -274,7 +274,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
     }
     setIsVerifyingPasscode(true);
     try {
-      const res = await verifyPasscodeFn({ passcode: enteredPasscode });
+      const res = await verifyPasscodeFn({ data: { passcode: enteredPasscode } });
       if (res.success) {
         setVaultUnlocked(true);
         toast.success("Dataset Vault unlocked successfully!");
@@ -448,9 +448,11 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
       });
 
       const res = await saveDatasetFn({
-        category: finalCategory,
-        source_filename: csvFileName,
-        records: preparedList,
+        data: {
+          category: finalCategory,
+          source_filename: csvFileName,
+          records: preparedList,
+        },
       });
 
       if (res.success) {
@@ -472,7 +474,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
   const handleDeleteSingle = async (id: string, title: string) => {
     if (!confirm(`Are you sure you want to permanently delete "${title}"?`)) return;
     try {
-      await deleteRecordFn({ id });
+      await deleteRecordFn({ data: { id } });
       toast.success("Record deleted successfully.");
       selectedIds.delete(id);
       setSelectedIds(new Set(selectedIds));
@@ -488,7 +490,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
     if (!confirm(`Are you sure you want to permanently delete ${ids.length} selected records?`)) return;
 
     try {
-      await bulkDeleteFn({ ids });
+      await bulkDeleteFn({ data: { ids } });
       toast.success(`Deleted ${ids.length} records successfully.`);
       setSelectedIds(new Set());
       qc.invalidateQueries({ queryKey: ["dataset-vault-records"] });
@@ -523,11 +525,13 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
 
       // Audit log
       await logExportFn({
-        format: exportFormat,
-        recordCount: listToExport.length,
-        category: activeCategory,
-        passwordProtected: exportPasswordEnabled,
-        selectedOnly: exportScope === "selected",
+        data: {
+          format: exportFormat,
+          recordCount: listToExport.length,
+          category: activeCategory,
+          passwordProtected: exportPasswordEnabled,
+          selectedOnly: exportScope === "selected",
+        },
       });
 
       toast.success(
@@ -1635,7 +1639,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
           onOpenChange={setIsSettingsModalOpen}
           currentSettings={settingsQ.data as DatasetVaultSettings}
           onSave={async (newSettings) => {
-            await updateSettingsFn(newSettings);
+            await updateSettingsFn({ data: newSettings });
             toast.success("Employee access & security controls updated successfully!");
             qc.invalidateQueries({ queryKey: ["dataset-vault-settings"] });
           }}
