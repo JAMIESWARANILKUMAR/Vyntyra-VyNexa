@@ -47,7 +47,7 @@ import { listJobPostings, createJobPosting, updateJobPosting, toggleJobPosting, 
 import { listAdminNotifications, markAllNotificationsRead } from "@/lib/notifications.functions";
 import { getVisitorCount } from "@/lib/visitor.functions";
 import { listAllLeaveRequests, listAllFeedbacks, updateLeaveStatus, deleteStoredOfferLetterAndRegenerate, deleteStoredNocAndRegenerate, deleteStoredOfferLetter, deleteStoredNoc } from "@/lib/operations.functions";
-import { Sparkles, RefreshCw, GraduationCap, FolderGit2, Link2, FileSpreadsheet, Award, MessageCircle, BrainCircuit } from "lucide-react";
+import { Sparkles, RefreshCw, GraduationCap, FolderGit2, Link2, FileSpreadsheet, Award, MessageCircle, BrainCircuit, Database } from "lucide-react";
 import { WorldClocks } from "@/components/world-clocks";
 import { InstallPwaButton } from "@/components/install-pwa-button";
 import { Switch } from "@/components/ui/switch";
@@ -524,6 +524,7 @@ function AdminDashboard() {
             { href: "/admin/cbt/submissions", label: "CBT Submissions", icon: ClipboardList },
             { href: "/admin/b2b-playbook", label: "B2B Playbook", icon: BookOpen, colorClass: "text-gold hover:bg-gold/10" },
             { href: "/admin/operations", label: "Operations", icon: Users },
+            { href: "/admin/operations?tab=dataset-vault", label: "Dataset Vault & CSV Hub", icon: Database, colorClass: "text-blue-600 font-bold hover:bg-blue-50" },
             { href: "/admin/email-campaigns", label: "Email Campaigns", icon: Mail },
             { href: "/cms", label: "CMS", icon: Settings2 },
             { href: "/templates", label: "Promotional Email Details", icon: Mail, colorClass: "text-emerald-600 border border-emerald-500/30 hover:bg-emerald-50" },
@@ -569,6 +570,15 @@ function AdminDashboard() {
                   >
                     <Link to="/admin/operations" search={{ tab: "cbt" }}>
                       <BrainCircuit className="h-4 w-4" /> AI CBT Engine
+                    </Link>
+                  </Button>
+
+                  <Button
+                    asChild
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0 flex-1 sm:flex-none justify-center"
+                  >
+                    <Link to="/admin/operations" search={{ tab: "dataset-vault" }}>
+                      <Database className="h-4 w-4" /> Dataset Vault & CSV Hub
                     </Link>
                   </Button>
 

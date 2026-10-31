@@ -14,10 +14,11 @@ import {
   IndianRupee, MessageSquare, BookOpen, Fingerprint, FileText, Send, Download,
   Sparkles, Zap, Wallet, ExternalLink, VolumeX, ShieldCheck, Laptop, Receipt,
   LifeBuoy, Award, GraduationCap, FileCheck, HelpCircle, Layers, CreditCard,
-  Building2, Plus, ArrowUpRight, HeartHandshake, CheckSquare, FileUp, Printer, Shield, Radio, Cpu, RotateCcw,
+  Building2, Plus, ArrowUpRight, HeartHandshake, CheckSquare, FileUp, Printer, Shield, Radio, Cpu, RotateCcw, Database,
   Coins, CheckCheck, Target, Flame, Calendar, Play, FolderOpen,
   Menu, X, ChevronRight
 } from "lucide-react";
+import { EnterpriseDatasetVaultView } from "@/components/enterprise-dataset-vault";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -1362,6 +1363,7 @@ function EmployeeDashboard() {
     { id: "interviews", label: "AI Mock & Interviews", badge: assignedInterviews.length, enabled: true },
     { id: "my_interns", label: "My Interns & Mentorship", badge: myInterns.length, enabled: isModuleEnabled("my_interns") },
     { id: "campaigns", label: "Email Campaigns", enabled: true },
+    { id: "dataset-vault", label: "Enterprise Datasets", enabled: true },
     { id: "announcements", label: `News`, badge: announcements.length, enabled: isModuleEnabled("announcements") },
     { id: "team", label: "Team & Kudos", enabled: isModuleEnabled("team") },
     { id: "resources", label: "Resources & LMS", enabled: isModuleEnabled("resources") },
@@ -3330,6 +3332,12 @@ function EmployeeDashboard() {
           {activeTab === "refer" && (
             <motion.div key="refer" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full">
               <EmployeeReferEarn />
+            </motion.div>
+          )}
+
+          {activeTab === "dataset-vault" && (
+            <motion.div key="dataset-vault" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full">
+              <EnterpriseDatasetVaultView isSuperAdmin={false} />
             </motion.div>
           )}
 
