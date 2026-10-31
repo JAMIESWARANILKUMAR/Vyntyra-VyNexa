@@ -1539,6 +1539,11 @@ export function AdminAmbassadorOperations() {
                         <span className="inline-block px-2 py-0.5 rounded font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 text-xs">
                           ₹{tier.voucher_amount ? tier.voucher_amount.toLocaleString() : "0"}
                         </span>
+                        {tier.cumulative_amount !== undefined && (
+                          <span className="text-[10px] text-slate-500 block font-mono mt-0.5">
+                            Total: ₹{tier.cumulative_amount.toLocaleString()}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-slate-700 max-w-xs leading-relaxed text-[11px]">
                         {tier.rewards_text}
@@ -2437,14 +2442,14 @@ export function AdminAmbassadorOperations() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 items-center">
+              <div className="grid grid-cols-3 gap-3 items-center">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                    Milestone Voucher / Incentive (₹)
+                    Milestone Voucher (₹)
                   </label>
                   <Input
                     type="number"
-                    placeholder="e.g. 500, 1000, 15000"
+                    placeholder="e.g. 500, 1000"
                     value={editingTier.voucher_amount ?? 0}
                     onChange={(e) =>
                       setEditingTier({
@@ -2456,13 +2461,31 @@ export function AdminAmbassadorOperations() {
                   />
                 </div>
 
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                    Cumulative Total (₹, Max 15k)
+                  </label>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 500, 1000 ... 15000"
+                    value={editingTier.cumulative_amount ?? 0}
+                    onChange={(e) =>
+                      setEditingTier({
+                        ...editingTier,
+                        cumulative_amount: parseInt(e.target.value, 10) || 0,
+                      })
+                    }
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+
                 <div className="pt-4 flex items-center gap-2">
                   <Switch
                     checked={editingTier.highlight || false}
                     onCheckedChange={(val) => setEditingTier({ ...editingTier, highlight: val })}
                   />
-                  <span className="text-xs font-bold text-slate-700">
-                    Apex Tier Highlight (Gold Crown)
+                  <span className="text-[11px] font-bold text-slate-700">
+                    Apex Crown Tier
                   </span>
                 </div>
               </div>

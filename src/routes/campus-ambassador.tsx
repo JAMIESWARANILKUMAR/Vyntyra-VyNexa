@@ -1006,31 +1006,32 @@ function CampusAmbassadorPage() {
 
         {/* ─── AMBASSADOR TIERED REWARD STRUCTURE ─── */}
         <section className="py-16 sm:py-20 px-4 sm:px-6 max-w-6xl mx-auto">
-          <div className="rounded-3xl border border-blue-500/30 bg-gradient-to-b from-[#1d4ed8] via-[#1e40af] to-[#0f172a] p-8 sm:p-12 relative overflow-hidden shadow-2xl text-white">
+          <div className="rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-900 via-[#0a1026] to-slate-950 p-8 sm:p-12 relative overflow-hidden shadow-2xl text-white">
             {/* Background Floating Glows */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-sky-400/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="text-center max-w-3xl mx-auto mb-12 relative">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-amber-300 shadow-xl mb-4">
-                <Trophy className="h-8 w-8 text-amber-300 drop-shadow-md" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 backdrop-blur-md border border-amber-500/30 text-amber-300 shadow-xl mb-4">
+                <Trophy className="h-8 w-8 text-amber-400 drop-shadow-md" />
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
                 {progressionData.heading || "Ambassador Tiered Reward Structure"}
               </h2>
-              <p className="mt-3 text-base sm:text-lg text-blue-100/90 font-medium">
-                {progressionData.description || "Progression tiers based on total points accumulated throughout the program duration."}
+              <p className="mt-3 text-base sm:text-lg text-slate-300 font-medium">
+                {progressionData.description || "Progression tiers based on total points accumulated throughout the program duration. Total rewards strictly capped at ₹15,000."}
               </p>
             </div>
 
             {/* Structured Progression Table */}
-            <div className="rounded-2xl border border-white/15 bg-slate-950/80 backdrop-blur-md overflow-hidden shadow-2xl">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/80 backdrop-blur-md overflow-hidden shadow-2xl">
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[700px]">
+                <table className="w-full text-left border-collapse min-w-[750px]">
                   <thead>
-                    <tr className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs sm:text-sm tracking-wide border-b border-white/10">
+                    <tr className="bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 text-white font-bold text-xs sm:text-sm tracking-wide border-b border-slate-800">
                       <th className="py-4 px-6">Tier Category</th>
                       <th className="py-4 px-6 text-center">Points</th>
+                      <th className="py-4 px-6 text-center">Milestone Voucher</th>
                       <th className="py-4 px-6">E-Vouchers &amp; Physical Rewards</th>
                       <th className="py-4 px-6">Digital Rewards</th>
                     </tr>
@@ -1058,7 +1059,23 @@ function CampusAmbassadorPage() {
                             {tier.points.toLocaleString()} pts
                           </span>
                         </td>
-                        <td className={`py-4 px-6 ${tier.highlight ? "text-emerald-400 font-bold" : "text-slate-200"}`}>
+                        <td className="py-4 px-6 text-center">
+                          <span
+                            className={`inline-block px-2.5 py-1 rounded-lg font-mono font-bold text-xs ${
+                              tier.highlight
+                                ? "bg-emerald-500/20 border border-emerald-400/50 text-emerald-300"
+                                : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+                            }`}
+                          >
+                            ₹{tier.voucher_amount ? tier.voucher_amount.toLocaleString() : "0"}
+                          </span>
+                          {tier.cumulative_amount !== undefined && (
+                            <span className="text-[10px] text-slate-400 block font-mono mt-0.5">
+                              Total: ₹{tier.cumulative_amount.toLocaleString()}
+                            </span>
+                          )}
+                        </td>
+                        <td className={`py-4 px-6 ${tier.highlight ? "text-emerald-300 font-bold" : "text-slate-200"}`}>
                           {tier.rewards_text}
                         </td>
                         <td className={`py-4 px-6 ${tier.highlight ? "text-slate-200 font-medium" : "text-slate-300"}`}>
@@ -1072,12 +1089,12 @@ function CampusAmbassadorPage() {
             </div>
 
             {/* Notes Section */}
-            <div className="mt-8 pt-6 border-t border-white/15 text-slate-200 text-xs sm:text-sm space-y-2.5">
+            <div className="mt-8 pt-6 border-t border-slate-800 text-slate-300 text-xs sm:text-sm space-y-2.5">
               <div className="font-bold text-white flex items-center gap-2 mb-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block"></span>
-                Important Progression Notes:
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
+                Important Progression Notes (Strict ₹15,000 Cap):
               </div>
-              <ul className="space-y-2 pl-4 list-disc text-blue-100/90 leading-relaxed">
+              <ul className="space-y-2 pl-4 list-disc text-slate-300 leading-relaxed">
                 {progressionNotes.map((note, idx) => (
                   <li key={idx} className="leading-relaxed">
                     {note}
@@ -1106,11 +1123,10 @@ function CampusAmbassadorPage() {
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight">
                 Are You the Next
               </h2>
-              <div className="text-3xl sm:text-4xl md:text-5xl font-black mt-1 tracking-tight">
-                <span className="text-rose-500">Vyn</span>
-                <span className="text-amber-400">tyra </span>
-                <span className="text-sky-400">India </span>
-                <span className="text-emerald-400">Ambassador?</span>
+              <div className="text-3xl sm:text-4xl md:text-5xl font-black mt-2 tracking-tight">
+                <span className="text-amber-400">Vyntyra</span>{" "}
+                <span className="text-white">India</span>{" "}
+                <span className="text-sky-400">Campus Ambassador?</span>
               </div>
             </div>
 
