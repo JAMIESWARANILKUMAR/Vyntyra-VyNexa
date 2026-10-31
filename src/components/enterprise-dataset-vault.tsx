@@ -137,6 +137,9 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
   const [csvRawText, setCsvRawText] = useState<string>("");
   const [csvFileName, setCsvFileName] = useState<string>("");
   const [parsedHeaders, setParsedHeaders] = useState<string[]>([]);
+  const safeHeaders = useMemo(() => {
+    return parsedHeaders.filter((h) => typeof h === "string" && h.trim().length > 0);
+  }, [parsedHeaders]);
   const [parsedRows, setParsedRows] = useState<Record<string, string>[]>([]);
   const [selectedColumns, setSelectedColumns] = useState<Record<string, boolean>>({});
   const [targetCategory, setTargetCategory] = useState<string>("companies");
@@ -172,7 +175,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
 
   const allRecords = useMemo(() => recordsQ.data?.records || [], [recordsQ.data]);
 
-  // Dynamic filter options derived from current records
+  // Dynamic filter options derived from current records (defensively sanitized)
   const filterOptions = useMemo(() => {
     const locations = new Set<string>();
     const industries = new Set<string>();
@@ -180,18 +183,26 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
     const roles = new Set<string>();
 
     allRecords.forEach((r) => {
-      if (r.location_state) locations.add(r.location_state);
-      if (r.location_city && !locations.has(r.location_city)) locations.add(r.location_city);
-      if (r.industry) industries.add(r.industry);
-      if (r.sector) sectors.add(r.sector);
-      if (r.role_designation) roles.add(r.role_designation);
+      const state = r.location_state?.trim();
+      const city = r.location_city?.trim();
+      const district = r.location_district?.trim();
+      const industry = r.industry?.trim();
+      const sector = r.sector?.trim();
+      const role = r.role_designation?.trim();
+
+      if (state && state.length > 0) locations.add(state);
+      if (city && city.length > 0 && !locations.has(city)) locations.add(city);
+      if (district && district.length > 0 && !locations.has(district)) locations.add(district);
+      if (industry && industry.length > 0) industries.add(industry);
+      if (sector && sector.length > 0) sectors.add(sector);
+      if (role && role.length > 0) roles.add(role);
     });
 
     return {
-      locations: Array.from(locations).sort(),
-      industries: Array.from(industries).sort(),
-      sectors: Array.from(sectors).sort(),
-      roles: Array.from(roles).sort(),
+      locations: Array.from(locations).filter((s) => typeof s === "string" && s.trim().length > 0).sort(),
+      industries: Array.from(industries).filter((s) => typeof s === "string" && s.trim().length > 0).sort(),
+      sectors: Array.from(sectors).filter((s) => typeof s === "string" && s.trim().length > 0).sort(),
+      roles: Array.from(roles).filter((s) => typeof s === "string" && s.trim().length > 0).sort(),
     };
   }, [allRecords]);
 
@@ -341,7 +352,21 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
       return result;
     };
 
-    const headers = parseLine(lines[0]).map((h) => h.replace(/^["']|["']$/g, "").trim());
+    const rawHeaders = parseLine(lines[0]).map((h) => h.replace(/^["']|["']$/g, "").trim());
+    // Ensure every header has a non-empty name, preventing blank/whitespace headers from breaking Radix SelectItem
+    const headersWithFallbacks = rawHeaders.map((h, idx) => {
+      const clean = h.trim();
+      return clean.length > 0 ? clean : `Column_${idx + 1}`;
+    });
+
+    // Deduplicate headers
+    const seenHeaders = new Map<string, number>();
+    const headers = headersWithFallbacks.map((h) => {
+      const count = seenHeaders.get(h) || 0;
+      seenHeaders.set(h, count + 1);
+      return count === 0 ? h : `${h}_${count + 1}`;
+    });
+
     const rows: Record<string, string>[] = [];
 
     for (let i = 1; i < lines.length; i++) {
@@ -808,11 +833,13 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
                     <SelectItem value="all">All Locations</SelectItem>
-                    {filterOptions.locations.map((loc) => (
-                      <SelectItem key={loc} value={loc}>
-                        {loc}
-                      </SelectItem>
-                    ))}
+                    {filterOptions.locations
+                      .filter((loc) => typeof loc === "string" && loc.trim().length > 0)
+                      .map((loc) => (
+                        <SelectItem key={loc} value={loc}>
+                          {loc}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -828,11 +855,13 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
                     <SelectItem value="all">All Industries</SelectItem>
-                    {filterOptions.industries.map((ind) => (
-                      <SelectItem key={ind} value={ind}>
-                        {ind}
-                      </SelectItem>
-                    ))}
+                    {filterOptions.industries
+                      .filter((ind) => typeof ind === "string" && ind.trim().length > 0)
+                      .map((ind) => (
+                        <SelectItem key={ind} value={ind}>
+                          {ind}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -848,11 +877,13 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
                     <SelectItem value="all">All Sectors</SelectItem>
-                    {filterOptions.sectors.map((sec) => (
-                      <SelectItem key={sec} value={sec}>
-                        {sec}
-                      </SelectItem>
-                    ))}
+                    {filterOptions.sectors
+                      .filter((sec) => typeof sec === "string" && sec.trim().length > 0)
+                      .map((sec) => (
+                        <SelectItem key={sec} value={sec}>
+                          {sec}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -868,11 +899,13 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
                     <SelectItem value="all">All Roles</SelectItem>
-                    {filterOptions.roles.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
+                    {filterOptions.roles
+                      .filter((r) => typeof r === "string" && r.trim().length > 0)
+                      .map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1257,8 +1290,8 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">-- Not Mapped --</SelectItem>
-                      {parsedHeaders.map((h) => (
-                        <SelectItem key={h} value={h}>
+                      {safeHeaders.map((h, idx) => (
+                        <SelectItem key={`${h}_${idx}`} value={h}>
                           {h}
                         </SelectItem>
                       ))}
@@ -1278,8 +1311,8 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">-- Not Mapped --</SelectItem>
-                      {parsedHeaders.map((h) => (
-                        <SelectItem key={h} value={h}>
+                      {safeHeaders.map((h, idx) => (
+                        <SelectItem key={`${h}_${idx}`} value={h}>
                           {h}
                         </SelectItem>
                       ))}
@@ -1299,8 +1332,8 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">-- Not Mapped --</SelectItem>
-                      {parsedHeaders.map((h) => (
-                        <SelectItem key={h} value={h}>
+                      {safeHeaders.map((h, idx) => (
+                        <SelectItem key={`${h}_${idx}`} value={h}>
                           {h}
                         </SelectItem>
                       ))}
@@ -1320,8 +1353,8 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">-- Not Mapped --</SelectItem>
-                      {parsedHeaders.map((h) => (
-                        <SelectItem key={h} value={h}>
+                      {safeHeaders.map((h, idx) => (
+                        <SelectItem key={`${h}_${idx}`} value={h}>
                           {h}
                         </SelectItem>
                       ))}
@@ -1341,8 +1374,8 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">-- Not Mapped --</SelectItem>
-                      {parsedHeaders.map((h) => (
-                        <SelectItem key={h} value={h}>
+                      {safeHeaders.map((h, idx) => (
+                        <SelectItem key={`${h}_${idx}`} value={h}>
                           {h}
                         </SelectItem>
                       ))}
@@ -1362,8 +1395,8 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">-- Not Mapped --</SelectItem>
-                      {parsedHeaders.map((h) => (
-                        <SelectItem key={h} value={h}>
+                      {safeHeaders.map((h, idx) => (
+                        <SelectItem key={`${h}_${idx}`} value={h}>
                           {h}
                         </SelectItem>
                       ))}
@@ -1383,8 +1416,8 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">-- Not Mapped --</SelectItem>
-                      {parsedHeaders.map((h) => (
-                        <SelectItem key={h} value={h}>
+                      {safeHeaders.map((h, idx) => (
+                        <SelectItem key={`${h}_${idx}`} value={h}>
                           {h}
                         </SelectItem>
                       ))}
@@ -1404,8 +1437,8 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">-- Not Mapped --</SelectItem>
-                      {parsedHeaders.map((h) => (
-                        <SelectItem key={h} value={h}>
+                      {safeHeaders.map((h, idx) => (
+                        <SelectItem key={`${h}_${idx}`} value={h}>
                           {h}
                         </SelectItem>
                       ))}
@@ -1425,8 +1458,8 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">-- Not Mapped --</SelectItem>
-                      {parsedHeaders.map((h) => (
-                        <SelectItem key={h} value={h}>
+                      {safeHeaders.map((h, idx) => (
+                        <SelectItem key={`${h}_${idx}`} value={h}>
                           {h}
                         </SelectItem>
                       ))}
