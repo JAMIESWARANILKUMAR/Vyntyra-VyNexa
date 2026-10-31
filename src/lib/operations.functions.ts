@@ -2187,6 +2187,31 @@ export const createMeeting = createServerFn({ method: 'POST' })
       throw new Error(error.message);
     }
 
+    // Auto-sync room to meet_rooms table so it is immediately active and accessible
+    if (cleanLink.includes('/meet/')) {
+      const match = cleanLink.match(/\/meet\/([a-zA-Z0-9-]+)/);
+      if (match && match[1]) {
+        const roomId = match[1].toLowerCase();
+        try {
+          const roomSettings = {
+            type: 'internal',
+            target_role: data.target_role || 'all',
+          };
+          await adminClient.from('meet_rooms').upsert({
+            id: roomId,
+            title: data.title,
+            host_id: context.userId || 'host',
+            status: 'active',
+            max_participants: 100,
+            settings: JSON.stringify(roomSettings),
+            created_at: new Date().toISOString()
+          });
+        } catch (e) {
+          console.warn('[createMeeting] meet_rooms upsert error:', e);
+        }
+      }
+    }
+
     // Google Calendar URL
     const gcalUrl = generateGoogleCalendarUrl({
       title: data.title,
@@ -2318,6 +2343,32 @@ export const updateMeeting = createServerFn({ method: 'POST' })
       if (err2) throw new Error(err2.message);
     } else if (error) {
       throw new Error(error.message);
+    }
+
+    // Auto-sync room to meet_rooms table so it is immediately active and accessible
+    const linkToCheck = updatePayload.meeting_link || updatedMeeting?.meeting_link;
+    if (linkToCheck && linkToCheck.includes('/meet/')) {
+      const match = linkToCheck.match(/\/meet\/([a-zA-Z0-9-]+)/);
+      if (match && match[1]) {
+        const roomId = match[1].toLowerCase();
+        try {
+          const roomSettings = {
+            type: 'internal',
+            target_role: updatePayload.target_role || updatedMeeting?.target_role || 'all',
+          };
+          await adminClient.from('meet_rooms').upsert({
+            id: roomId,
+            title: updatePayload.title || updatedMeeting?.title || 'Meeting Room',
+            host_id: context.userId || 'host',
+            status: 'active',
+            max_participants: 100,
+            settings: JSON.stringify(roomSettings),
+            created_at: new Date().toISOString()
+          });
+        } catch (e) {
+          console.warn('[updateMeeting] meet_rooms upsert error:', e);
+        }
+      }
     }
 
     // If requested, send reschedule notification email

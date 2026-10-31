@@ -280,16 +280,21 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
 
     // Verify room exists and is active
     let room: any = null;
-    const cleanRoomId = data.roomId.trim().toLowerCase();
-    const cleanAccessCode = (data.accessCode || data.roomId).trim().toUpperCase();
+    let rawRoomId = data.roomId.trim();
+    if (rawRoomId.includes('/meet/')) {
+      rawRoomId = rawRoomId.split('/meet/').pop()?.split(/[?#]/)[0] || rawRoomId;
+    }
+    const cleanRoomId = rawRoomId.toLowerCase();
+    const cleanAccessCode = (data.accessCode || rawRoomId).trim().toUpperCase();
     const noHyphenId = cleanRoomId.replace(/-/g, '');
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanRoomId);
 
     if (d1 && typeof d1.prepare === "function") {
       try {
         room = await d1.prepare(`
           SELECT * FROM meet_rooms 
           WHERE (id = ? OR LOWER(id) = ? OR REPLACE(LOWER(id), '-', '') = ?) AND status = 'active'
-        `).bind(data.roomId, cleanRoomId, noHyphenId).first() as any;
+        `).bind(cleanRoomId, cleanRoomId, noHyphenId).first() as any;
       } catch (e) {
         console.warn("D1 room query error:", e);
       }
@@ -302,7 +307,7 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
         const { data: supaRoom } = await adminClient
           .from('meet_rooms')
           .select('*')
-          .or(`id.eq.${data.roomId},id.eq.${cleanRoomId},id.ilike.%${cleanRoomId}%`)
+          .or(`id.eq.${cleanRoomId},id.ilike.%${cleanRoomId}%,id.ilike.%${noHyphenId}%`)
           .eq('status', 'active')
           .maybeSingle();
         if (supaRoom) {
@@ -317,11 +322,18 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
     if (!room) {
       const adminClient = getAdminClient();
       try {
+        let queryFilter = `meeting_link.ilike.%${cleanRoomId}%,meeting_url.ilike.%${cleanRoomId}%,meeting_link.ilike.%${noHyphenId}%,meeting_url.ilike.%${noHyphenId}%`;
+        if (isUuid) {
+          queryFilter += `,id.eq.${cleanRoomId}`;
+        }
         const { data: supaMeet } = await adminClient
           .from('meetings')
           .select('*')
-          .or(`meeting_link.ilike.%${cleanRoomId}%,meeting_url.ilike.%${cleanRoomId}%,meeting_link.ilike.%${data.roomId}%,meeting_url.ilike.%${data.roomId}%,id.eq.${cleanRoomId}`)
+          .or(queryFilter)
+          .order('scheduled_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
+
         if (supaMeet) {
           let parsedSettings: any = {
             type: supaMeet.description?.includes('External') ? 'external' : 'internal',
@@ -333,12 +345,26 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
             } catch (_) {}
           }
           room = {
-            id: data.roomId,
+            id: cleanRoomId,
             title: supaMeet.title,
-            host_id: supaMeet.host_id || supaMeet.target_user_id || 'host',
+            host_id: supaMeet.created_by || supaMeet.host_id || supaMeet.target_user_id || 'host',
             status: 'active',
             settings: JSON.stringify(parsedSettings)
           };
+
+          // Auto-heal: Ensure meet_rooms table has this room so all future queries and lists resolve it instantly
+          try {
+            await adminClient.from('meet_rooms').upsert({
+              id: cleanRoomId,
+              title: supaMeet.title,
+              host_id: supaMeet.created_by || 'host',
+              status: 'active',
+              settings: JSON.stringify(parsedSettings),
+              created_at: supaMeet.created_at || new Date().toISOString()
+            });
+          } catch (e) {
+            console.warn("Auto-sync meet_rooms error:", e);
+          }
         }
       } catch (e) {
         console.warn("Supabase meetings fallback query error:", e);
@@ -374,13 +400,13 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
       const { accountId, appId, apiToken } = getRealtimeCredentials();
       if (accountId && appId && apiToken) {
         try {
-          const cfCheck = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/realtime/kit/${appId}/meetings/${data.roomId}`, {
+          const cfCheck = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/realtime/kit/${appId}/meetings/${cleanRoomId}`, {
             headers: { "Authorization": `Bearer ${apiToken}` }
           });
           if (cfCheck.ok) {
             const cfRoomData = await cfCheck.json() as any;
             room = {
-              id: data.roomId,
+              id: cleanRoomId,
               title: cfRoomData.data?.title || "Live Meeting",
               host_id: "host",
               status: "active",
@@ -388,6 +414,36 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
             };
           }
         } catch (_) {}
+      }
+    }
+
+    // 5. Ultimate Fallback: Auto-provision dynamic active room for valid Vyntyra room codes
+    if (!room && (cleanRoomId.startsWith('vyn-') || cleanRoomId.length >= 6)) {
+      const adminClient = getAdminClient();
+      const defaultSettings = {
+        type: 'internal',
+        access_code: getOrDeriveAccessCode(cleanRoomId)
+      };
+      const settingsStr = JSON.stringify(defaultSettings);
+      room = {
+        id: cleanRoomId,
+        title: "Live Meeting Room",
+        host_id: userId || 'host',
+        status: 'active',
+        settings: settingsStr
+      };
+
+      try {
+        await adminClient.from('meet_rooms').upsert({
+          id: cleanRoomId,
+          title: "Live Meeting Room",
+          host_id: userId || 'host',
+          status: 'active',
+          settings: settingsStr,
+          created_at: new Date().toISOString()
+        });
+      } catch (e) {
+        console.warn("Auto-provision meet_rooms fallback error:", e);
       }
     }
 
@@ -619,10 +675,14 @@ export const getMeetingTokenFn = createServerFn({ method: "POST" })
             // Persist the mapped cf_room_id so all subsequent users join the same room
             const adminClient = getAdminClient();
             try {
-              await adminClient.from('meet_rooms').update({ settings: updatedSettingsStr }).eq('id', data.roomId);
+              await adminClient.from('meet_rooms').update({ settings: updatedSettingsStr }).eq('id', cleanRoomId);
             } catch (_) {}
             try {
-              await adminClient.from('meetings').update({ description: (room.description || '') + ` __SETTINGS:${updatedSettingsStr}` }).or(`id.eq.${data.roomId},meeting_link.ilike.%${data.roomId}%,meeting_url.ilike.%${data.roomId}%`);
+              if (isUuid) {
+                await adminClient.from('meetings').update({ description: (room.description || '') + ` __SETTINGS:${updatedSettingsStr}` }).or(`id.eq.${cleanRoomId},meeting_link.ilike.%${cleanRoomId}%,meeting_url.ilike.%${cleanRoomId}%`);
+              } else {
+                await adminClient.from('meetings').update({ description: (room.description || '') + ` __SETTINGS:${updatedSettingsStr}` }).or(`meeting_link.ilike.%${cleanRoomId}%,meeting_url.ilike.%${cleanRoomId}%`);
+              }
             } catch (_) {}
 
             // Now add participant to the newly created Cloudflare meeting!
