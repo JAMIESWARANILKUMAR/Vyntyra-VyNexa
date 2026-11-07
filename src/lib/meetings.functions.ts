@@ -96,26 +96,29 @@ export const getOrDeriveAccessCode = (roomId: string, existingCode?: string): st
 // Creates a new meeting room
 export const createMeetingRoomFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({
-    title: z.string(),
-    maxParticipants: z.number().default(40),
-    customRoomId: z.string().optional(),
-    settings: z.object({
-      muteOnEntry: z.boolean().default(false),
-      disableCameras: z.boolean().default(false),
-      recordingEnabled: z.boolean().default(false),
-      type: z.enum(['internal', 'external']).default('internal'),
-      password: z.string().optional(),
-      access_code: z.string().optional(),
-      allowedEmails: z.string().optional(), // Comma separated
-      superHosts: z.string().optional(), // Comma separated
-      hosts: z.string().optional(), // Comma separated
-      scheduledFor: z.string().optional(), // ISO string
-      target_type: z.enum(['all', 'intern', 'team']).default('all'),
-      target_teams: z.array(z.string()).default([]),
-      target_interns: z.array(z.string()).default([]),
-    }).optional()
-  }).parse(d))
+  .inputValidator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
+      title: z.string(),
+      maxParticipants: z.number().default(40),
+      customRoomId: z.string().optional(),
+      settings: z.object({
+        muteOnEntry: z.boolean().default(false),
+        disableCameras: z.boolean().default(false),
+        recordingEnabled: z.boolean().default(false),
+        type: z.enum(['internal', 'external']).default('internal'),
+        password: z.string().optional(),
+        access_code: z.string().optional(),
+        allowedEmails: z.string().optional(), // Comma separated
+        superHosts: z.string().optional(), // Comma separated
+        hosts: z.string().optional(), // Comma separated
+        scheduledFor: z.string().optional(), // ISO string
+        target_type: z.enum(['all', 'intern', 'team']).default('all'),
+        target_teams: z.array(z.string()).default([]),
+        target_interns: z.array(z.string()).default([]),
+      }).optional()
+    }).parse(input);
+  })
   .handler(async ({ data, context }) => {
     const { accountId, appId, apiToken } = getRealtimeCredentials();
 
@@ -229,17 +232,20 @@ export const createMeetingRoomFn = createServerFn({ method: "POST" })
 
 // Gets an active meeting token and config
 export const getMeetingTokenFn = createServerFn({ method: "POST" })
-  .validator((d: unknown) => z.object({
-    roomId: z.string(),
-    password: z.string().optional(),
-    accessCode: z.string().optional(),
-    internId: z.string().optional(),
-    guestName: z.string().optional(),
-    guestEmail: z.string().optional(),
-    guestPhone: z.string().optional(),
-    guestOrg: z.string().optional(),
-    authToken: z.string().optional()
-  }).parse(d))
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
+      roomId: z.string(),
+      password: z.string().optional(),
+      accessCode: z.string().optional(),
+      internId: z.string().optional(),
+      guestName: z.string().optional(),
+      guestEmail: z.string().optional(),
+      guestPhone: z.string().optional(),
+      guestOrg: z.string().optional(),
+      authToken: z.string().optional()
+    }).parse(input);
+  })
   .handler(async ({ data }) => {
     // 1. Manually resolve user auth (to allow unauthenticated external guests if password matches)
     const request = getRequest();
@@ -914,9 +920,12 @@ export const getActiveMeetingsFn = createServerFn({ method: "GET" })
 // Ends a meeting
 export const endMeetingFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({
-    roomId: z.string()
-  }).parse(d))
+  .inputValidator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
+      roomId: z.string()
+    }).parse(input);
+  })
   .handler(async ({ data, context }) => {
     const d1 = getD1Database(context);
 
@@ -948,9 +957,12 @@ export const endMeetingFn = createServerFn({ method: "POST" })
 
 // Fast verification of an 8-Digit Vyntyra Access Code
 export const verifyMeetingAccessCodeFn = createServerFn({ method: "POST" })
-  .validator((d: unknown) => z.object({
-    accessCode: z.string().min(6).max(16),
-  }).parse(d))
+  .validator((d: unknown) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
+      accessCode: z.string().min(6).max(16),
+    }).parse(input);
+  })
   .handler(async ({ data }) => {
     const code = data.accessCode.trim().toUpperCase();
     const adminClient = getAdminClient();
@@ -1011,13 +1023,14 @@ const meetingTranslationCache = new Map<string, string>();
  */
 export const translateSpeechFn = createServerFn({ method: "POST" })
   .validator((d: any) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
     return z.object({
       text: z.string().min(1).max(2000),
       targetLang: z.string().default("hi"),
       targetLangName: z.string().default("Hindi"),
       sourceLang: z.string().optional().default("auto"),
       model: z.string().optional().default("meta-llama/llama-3.3-70b-instruct"),
-    }).parse(d);
+    }).parse(input);
   })
   .handler(async ({ data }) => {
     const cleanText = data.text.trim();
@@ -1149,13 +1162,16 @@ export const translateSpeechFn = createServerFn({ method: "POST" })
  * assigns Intern ID if registered, and records a visitor gatekeeper entry.
  */
 export const verifyGuestIdentityFn = createServerFn({ method: "POST" })
-  .validator((d: any) => z.object({
-    roomId: z.string(),
-    email: z.string().email(),
-    fullName: z.string().min(1),
-    phone: z.string().optional(),
-    organization: z.string().optional(),
-  }).parse(d))
+  .validator((d: any) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
+      roomId: z.string(),
+      email: z.string().email(),
+      fullName: z.string().min(1),
+      phone: z.string().optional(),
+      organization: z.string().optional(),
+    }).parse(input);
+  })
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
     const cleanEmail = data.email.trim().toLowerCase();
@@ -1233,18 +1249,21 @@ export const verifyGuestIdentityFn = createServerFn({ method: "POST" })
  * Tracks join_time, leave_time, duration, and reconnection attempts.
  */
 export const recordMeetingTelemetryFn = createServerFn({ method: "POST" })
-  .validator((d: any) => z.object({
-    meetingId: z.string(),
-    participantId: z.string(),
-    userEmail: z.string().optional(),
-    userName: z.string(),
-    phone: z.string().optional(),
-    internId: z.string().optional(),
-    userType: z.string().optional().default('guest'),
-    action: z.enum(['join', 'ping', 'leave']),
-    durationSeconds: z.number().optional().default(0),
-    deviceMetadata: z.string().optional(),
-  }).parse(d))
+  .validator((d: any) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
+      meetingId: z.string(),
+      participantId: z.string(),
+      userEmail: z.string().optional(),
+      userName: z.string(),
+      phone: z.string().optional(),
+      internId: z.string().optional(),
+      userType: z.string().optional().default('guest'),
+      action: z.enum(['join', 'ping', 'leave']),
+      durationSeconds: z.number().optional().default(0),
+      deviceMetadata: z.string().optional(),
+    }).parse(input);
+  })
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
     const nowIso = new Date().toISOString();
@@ -1306,6 +1325,26 @@ export const recordMeetingTelemetryFn = createServerFn({ method: "POST" })
               updated_at: nowIso,
             })
             .eq('id', existing.id);
+        } else {
+          // If no initial join row was found on ping/leave, create one to ensure attendance is never missed
+          await adminClient
+            .from('meet_attendance_telemetry')
+            .insert({
+              meeting_id: data.meetingId,
+              participant_id: data.participantId,
+              user_email: data.userEmail || null,
+              user_name: data.userName,
+              phone: data.phone || null,
+              intern_id: data.internId || null,
+              user_type: data.userType || 'guest',
+              join_time: nowIso,
+              reconnection_count: 1,
+              duration_seconds: data.durationSeconds || 0,
+              attendance_status: 'Present',
+              leave_time: data.action === 'leave' ? nowIso : null,
+              device_metadata: data.deviceMetadata || null,
+              updated_at: nowIso,
+            });
         }
       }
       return { success: true };
@@ -1319,9 +1358,12 @@ export const recordMeetingTelemetryFn = createServerFn({ method: "POST" })
  * Host Attendance & Session Telemetry Fetcher
  */
 export const getMeetingAttendanceFn = createServerFn({ method: "POST" })
-  .validator((d: any) => z.object({
-    meetingId: z.string(),
-  }).parse(d))
+  .validator((d: any) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
+      meetingId: z.string(),
+    }).parse(input);
+  })
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
     try {
@@ -1365,10 +1407,13 @@ export const getMeetingAttendanceFn = createServerFn({ method: "POST" })
  * Host Attendance Status Override (Present, Late, Excused, Absent)
  */
 export const updateAttendanceStatusFn = createServerFn({ method: "POST" })
-  .validator((d: any) => z.object({
-    recordId: z.string(),
-    status: z.enum(['Present', 'Late', 'Excused', 'Absent']),
-  }).parse(d))
+  .validator((d: any) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
+      recordId: z.string(),
+      status: z.enum(['Present', 'Late', 'Excused', 'Absent']),
+    }).parse(input);
+  })
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
     try {
@@ -1390,16 +1435,19 @@ export const updateAttendanceStatusFn = createServerFn({ method: "POST" })
  * Host Controls & Permissions Manager (Lock, Mute All, Eject, Co-Hosts, Permissions)
  */
 export const updateHostControlsFn = createServerFn({ method: "POST" })
-  .validator((d: any) => z.object({
-    meetingId: z.string(),
-    isLocked: z.boolean().optional(),
-    waitingRoom: z.boolean().optional(),
-    allowGuestScreenShare: z.boolean().optional(),
-    allowGuestChat: z.boolean().optional(),
-    ejectUserId: z.string().optional(),
-    addCoHostEmail: z.string().optional(),
-    removeCoHostEmail: z.string().optional(),
-  }).parse(d))
+  .validator((d: any) => {
+    const input = (d as any)?.data !== undefined ? (d as any).data : d;
+    return z.object({
+      meetingId: z.string(),
+      isLocked: z.boolean().optional(),
+      waitingRoom: z.boolean().optional(),
+      allowGuestScreenShare: z.boolean().optional(),
+      allowGuestChat: z.boolean().optional(),
+      ejectUserId: z.string().optional(),
+      addCoHostEmail: z.string().optional(),
+      removeCoHostEmail: z.string().optional(),
+    }).parse(input);
+  })
   .handler(async ({ data }) => {
     const adminClient = getAdminClient();
     try {

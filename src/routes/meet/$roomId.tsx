@@ -9,7 +9,8 @@ import { RtkUiProvider, RtkMeeting, createDefaultConfig } from '@cloudflare/real
 import { 
   Globe, Loader2, AlertCircle, Lock, Copy, RotateCw, CheckCircle2, 
   ShieldCheck, Sparkles, Sliders, X, Shield, FileSpreadsheet, Users, UserX,
-  Briefcase, GraduationCap, KeyRound, Pen, FileText, Music, LayoutGrid, Settings
+  Briefcase, GraduationCap, KeyRound, Pen, FileText, Music, LayoutGrid, Settings,
+  Subtitles, Pin, PinOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,7 @@ import { AudioEnhancerModal, AudioMode } from '@/components/meet/AudioEnhancerMo
 import { AppleHelloGreeting } from '@/components/meet/AppleHelloGreeting';
 import { PostMeetingSummary } from '@/components/meet/PostMeetingSummary';
 import { MeetingSettingsModal, MeetingPreferences, getSavedPreferences, WAVEFORM_THEMES } from '@/components/meet/MeetingSettingsModal';
+import { LiveTranscriptionOverlay } from '@/components/meet/LiveTranscriptionOverlay';
 
 // Meeting Plugins
 import { MeetingWhiteboardModal } from '@/components/meet/MeetingWhiteboardModal';
@@ -66,10 +68,14 @@ function MeetingRoom() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
 
-  // Indian Languages AI Translation State
+  // Indian Languages AI Translation & Live Captions State
   const [translationEnabled, setTranslationEnabled] = useState(false);
+  const [isCaptionsEnabled, setIsCaptionsEnabled] = useState(false);
   const [selectedIndianLanguage, setSelectedIndianLanguage] = useState<IndianLanguage>(INDIAN_LANGUAGES[0]);
   const [isMobileToolsOpen, setIsMobileToolsOpen] = useState(false);
+
+  // Multi-Pin to Stage State (Up to 3 Participants)
+  const [pinnedParticipantIds, setPinnedParticipantIds] = useState<string[]>([]);
 
   // Enterprise Host Controls & Attendance Modals
   const [isHostControlsOpen, setIsHostControlsOpen] = useState(false);
@@ -313,6 +319,74 @@ function MeetingRoom() {
           toast.info("The host has muted all participants.");
         }
       })
+      .on('broadcast', { event: 'stop_all_video' }, () => {
+        if (!data?.isHost && !data?.isCoHost) {
+          try {
+            if (meeting.self?.disableVideo) {
+              meeting.self.disableVideo();
+            }
+          } catch (_) {}
+          toast.info("The host has turned off video for all participants.");
+        }
+      })
+      .on('broadcast', { event: 'remote_mute_mic' }, ({ payload }: any) => {
+        const myId = data?.participantId || meeting.self?.id;
+        const myName = data?.participantName;
+        if (payload?.targetId === myId || (myName && payload?.targetName === myName)) {
+          try {
+            if (meeting.self?.disableAudio) {
+              meeting.self.disableAudio();
+            }
+          } catch (_) {}
+          toast.warning("The host has muted your microphone.", { duration: 6000 });
+        }
+      })
+      .on('broadcast', { event: 'remote_disable_video' }, ({ payload }: any) => {
+        const myId = data?.participantId || meeting.self?.id;
+        const myName = data?.participantName;
+        if (payload?.targetId === myId || (myName && payload?.targetName === myName)) {
+          try {
+            if (meeting.self?.disableVideo) {
+              meeting.self.disableVideo();
+            }
+          } catch (_) {}
+          toast.warning("The host has turned off your video camera.", { duration: 6000 });
+        }
+      })
+      .on('broadcast', { event: 'remote_request_unmute' }, ({ payload }: any) => {
+        const myId = data?.participantId || meeting.self?.id;
+        const myName = data?.participantName;
+        if (payload?.targetId === myId || (myName && payload?.targetName === myName)) {
+          toast.info("The host has requested you to unmute your microphone.", {
+            action: {
+              label: "Unmute",
+              onClick: () => {
+                try { meeting.self?.enableAudio?.(); } catch (_) {}
+              }
+            },
+            duration: 12000
+          });
+        }
+      })
+      .on('broadcast', { event: 'remote_request_video' }, ({ payload }: any) => {
+        const myId = data?.participantId || meeting.self?.id;
+        const myName = data?.participantName;
+        if (payload?.targetId === myId || (myName && payload?.targetName === myName)) {
+          toast.info("The host has requested you to turn on your camera.", {
+            action: {
+              label: "Start Video",
+              onClick: () => {
+                try { meeting.self?.enableVideo?.(); } catch (_) {}
+              }
+            },
+            duration: 12000
+          });
+        }
+      })
+      .on('broadcast', { event: 'pinned_participants_changed' }, ({ payload }: any) => {
+        const pinned = payload?.pinnedIds || [];
+        setPinnedParticipantIds(pinned);
+      })
       .on('broadcast', { event: 'meeting_lock_changed' }, ({ payload }: any) => {
         setRoomSettings((prev: any) => ({ ...prev, isLocked: payload?.isLocked }));
         toast.info(payload?.isLocked ? "Meeting has been locked by the host." : "Meeting has been unlocked.");
@@ -445,6 +519,18 @@ function MeetingRoom() {
         if (root instanceof HTMLElement) {
           const tag = root.tagName.toLowerCase();
           if (tag === 'rtk-participant-tile' || root.classList.contains('rtk-participant-tile') || root.classList.contains('rtk-video-tile')) {
+            // Apply pin highlighting if participant is in pinnedParticipantIds
+            const participantId = root.getAttribute('data-participant-id') || root.getAttribute('id') || '';
+            const isPinned = pinnedParticipantIds.some(pid => participantId && participantId.includes(pid));
+            if (isPinned) {
+              root.setAttribute('data-pinned', 'true');
+              root.style.setProperty('box-shadow', '0 0 0 2px #3b82f6, 0 0 25px rgba(59, 130, 246, 0.45)', 'important');
+              root.style.setProperty('order', '-1', 'important');
+            } else {
+              root.removeAttribute('data-pinned');
+              root.style.removeProperty('order');
+            }
+
             if (activeBgPreset?.type === 'image' && bgUrl) {
               root.style.setProperty('background-image', `url('${bgUrl}')`, 'important');
               root.style.setProperty('background-size', 'cover', 'important');
@@ -480,7 +566,7 @@ function MeetingRoom() {
     const observer = new MutationObserver(applyVideoEffects);
     observer.observe(document.body, { childList: true, subtree: true, attributes: true });
     return () => observer.disconnect();
-  }, [activeColorFilterCss, activeBgPreset, activeWaveTheme, meetingPrefs.mirrorVideo]);
+  }, [activeColorFilterCss, activeBgPreset, activeWaveTheme, meetingPrefs.mirrorVideo, pinnedParticipantIds]);
 
   // Real-time Web Audio DSP Engine (Dolby 3D Audio, Studio Stereo, Crisp Mono)
   useEffect(() => {
@@ -876,7 +962,10 @@ function MeetingRoom() {
         [data-part="video"],
         .rtk-video video,
         rtk-meeting video {
-          filter: ${activeColorFilterCss !== 'none' ? activeColorFilterCss : ''} ${activeBgPreset?.type === 'blur' ? `blur(${Math.min(activeBgPreset.blurAmount || 12, 6)}px)` : ''} !important;
+          filter: ${[
+            activeColorFilterCss !== 'none' ? activeColorFilterCss : '',
+            activeBgPreset?.type === 'blur' ? `blur(${Math.min(activeBgPreset.blurAmount || 12, 6)}px)` : ''
+          ].filter(Boolean).join(' ') || 'none'} !important;
           ${activeBgPreset?.type === 'image' ? `
             -webkit-mask-image: radial-gradient(ellipse 68% 80% at 50% 50%, black 50%, rgba(0,0,0,0.4) 75%, transparent 100%) !important;
             mask-image: radial-gradient(ellipse 68% 80% at 50% 50%, black 50%, rgba(0,0,0,0.4) 75%, transparent 100%) !important;
@@ -885,6 +974,15 @@ function MeetingRoom() {
             mask-image: none !important;
           `}
           transition: filter 0.3s ease, mask-image 0.3s ease !important;
+        }
+
+        /* ── Multi-Pin Stage Spotlight (Up to 3 Participants) ── */
+        rtk-participant-tile[data-pinned="true"],
+        .rtk-participant-tile[data-pinned="true"],
+        .rtk-video-tile[data-pinned="true"] {
+          border: 2px solid #3b82f6 !important;
+          box-shadow: 0 0 25px rgba(59, 130, 246, 0.45), 0 16px 40px -12px rgba(0, 0, 0, 0.85) !important;
+          order: -1 !important;
         }
 
         /* Virtual Background Backdrop on Participant Tiles */
@@ -1134,10 +1232,10 @@ function MeetingRoom() {
         }
       `}} />
 
-      {/* Sleek Floating Glassmorphic Top Header with Mobile Safe Area */}
+      {/* Sleek Minimalist Executive Top Header */}
       <header className="absolute top-0 left-0 right-0 h-14 sm:h-16 pt-[max(6px,env(safe-area-inset-top))] sm:pt-1 px-3 sm:px-5 flex items-center justify-between z-40 bg-gradient-to-b from-black/90 via-black/50 to-transparent pointer-events-none">
         
-        {/* Left: Branding, Room Title, Live Clock & Sleek Share Pill */}
+        {/* Left: Branding, Room Title, Live Clock & Share Action */}
         <div className="flex items-center gap-2 sm:gap-2.5 pointer-events-auto">
           <div className="flex items-center gap-2 bg-[#0a0d14]/85 backdrop-blur-2xl border border-white/10 px-3 py-1.5 rounded-full shadow-2xl">
             <img src="/icon-512.png" alt="Vyntyra Logo" className="h-5 w-5 object-contain rounded-md shadow-sm shrink-0" />
@@ -1170,7 +1268,7 @@ function MeetingRoom() {
             <span className="font-mono text-gray-200">{meetingTimer}</span>
           </div>
 
-          {/* Genuine Active Recording Indicator (ONLY visible when recording is truly triggered!) */}
+          {/* Genuine Active Recording Indicator */}
           {isRecording && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-[10px] font-bold text-red-300 backdrop-blur-md shadow-sm animate-pulse">
               <span className="h-2 w-2 rounded-full bg-red-500"></span>
@@ -1178,7 +1276,7 @@ function MeetingRoom() {
             </div>
           )}
 
-          {/* Desktop Direct Copy Action */}
+          {/* Direct Copy Meeting Link */}
           <Button
             size="sm"
             variant="ghost"
@@ -1195,7 +1293,6 @@ function MeetingRoom() {
             <span className="font-medium">Copy Link</span>
           </Button>
 
-          {/* Verified Intern / Employee Tag */}
           {data?.internId && (
             <div className="hidden lg:flex items-center gap-1.5 bg-blue-500/15 border border-blue-500/30 px-3 py-1 rounded-full text-[10px] font-mono text-blue-300 backdrop-blur-md">
               <ShieldCheck className="h-3.5 w-3.5 text-blue-400" />
@@ -1204,100 +1301,65 @@ function MeetingRoom() {
           )}
         </div>
 
-        {/* Right Section: Stream HUD & Enterprise Suite Controls */}
+        {/* Center: Pinned Spotlight Badge (Visible when participants are pinned) */}
+        {pinnedParticipantIds.length > 0 && (
+          <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-blue-600/20 border border-blue-500/35 rounded-full backdrop-blur-xl shadow-lg pointer-events-auto">
+            <Pin className="h-3.5 w-3.5 text-blue-400" />
+            <span className="text-xs font-semibold text-blue-200">
+              {pinnedParticipantIds.length}/3 Pinned to Stage
+            </span>
+            {isHostUser && (
+              <button
+                onClick={() => {
+                  setPinnedParticipantIds([]);
+                  supabase.channel(`meet-controls-${roomId}`).send({
+                    type: 'broadcast',
+                    event: 'pinned_participants_changed',
+                    payload: { pinnedIds: [] }
+                  });
+                  toast.info("Cleared pinned participants");
+                }}
+                className="text-[10px] text-blue-400 hover:text-white underline ml-1 font-medium"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Right Section: Stream HUD, Live Captions (CC), Tools & Host Controls */}
         <div className="flex items-center gap-2 sm:gap-2.5 pointer-events-auto">
-          {/* Live Network Speed & Ping HUD */}
+          {/* Live Network Speed & Latency HUD */}
           <MeetingNetworkHUD />
 
-          {/* Desktop Executive Controls (hidden on screens < 1024px to prevent clutter) */}
-          <div className="hidden lg:flex items-center gap-2 bg-[#0a0d14]/80 backdrop-blur-2xl border border-white/10 p-1 rounded-full shadow-2xl">
+          {/* Desktop Executive Controls */}
+          <div className="hidden sm:flex items-center gap-2 bg-[#0a0d14]/80 backdrop-blur-2xl border border-white/10 p-1 rounded-full shadow-2xl">
             
-            {/* Group 1: Collaboration Suite */}
+            {/* Live Subtitles & AI Transcription (CC) Toggle */}
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => setIsWhiteboardOpen(true)}
-              className="h-7.5 px-2.5 hover:bg-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all flex items-center gap-1.5"
-              title="Collaborative Whiteboard"
+              onClick={() => {
+                const nextState = !isCaptionsEnabled;
+                setIsCaptionsEnabled(nextState);
+                setTranslationEnabled(nextState);
+                toast.info(nextState ? "Live Captions & Speech-to-Text active" : "Live Captions hidden");
+              }}
+              className={`h-7.5 px-3 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                isCaptionsEnabled
+                  ? 'bg-blue-600/30 text-blue-300 border border-blue-500/50 shadow-md'
+                  : 'hover:bg-white/10 text-gray-300'
+              }`}
+              title="Toggle Live Captions & AI Transcription"
             >
-              <Pen className="h-3.5 w-3.5 text-blue-400" />
-              <span className="font-medium">Whiteboard</span>
+              <Subtitles className="h-3.5 w-3.5 text-blue-400" />
+              <span>CC</span>
+              {isCaptionsEnabled && (
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              )}
             </Button>
 
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setIsNotesOpen(true)}
-              className="h-7.5 px-2.5 hover:bg-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all flex items-center gap-1.5"
-              title="Meeting Notes & Tasks"
-            >
-              <FileText className="h-3.5 w-3.5 text-purple-400" />
-              <span className="font-medium">Notes</span>
-            </Button>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setIsSoundboardOpen(true)}
-              className="h-7.5 px-2.5 hover:bg-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all flex items-center gap-1.5"
-              title="Meeting Soundboard FX"
-            >
-              <Music className="h-3.5 w-3.5 text-amber-400" />
-              <span className="font-medium">FX</span>
-            </Button>
-
-            <div className="h-4 w-px bg-white/10 mx-0.5" />
-
-            {/* Group 2: Audio & Video Studio */}
-            <AudioEnhancerModal
-              activeMode={audioMode}
-              onModeChange={(m) => setAudioMode(m)}
-            />
-
-            <GridLayoutSelector
-              currentLayout={currentGridLayout}
-              onSelectLayout={(layoutId) => {
-                setCurrentGridLayout(layoutId);
-                toast.info(`Grid adjusted to ${layoutId} tiles format`);
-              }}
-            />
-
-            <VideoEnhancerModal
-              activeFilter={selectedFilter}
-              activeBackground={selectedBackground}
-              onSelectFilter={(f) => {
-                setSelectedFilter(f);
-                toast.success("Video filter applied");
-              }}
-              onSelectBackground={(b) => {
-                setSelectedBackground(b);
-                toast.success("Background effect updated");
-              }}
-            />
-
-            <IndianLanguageTranslator
-              isEnabled={translationEnabled}
-              onToggle={() => setTranslationEnabled(!translationEnabled)}
-              selectedLanguage={selectedIndianLanguage}
-              onLanguageChange={(lang) => {
-                setSelectedIndianLanguage(lang);
-                toast.success(`Translated into ${lang.name} (${lang.nativeName})`);
-              }}
-            />
-
-            {/* Group 2.5: Settings & Preferences */}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setIsSettingsOpen(true)}
-              className="h-7.5 px-2.5 hover:bg-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all flex items-center gap-1.5"
-              title="Meeting Settings, Devices & Waveform Style"
-            >
-              <Settings className="h-3.5 w-3.5 text-blue-400" />
-              <span className="font-medium">Settings</span>
-            </Button>
-
-            {/* Group 2.6: Attendance Action - Visible to ALL participants! */}
+            {/* Attendance Status & Roster */}
             <Button
               size="sm"
               variant="ghost"
@@ -1309,7 +1371,19 @@ function MeetingRoom() {
               <span>{isEmployeeOrHrUser ? "Attendance Roster" : "Attendance Status"}</span>
             </Button>
 
-            {/* Group 3: Host Privilege Controls */}
+            {/* Studio Tools & Plugins Hub */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsMobileToolsOpen(true)}
+              className="h-7.5 px-3 hover:bg-white/10 text-gray-200 hover:text-white rounded-full text-xs transition-all flex items-center gap-1.5"
+              title="Meeting Studio, FX, Enhancers & Plugins"
+            >
+              <Sliders className="h-3.5 w-3.5 text-blue-400" />
+              <span className="font-medium">Studio & Tools</span>
+            </Button>
+
+            {/* Host Privilege Controls */}
             {isHostUser && (
               <>
                 <div className="h-4 w-px bg-white/10 mx-0.5" />
@@ -1322,7 +1396,7 @@ function MeetingRoom() {
                       ? 'bg-amber-500/25 hover:bg-amber-500/40 text-amber-300 border border-amber-500/45 shadow-amber-500/20'
                       : 'bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 border border-blue-500/40'
                   }`}
-                  title="Enterprise Host Controls & Security"
+                  title="Super Admin & Host Control Center (Microphone, Video & Pins)"
                 >
                   <Shield className={`h-3.5 w-3.5 ${isSuperHostUser ? 'text-amber-400' : 'text-blue-400'}`} />
                   <span>{isSuperHostUser ? "Super Host" : "Host"}</span>
@@ -1332,23 +1406,12 @@ function MeetingRoom() {
 
           </div>
 
-          {/* Quick Whiteboard Shortcut for Mobile */}
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setIsWhiteboardOpen(true)}
-            className="lg:hidden h-8 w-8 p-0 bg-[#0a0d14]/80 hover:bg-black/90 backdrop-blur-xl border border-white/10 text-gray-200 rounded-full flex items-center justify-center shadow-md"
-            title="Whiteboard"
-          >
-            <Pen className="h-3.5 w-3.5 text-blue-400" />
-          </Button>
-
-          {/* Smartphone Clean Tools Trigger */}
+          {/* Mobile Tools Trigger */}
           <Button
             size="sm"
             variant="ghost"
             onClick={() => setIsMobileToolsOpen(true)}
-            className="lg:hidden h-8 px-3 bg-[#0a0d14]/80 hover:bg-black/90 backdrop-blur-xl border border-white/10 text-gray-200 rounded-full text-xs flex items-center gap-1.5 shadow-md"
+            className="sm:hidden h-8 px-3 bg-[#0a0d14]/80 hover:bg-black/90 backdrop-blur-xl border border-white/10 text-gray-200 rounded-full text-xs flex items-center gap-1.5 shadow-md"
             title="Meeting Settings, Plugins & Tools"
           >
             <Sliders className="h-3.5 w-3.5 text-blue-400" />
@@ -1402,6 +1465,22 @@ function MeetingRoom() {
         <RtkUiProvider meeting={meeting}>
           <RtkMeeting meeting={meeting} config={rtkConfig} showSetupScreen={false} />
         </RtkUiProvider>
+
+        {/* ─── Live Speech-to-Text & Realtime Transcription Overlay ─── */}
+        <LiveTranscriptionOverlay
+          roomId={roomId}
+          currentUserId={data?.participantId || meeting?.self?.id}
+          currentUserName={data?.participantName || submittedGuestName || "You"}
+          isCaptionsEnabled={isCaptionsEnabled || translationEnabled}
+          onToggleCaptions={() => {
+            const next = !isCaptionsEnabled;
+            setIsCaptionsEnabled(next);
+            setTranslationEnabled(next);
+          }}
+          selectedLanguage={selectedIndianLanguage}
+          onSelectLanguage={setSelectedIndianLanguage}
+          isMicActive={true}
+        />
       </main>
 
       {/* ─── Bottom Floating Reaction Emoji Launcher ─── */}
@@ -1427,6 +1506,9 @@ function MeetingRoom() {
         meeting={meeting}
         currentSettings={roomSettings}
         onSettingsUpdate={(newSettings) => setRoomSettings(newSettings)}
+        pinnedParticipantIds={pinnedParticipantIds}
+        onUpdatePinned={(ids) => setPinnedParticipantIds(ids)}
+        isSuperHost={isSuperHostUser}
       />
 
       {/* ─── Attendance & Telemetry Modal ─── */}
