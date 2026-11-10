@@ -602,33 +602,33 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
   return (
     <div className="space-y-6">
       {/* ─── Top Header & Primary Actions ─── */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-6 rounded-3xl text-white shadow-xl border border-slate-700/50">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                <Database className="h-6 w-6" />
+      <div className="bg-white p-6 sm:p-7 rounded-2xl text-slate-900 shadow-sm border border-slate-200">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">
+                <Database className="h-5 w-5" />
               </span>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
                 Enterprise Dataset Vault & CSV Hub
               </h2>
               {isSuperAdmin ? (
-                <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] font-bold">
+                <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200 text-[10px] font-semibold">
                   SUPER ADMIN MASTER
                 </Badge>
               ) : (
-                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[10px] font-bold">
+                <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200 text-[10px] font-semibold">
                   EMPLOYEE PORTAL
                 </Badge>
               )}
             </div>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
               Extract, map, securely store, and export high-fidelity master datasets across{" "}
-              <span className="text-white font-semibold">Companies, Colleges, Students, Interns, and Employees</span>.
+              <span className="text-slate-900 font-semibold">Companies, Colleges, Students, Interns, and Employees</span>.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             {/* Super Admin Actions */}
             {isSuperAdmin && (
               <>
@@ -641,7 +641,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                 />
                 <Button
                   onClick={() => fileInputRef.current?.click()}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-2 rounded-xl shadow-md cursor-pointer transition-all hover:scale-105"
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs gap-2 rounded-xl shadow-sm cursor-pointer h-9 px-4"
                 >
                   <Upload className="h-4 w-4" />
                   Upload & Extract CSV
@@ -650,9 +650,9 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                 <Button
                   onClick={() => setIsSettingsModalOpen(true)}
                   variant="outline"
-                  className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-xs font-bold gap-2 rounded-xl cursor-pointer"
+                  className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200 text-xs font-semibold gap-2 rounded-xl cursor-pointer h-9 px-4"
                 >
-                  <Settings2 className="h-4 w-4 text-amber-400" />
+                  <Settings2 className="h-4 w-4 text-slate-500" />
                   Access & Security Controls
                 </Button>
               </>
@@ -663,9 +663,10 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
               <Button
                 onClick={() => setIsExportModalOpen(true)}
                 disabled={filteredRecords.length === 0}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-2 rounded-xl shadow-md cursor-pointer transition-all hover:scale-105"
+                variant="outline"
+                className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200 font-semibold text-xs gap-2 rounded-xl shadow-xs cursor-pointer h-9 px-4"
               >
-                <Download className="h-4 w-4" />
+                <Download className="h-4 w-4 text-slate-500" />
                 Export Dataset ({selectedIds.size > 0 ? `${selectedIds.size} Selected` : filteredRecords.length})
               </Button>
             )}
@@ -739,7 +740,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                       : "bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/60"
                   }`}
                 >
-                  <Icon className={`h-3.5 w-3.5 ${isActive ? "text-amber-400" : "text-slate-500"}`} />
+                  <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
                   <span>{cat.label}</span>
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${

@@ -486,11 +486,11 @@ function AdminDashboard() {
   };
 
   const chartData = [
-    { name: 'New', count: stats.new, color: '#0ea5e9' },
-    { name: 'Reviewing', count: stats.reviewing, color: '#f59e0b' },
-    { name: 'Shortlisted', count: stats.shortlisted, color: '#10b981' },
-    { name: 'Hired', count: stats.hired, color: '#0A1F44' },
-    { name: 'Rejected', count: stats.rejected, color: '#ef4444' },
+    { name: 'New', count: stats.new, color: '#475569' },
+    { name: 'Reviewing', count: stats.reviewing, color: '#64748b' },
+    { name: 'Shortlisted', count: stats.shortlisted, color: '#334155' },
+    { name: 'Hired', count: stats.hired, color: '#0f172a' },
+    { name: 'Rejected', count: stats.rejected, color: '#94a3b8' },
   ];
 
   const unreadCount = (notifsQ.data ?? []).filter((n: any) => !n.is_read).length;
@@ -655,31 +655,31 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* 📢 Promotional Campaign Settings Card 📢 */}
-        <div className="rounded-lg border border-emerald-500/20 bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 text-white shadow-xl p-5 mb-6">
+        {/* ── Promotional Campaign Settings Card ── */}
+        <div className="rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm p-5 mb-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="h-10 w-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                <Mail className="h-5 w-5 text-emerald-400" />
+              <div className="h-10 w-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+                <Mail className="h-5 w-5 text-slate-700" />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                     Campaign Engine
                   </span>
-                  <span className="text-xs text-slate-400">Marketing & Outreach</span>
+                  <span className="text-xs text-slate-500">Marketing &amp; Outreach</span>
                 </div>
-                <h3 className="text-base font-bold text-white">
+                <h3 className="text-base font-bold text-slate-900">
                   Promotional Email Settings
                 </h3>
-                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
                   Manage the promotional email content sent to candidates. You can update the fees, benefits, and domain lists directly from the CMS Templates interface.
                 </p>
               </div>
             </div>
             <Button
               asChild
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg flex items-center gap-2 shrink-0 border-0"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-sm flex items-center gap-2 shrink-0 h-9 px-4 rounded-lg"
             >
               <Link to="/templates">
                 Edit Promotional Email <ChevronRight className="h-4 w-4" />
@@ -689,30 +689,30 @@ function AdminDashboard() {
         </div>
 
         {/* ── B2B Cold Email & Pitch Script Playbook Preview Card ── */}
-        <div className="rounded-lg border border-indigo-500/20 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl p-5 mb-8">
+        <div className="rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm p-5 mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="h-10 w-10 rounded-lg bg-gold/10 border border-gold/30 flex items-center justify-center shrink-0">
-                <BookOpen className="h-5 w-5 text-gold" />
+              <div className="h-10 w-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+                <BookOpen className="h-5 w-5 text-slate-700" />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-gold bg-gold/10 px-2 py-0.5 rounded border border-gold/30">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                     B2B Revenue Engine
                   </span>
-                  <span className="text-xs text-slate-400">4 Targeted Sectors</span>
+                  <span className="text-xs text-slate-500">4 Targeted Sectors</span>
                 </div>
-                <h3 className="text-base font-bold text-white">
-                  B2B Cold Email & Pitch Script Playbook
+                <h3 className="text-base font-bold text-slate-900">
+                  B2B Cold Email &amp; Pitch Script Playbook
                 </h3>
-                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                  High-converting B2B cold email templates and 45-second phone/walk-in pitch scripts targeting Restaurants, Schools & Colleges, Salons & Spas, and Furniture Showrooms.
+                <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
+                  High-converting B2B cold email templates and 45-second phone/walk-in pitch scripts targeting Restaurants, Schools &amp; Colleges, Salons &amp; Spas, and Furniture Showrooms.
                 </p>
               </div>
             </div>
             <Button
               asChild
-              className="bg-gold hover:bg-gold/90 text-slate-950 font-bold text-xs shadow-lg flex items-center gap-2 shrink-0 border-0"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-sm flex items-center gap-2 shrink-0 h-9 px-4 rounded-lg"
             >
               <Link to="/admin/b2b-playbook">
                 Open Full Playbook <ChevronRight className="h-4 w-4" />
@@ -1426,21 +1426,24 @@ function JobPostingDialog({ open, onClose, editing }: { open: boolean; onClose: 
 }
 
 function Stat({ label, value, tone = "default", onClick }: { label: string; value: number; tone?: string; onClick?: () => void }) {
-  const toneColor: Record<string, string> = {
-    default: "text-primary",
-    secondary: "text-secondary",
-    amber: "text-amber-600",
-    emerald: "text-emerald-600",
-    primary: "text-primary",
-    destructive: "text-destructive",
+  const toneDot: Record<string, string> = {
+    default: "bg-slate-400",
+    secondary: "bg-slate-500",
+    amber: "bg-amber-500",
+    emerald: "bg-emerald-500",
+    primary: "bg-slate-900",
+    destructive: "bg-rose-500",
   };
   return (
     <div 
       onClick={onClick}
-      className={`rounded-md border border-border bg-card p-5 shadow-corp select-none transition-all duration-200 ${onClick ? "cursor-pointer hover:bg-surface hover:border-gold/30 hover:shadow-elev active:scale-95" : ""}`}
+      className={`rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs select-none transition-all duration-200 ${onClick ? "cursor-pointer hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm active:scale-95" : ""}`}
     >
-      <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">{label}</div>
-      <div className={"mt-2 text-3xl font-semibold tracking-tight " + (toneColor[tone] || "text-primary")}>{value}</div>
+      <div className="flex items-center justify-between">
+        <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">{label}</div>
+        <span className={`w-2 h-2 rounded-full ${toneDot[tone] || "bg-slate-400"}`} />
+      </div>
+      <div className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{value}</div>
     </div>
   );
 }

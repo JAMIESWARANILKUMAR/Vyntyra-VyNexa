@@ -1285,7 +1285,7 @@ function OperationsDashboard() {
                     : "bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/60"
                 }`}
               >
-                <Icon className={`h-3.5 w-3.5 ${isActive ? "text-amber-400" : "text-slate-500"}`} />
+                <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
                 <span>{tab.label}</span>
                 {tab.count !== null && tab.count !== undefined && (
                   <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${

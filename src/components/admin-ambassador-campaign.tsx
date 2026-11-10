@@ -457,20 +457,18 @@ Hi *${name || "Associate"}*, represent Vyntyra Consultancy Services at *${colleg
 
   return (
     <div className="space-y-6">
-      {/* ─── Hero Operations Banner ─── */}
-      <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-slate-950 via-amber-950/20 to-slate-900 p-6 sm:p-8 text-white relative overflow-hidden shadow-xl">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300 text-xs font-mono font-bold tracking-widest uppercase">
-              <Sparkles className="h-3 w-3" />
-              CAMPUS AMBASSADOR OPERATIONS CONTROL
+      {/* ─── Corporate Operations Header ─── */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 text-slate-900 shadow-sm relative overflow-hidden">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md border border-slate-200 bg-slate-100 text-slate-700 text-xs font-semibold tracking-wider uppercase">
+              <Sparkles className="h-3 w-3 text-slate-500" />
+              Ambassador Operations Control
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
               Campus Ambassador Applications &amp; Email Automation
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
               Track applicant lifecycle stages (<strong>Under Review</strong>, <strong>Shortlisted</strong>, <strong>Selected / 6-Mo Agreement</strong>, <strong>Enrolled</strong>, <strong>Rejected</strong>) and manage instant automated email dispatch with live template controls.
             </p>
           </div>
@@ -484,15 +482,15 @@ Hi *${name || "Associate"}*, represent Vyntyra Consultancy Services at *${colleg
                 registrationsQuery.refetch();
                 emailTemplatesQuery.refetch();
               }}
-              className="border-slate-700 bg-slate-900/60 text-slate-300 hover:text-white"
+              className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-semibold text-xs h-9"
             >
-              <RefreshCw className="h-4 w-4 mr-1.5" /> Refresh
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5 text-slate-500" /> Refresh
             </Button>
             <a
               href="/campus-ambassador"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-sm transition-colors h-9"
             >
               <span>Live Landing Page</span>
               <ExternalLink className="h-3.5 w-3.5" />
@@ -500,44 +498,44 @@ Hi *${name || "Associate"}*, represent Vyntyra Consultancy Services at *${colleg
           </div>
         </div>
 
-        {/* ─── Mode Selector Tabs ─── */}
-        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-slate-800 pt-4">
+        {/* ─── Clean Corporate Mode Selector Tabs ─── */}
+        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
           <button
             onClick={() => setActiveChannel("registrations")}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${
               activeChannel === "registrations"
-                ? "bg-amber-500 text-slate-950 shadow-md font-black"
-                : "bg-slate-900/80 text-slate-300 hover:text-white border border-slate-800"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60"
             }`}
           >
             <Users className="h-4 w-4" /> Applications &amp; Tracking ({registrations.length})
           </button>
           <button
             onClick={() => setActiveChannel("templates")}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${
               activeChannel === "templates"
-                ? "bg-indigo-600 text-white shadow-md font-black"
-                : "bg-slate-900/80 text-slate-300 hover:text-white border border-slate-800"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60"
             }`}
           >
             <Settings2 className="h-4 w-4" /> Automated Email Templates Studio
           </button>
           <button
             onClick={() => setActiveChannel("email")}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${
               activeChannel === "email"
-                ? "bg-amber-500 text-slate-950 shadow-md"
-                : "bg-slate-900/80 text-slate-300 hover:text-white border border-slate-800"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60"
             }`}
           >
             <Mail className="h-4 w-4" /> 1-Click Email Broadcast ({interns.length})
           </button>
           <button
             onClick={() => setActiveChannel("whatsapp")}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${
               activeChannel === "whatsapp"
-                ? "bg-emerald-500 text-white shadow-md"
-                : "bg-slate-900/80 text-slate-300 hover:text-white border border-slate-800"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60"
             }`}
           >
             <MessageSquare className="h-4 w-4" /> 1-Click WhatsApp Broadcast
@@ -553,22 +551,24 @@ Hi *${name || "Associate"}*, represent Vyntyra Consultancy Services at *${colleg
           {/* Stage Metric Counters */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
-              { id: "all", label: "Total Applications", count: stageCounts.all, color: "border-slate-300 bg-slate-50 text-slate-900" },
-              { id: "under_review", label: "Under Review", count: stageCounts.under_review, color: "border-sky-300 bg-sky-50 text-sky-800" },
-              { id: "shortlisted", label: "Shortlisted", count: stageCounts.shortlisted, color: "border-amber-300 bg-amber-50 text-amber-800" },
-              { id: "selected", label: "Selected / Signed", count: stageCounts.selected, color: "border-emerald-300 bg-emerald-50 text-emerald-800" },
-              { id: "agreement_sent", label: "Agreement Active", count: stageCounts.agreement_sent, color: "border-purple-300 bg-purple-50 text-purple-800" },
-              { id: "rejected", label: "Not Shortlisted", count: stageCounts.rejected, color: "border-rose-300 bg-rose-50 text-rose-800" },
+              { id: "all", label: "Total Applications", count: stageCounts.all },
+              { id: "under_review", label: "Under Review", count: stageCounts.under_review },
+              { id: "shortlisted", label: "Shortlisted", count: stageCounts.shortlisted },
+              { id: "selected", label: "Selected / Signed", count: stageCounts.selected },
+              { id: "agreement_sent", label: "Agreement Active", count: stageCounts.agreement_sent },
+              { id: "rejected", label: "Not Shortlisted", count: stageCounts.rejected },
             ].map((st) => (
               <button
                 key={st.id}
                 onClick={() => setStageFilter(st.id as LifecycleStage)}
-                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${st.color} ${
-                  stageFilter === st.id ? "ring-2 ring-amber-500 shadow-md font-bold" : "opacity-85 hover:opacity-100"
+                className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                  stageFilter === st.id 
+                    ? "border-slate-900 bg-slate-50/80 ring-1 ring-slate-900 shadow-sm" 
+                    : "border-slate-200 bg-white hover:border-slate-300 shadow-xs"
                 }`}
               >
-                <div className="text-[11px] font-semibold text-slate-600 truncate">{st.label}</div>
-                <div className="text-xl font-black mt-1">{st.count}</div>
+                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">{st.label}</div>
+                <div className="text-2xl font-bold text-slate-900 mt-1">{st.count}</div>
               </button>
             ))}
           </div>
