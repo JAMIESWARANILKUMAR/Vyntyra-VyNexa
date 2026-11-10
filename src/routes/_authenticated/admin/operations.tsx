@@ -1,3 +1,4 @@
+import { AdminInternChatAuditView } from "@/components/admin-intern-chat-audit";
 import MDEditor from '@uiw/react-md-editor';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -1039,6 +1040,7 @@ function OperationsDashboard() {
         { id: "announcements", label: "Communication & Promos", icon: Megaphone, count: null },
         { id: "vyntyra-meet", label: "Vyntyra Meet", icon: ShieldCheck, count: null },
         { id: "ai-interviews", label: "AI Mock Interviews", icon: Sparkles, count: null },
+        { id: "intern-chat-audit", label: "Vyntyra Chat Audit", icon: MessageSquare, count: null },
       ]
     },
     {
@@ -3781,6 +3783,10 @@ function OperationsDashboard() {
         )}
 
         {/* 🎙️ TAB: AI MOCK INTERVIEWS */}
+                {activeTab === "intern-chat-audit" && (
+          <AdminInternChatAuditView />
+        )}
+
         {activeTab === "ai-interviews" && (
           <section id="ai-interviews-section">
             <AdminMockInterviewsOperationsView />

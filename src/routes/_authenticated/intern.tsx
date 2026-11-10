@@ -1,3 +1,4 @@
+import { InternChatView } from "@/components/intern-chat-view";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -258,7 +259,7 @@ function CbtResultsSection() {
 
 function InternDashboard() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "browser" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements" | "leaves" | "support" | "refer" | "cbt" | "mock_interview" | "ambassador">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "browser" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements" | "leaves" | "support" | "refer" | "cbt" | "mock_interview" | "ambassador" | "chat">("overview");
   const [newNote, setNewNote] = useState("");
   const [feedback, setFeedback] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
@@ -1096,6 +1097,7 @@ function InternDashboard() {
     { id: "ambassador", label: "Campus Ambassador", shortLabel: "Ambassador", icon: Award, category: "Connect & Support", enabled: true, isNew: true },
     { id: "notes",          label: "Notes", shortLabel: "Notes", icon: FileText, category: "Connect & Support", enabled: isModuleEnabled("notes") },
     { id: "feedback",       label: "Feedback", shortLabel: "Feedback", icon: MessageCircle, category: "Connect & Support", enabled: isModuleEnabled("feedback") },
+    { id: "chat",           label: "Vyntyra Chat (Beta)", shortLabel: "Chat", icon: MessageSquare, category: "Connect & Support", isNew: true, enabled: true },
   ].filter(t => t.enabled);
 
   // Auto-switch tab if current active tab is disabled by admin
@@ -4261,7 +4263,18 @@ function InternDashboard() {
             </div>
           )}
 
-          {activeTab === "mock_interview" && (
+                  {/* ─── VYNTYRA CHAT BETA (DIRECT INTERN MESSAGING + AI COPILOT) ─── */}
+        {activeTab === "chat" && (
+          <InternChatView
+            currentUserId={session?.user?.id || profile?.id || ""}
+            currentUserName={displayName}
+            currentUserEmail={email}
+            currentUserAvatar={profile?.avatar_url}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {activeTab === "mock_interview" && (
             <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500 pb-12">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
