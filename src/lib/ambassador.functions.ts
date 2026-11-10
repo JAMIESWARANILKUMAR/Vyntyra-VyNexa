@@ -870,139 +870,144 @@ async function sendAmbassadorAutomatedEmails(record: AmbassadorRegistration) {
   // 1. Applicant Confirmation HTML
   const applicantHtml = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${applicantSubject}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #070b14; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #f8fafc;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #070b14; padding: 40px 10px;">
+<body style="margin: 0; padding: 0; background-color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #111827; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; padding: 36px 12px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="max-width: 620px; width: 100%; background: linear-gradient(180deg, #0d1527 0%, #080d19 100%); border: 1px solid #1e293b; border-radius: 18px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; text-align: left;">
+          
+          <!-- Corporate Minimal Header with Logo -->
           <tr>
-            <td style="height: 6px; background: linear-gradient(90deg, #f59e0b 0%, #ec4899 50%, #6366f1 100%);"></td>
+            <td style="padding: 24px 36px; border-bottom: 1px solid #e5e7eb;">
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="width: 36px; vertical-align: middle;">
+                    <img src="https://portal.vyntyraconsultancyservices.in/icon-512.png" alt="Vyntyra Logo" width="30" height="30" style="display: block; border-radius: 4px;">
+                  </td>
+                  <td style="padding-left: 12px; vertical-align: middle;">
+                    <div style="color: #111827; font-size: 18px; font-weight: 600; letter-spacing: -0.01em;">Vyntyra Consultancy Services</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
           </tr>
+
+          <!-- Main Content Body -->
           <tr>
-            <td style="padding: 36px 36px 20px 36px; text-align: center;">
-              <div style="display: inline-block; padding: 6px 14px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 9999px; margin-bottom: 16px;">
-                <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.15em; color: #fbbf24; text-transform: uppercase;">✨ FIRST COHORT 2026-27 · APPLICATION CONFIRMED</span>
-              </div>
-              <h1 style="margin: 0 0 12px 0; font-size: 26px; line-height: 1.25; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">
-                Application Received Successfully!
+            <td style="padding: 36px 36px 20px 36px;">
+              <h1 style="margin: 0 0 16px 0; font-size: 22px; font-weight: 600; color: #111827; line-height: 1.3; letter-spacing: -0.01em;">
+                Application Received: Campus Ambassador
               </h1>
-              <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #94a3b8;">
-                Dear <strong>${record.full_name}</strong>, thank you for applying to become the official <strong>Vyntyra Institutional Relations Associate (Campus Ambassador)</strong> representing <strong>${record.college_name}</strong>.
+
+              <p style="margin: 0 0 14px 0; font-size: 15px; line-height: 1.6; color: #111827;">
+                Dear <strong>${record.full_name}</strong>,
               </p>
-            </td>
-          </tr>
 
-          <!-- 6-MONTH AGREEMENT IMPORTANT NOTICE -->
-          <tr>
-            <td style="padding: 0 32px 20px 32px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 18px;">
-                <tr>
-                  <td>
-                    <div style="font-size: 13px; font-weight: 800; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
-                      📋 Mandatory 6-Month Tenure Agreement Notice
-                    </div>
-                    <div style="font-size: 13px; color: #cbd5e1; line-height: 1.6;">
-                      The Institutional Relations Associate appointment is applicable for a <strong>formal 6-month tenure</strong>. Following internal candidate shortlisting and interview rounds, the official <strong>6-Month Association Agreement & Terms Document</strong> will be dispatched directly to your registered email for digital signing.<br/>
-                      <strong style="color: #fbbf24;">📦 Important Dispatch Policy:</strong> Official Swags, Goodies, and Executive Welcome Kits will be dispatched <strong>after reaching 1st milestone only</strong>.
-                    </div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- SUBMITTED APPLICATION SUMMARY -->
-          <tr>
-            <td style="padding: 0 32px 24px 32px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(15, 23, 42, 0.8); border: 1px solid #1e293b; border-radius: 12px; padding: 20px;">
-                <tr>
-                  <td colspan="2" style="padding-bottom: 12px; border-bottom: 1px solid #1e293b; font-size: 14px; font-weight: 700; color: #f8fafc;">
-                    📌 Application Details Summary
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8; width: 40%;">Reference ID:</td>
-                  <td style="padding: 8px 0; font-size: 12px; color: #fbbf24; font-family: monospace; font-weight: 700;">${record.id}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">Full Name:</td>
-                  <td style="padding: 8px 0; font-size: 12px; color: #f8fafc; font-weight: 600;">${record.full_name}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">Email & WhatsApp:</td>
-                  <td style="padding: 8px 0; font-size: 12px; color: #f8fafc;">${record.email} / ${record.phone}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">College & Location:</td>
-                  <td style="padding: 8px 0; font-size: 12px; color: #f8fafc;">${record.college_name} (${record.college_location || "Campus"}, ${record.district || ""}, ${record.state || ""})</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">Branch & Department:</td>
-                  <td style="padding: 8px 0; font-size: 12px; color: #f8fafc;">${record.branch || record.degree_branch || "N/A"} (${record.department || "General"})</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">Graduation Year:</td>
-                  <td style="padding: 8px 0; font-size: 12px; color: #f8fafc;">${record.expected_graduation_year || record.graduation_year || "2026"}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">Languages Known:</td>
-                  <td style="padding: 8px 0; font-size: 12px; color: #f8fafc;">${languagesList}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; font-size: 12px; color: #94a3b8;">Video Pitch (Google Drive):</td>
-                  <td style="padding: 8px 0; font-size: 12px; color: #38bdf8;">
-                    <a href="${record.video_pitch_url}" style="color: #38bdf8; text-decoration: underline;" target="_blank">View Video Pitch &rarr;</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- PRIVILEGES RECAP -->
-          <tr>
-            <td style="padding: 0 32px 30px 32px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(15, 23, 42, 0.5); border: 1px solid #1e293b; border-radius: 12px; padding: 18px;">
-                <tr>
-                  <td style="font-size: 13px; font-weight: 700; color: #f8fafc; padding-bottom: 8px;">
-                    💎 Exclusive Cohort 1.0 Privileges Awaiting You:
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-size: 12px; color: #cbd5e1; line-height: 1.8;">
-                    🎁 <strong>IRA Executive Welcome Kit:</strong> Personalized ID Card, Lanyard, Pin & Stationery (<em>Dispatched after reaching 1st milestone only</em>).<br/>
-                    👕 <strong>Corporate Merchandise:</strong> Performance hoodies, tees, laptop sleeves & bottles (<em>Dispatched after reaching 1st milestone only</em>).<br/>
-                    💰 <strong>Ambassador Rewards:</strong> Earn up to <strong>₹15,000</strong> milestone stipends (*T&C Apply).<br/>
-                    ⚡ <strong>Electronic Gadgets:</strong> Powerbanks, ANC Earbuds, Soundbars, Smartwatches & Webcams.<br/>
-                    ✈️ <strong>Top 10 Travel Retreat:</strong> All-expenses-paid curated corporate & leisure experience.<br/>
-                    📜 <strong>Dual Certification:</strong> Certificate of Recognition + Accredited Corporate Internship Letter.<br/>
-                    👑 <strong>VVIP All-Access Pass:</strong> Lifetime complimentary access to all Vyntyra workshops & courses.
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td align="center" style="padding: 0 32px 36px 32px;">
-              <a href="https://vyntyraconsultancyservices.in/campus-ambassador" style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0b1120; font-weight: 800; font-size: 14px; text-decoration: none; padding: 12px 32px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.05em;">
-                Visit Ambassador Portal &rarr;
-              </a>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="background-color: #050811; padding: 22px; text-align: center; border-top: 1px solid #1e293b;">
-              <p style="margin: 0; font-size: 11px; color: #64748b; line-height: 1.6;">
-                Vyntyra Consultancy Services Pvt. Ltd. · Great Place to Work® Certified 2026-27<br/>
-                Institutional Relations & Campus Ambassador Program Cell<br/>
-                Official Desk: <a href="mailto:ambassadorprogram@vyntyraconsultancyservices.in" style="color: #fbbf24; text-decoration: none;">ambassadorprogram@vyntyraconsultancyservices.in</a>
+              <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #374151;">
+                Thank you for applying to become the official <strong>Vyntyra Institutional Relations Associate (Campus Ambassador)</strong> representing <strong>${record.college_name}</strong> for <strong>First Cohort 2026-27</strong>.
               </p>
+
+              <!-- 6-MONTH AGREEMENT IMPORTANT NOTICE -->
+              <div style="border: 1px solid #fef3c7; border-radius: 6px; padding: 14px 18px; background: #fffbeb; margin: 20px 0;">
+                <div style="font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.05em;">
+                  Tenure Agreement &amp; Dispatch Policy Notice
+                </div>
+                <div style="font-size: 13px; color: #78350f; margin-top: 4px; line-height: 1.6;">
+                  The Institutional Relations Associate appointment is for a <strong>formal 6-month tenure</strong>. Following candidate shortlisting, the official 6-Month Association Agreement will be sent for signature.<br/>
+                  <strong>Dispatch Policy:</strong> Official executive welcome kit and corporate merchandise will be dispatched <strong>after reaching your 1st milestone</strong>.
+                </div>
+              </div>
+
+              <!-- SUBMITTED APPLICATION SUMMARY -->
+              <div style="border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px 20px; background: #f9fafb; margin: 20px 0;">
+                <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td colspan="2" style="padding-bottom: 10px; border-bottom: 1px solid #e5e7eb; font-size: 12px; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: 0.05em;">
+                      Application Summary
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 12.5px; color: #6b7280; width: 40%;">Reference ID:</td>
+                    <td style="padding: 8px 0; font-size: 12.5px; color: #111827; font-family: monospace; font-weight: 700;">${record.id}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 12.5px; color: #6b7280;">Full Name:</td>
+                    <td style="padding: 8px 0; font-size: 12.5px; color: #111827; font-weight: 600;">${record.full_name}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 12.5px; color: #6b7280;">Email &amp; Phone:</td>
+                    <td style="padding: 8px 0; font-size: 12.5px; color: #111827;">${record.email} / ${record.phone}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 12.5px; color: #6b7280;">College &amp; Location:</td>
+                    <td style="padding: 8px 0; font-size: 12.5px; color: #111827;">${record.college_name} (${record.college_location || "Campus"}, ${record.district || ""}, ${record.state || ""})</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 12.5px; color: #6b7280;">Branch &amp; Year:</td>
+                    <td style="padding: 8px 0; font-size: 12.5px; color: #111827;">${record.branch || record.degree_branch || "N/A"} · Grad: ${record.expected_graduation_year || record.graduation_year || "2026"}</td>
+                  </tr>
+                  ${record.video_pitch_url ? `
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 12.5px; color: #6b7280;">Video Pitch:</td>
+                    <td style="padding: 8px 0; font-size: 12.5px;">
+                      <a href="${record.video_pitch_url}" style="color: #0284c7; text-decoration: underline;" target="_blank">View Video Pitch &rarr;</a>
+                    </td>
+                  </tr>` : ""}
+                </table>
+              </div>
+
+              <!-- PRIVILEGES SUMMARY -->
+              <div style="border: 1px solid #e5e7eb; border-radius: 6px; padding: 14px 18px; background: #ffffff; margin: 20px 0;">
+                <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+                  Program Rewards &amp; Privileges (Up to ₹15,000)
+                </div>
+                <div style="font-size: 12.5px; color: #374151; line-height: 1.7;">
+                  &bull; <strong>Welcome Kit &amp; Swags:</strong> Personalized ID card, lanyard, badges, hoodies &amp; tees (<em>dispatched after 1st milestone</em>).<br/>
+                  &bull; <strong>Performance Rewards:</strong> Milestone stipends and vouchers up to <strong>₹15,000</strong>.<br/>
+                  &bull; <strong>Gadgets &amp; Retreat:</strong> ANC Earbuds, Smartwatches, and curated retreat for Top 10 Associates.<br/>
+                  &bull; <strong>Dual Certification:</strong> Certificate of Recognition + Corporate Experience Letter.
+                </div>
+              </div>
+
+              <!-- Action CTA -->
+              <div style="margin: 24px 0 20px;">
+                <a href="https://vyntyraconsultancyservices.in/campus-ambassador" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px;">
+                  Visit Ambassador Hub
+                </a>
+              </div>
+
+              <!-- Signature Block -->
+              <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0 0 8px 0; color: #111827; font-size: 15px;">Sincerely,</p>
+                <div style="margin: 8px 0 10px 0;">
+                  <img src="https://portal.vyntyraconsultancyservices.in/signature.png" alt="Executive Signature" width="130" style="display: block; max-width: 130px; height: auto;" />
+                </div>
+                <div style="font-size: 15px; font-weight: 700; color: #111827; line-height: 1.4;">Jami Eswar Anil Kumar</div>
+                <div style="font-size: 13px; color: #0284c7; font-weight: 600;">Founder &amp; Managing Director</div>
+                <div style="font-size: 12px; color: #64748b;">Institutional Relations Cell &middot; Vyntyra Consultancy Services</div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Corporate Legal Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; border-top: 1px solid #e5e7eb; padding: 24px 36px; color: #64748b; font-size: 11.5px; line-height: 1.6;">
+              <div style="margin-bottom: 6px;">
+                <strong>Vyntyra Consultancy Services</strong> &middot; Dwaraka Nagar, Visakhapatnam - 530016, AP, India<br/>
+                ISO 9001:2015 Certified &middot; MSME Registered &middot; NASSCOM Verified
+              </div>
+              <div style="font-size: 10px; color: #9ca3af; font-style: italic; margin-top: 8px;">
+                Disclaimer: This transmission contains confidential information intended solely for the recipient. If received in error, please notify the sender immediately and delete all copies.
+              </div>
+              <div style="margin-top: 8px; font-size: 11px;">
+                &copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.
+              </div>
             </td>
           </tr>
         </table>
@@ -1016,92 +1021,87 @@ async function sendAmbassadorAutomatedEmails(record: AmbassadorRegistration) {
   // 2. Admin Notification HTML
   const adminHtml = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>${adminSubject}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0b1120; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f8fafc;">
+<body style="margin: 0; padding: 0; background-color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #111827;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding: 30px 10px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="max-width: 620px; width: 100%; background: #131d36; border: 1px solid #334155; border-radius: 14px; overflow: hidden;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; text-align: left;">
           <tr>
-            <td style="height: 6px; background: #f59e0b;"></td>
+            <td style="padding: 20px 28px; border-bottom: 1px solid #e5e7eb;">
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="width: 32px; vertical-align: middle;">
+                    <img src="https://portal.vyntyraconsultancyservices.in/icon-512.png" alt="Vyntyra Logo" width="26" height="26" style="display: block; border-radius: 4px;">
+                  </td>
+                  <td style="padding-left: 10px; vertical-align: middle;">
+                    <div style="color: #111827; font-size: 16px; font-weight: 600;">Vyntyra Operations Control</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
           </tr>
           <tr>
-            <td style="padding: 24px;">
-              <div style="font-size: 11px; font-weight: 800; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">
-                NEW AMBASSADOR APPLICATION RECEIVED
+            <td style="padding: 28px;">
+              <div style="font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+                New Ambassador Registration
               </div>
-              <h2 style="margin: 0 0 16px 0; color: #ffffff; font-size: 20px;">
+              <h2 style="margin: 0 0 16px 0; color: #111827; font-size: 20px; font-weight: 600;">
                 ${record.full_name} (${record.college_name})
               </h2>
 
-              <table role="presentation" width="100%" style="border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
-                <tr style="border-bottom: 1px solid #1e293b;">
-                  <td style="padding: 8px 0; color: #94a3b8; width: 35%;">Applicant ID:</td>
-                  <td style="padding: 8px 0; color: #f8fafc; font-family: monospace;">${record.id}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #1e293b;">
-                  <td style="padding: 8px 0; color: #94a3b8;">Email:</td>
-                  <td style="padding: 8px 0; color: #f8fafc;"><a href="mailto:${record.email}" style="color: #38bdf8;">${record.email}</a></td>
-                </tr>
-                <tr style="border-bottom: 1px solid #1e293b;">
-                  <td style="padding: 8px 0; color: #94a3b8;">WhatsApp / Phone:</td>
-                  <td style="padding: 8px 0; color: #f8fafc;"><a href="https://wa.me/${record.phone.replace(/[^0-9]/g, "")}" style="color: #34d399;">${record.phone}</a></td>
-                </tr>
-                <tr style="border-bottom: 1px solid #1e293b;">
-                  <td style="padding: 8px 0; color: #94a3b8;">College & Location:</td>
-                  <td style="padding: 8px 0; color: #f8fafc;">${record.college_name} (${record.college_location || "N/A"})</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #1e293b;">
-                  <td style="padding: 8px 0; color: #94a3b8;">State & District:</td>
-                  <td style="padding: 8px 0; color: #f8fafc;">${record.district || "N/A"}, ${record.state || "N/A"}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #1e293b;">
-                  <td style="padding: 8px 0; color: #94a3b8;">Full Address:</td>
-                  <td style="padding: 8px 0; color: #f8fafc;">${record.full_address || "N/A"}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #1e293b;">
-                  <td style="padding: 8px 0; color: #94a3b8;">Education:</td>
-                  <td style="padding: 8px 0; color: #f8fafc;">${record.branch || record.degree_branch} (${record.department || "General"}) · Grad: ${record.expected_graduation_year || record.graduation_year}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #1e293b;">
-                  <td style="padding: 8px 0; color: #94a3b8;">Languages:</td>
-                  <td style="padding: 8px 0; color: #f8fafc;">${languagesList}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #1e293b;">
-                  <td style="padding: 8px 0; color: #94a3b8;">LinkedIn:</td>
-                  <td style="padding: 8px 0; color: #38bdf8;">${record.linkedin_url || record.linkedin_profile || "N/A"}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #1e293b;">
-                  <td style="padding: 8px 0; color: #94a3b8;">Instagram:</td>
-                  <td style="padding: 8px 0; color: #f43f5e;">${record.instagram_url || "N/A"}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #1e293b;">
-                  <td style="padding: 8px 0; color: #94a3b8;">6-Month Agreement:</td>
-                  <td style="padding: 8px 0; color: #34d399; font-weight: 700;">Accepted (6 Months Applicable)</td>
-                </tr>
-              </table>
-
-              <!-- Action Links -->
-              <div style="margin-top: 20px; text-align: center;">
-                <a href="${record.video_pitch_url}" target="_blank" style="display: inline-block; background: #3b82f6; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 13px; margin-right: 10px;">
-                  📹 Watch 5-10 Min Video Pitch (Google Drive)
-                </a>
-                ${
-                  record.portrait_photo_url
-                    ? `<a href="${record.portrait_photo_url}" target="_blank" style="display: inline-block; background: #475569; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 13px;">
-                        🖼️ View Portrait Photo
-                      </a>`
-                    : ""
-                }
+              <div style="border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px 20px; background: #f9fafb; margin-bottom: 20px;">
+                <table role="presentation" width="100%" style="border-collapse: collapse; font-size: 13px;">
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 8px 0; color: #6b7280; width: 35%;">Applicant ID:</td>
+                    <td style="padding: 8px 0; color: #111827; font-family: monospace; font-weight: 700;">${record.id}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 8px 0; color: #6b7280;">Email:</td>
+                    <td style="padding: 8px 0; color: #111827;"><a href="mailto:${record.email}" style="color: #0284c7;">${record.email}</a></td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 8px 0; color: #6b7280;">WhatsApp / Phone:</td>
+                    <td style="padding: 8px 0; color: #111827;"><a href="https://wa.me/${record.phone.replace(/[^0-9]/g, "")}" style="color: #059669;">${record.phone}</a></td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 8px 0; color: #6b7280;">College & Location:</td>
+                    <td style="padding: 8px 0; color: #111827;">${record.college_name} (${record.college_location || "N/A"})</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 8px 0; color: #6b7280;">State & District:</td>
+                    <td style="padding: 8px 0; color: #111827;">${record.district || "N/A"}, ${record.state || "N/A"}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 8px 0; color: #6b7280;">Education:</td>
+                    <td style="padding: 8px 0; color: #111827;">${record.branch || record.degree_branch} (${record.department || "General"}) · Grad: ${record.expected_graduation_year || record.graduation_year}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 8px 0; color: #6b7280;">Languages:</td>
+                    <td style="padding: 8px 0; color: #111827;">${languagesList}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 8px 0; color: #6b7280;">LinkedIn:</td>
+                    <td style="padding: 8px 0; color: #0284c7;">${record.linkedin_url || record.linkedin_profile || "N/A"}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; color: #6b7280;">6-Month Agreement:</td>
+                    <td style="padding: 8px 0; color: #059669; font-weight: 700;">Accepted (6 Months Applicable)</td>
+                  </tr>
+                </table>
               </div>
 
-              <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #334155; text-align: center;">
-                <a href="https://vyntyraconsultancyservices.in/admin/operations?tab=ambassador" style="color: #fbbf24; font-size: 12px; text-decoration: underline;">
-                  Open Admin Panel &rarr; Operations &rarr; Ambassador Program
+              <!-- Action Links -->
+              <div style="margin-top: 20px;">
+                <a href="${record.video_pitch_url}" target="_blank" style="display: inline-block; background: #0f172a; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px; margin-right: 10px;">
+                  Watch Video Pitch
+                </a>
+                <a href="https://vyntyraconsultancyservices.in/admin/operations?tab=ambassador" target="_blank" style="display: inline-block; background: #ffffff; color: #374151; border: 1px solid #d1d5db; padding: 9px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px;">
+                  Review in Admin Hub
                 </a>
               </div>
             </td>
@@ -1622,93 +1622,119 @@ export const sendAmbassadorPromotionalEmail = createServerFn({ method: "POST" })
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0b1120; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #f8fafc;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0b1120; padding: 40px 10px;">
+<body style="margin: 0; padding: 0; background-color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #111827; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; padding: 36px 12px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%; background: linear-gradient(180deg, #131d36 0%, #0d1527 100%); border: 1px solid #1e293b; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; text-align: left;">
+          
+          <!-- Corporate Minimal Header with Logo -->
           <tr>
-            <td style="height: 6px; background: linear-gradient(90deg, #f59e0b 0%, #ec4899 50%, #6366f1 100%);"></td>
-          </tr>
-          <tr>
-            <td style="padding: 36px 36px 20px 36px; text-align: center;">
-              <div style="display: inline-block; padding: 6px 14px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 9999px; margin-bottom: 16px;">
-                <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.15em; color: #fbbf24; text-transform: uppercase;">✨ FIRST COHORT 2026-27 · LAUNCHING SOON</span>
-              </div>
-              <h1 style="margin: 0 0 12px 0; font-size: 26px; line-height: 1.25; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">
-                Vyntyra Institutional Relations Associate<br/>
-                <span style="background: linear-gradient(90deg, #fbbf24, #f43f5e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: #fbbf24;">(Campus Ambassador Program)</span>
-              </h1>
-              <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #94a3b8;">
-                Dear <strong>${recipientName}</strong>, represent Vyntyra Consultancy Services at <strong>${collegeName}</strong>. Build executive leadership, unlock prestigious rewards, and bridge institutional technology networks.
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 10px 32px 30px 32px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(148, 163, 184, 0.15); border-radius: 12px; padding: 20px;">
+            <td style="padding: 24px 36px; border-bottom: 1px solid #e5e7eb;">
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                    <div style="font-size: 14px; font-weight: 700; color: #f8fafc;">🎁 Exclusive IRA Welcome Kit</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">Official Associate Badge, Corporate ID Card, Welcome Stationery & Premium Swag.</div>
+                  <td style="width: 36px; vertical-align: middle;">
+                    <img src="https://portal.vyntyraconsultancyservices.in/icon-512.png" alt="Vyntyra Logo" width="30" height="30" style="display: block; border-radius: 4px;">
                   </td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                    <div style="font-size: 14px; font-weight: 700; color: #f8fafc;">👕 Performance-Based Corporate Merchandise</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">Exclusive branded apparel, premium hoodies, t-shirts, laptop bags, and water bottles.</div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                    <div style="font-size: 14px; font-weight: 700; color: #10b981;">💰 Ambassador Rewards: Earn up to ₹15,000</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">Generous milestone stipends & cash incentives within the program (*Performance & T&C Apply).</div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                    <div style="font-size: 14px; font-weight: 700; color: #38bdf8;">⚡ Branded Electronic Gadgets</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">Top performers receive high-capacity Powerbanks, True Wireless Earbuds, Soundbars, Smartwatches & Webcams.</div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                    <div style="font-size: 14px; font-weight: 700; color: #ec4899;">✈️ Curated Travel Experience (Top 10 Associates)</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">Top 10 Associates win an all-expenses-paid curated corporate & retreat experience with co-associates.</div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                    <div style="font-size: 14px; font-weight: 700; color: #f8fafc;">📜 Certificate of Recognition & Internship</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">Dual credentials for your resume: Institutional Leadership & Corporate Relations Internship Letter.</div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0;">
-                    <div style="font-size: 14px; font-weight: 700; color: #a855f7;">👑 Exclusive VVIP Access to all Vyntyra Events</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">Free VIP access to all Workshops, Bootcamps, Masterclasses, Sessions, Learning Modules & Courses.</div>
+                  <td style="padding-left: 12px; vertical-align: middle;">
+                    <div style="color: #111827; font-size: 18px; font-weight: 600; letter-spacing: -0.01em;">Vyntyra Consultancy Services</div>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
+
+          <!-- Main Content Body -->
           <tr>
-            <td align="center" style="padding: 0 32px 36px 32px;">
-              <a href="https://vyntyraconsultancyservices.in/campus-ambassador" style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0b1120; font-weight: 800; font-size: 15px; text-decoration: none; padding: 14px 36px; border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.4); text-transform: uppercase; letter-spacing: 0.05em;">
-                Pre-Register for First Cohort &rarr;
-              </a>
-              <p style="margin: 14px 0 0 0; font-size: 12px; color: #64748b;">
-                Announcement coming soon. Early applicants receive priority review for Cohort 1.0.
+            <td style="padding: 36px 36px 20px 36px;">
+              <h1 style="margin: 0 0 16px 0; font-size: 22px; font-weight: 600; color: #111827; line-height: 1.3; letter-spacing: -0.01em;">
+                Vyntyra Institutional Relations Associate<br/>
+                <span style="font-size: 16px; color: #6b7280; font-weight: 500;">Campus Ambassador Program &middot; First Cohort 2026-27</span>
+              </h1>
+
+              <p style="margin: 0 0 14px 0; font-size: 15px; line-height: 1.6; color: #111827;">
+                Dear <strong>${recipientName}</strong>,
               </p>
+
+              <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #374151;">
+                Represent Vyntyra Consultancy Services at <strong>${collegeName}</strong>. Build institutional leadership, earn milestone stipends, and connect academic networks directly with industry technology initiatives.
+              </p>
+
+              <!-- Perks & Privileges Table -->
+              <div style="border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px 20px; background: #f9fafb; margin: 20px 0;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size: 13px;">
+                  <tr>
+                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                      <div style="font-weight: 600; color: #111827;">Exclusive IRA Welcome Kit</div>
+                      <div style="color: #6b7280; font-size: 12px; margin-top: 2px;">Official executive ID badge, lanyard, customized pin &amp; welcome stationery (dispatched after 1st milestone).</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                      <div style="font-weight: 600; color: #111827;">Corporate Branded Merchandise</div>
+                      <div style="color: #6b7280; font-size: 12px; margin-top: 2px;">Embroidered hoodies, cotton tees, laptop sleeves &amp; steel bottles (dispatched after 1st milestone).</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                      <div style="font-weight: 600; color: #059669;">Ambassador Rewards: Up to ₹15,000</div>
+                      <div style="color: #6b7280; font-size: 12px; margin-top: 2px;">Milestone stipends and project performance incentives up to ₹15,000 (*T&amp;C Apply).</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                      <div style="font-weight: 600; color: #0284c7;">Branded Electronic Gadgets</div>
+                      <div style="color: #6b7280; font-size: 12px; margin-top: 2px;">Fast-charging powerbanks, ANC earbuds, soundbars, smartwatches, and full HD webcams.</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                      <div style="font-weight: 600; color: #db2777;">Curated Executive Retreat (Top 10)</div>
+                      <div style="color: #6b7280; font-size: 12px; margin-top: 2px;">All-expenses-paid curated corporate &amp; leisure experience for Top 10 Associates.</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 10px 0;">
+                      <div style="font-weight: 600; color: #111827;">Dual Certification &amp; VVIP Access</div>
+                      <div style="color: #6b7280; font-size: 12px; margin-top: 2px;">Certificate of Recognition + Corporate Experience Letter, plus complimentary access to all masterclasses.</div>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Action CTA -->
+              <div style="margin: 24px 0 20px;">
+                <a href="https://vyntyraconsultancyservices.in/campus-ambassador" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px;">
+                  Pre-Register for First Cohort &rarr;
+                </a>
+              </div>
+
+              <!-- Signature Block -->
+              <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0 0 8px 0; color: #111827; font-size: 15px;">Sincerely,</p>
+                <div style="margin: 8px 0 10px 0;">
+                  <img src="https://portal.vyntyraconsultancyservices.in/signature.png" alt="Executive Signature" width="130" style="display: block; max-width: 130px; height: auto;" />
+                </div>
+                <div style="font-size: 15px; font-weight: 700; color: #111827; line-height: 1.4;">Jami Eswar Anil Kumar</div>
+                <div style="font-size: 13px; color: #0284c7; font-weight: 600;">Founder &amp; Managing Director</div>
+                <div style="font-size: 12px; color: #64748b;">Institutional Relations Cell &middot; Vyntyra Consultancy Services</div>
+              </div>
             </td>
           </tr>
+
+          <!-- Corporate Legal Footer -->
           <tr>
-            <td style="background-color: #080d19; padding: 24px; text-align: center; border-top: 1px solid #1e293b;">
-              <p style="margin: 0; font-size: 11px; color: #64748b; line-height: 1.6;">
-                Vyntyra Consultancy Services Pvt. Ltd. · Great Place to Work® Certified 2026-27<br/>
-                Recognized by NASSCOM FutureSkills Prime · MSME Registered Govt. of India<br/>
-                Questions? Email us at <a href="mailto:hr@vyntyraconsultancyservices.in" style="color: #fbbf24; text-decoration: none;">hr@vyntyraconsultancyservices.in</a>
-              </p>
+            <td style="background-color: #f9fafb; border-top: 1px solid #e5e7eb; padding: 24px 36px; color: #64748b; font-size: 11.5px; line-height: 1.6;">
+              <div style="margin-bottom: 6px;">
+                <strong>Vyntyra Consultancy Services</strong> &middot; Dwaraka Nagar, Visakhapatnam - 530016, AP, India<br/>
+                ISO 9001:2015 Certified &middot; MSME Registered &middot; NASSCOM Verified
+              </div>
+              <div style="font-size: 10px; color: #9ca3af; font-style: italic; margin-top: 8px;">
+                Disclaimer: This transmission contains confidential information intended solely for the recipient. If received in error, please notify the sender immediately and delete all copies.
+              </div>
+              <div style="margin-top: 8px; font-size: 11px;">
+                &copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.
+              </div>
             </td>
           </tr>
         </table>
@@ -1824,7 +1850,7 @@ export const DEFAULT_AMBASSADOR_EMAIL_TEMPLATES: AmbassadorEmailTemplate[] = [
     id: "tmpl_under_review",
     status_trigger: "under_review",
     title: "Application Under Review Notification",
-    subject: "🔍 Application Under Review: Vyntyra Institutional Relations Associate — {{cohort_name}}",
+    subject: "Application Under Review: Vyntyra Institutional Relations Associate — {{cohort_name}}",
     body_html: `<p>Dear <strong>{{full_name}}</strong>,</p>
 <p>Your application for <strong>Vyntyra Institutional Relations Associate (Campus Ambassador)</strong> representing <strong>{{college_name}}</strong> is officially <strong>under committee review</strong>.</p>
 <p>Our selection panel is currently reviewing your academic background, campus leadership profile, and your 5-10 minute video pitch.</p>
@@ -1836,7 +1862,7 @@ export const DEFAULT_AMBASSADOR_EMAIL_TEMPLATES: AmbassadorEmailTemplate[] = [
     id: "tmpl_shortlisted",
     status_trigger: "shortlisted",
     title: "Candidate Shortlisted Notification",
-    subject: "🎉 Congratulations! You are Shortlisted for Vyntyra Institutional Relations Associate",
+    subject: "Candidate Shortlisted: Vyntyra Institutional Relations Associate — {{cohort_name}}",
     body_html: `<p>Dear <strong>{{full_name}}</strong>,</p>
 <p>We are delighted to inform you that you have been <strong>Shortlisted</strong> for the <strong>First Cohort 2026-27</strong> of the Vyntyra Institutional Relations Associate Program representing <strong>{{college_name}}</strong>!</p>
 <p>Your video pitch and academic track record demonstrated exemplary leadership potential.</p>
@@ -1848,14 +1874,14 @@ export const DEFAULT_AMBASSADOR_EMAIL_TEMPLATES: AmbassadorEmailTemplate[] = [
     id: "tmpl_selected",
     status_trigger: "selected",
     title: "Selection Letter & 6-Month Agreement Dispatched",
-    subject: "🏆 Official Selection: Vyntyra Institutional Relations Associate & 6-Month Agreement",
+    subject: "Official Selection: Vyntyra Institutional Relations Associate & 6-Month Agreement",
     body_html: `<p>Dear <strong>{{full_name}}</strong>,</p>
 <p>Heartiest congratulations! You have been officially <strong>SELECTED</strong> as the <strong>Vyntyra Institutional Relations Associate (Campus Ambassador)</strong> for <strong>{{college_name}}</strong> in Cohort 1.0!</p>
 <p>As outlined in our program terms, your appointment is for a <strong>formal 6-month tenure</strong>.</p>
 <p><strong>Action Required - 6-Month Agreement:</strong><br/>
 Please download, review, and digitally sign your official <strong>6-Month Association Agreement Document</strong> using the link below:</p>
-<p><a href="{{agreement_link}}" style="display:inline-block;padding:12px 24px;background:#f59e0b;color:#0b1120;font-weight:bold;text-decoration:none;border-radius:6px;">Review &amp; Sign 6-Month Agreement &rarr;</a></p>
-<p><strong>📦 Dispatch Policy Notice:</strong> Please note that as per company policy, your personalized Executive IRA Welcome Kit, ID Badge, and corporate swags will be dispatched <strong>after reaching your 1st milestone only</strong>.</p>
+<p><a href="{{agreement_link}}" style="display:inline-block;padding:12px 24px;background:#0f172a;color:#ffffff;font-weight:600;font-size:14px;text-decoration:none;border-radius:6px;">Review &amp; Sign 6-Month Agreement &rarr;</a></p>
+<p><strong>Dispatch Policy Notice:</strong> Please note that as per company policy, your personalized Executive IRA Welcome Kit, ID Badge, and corporate swags will be dispatched <strong>after reaching your 1st milestone only</strong>.</p>
 <p>Warm congratulations,<br/><strong>Board of Directors · Vyntyra Consultancy Services Pvt. Ltd.</strong></p>`,
     agreement_url: "https://vyntyraconsultancyservices.in/campus-ambassador/agreement-sample.pdf",
     is_enabled: true,
@@ -1864,12 +1890,12 @@ Please download, review, and digitally sign your official <strong>6-Month Associ
     id: "tmpl_agreement_sent",
     status_trigger: "agreement_sent",
     title: "Onboarding & 1st Milestone Welcome Kit Dispatch Notice",
-    subject: "🚀 Welcome Onboard! Official Onboarding Active — Vyntyra IRA",
+    subject: "Welcome Onboard: Official Onboarding Active — Vyntyra IRA",
     body_html: `<p>Dear <strong>{{full_name}}</strong>,</p>
 <p>Your 6-month agreement has been recorded. You are officially an active <strong>Institutional Relations Associate</strong> representing Vyntyra at <strong>{{college_name}}</strong>!</p>
-<p>📦 <strong>Welcome Kit &amp; Swags Policy:</strong> Scheduled for priority packaging &amp; courier dispatch <strong>immediately upon reaching your 1st milestone</strong>.<br/>
-💼 <strong>Rewards Portal:</strong> Milestone stipends up to ₹15,000 are now active.<br/>
-📲 <strong>Ambassador Community:</strong> You will be added to the private Cohort 1.0 Executive Slack &amp; WhatsApp group.</p>
+<p><strong>Welcome Kit &amp; Swags Policy:</strong> Scheduled for priority packaging &amp; courier dispatch <strong>immediately upon reaching your 1st milestone</strong>.<br/>
+<strong>Rewards Portal:</strong> Milestone stipends up to ₹15,000 are now active.<br/>
+<strong>Ambassador Community:</strong> You will be added to the private Cohort 1.0 Executive Slack &amp; WhatsApp group.</p>
 <p>Welcome to the family!<br/><strong>Vyntyra Corporate Leadership Team</strong></p>`,
     is_enabled: true,
   },
@@ -2212,36 +2238,68 @@ export const updateAmbassadorApplicationStatusWithEmail = createServerFn({
           const rawBody = data.custom_email_body || template.body_html;
           const renderedInnerHtml = renderEmailTemplateText(rawBody, variables);
 
-          // Wrap in Luxury Shell
+          // Wrap in Clean ISO Standard Template with Logo & Signature
           const finalHtml = `
 <!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background-color:#070b14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#f8fafc;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:40px 10px;">
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${finalSubject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #111827; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; padding: 36px 12px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="max-width:620px;width:100%;background:#0d1527;border:1px solid #1e293b;border-radius:16px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
-          <tr><td style="height:6px;background:linear-gradient(90deg, #f59e0b, #ec4899, #6366f1);"></td></tr>
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; text-align: left;">
+          
+          <!-- Corporate Minimal Header with Logo -->
           <tr>
-            <td style="padding:32px 32px 10px 32px;text-align:center;">
-              <div style="display:inline-block;padding:5px 12px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:9999px;font-size:11px;font-weight:800;color:#fbbf24;text-transform:uppercase;margin-bottom:12px;">
-                ✨ VYNTYRA CAMPUS AMBASSADOR PROGRAM · COHORT 1.0
+            <td style="padding: 24px 36px; border-bottom: 1px solid #e5e7eb;">
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="width: 36px; vertical-align: middle;">
+                    <img src="https://portal.vyntyraconsultancyservices.in/icon-512.png" alt="Vyntyra Logo" width="30" height="30" style="display: block; border-radius: 4px;">
+                  </td>
+                  <td style="padding-left: 12px; vertical-align: middle;">
+                    <div style="color: #111827; font-size: 18px; font-weight: 600; letter-spacing: -0.01em;">Vyntyra Consultancy Services</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Content Body -->
+          <tr>
+            <td style="padding: 36px 36px 20px 36px; font-size: 15px; line-height: 1.6; color: #111827;">
+              ${renderedInnerHtml}
+
+              <!-- Signature Block -->
+              <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0 0 8px 0; color: #111827; font-size: 15px;">Sincerely,</p>
+                <div style="margin: 8px 0 10px 0;">
+                  <img src="https://portal.vyntyraconsultancyservices.in/signature.png" alt="Executive Signature" width="130" style="display: block; max-width: 130px; height: auto;" />
+                </div>
+                <div style="font-size: 15px; font-weight: 700; color: #111827; line-height: 1.4;">Jami Eswar Anil Kumar</div>
+                <div style="font-size: 13px; color: #0284c7; font-weight: 600;">Founder &amp; Managing Director</div>
+                <div style="font-size: 12px; color: #64748b;">Institutional Relations Cell &middot; Vyntyra Consultancy Services</div>
               </div>
             </td>
           </tr>
+
+          <!-- Corporate Legal Footer -->
           <tr>
-            <td style="padding:10px 32px 30px 32px;font-size:14px;line-height:1.7;color:#cbd5e1;">
-              ${renderedInnerHtml}
-            </td>
-          </tr>
-          <tr>
-            <td style="background-color:#050811;padding:20px;text-align:center;border-top:1px solid #1e293b;">
-              <p style="margin:0;font-size:11px;color:#64748b;line-height:1.6;">
-                Vyntyra Consultancy Services Pvt. Ltd. · Great Place to Work® Certified<br/>
-                Institutional Relations & Campus Ambassador Cell<br/>
-                Desk: <a href="mailto:ambassadorprogram@vyntyraconsultancyservices.in" style="color:#fbbf24;text-decoration:none;">ambassadorprogram@vyntyraconsultancyservices.in</a>
-              </p>
+            <td style="background-color: #f9fafb; border-top: 1px solid #e5e7eb; padding: 24px 36px; color: #64748b; font-size: 11.5px; line-height: 1.6;">
+              <div style="margin-bottom: 6px;">
+                <strong>Vyntyra Consultancy Services</strong> &middot; Dwaraka Nagar, Visakhapatnam - 530016, AP, India<br/>
+                ISO 9001:2015 Certified &middot; MSME Registered &middot; NASSCOM Verified
+              </div>
+              <div style="font-size: 10px; color: #9ca3af; font-style: italic; margin-top: 8px;">
+                Disclaimer: This transmission contains confidential information intended solely for the recipient. If received in error, please notify the sender immediately and delete all copies.
+              </div>
+              <div style="margin-top: 8px; font-size: 11px;">
+                &copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.
+              </div>
             </td>
           </tr>
         </table>
@@ -2404,14 +2462,53 @@ export const sendTestAmbassadorStatusEmail = createServerFn({ method: "POST" })
 
     const finalHtml = `
 <!DOCTYPE html>
-<html>
-<body style="margin:0;padding:20px;background-color:#070b14;font-family:sans-serif;color:#f8fafc;">
-  <div style="max-width:600px;margin:auto;background:#0d1527;border:1px solid #1e293b;border-radius:12px;padding:24px;">
-    <div style="background:#f59e0b;color:#000;font-weight:bold;font-size:11px;padding:4px 8px;border-radius:4px;display:inline-block;margin-bottom:12px;">
-      PREVIEW EMAIL
-    </div>
-    ${renderedBody}
-  </div>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>${finalSubject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #111827;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding: 30px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; text-align: left;">
+          <tr>
+            <td style="padding: 20px 28px; border-bottom: 1px solid #e5e7eb;">
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="width: 32px; vertical-align: middle;">
+                    <img src="https://portal.vyntyraconsultancyservices.in/icon-512.png" alt="Vyntyra Logo" width="26" height="26" style="display: block; border-radius: 4px;">
+                  </td>
+                  <td style="padding-left: 10px; vertical-align: middle;">
+                    <div style="color: #111827; font-size: 16px; font-weight: 600;">Vyntyra Consultancy Services</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 28px; font-size: 15px; line-height: 1.6; color: #111827;">
+              <div style="background: #f1f5f9; color: #475569; font-weight: 600; font-size: 11px; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 16px; letter-spacing: 0.05em; text-transform: uppercase;">
+                Test Preview
+              </div>
+              ${renderedBody}
+
+              <!-- Signature Block -->
+              <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0 0 8px 0; color: #111827; font-size: 15px;">Sincerely,</p>
+                <div style="margin: 8px 0 10px 0;">
+                  <img src="https://portal.vyntyraconsultancyservices.in/signature.png" alt="Executive Signature" width="130" style="display: block; max-width: 130px; height: auto;" />
+                </div>
+                <div style="font-size: 15px; font-weight: 700; color: #111827; line-height: 1.4;">Jami Eswar Anil Kumar</div>
+                <div style="font-size: 13px; color: #0284c7; font-weight: 600;">Founder &amp; Managing Director</div>
+                <div style="font-size: 12px; color: #64748b;">Institutional Relations Cell &middot; Vyntyra Consultancy Services</div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 

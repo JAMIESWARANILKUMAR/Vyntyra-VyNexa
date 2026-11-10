@@ -705,27 +705,21 @@ async function sendCbtAssignmentEmail(params: SendCbtAssignmentEmailInput) {
   <title>${subject}</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 32px 12px; color: #1e293b; line-height: 1.5;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 660px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
     
-    <!-- Top Accent Bar -->
+    <!-- Corporate Minimal Header with Logo -->
     <tr>
-      <td style="background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 50%, #4f46e5 100%); height: 5px;"></td>
-    </tr>
-
-    <!-- Header Block -->
-    <tr>
-      <td style="background-color: #0b0f19; padding: 32px 28px; text-align: center;">
-        <div style="display: inline-block; background-color: rgba(99, 102, 241, 0.2); border: 1px solid rgba(129, 140, 248, 0.4); border-radius: 9999px; padding: 4px 14px; margin-bottom: 12px;">
-          <span style="color: #a5b4fc; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">
-            ${isExtension ? "DEADLINE EXTENSION NOTICE" : "OFFICIAL CBT ASSESSMENT ALLOCATION"}
-          </span>
-        </div>
-        <h1 style="color: #ffffff; margin: 0 0 6px; font-size: 22px; font-weight: 800; letter-spacing: 0.5px;">
-          VYNTYRA CONSULTANCY SERVICES
-        </h1>
-        <p style="color: #94a3b8; margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
-          VyNexa Connect • Computer-Based Testing (CBT) System
-        </p>
+      <td style="padding: 24px 36px; border-bottom: 1px solid #e5e7eb;">
+        <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td style="width: 36px; vertical-align: middle;">
+              <img src="https://portal.vyntyraconsultancyservices.in/icon-512.png" alt="Vyntyra Logo" width="30" height="30" style="display: block; border-radius: 4px;">
+            </td>
+            <td style="padding-left: 12px; vertical-align: middle;">
+              <div style="color: #111827; font-size: 18px; font-weight: 600; letter-spacing: -0.01em;">Vyntyra Consultancy Services</div>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
 
@@ -835,18 +829,14 @@ async function sendCbtAssignmentEmail(params: SendCbtAssignmentEmailInput) {
         </div>
 
         <!-- Call-to-Action Launch Button -->
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="text-align: center; margin-bottom: 26px;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 26px;">
           <tr>
-            <td align="center">
-              <a href="${examUrl}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; font-size: 15px; font-weight: 700; text-decoration: none; padding: 15px 36px; border-radius: 8px; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35); letter-spacing: 0.3px;">
-                Launch Assessment on Candidate Portal &rarr;
+            <td>
+              <a href="${examUrl}" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px;">
+                Launch Assessment &rarr;
               </a>
-              <p style="color: #64748b; font-size: 12px; margin: 12px 0 4px; font-weight: 600;">
-                Primary Candidate Portal Link: <br/>
-                <a href="${examUrl}" style="color: #4f46e5; text-decoration: underline; word-break: break-all;">${examUrl}</a>
-              </p>
-              <p style="color: #94a3b8; font-size: 11px; margin: 4px 0 0;">
-                Direct Mirror: <a href="${mirrorExamUrl}" style="color: #6366f1; text-decoration: underline; word-break: break-all;">${mirrorExamUrl}</a>
+              <p style="color: #64748b; font-size: 12px; margin: 12px 0 4px;">
+                Direct Assessment URL: <a href="${examUrl}" style="color: #0284c7; text-decoration: underline; word-break: break-all;">${examUrl}</a>
               </p>
             </td>
           </tr>
@@ -894,20 +884,14 @@ async function sendCbtAssignmentEmail(params: SendCbtAssignmentEmailInput) {
         </table>
 
         <!-- Official Sign-off & Signature Block -->
-        <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 10px;">
-          <p style="color: #334155; font-size: 13px; font-weight: 700; margin: 0 0 2px;">
-            VyNexa Technical Evaluation &amp; Assessment Board
-          </p>
-          <p style="color: #64748b; font-size: 12px; font-weight: 600; margin: 0 0 2px;">
-            Vyntyra Consultancy Services Private Limited
-          </p>
-          <p style="color: #94a3b8; font-size: 11px; margin: 0 0 4px;">
-            Enterprise Talent Acquisition &amp; Performance Operations Division
-          </p>
-          <p style="color: #64748b; font-size: 11px; margin: 0; line-height: 1.8;">
-            Candidate Portal: <a href="${portalUrl}" style="color: #4f46e5; text-decoration: none; font-weight: 600;">portal.vyntyraconsultancyservices.in</a><br/>
-            Support &amp; Recruitment: <a href="mailto:careers@vyntyraconsultancyservices.in" style="color: #4f46e5; text-decoration: none;">careers@vyntyraconsultancyservices.in</a>
-          </p>
+        <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 20px;">
+          <p style="margin: 0 0 8px 0; color: #111827; font-size: 15px;">Sincerely,</p>
+          <div style="margin: 8px 0 10px 0;">
+            <img src="https://portal.vyntyraconsultancyservices.in/signature.png" alt="Executive Signature" width="130" style="display: block; max-width: 130px; height: auto;" />
+          </div>
+          <div style="font-size: 15px; font-weight: 700; color: #111827; line-height: 1.4;">Jami Eswar Anil Kumar</div>
+          <div style="font-size: 13px; color: #0284c7; font-weight: 600;">Founder &amp; Managing Director</div>
+          <div style="font-size: 12px; color: #64748b;">Vyntyra Technical Evaluation Board &middot; Project VyNexa</div>
         </div>
 
       </td>
@@ -2603,25 +2587,63 @@ export const grantInternRetakeFn = createServerFn({ method: "POST" })
       const examTitle = sub.cbt_exams?.title || "Assessment";
       const candidateName = sub.profiles?.full_name || "Candidate";
 
-      const retakeHtml = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; color: #1e293b; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
-          <h2 style="color: #059669; margin-top: 0;">Assessment Retake Approved</h2>
-          <p>Hello <strong>${candidateName}</strong>,</p>
-          <p>Your previous assessment submission for <strong>${examTitle}</strong> has been officially reset by the administrator.</p>
-          <p>You may now launch and attempt your assessment again through the official Candidate Portal.</p>
-          ${reason ? `<div style="background-color: #f1f5f9; padding: 12px; border-radius: 8px; margin: 16px 0;"><strong>Administrator Note:</strong> ${reason}</div>` : ""}
-          <div style="margin: 24px 0;">
-            <a href="${examUrl}" style="display: inline-block; background-color: #059669; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;">
-              Launch Retake on Candidate Portal &rarr;
-            </a>
-          </div>
-          <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 24px; font-size: 12px; color: #64748b; line-height: 1.6;">
-            <strong>Official Portals:</strong><br/>
-            Candidate Portal: <a href="${portalUrl}" style="color: #4f46e5; text-decoration: underline;">portal.vyntyraconsultancyservices.in</a><br/>
-            Support: <a href="mailto:careers@vyntyraconsultancyservices.in" style="color: #4f46e5;">careers@vyntyraconsultancyservices.in</a>
-          </div>
+      const retakeHtml = `<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Assessment Retake Approved</title></head>
+<body style="margin:0;padding:32px 16px;background-color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;margin:0 auto;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+    <tr>
+      <td style="padding:28px 36px;border-bottom:1px solid #e5e7eb;">
+        <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td style="vertical-align:middle;width:36px;">
+              <img src="https://portal.vyntyraconsultancyservices.in/icon-512.png" alt="Vyntyra" width="32" height="32" style="display:block;border-radius:6px;" />
+            </td>
+            <td style="vertical-align:middle;padding-left:12px;">
+              <span style="font-size:17px;font-weight:600;color:#111827;letter-spacing:-0.01em;">Vyntyra Assessment Directorate</span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:36px;line-height:1.6;font-size:15px;color:#111827;">
+        <h2 style="font-size:22px;font-weight:600;color:#111827;margin:0 0 16px;letter-spacing:-0.02em;">Assessment Retake Approved</h2>
+        <p style="margin:0 0 16px;color:#374151;">Dear <strong>${candidateName}</strong>,</p>
+        <p style="margin:0 0 20px;color:#374151;">Your previous assessment submission for <strong>${examTitle}</strong> has been officially reset and approved for a fresh attempt by the assessment administrator.</p>
+        
+        <div style="border:1px solid #e5e7eb;border-radius:6px;padding:16px 20px;background:#f9fafb;margin-bottom:24px;">
+          <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Assessment Name</div>
+          <div style="font-size:15px;font-weight:600;color:#111827;">${examTitle}</div>
+          ${reason ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:13px;color:#374151;"><strong>Administrator Remarks:</strong> ${reason}</div>` : ""}
         </div>
-      `;
+
+        <p style="margin:0 0 24px;color:#374151;">Please ensure you are connected to a stable internet network and have enabled screen recording and camera permissions prior to launching.</p>
+        
+        <div style="margin:24px 0;">
+          <a href="${examUrl}" style="display:inline-block;background-color:#0f172a;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Launch Retake Assessment</a>
+        </div>
+
+        <div style="margin-top:32px;padding-top:20px;border-top:1px solid #e5e7eb;">
+          <p style="margin:0 0 8px 0;color:#111827;font-size:15px;">Sincerely,</p>
+          <div style="margin:8px 0 10px 0;">
+            <img src="https://portal.vyntyraconsultancyservices.in/signature.png" alt="Executive Signature" width="130" style="display:block;max-width:130px;height:auto;" />
+          </div>
+          <div style="font-size:15px;font-weight:700;color:#111827;line-height:1.4;">Jami Eswar Anil Kumar</div>
+          <div style="font-size:13px;color:#0284c7;font-weight:600;">Founder &amp; Managing Director</div>
+          <div style="font-size:12px;color:#64748b;">Vyntyra Consultancy Services &middot; Project VyNexa</div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:#f9fafb;border-top:1px solid #e5e7eb;padding:24px 36px;color:#64748b;font-size:11.5px;line-height:1.6;">
+        <div><strong>Vyntyra Consultancy Services</strong> &middot; ISO 9001:2015 Certified &middot; MSME Registered</div>
+        <div style="margin-top:4px;">Candidate Portal: <a href="${portalUrl}" style="color:#0284c7;text-decoration:none;">${portalUrl}</a> &middot; Support: <a href="mailto:careers@vyntyraconsultancyservices.in" style="color:#0284c7;text-decoration:none;">careers@vyntyraconsultancyservices.in</a></div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 
       let sent = false;
       if (brevoKey) {

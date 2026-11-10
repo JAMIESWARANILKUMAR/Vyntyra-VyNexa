@@ -642,12 +642,64 @@ export const updateTaskExecution = createServerFn({ method: "POST" })
                const resend = new Resend(apiKey);
                
                // Notify Intern
-               await resend.emails.send({
-                 from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
-                 to: profileData.email,
-                 subject: `Task Submitted Successfully: ${taskData.title}`,
-                 html: `<p>Hi ${profileData.full_name || "Intern"},</p><p>Your submission for the task "<strong>${taskData.title}</strong>" has been successfully received.</p><p>Our operations team will review it shortly.</p><p>Best,</p><p><strong>Jamieswaran Ilkumar</strong><br>Founder & CEO<br>Vyntyra Consultancy Services</p><p><img src="${process.env.VITE_APP_URL || "https://portal.vyntyraconsultancyservices.in"}/signature.png" alt="Founder Signature" style="max-width: 150px;" /></p>`
-               });
+                await resend.emails.send({
+                  from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
+                  to: profileData.email,
+                  subject: `Task Submitted Successfully: ${taskData.title}`,
+                  html: `<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Task Submitted Successfully</title></head>
+<body style="margin:0;padding:32px 16px;background-color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;margin:0 auto;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+    <tr>
+      <td style="padding:28px 36px;border-bottom:1px solid #e5e7eb;">
+        <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td style="vertical-align:middle;width:36px;">
+              <img src="https://portal.vyntyraconsultancyservices.in/icon-512.png" alt="Vyntyra" width="32" height="32" style="display:block;border-radius:6px;" />
+            </td>
+            <td style="vertical-align:middle;padding-left:12px;">
+              <span style="font-size:17px;font-weight:600;color:#111827;letter-spacing:-0.01em;">Vyntyra Consultancy Services</span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:36px;line-height:1.6;font-size:15px;color:#111827;">
+        <h2 style="font-size:22px;font-weight:600;color:#111827;margin:0 0 16px;letter-spacing:-0.02em;">Task Submission Received</h2>
+        <p style="margin:0 0 16px;color:#374151;">Dear ${profileData.full_name || "Intern"},</p>
+        <p style="margin:0 0 20px;color:#374151;">Your task submission has been successfully uploaded and recorded in the Project VyNexa portal.</p>
+        <div style="border:1px solid #e5e7eb;border-radius:6px;padding:16px 20px;background:#f9fafb;margin-bottom:24px;">
+          <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Task Title</div>
+          <div style="font-size:15px;font-weight:600;color:#111827;">${taskData.title}</div>
+          <div style="margin-top:10px;font-size:13px;color:#059669;font-weight:600;">Status: Pending Mentor Review</div>
+        </div>
+        <p style="margin:0 0 24px;color:#374151;">Our operations team and mentors will review your deliverable shortly. You will be notified once feedback or approvals are published.</p>
+        <div style="margin:24px 0;">
+          <a href="https://portal.vyntyraconsultancyservices.in/tasks" style="display:inline-block;background-color:#0f172a;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">View Tasks Dashboard</a>
+        </div>
+        <div style="margin-top:32px;padding-top:20px;border-top:1px solid #e5e7eb;">
+          <p style="margin:0 0 8px 0;color:#111827;font-size:15px;">Sincerely,</p>
+          <div style="margin:8px 0 10px 0;">
+            <img src="https://portal.vyntyraconsultancyservices.in/signature.png" alt="Executive Signature" width="130" style="display:block;max-width:130px;height:auto;" />
+          </div>
+          <div style="font-size:15px;font-weight:700;color:#111827;line-height:1.4;">Jami Eswar Anil Kumar</div>
+          <div style="font-size:13px;color:#0284c7;font-weight:600;">Founder &amp; Managing Director</div>
+          <div style="font-size:12px;color:#64748b;">Vyntyra Consultancy Services &middot; Project VyNexa</div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:#f9fafb;border-top:1px solid #e5e7eb;padding:24px 36px;color:#64748b;font-size:11.5px;line-height:1.6;">
+        <div><strong>Vyntyra Consultancy Services</strong> &middot; ISO 9001:2015 Certified &middot; MSME Registered</div>
+        <div style="margin-top:4px;">&copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.</div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+                });
                
                let notifyEmails = ["hr@vyntyraconsultancyservices.in"];
                if (profileData.mentor_id) {
@@ -4797,30 +4849,40 @@ export const sendB2bPitchEmail = createServerFn({ method: "POST" })
   <meta charset="utf-8">
   <title>${subject}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#0b1120;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#334155;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#0b1120;padding:35px 10px;">
+<body style="margin:0;padding:32px 16px;background-color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;margin:0 auto;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
     <tr>
-      <td align="center">
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:620px;background-color:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 20px 40px -10px rgba(0,0,0,0.5);">
+      <td style="padding:28px 36px;border-bottom:1px solid #e5e7eb;">
+        <table role="presentation" border="0" cellspacing="0" cellpadding="0">
           <tr>
-            <td style="background-color:#0f172a;padding:26px 36px;text-align:left;border-bottom:3px solid #6366f1;">
-              <div style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.02em;">Vyntyra Consultancy Services</div>
-              <div style="color:#818cf8;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;margin-top:4px;">Digital Solutions &middot; Client Growth Engine</div>
+            <td style="vertical-align:middle;width:36px;">
+              <img src="https://portal.vyntyraconsultancyservices.in/icon-512.png" alt="Vyntyra" width="32" height="32" style="display:block;border-radius:6px;" />
             </td>
-          </tr>
-          <tr>
-            <td style="padding:36px;text-align:left;">
-              <div style="font-size:14px;line-height:1.75;color:#1e293b;">
-                ${formattedBodyHtml}
-              </div>
-              <div style="margin-top:32px;padding-top:20px;border-top:1px solid #e2e8f0;color:#64748b;font-size:12px;line-height:1.6;">
-                <strong>Vyntyra Consultancy Services Pvt. Ltd.</strong><br/>
-                Engineering Scalable Systems, Custom Apps &middot; Web, POS, &amp; Growth Tech<br/>
-                <a href="https://vyntyraconsultancyservices.in" style="color:#4f46e5;font-weight:600;text-decoration:none;">vyntyraconsultancyservices.in</a>
-              </div>
+            <td style="vertical-align:middle;padding-left:12px;">
+              <span style="font-size:17px;font-weight:600;color:#111827;letter-spacing:-0.01em;">Vyntyra Consultancy Services</span>
             </td>
           </tr>
         </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:36px;line-height:1.7;font-size:14.5px;color:#111827;">
+        ${formattedBodyHtml}
+        <div style="margin-top:32px;padding-top:20px;border-top:1px solid #e5e7eb;">
+          <p style="margin:0 0 8px 0;color:#111827;font-size:15px;">Sincerely,</p>
+          <div style="margin:8px 0 10px 0;">
+            <img src="https://portal.vyntyraconsultancyservices.in/signature.png" alt="Executive Signature" width="130" style="display:block;max-width:130px;height:auto;" />
+          </div>
+          <div style="font-size:15px;font-weight:700;color:#111827;line-height:1.4;">Jami Eswar Anil Kumar</div>
+          <div style="font-size:13px;color:#0284c7;font-weight:600;">Founder &amp; Managing Director</div>
+          <div style="font-size:12px;color:#64748b;">Vyntyra Consultancy Services &middot; Project VyNexa</div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:#f9fafb;border-top:1px solid #e5e7eb;padding:24px 36px;color:#64748b;font-size:11.5px;line-height:1.6;">
+        <div><strong>Vyntyra Consultancy Services Pvt. Ltd.</strong> &middot; ISO 9001:2015 Certified &middot; MSME Registered</div>
+        <div style="margin-top:4px;">Website: <a href="https://vyntyraconsultancyservices.in" style="color:#0284c7;text-decoration:none;">vyntyraconsultancyservices.in</a> &middot; Enterprise Solutions</div>
       </td>
     </tr>
   </table>
@@ -5981,10 +6043,60 @@ export const submitTaskUrl = createServerFn({ method: "POST" })
           from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
           to: internProfile.email,
           subject: `Task Submitted Successfully: ${updatedTaskTitle}`,
-          html: `<p>Hi ${internProfile.full_name || 'Intern'},</p>
-          <p>Your task deliverable for <strong>${updatedTaskTitle}</strong> has been submitted successfully.</p>
-          <p>Deliverable URL: <a href="${url}">${url}</a></p>
-          <p>It is now queued for mentor review.</p>\n          <br><p style="color: #334155; margin-bottom: 5px;">Sincerely,</p><p style="margin: 10px 0;"><img src="/signature.png" alt="Founder Signature" style="max-width: 180px;" /></p><p style="margin: 0; padding: 0; line-height: 1.4;"><strong style="color: #002D62; font-size: 16px;">Jami Eswar Anil Kumar</strong><br><span style="color: #4682B4; font-size: 14px;">Founder & Managing Director</span><br><span style="color: #4682B4; font-size: 14px;">Vyntyra Consultancy Services</span></p>`
+          html: `<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Task Submitted Successfully</title></head>
+<body style="margin:0;padding:32px 16px;background-color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;margin:0 auto;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+    <tr>
+      <td style="padding:28px 36px;border-bottom:1px solid #e5e7eb;">
+        <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td style="vertical-align:middle;width:36px;">
+              <img src="https://portal.vyntyraconsultancyservices.in/icon-512.png" alt="Vyntyra" width="32" height="32" style="display:block;border-radius:6px;" />
+            </td>
+            <td style="vertical-align:middle;padding-left:12px;">
+              <span style="font-size:17px;font-weight:600;color:#111827;letter-spacing:-0.01em;">Vyntyra Consultancy Services</span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:36px;line-height:1.6;font-size:15px;color:#111827;">
+        <h2 style="font-size:22px;font-weight:600;color:#111827;margin:0 0 16px;letter-spacing:-0.02em;">Task Submission Received</h2>
+        <p style="margin:0 0 16px;color:#374151;">Dear ${internProfile.full_name || 'Intern'},</p>
+        <p style="margin:0 0 20px;color:#374151;">Your task deliverable has been submitted successfully and recorded in the Project VyNexa portal.</p>
+        <div style="border:1px solid #e5e7eb;border-radius:6px;padding:16px 20px;background:#f9fafb;margin-bottom:24px;">
+          <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Task Title</div>
+          <div style="font-size:15px;font-weight:600;color:#111827;">${updatedTaskTitle}</div>
+          <div style="margin-top:8px;font-size:13px;color:#4b5563;"><strong>Deliverable Link:</strong> <a href="${url}" target="_blank" style="color:#0284c7;text-decoration:none;word-break:break-all;">${url}</a></div>
+          <div style="margin-top:10px;font-size:13px;color:#059669;font-weight:600;">Status: Queued for Mentor Review</div>
+        </div>
+        <p style="margin:0 0 24px;color:#374151;">Your assigned mentor will review your deliverable and provide evaluation notes shortly.</p>
+        <div style="margin:24px 0;">
+          <a href="https://portal.vyntyraconsultancyservices.in/tasks" style="display:inline-block;background-color:#0f172a;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">View Tasks Dashboard</a>
+        </div>
+        <div style="margin-top:32px;padding-top:20px;border-top:1px solid #e5e7eb;">
+          <p style="margin:0 0 8px 0;color:#111827;font-size:15px;">Sincerely,</p>
+          <div style="margin:8px 0 10px 0;">
+            <img src="https://portal.vyntyraconsultancyservices.in/signature.png" alt="Executive Signature" width="130" style="display:block;max-width:130px;height:auto;" />
+          </div>
+          <div style="font-size:15px;font-weight:700;color:#111827;line-height:1.4;">Jami Eswar Anil Kumar</div>
+          <div style="font-size:13px;color:#0284c7;font-weight:600;">Founder &amp; Managing Director</div>
+          <div style="font-size:12px;color:#64748b;">Vyntyra Consultancy Services &middot; Project VyNexa</div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:#f9fafb;border-top:1px solid #e5e7eb;padding:24px 36px;color:#64748b;font-size:11.5px;line-height:1.6;">
+        <div><strong>Vyntyra Consultancy Services</strong> &middot; ISO 9001:2015 Certified &middot; MSME Registered</div>
+        <div style="margin-top:4px;">&copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.</div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
         });
       }
 

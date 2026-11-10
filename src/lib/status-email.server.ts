@@ -69,6 +69,17 @@ export function shell(innerHtml: string) {
           <tr>
             <td style="padding:40px;color:#334155;line-height:1.7;font-size:15px;text-align:left;">
               ${innerHtml}
+
+              <!-- Signature Block -->
+              <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                <p style="margin: 0 0 8px 0; color: #111827; font-size: 15px;">Sincerely,</p>
+                <div style="margin: 8px 0 10px 0;">
+                  <img src="https://portal.vyntyraconsultancyservices.in/signature.png" alt="Executive Signature" width="130" style="display: block; max-width: 130px; height: auto;" />
+                </div>
+                <div style="font-size: 15px; font-weight: 700; color: #0f172a; line-height: 1.4;">Jami Eswar Anil Kumar</div>
+                <div style="font-size: 13px; color: #0284c7; font-weight: 600;">Founder &amp; Managing Director</div>
+                <div style="font-size: 12px; color: #64748b;">Vyntyra Talent Acquisition &middot; Project VyNexa</div>
+              </div>
             </td>
           </tr>
 

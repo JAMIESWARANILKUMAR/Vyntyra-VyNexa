@@ -70,20 +70,58 @@ export const requestPortalLink = createServerFn({ method: "POST" })
       const apiKey = getEnv("RESEND_API_KEY");
       if (apiKey) {
         const resend = new Resend(apiKey);
-        const html = `<!doctype html><html><body style="margin:0;background:#fff;font-family:Inter,Arial,sans-serif;">
-          <div style="max-width:600px;margin:0 auto;">
-            <div style="background:#0A1F44;color:#fff;padding:24px 32px;">
-              <div style="font-family:Georgia,serif;font-size:22px;">Your application status link</div>
-              <div style="color:#D4AF37;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-top:4px;">Project VyNexa</div>
-            </div>
-            <div style="padding:28px 32px;color:#0A1F44;line-height:1.6;">
-              <p>Hello ${escapeHtml(app.full_name)},</p>
-              <p>Use the secure link below to view the current status of your application for <strong>${escapeHtml(app.role_applied)}</strong>. The link expires in <strong>30 minutes</strong> and can be used once.</p>
-              <p style="margin:24px 0;"><a href="${portalLink}" style="display:inline-block;background:#0A1F44;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;">View application status</a></p>
-              <p style="color:#64748B;font-size:13px;">If you did not request this, you can safely ignore this email.</p>
-            </div>
+        const html = `<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Your Application Status Link</title></head>
+<body style="margin:0;padding:32px 16px;background-color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;margin:0 auto;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+    <tr>
+      <td style="padding:28px 36px;border-bottom:1px solid #e5e7eb;">
+        <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td style="vertical-align:middle;width:36px;">
+              <img src="https://portal.vyntyraconsultancyservices.in/icon-512.png" alt="Vyntyra" width="32" height="32" style="display:block;border-radius:6px;" />
+            </td>
+            <td style="vertical-align:middle;padding-left:12px;">
+              <span style="font-size:17px;font-weight:600;color:#111827;letter-spacing:-0.01em;">Vyntyra Consultancy Services</span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:36px;line-height:1.6;font-size:15px;color:#111827;">
+        <h2 style="font-size:22px;font-weight:600;color:#111827;margin:0 0 16px;letter-spacing:-0.02em;">Your Application Status Link</h2>
+        <p style="margin:0 0 16px;color:#374151;">Dear ${escapeHtml(app.full_name)},</p>
+        <p style="margin:0 0 20px;color:#374151;">Use the secure authentication link below to view the real-time status of your application for <strong>${escapeHtml(app.role_applied)}</strong>.</p>
+        <div style="border:1px solid #e5e7eb;border-radius:6px;padding:16px 20px;background:#f9fafb;margin-bottom:24px;">
+          <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Security Notice</div>
+          <div style="font-size:13.5px;color:#374151;">This one-time access link expires in <strong>30 minutes</strong> and grants immediate encrypted access to your candidate file.</div>
+        </div>
+        <div style="margin:24px 0;">
+          <a href="${portalLink}" style="display:inline-block;background-color:#0f172a;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">View Application Status</a>
+        </div>
+        <p style="margin:20px 0 0;font-size:13px;color:#6b7280;">If you did not request this link, you can safely disregard this message.</p>
+        <div style="margin-top:32px;padding-top:20px;border-top:1px solid #e5e7eb;">
+          <p style="margin:0 0 8px 0;color:#111827;font-size:15px;">Sincerely,</p>
+          <div style="margin:8px 0 10px 0;">
+            <img src="https://portal.vyntyraconsultancyservices.in/signature.png" alt="Executive Signature" width="130" style="display:block;max-width:130px;height:auto;" />
           </div>
-        </body></html>`;
+          <div style="font-size:15px;font-weight:700;color:#111827;line-height:1.4;">Jami Eswar Anil Kumar</div>
+          <div style="font-size:13px;color:#0284c7;font-weight:600;">Founder &amp; Managing Director</div>
+          <div style="font-size:12px;color:#64748b;">Vyntyra Consultancy Services &middot; Project VyNexa</div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:#f9fafb;border-top:1px solid #e5e7eb;padding:24px 36px;color:#64748b;font-size:11.5px;line-height:1.6;">
+        <div><strong>Vyntyra Consultancy Services</strong> &middot; ISO 9001:2015 Certified &middot; MSME Registered</div>
+        <div style="margin-top:4px;">&copy; ${new Date().getFullYear()} Vyntyra Consultancy Services. All rights reserved.</div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
         await resend.emails.send({
           to: app.email,
           from: "Vyntyra Careers <careers@vyntyraconsultancyservices.in>",
