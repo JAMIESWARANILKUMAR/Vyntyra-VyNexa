@@ -34,6 +34,9 @@ import {
   Settings2,
   Check,
   ChevronRight,
+  MapPin,
+  Languages,
+  ShoppingBag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,7 +116,7 @@ export function AdminAmbassadorCampaign() {
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [subjectText, setSubjectText] = useState(
-    "🚀 Launching Soon: Vyntyra Institutional Relations Associate (Campus Ambassador) — First Cohort"
+    "Launching Soon: Vyntyra Institutional Relations Associate (Campus Ambassador) — First Cohort"
   );
   const [isSending, setIsSending] = useState(false);
   const [sentCount, setSentCount] = useState(0);
@@ -690,10 +693,11 @@ Hi *${name || "Associate"}*, represent Vyntyra Consultancy Services at *${colleg
                             <div className="text-slate-500 text-[11px] font-mono">{reg.phone}</div>
                             {reg.full_address && (
                               <div
-                                className="text-[10px] text-slate-500 mt-1 max-w-[220px] line-clamp-2"
+                                className="text-[10px] text-slate-500 mt-1 max-w-[220px] line-clamp-2 flex items-start gap-1"
                                 title={reg.full_address}
                               >
-                                🏠 {reg.full_address}
+                                <MapPin className="h-3 w-3 shrink-0 text-slate-400 mt-0.5" />
+                                <span>{reg.full_address}</span>
                               </div>
                             )}
                           </td>
@@ -720,8 +724,9 @@ Hi *${name || "Associate"}*, represent Vyntyra Consultancy Services at *${colleg
                               {reg.department || "General"} · Grad: {reg.expected_graduation_year || reg.graduation_year || "2026"}
                             </div>
                             {reg.languages_known && (
-                              <div className="text-[10px] text-purple-600 mt-0.5">
-                                🗣️ {Array.isArray(reg.languages_known) ? reg.languages_known.join(", ") : reg.languages_known}
+                              <div className="text-[10px] text-purple-600 mt-0.5 flex items-center gap-1">
+                                <Languages className="h-3 w-3 shrink-0" />
+                                <span>{Array.isArray(reg.languages_known) ? reg.languages_known.join(", ") : reg.languages_known}</span>
                               </div>
                             )}
                           </td>
@@ -1204,7 +1209,9 @@ Hi *${name || "Associate"}*, represent Vyntyra Consultancy Services at *${colleg
               {/* Email Content Preview */}
               <div className="border rounded-xl p-4 bg-slate-950 text-white space-y-3 text-xs">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-[11px]">
-                  <span className="font-bold text-amber-400">✨ FIRST COHORT 2026-27</span>
+                  <span className="font-bold text-amber-400 flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5" /> FIRST COHORT 2026-27
+                  </span>
                   <span className="text-slate-400">Official Preview</span>
                 </div>
                 <div className="text-sm font-bold text-white">
@@ -1215,14 +1222,15 @@ Hi *${name || "Associate"}*, represent Vyntyra Consultancy Services at *${colleg
                 </p>
 
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800 text-[11px] text-slate-300">
-                  <div>🎁 IRA Welcome Kit (After 1st Milestone)</div>
-                  <div>👕 Corporate Swags (After 1st Milestone)</div>
-                  <div className="text-emerald-400">💰 Earn up to ₹15,000 Rewards*</div>
-                  <div className="text-sky-400">⚡ Branded Electronic Gadgets</div>
-                  <div className="text-pink-400">✈️ Top 10 Curated Travel Retreat</div>
-                  <div>📜 Dual Certificate of Recognition</div>
-                  <div className="col-span-2 text-amber-400 font-semibold text-[10px] pt-1 border-t border-slate-800/80">
-                    ⭐ Official swags and welcome kits will be dispatched after reaching 1st milestone only.
+                  <div className="flex items-center gap-1.5"><Gift className="h-3.5 w-3.5 text-amber-400 shrink-0" /><span>IRA Welcome Kit (After 1st Milestone)</span></div>
+                  <div className="flex items-center gap-1.5"><ShoppingBag className="h-3.5 w-3.5 text-sky-400 shrink-0" /><span>Corporate Swags (After 1st Milestone)</span></div>
+                  <div className="text-emerald-400 flex items-center gap-1.5"><Award className="h-3.5 w-3.5 shrink-0" /><span>Earn up to ₹15,000 Rewards*</span></div>
+                  <div className="text-sky-400 flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 shrink-0" /><span>Branded Electronic Gadgets</span></div>
+                  <div className="text-pink-400 flex items-center gap-1.5"><Plane className="h-3.5 w-3.5 shrink-0" /><span>Top 10 Curated Travel Retreat</span></div>
+                  <div className="flex items-center gap-1.5"><FileCheck2 className="h-3.5 w-3.5 text-indigo-400 shrink-0" /><span>Dual Certificate of Recognition</span></div>
+                  <div className="col-span-2 text-amber-400 font-semibold text-[10px] pt-1 border-t border-slate-800/80 flex items-center gap-1.5">
+                    <AlertCircle className="h-3 w-3 shrink-0" />
+                    <span>Official swags and welcome kits will be dispatched after reaching 1st milestone only.</span>
                   </div>
                 </div>
 

@@ -1597,9 +1597,9 @@ function OperationsDashboard() {
                             <SelectTrigger><SelectValue placeholder="Select member" /></SelectTrigger>
                             <SelectContent>
                               {employees.length > 0 && <SelectItem value="__header_emp" disabled className="text-xs text-muted-foreground font-semibold">— Employees —</SelectItem>}
-                              {employees.map((m: any) => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}
+                              {employees.filter((m: any) => Boolean(m?.id)).map((m: any) => <SelectItem key={m.id} value={String(m.id)}>{m.full_name || m.email || "Employee"}</SelectItem>)}
                               {interns.length > 0 && <SelectItem value="__header_int" disabled className="text-xs text-muted-foreground font-semibold">— Interns —</SelectItem>}
-                              {interns.map((m: any) => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}
+                              {interns.filter((m: any) => Boolean(m?.id)).map((m: any) => <SelectItem key={m.id} value={String(m.id)}>{m.full_name || m.email || "Intern"}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         </div>
@@ -2005,8 +2005,8 @@ function OperationsDashboard() {
                           <Select value={scheduleForm.target_user_id} onValueChange={(v) => setScheduleForm({ ...scheduleForm, target_user_id: v })}>
                             <SelectTrigger><SelectValue placeholder="Choose Person..." /></SelectTrigger>
                             <SelectContent>
-                              {(teamQ.data || []).map((m: any) => (
-                                <SelectItem key={m.id} value={m.id}>
+                              {(teamQ.data || []).filter((m: any) => Boolean(m?.id)).map((m: any) => (
+                                <SelectItem key={m.id} value={String(m.id)}>
                                   {m.full_name || m.email} ({m.role || "Member"})
                                 </SelectItem>
                               ))}
@@ -2159,8 +2159,8 @@ function OperationsDashboard() {
                         <Select value={meetingForm.target_user_id} onValueChange={(v) => setMeetingForm({ ...meetingForm, target_user_id: v })}>
                           <SelectTrigger><SelectValue placeholder="Choose Person..." /></SelectTrigger>
                           <SelectContent>
-                            {(teamQ.data || []).map((m: any) => (
-                              <SelectItem key={m.id} value={m.id}>
+                            {(teamQ.data || []).filter((m: any) => Boolean(m?.id)).map((m: any) => (
+                              <SelectItem key={m.id} value={String(m.id)}>
                                 {m.full_name || m.email} ({m.role || "Member"})
                               </SelectItem>
                             ))}
@@ -2325,8 +2325,8 @@ function OperationsDashboard() {
                         >
                           <SelectTrigger><SelectValue placeholder="Choose Person..." /></SelectTrigger>
                           <SelectContent>
-                            {(teamQ.data || []).map((m: any) => (
-                              <SelectItem key={m.id} value={m.id}>
+                            {(teamQ.data || []).filter((m: any) => Boolean(m?.id)).map((m: any) => (
+                              <SelectItem key={m.id} value={String(m.id)}>
                                 {m.full_name || m.email} ({m.role || "Member"})
                               </SelectItem>
                             ))}
@@ -2712,8 +2712,8 @@ function OperationsDashboard() {
                           <Select value={resourceForm.target_user_id} onValueChange={(v) => setResourceForm({ ...resourceForm, target_user_id: v })}>
                             <SelectTrigger><SelectValue placeholder="Choose Person..." /></SelectTrigger>
                             <SelectContent>
-                              {(teamQ.data || []).map((m: any) => (
-                                <SelectItem key={m.id} value={m.id}>
+                              {(teamQ.data || []).filter((m: any) => Boolean(m?.id)).map((m: any) => (
+                                <SelectItem key={m.id} value={String(m.id)}>
                                   {m.full_name || m.email} ({m.role || "Member"})
                                 </SelectItem>
                               ))}
@@ -3610,8 +3610,8 @@ function OperationsDashboard() {
                 <Select value={selectedResolverEmployeeId} onValueChange={setSelectedResolverEmployeeId}>
                   <SelectTrigger><SelectValue placeholder="Select employee resolver..." /></SelectTrigger>
                   <SelectContent>
-                    {employees.map((emp: any) => (
-                      <SelectItem key={emp.id} value={emp.id}>{emp.full_name} ({emp.department || "General"})</SelectItem>
+                    {employees.filter((emp: any) => Boolean(emp?.id)).map((emp: any) => (
+                      <SelectItem key={emp.id} value={String(emp.id)}>{emp.full_name || emp.email} ({emp.department || "General"})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -3870,16 +3870,16 @@ function MemberRow({ member, team, onRevoke, onResetPassword, onClick }: { membe
           {member.role === "intern" && (
             <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
               {member.exam_fee_paid ? (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  ✓ Fee Paid (₹{member.exam_fee_amount || 199})
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                  <Check className="h-3 w-3 text-emerald-600" /> Fee Paid (₹{member.exam_fee_amount || 199})
                 </span>
               ) : member.is_fee_exempted ? (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200">
                   Exempted
                 </span>
               ) : member.fee_payment_scheduled ? (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
-                  ⏳ Fee Scheduled (₹{member.exam_fee_amount || 199})
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
+                  <Clock className="h-3 w-3 text-amber-600" /> Fee Scheduled (₹{member.exam_fee_amount || 199})
                 </span>
               ) : (
                 <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
@@ -3887,8 +3887,8 @@ function MemberRow({ member, team, onRevoke, onResetPassword, onClick }: { membe
                 </span>
               )}
               {member.urgent_popup_active && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200 animate-pulse">
-                  🚨 Urgent Popup Alert Active
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200 animate-pulse flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3 text-red-600" /> Urgent Popup Alert Active
                 </span>
               )}
             </div>
@@ -4081,8 +4081,8 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
                    </SelectTrigger>
                    <SelectContent>
                      <SelectItem value="none">Lead Mentor (Jami Eswar Anil Kumar - Default)</SelectItem>
-                     {team?.filter((m: any) => (m.id !== user.id && m.user_id !== user.id) && m.role !== "intern").map((mentor: any) => {
-                       const mentorId = mentor.id || mentor.user_id;
+                     {team?.filter((m: any) => Boolean(m?.id || m?.user_id) && (m.id !== user.id && m.user_id !== user.id) && m.role !== "intern").map((mentor: any) => {
+                       const mentorId = String(mentor.id || mentor.user_id);
                        return (
                          <SelectItem key={mentorId} value={mentorId}>
                            {mentor.full_name || mentor.email} ({mentor.position || mentor.department || "Employee"})
@@ -4409,9 +4409,9 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
                           {unassignedInterns.length === 0 ? (
                             <SelectItem value="none" disabled>No unassigned interns remaining</SelectItem>
                           ) : (
-                            unassignedInterns.map((intern: any) => (
-                              <SelectItem key={intern.id} value={intern.id}>
-                                {intern.full_name} ({intern.email}) {intern.intern_id && `· ID: ${intern.intern_id}`} {intern.position && `· ${intern.position}`}
+                            unassignedInterns.filter((intern: any) => Boolean(intern?.id)).map((intern: any) => (
+                              <SelectItem key={intern.id} value={String(intern.id)}>
+                                {intern.full_name || intern.email} {intern.intern_id && `· ID: ${intern.intern_id}`} {intern.position && `· ${intern.position}`}
                               </SelectItem>
                             ))
                           )}

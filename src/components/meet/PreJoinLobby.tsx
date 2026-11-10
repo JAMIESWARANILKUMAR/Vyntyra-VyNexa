@@ -83,6 +83,13 @@ export function PreJoinLobby({
   const [internId, setInternId] = useState(initialInternId || '');
   const [employeePasscode, setEmployeePasscode] = useState('');
 
+  // Keep access code in sync when defaultAccessCode is resolved
+  useEffect(() => {
+    if (defaultAccessCode && !accessCode) {
+      setAccessCode(defaultAccessCode);
+    }
+  }, [defaultAccessCode]);
+
   // Auto-verification & Loading states
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [verifiedInternId, setVerifiedInternId] = useState<string | null>(initialInternId || null);
@@ -303,13 +310,11 @@ export function PreJoinLobby({
     }
 
     if (joinMethod === 'access_code') {
-      const cleanCode = accessCode.trim().toUpperCase();
+      const cleanCode = (accessCode.trim() || defaultAccessCode.trim()).toUpperCase();
       if (!cleanCode || cleanCode.length < 6) {
-        errors.accessCode = "8-Digit Vyntyra Access Code is mandatory.";
+        errors.accessCode = "8-Digit Vyntyra Access Code is required.";
       }
-      if (!collegeOrg.trim()) {
-        errors.collegeOrg = "College or Organization is mandatory.";
-      }
+      // College/Organization is strictly optional for guests
     }
 
     if (joinMethod === 'employee' && !isVerified) {
@@ -350,7 +355,7 @@ export function PreJoinLobby({
       guestEmail: email.trim().toLowerCase(),
       guestPhone: phone.trim() || '+910000000000',
       guestOrg: collegeOrg.trim() || (isVerified ? "VCS Corporate Workspace" : undefined),
-      accessCode: accessCode.trim().toUpperCase() || undefined,
+      accessCode: (accessCode.trim() || defaultAccessCode.trim()).toUpperCase() || undefined,
       internId: internId.trim() || verifiedInternId || undefined,
       isVerified,
       password: employeePasscode.trim() || undefined,
@@ -720,7 +725,11 @@ export function PreJoinLobby({
                       <span>8-Digit Vyntyra Access Code</span>
                       <span className="text-rose-400">*</span>
                     </label>
-                    <span className="text-[10px] font-mono text-blue-400">e.g. VYN89201</span>
+                    {accessCode && (
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono">
+                        Pre-filled
+                      </span>
+                    )}
                   </div>
                   <Input
                     value={accessCode}
@@ -813,16 +822,14 @@ export function PreJoinLobby({
                   <div className="space-y-1">
                     <label className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
                       <Building className="h-2.5 w-2.5" />
-                      <span>College/Org</span>
-                      {joinMethod === 'access_code' && <span className="text-rose-400">*</span>}
+                      <span>College / Org</span>
+                      <span className="text-[9px] text-gray-500 font-normal">(Optional)</span>
                     </label>
                     <Input
                       value={collegeOrg}
                       onChange={(e) => setCollegeOrg(e.target.value)}
-                      placeholder="University/Co."
-                      className={`h-8 bg-black/60 text-[11px] rounded-xl ${
-                        validationErrors.collegeOrg ? 'border-rose-500 text-rose-300' : 'border-white/10 text-white'
-                      }`}
+                      placeholder="University or Co. (Optional)"
+                      className="h-8 bg-black/60 text-[11px] rounded-xl border-white/10 text-white"
                     />
                   </div>
                 </div>

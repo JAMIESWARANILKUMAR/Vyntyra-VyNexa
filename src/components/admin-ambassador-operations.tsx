@@ -33,6 +33,7 @@ import {
   ChevronDown,
   ChevronUp,
   Trophy,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -539,20 +540,20 @@ export function AdminAmbassadorOperations() {
     <div className="space-y-6">
       {/* ─── Super Admin Control Header ─── */}
       <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-r from-slate-950 via-[#0d1633] to-slate-950 p-6 sm:p-8 text-white shadow-xl">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-amber-500/15 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-pink-500/15 blur-3xl" />
+        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-mono font-bold text-amber-300 uppercase tracking-wider">
-              <Award className="h-3.5 w-3.5 text-amber-400" />
-              PIN-TO-PIN SUPER ADMIN OPERATIONS ENGINE
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-mono font-medium text-blue-300 uppercase tracking-wider">
+              <ShieldCheck className="h-3.5 w-3.5 text-blue-400" />
+              ENTERPRISE OPERATIONS CONTROLLER &middot; CAMPUS AMBASSADOR ENGINE
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Campus Ambassador Ultra-Control Hub
+              Campus Ambassador Management Hub
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl font-light">
-              Customize every pixel: background colors, text gradients, hero typography, metrics, perks, swags, gadgets, travel retreat, FAQs, and popup tickets.
+              Configure branding, program milestones, progression tiers, merchandise catalog, and candidate lifecycle automation.
             </p>
           </div>
 
@@ -572,7 +573,7 @@ export function AdminAmbassadorOperations() {
               className="border-slate-700 bg-slate-900/70 text-slate-200 hover:text-white rounded-xl text-xs flex items-center gap-1.5"
             >
               <Eye className="h-4 w-4 text-amber-400" />
-              <span>Test Live VIP Popup</span>
+              <span>Preview VIP Modal</span>
             </Button>
           </div>
         </div>
@@ -619,16 +620,16 @@ export function AdminAmbassadorOperations() {
       {/* ─── Pin-to-Pin Tab Navigation ─── */}
       <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 pb-3 overflow-x-auto scrollbar-none">
         {[
-          { id: "theme", label: "🎨 Colors & Themes", icon: Palette },
-          { id: "hero", label: "🚀 Hero & Metrics", icon: Layout },
-          { id: "pillars", label: "💎 Perks & Pillars", icon: Sparkles, count: settings.pillars_section.pillars.length },
-          { id: "rewards_tiers", label: "🏆 Progression Tiers & Rewards", icon: Trophy, count: (settings.progression_table?.tiers || DEFAULT_AMBASSADOR_TIERS).length },
-          { id: "products", label: "📸 Product Photography", icon: ImageIcon, count: settings.products.length },
-          { id: "gadgets_retreat", label: "⚡ Gadgets & Retreat", icon: Zap },
-          { id: "faqs", label: "❓ FAQs", icon: HelpCircle, count: settings.faqs.length },
-          { id: "form", label: "📝 Application Form", icon: FileText },
-          { id: "popup", label: "🎟️ Coming Soon VIP Popup", icon: Eye },
-          { id: "applicants", label: "👥 Applications, Lifecycle & Email Automation", icon: Mail, count: (registrationsQ.data || []).length },
+          { id: "theme", label: "Colors & Branding", icon: Palette },
+          { id: "hero", label: "Hero & Key Metrics", icon: Layout },
+          { id: "pillars", label: "Core Pillars & Benefits", icon: Sparkles, count: settings.pillars_section.pillars.length },
+          { id: "rewards_tiers", label: "Progression Tiers & Rewards", icon: Trophy, count: (settings.progression_table?.tiers || DEFAULT_AMBASSADOR_TIERS).length },
+          { id: "products", label: "Merchandise & Catalog", icon: ImageIcon, count: settings.products.length },
+          { id: "gadgets_retreat", label: "Gadgets & Executive Retreat", icon: Zap },
+          { id: "faqs", label: "FAQs & Information", icon: HelpCircle, count: settings.faqs.length },
+          { id: "form", label: "Application Form Configuration", icon: FileText },
+          { id: "popup", label: "VIP Registration Modal", icon: Eye },
+          { id: "applicants", label: "Candidate Applications & Automation", icon: Mail, count: (registrationsQ.data || []).length },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -658,7 +659,7 @@ export function AdminAmbassadorOperations() {
         })}
       </div>
 
-      {/* ═════════ TAB 1: 🎨 THEME & COLORS (PIN-TO-PIN) ═════════ */}
+      {/* ═════════ TAB 1: THEME & COLORS (PIN-TO-PIN) ═════════ */}
       {activeTab === "theme" && (
         <div className="space-y-6">
           {/* Preset Palettes Bar */}
@@ -666,7 +667,7 @@ export function AdminAmbassadorOperations() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                  <Palette className="h-4 w-4 text-amber-500" /> One-Click Luxury Color Palettes
+                  <Palette className="h-4 w-4 text-amber-500" /> Executive Color Palettes
                 </h3>
                 <p className="text-xs text-slate-500">
                   Select a designer palette or customize each individual color below.
@@ -1089,7 +1090,7 @@ export function AdminAmbassadorOperations() {
         </div>
       )}
 
-      {/* ═════════ TAB 2: 🚀 HERO & METRICS ═════════ */}
+      {/* ═════════ TAB 2: HERO & METRICS ═════════ */}
       {activeTab === "hero" && (
         <div className="space-y-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
@@ -1241,7 +1242,7 @@ export function AdminAmbassadorOperations() {
         </div>
       )}
 
-      {/* ═════════ TAB 3: 💎 PERKS & PILLARS (CRUD) ═════════ */}
+      {/* ═════════ TAB 3: PERKS & PILLARS (CRUD) ═════════ */}
       {activeTab === "pillars" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
@@ -1300,7 +1301,7 @@ export function AdminAmbassadorOperations() {
         </div>
       )}
 
-      {/* ═════════ TAB 4: 📸 PRODUCT PHOTOGRAPHY & CATALOG ═════════ */}
+      {/* ═════════ TAB 4: PRODUCT PHOTOGRAPHY & CATALOG ═════════ */}
       {activeTab === "products" && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1399,7 +1400,7 @@ export function AdminAmbassadorOperations() {
         </div>
       )}
 
-      {/* ═════════ TAB: 🏆 PROGRESSION TIERS & REWARDS ═════════ */}
+      {/* ═════════ TAB: PROGRESSION TIERS & REWARDS ═════════ */}
       {activeTab === "rewards_tiers" && (
         <div className="space-y-6">
           {/* Section Overview Card */}
@@ -1657,7 +1658,7 @@ export function AdminAmbassadorOperations() {
         </div>
       )}
 
-      {/* ═════════ TAB 5: ⚡ GADGETS & TRAVEL RETREAT ═════════ */}
+      {/* ═════════ TAB 5: GADGETS & TRAVEL RETREAT ═════════ */}
       {activeTab === "gadgets_retreat" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Gadgets Section Settings */}
@@ -1819,7 +1820,7 @@ export function AdminAmbassadorOperations() {
         </div>
       )}
 
-      {/* ═════════ TAB 6: ❓ FAQS ═════════ */}
+      {/* ═════════ TAB 6: FAQS ═════════ */}
       {activeTab === "faqs" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
@@ -1876,7 +1877,7 @@ export function AdminAmbassadorOperations() {
         </div>
       )}
 
-      {/* ═════════ TAB 7: 📝 FORM & APPLICATION CONTROLS ═════════ */}
+      {/* ═════════ TAB 7: FORM & APPLICATION CONTROLS ═════════ */}
       {activeTab === "form" && (
         <div className="space-y-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
@@ -1969,7 +1970,7 @@ export function AdminAmbassadorOperations() {
         </div>
       )}
 
-      {/* ═════════ TAB 8: 🎟️ COMING SOON VIP POPUP ═════════ */}
+      {/* ═════════ TAB 8: COMING SOON VIP POPUP ═════════ */}
       {activeTab === "popup" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-7 space-y-4">
@@ -2085,8 +2086,9 @@ export function AdminAmbassadorOperations() {
                 <p className="text-xs text-slate-300 leading-relaxed pt-1">
                   {settings.popup.announcement_message}
                 </p>
-                <div className="pt-2 border-t border-slate-800 text-[11px] text-emerald-400 font-semibold">
-                  💰 {settings.popup.rewards_text}
+                <div className="pt-2 border-t border-slate-800 text-[11px] text-emerald-400 font-semibold flex items-center gap-1.5">
+                  <Trophy className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  <span>{settings.popup.rewards_text}</span>
                 </div>
               </div>
 
@@ -2101,7 +2103,7 @@ export function AdminAmbassadorOperations() {
         </div>
       )}
 
-      {/* ═════════ TAB 9: 👥 APPLICANTS & BROADCAST ═════════ */}
+      {/* ═════════ TAB 9: APPLICANTS & BROADCAST ═════════ */}
       {activeTab === "applicants" && (
         <div className="space-y-6">
           <AdminAmbassadorCampaign />
