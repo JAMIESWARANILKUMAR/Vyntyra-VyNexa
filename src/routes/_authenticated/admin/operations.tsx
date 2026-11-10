@@ -11,7 +11,8 @@ import {
   Play, Pause, Square, Search, ExternalLink, ShieldCheck, Download, Send, MessageCircle, Key,
   PartyPopper, LayoutDashboard, BrainCircuit, Layers, FolderOpen, Megaphone, DollarSign,
   CalendarPlus, Share2, Copy, Check, Pencil, Edit, Bell, Sparkles, Database
-} from "lucide-react";
+, PanelLeftClose, PanelLeftOpen, Menu, X, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { EnterpriseDatasetVaultView } from "@/components/enterprise-dataset-vault";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -123,6 +124,8 @@ function OperationsDashboard() {
   const searchParams = Route.useSearch();
   const navigate = Route.useNavigate();
   const [activeTab, setActiveTab] = useState<string>((searchParams as any)?.tab || "overview");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if ((searchParams as any)?.tab && (searchParams as any).tab !== activeTab) {
@@ -1017,289 +1020,525 @@ function OperationsDashboard() {
     }
   }
 
+  const ADMIN_NAV_SECTIONS = [
+    {
+      title: "Core Operations",
+      items: [
+        { id: "overview", label: "Overview", icon: LayoutDashboard, count: null },
+        { id: "directory", label: "Directory & Users", icon: Users, count: team.length },
+        { id: "tasks", label: "Tasks & LMS", icon: ClipboardList, count: (tasksQ.data || []).filter((t: any) => t.status !== "completed").length },
+        { id: "attendance", label: "Attendance & Logs", icon: Clock, count: null },
+        { id: "holidays", label: "Holidays & Calendar", icon: CalendarDays, count: (holidaysQ.data || []).length },
+        { id: "leaves", label: "Leaves & Requests", icon: FileText, count: (leavesQ.data || []).filter((l: any) => l.status === "pending").length || null },
+      ]
+    },
+    {
+      title: "Workspace & Video",
+      items: [
+        { id: "meetings", label: "Meetings & Standups", icon: Video, count: null },
+        { id: "announcements", label: "Communication & Promos", icon: Megaphone, count: null },
+        { id: "vyntyra-meet", label: "Vyntyra Meet", icon: ShieldCheck, count: null },
+        { id: "ai-interviews", label: "AI Mock Interviews", icon: Sparkles, count: null },
+      ]
+    },
+    {
+      title: "Governance & Data",
+      items: [
+        { id: "finances", label: "Finances & Payouts", icon: DollarSign, count: null },
+        { id: "cbt", label: "AI CBT Engine", icon: BrainCircuit, count: null },
+        { id: "ambassador", label: "Campus Ambassador", icon: Award, count: null },
+        { id: "dataset-vault", label: "Dataset Vault & CSV Hub", icon: Database, count: null },
+        { id: "profile_approvals", label: "Profile Approvals", icon: UserCheck, count: null },
+        { id: "support", label: "Support & Feedback", icon: LifeBuoy, count: (supportQueries || []).filter((q: any) => q.status === "open").length || null },
+      ]
+    }
+  ];
+
+  const currentTabItem = ADMIN_NAV_SECTIONS.flatMap(s => s.items).find(i => i.id === activeTab);
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* â”€â”€ Header â”€â”€ */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Link to="/admin" className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors text-sm font-medium">
-              <ArrowLeft className="h-4 w-4" /> Dashboard
-            </Link>
-            <div className="w-px h-5 bg-slate-200" />
-            <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                <Shield className="h-4 w-4 text-white" />
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col lg:flex-row text-slate-900 antialiased selection:bg-slate-900 selection:text-white">
+      {/* ─── Desktop Animated Toggle Sidebar ─── */}
+      <motion.aside
+        animate={{ width: sidebarCollapsed ? 76 : 280 }}
+        transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
+        className="hidden lg:flex flex-col h-screen sticky top-0 bg-white border-r border-slate-200/90 z-40 select-none overflow-hidden shrink-0 shadow-xs"
+      >
+        {/* Sidebar Header */}
+        <div className="h-16 px-4 border-b border-slate-200/80 flex items-center justify-between shrink-0 bg-white">
+          {!sidebarCollapsed ? (
+            <>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="h-9 w-9 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs shrink-0 font-black">
+                  <Shield className="h-4.5 w-4.5 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-extrabold text-sm text-slate-900 leading-tight truncate">Operations Hub</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Super Admin</div>
+                </div>
               </div>
-              <div>
-                <div className="font-semibold text-sm leading-tight">Operations Control</div>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Super Admin</div>
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(true)}
+                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Collapse Sidebar"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </button>
+            </>
+          ) : (
+            <div className="w-full flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(false)}
+                className="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Expand Sidebar"
+              >
+                <PanelLeftOpen className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar Navigation Rail */}
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-none">
+          {ADMIN_NAV_SECTIONS.map((section) => (
+            <div key={section.title} className="space-y-1">
+              {!sidebarCollapsed && (
+                <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 px-2.5 pb-1">
+                  {section.title}
+                </div>
+              )}
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => switchTab(item.id)}
+                      title={sidebarCollapsed ? item.label : undefined}
+                      className={`w-full flex items-center rounded-xl transition-all duration-150 cursor-pointer ${
+                        sidebarCollapsed
+                          ? "justify-center p-2.5"
+                          : "justify-between px-3 py-2 text-xs font-semibold"
+                      } ${
+                        isActive
+                          ? "bg-slate-900 text-white shadow-xs font-bold"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 font-medium"
+                      }`}
+                    >
+                      <div className={`flex items-center ${sidebarCollapsed ? "justify-center" : "gap-2.5 min-w-0"}`}>
+                        <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-white" : "text-slate-500"}`} />
+                        {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                      </div>
+
+                      {!sidebarCollapsed && item.count !== null && item.count !== undefined && (
+                        <span
+                          className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-1.5 shrink-0 ${
+                            isActive
+                              ? "bg-white/20 text-white"
+                              : "bg-slate-200/80 text-slate-700"
+                          }`}
+                        >
+                          {item.count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
+          ))}
+        </div>
+
+        {/* Sidebar Footer Quick Actions */}
+        <div className="p-3 border-t border-slate-200/80 bg-slate-50/50 space-y-2 shrink-0">
+          {!sidebarCollapsed ? (
+            <div className="space-y-1.5">
+              <Link
+                to="/admin"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Return to Dashboard</span>
+              </Link>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <Link
+                to="/admin"
+                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                title="Return to Dashboard"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </div>
+          )}
+        </div>
+      </motion.aside>
+
+      {/* ─── Mobile Slide-over Navigation Drawer ─── */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden flex">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+            />
+
+            {/* Drawer */}
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              className="relative w-72 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col z-10"
+            >
+              <div className="h-16 px-4 border-b border-slate-200 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold">
+                    <Shield className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-sm text-slate-900">Operations Hub</div>
+                    <div className="text-[10px] font-bold text-slate-500 uppercase">Super Admin</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-3 space-y-5 scrollbar-none">
+                {ADMIN_NAV_SECTIONS.map((section) => (
+                  <div key={section.title} className="space-y-1">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 px-2 pb-1">
+                      {section.title}
+                    </div>
+                    <div className="space-y-0.5">
+                      {section.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = activeTab === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              switchTab(item.id);
+                              setMobileMenuOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer ${
+                              isActive
+                                ? "bg-slate-900 text-white shadow-xs font-bold"
+                                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-slate-500"}`} />
+                              <span>{item.label}</span>
+                            </div>
+                            {item.count !== null && item.count !== undefined && (
+                              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                                isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                              }`}>
+                                {item.count}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-3 border-t border-slate-200">
+                <Link
+                  to="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <span>Return to Dashboard</span>
+                </Link>
+              </div>
+            </motion.div>
           </div>
-          <Dialog open={provisionOpen} onOpenChange={setProvisionOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-2 shadow-sm">
-                <Plus className="h-4 w-4" /> Add Team Member
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2"><UserCheck className="h-5 w-5 text-primary" /> Provision Team Member</DialogTitle>
-                <DialogDescription>Create a secure login account. The user can sign in immediately with these credentials.</DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleProvision} className="space-y-4 py-2">
-                <div className="space-y-1.5">
-                  <Label>Full Name</Label>
-                  <Input required value={provisionForm.full_name} onChange={e => setProvisionForm({ ...provisionForm, full_name: e.target.value })} placeholder="e.g. Priya Sharma" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Email Address</Label>
-                  <Input required type="email" value={provisionForm.email} onChange={e => setProvisionForm({ ...provisionForm, email: e.target.value })} placeholder="priya@vyntyra.in" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Temporary Password <span className="text-muted-foreground text-xs">(min 6 characters)</span></Label>
-                  <Input required type="text" minLength={6} value={provisionForm.password} onChange={e => setProvisionForm({ ...provisionForm, password: e.target.value })} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Role</Label>
-                  <Select value={provisionForm.role} onValueChange={(v: any) => setProvisionForm({ ...provisionForm, role: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="employee"><span className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> Employee</span></SelectItem>
-                      <SelectItem value="intern"><span className="flex items-center gap-2"><GraduationCap className="h-4 w-4" /> Intern</span></SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {provisionForm.role === 'employee' && (
-                  <>
-                    <div className="space-y-1.5">
-                      <Label>Employee ID</Label>
-                      <Input value={provisionForm.employee_id} onChange={e => setProvisionForm({ ...provisionForm, employee_id: e.target.value })} placeholder="e.g. EMP-2024-001" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Job Title / Position</Label>
-                      <Input value={provisionForm.position} onChange={e => setProvisionForm({ ...provisionForm, position: e.target.value })} placeholder="e.g. Software Engineer" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Department</Label>
-                      <Input value={provisionForm.department} onChange={e => setProvisionForm({ ...provisionForm, department: e.target.value })} placeholder="e.g. Engineering" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Bank Account Number</Label>
-                      <Input value={provisionForm.bank_account_number} onChange={e => setProvisionForm({ ...provisionForm, bank_account_number: e.target.value })} placeholder="Account Number for Payouts" />
-                    </div>
-                  </>
-                )}
+        )}
+      </AnimatePresence>
 
-                {provisionForm.role === 'intern' && (
-                  <>
-                    <div className="space-y-1.5">
-                      <Label>Intern ID</Label>
-                      <Input value={provisionForm.intern_id} onChange={e => setProvisionForm({ ...provisionForm, intern_id: e.target.value })} placeholder="e.g. INT-2024-001" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Department</Label>
-                      <Input value={provisionForm.department} onChange={e => setProvisionForm({ ...provisionForm, department: e.target.value })} placeholder="e.g. Design" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Duration (Months)</Label>
-                      <Input type="number" value={provisionForm.duration_months} onChange={e => setProvisionForm({ ...provisionForm, duration_months: e.target.value })} placeholder="e.g. 6" />
-                    </div>
-                  </>
-                )}
-                <DialogFooter>
-                  <Button type="button" variant="ghost" onClick={() => setProvisionOpen(false)}>Cancel</Button>
-                  <Button type="submit" className="gap-2"><UserCheck className="h-4 w-4" /> Create Account</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+      {/* ─── Main Content Container ─── */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+        {/* Sticky Top Bar for Content Area */}
+        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-200/90 px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Mobile Menu Button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="lg:hidden p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors"
+              aria-label="Open Navigation Menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
 
-          {/* â”€â”€ Admin Password Reset Modal â”€â”€ */}
-          <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-slate-900">
-                  <ShieldCheck className="h-5 w-5 text-indigo-600" /> Reset Password for User
-                </DialogTitle>
-                <DialogDescription>
-                  Instantly set a new secure password for {resetUserTarget?.full_name || resetUserTarget?.email || "this account"}.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleAdminResetPassword} className="space-y-4 py-2">
-                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1">
-                  <div><strong className="text-slate-900">Account:</strong> {resetUserTarget?.full_name || "â€”"} ({resetUserTarget?.email})</div>
-                  <div><strong className="text-slate-900">Role:</strong> <span className="uppercase font-bold text-indigo-600">{resetUserTarget?.role}</span> &middot; ID: {resetUserTarget?.employee_id || resetUserTarget?.intern_id || resetUserTarget?.id}</div>
-                </div>
+            {/* Desktop Quick Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="hidden lg:flex p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+              title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+            </button>
 
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-slate-700">New Secure Password (min 6 chars) *</Label>
-                  <Input
-                    required
-                    type="text"
-                    minLength={6}
-                    value={resetPasswordForm.newPassword}
-                    onChange={(e) => setResetPasswordForm({ ...resetPasswordForm, newPassword: e.target.value })}
-                    placeholder="e.g. Vyntyra2026#Pass"
-                    className="text-xs font-mono"
-                  />
-                </div>
+            {/* Breadcrumb Path */}
+            <div className="flex items-center gap-2 text-xs font-medium text-slate-500 truncate">
+              <Link to="/admin" className="hover:text-slate-800 transition-colors hidden sm:inline">
+                Admin
+              </Link>
+              <ChevronRight className="h-3.5 w-3.5 text-slate-400 hidden sm:inline" />
+              <span className="text-slate-700 font-semibold hidden md:inline">Operations Control</span>
+              <ChevronRight className="h-3.5 w-3.5 text-slate-400 hidden md:inline" />
+              <span className="font-bold text-slate-900 truncate">
+                {currentTabItem?.label || activeTab}
+              </span>
+            </div>
+          </div>
 
-                <DialogFooter>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setResetPasswordOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold gap-1.5">
-                    <ShieldCheck className="h-4 w-4" /> Set & Update Password
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-
-          {/* ─── Add Holiday Modal ─── */}
-          <Dialog open={holidayModalOpen} onOpenChange={setHolidayModalOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline" className="gap-1.5 text-xs bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 font-bold">
-                <PartyPopper className="h-3.5 w-3.5 text-amber-600" /> Add Holiday
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-slate-900">
-                  <PartyPopper className="h-5 w-5 text-amber-600" /> Add Official Holiday
-                </DialogTitle>
-                <DialogDescription>
-                  This holiday will be reflected in the calendar and dashboard across all Admin, Employee, and Intern portals.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreateHolidaySubmit} className="space-y-4 py-2">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-slate-700">Holiday Title *</Label>
-                  <Input 
-                    required 
-                    value={holidayForm.name} 
-                    onChange={e => setHolidayForm({ ...holidayForm, name: e.target.value })} 
-                    placeholder="e.g. Diwali, Independence Day, Annual Company Day" 
-                    className="text-xs"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
+          {/* Quick Action Buttons */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Provision User Modal */}
+            <Dialog open={provisionOpen} onOpenChange={setProvisionOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs h-9 px-3.5 rounded-xl shadow-xs">
+                  <Plus className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Add Team Member</span>
+                  <span className="sm:hidden">Add User</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2"><UserCheck className="h-5 w-5 text-primary" /> Provision Team Member</DialogTitle>
+                  <DialogDescription>Create a secure login account. The user can sign in immediately with these credentials.</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleProvision} className="space-y-4 py-2">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-700">Holiday Date *</Label>
-                    <Input 
-                      required 
-                      type="date" 
-                      value={holidayForm.date} 
-                      onChange={e => setHolidayForm({ ...holidayForm, date: e.target.value })} 
-                      className="text-xs"
-                    />
+                    <Label>Full Name</Label>
+                    <Input required value={provisionForm.full_name} onChange={e => setProvisionForm({ ...provisionForm, full_name: e.target.value })} placeholder="e.g. Priya Sharma" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-700">Holiday Type</Label>
-                    <Select 
-                      value={holidayForm.type} 
-                      onValueChange={(v: any) => setHolidayForm({ ...holidayForm, type: v })}
-                    >
-                      <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                    <Label>Email Address</Label>
+                    <Input required type="email" value={provisionForm.email} onChange={e => setProvisionForm({ ...provisionForm, email: e.target.value })} placeholder="priya@vyntyra.in" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Temporary Password <span className="text-muted-foreground text-xs">(min 6 characters)</span></Label>
+                    <Input required type="text" minLength={6} value={provisionForm.password} onChange={e => setProvisionForm({ ...provisionForm, password: e.target.value })} placeholder="••••••••" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Role</Label>
+                    <Select value={provisionForm.role} onValueChange={(v: any) => setProvisionForm({ ...provisionForm, role: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="public">Public / National Holiday</SelectItem>
-                        <SelectItem value="company">Official Company Holiday</SelectItem>
-                        <SelectItem value="festive">Festive Celebration</SelectItem>
-                        <SelectItem value="optional">Optional / Restricted Holiday</SelectItem>
+                        <SelectItem value="employee"><span className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> Employee</span></SelectItem>
+                        <SelectItem value="intern"><span className="flex items-center gap-2"><GraduationCap className="h-4 w-4" /> Intern</span></SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
+                  
+                  {provisionForm.role === 'employee' && (
+                    <>
+                      <div className="space-y-1.5">
+                        <Label>Employee ID</Label>
+                        <Input value={provisionForm.employee_id} onChange={e => setProvisionForm({ ...provisionForm, employee_id: e.target.value })} placeholder="e.g. EMP-2024-001" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Job Title / Position</Label>
+                        <Input value={provisionForm.position} onChange={e => setProvisionForm({ ...provisionForm, position: e.target.value })} placeholder="e.g. Software Engineer" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Department</Label>
+                        <Input value={provisionForm.department} onChange={e => setProvisionForm({ ...provisionForm, department: e.target.value })} placeholder="e.g. Engineering" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Bank Account Number</Label>
+                        <Input value={provisionForm.bank_account_number} onChange={e => setProvisionForm({ ...provisionForm, bank_account_number: e.target.value })} placeholder="Account Number for Payouts" />
+                      </div>
+                    </>
+                  )}
 
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-slate-700">Description (Optional)</Label>
-                  <Textarea 
-                    rows={2} 
-                    value={holidayForm.description} 
-                    onChange={e => setHolidayForm({ ...holidayForm, description: e.target.value })} 
-                    placeholder="e.g. Offices and sprint operations closed." 
-                    className="text-xs"
-                  />
-                </div>
+                  {provisionForm.role === 'intern' && (
+                    <>
+                      <div className="space-y-1.5">
+                        <Label>Intern ID</Label>
+                        <Input value={provisionForm.intern_id} onChange={e => setProvisionForm({ ...provisionForm, intern_id: e.target.value })} placeholder="e.g. INT-2024-001" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Department</Label>
+                        <Input value={provisionForm.department} onChange={e => setProvisionForm({ ...provisionForm, department: e.target.value })} placeholder="e.g. Design" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Duration (Months)</Label>
+                        <Input type="number" value={provisionForm.duration_months} onChange={e => setProvisionForm({ ...provisionForm, duration_months: e.target.value })} placeholder="e.g. 6" />
+                      </div>
+                    </>
+                  )}
+                  <DialogFooter>
+                    <Button type="button" variant="ghost" onClick={() => setProvisionOpen(false)}>Cancel</Button>
+                    <Button type="submit" className="gap-2"><UserCheck className="h-4 w-4" /> Create Account</Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
 
-                <label className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border text-xs cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={holidayForm.is_recurring} 
-                    onChange={e => setHolidayForm({ ...holidayForm, is_recurring: e.target.checked })} 
-                    className="accent-amber-600 rounded" 
-                  />
-                  <span className="font-semibold text-slate-700">Recurring annual holiday</span>
-                </label>
+            {/* Admin Password Reset Modal */}
+            <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-slate-900">
+                    <ShieldCheck className="h-5 w-5 text-indigo-600" /> Reset Password for User
+                  </DialogTitle>
+                  <DialogDescription>
+                    Instantly set a new secure password for {resetUserTarget?.full_name || resetUserTarget?.email || "this account"}.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleAdminResetPassword} className="space-y-4 py-2">
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1">
+                    <div><strong className="text-slate-900">Account:</strong> {resetUserTarget?.full_name || "—"} ({resetUserTarget?.email})</div>
+                    <div><strong className="text-slate-900">Role:</strong> <span className="uppercase font-bold text-indigo-600">{resetUserTarget?.role}</span> &middot; ID: {resetUserTarget?.employee_id || resetUserTarget?.intern_id || resetUserTarget?.id}</div>
+                  </div>
 
-                <DialogFooter>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setHolidayModalOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isSavingHoliday} size="sm" className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-1.5">
-                    {isSavingHoliday ? <Loader2 className="h-4 w-4 animate-spin" /> : <PartyPopper className="h-4 w-4" />}
-                    Save Holiday
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </header>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">New Secure Password (min 6 chars) *</Label>
+                    <Input
+                      required
+                      type="text"
+                      minLength={6}
+                      value={resetPasswordForm.newPassword}
+                      onChange={(e) => setResetPasswordForm({ ...resetPasswordForm, newPassword: e.target.value })}
+                      placeholder="e.g. Vyntyra2026#Pass"
+                      className="text-xs font-mono"
+                    />
+                  </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+                  <DialogFooter>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setResetPasswordOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold gap-1.5">
+                      <ShieldCheck className="h-4 w-4" /> Set & Update Password
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
 
-        {/* ─── Operations Sub-Navigation Bar ─── */}
-        <div className="bg-white p-2 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-          {[
-            { id: "overview", label: "Overview", icon: LayoutDashboard, count: null },
-            { id: "directory", label: "Directory & Users", icon: Users, count: team.length },
-            { id: "tasks", label: "Tasks & LMS", icon: ClipboardList, count: (tasksQ.data || []).filter((t: any) => t.status !== "completed").length },
-            { id: "attendance", label: "Attendance & Logs", icon: Clock, count: null },
-            { id: "holidays", label: "Holidays & Calendar", icon: CalendarDays, count: (holidaysQ.data || []).length },
-            { id: "leaves", label: "Leaves & Requests", icon: FileText, count: (leavesQ.data || []).filter((l: any) => l.status === "pending").length || null },
-            { id: "meetings", label: "Meetings & Standups", icon: Video, count: null },
-            { id: "announcements", label: "Communication & Promos", icon: Megaphone, count: null },
-              { id: "finances", label: "Finances & Payouts", icon: DollarSign, count: null },
-              { id: "cbt", label: "AI CBT Engine", icon: BrainCircuit, count: null },
-              { id: "vyntyra-meet", label: "Vyntyra Meet", icon: ShieldCheck, count: null },
-              { id: "ai-interviews", label: "AI Mock Interviews", icon: Sparkles, count: null },
-            { id: "support", label: "Support & Feedback", icon: LifeBuoy, count: (supportQueries || []).filter((q: any) => q.status === "open").length || null },
-            { id: "profile_approvals", label: "Profile Approvals", icon: UserCheck, count: null },
-            { id: "ambassador", label: "Campus Ambassador", icon: Award, count: null },
-            { id: "dataset-vault", label: "Dataset Vault & CSV Hub", icon: Database, count: null },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => switchTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs shrink-0 transition-all cursor-pointer ${
-                  isActive
-                    ? "bg-slate-900 text-white shadow-sm scale-[1.02]"
-                    : "bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/60"
-                }`}
-              >
-                <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
-                <span>{tab.label}</span>
-                {tab.count !== null && tab.count !== undefined && (
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                    isActive ? "bg-white/20 text-white" : "bg-slate-200/80 text-slate-700"
-                  }`}>
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+            {/* Add Holiday Modal */}
+            <Dialog open={holidayModalOpen} onOpenChange={setHolidayModalOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="gap-1.5 text-xs bg-white text-slate-700 border-slate-200 hover:bg-slate-50 font-bold h-9 px-3 rounded-xl">
+                  <PartyPopper className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="hidden sm:inline">Add Holiday</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-slate-900">
+                    <PartyPopper className="h-5 w-5 text-amber-600" /> Add Official Holiday
+                  </DialogTitle>
+                  <DialogDescription>
+                    This holiday will be reflected in the calendar and dashboard across all Admin, Employee, and Intern portals.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleCreateHolidaySubmit} className="space-y-4 py-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Holiday Title *</Label>
+                    <Input 
+                      required 
+                      value={holidayForm.name} 
+                      onChange={e => setHolidayForm({ ...holidayForm, name: e.target.value })} 
+                      placeholder="e.g. Diwali, Independence Day, Annual Company Day" 
+                      className="text-xs"
+                    />
+                  </div>
 
-        {/* ─── TAB: OVERVIEW ─── */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-slate-700">Holiday Date *</Label>
+                      <Input 
+                        required 
+                        type="date" 
+                        value={holidayForm.date} 
+                        onChange={e => setHolidayForm({ ...holidayForm, date: e.target.value })} 
+                        className="text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-slate-700">Holiday Type</Label>
+                      <Select 
+                        value={holidayForm.type} 
+                        onValueChange={(v: any) => setHolidayForm({ ...holidayForm, type: v })}
+                      >
+                        <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="public">Public / National Holiday</SelectItem>
+                          <SelectItem value="company">Official Company Holiday</SelectItem>
+                          <SelectItem value="festive">Festive Celebration</SelectItem>
+                          <SelectItem value="optional">Optional / Restricted Holiday</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Description (Optional)</Label>
+                    <Textarea 
+                      rows={2} 
+                      value={holidayForm.description} 
+                      onChange={e => setHolidayForm({ ...holidayForm, description: e.target.value })} 
+                      placeholder="e.g. Offices and sprint operations closed." 
+                      className="text-xs"
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border text-xs cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={holidayForm.is_recurring} 
+                      onChange={e => setHolidayForm({ ...holidayForm, is_recurring: e.target.checked })} 
+                      className="accent-amber-600 rounded" 
+                    />
+                    <span className="font-semibold text-slate-700">Recurring annual holiday</span>
+                  </label>
+
+                  <DialogFooter>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setHolidayModalOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSavingHoliday} size="sm" className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-1.5">
+                      {isSavingHoliday ? <Loader2 className="h-4 w-4 animate-spin" /> : <PartyPopper className="h-4 w-4" />}
+                      Save Holiday
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </header>
+
+        {/* Content Body */}
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+{/* ─── TAB: OVERVIEW ─── */}
         {activeTab === "overview" && (
           <div className="space-y-6">
             {/* Stats Row */}
@@ -3562,6 +3801,7 @@ function OperationsDashboard() {
           </section>
         )}
       </main>
+    </div>
       
       {/* â”€â”€ User Profile Drawer / Dialog â”€â”€ */}
       <UserProfileDialog 
