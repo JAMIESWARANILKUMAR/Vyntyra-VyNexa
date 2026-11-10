@@ -290,6 +290,36 @@ export const changeApplicationStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const testTplSchema = z.object({
+  status: z.string(),
+  subject: z.string().min(1),
+  html_body: z.string().min(1),
+  test_email: z.string().email(),
+});
+
+export const sendTestStatusTemplateEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => testTplSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const { sendStatusChangeEmail } = await import("./status-email.server");
+    const res = await sendStatusChangeEmail({
+      toEmail: data.test_email,
+      fullName: "Priya Sharma",
+      roleApplied: "Software Engineer Intern",
+      status: data.status,
+      applicationId: "APP-TEST-2026",
+      portalLink: "https://portal.vyntyraconsultancyservices.in/track",
+      template: {
+        subject: `[TEST PREVIEW] ${data.subject}`,
+        html_body: data.html_body,
+      },
+      idempotencyKey: `test-${data.status}-${Date.now()}`,
+      ccEmail: null,
+    });
+    return { ok: true, result: res };
+  });
+
 // ---------- Status event history ----------
 
 const listEventsSchema = z.object({ applicationId: z.string() });

@@ -1009,34 +1009,95 @@ Hi *${name || "Associate"}*, represent Vyntyra Consultancy Services at *${colleg
                   />
                 </div>
 
-                {/* Rendered Preview Box */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                    Real-Time Rendered Preview
-                  </label>
-                  <div className="border rounded-xl p-4 bg-slate-950 text-white space-y-2 text-xs">
-                    <div className="text-[11px] text-slate-400 pb-2 border-b border-slate-800">
-                      Subject:{" "}
-                      <span className="text-amber-400 font-bold">
-                        {editingTemplate.subject
-                          .replace("{{full_name}}", "Rahul Sharma")
-                          .replace("{{college_name}}", "Andhra University")
-                          .replace("{{cohort_name}}", "First Cohort 2026-27")}
-                      </span>
+                {/* Rendered Preview Box - Exact Corporate Email Preview */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase">
+                      Exact Email Template Preview (Recipient View)
+                    </label>
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      Live 1:1 render with ISO corporate header &amp; executive signature
+                    </span>
+                  </div>
+                  
+                  <div className="rounded-xl border border-slate-200 bg-[#f8fafc] overflow-hidden shadow-sm">
+                    {/* Simulated Client Bar */}
+                    <div className="bg-slate-100 border-b border-slate-200 px-4 py-2 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-slate-600 text-[11px]">Subject:</span>
+                        <span className="font-bold text-slate-900 text-xs">
+                          {editingTemplate.subject
+                            .replace("{{full_name}}", "Rahul Sharma")
+                            .replace("{{college_name}}", "Andhra University")
+                            .replace("{{cohort_name}}", "First Cohort 2026-27")}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-400">Careers Directorate Dispatch</span>
                     </div>
-                    <div
-                      className="prose prose-invert prose-xs max-w-none text-slate-300"
-                      dangerouslySetInnerHTML={{
-                        __html: editingTemplate.body_html
-                          .replace(/\{\{full_name\}\}/g, "Rahul Sharma")
-                          .replace(/\{\{college_name\}\}/g, "Andhra University")
-                          .replace(/\{\{id\}\}/g, "VCS-IRA-2026-0042")
-                          .replace(
-                            /\{\{agreement_link\}\}/g,
-                            editingTemplate.agreement_url || "#"
-                          ),
-                      }}
-                    />
+
+                    {/* Exact Email Card */}
+                    <div className="p-4 sm:p-6 bg-[#f8fafc]">
+                      <div className="max-w-[560px] mx-auto bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-left">
+                        {/* Header */}
+                        <div className="px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                          <img 
+                            src="https://portal.vyntyraconsultancyservices.in/icon-512.png" 
+                            alt="Vyntyra" 
+                            className="w-7 h-7 rounded-md object-contain" 
+                          />
+                          <span className="text-[15px] font-semibold text-slate-900">
+                            Vyntyra Consultancy Services
+                          </span>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 text-slate-700 text-xs leading-relaxed space-y-3">
+                          <div
+                            className="prose prose-slate prose-xs max-w-none text-slate-700 leading-relaxed [&_p]:my-2 [&_h2]:text-base [&_h2]:font-bold [&_h2]:text-slate-900 [&_a]:text-indigo-600"
+                            dangerouslySetInnerHTML={{
+                              __html: editingTemplate.body_html
+                                .replace(/\{\{full_name\}\}/g, "Rahul Sharma")
+                                .replace(/\{\{college_name\}\}/g, "Andhra University")
+                                .replace(/\{\{id\}\}/g, "VCS-IRA-2026-0042")
+                                .replace(
+                                  /\{\{agreement_link\}\}/g,
+                                  editingTemplate.agreement_url || "#"
+                                ),
+                            }}
+                          />
+
+                          {/* Executive Signature Block */}
+                          <div className="mt-6 pt-4 border-t border-slate-200">
+                            <p className="text-xs text-slate-900 m-0 mb-1">Sincerely,</p>
+                            <div className="my-1.5">
+                              <img 
+                                src="https://portal.vyntyraconsultancyservices.in/signature.png" 
+                                alt="Jami Eswar Anil Kumar Signature" 
+                                className="w-28 h-auto block max-w-[110px]" 
+                              />
+                            </div>
+                            <div className="text-xs font-bold text-slate-900 leading-tight">
+                              Jami Eswar Anil Kumar
+                            </div>
+                            <div className="text-[11px] text-sky-600 font-semibold">
+                              Founder &amp; Managing Director
+                            </div>
+                            <div className="text-[10px] text-slate-500">
+                              Vyntyra Institutional Relations &middot; Project VyNexa
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="bg-slate-50 border-t border-slate-200 p-4 text-center text-slate-400 text-[10px] leading-relaxed">
+                          <div className="text-slate-700 font-semibold text-[11px] mb-1">
+                            Vyntyra Consultancy Services
+                          </div>
+                          <div>Dwaraka Nagar, Visakhapatnam - 530016 &middot; ISO 9001:2015 &middot; MSME Registered</div>
+                          <div className="mt-1">Confidential &middot; &copy; 2026 Vyntyra Consultancy Services. All rights reserved.</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
