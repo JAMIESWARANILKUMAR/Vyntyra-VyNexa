@@ -60,11 +60,11 @@ export function NonTechDomainWorkspace({ leads, onAddLead, onUpdateLeadStatus, o
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "Closed-Won": return "bg-emerald-100 text-emerald-800 border-emerald-200";
-      case "Closed-Lost": return "bg-red-100 text-red-800 border-red-200";
-      case "Proposal Sent": return "bg-emerald-100 text-emerald-800 border-emerald-200";
-      case "Requirement Gathered": return "bg-emerald-100 text-emerald-800 border-emerald-200";
-      default: return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      case "Closed-Won": return "bg-slate-900 text-white border-slate-900";
+      case "Closed-Lost": return "bg-slate-200 text-slate-800 border-slate-300";
+      case "Proposal Sent": return "bg-slate-100 text-slate-800 border-slate-200";
+      case "Requirement Gathered": return "bg-slate-100 text-slate-800 border-slate-200";
+      default: return "bg-slate-100 text-slate-800 border-slate-200";
     }
   };
 
@@ -75,7 +75,7 @@ export function NonTechDomainWorkspace({ leads, onAddLead, onUpdateLeadStatus, o
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Total Leads Generated", val: leads.length, sub: "Live CRM database leads", color: "border-l-blue-500" },
-          { label: "Active Pipeline Value", val: `₹${totalPipelineVal.toLocaleString("en-IN")}`, sub: "Estimated Contract Size", color: "border-l-emerald-500" },
+          { label: "Active Pipeline Value", val: `₹${totalPipelineVal.toLocaleString("en-IN")}`, sub: "Estimated Contract Size", color: "border-l-slate-700" },
           { label: "Conversion Rate", val: `${conversionRate}%`, sub: "Closed-Won percentage", color: "border-l-purple-500" },
           { label: "Pending Follow-Ups", val: pendingFollowups, sub: "Scheduled callbacks", color: "border-l-amber-500" },
         ].map((m, idx) => (
@@ -92,17 +92,17 @@ export function NonTechDomainWorkspace({ leads, onAddLead, onUpdateLeadStatus, o
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-slate-900 text-base flex items-center gap-2">
-              <Users className="h-5 w-5 text-emerald-600" /> CRM & Lead Management Hub
+              <Users className="h-5 w-5 text-slate-800" /> CRM & Lead Management Hub
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">Track inbound leads, scope projects, log contact interactions, and trigger 1-click communications.</p>
           </div>
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1.5" onClick={() => setLeadModalOpen(!leadModalOpen)}>
+          <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs gap-1.5" onClick={() => setLeadModalOpen(!leadModalOpen)}>
             <Plus className="h-4 w-4" /> Create Lead Record
           </Button>
         </div>
 
         {leadModalOpen && (
-          <form onSubmit={handleLeadSubmit} className="p-4 rounded-xl bg-emerald-50/40 border border-emerald-200 space-y-3">
+          <form onSubmit={handleLeadSubmit} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[11px] font-semibold text-slate-700">Client / Decision Maker Name</label>
@@ -136,7 +136,7 @@ export function NonTechDomainWorkspace({ leads, onAddLead, onUpdateLeadStatus, o
 
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" size="sm" onClick={() => setLeadModalOpen(false)}>Cancel</Button>
-              <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs">Save Lead Profile</Button>
+              <Button type="submit" size="sm" className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold">Save Lead Profile</Button>
             </div>
           </form>
         )}
@@ -174,12 +174,12 @@ export function NonTechDomainWorkspace({ leads, onAddLead, onUpdateLeadStatus, o
                   {lead.phone && (
                     <>
                       <a href={`tel:${lead.phone}`} className="flex-1">
-                        <Button size="sm" variant="outline" className="w-full h-7 text-[11px] border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                        <Button size="sm" variant="outline" className="w-full h-7 text-[11px] border-slate-300 text-slate-800 hover:bg-slate-100">
                           <Phone className="h-3 w-3 mr-1" /> Call
                         </Button>
                       </a>
                       <a href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" className="flex-1">
-                        <Button size="sm" variant="outline" className="w-full h-7 text-[11px] border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                        <Button size="sm" variant="outline" className="w-full h-7 text-[11px] border-slate-300 text-slate-800 hover:bg-slate-100">
                           <MessageCircle className="h-3 w-3 mr-1" /> WhatsApp
                         </Button>
                       </a>
@@ -187,7 +187,7 @@ export function NonTechDomainWorkspace({ leads, onAddLead, onUpdateLeadStatus, o
                   )}
                   {lead.email && (
                     <a href={`mailto:${lead.email}`} className="flex-1">
-                      <Button size="sm" variant="outline" className="w-full h-7 text-[11px] border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                      <Button size="sm" variant="outline" className="w-full h-7 text-[11px] border-slate-300 text-slate-800 hover:bg-slate-100">
                         <Mail className="h-3 w-3 mr-1" /> Email
                       </Button>
                     </a>
@@ -202,7 +202,7 @@ export function NonTechDomainWorkspace({ leads, onAddLead, onUpdateLeadStatus, o
       {/* 3. Digital Marketing Analytics Tracker */}
       <div className="rounded-xl border bg-white shadow-sm p-6 space-y-4">
         <h3 className="font-semibold text-slate-900 text-sm flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-emerald-600" /> Digital Marketing Campaign Analytics
+          <BarChart3 className="h-4 w-4 text-slate-800" /> Digital Marketing Campaign Analytics
         </h3>
 
         <div className="overflow-x-auto">
@@ -221,11 +221,11 @@ export function NonTechDomainWorkspace({ leads, onAddLead, onUpdateLeadStatus, o
               {campaigns.map((c, idx) => (
                 <tr key={idx} className="hover:bg-slate-50">
                   <td className="p-3 font-semibold text-slate-900">{c.name}</td>
-                  <td className="p-3 font-mono text-emerald-700">{c.platform}</td>
-                  <td className="p-3 font-bold text-emerald-600">{c.ctr}</td>
+                  <td className="p-3 font-mono text-slate-800">{c.platform}</td>
+                  <td className="p-3 font-bold text-slate-900">{c.ctr}</td>
                   <td className="p-3">{c.impressions}</td>
                   <td className="p-3 font-medium">{c.spend}</td>
-                  <td className="p-3 font-bold text-emerald-600">{c.leads}</td>
+                  <td className="p-3 font-bold text-slate-900">{c.leads}</td>
                 </tr>
               ))}
             </tbody>

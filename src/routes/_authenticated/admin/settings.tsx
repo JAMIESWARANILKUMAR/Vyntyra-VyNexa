@@ -50,9 +50,14 @@ export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: AdminSettingsPage,
 });
 
-function AdminSettingsPage() {
-  const { tab } = Route.useSearch();
-  const navigate = Route.useNavigate();
+export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }: { embedded?: boolean; defaultTab?: SettingsTab }) {
+  let tab: SettingsTab | undefined = undefined;
+  try {
+    const search = Route.useSearch();
+    tab = search?.tab;
+  } catch (e) {}
+  let navigate: any = null;
+  try { navigate = Route.useNavigate(); } catch (e) {}
   const [activeTab, setActiveTab] = useState<SettingsTab>(tab || "referrals");
 
   useEffect(() => {
@@ -63,7 +68,7 @@ function AdminSettingsPage() {
 
   const handleTabChange = (newTab: SettingsTab) => {
     setActiveTab(newTab);
-    navigate({ search: { tab: newTab } });
+    try { if (navigate) navigate({ search: { tab: newTab } }); } catch (e) {}
   };
 
   const qc = useQueryClient();
@@ -957,7 +962,8 @@ function AdminSettingsPage() {
   const totalCustomRules = referralRules.filter(r => r.is_custom_rule).length;
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className={embedded ? "w-full" : "min-h-screen bg-surface"}>
+      {!embedded && (
       <header className="border-b border-border bg-card sticky top-0 z-40">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -974,6 +980,7 @@ function AdminSettingsPage() {
           </div>
         </div>
       </header>
+      )}
 
       {/* Subpage Top Navigation Bar */}
       <div className="bg-white border-b sticky top-14 z-30 shadow-2xs">

@@ -12,9 +12,13 @@ import {
   Play, Pause, Square, Search, ExternalLink, ShieldCheck, Download, Send, MessageCircle, Key,
   PartyPopper, LayoutDashboard, BrainCircuit, Layers, FolderOpen, Megaphone, DollarSign,
   CalendarPlus, Share2, Copy, Check, Pencil, Edit, Bell, Sparkles, Database
-, PanelLeftClose, PanelLeftOpen, Menu, X, ChevronRight } from "lucide-react";
+, PanelLeftClose, PanelLeftOpen, Menu, X, ChevronRight, BookOpen, Settings2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { EnterpriseDatasetVaultView } from "@/components/enterprise-dataset-vault";
+import { AdminB2bPlaybook } from "@/components/admin-b2b-playbook";
+import { EmailCampaignsPage } from "@/routes/_authenticated/admin/email-campaigns";
+import { AdminSecurityPage } from "@/routes/_authenticated/admin/security";
+import { AdminSettingsPage } from "@/routes/_authenticated/admin/settings";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useMemo } from "react";
@@ -1075,7 +1079,7 @@ function OperationsDashboard() {
                   <Shield className="h-4.5 w-4.5 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <div className="font-extrabold text-sm text-slate-900 leading-tight truncate">Operations Hub</div>
+                  <div className="font-extrabold text-sm text-slate-900 leading-tight truncate">Explore Admin Dashboard</div>
                   <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Super Admin</div>
                 </div>
               </div>
@@ -1208,7 +1212,7 @@ function OperationsDashboard() {
                     <Shield className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="font-extrabold text-sm text-slate-900">Operations Hub</div>
+                    <div className="font-extrabold text-sm text-slate-900">Explore Admin Dashboard</div>
                     <div className="text-[10px] font-bold text-slate-500 uppercase">Super Admin</div>
                   </div>
                 </div>
@@ -1310,7 +1314,7 @@ function OperationsDashboard() {
                 Admin
               </Link>
               <ChevronRight className="h-3.5 w-3.5 text-slate-400 hidden sm:inline" />
-              <span className="text-slate-700 font-semibold hidden md:inline">Operations Control</span>
+              <span className="text-slate-700 font-semibold hidden md:inline">Explore Admin Dashboard</span>
               <ChevronRight className="h-3.5 w-3.5 text-slate-400 hidden md:inline" />
               <span className="font-bold text-slate-900 truncate">
                 {currentTabItem?.label || activeTab}
@@ -1553,7 +1557,7 @@ function OperationsDashboard() {
 
             {/* Quick Navigation Cards */}
             <div className="space-y-3">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Operations Control Sub-Pages</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Explore Admin Dashboard Sub-Pages</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
                   { id: "directory", title: "Directory & User Management", desc: "Provision accounts, reset passwords, and assign unassigned interns to mentors.", icon: Users, color: "text-blue-600 bg-blue-50 border-blue-200", badge: `${team.length} Members` },

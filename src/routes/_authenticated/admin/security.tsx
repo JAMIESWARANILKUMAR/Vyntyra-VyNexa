@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/admin/security")({
   component: AdminSecurityPage,
 });
 
-function AdminSecurityPage() {
+export function AdminSecurityPage({ embedded = false }: { embedded?: boolean }) {
   const [passwordForm, setPasswordForm] = useState({ newPassword: "", confirmPassword: "" });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
@@ -133,7 +133,8 @@ function AdminSecurityPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
+    <div className={embedded ? "w-full" : "min-h-screen bg-slate-50/50"}>
+      {!embedded && (
       <header className="border-b border-border bg-white sticky top-0 z-40">
         <div className="mx-auto max-w-5xl px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -152,8 +153,9 @@ function AdminSecurityPage() {
           </div>
         </div>
       </header>
+      )}
 
-      <main className="mx-auto max-w-5xl px-6 py-10">
+      <main className={embedded ? "w-full py-2" : "mx-auto max-w-5xl px-6 py-10"}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           
           {/* Change Password Card */}
@@ -229,7 +231,7 @@ function AdminSecurityPage() {
                     <Button 
                       onClick={handleDisableMfa} 
                       variant="outline" 
-                      className="w-full rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 h-11 font-semibold text-xs tracking-wider uppercase bg-transparent"
+                      className="w-full rounded-xl border border-slate-300 text-slate-800 hover:bg-slate-100 h-11 font-semibold text-xs tracking-wider uppercase bg-white"
                     >
                       REMOVE 2FA
                     </Button>
@@ -265,7 +267,7 @@ function AdminSecurityPage() {
                         </Button>
                         <Button 
                           type="submit" 
-                          className="flex-1 bg-gold hover:bg-gold/90 text-primary font-bold rounded-xl h-11 border-0"
+                          className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-11 border-0"
                         >
                           Verify & Enable
                         </Button>
@@ -282,7 +284,7 @@ function AdminSecurityPage() {
                     </div>
                     <Button 
                       onClick={handleEnrollMfa} 
-                      className="w-full bg-gold hover:bg-gold/90 text-primary font-bold rounded-xl h-11 border-0 shadow-[0_0_15px_rgba(212,175,55,0.15)]"
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-11 border-0 shadow-sm"
                     >
                       ADD 2FA
                     </Button>

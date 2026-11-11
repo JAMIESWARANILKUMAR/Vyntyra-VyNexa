@@ -55,22 +55,22 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
       className="space-y-6"
     >
       {/* 1. Developer IDE & Ecosystem Quick Launch Grid */}
-      <div className="rounded-3xl bg-gradient-to-r from-white via-slate-50 to-white text-slate-900 p-6 sm:p-7 shadow-xl shadow-emerald-950/5 border border-emerald-200/80 backdrop-blur-xl space-y-5">
+      <div className="rounded-2xl bg-white text-slate-900 p-6 sm:p-7 shadow-xs border border-slate-200/80 space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-emerald-100 border border-emerald-300 flex items-center justify-center shadow-xs">
-              <Cpu className="h-5 w-5 text-emerald-600" />
+            <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
+              <Cpu className="h-5 w-5 text-white" />
             </div>
             <div>
               <h2 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                 Tech Engineering Workspace
-                <Sparkles className="h-4 w-4 text-emerald-500 animate-pulse" />
+                <Sparkles className="h-4 w-4 text-slate-400" />
               </h2>
               <p className="text-xs text-slate-600">Integrated developer tools, deployment links & staging environments</p>
             </div>
           </div>
-          <span className="text-[11px] font-mono font-black text-emerald-900 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300 shadow-xs flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+          <span className="text-[11px] font-mono font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 shadow-2xs flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
             ENV: STAGING-PROD
           </span>
         </div>
@@ -91,12 +91,12 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
               href={item.url}
               target="_blank"
               rel="noreferrer"
-              className="p-3.5 rounded-2xl bg-white border border-emerald-200/80 hover:bg-emerald-50 hover:border-emerald-300 transition-all flex flex-col items-center gap-2.5 group text-center shadow-xs backdrop-blur-md"
+              className="p-3.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all flex flex-col items-center gap-2.5 group text-center shadow-xs"
             >
-              <div className="h-9 w-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center group-hover:scale-110 group-hover:border-emerald-400 transition-all">
+              <div className="h-9 w-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center group-hover:scale-105 transition-all">
                 {item.icon}
               </div>
-              <span className="text-xs font-extrabold text-slate-800 group-hover:text-emerald-600 truncate max-w-full">{item.name}</span>
+              <span className="text-xs font-bold text-slate-800 group-hover:text-slate-950 truncate max-w-full">{item.name}</span>
             </motion.a>
           ))}
         </div>
@@ -105,7 +105,7 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* 2. Code & PR Submission Hub */}
-        <div className="rounded-3xl border border-emerald-200/80 bg-white/95 p-6 shadow-xl shadow-emerald-950/5 backdrop-blur-xl space-y-4 text-slate-900">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4 text-slate-900">
           <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
             <GitBranch className="h-4.5 w-4.5 text-emerald-600" /> Code &amp; PR Submission Hub
           </h3>
@@ -115,7 +115,7 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
             <div className="grid grid-cols-3 gap-2">
               <input
                 type="text"
-                className="col-span-1 rounded-xl border border-emerald-200 bg-white p-2.5 text-xs font-mono text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 outline-none shadow-xs"
+                className="col-span-1 rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-mono text-slate-900 placeholder:text-slate-400 focus:border-slate-900 outline-none shadow-xs"
                 placeholder="Branch (e.g. main)"
                 value={repoBranch}
                 onChange={(e) => setRepoBranch(e.target.value)}
@@ -123,13 +123,13 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
               <input
                 type="url"
                 required
-                className="col-span-2 rounded-xl border border-emerald-200 bg-white p-2.5 text-xs font-mono text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 outline-none shadow-xs"
+                className="col-span-2 rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-mono text-slate-900 placeholder:text-slate-400 focus:border-slate-900 outline-none shadow-xs"
                 placeholder="https://github.com/org/repo/pull/123"
                 value={prUrl}
                 onChange={(e) => setPrUrl(e.target.value)}
               />
             </div>
-            <Button type="submit" size="sm" className="w-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black text-xs h-10 rounded-xl shadow-lg shadow-emerald-500/25 cursor-pointer border border-emerald-400/30">
+            <Button type="submit" size="sm" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs h-10 rounded-xl cursor-pointer shadow-xs border border-slate-900">
               Submit PR for Review
             </Button>
           </form>
@@ -142,12 +142,12 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
                 <div className="p-4 text-center text-slate-500 text-xs italic">No PRs submitted yet today.</div>
               ) : (
                 prLogs.map((p, i) => (
-                  <div key={i} className="p-3.5 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 space-y-1">
+                  <div key={i} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <a href={p.pr} target="_blank" rel="noreferrer" className="font-extrabold text-emerald-600 hover:underline truncate max-w-[240px]">
+                      <a href={p.pr} target="_blank" rel="noreferrer" className="font-bold text-slate-900 hover:underline truncate max-w-[240px]">
                         {p.title}
                       </a>
-                      <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase border ${p.status === "Approved" ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-emerald-100 text-emerald-800 border-emerald-300"}`}>
+                      <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase border ${p.status === "Approved" ? "bg-slate-900 text-white border-slate-900" : "bg-slate-200 text-slate-800 border-slate-300"}`}>
                         {p.status}
                       </span>
                     </div>
@@ -160,18 +160,18 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
         </div>
 
         {/* 3. Technical Bug & Ticket Log */}
-        <div className="rounded-3xl border border-emerald-200/80 bg-white/95 p-6 shadow-xl shadow-emerald-950/5 backdrop-blur-xl space-y-4 text-slate-900">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4 text-slate-900">
           <div className="flex items-center justify-between">
             <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-              <Bug className="h-4.5 w-4.5 text-rose-500" /> Technical Bug &amp; Issue Tracker
+              <Bug className="h-4.5 w-4.5 text-slate-700" /> Technical Bug &amp; Issue Tracker
             </h3>
-            <Button size="sm" variant="outline" className="h-8 text-xs font-extrabold text-rose-700 border-rose-300 bg-rose-50 hover:bg-rose-100 rounded-xl cursor-pointer" onClick={() => setBugOpen(!bugOpen)}>
-              <Plus className="h-3.5 w-3.5 mr-1 text-rose-600" /> Report Bug
+            <Button size="sm" variant="outline" className="h-8 text-xs font-bold text-slate-800 border-slate-300 bg-white hover:bg-slate-100 rounded-xl cursor-pointer" onClick={() => setBugOpen(!bugOpen)}>
+              <Plus className="h-3.5 w-3.5 mr-1 text-slate-700" /> Report Bug
             </Button>
           </div>
 
           {bugOpen && (
-            <form onSubmit={handleBugSubmit} className="p-4 rounded-2xl border border-rose-300 bg-rose-50/60 space-y-3">
+            <form onSubmit={handleBugSubmit} className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
               <input
                 type="text"
                 required
@@ -205,13 +205,13 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
                   onChange={(e) => setBugForm({ ...bugForm, repo_url: e.target.value })}
                 />
               </div>
-              <Button type="submit" size="sm" className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs h-9 rounded-xl w-full cursor-pointer shadow-md shadow-rose-500/20">
+              <Button type="submit" size="sm" className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs h-9 rounded-xl w-full cursor-pointer shadow-xs border border-slate-900">
                 File Technical Ticket
               </Button>
             </form>
           )}
 
-          <div className="divide-y divide-orange-200/60 max-h-[260px] overflow-y-auto">
+          <div className="divide-y divide-slate-100 max-h-[260px] overflow-y-auto">
             {bugs.length === 0 ? (
               <div className="p-6 text-center text-slate-500 text-xs italic">No active bugs reported. All systems running cleanly!</div>
             ) : (
@@ -219,7 +219,7 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
                 <div key={b.id} className="py-3 flex items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase border ${b.severity === "Blocker" ? "bg-rose-100 text-rose-800 border-rose-300" : "bg-emerald-100 text-emerald-800 border-emerald-300"}`}>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border ${b.severity === "Blocker" ? "bg-slate-900 text-white border-slate-900" : "bg-slate-100 text-slate-800 border-slate-200"}`}>
                         {b.severity}
                       </span>
                       <h4 className="font-extrabold text-xs text-slate-900">{b.title}</h4>
@@ -229,7 +229,7 @@ export function TechDomainWorkspace({ bugs, onAddBug, onUpdateBugStatus }: TechW
                   <Button
                     size="sm"
                     variant="ghost"
-                    className={`h-7 text-xs font-bold ${b.status === "resolved" ? "text-emerald-600 hover:text-emerald-700" : "text-slate-500 hover:text-slate-900"}`}
+                    className={`h-7 text-xs font-bold ${b.status === "resolved" ? "text-slate-900 font-bold" : "text-slate-500 hover:text-slate-900"}`}
                     onClick={() => onUpdateBugStatus(b.id, b.status === "resolved" ? "open" : "resolved")}
                   >
                     {b.status === "resolved" ? <CheckCircle2 className="h-4 w-4" /> : "Resolve"}

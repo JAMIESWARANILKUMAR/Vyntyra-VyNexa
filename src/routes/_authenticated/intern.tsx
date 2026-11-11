@@ -275,7 +275,7 @@ function InternDashboard() {
         toast("NEW EXTENSION ADDED", {
           description: "AI CBT Exams is now available in your dashboard! Check the Connect & Support section.",
           duration: 8000,
-          icon: <BrainCircuit className="h-5 w-5 text-indigo-500" />
+          icon: <BrainCircuit className="h-5 w-5 text-slate-800" />
         });
         localStorage.setItem("cbt-extension-notified", "true");
       }, 1500);
@@ -1080,7 +1080,7 @@ function InternDashboard() {
     { id: "deliverables",   label: `Deliverables (${deliverables.length})`, shortLabel: "Deliverables", icon: Send, category: "Core Work", enabled: isModuleEnabled("deliverables") },
     { id: "kanban",         label: "Sprint Board", shortLabel: "Sprint", icon: Layers, category: "Core Work", enabled: isModuleEnabled("kanban") },
     { id: "lms",            label: "LMS & Skills", shortLabel: "LMS", icon: BookOpen, category: "Core Work", enabled: isModuleEnabled("lms") },
-    { id: "browser",        label: "VyNexa Search", shortLabel: "VyNexa Search", icon: Globe, category: "Core Work", enabled: isModuleEnabled("browser") },
+    
 
     { id: "standups",       label: `Standups (${standups.length})`, shortLabel: "Standups", icon: Clock, category: "Routine & Compliance", enabled: isModuleEnabled("standups") },
     { id: "attendance",     label: `Attendance (${attendanceLogs.length})`, shortLabel: "Attendance", icon: CalendarDays, category: "Routine & Compliance", enabled: isModuleEnabled("attendance") },
@@ -1841,7 +1841,7 @@ function InternDashboard() {
                 <div className="flex items-center gap-3 flex-wrap shrink-0 w-full lg:w-auto">
                   <Button
                     onClick={() => setActiveTab("ambassador")}
-                    className="flex-1 lg:flex-none bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs h-11 px-6 rounded-2xl shadow-lg shadow-amber-500/20 cursor-pointer"
+                    className="flex-1 lg:flex-none bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs h-11 px-6 rounded-2xl shadow-sm border border-slate-200 cursor-pointer"
                   >
                     View Program & Perks &rarr;
                   </Button>
@@ -1860,19 +1860,19 @@ function InternDashboard() {
               {/* Quick Perks Strip */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-800/80 text-xs text-slate-300">
                 <div className="flex items-center gap-2">
-                  <span className="text-amber-400">🎁</span>
+                  <Gift className="h-4 w-4 text-slate-400" />
                   <span>IRA Welcome Kit</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-600">💰</span>
+                  <Coins className="h-4 w-4 text-slate-400" />
                   <span>Up to ₹15k Rewards*</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sky-400">⚡</span>
+                  <Sparkles className="h-4 w-4 text-slate-400" />
                   <span>5+ Branded Gadgets</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-pink-400">✈️</span>
+                  <Award className="h-4 w-4 text-slate-400" />
                   <span>Top 10 Travel Retreat</span>
                 </div>
               </div>
@@ -4226,7 +4226,7 @@ function InternDashboard() {
             <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500 pb-12">
               
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+                <div className="p-3 bg-slate-900 text-white rounded-xl">
                   <BrainCircuit className="h-6 w-6" />
                 </div>
                 <div>
@@ -4244,14 +4244,14 @@ function InternDashboard() {
                     <Button onClick={() => {
                       const id = (document.getElementById("cbtTestId") as HTMLInputElement).value;
                       if(id) window.location.href = "/cbt/" + id;
-                    }} className="bg-emerald-600 hover:bg-emerald-700 whitespace-nowrap">Start Exam</Button>
+                    }} className="bg-slate-900 hover:bg-slate-800 text-white whitespace-nowrap">Start Exam</Button>
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-8 rounded-2xl shadow-xl border border-indigo-100">
-                  <h3 className="font-bold text-lg mb-2 text-indigo-900">Practice Demo</h3>
-                  <p className="text-indigo-700 mb-6 text-sm">Take a quick 5-question demo exam to familiarize yourself with the VyNexa Portal CBT Engine and proctoring rules.</p>
-                  <Button onClick={() => window.location.href = "/cbt/demo"} className="bg-indigo-600 hover:bg-indigo-700 w-full shadow-lg shadow-indigo-500/30">
+                <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+                  <h3 className="font-bold text-lg mb-2 text-slate-900">Practice Demo</h3>
+                  <p className="text-slate-600 mb-6 text-sm">Take a quick 5-question demo exam to familiarize yourself with the VyNexa Portal CBT Engine and proctoring rules.</p>
+                  <Button onClick={() => window.location.href = "/cbt/demo"} className="bg-slate-900 hover:bg-slate-800 text-white w-full shadow-xs">
                     Launch Practice Demo
                   </Button>
                 </div>
@@ -4273,6 +4273,12 @@ function InternDashboard() {
             onNavigateTab={(tab) => setActiveTab(tab as any)}
           />
         )}
+
+        {activeTab === "ambassador" && (
+            <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500 pb-12">
+              <InternAmbassadorView profile={profile} application={profile} />
+            </div>
+          )}
 
         {activeTab === "mock_interview" && (
             <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500 pb-12">
@@ -4525,7 +4531,7 @@ function InternDashboard() {
       )}
 
       {/* Floating Apps Panel */}
-      <FloatingAppsPanel />
+      {/* FloatingAppsPanel removed */}
 
       {/* ── First-Time Login Animated Welcome Modal ── */}
       <FirstLoginWelcomeModal user={profile} mustChangePassword={!!session?.user?.user_metadata?.must_change_password} />
@@ -5842,7 +5848,7 @@ function CbtAvailableExamsSection() {
 
   return (
     <div className="bg-white/80 backdrop-blur-2xl p-8 rounded-2xl shadow-xl border border-slate-200/60 mt-6">
-      <h3 className="font-bold text-lg mb-6 flex items-center gap-2"><BrainCircuit className="h-5 w-5 text-indigo-500" /> Pending CBT Exams</h3>
+      <h3 className="font-bold text-lg mb-6 flex items-center gap-2"><BrainCircuit className="h-5 w-5 text-slate-800" /> Pending CBT Exams</h3>
       {isLoading ? (
         <div className="flex items-center gap-2 text-slate-500">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading exams...
@@ -5852,10 +5858,10 @@ function CbtAvailableExamsSection() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {exams.map((exam: any) => (
-            <div key={exam.id} className="p-5 border border-indigo-100 rounded-xl bg-indigo-50/50 hover:bg-indigo-50 transition flex flex-col justify-between gap-4">
+            <div key={exam.id} className="p-5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 transition flex flex-col justify-between gap-4">
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <h4 className="font-bold text-indigo-900 leading-tight">{exam.title}</h4>
+                  <h4 className="font-bold text-slate-900 leading-tight">{exam.title}</h4>
                   {exam.canRetake ? (
                     <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
                       Retake Available ({exam.attemptsUsed} used)
@@ -5866,7 +5872,7 @@ function CbtAvailableExamsSection() {
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-indigo-700/80 mb-3 line-clamp-2">{exam.description || "Technical assessment and knowledge evaluation."}</p>
+                <p className="text-xs text-slate-600 mb-3 line-clamp-2">{exam.description || "Technical assessment and knowledge evaluation."}</p>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 mb-2">
                   <span className="bg-white/80 px-2 py-0.5 rounded border border-slate-200 font-medium">
                     ⏱️ {exam.time_limit_minutes} Mins
@@ -5883,14 +5889,14 @@ function CbtAvailableExamsSection() {
                 {exam.canRetake ? (
                   <Button
                     onClick={() => window.location.href = "/cbt/" + exam.id}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 shadow-sm"
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold flex items-center justify-center gap-2 shadow-xs"
                   >
                     <RotateCcw className="h-4 w-4" /> Retake Test (Attempt {(exam.attemptsUsed || 0) + 1})
                   </Button>
                 ) : (
                   <Button
                     onClick={() => window.location.href = "/cbt/" + exam.id}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center justify-center gap-2"
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold flex items-center justify-center gap-2 shadow-xs"
                   >
                     <Play className="h-4 w-4" /> Start Exam Now
                   </Button>

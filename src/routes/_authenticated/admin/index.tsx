@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from "framer-motion";
 import { DashboardHeader } from '@/components/dashboard-header';
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -47,7 +48,7 @@ import { listJobPostings, createJobPosting, updateJobPosting, toggleJobPosting, 
 import { listAdminNotifications, markAllNotificationsRead } from "@/lib/notifications.functions";
 import { getVisitorCount } from "@/lib/visitor.functions";
 import { listAllLeaveRequests, listAllFeedbacks, updateLeaveStatus, deleteStoredOfferLetterAndRegenerate, deleteStoredNocAndRegenerate, deleteStoredOfferLetter, deleteStoredNoc } from "@/lib/operations.functions";
-import { Sparkles, RefreshCw, GraduationCap, FolderGit2, Link2, FileSpreadsheet, Award, MessageCircle, BrainCircuit, Database } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Menu, Sparkles, RefreshCw, GraduationCap, FolderGit2, Link2, FileSpreadsheet, Award, MessageCircle, BrainCircuit, Database } from "lucide-react";
 import { WorldClocks } from "@/components/world-clocks";
 import { InstallPwaButton } from "@/components/install-pwa-button";
 import { Switch } from "@/components/ui/switch";
@@ -105,6 +106,8 @@ const NOTIF_ICONS: Record<string, string> = {
 };
 
 function AdminDashboard() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const navigate = useNavigate();
   const qc = useQueryClient();
   const list = useServerFn(listApplications);
@@ -508,31 +511,279 @@ function AdminDashboard() {
     return `${days}d ago`;
   }
 
+  const ADMIN_SIDEBAR_NAV = [
+    {
+      title: "Core Operations",
+      items: [
+        { id: "overview", label: "Overview & Applicants", icon: Users, href: "/admin", isActive: true },
+        { id: "directory", label: "Directory & Users", icon: Users, href: "/admin/operations?tab=directory" },
+        { id: "tasks", label: "Tasks & LMS", icon: ClipboardList, href: "/admin/operations?tab=tasks" },
+        { id: "attendance", label: "Attendance & Logs", icon: Clock, href: "/admin/operations?tab=attendance" },
+        { id: "holidays", label: "Holidays & Calendar", icon: Clock, href: "/admin/operations?tab=holidays" },
+        { id: "leaves", label: "Leaves & Requests", icon: FileText, href: "/admin/operations?tab=leaves" },
+      ]
+    },
+    {
+      title: "Workspace & Video",
+      items: [
+        { id: "meetings", label: "Meetings & Standups", icon: ExternalLink, href: "/admin/operations?tab=meetings" },
+        { id: "announcements", label: "Communication & Promos", icon: Mail, href: "/admin/operations?tab=announcements" },
+        { id: "vyntyra-meet", label: "Vyntyra Meet", icon: ShieldCheck, href: "/admin/operations?tab=vyntyra-meet" },
+        { id: "ai-interviews", label: "AI Mock Interviews", icon: Sparkles, href: "/admin/operations?tab=ai-interviews" },
+        { id: "intern-chat-audit", label: "Vyntyra Chat Audit", icon: MessageCircle, href: "/admin/operations?tab=intern-chat-audit" },
+      ]
+    },
+    {
+      title: "Governance & Data",
+      items: [
+        { id: "finances", label: "Finances & Payouts", icon: Award, href: "/admin/operations?tab=finances" },
+        { id: "cbt", label: "AI CBT Engine", icon: BrainCircuit, href: "/admin/operations?tab=cbt" },
+        { id: "ambassador", label: "Campus Ambassador", icon: Award, href: "/admin/operations?tab=ambassador" },
+        { id: "dataset-vault", label: "Dataset Vault & CSV Hub", icon: Database, href: "/admin/operations?tab=dataset-vault" },
+        { id: "profile_approvals", label: "Profile Approvals", icon: ShieldCheck, href: "/admin/operations?tab=profile_approvals" },
+      ]
+    },
+    {
+      title: "Growth & Enterprise",
+      items: [
+        { id: "b2b-playbook", label: "B2B Sales Playbook", icon: BookOpen, href: "/admin/operations?tab=b2b-playbook" },
+        { id: "email-campaigns", label: "Email Campaigns", icon: Mail, href: "/admin/operations?tab=email-campaigns" },
+        { id: "security", label: "Security & SOC2 Audit", icon: Shield, href: "/admin/operations?tab=security" },
+        { id: "settings", label: "Admin Settings", icon: Settings2, href: "/admin/operations?tab=settings" },
+      ]
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-surface">
-      <DashboardHeader 
-          panelName="Super Admin Dashboard"
-          onSignOut={async () => {
-            await qc.cancelQueries();
-            qc.clear();
-            await supabase.auth.signOut();
-            window.location.href = "/auth/admin";
-          }}
-          links={[
-            { href: "/admin/interviews", label: "AI Mock Interviews", icon: Sparkles, colorClass: "text-blue-600 font-bold hover:bg-blue-50" },
-            { href: "/admin/cbt/generate", label: "AI CBT Engine", icon: BrainCircuit, colorClass: "text-indigo-600 font-bold hover:bg-indigo-50" },
-            { href: "/admin/cbt/submissions", label: "CBT Submissions", icon: ClipboardList },
-            { href: "/admin/b2b-playbook", label: "B2B Playbook", icon: BookOpen, colorClass: "text-gold hover:bg-gold/10" },
-            { href: "/admin/operations", label: "Operations", icon: Users },
-            { href: "/admin/operations?tab=dataset-vault", label: "Dataset Vault & CSV Hub", icon: Database, colorClass: "text-blue-600 font-bold hover:bg-blue-50" },
-            { href: "/admin/email-campaigns", label: "Email Campaigns", icon: Mail },
-            { href: "/cms", label: "CMS", icon: Settings2 },
-            { href: "/templates", label: "Promotional Email Details", icon: Mail, colorClass: "text-emerald-600 border border-emerald-500/30 hover:bg-emerald-50" },
-            { href: "/templates", label: "All Templates", icon: FileText },
-            { href: "/admin/security", label: "Security", icon: Shield },
-            { href: "/admin/settings", label: "Settings", icon: Settings2 }
-          ]}
-        />
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col lg:flex-row text-slate-900 antialiased selection:bg-slate-900 selection:text-white">
+      {/* ─── Desktop Animated Toggle Sidebar ─── */}
+      <motion.aside
+        animate={{ width: sidebarCollapsed ? 76 : 280 }}
+        transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
+        className="hidden lg:flex flex-col h-screen sticky top-0 bg-white border-r border-slate-200/90 z-40 select-none overflow-hidden shrink-0 shadow-xs"
+      >
+        {/* Sidebar Header */}
+        <div className="h-16 px-4 border-b border-slate-200/80 flex items-center justify-between shrink-0 bg-white">
+          {!sidebarCollapsed ? (
+            <>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="h-9 w-9 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs shrink-0 font-black">
+                  <Shield className="h-4.5 w-4.5 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-extrabold text-sm text-slate-900 leading-tight truncate">Explore Admin Hub</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Super Admin</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(true)}
+                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Collapse Sidebar"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </button>
+            </>
+          ) : (
+            <div className="w-full flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(false)}
+                className="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Expand Sidebar"
+              >
+                <PanelLeftOpen className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar Navigation Rail */}
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-none">
+          {ADMIN_SIDEBAR_NAV.map((section) => (
+            <div key={section.title} className="space-y-1">
+              {!sidebarCollapsed && (
+                <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 px-2.5 pb-1">
+                  {section.title}
+                </div>
+              )}
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = item.isActive;
+                  return (
+                    <Link
+                      key={item.id}
+                      to={item.href}
+                      title={sidebarCollapsed ? item.label : undefined}
+                      className={`w-full flex items-center rounded-xl transition-all duration-150 cursor-pointer ${
+                        sidebarCollapsed
+                          ? "justify-center p-2.5"
+                          : "justify-between px-3 py-2 text-xs font-semibold"
+                      } ${
+                        isActive
+                          ? "bg-slate-900 text-white shadow-xs font-bold"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 font-medium"
+                      }`}
+                    >
+                      <div className={`flex items-center ${sidebarCollapsed ? "justify-center" : "gap-2.5 min-w-0"}`}>
+                        <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-white" : "text-slate-500"}`} />
+                        {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Sidebar Footer */}
+        <div className="p-3 border-t border-slate-200/80 bg-slate-50/50 space-y-2 shrink-0">
+          {!sidebarCollapsed ? (
+            <button
+              onClick={async () => {
+                await qc.cancelQueries();
+                qc.clear();
+                await supabase.auth.signOut();
+                window.location.href = "/auth/admin";
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
+            </button>
+          ) : (
+            <button
+              onClick={async () => {
+                await qc.cancelQueries();
+                qc.clear();
+                await supabase.auth.signOut();
+                window.location.href = "/auth/admin";
+              }}
+              className="w-full flex justify-center p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              title="Sign Out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </motion.aside>
+
+      {/* ─── Mobile Slide-over Navigation Drawer ─── */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden flex">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              className="relative w-72 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col z-10"
+            >
+              <div className="h-16 px-4 border-b border-slate-200 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold">
+                    <Shield className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-sm text-slate-900">Explore Admin Hub</div>
+                    <div className="text-[10px] text-slate-500 font-bold uppercase">Super Admin</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+                {ADMIN_SIDEBAR_NAV.map((section) => (
+                  <div key={section.title} className="space-y-1">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 px-2.5 pb-1">
+                      {section.title}
+                    </div>
+                    <div className="space-y-0.5">
+                      {section.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = item.isActive;
+                        return (
+                          <Link
+                            key={item.id}
+                            to={item.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl ${
+                              isActive ? "bg-slate-900 text-white font-bold" : "text-slate-600 hover:bg-slate-100"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <Icon className="h-4 w-4" />
+                              <span>{item.label}</span>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-4 border-t border-slate-200">
+                <button
+                  onClick={async () => {
+                    await qc.cancelQueries();
+                    qc.clear();
+                    await supabase.auth.signOut();
+                    window.location.href = "/auth/admin";
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Main Content Container ─── */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+        {/* Mobile Header */}
+        <header className="lg:hidden sticky top-0 z-30 bg-white border-b border-slate-200/90 px-4 h-14 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-1.5 rounded-lg text-slate-700 hover:bg-slate-100"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="font-extrabold text-xs text-slate-900">Explore Admin Hub</div>
+          <button
+            onClick={async () => {
+              await qc.cancelQueries();
+              qc.clear();
+              await supabase.auth.signOut();
+              window.location.href = "/auth/admin";
+            }}
+            className="p-1.5 text-slate-500 hover:text-rose-600"
+            title="Sign Out"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </header>
+  
+      
 
       <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
         {/* ── Hero Greeting ── */}
@@ -566,7 +817,7 @@ function AdminDashboard() {
                 <div className="flex flex-wrap justify-start sm:justify-end items-center gap-2 mt-1 w-full sm:w-auto">
                   <Button
                     asChild
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0 flex-1 sm:flex-none justify-center"
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 border border-slate-900 flex-1 sm:flex-none justify-center"
                   >
                     <Link to="/admin/operations" search={{ tab: "cbt" }}>
                       <BrainCircuit className="h-4 w-4" /> AI CBT Engine
@@ -575,7 +826,7 @@ function AdminDashboard() {
 
                   <Button
                     asChild
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0 flex-1 sm:flex-none justify-center"
+                    className="bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs shadow-xs flex items-center gap-1.5 border border-slate-300 flex-1 sm:flex-none justify-center"
                   >
                     <Link to="/admin/operations" search={{ tab: "dataset-vault" }}>
                       <Database className="h-4 w-4" /> Dataset Vault & CSV Hub
@@ -584,7 +835,7 @@ function AdminDashboard() {
 
                   <Button
                     asChild
-                    className="bg-gold hover:bg-gold/90 text-slate-950 font-bold text-xs shadow-lg flex items-center gap-1.5 border-0 flex-1 sm:flex-none justify-center"
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 border border-slate-900 flex-1 sm:flex-none justify-center"
                   >
                     <Link to="/admin/b2b-playbook">
                       <BookOpen className="h-4 w-4" /> B2B Sales Playbook
@@ -593,17 +844,17 @@ function AdminDashboard() {
 
                   <Button
                     onClick={() => setSelectionTrackerOpen(true)}
-                    className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0 flex-1 sm:flex-none justify-center"
+                    className="bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs shadow-xs flex items-center gap-1.5 border border-slate-300 flex-1 sm:flex-none justify-center"
                   >
-                    <Mail className="h-4 w-4 text-gold" /> Selection Emails
+                    <Mail className="h-4 w-4 text-slate-800" /> Selection Emails
                   </Button>
 
                   <Button
                     asChild
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 border-0 flex-1 sm:flex-none justify-center"
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 border border-slate-900 flex-1 sm:flex-none justify-center"
                   >
                     <Link to="/admin/operations">
-                      <ClipboardList className="h-4 w-4" /> Operations & Tasks
+                      <ClipboardList className="h-4 w-4" /> Explore Admin Dashboard
                     </Link>
                   </Button>
                 </div>
@@ -1210,7 +1461,7 @@ function AdminDashboard() {
         open={addMemberOpen}
         onClose={() => setAddMemberOpen(false)}
       />
-
+      </div>
     </div>
   );
 }

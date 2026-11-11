@@ -79,7 +79,7 @@ export function EmployeeReferEarn() {
       <div className="bg-white/90 rounded-3xl border border-slate-200/80 p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center gap-2.5">
-            <Coins className="h-6 w-6 text-amber-400" /> Referral &amp; Commission Earnings Hub
+            <Coins className="h-6 w-6 text-slate-800" /> Referral &amp; Commission Earnings Hub
           </h2>
           <p className="text-xs text-slate-500 mt-1">
             Share your unique invite code, track candidate enrollments, and withdraw real-time commission earnings.
@@ -87,9 +87,9 @@ export function EmployeeReferEarn() {
         </div>
 
         {referralCode && (
-          <div className="flex items-center gap-2 bg-emerald-50/80 border border-emerald-300/30 px-4 py-2 rounded-2xl shadow-lg">
-            <span className="text-xs font-bold text-emerald-700">Your Code:</span>
-            <span className="font-mono font-black text-sm text-slate-900 bg-emerald-600/50 border border-emerald-600/40 px-2.5 py-0.5 rounded-lg shadow-inner">
+          <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 px-4 py-2 rounded-2xl shadow-xs">
+            <span className="text-xs font-bold text-slate-700">Your Code:</span>
+            <span className="font-mono font-black text-sm text-slate-900 bg-white border border-slate-200 px-2.5 py-0.5 rounded-lg shadow-inner">
               {referralCode}
             </span>
           </div>
@@ -101,7 +101,7 @@ export function EmployeeReferEarn() {
         <div className="p-5 rounded-3xl border border-slate-200/80 bg-white/90 shadow-xl backdrop-blur-xl space-y-1">
           <div className="flex items-center justify-between text-slate-500 mb-1">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Referred</span>
-            <Users className="h-4 w-4 text-emerald-600" />
+            <Users className="h-4 w-4 text-slate-700" />
           </div>
           <div className="text-2xl font-black text-slate-900">{totalReferred}</div>
           <span className="text-[10px] text-slate-500 font-medium">Registered Applicants</span>
@@ -109,31 +109,31 @@ export function EmployeeReferEarn() {
 
         <div className="p-5 rounded-3xl border border-slate-200/80 bg-white/90 shadow-xl backdrop-blur-xl space-y-1">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Paid &amp; Verified</span>
-            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">Paid &amp; Verified</span>
+            <ShieldCheck className="h-4 w-4 text-slate-700" />
           </div>
-          <div className="text-2xl font-black text-emerald-600">{paidCount}</div>
+          <div className="text-2xl font-black text-slate-900">{paidCount}</div>
           <span className="text-[10px] text-slate-500 font-medium">Successfully Enrolled</span>
         </div>
 
-        <div className="p-5 rounded-3xl border border-emerald-300/40 bg-emerald-50/30 shadow-xl backdrop-blur-xl space-y-1 relative overflow-hidden">
-          <div className="absolute top-0 right-0 h-12 w-12 bg-emerald-500/10 rounded-bl-full" />
-          <div className="flex items-center justify-between text-emerald-700 mb-1">
+        <div className="p-5 rounded-3xl border border-slate-200 bg-white shadow-xl backdrop-blur-xl space-y-1 relative overflow-hidden">
+          <div className="absolute top-0 right-0 h-12 w-12 bg-slate-100 rounded-bl-full" />
+          <div className="flex items-center justify-between text-slate-700 mb-1">
             <span className="text-[11px] font-black uppercase tracking-wider">Your Net Earnings</span>
-            <Sparkles className="h-4 w-4 text-emerald-600 animate-pulse" />
+            <Sparkles className="h-4 w-4 text-slate-700" />
           </div>
-          <div className="text-2xl font-black text-emerald-800">₹{Number(netCommissionEarnings).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-          <span className="text-[10px] text-emerald-600/80 font-semibold">₹{grossCommission} gross − ₹{gatewayCostReferrerShare} (50% PG share)</span>
+          <div className="text-2xl font-black text-slate-900">₹{Number(netCommissionEarnings).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          <span className="text-[10px] text-slate-500 font-semibold">₹{grossCommission} gross − ₹{gatewayCostReferrerShare} (50% PG share)</span>
         </div>
       </div>
 
       {/* Transparent Fee & Allocation Note */}
-      <div className="p-5 bg-gradient-to-r from-emerald-50/40 via-emerald-50/30 to-white/60 border border-emerald-300/30 rounded-3xl text-xs flex items-start gap-3.5 shadow-xl backdrop-blur-xl">
-        <Sparkles className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+      <div className="p-5 bg-slate-50 border border-slate-200 rounded-3xl text-xs flex items-start gap-3.5 shadow-xl backdrop-blur-xl">
+        <Sparkles className="h-5 w-5 text-slate-700 shrink-0 mt-0.5" />
         <div className="space-y-1 text-slate-600 leading-relaxed">
           <div className="font-extrabold text-slate-900">50/50 Equal Gateway &amp; Tax Sharing Policy:</div>
           <div className="text-slate-500 text-xs">
-            Payment gateway processing charges, settlement fees, and applicable taxes are <strong className="text-emerald-700">divided equally (50% / 50%)</strong> between the Referrer's Commission and Company Income across all transactions. ₹199 per paid candidate is dedicated to Government Certification reserves.
+            Payment gateway processing charges, settlement fees, and applicable taxes are <strong className="text-slate-900">divided equally (50% / 50%)</strong> between the Referrer's Commission and Company Income across all transactions. ₹199 per paid candidate is dedicated to Government Certification reserves.
           </div>
         </div>
       </div>
@@ -143,8 +143,8 @@ export function EmployeeReferEarn() {
           
           {/* Referral Code Card */}
           <div className="rounded-3xl border border-slate-200/80 bg-white/90 p-6 shadow-xl backdrop-blur-xl flex flex-col items-center text-center relative overflow-hidden transition-all duration-300 hover:border-slate-300">
-            <div className="absolute top-0 right-0 h-16 w-16 bg-emerald-500/10 rounded-bl-full flex items-center justify-center">
-              <Award className="h-5 w-5 text-emerald-600 translate-x-2 -translate-y-2 animate-float" />
+            <div className="absolute top-0 right-0 h-16 w-16 bg-slate-100 rounded-bl-full flex items-center justify-center">
+              <Award className="h-5 w-5 text-slate-700 translate-x-2 -translate-y-2 animate-float" />
             </div>
             
             <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1">
@@ -156,7 +156,7 @@ export function EmployeeReferEarn() {
             
             {referralCodeQ.isLoading ? (
               <div className="py-6 flex items-center gap-2 text-slate-500 text-xs justify-center">
-                <Loader2 className="h-4 w-4 animate-spin text-emerald-600" /> Generating unique code...
+                <Loader2 className="h-4 w-4 animate-spin text-slate-900" /> Generating unique code...
               </div>
             ) : (
               <div className="w-full space-y-4">
@@ -167,10 +167,10 @@ export function EmployeeReferEarn() {
                     toast.success("Referral Code copied to clipboard!");
                     setTimeout(() => setCopiedCode(false), 2000);
                   }}
-                  className="relative animate-dark-shine border-2 border-dashed border-emerald-300/40 p-5 rounded-2xl font-mono text-3xl font-black tracking-widest text-emerald-700 overflow-hidden flex items-center justify-center gap-2 select-all shadow-inner group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer"
+                  className="relative animate-dark-shine border-2 border-dashed border-slate-300 p-5 rounded-2xl font-mono text-3xl font-black tracking-widest text-slate-900 bg-slate-50 overflow-hidden flex items-center justify-center gap-2 select-all shadow-inner group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer"
                 >
                   {referralCode}
-                  <span className="absolute bottom-1 right-2 text-[9px] font-sans font-medium text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200">Click to copy</span>
+                  <span className="absolute bottom-1 right-2 text-[9px] font-sans font-medium text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200">Click to copy</span>
                 </div>
                 
                 <Button
@@ -182,8 +182,8 @@ export function EmployeeReferEarn() {
                   }}
                   className={`w-full font-bold text-xs h-10 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-md cursor-pointer ${
                     copiedCode 
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-slate-900" 
-                      : "bg-emerald-600 hover:bg-emerald-700 text-slate-900"
+                      ? "bg-slate-900 hover:bg-slate-800 text-white" 
+                      : "bg-slate-900 hover:bg-slate-800 text-white"
                   }`}
                 >
                   {copiedCode ? (
@@ -203,7 +203,7 @@ export function EmployeeReferEarn() {
           {/* Invitation Message Card */}
           <div className="rounded-3xl border border-slate-200/80 bg-white/90 p-6 shadow-xl backdrop-blur-xl space-y-3.5 transition-all duration-300 hover:border-slate-300">
             <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-              <Send className="h-4 w-4 text-emerald-600" /> Share Invitation Message
+              <Send className="h-4 w-4 text-slate-700" /> Share Invitation Message
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed">Send this invite directly to candidates wishing to apply.</p>
             
@@ -222,7 +222,7 @@ export function EmployeeReferEarn() {
               variant="outline"
               className={`w-full text-xs font-bold h-10 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 border-slate-300 cursor-pointer ${
                 copiedInvite 
-                  ? "bg-emerald-50/80 border-emerald-300 text-emerald-700" 
+                  ? "bg-slate-100 border-slate-300 text-slate-800" 
                   : "bg-slate-50 text-slate-700 hover:text-slate-900 hover:bg-slate-100"
               }`}
             >
@@ -245,12 +245,12 @@ export function EmployeeReferEarn() {
           <div className="border-b border-slate-200 pb-4 mb-4 flex items-center justify-between flex-wrap gap-3">
             <div>
               <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-                <Users className="h-5 w-5 text-emerald-600" /> Referred Candidates &amp; Financial Breakdown
+                <Users className="h-5 w-5 text-slate-700" /> Referred Candidates &amp; Financial Breakdown
               </h3>
               <p className="text-xs text-slate-500 mt-1">Real-time status, payments, and individual commission calculation per referral.</p>
             </div>
             {candidates.length > 0 && (
-              <span className="bg-emerald-50/80 border border-emerald-300/30 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
+              <span className="bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold px-3 py-1 rounded-full">
                 {paidCount} Paid / {candidates.length} Total
               </span>
             )}
@@ -259,15 +259,15 @@ export function EmployeeReferEarn() {
           <div className="flex-1 overflow-x-auto">
             {referralCodeQ.isLoading || referralConversionsQ.isLoading ? (
               <div className="p-8 flex flex-col items-center justify-center gap-3 text-slate-500 text-sm h-full min-h-[250px]">
-                <Loader2 className="h-8 w-8 animate-spin text-emerald-600" /> 
+                <Loader2 className="h-8 w-8 animate-spin text-slate-900" /> 
                 <span>Loading referral conversions...</span>
               </div>
             ) : candidates.length === 0 ? (
               <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-8 text-slate-500 gap-4">
                 <div className="relative flex items-center justify-center">
-                  <div className="absolute h-16 w-16 bg-emerald-500/10 rounded-full animate-pulse-ring" />
-                  <div className="relative h-12 w-12 bg-emerald-50/80 border border-emerald-300/30 rounded-full flex items-center justify-center shadow-lg">
-                    <Users className="h-6 w-6 text-emerald-600 animate-float" />
+                  <div className="absolute h-16 w-16 bg-slate-100 rounded-full animate-pulse-ring" />
+                  <div className="relative h-12 w-12 bg-slate-100 border border-slate-200 rounded-full flex items-center justify-center shadow-lg">
+                    <Users className="h-6 w-6 text-slate-700 animate-float" />
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -294,7 +294,7 @@ export function EmployeeReferEarn() {
                     return (
                       <tr key={r.id || idx} className="hover:bg-slate-100/40 transition-colors">
                         <td className="px-4 py-3 font-medium text-slate-900 flex items-center gap-2.5">
-                          <div className="h-7 w-7 rounded-full bg-emerald-50/80 border border-emerald-300/30 text-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">
+                          <div className="h-7 w-7 rounded-full bg-slate-100 border border-slate-200 text-slate-800 flex items-center justify-center text-xs font-bold shrink-0">
                             {r.candidate_name ? r.candidate_name[0].toUpperCase() : "?"}
                           </div>
                           <div>
@@ -309,7 +309,7 @@ export function EmployeeReferEarn() {
                         <td className="px-4 py-3">
                           <span className={`px-2.5 py-1 text-[10px] font-extrabold rounded-full uppercase tracking-wider ${
                             isPaid
-                              ? "bg-emerald-50/80 text-emerald-700 border border-emerald-300"
+                              ? "bg-slate-900 text-white border border-slate-900"
                               : "bg-amber-50/80 text-amber-700 border border-amber-300/30"
                           }`}>
                             {isPaid ? "Paid & Verified" : "Pending Payment"}
@@ -318,7 +318,7 @@ export function EmployeeReferEarn() {
                         <td className="px-4 py-3 text-right font-extrabold">
                           {isPaid ? (
                             <div>
-                              <span className="text-emerald-700 font-bold bg-emerald-50/80 border border-emerald-300/30 px-2.5 py-1 rounded-xl shadow-xs">
+                              <span className="text-slate-900 font-bold bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-xl shadow-xs">
                                 +₹{Number(r.net_earnings !== undefined ? r.net_earnings : Math.max(0, commission - Math.round(((r.gateway_fee || 12.89) / 2) * 100) / 100)).toFixed(2)}
                               </span>
                               <div className="text-[9px] text-slate-500 font-normal mt-1">
