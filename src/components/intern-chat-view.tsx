@@ -417,9 +417,13 @@ export function InternChatView({
                           intern.full_name.slice(0, 2).toUpperCase()
                         )}
                       </div>
-                      {intern.is_online && (
-                        <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-slate-900 border-2 border-white" />
-                      )}
+                      {/* Green dot if clocked in / active, Red dot if not active */}
+                      <span
+                        className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${
+                          intern.is_online ? "bg-emerald-500" : "bg-rose-500"
+                        }`}
+                        title={intern.is_online ? "Active (Clocked In)" : "Not active"}
+                      />
                     </div>
 
                     <div className="min-w-0 flex-1">
@@ -431,11 +435,21 @@ export function InternChatView({
                           {intern.intern_id}
                         </span>
                       </div>
-                      <p className={`text-[11px] truncate mt-0.5 ${
-                        isSelected ? "text-slate-300" : "text-slate-500"
-                      }`}>
-                        {intern.domain}
-                      </p>
+                      <div className="flex items-center justify-between gap-1 mt-0.5">
+                        <p className={`text-[11px] truncate ${
+                          isSelected ? "text-slate-300" : "text-slate-500"
+                        }`}>
+                          {intern.domain}
+                        </p>
+                        <span className={`text-[10px] font-bold shrink-0 flex items-center gap-1 ${
+                          intern.is_online
+                            ? (isSelected ? "text-emerald-300" : "text-emerald-600")
+                            : (isSelected ? "text-rose-300" : "text-rose-500")
+                        }`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${intern.is_online ? "bg-emerald-500" : "bg-rose-500"}`} />
+                          {intern.is_online ? "Active" : "Not active"}
+                        </span>
+                      </div>
                     </div>
                   </button>
                 );
@@ -503,9 +517,12 @@ export function InternChatView({
                           selectedContact.full_name.slice(0, 2).toUpperCase()
                         )}
                       </div>
-                      {selectedContact.is_online && (
-                        <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-slate-900 border-2 border-white" />
-                      )}
+                      {/* Green dot if active, Red dot if not active */}
+                      <span
+                        className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${
+                          selectedContact.is_online ? "bg-emerald-500" : "bg-rose-500"
+                        }`}
+                      />
                     </button>
 
                     <div className="min-w-0">
@@ -523,10 +540,17 @@ export function InternChatView({
                       <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
                         <span className="truncate">{selectedContact.domain}</span>
                         <span>·</span>
-                        <span className="text-slate-700 font-semibold flex items-center gap-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-slate-900" />
-                          Active now
-                        </span>
+                        {selectedContact.is_online ? (
+                          <span className="text-emerald-600 font-semibold flex items-center gap-1.5">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                            {selectedContact.is_clocked_in ? "Clocked In & Active" : "Active now"}
+                          </span>
+                        ) : (
+                          <span className="text-rose-500 font-semibold flex items-center gap-1.5">
+                            <span className="h-2 w-2 rounded-full bg-rose-500" />
+                            Not active
+                          </span>
+                        )}
                       </div>
                     </div>
                   </>
@@ -764,6 +788,15 @@ export function InternChatView({
 
                 <h3 className="text-xl font-black tracking-tight">{viewingProfile.full_name}</h3>
                 <p className="text-xs text-slate-300 font-mono mt-0.5">{viewingProfile.intern_id}</p>
+
+                <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/10 text-white">
+                  <span className={`h-2 w-2 rounded-full ${viewingProfile.is_online ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
+                  <span>
+                    {viewingProfile.is_online
+                      ? (viewingProfile.is_clocked_in ? "Clocked In · Active Shift" : "Active now")
+                      : "Not active · Offline"}
+                  </span>
+                </div>
               </div>
 
               {/* Safe Information Grid (WhatsApp layout) */}

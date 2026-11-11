@@ -60,6 +60,7 @@ export interface SafeInternProfile {
   internship_period: string;
   avatar_url?: string | null;
   is_online?: boolean;
+  is_clocked_in?: boolean;
   last_seen?: string | null;
 }
 
@@ -284,7 +285,8 @@ export const listChatInternsFn = createServerFn({ method: "GET" })
           department: "Full-Stack Web Engineering",
           position: "Frontend React Developer",
           college_name: "IIT Madras - CSE",
-          duration_months: 6
+          duration_months: 6,
+          is_clocked_in: true
         },
         {
           id: "int_02",
@@ -294,7 +296,8 @@ export const listChatInternsFn = createServerFn({ method: "GET" })
           department: "AI & Machine Learning",
           position: "LLM Systems Engineer",
           college_name: "BITS Pilani - CS & Data",
-          duration_months: 6
+          duration_months: 6,
+          is_clocked_in: true
         },
         {
           id: "int_03",
@@ -304,7 +307,8 @@ export const listChatInternsFn = createServerFn({ method: "GET" })
           department: "Cloud Architecture & DevOps",
           position: "Cloud Infrastructure Intern",
           college_name: "NIT Trichy - ECE",
-          duration_months: 6
+          duration_months: 6,
+          is_clocked_in: false
         },
         {
           id: "int_04",
@@ -314,13 +318,36 @@ export const listChatInternsFn = createServerFn({ method: "GET" })
           department: "UI/UX & Product Design",
           position: "Product Design Associate",
           college_name: "NID Ahmedabad",
-          duration_months: 6
+          duration_months: 6,
+          is_clocked_in: false
         }
       ];
     }
 
+    // 5. Query active attendance to identify who is currently clocked in
+    const clockedInUserIds = new Set<string>();
+    try {
+      const { data: activeAtt } = await admin
+        .from("attendance")
+        .select("user_id, clock_in, clock_out")
+        .is("clock_out", null)
+        .gte("clock_in", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+
+      if (activeAtt) {
+        activeAtt.forEach((a: any) => {
+          if (a.user_id) clockedInUserIds.add(String(a.user_id));
+        });
+      }
+    } catch (e) {
+      console.warn("[listChatInternsFn] Attendance check error:", e);
+    }
+
     return rawProfiles.map((i: any) => {
       const presence = memoryPresence.get(String(i.id));
+      const isClockedIn = clockedInUserIds.has(String(i.id)) || (i.is_clocked_in === true);
+      // Active if currently clocked in or active in presence session
+      const isActive = isClockedIn || (presence?.is_online === true);
+
       return {
         id: String(i.id),
         full_name: i.full_name || "Intern Associate",
@@ -330,7 +357,8 @@ export const listChatInternsFn = createServerFn({ method: "GET" })
         domain: i.department || "Software Development",
         internship_period: `${i.duration_months || 6} Months (Cohort 2026-27)`,
         avatar_url: i.avatar_url || null,
-        is_online: presence?.is_online ?? true,
+        is_online: isActive,
+        is_clocked_in: isClockedIn,
         last_seen: presence?.last_seen ?? i.updated_at ?? new Date().toISOString()
       };
     });
