@@ -251,29 +251,37 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
   ];
 
   return (
-    <section className="rounded-3xl border border-slate-200/80 bg-white shadow-xl overflow-hidden mt-4 transition-all">
-      {/* Premium Header Banner */}
-      <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white px-8 py-7 flex flex-wrap items-center justify-between gap-6 border-b border-indigo-900/40 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 space-y-1.5">
-          <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-            <ShieldCheck className="h-4 w-4 text-emerald-400" /> High-Deliverability Resend Enterprise Engine
+    <section className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden mt-4">
+      {/* ─── Institutional Header Banner ─── */}
+      <div className="bg-slate-900 text-white px-6 sm:px-8 py-6 sm:py-7 flex flex-wrap items-center justify-between gap-6 border-b border-slate-800">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="h-6 px-2.5 rounded-md bg-white/10 text-white font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5 border border-white/15">
+              <ShieldCheck className="h-3.5 w-3.5 text-white" /> ISO/IEC 27001 AUDIT READY
+            </span>
+            <span className="h-6 px-2.5 rounded-md bg-white/10 text-white font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 border border-white/15">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> HIGH-DELIVERABILITY RESEND ENTERPRISE
+            </span>
+            <span className="h-6 px-2.5 rounded-md bg-white/10 text-white font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 border border-white/10">
+              ZERO-SPAM INBOX ROUTING
+            </span>
           </div>
-          <h2 className="text-2xl font-black mt-1 text-white flex items-center gap-2.5 tracking-tight">
-            <Mail className="h-6 w-6 text-indigo-400" /> Automated Email Outreach & Promotion Engine
+
+          <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5 tracking-tight">
+            <Mail className="h-5 w-5 text-white" /> Automated Email Outreach &amp; Promotion Engine
           </h2>
-          <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-            Dispatch high-converting internship promotions, admission offers, and candidate newsletters with automatic <strong>2-second deliverability pacing</strong>, zero spam inbox routing, and full SPF/DKIM verification.
+
+          <p className="text-xs text-slate-300 max-w-3xl leading-relaxed">
+            Dispatch high-converting internship promotions, admission offers, and candidate newsletters with automatic <strong className="text-white font-bold">2-second deliverability pacing</strong>, zero spam inbox routing, and full SPF/DKIM verification.
           </p>
         </div>
-        
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-indigo-500/30 text-xs shadow-inner">
-            <Clock className="h-5 w-5 text-emerald-400 shrink-0" />
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-xs px-4 py-2.5 rounded-xl border border-white/15 text-xs shadow-xs">
+            <Clock className="h-5 w-5 text-white shrink-0" />
             <div>
-              <div className="text-slate-300 font-semibold text-[11px] uppercase tracking-wider">Deliverability Pacing</div>
-              <div className="text-emerald-400 font-black text-xs">2.0s Smart Rate Limit</div>
+              <div className="text-slate-300 font-mono text-[10px] uppercase tracking-wider font-semibold">Deliverability Pacing</div>
+              <div className="text-white font-black text-xs font-mono">2.0s Smart Rate Limit</div>
             </div>
           </div>
         </div>
@@ -292,38 +300,38 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                 Real-time tracking of sent promotional email recipients vs actual registered internship applications.
               </p>
             </div>
-            <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold px-3 py-1 rounded-full">
+            <span className="bg-slate-900 text-white font-mono text-xs font-bold px-3 py-1 rounded-md self-start sm:self-center">
               Conversion Rate: {conv.conversionRate}%
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-1">
-              <div className="text-xs font-semibold text-slate-500 uppercase">Promotional Emails Sent</div>
-              <div className="text-2xl font-black text-slate-900">{conv.totalSent}</div>
-              <div className="text-[11px] text-slate-400">Total email dispatches</div>
+              <div className="text-[10px] font-bold font-mono text-slate-500 uppercase">Promotional Emails Sent</div>
+              <div className="text-2xl font-black text-slate-900 font-mono">{conv.totalSent}</div>
+              <div className="text-[11px] text-slate-500">Total email dispatches</div>
             </div>
 
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 shadow-xs space-y-1">
-              <div className="text-xs font-semibold text-emerald-800 uppercase flex items-center gap-1">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Registered (Matched)
+            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-1">
+              <div className="text-[10px] font-bold font-mono text-slate-500 uppercase flex items-center gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5 text-slate-900" /> Registered (Matched)
               </div>
-              <div className="text-2xl font-black text-emerald-950">{conv.totalMatched}</div>
-              <div className="text-[11px] text-emerald-700 font-medium">Applied for Internship</div>
+              <div className="text-2xl font-black text-slate-900 font-mono">{conv.totalMatched}</div>
+              <div className="text-[11px] text-slate-500">Applied for Internship</div>
             </div>
 
-            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 shadow-xs space-y-1">
-              <div className="text-xs font-semibold text-amber-800 uppercase flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5 text-amber-600" /> Pending Registration
+            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-1">
+              <div className="text-[10px] font-bold font-mono text-slate-500 uppercase flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5 text-slate-500" /> Pending Registration
               </div>
-              <div className="text-2xl font-black text-amber-950">{conv.totalPending}</div>
-              <div className="text-[11px] text-amber-700 font-medium">Email Sent / Not Registered</div>
+              <div className="text-2xl font-black text-slate-900 font-mono">{conv.totalPending}</div>
+              <div className="text-[11px] text-slate-500">Email Sent / Not Registered</div>
             </div>
 
-            <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-200 shadow-xs space-y-1">
-              <div className="text-xs font-semibold text-indigo-800 uppercase">Total Portal Applications</div>
-              <div className="text-2xl font-black text-indigo-950">{conv.allApplicationsCount}</div>
-              <div className="text-[11px] text-indigo-700 font-medium">Across All Channels</div>
+            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-1">
+              <div className="text-[10px] font-bold font-mono text-slate-500 uppercase">Total Portal Applications</div>
+              <div className="text-2xl font-black text-slate-900 font-mono">{conv.allApplicationsCount}</div>
+              <div className="text-[11px] text-slate-500">Across All Channels</div>
             </div>
           </div>
 
@@ -397,10 +405,10 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
         {/* Safety Email Service Quota & Load Balancer Widgets */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Card 1: Resend Quota */}
-          <div className="rounded-xl border border-emerald-300 bg-white p-4 space-y-2 shadow-xs ring-1 ring-emerald-500/10">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">Resend Primary Engine</span>
-              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Resend Primary Engine</span>
+              <span className="bg-slate-900 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded-md">
                 Primary &middot; 3k / mo
               </span>
             </div>
@@ -410,13 +418,13 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
             </div>
             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
               <div 
-                className="bg-emerald-500 h-full transition-all" 
+                className="bg-slate-900 h-full transition-all" 
                 style={{ width: `${Math.min(100, ((quota.resendSentThisMonth || 0) / 3000) * 100)}%` }} 
               />
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
               <span>Today: <strong>{quota.resendSentToday || 0} Sent</strong></span>
-              <span className="text-emerald-700 font-semibold font-mono">
+              <span className="text-slate-900 font-semibold font-mono">
                 {quota.hasResendKey ? "✓ Resend Active (Primary)" : "⚠️ Key Missing"}
               </span>
             </div>
@@ -447,18 +455,18 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
           </div>
 
           {/* Card 3: Total Load Balancer Safety */}
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-2 shadow-xs">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">Total Safety Capacity</span>
-              <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Total Safety Capacity</span>
+              <span className="bg-slate-900 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded-md">
                 Resend Direct
               </span>
             </div>
             <div className="flex items-baseline justify-between">
-              <div className="text-2xl font-black text-emerald-950">{quota.totalSentThisMonth.toLocaleString()}</div>
-              <div className="text-xs text-emerald-800 font-medium">Total Sent This Month</div>
+              <div className="text-2xl font-black text-slate-900 font-mono">{quota.totalSentThisMonth.toLocaleString()}</div>
+              <div className="text-xs text-slate-600 font-medium">Total Sent This Month</div>
             </div>
-            <div className="text-[11px] text-emerald-800 leading-snug pt-1">
+            <div className="text-[11px] text-slate-600 leading-snug pt-1">
               All emails are delivered directly via the Resend Enterprise Engine with 100% reliable inbox delivery and smart deliverability pacing.
             </div>
           </div>
@@ -487,8 +495,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
 
             <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
               <div className="flex flex-wrap items-center gap-2">
-                <label className="cursor-pointer inline-flex items-center gap-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition-colors shadow-xs">
-                  <UploadCloud className="h-4 w-4 text-emerald-600" /> Upload Excel / CSV
+                <label className="cursor-pointer inline-flex items-center gap-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors shadow-xs">
+                  <UploadCloud className="h-4 w-4 text-white" /> Upload Excel / CSV
                   <input type="file" accept=".csv,.xlsx,.xls,.txt" onChange={handleFileUpload} className="hidden" />
                 </label>
 
@@ -497,7 +505,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                   variant="outline" 
                   size="sm" 
                   onClick={downloadCsvTemplate}
-                  className="text-xs gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                  className="text-xs gap-1.5 border-slate-300 text-slate-800 hover:bg-slate-100 rounded-lg"
                 >
                   <Download className="h-3.5 w-3.5" /> Download CSV Template
                 </Button>
@@ -507,7 +515,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                 </Button>
               </div>
 
-              <div className="text-xs font-semibold text-slate-700 bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-lg border border-emerald-200 flex items-center gap-1.5">
+              <div className="text-xs font-semibold text-slate-800 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-1.5 font-mono">
                 <Users className="h-3.5 w-3.5" /> Extracted Audience: <strong className="text-emerald-900 font-bold">{recipients.length} Recipients</strong>
               </div>
             </div>
@@ -528,8 +536,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
             </div>
 
             {/* Template Specs */}
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 space-y-2.5 text-xs text-slate-700">
-              <div className="font-bold text-emerald-900 flex items-center gap-1.5 text-sm">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2.5 text-xs text-slate-800">
+              <div className="font-bold text-slate-900 flex items-center gap-1.5 text-xs font-mono uppercase">
                 <ShieldCheck className="h-4 w-4 text-emerald-600" /> Verified High-Inbox Template Features:
               </div>
               <ul className="space-y-1.5 text-slate-600">
@@ -570,21 +578,21 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                 <Button 
                   onClick={startAutomation} 
                   disabled={recipients.length === 0}
-                  className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-5 py-2.5 rounded-xl shadow-lg transition-all gap-2 text-xs"
+                  className="bg-white hover:bg-slate-100 text-slate-900 font-extrabold px-5 py-2.5 rounded-xl shadow-xs transition-all gap-2 text-xs cursor-pointer"
                 >
                   <Play className="h-4 w-4 fill-slate-950" /> Start 2s Delay Campaign ({recipients.length})
                 </Button>
               ) : isPaused ? (
                 <Button 
                   onClick={resumeAutomation} 
-                  className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs gap-2"
+                  className="bg-white hover:bg-slate-100 text-slate-900 font-extrabold px-5 py-2.5 rounded-xl text-xs gap-2 cursor-pointer"
                 >
                   <Play className="h-4 w-4 fill-slate-950" /> Resume Campaign
                 </Button>
               ) : (
                 <Button 
                   onClick={pauseAutomation} 
-                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs gap-2"
+                  className="bg-white hover:bg-slate-100 text-slate-900 font-extrabold px-5 py-2.5 rounded-xl text-xs gap-2 cursor-pointer"
                 >
                   <Pause className="h-4 w-4 fill-slate-950" /> Pause Campaign
                 </Button>
@@ -594,7 +602,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                 <Button 
                   onClick={stopAutomation} 
                   variant="outline" 
-                  className="border-rose-500 text-rose-400 hover:bg-rose-950/40 text-xs px-4 py-2.5 rounded-xl gap-1.5"
+                  className="border border-white/20 text-white hover:bg-white/10 text-xs px-4 py-2.5 rounded-xl gap-1.5 cursor-pointer"
                 >
                   <Square className="h-3.5 w-3.5 fill-rose-400" /> Stop Campaign
                 </Button>
@@ -616,7 +624,7 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
             </div>
             <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden border border-slate-700">
               <div 
-                className="bg-emerald-500 h-full transition-all duration-500 ease-out" 
+                className="bg-white h-full transition-all duration-500 ease-out" 
                 style={{ width: `${recipients.length > 0 ? (currentIndex / recipients.length) * 100 : 0}%` }}
               />
             </div>
@@ -729,9 +737,9 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                       <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="px-5 py-3.5">
                           {isSelectionEmail ? (
-                            <span className="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap">Selection</span>
+                            <span className="bg-slate-900 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap">Selection</span>
                           ) : (
-                            <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap">Promotional</span>
+                            <span className="bg-slate-100 text-slate-800 border border-slate-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap">Promotional</span>
                           )}
                         </td>
                         <td className="px-5 py-3.5 font-bold text-slate-900">{log.recipient_email}</td>
@@ -755,8 +763,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                         <td className="px-5 py-3.5 text-slate-600 font-mono">{sentTime}</td>
                         <td className="px-5 py-3.5">
                           {log.status === "sent" ? (
-                            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                              <CheckCircle2 className="h-3 w-3" /> Sent
+                            <span className="bg-slate-900 text-white font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md inline-flex items-center gap-1">
+                              <Check className="h-3 w-3 text-white" /> Sent
                             </span>
                           ) : log.status === "pending" ? (
                             <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
@@ -770,8 +778,8 @@ function EmailAutomationHub({ emailLogsQ, doSendPromotionalEmail, doDeleteAutoma
                         </td>
                         <td className="px-5 py-3.5">
                           {isMatched ? (
-                            <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-extrabold px-2.5 py-1 rounded-full inline-flex items-center gap-1 shadow-xs uppercase">
-                              <CheckCircle2 className="h-3 w-3 text-emerald-600" /> REGISTERED ({log.applicant_status})
+                            <span className="bg-slate-900 text-white font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md inline-flex items-center gap-1 uppercase">
+                              <Check className="h-3 w-3 text-white" /> Registered ({log.applicant_status})
                             </span>
                           ) : (
                             <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md">PENDING</span>
