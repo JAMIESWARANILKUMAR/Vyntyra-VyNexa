@@ -205,7 +205,7 @@ export function InternChatView({
       if (res.blocked) {
         toast.error(res.reason, {
           duration: 6000,
-          icon: <AlertTriangle className="h-5 w-5 text-rose-500" />
+          icon: <AlertTriangle className="h-5 w-5 text-slate-900" />
         });
       } else {
         qc.invalidateQueries({ queryKey: ["chat-messages", activeRoomId] });
@@ -265,7 +265,7 @@ export function InternChatView({
   return (
     <div className="space-y-4">
       {/* ─── Top Brand & Capabilities Header ─── */}
-      <div className="bg-white/80 backdrop-blur-xl border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-white/90 backdrop-blur-xl border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div className="h-12 w-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black shadow-md shadow-slate-900/10">
             <MessageSquare className="h-6 w-6 text-white" />
@@ -275,7 +275,7 @@ export function InternChatView({
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                 Vyntyra Chat
               </h1>
-              <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-black text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs animate-pulse">
+              <span className="bg-slate-900 text-white font-mono font-bold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                 BETA
               </span>
             </div>
@@ -289,9 +289,9 @@ export function InternChatView({
           <Button
             size="sm"
             onClick={handleSelectAi}
-            className="flex-1 sm:flex-none h-9 px-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs gap-1.5 shadow-xs cursor-pointer"
+            className="flex-1 sm:flex-none h-9 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs gap-1.5 shadow-xs cursor-pointer"
           >
-            <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+            <Sparkles className="h-3.5 w-3.5 text-white" />
             <span>Ask Vyntyra AI</span>
           </Button>
 
@@ -299,9 +299,9 @@ export function InternChatView({
             size="sm"
             variant="outline"
             onClick={handleSelectGeneral}
-            className="flex-1 sm:flex-none h-9 px-3.5 rounded-xl border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs gap-1.5 cursor-pointer"
+            className="flex-1 sm:flex-none h-9 px-3.5 rounded-xl border-slate-300 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs gap-1.5 cursor-pointer"
           >
-            <Users className="h-3.5 w-3.5 text-slate-500" />
+            <Users className="h-3.5 w-3.5 text-slate-800" />
             <span>Intern Lounge</span>
           </Button>
         </div>
@@ -341,17 +341,17 @@ export function InternChatView({
               className={`w-full text-left p-3 rounded-2xl transition-all cursor-pointer flex items-center gap-3 ${
                 activeRoomType === "ai"
                   ? "bg-slate-900 text-white shadow-sm"
-                  : "bg-gradient-to-r from-purple-50 to-indigo-50/60 hover:from-purple-100 hover:to-indigo-100 border border-purple-200/80 text-slate-900"
+                  : "bg-slate-100 hover:bg-slate-200/70 border border-slate-200 text-slate-900"
               }`}
             >
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
-                <Sparkles className="h-5 w-5 text-amber-300" />
+              <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
+                <Sparkles className="h-5 w-5 text-white" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
                   <span className="font-extrabold text-xs truncate">Ask Vyntyra AI</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
-                    activeRoomType === "ai" ? "bg-white/20 text-white" : "bg-purple-100 text-purple-800"
+                    activeRoomType === "ai" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-800"
                   }`}>
                     OpenRouter
                   </span>
@@ -379,7 +379,7 @@ export function InternChatView({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
                   <span className="font-extrabold text-xs truncate">Intern Community Lounge</span>
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="h-2 w-2 rounded-full bg-slate-900" />
                 </div>
                 <p className={`text-[11px] truncate mt-0.5 ${activeRoomType === "channel" ? "text-slate-300" : "text-slate-500"}`}>
                   General channel for all interns
@@ -418,7 +418,7 @@ export function InternChatView({
                         )}
                       </div>
                       {intern.is_online && (
-                        <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white" />
+                        <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-slate-900 border-2 border-white" />
                       )}
                     </div>
 
@@ -452,15 +452,15 @@ export function InternChatView({
             <div className="flex items-center gap-3 min-w-0">
               {activeRoomType === "ai" ? (
                 <>
-                  <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
-                    <Sparkles className="h-5 w-5 text-amber-300" />
+                  <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
+                    <Sparkles className="h-5 w-5 text-white" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-extrabold text-sm text-slate-900 leading-tight">
                         Ask Vyntyra Chat AI
                       </h3>
-                      <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-purple-100 text-purple-800">
+                      <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-slate-100 text-slate-800 border border-slate-200">
                         Smart Copilot
                       </span>
                     </div>
@@ -472,14 +472,14 @@ export function InternChatView({
               ) : activeRoomType === "channel" ? (
                 <>
                   <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
-                    <Users className="h-5 w-5" />
+                    <Users className="h-5 w-5 text-white" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-extrabold text-sm text-slate-900 leading-tight">
                         Vyntyra Intern Community Lounge
                       </h3>
-                      <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-slate-100 text-slate-800 border border-slate-200">
                         {interns.length} Interns
                       </span>
                     </div>
@@ -504,7 +504,7 @@ export function InternChatView({
                         )}
                       </div>
                       {selectedContact.is_online && (
-                        <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white" />
+                        <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-slate-900 border-2 border-white" />
                       )}
                     </button>
 
@@ -523,8 +523,8 @@ export function InternChatView({
                       <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
                         <span className="truncate">{selectedContact.domain}</span>
                         <span>·</span>
-                        <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-slate-700 font-semibold flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-900" />
                           Active now
                         </span>
                       </div>
@@ -540,7 +540,7 @@ export function InternChatView({
                 variant="outline"
                 size="sm"
                 onClick={() => setViewingProfile(selectedContact)}
-                className="text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-100 gap-1.5 rounded-xl cursor-pointer"
+                className="text-xs font-bold border-slate-300 bg-white hover:bg-slate-100 text-slate-800 gap-1.5 rounded-xl cursor-pointer"
               >
                 <User className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">View Profile</span>
@@ -587,14 +587,14 @@ export function InternChatView({
                         isMe
                           ? "bg-slate-900 text-white rounded-tr-xs"
                           : isAi
-                          ? "bg-gradient-to-br from-purple-50/90 to-indigo-50/90 border border-purple-200/80 text-slate-900 rounded-tl-xs"
+                          ? "bg-slate-100 border border-slate-200 text-slate-900 rounded-tl-xs"
                           : "bg-white border border-slate-200/90 text-slate-900 rounded-tl-xs"
                       }`}
                     >
                       {/* AI Header Badge inside bubble */}
                       {isAi && (
-                        <div className="flex items-center gap-1.5 pb-2 mb-2 border-b border-purple-200/60 font-bold text-[11px] text-purple-900">
-                          <Sparkles className="h-3.5 w-3.5 text-purple-600" />
+                        <div className="flex items-center gap-1.5 pb-2 mb-2 border-b border-slate-200 font-bold text-[11px] text-slate-900">
+                          <Sparkles className="h-3.5 w-3.5 text-slate-900" />
                           <span>Vyntyra Chat AI</span>
                         </div>
                       )}
@@ -634,7 +634,7 @@ export function InternChatView({
                           href={msg.content}
                           target="_blank"
                           rel="noreferrer"
-                          className="underline flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 break-all"
+                          className="underline flex items-center gap-1 font-semibold text-slate-900 break-all"
                         >
                           <span>{msg.content}</span>
                           <ExternalLink className="h-3 w-3 shrink-0" />
@@ -650,7 +650,7 @@ export function InternChatView({
                         <span>
                           {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
-                        {isMe && <CheckCheck className="h-3 w-3 text-emerald-400" />}
+                        {isMe && <CheckCheck className="h-3 w-3 text-slate-400" />}
                       </div>
                     </div>
                   </motion.div>
@@ -663,9 +663,9 @@ export function InternChatView({
               <motion.div
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2 p-3 rounded-2xl bg-purple-50 border border-purple-200 text-purple-900 text-xs w-fit"
+                className="flex items-center gap-2 p-3 rounded-2xl bg-slate-100 border border-slate-200 text-slate-900 text-xs w-fit"
               >
-                <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                <Loader2 className="h-4 w-4 animate-spin text-slate-900" />
                 <span className="font-bold">Vyntyra AI is analyzing and composing answer...</span>
               </motion.div>
             )}
@@ -746,15 +746,15 @@ export function InternChatView({
           {viewingProfile && (
             <div>
               {/* Profile Header Canvas */}
-              <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-6 text-white text-center relative">
+              <div className="bg-slate-900 p-6 text-white text-center relative">
                 <button
                   onClick={() => setViewingProfile(null)}
-                  className="absolute right-4 top-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                  className="absolute right-4 top-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white cursor-pointer"
                 >
                   <X className="h-4 w-4" />
                 </button>
 
-                <div className="mx-auto h-24 w-24 rounded-3xl bg-slate-700 border-4 border-white/20 shadow-xl overflow-hidden flex items-center justify-center text-3xl font-black mb-3">
+                <div className="mx-auto h-24 w-24 rounded-3xl bg-slate-800 border-2 border-white/20 shadow-xl overflow-hidden flex items-center justify-center text-3xl font-black mb-3 text-white">
                   {viewingProfile.avatar_url ? (
                     <img src={viewingProfile.avatar_url} alt={viewingProfile.full_name} className="h-full w-full object-cover" />
                   ) : (
