@@ -69,12 +69,12 @@ const TASK_STATUS_STYLES: Record<string, { dot: string; badge: string; label: st
   in_progress:  { dot: "bg-blue-500",    badge: "bg-blue-50 text-blue-700 border-blue-200/90 shadow-xs",        label: "In Progress" },
   submitted:    { dot: "bg-purple-500",  badge: "bg-purple-50 text-purple-700 border-purple-200/90 shadow-xs",  label: "Submitted (Under Review)" },
   under_review: { dot: "bg-amber-500",   badge: "bg-amber-50 text-amber-700 border-amber-200/90 shadow-xs",     label: "Under Mentor Review" },
-  completed:    { dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-700 border-slate-200/90 shadow-xs", label: "Verified & Completed" },
-  verified:     { dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-700 border-slate-200/90 shadow-xs", label: "Verified & Completed" },
-  approved:     { dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-700 border-slate-200/90 shadow-xs", label: "Approved & Verified" },
-  done:         { dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-700 border-slate-200/90 shadow-xs", label: "Completed" },
-  resolved:     { dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-700 border-slate-200/90 shadow-xs", label: "Resolved & Verified" },
-  graded:       { dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-700 border-slate-200/90 shadow-xs", label: "Graded & Verified" },
+  completed:    { dot: "bg-slate-500", badge: "bg-slate-50 text-emerald-700 border-slate-200/90 shadow-xs", label: "Verified & Completed" },
+  verified:     { dot: "bg-slate-500", badge: "bg-slate-50 text-emerald-700 border-slate-200/90 shadow-xs", label: "Verified & Completed" },
+  approved:     { dot: "bg-slate-500", badge: "bg-slate-50 text-emerald-700 border-slate-200/90 shadow-xs", label: "Approved & Verified" },
+  done:         { dot: "bg-slate-500", badge: "bg-slate-50 text-emerald-700 border-slate-200/90 shadow-xs", label: "Completed" },
+  resolved:     { dot: "bg-slate-500", badge: "bg-slate-50 text-emerald-700 border-slate-200/90 shadow-xs", label: "Resolved & Verified" },
+  graded:       { dot: "bg-slate-500", badge: "bg-slate-50 text-emerald-700 border-slate-200/90 shadow-xs", label: "Graded & Verified" },
   blocked:      { dot: "bg-rose-500",    badge: "bg-rose-50 text-rose-700 border-rose-200/90 shadow-xs",        label: "Revision Requested" },
   rejected:     { dot: "bg-red-500",     badge: "bg-red-50 text-red-700 border-red-200/90 shadow-xs",          label: "Changes Needed" },
 };
@@ -198,7 +198,7 @@ function CbtResultsSection() {
             <div key={sub.id} className="p-4 border border-slate-200 rounded-xl bg-white/60 shadow-sm flex flex-col gap-3">
               <div className="flex justify-between items-center">
                 <div className="font-bold text-slate-800">{sub.cbt_exams?.title || "Exam"}</div>
-                <div className={`px-2 py-1 rounded text-xs font-bold ${sub.total_score >= (sub.cbt_exams?.passing_score || 50) ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                <div className={`px-2 py-1 rounded text-xs font-bold ${sub.total_score >= (sub.cbt_exams?.passing_score || 50) ? 'bg-slate-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                   {sub.total_score >= (sub.cbt_exams?.passing_score || 50) ? 'PASSED' : 'FAILED'}
                 </div>
               </div>
@@ -213,7 +213,7 @@ function CbtResultsSection() {
                   {
                     Object.entries(typeof sub.ai_feedback === 'string' ? JSON.parse(sub.ai_feedback) : sub.ai_feedback).map(([k,v]: any) => (
                       <div key={k} className="flex gap-2 items-start border-b border-slate-100 last:border-0 pb-1 last:pb-0">
-                        <div className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold ${v.score === v.max ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                        <div className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold ${v.score === v.max ? 'bg-slate-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                           {v.score}/{v.max}
                         </div>
                         <div className="text-slate-600 leading-tight">{v.feedback}</div>
@@ -1723,7 +1723,7 @@ function InternDashboard() {
                       <div className="text-xs font-bold uppercase tracking-wider text-slate-900">
                         Assigned Assets
                       </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-slate-200">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-200">
                         Active
                       </span>
                     </div>
@@ -1772,7 +1772,7 @@ function InternDashboard() {
                         "Security & Compliance Training"
                       ].map((item, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-slate-700 font-medium">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <CheckCircle2 className="h-4 w-4 text-slate-900 shrink-0" />
                           <span className="truncate">{item}</span>
                         </div>
                       ))}
@@ -1821,14 +1821,13 @@ function InternDashboard() {
             </div>
 
             {/* ─── CAMPUS AMBASSADOR FIRST COHORT LAUNCHING SOON BANNER ─── */}
-            <div className="relative overflow-hidden rounded-3xl border border-amber-500/40 bg-gradient-to-r from-slate-950 via-[#0f172a] to-slate-950 p-6 sm:p-8 shadow-xl text-white">
-              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-amber-500/15 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-20 left-10 h-64 w-64 rounded-full bg-pink-500/15 blur-3xl" />
+            <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 p-6 sm:p-8 shadow-xl text-white">
+              
               
               <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                 <div className="space-y-2 max-w-2xl">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[11px] font-bold text-amber-300">
-                    <Sparkles className="h-3 w-3 text-amber-400" />
+                  <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/80 px-3 py-1 text-[11px] font-bold text-slate-200">
+                    <Sparkles className="h-3 w-3 text-slate-300" />
                     <span>FIRST COHORT 2026-27 · LAUNCHING SOON</span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-black text-white">
@@ -1886,7 +1885,7 @@ function InternDashboard() {
               <div className="bg-gradient-to-r from-slate-50 via-white to-white px-6 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-5 border-b border-slate-200/80">
                 <div className="flex items-center gap-5 min-w-0">
                   <div className="relative shrink-0 group">
-                    <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 rounded-2xl ring-2 ring-emerald-400/60 shadow-xl text-2xl" />
+                    <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 rounded-2xl ring-2 ring-slate-300 shadow-xl text-2xl" />
                     <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl cursor-pointer text-white">
                       <span className="text-[10px] font-bold uppercase tracking-wider">Upload</span>
                       <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.webp" onChange={handleImageUpload} />
@@ -1895,7 +1894,7 @@ function InternDashboard() {
                   </div>
                   <div className="min-w-0">
                     <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">{profile?.full_name || displayName}</div>
-                    <div className="text-emerald-600 text-xs font-mono font-black mt-0.5 flex items-center gap-2">
+                    <div className="text-slate-900 text-xs font-mono font-black mt-0.5 flex items-center gap-2">
                       <span>{profile?.intern_id || "VYN-INT-PRO"}</span>
                       <span className="h-1 w-1 rounded-full bg-slate-300" />
                       <span className="text-slate-600 font-sans font-medium">{profile?.department || "Associate Intern"}</span>
@@ -1906,7 +1905,7 @@ function InternDashboard() {
 
                 {mentor && (
                   <div className="shrink-0 text-left sm:text-right bg-slate-50 rounded-2xl p-3.5 border border-slate-200/80 backdrop-blur-md w-full sm:w-auto shadow-xs">
-                    <div className="text-[10px] text-emerald-600 font-black uppercase tracking-wider mb-0.5 flex items-center sm:justify-end gap-1.5">
+                    <div className="text-[10px] text-slate-600 font-black uppercase tracking-wider mb-0.5 flex items-center sm:justify-end gap-1.5">
                       <Sparkles className="h-3 w-3" /> Assigned Mentor
                     </div>
                     <div className="text-sm font-extrabold text-slate-900">{mentor.full_name}</div>
@@ -1916,15 +1915,15 @@ function InternDashboard() {
               </div>
 
               {/* Details grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-amber-200/70 p-0 text-xs bg-white/80">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 p-0 text-xs bg-white/80">
                 {[
-                  { icon: <Mail className="h-4 w-4 text-emerald-600" />, label: "Email", value: email },
-                  { icon: <Phone className="h-4 w-4 text-emerald-600" />, label: "Contact", value: profile?.phone || "—" },
+                  { icon: <Mail className="h-4 w-4 text-slate-700" />, label: "Email", value: email },
+                  { icon: <Phone className="h-4 w-4 text-slate-700" />, label: "Contact", value: profile?.phone || "—" },
                   { icon: <MapPin className="h-4 w-4 text-rose-600" />, label: "Address", value: profile?.address || "—" },
-                  { icon: <Briefcase className="h-4 w-4 text-emerald-600" />, label: "Domain", value: profile?.department || "—" },
-                  { icon: <CalendarDays className="h-4 w-4 text-emerald-600" />, label: "Internship Start", value: profile?.start_date ? new Date(profile.start_date).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "—" },
+                  { icon: <Briefcase className="h-4 w-4 text-slate-700" />, label: "Domain", value: profile?.department || "—" },
+                  { icon: <CalendarDays className="h-4 w-4 text-slate-700" />, label: "Internship Start", value: profile?.start_date ? new Date(profile.start_date).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "—" },
                   {
-                    icon: <Clock className="h-4 w-4 text-emerald-600" />,
+                    icon: <Clock className="h-4 w-4 text-slate-700" />,
                     label: "End Date / Remaining",
                     value: profile?.end_date
                       ? (() => {
@@ -1935,10 +1934,10 @@ function InternDashboard() {
                       : "—",
                   },
                 ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3.5 px-6 py-4 hover:bg-emerald-50/50 transition-colors">
+                  <div key={i} className="flex items-start gap-3.5 px-6 py-4 hover:bg-slate-50 transition-colors">
                     <div className="h-9 w-9 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">{item.icon}</div>
                     <div className="min-w-0">
-                      <div className="text-[10px] font-black uppercase tracking-wider text-emerald-900/80">{item.label}</div>
+                      <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">{item.label}</div>
                       <div className="text-sm font-black text-slate-900 mt-0.5 break-words">{item.value}</div>
                     </div>
                   </div>
@@ -1950,7 +1949,7 @@ function InternDashboard() {
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="text-[11px] font-black uppercase tracking-wider text-slate-900 mr-1">Your Documents:</span>
                   {docsQ.isLoading ? (
-                    <span className="text-xs text-emerald-900 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin text-emerald-600" /> Loading...</span>
+                    <span className="text-xs text-slate-900 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin text-slate-700" /> Loading...</span>
                   ) : (
                     <>
                       <a
@@ -1959,12 +1958,12 @@ function InternDashboard() {
                         rel="noopener noreferrer"
                         className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
                           docsQ.data?.offerLetterUrl
-                            ? "bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-700 hover:to-emerald-700 text-white border border-slate-300 shadow-md shadow-slate-900/10"
-                            : "bg-emerald-100/60 text-slate-400 border border-slate-200 cursor-not-allowed pointer-events-none"
+                            ? "bg-slate-900 hover:bg-slate-800 text-white font-bold border border-slate-900 shadow-xs"
+                            : "bg-slate-100/60 text-slate-400 border border-slate-200 cursor-not-allowed pointer-events-none"
                         }`}
                         onClick={(e) => { if (!docsQ.data?.offerLetterUrl) e.preventDefault(); }}
                       >
-                        <FileText className="h-3.5 w-3.5 text-emerald-100" />
+                        <FileText className="h-3.5 w-3.5 text-white" />
                         Download Offer Letter
                       </a>
                       {docsQ.data?.nocDownloadEnabled && (
@@ -1975,19 +1974,19 @@ function InternDashboard() {
                           className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
                             docsQ.data?.nocUrl
                               ? "bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-700 hover:to-emerald-700 text-white shadow-md shadow-slate-900/10"
-                              : "bg-emerald-100/60 text-slate-400 border border-slate-200 cursor-not-allowed pointer-events-none"
+                              : "bg-slate-100/60 text-slate-400 border border-slate-200 cursor-not-allowed pointer-events-none"
                           }`}
                           onClick={(e) => { if (!docsQ.data?.nocUrl) e.preventDefault(); }}
                         >
-                          <Award className="h-3.5 w-3.5 text-emerald-100" />
+                          <Award className="h-3.5 w-3.5 text-white" />
                           Download NOC Certificate
                           {!docsQ.data?.nocUrl && <span className="ml-1 opacity-70">(Not Ready)</span>}
                         </a>
                       )}
 
                       {profile?.exam_fee_paid && (
-                        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-slate-100 text-emerald-900 border border-slate-200 shadow-xs">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-slate-100 text-slate-900 border border-slate-200 shadow-xs">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-slate-700" />
                           <span>Fee Paid · Ref: <strong className="font-mono text-slate-900">{profile.payment_reference_no || `TXN-${(profile.id || "").slice(0, 6).toUpperCase()}`}</strong> ({profile.payment_mode || "Online"})</span>
                         </div>
                       )}
@@ -1997,10 +1996,10 @@ function InternDashboard() {
 
                 <button
                   onClick={() => docsQ.refetch()}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-900 hover:text-emerald-600 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-slate-900 hover:text-slate-700 transition-colors cursor-pointer"
                   title="Refresh document links"
                 >
-                  <RefreshCw className="h-3 w-3 text-emerald-500" />
+                  <RefreshCw className="h-3 w-3 text-slate-700" />
                   Refresh
                 </button>
               </div>
@@ -2009,22 +2008,22 @@ function InternDashboard() {
             {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
             {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
             <div className="bg-gradient-to-r from-white via-white to-slate-50 rounded-3xl p-6 text-slate-900 shadow-xl shadow-slate-900/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-slate-200/80 relative overflow-hidden backdrop-blur-2xl">
-              <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-emerald-300/20 blur-2xl" />
+              <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-slate-200/40 blur-2xl" />
               <div className="flex items-center gap-4 relative z-10">
-                <div className="h-12 w-12 rounded-2xl bg-emerald-100 border border-slate-200 backdrop-blur-md flex items-center justify-center text-emerald-600 shrink-0 shadow-sm">
+                <div className="h-12 w-12 rounded-2xl bg-slate-100 border border-slate-200 backdrop-blur-md flex items-center justify-center text-slate-700 shrink-0 shadow-sm">
                   <ClipboardList className="h-6 w-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900 flex items-center gap-2">
                       My Tasks &amp; Sprint Deliverables Hub
-                      <Sparkles className="h-4 w-4 text-emerald-500 animate-pulse" />
+                      <Sparkles className="h-4 w-4 text-slate-700 animate-pulse" />
                     </h3>
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-slate-200 text-[10px] font-black uppercase tracking-wide">
+                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-200 text-[10px] font-black uppercase tracking-wide">
                       {pendingTasks.length} Pending
                     </span>
                     {inProgressTasks.length > 0 && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-slate-200 text-[10px] font-black uppercase tracking-wide">
+                      <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-200 text-[10px] font-black uppercase tracking-wide">
                         {inProgressTasks.length} In Progress
                       </span>
                     )}
@@ -2038,7 +2037,7 @@ function InternDashboard() {
               <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0 relative z-10">
                 <Button
                   onClick={() => setActiveTab("tasks")}
-                  className="w-full md:w-auto bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black text-xs h-10 px-6 rounded-2xl shadow-lg shadow-slate-900/10 gap-2 cursor-pointer border border-slate-200 transition-all hover:scale-[1.02]"
+                  className="w-full md:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs h-10 px-6 rounded-2xl shadow-xs gap-2 cursor-pointer border border-slate-900 transition-all hover:scale-[1.01]"
                 >
                   <CheckCircle2 className="h-4 w-4 text-white" />
                   Open Tasks Workspace &rarr;
@@ -2050,7 +2049,7 @@ function InternDashboard() {
             <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 sm:p-7 shadow-xl shadow-slate-900/5 backdrop-blur-xl space-y-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
                 <div className="flex items-center gap-3.5">
-                  <div className="h-11 w-11 rounded-2xl bg-emerald-100 text-emerald-600 border border-slate-200 flex items-center justify-center shadow-xs">
+                  <div className="h-11 w-11 rounded-2xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shadow-xs">
                     <Clock className="h-5 w-5" />
                   </div>
                   <div>
@@ -2064,8 +2063,8 @@ function InternDashboard() {
                     todayAttendance
                       ? todayAttendance.clock_out
                         ? "bg-slate-100 text-slate-700 border border-slate-300"
-                        : "bg-emerald-100 text-emerald-800 border border-slate-200 animate-pulse"
-                      : "bg-emerald-100 text-emerald-800 border border-slate-200"
+                        : "bg-slate-100 text-slate-800 border border-slate-200 animate-pulse"
+                      : "bg-slate-100 text-slate-800 border border-slate-200"
                   }`}>
                     Status: {todayAttendance ? (todayAttendance.clock_out ? "Completed" : "Active Shift") : "Offline"}
                   </span>
@@ -2087,7 +2086,7 @@ function InternDashboard() {
                       onClick={handleClockIn}
                       disabled={isClocking || isClockingDisabled}
                       title={clockingDisabledReason}
-                      className="bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-600 text-white font-black text-xs gap-2 px-6 h-10 rounded-xl shadow-lg shadow-slate-900/10 disabled:opacity-50 cursor-pointer"
+                      className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs gap-2 px-6 h-10 rounded-xl shadow-xs disabled:opacity-50 cursor-pointer"
                     >
                       {isClocking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
                       Clock In Now
@@ -2105,7 +2104,7 @@ function InternDashboard() {
                       {todayAttendance?.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                     </div>
                   </div>
-                  <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-slate-200 text-emerald-600 flex items-center justify-center">
+                  <div className="h-9 w-9 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
                     <Clock className="h-4 w-4" />
                   </div>
                 </div>
@@ -2117,7 +2116,7 @@ function InternDashboard() {
                       {todayAttendance?.clock_out ? new Date(todayAttendance.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                     </div>
                   </div>
-                  <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-slate-200 text-emerald-600 flex items-center justify-center">
+                  <div className="h-9 w-9 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
                     <CheckCircle2 className="h-4 w-4" />
                   </div>
                 </div>
@@ -2129,7 +2128,7 @@ function InternDashboard() {
                       {attendanceLogs.length} Days
                     </div>
                   </div>
-                  <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-slate-200 text-emerald-600 flex items-center justify-center">
+                  <div className="h-9 w-9 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
                     <CalendarDays className="h-4 w-4" />
                   </div>
                 </div>
@@ -2139,11 +2138,11 @@ function InternDashboard() {
             {/* Domain Workspace Auto-Detected Header Strip */}
             <div className="rounded-2xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-4 flex items-center justify-between gap-4 shadow-xl shadow-slate-900/5 backdrop-blur-xl flex-wrap">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-slate-200 text-emerald-800 flex items-center justify-center font-black text-xs shadow-xs">
+                <div className="h-9 w-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xs shadow-xs">
                   {selectedDomain === "management" ? "MBA" : selectedDomain === "non_tech" ? "CRM" : "DEV"}
                 </div>
                 <div>
-                  <div className="text-[10px] font-black uppercase tracking-wider text-emerald-600">Assigned Domain Workspace</div>
+                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-700">Assigned Domain Workspace</div>
                   <div className="text-xs font-black text-slate-900">
                     {selectedDomain === "management" 
                       ? "MBA / BBA Business Management & Corporate Operations" 
@@ -2215,150 +2214,6 @@ function InternDashboard() {
               />
             )}
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {[
-                { icon: <ClipboardList className="h-5 w-5 text-emerald-600" />, label: "Pending Tasks", value: pendingTasks.length, border: "border-slate-200/80", bg: "bg-white" },
-                { icon: <CheckCircle2 className="h-5 w-5 text-emerald-600" />, label: "Completed", value: completedTasks.length, border: "border-slate-200/80", bg: "bg-white" },
-                { icon: <CreditCard className="h-5 w-5 text-emerald-600" />, label: "Credits Score", value: `${earnedCredits} / ${totalAssignedCredits}`, border: "border-slate-200/80", bg: "bg-white" },
-                { icon: <Flame className="h-5 w-5 text-emerald-500 animate-pulse" />, label: "Day Streak", value: `${dayStreak} Days`, border: "border-slate-200/80", bg: "bg-white" },
-                { icon: <Video className="h-5 w-5 text-emerald-600" />, label: "Meetings", value: meetings.filter(m => new Date(m.scheduled_at) >= new Date()).length, border: "border-slate-200/80", bg: "bg-white" },
-                { icon: <BookOpen className="h-5 w-5 text-emerald-600" />, label: "Resources", value: resources.length, border: "border-slate-200/80", bg: "bg-white" },
-              ].map((s, i) => (
-                <div key={i} className={`rounded-3xl border ${s.border} ${s.bg} p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-md shadow-slate-900/5 backdrop-blur-2xl transition-all duration-300 hover:scale-[1.02]`}>
-                  <div className="flex items-center justify-between">
-                    <div className="h-10 w-10 rounded-2xl bg-emerald-50 border border-slate-200 flex items-center justify-center shadow-xs shrink-0">{s.icon}</div>
-                    <span className="text-[9px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-slate-200">SYNC</span>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-black text-slate-900 font-mono tracking-tight">{s.value}</div>
-                    <div className="text-[10px] text-slate-600 uppercase tracking-wider font-extrabold mt-0.5 truncate">{s.label}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Calendar */}
-              <div className="lg:col-span-1">
-                <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 mb-3 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-emerald-600" />Calendar</h2>
-                <MonthlyCalendar events={[...schedules, ...meetings]} holidays={holidaysQ.data || []} />
-              </div>
-
-              <div className="lg:col-span-2 space-y-6">
-                {/* My Tasks */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2">
-                      <ClipboardList className="h-4 w-4 text-emerald-600" />
-                      My Assignments ({myTasks.length})
-                    </h2>
-                    <Button 
-                      variant="link" 
-                      onClick={() => setActiveTab("tasks")} 
-                      className="text-xs font-bold text-emerald-600 hover:text-emerald-700 p-0 h-auto gap-1 cursor-pointer"
-                    >
-                      View All &amp; Task Pool &rarr;
-                    </Button>
-                  </div>
-                  <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl backdrop-blur-xl overflow-hidden">
-                    {tasksQ.isLoading ? (
-                      <div className="p-8 flex items-center justify-center gap-2 text-slate-600 text-sm font-medium"><Loader2 className="h-4 w-4 animate-spin text-emerald-500" />Loading...</div>
-                    ) : tasks.length === 0 ? (
-                      <div className="p-8 text-center text-slate-600 text-sm space-y-2 font-medium">
-                        <p>No tasks assigned yet.</p>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => setActiveTab("tasks")}
-                          className="text-xs font-black text-emerald-900 bg-emerald-100 border-slate-200 cursor-pointer shadow-xs"
-                        >
-                          Check Open Task Pool
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-emerald-200/60">
-                        {myTasks.slice(0, 4).map((task: any) => {
-                          const s = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.pending;
-                          return (
-                            <div 
-                              key={task.id} 
-                              onClick={() => setActiveTab("tasks")}
-                              className="p-4 flex items-center justify-between gap-4 hover:bg-emerald-50/50 transition-colors cursor-pointer"
-                              title="Click to view full details and submit deliverable"
-                            >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <span className={`h-2 w-2 rounded-full shrink-0 ${s.dot}`} />
-                                <div className="min-w-0">
-                                  <div className="font-extrabold text-sm truncate text-slate-900">{task.title}</div>
-                                  {task.due_date && <div className="text-xs text-slate-600 mt-0.5 flex items-center gap-1 font-semibold"><Clock className="h-3 w-3 text-emerald-500" />Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</div>}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <span className={`text-[10px] px-2.5 py-0.5 rounded-full border font-black uppercase ${s.badge}`}>{s.label}</span>
-                                <span className="text-xs text-emerald-600 font-black hidden sm:inline">&rarr;</span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {myTasks.length > 4 && (
-                          <div className="p-3 bg-slate-50 text-center">
-                            <button
-                              onClick={() => setActiveTab("tasks")}
-                              className="text-xs font-black text-emerald-600 hover:text-emerald-700 cursor-pointer hover:underline"
-                            >
-                              + {myTasks.length - 4} more assigned tasks. Click to view all &rarr;
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Featured Resources */}
-                <div>
-                  <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 mb-3 flex items-center gap-2"><BookOpen className="h-4 w-4 text-emerald-600" />Quick Resources</h2>
-                  <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl backdrop-blur-xl overflow-hidden">
-                    {resourcesQ.isLoading ? (
-                      <div className="p-6 text-center text-slate-600 text-sm flex justify-center gap-2 items-center font-medium"><Loader2 className="h-4 w-4 animate-spin text-emerald-500" />Loading...</div>
-                    ) : resources.length === 0 ? (
-                      <div className="p-6 text-center text-slate-600 text-sm font-medium">No resources posted yet</div>
-                    ) : (
-                      <div className="divide-y divide-emerald-200/60">
-                        {resources.slice(0, 3).map((r: any) => {
-                          const ri = RESOURCE_ICONS[r.type] || RESOURCE_ICONS.link;
-                          const isDocOrSheet = r.url?.includes("docs.google.com") || r.url?.includes(".xls") || r.url?.includes(".csv") || r.type === "document";
-                          return (
-                            <div key={r.id} className="flex items-center justify-between gap-3 p-4 hover:bg-emerald-50/50 transition-colors group">
-                              <a href={r.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className={`h-9 w-9 rounded-xl border flex items-center justify-center shrink-0 ${ri.color}`}>{ri.icon}</div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-extrabold text-sm text-slate-900 group-hover:text-emerald-600 transition-colors truncate">{r.title}</div>
-                                  {r.description && <div className="text-xs text-slate-600 truncate font-medium">{r.description}</div>}
-                                </div>
-                              </a>
-                              <div className="flex items-center gap-2 shrink-0">
-                                {isDocOrSheet && (
-                                  <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-600 hover:bg-slate-100/50 px-2 cursor-pointer" onClick={() => setViewingDoc({ url: r.url, title: r.title })}>
-                                    Inbuilt Viewer
-                                  </Button>
-                                )}
-                                <a href={r.url} target="_blank" rel="noopener noreferrer">
-                                  <Button size="sm" variant="outline" className="h-7 text-xs border-slate-700 text-slate-300 hover:bg-slate-800 gap-1 cursor-pointer">
-                                    Open Link <ExternalLink className="h-3 w-3" />
-                                  </Button>
-                                </a>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
           </>
         )}
 
@@ -2367,7 +2222,7 @@ function InternDashboard() {
           <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 sm:p-8 shadow-xl shadow-slate-900/5 backdrop-blur-xl space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
               <div className="flex items-center gap-3.5">
-                <div className="h-11 w-11 rounded-2xl bg-emerald-100 text-emerald-600 border border-slate-200 flex items-center justify-center shadow-xs">
+                <div className="h-11 w-11 rounded-2xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shadow-xs">
                   <Clock className="h-5 w-5" />
                 </div>
                 <div>
@@ -2381,8 +2236,8 @@ function InternDashboard() {
                   todayAttendance
                     ? todayAttendance.clock_out
                       ? "bg-slate-100 text-slate-700 border border-slate-300"
-                      : "bg-emerald-100 text-emerald-800 border border-slate-200 animate-pulse"
-                    : "bg-emerald-100 text-emerald-800 border border-slate-200"
+                      : "bg-slate-100 text-slate-800 border border-slate-200 animate-pulse"
+                    : "bg-slate-100 text-slate-800 border border-slate-200"
                 }`}>
                   Status: {todayAttendance ? (todayAttendance.clock_out ? "Completed" : "Active Shift") : "Offline"}
                 </span>
@@ -2420,7 +2275,7 @@ function InternDashboard() {
                     {todayAttendance?.clock_in ? new Date(todayAttendance.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                   </div>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-slate-200 text-emerald-600 flex items-center justify-center">
+                <div className="h-9 w-9 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
                   <Clock className="h-4 w-4" />
                 </div>
               </div>
@@ -2432,7 +2287,7 @@ function InternDashboard() {
                     {todayAttendance?.clock_out ? new Date(todayAttendance.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                   </div>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-slate-200 text-emerald-600 flex items-center justify-center">
+                <div className="h-9 w-9 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
                   <CheckCircle2 className="h-4 w-4" />
                 </div>
               </div>
@@ -2444,7 +2299,7 @@ function InternDashboard() {
                     {attendanceLogs.length} Days
                   </div>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-emerald-100 border border-slate-200 text-emerald-600 flex items-center justify-center">
+                <div className="h-9 w-9 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center">
                   <CalendarDays className="h-4 w-4" />
                 </div>
               </div>
@@ -2456,7 +2311,7 @@ function InternDashboard() {
               <div className="rounded-2xl border border-slate-200/80 overflow-x-auto shadow-xs">
                 <table className="w-full text-left border-collapse text-xs min-w-[500px]">
                   <thead>
-                    <tr className="bg-emerald-50/80 border-b border-slate-200/80 text-slate-700 font-black uppercase tracking-wider text-[10px]">
+                    <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-700 font-black uppercase tracking-wider text-[10px]">
                       <th className="p-3">Date</th>
                       <th className="p-3">Clock In</th>
                       <th className="p-3">Clock Out</th>
@@ -2471,7 +2326,7 @@ function InternDashboard() {
                       </tr>
                     ) : (
                       attendanceLogs.map((log: any) => (
-                        <tr key={log.id} className="hover:bg-emerald-50/50 transition-colors">
+                        <tr key={log.id} className="hover:bg-slate-50 transition-colors">
                           <td className="p-3 font-mono font-bold text-slate-900">
                             {new Date(log.date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
                           </td>
@@ -2487,8 +2342,8 @@ function InternDashboard() {
                           <td className="p-3 text-right">
                             <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
                               log.clock_in && !log.clock_out 
-                                ? "bg-emerald-100 text-emerald-800 border-slate-200" 
-                                : "bg-emerald-100 text-emerald-800 border-slate-200"
+                                ? "bg-slate-100 text-slate-800 border-slate-200" 
+                                : "bg-slate-100 text-slate-800 border-slate-200"
                             }`}>
                               {log.clock_in && !log.clock_out ? "Active Shift" : "Completed"}
                             </span>
@@ -2508,7 +2363,7 @@ function InternDashboard() {
           <div className="space-y-6">
             <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 sm:p-8 shadow-xl shadow-slate-900/5 backdrop-blur-xl">
               <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
-                <Compass className="h-5 w-5 text-emerald-600" /> Welcome &amp; Orientation Roadmap (Week 1 to Week 8)
+                <Compass className="h-5 w-5 text-slate-700" /> Welcome &amp; Orientation Roadmap (Week 1 to Week 8)
               </h2>
               <p className="text-xs text-slate-600 mb-6 font-medium">Follow your structured orientation kit and weekly milestones for a seamless onboarding journey.</p>
               
@@ -2519,10 +2374,10 @@ function InternDashboard() {
                   { week: "Week 4", title: "Mid-Term Sprint & Review", desc: "Mid-term appraisal scorecard & project demo.", done: false },
                   { week: "Week 8", title: "Final Showcase & PPO", desc: "Deliverable showcase, exit survey & verifiable certificate.", done: false }
                 ].map((w, idx) => (
-                  <div key={idx} className={`p-5 rounded-2xl border ${w.done ? 'bg-emerald-50 border-slate-200' : 'bg-slate-50 border-slate-200'} shadow-xs`}>
+                  <div key={idx} className={`p-5 rounded-2xl border ${w.done ? 'bg-slate-50 border-slate-200' : 'bg-slate-50 border-slate-200'} shadow-xs`}>
                     <div className="flex items-center justify-between mb-2.5">
-                      <span className={`text-[10px] uppercase font-mono font-black px-2.5 py-0.5 rounded-full border ${w.done ? 'bg-emerald-100 text-emerald-800 border-slate-200' : 'bg-emerald-100 text-emerald-800 border-slate-200'}`}>{w.week}</span>
-                      {w.done ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Clock className="h-4 w-4 text-emerald-500" />}
+                      <span className={`text-[10px] uppercase font-mono font-black px-2.5 py-0.5 rounded-full border ${w.done ? 'bg-slate-100 text-slate-800 border-slate-200' : 'bg-slate-100 text-slate-800 border-slate-200'}`}>{w.week}</span>
+                      {w.done ? <CheckCircle2 className="h-4 w-4 text-slate-700" /> : <Clock className="h-4 w-4 text-slate-700" />}
                     </div>
                     <div className="font-black text-sm text-slate-900">{w.title}</div>
                     <div className="text-xs text-slate-600 mt-1 font-medium">{w.desc}</div>
@@ -2534,7 +2389,7 @@ function InternDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Compliance & Legal Uploads */}
               <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 sm:p-7 shadow-xl shadow-slate-900/5 backdrop-blur-xl space-y-4">
-                <h3 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><FileCheck className="h-4 w-4 text-emerald-600" /> Compliance &amp; Legal Uploads</h3>
+                <h3 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><FileCheck className="h-4 w-4 text-slate-700" /> Compliance &amp; Legal Uploads</h3>
                 <p className="text-xs text-slate-600 font-medium">Upload your NOC, Student ID proof, signed NDA, and bank passbook proof.</p>
                 <div className="space-y-3">
                   {[
@@ -2545,7 +2400,7 @@ function InternDashboard() {
                   ].map((doc, i) => (
                     <div key={i} className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs shadow-xs">
                       <span className="font-extrabold text-slate-900">{doc.label}</span>
-                      <span className={`font-black px-2.5 py-0.5 rounded-full border ${doc.status === 'Uploaded' ? 'bg-emerald-100 text-emerald-800 border-slate-200' : 'bg-emerald-100 text-emerald-800 border-slate-200'}`}>{doc.status}</span>
+                      <span className={`font-black px-2.5 py-0.5 rounded-full border ${doc.status === 'Uploaded' ? 'bg-slate-100 text-slate-800 border-slate-200' : 'bg-slate-100 text-slate-800 border-slate-200'}`}>{doc.status}</span>
                     </div>
                   ))}
                 </div>
@@ -2554,8 +2409,8 @@ function InternDashboard() {
               {/* Tooling & Credentials Tracker */}
               <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 sm:p-7 shadow-xl shadow-slate-900/5 backdrop-blur-xl space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><ShieldCheck className="h-4 w-4 text-emerald-600" /> Tooling &amp; Access Tracker</h3>
-                  <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-slate-200 bg-white text-slate-800 hover:bg-emerald-50 cursor-pointer shadow-xs" onClick={() => {
+                  <h3 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><ShieldCheck className="h-4 w-4 text-slate-700" /> Tooling &amp; Access Tracker</h3>
+                  <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-slate-200 bg-white text-slate-800 hover:bg-slate-50 cursor-pointer shadow-xs" onClick={() => {
                     const tool = prompt("Enter requested software/tool name (e.g. Figma, GitHub, AWS):");
                     if (tool) doCreateAccessRequest({ data: { tool_name: tool } }).then(() => { toast.success("Access requested!"); qc.invalidateQueries({ queryKey: ["my-access-requests"] }); });
                   }}>Request Access</Button>
@@ -2567,7 +2422,7 @@ function InternDashboard() {
                     accessRequests.map((req: any) => (
                       <div key={req.id} className="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-slate-50 text-xs shadow-xs">
                         <span className="font-extrabold text-slate-900">{req.tool_name}</span>
-                        <span className={`font-black uppercase text-[10px] px-2.5 py-0.5 rounded-full border ${req.status === 'provisioned' ? 'bg-emerald-100 text-emerald-800 border-slate-200' : req.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-slate-200' : 'bg-emerald-100 text-emerald-800 border-slate-200'}`}>{req.status}</span>
+                        <span className={`font-black uppercase text-[10px] px-2.5 py-0.5 rounded-full border ${req.status === 'provisioned' ? 'bg-slate-100 text-slate-800 border-slate-200' : req.status === 'approved' ? 'bg-slate-100 text-slate-800 border-slate-200' : 'bg-slate-100 text-slate-800 border-slate-200'}`}>{req.status}</span>
                       </div>
                     ))
                   )}
@@ -2584,9 +2439,9 @@ function InternDashboard() {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5 mb-6">
                 <div>
                   <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1">
-                    <BookMarked className="h-5 w-5 text-emerald-600" /> Structured Curriculum &amp; Skill Badges
+                    <BookMarked className="h-5 w-5 text-slate-700" /> Structured Curriculum &amp; Skill Badges
                   </h2>
-                  <p className="text-xs text-slate-600 font-medium">Official certified training modules, video masterclasses, and skilling paths for: <span className="font-extrabold text-emerald-600 capitalize">{selectedDomain}</span></p>
+                  <p className="text-xs text-slate-600 font-medium">Official certified training modules, video masterclasses, and skilling paths for: <span className="font-extrabold text-slate-700 capitalize">{selectedDomain}</span></p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-slate-600 font-bold">Filter Domain:</span>
@@ -2604,7 +2459,7 @@ function InternDashboard() {
 
               {lmsCoursesQ.isLoading ? (
                 <div className="p-12 flex items-center justify-center gap-2 text-slate-600 text-sm font-medium">
-                  <Loader2 className="h-5 w-5 animate-spin text-emerald-500" /> Loading curated courses...
+                  <Loader2 className="h-5 w-5 animate-spin text-slate-700" /> Loading curated courses...
                 </div>
               ) : (() => {
                 const availableCourses: LmsCourseItem[] = (lmsCoursesQ.data || []).filter((c: LmsCourseItem) => {
@@ -2638,8 +2493,8 @@ function InternDashboard() {
                         <div key={m.id || idx} className="rounded-2xl border border-slate-200/80 p-5 bg-slate-50 hover:bg-slate-50 transition-all flex flex-col justify-between shadow-xs">
                           <div>
                             <div className="flex justify-between items-start">
-                              <span className="text-[9px] uppercase font-mono bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded font-black border border-slate-200">{m.source}</span>
-                              {completed && <span className="text-[9px] uppercase font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-black border border-slate-200">Completed</span>}
+                              <span className="text-[9px] uppercase font-mono bg-slate-100 text-slate-900 px-2 py-0.5 rounded font-black border border-slate-200">{m.source}</span>
+                              {completed && <span className="text-[9px] uppercase font-mono bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-black border border-slate-200">Completed</span>}
                             </div>
                             <h3 className="font-extrabold text-xs text-slate-900 mt-3 line-clamp-2 min-h-[32px]">{m.title}</h3>
                             
@@ -2652,7 +2507,7 @@ function InternDashboard() {
                                 <span>Track Progress</span>
                                 <span className="font-black text-slate-900">{progress}%</span>
                               </div>
-                              <div className="h-2 bg-emerald-100 rounded-full overflow-hidden border border-slate-200/60">
+                              <div className="h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
                                 <div className="h-full bg-slate-900 rounded-full transition-all duration-350" style={{ width: `${progress}%` }} />
                               </div>
                             </div>
@@ -2665,12 +2520,12 @@ function InternDashboard() {
                                   max="100" 
                                   value={courseProgressInput}
                                   onChange={(e) => setCourseProgressInput(parseInt(e.target.value))}
-                                  className="w-full h-1 bg-emerald-100 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                                  className="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                                 />
                                 <span className="text-xs font-mono font-black w-8 text-right text-slate-900">{courseProgressInput}%</span>
                                 <Button 
                                   size="sm"
-                                  className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] h-6 px-2 cursor-pointer font-black"
+                                  className="bg-slate-500 hover:bg-emerald-600 text-white text-[10px] h-6 px-2 cursor-pointer font-black"
                                   onClick={async () => {
                                     try {
                                       await doUpdateLmsProgress({
@@ -2696,20 +2551,20 @@ function InternDashboard() {
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                className="mt-3 text-slate-600 hover:text-emerald-600 text-[10px] h-6 px-1.5 gap-1 cursor-pointer font-bold"
+                                className="mt-3 text-slate-600 hover:text-slate-700 text-[10px] h-6 px-1.5 gap-1 cursor-pointer font-bold"
                                 onClick={() => {
                                   setUpdatingCourseIdx(idx);
                                   setCourseProgressInput(progress);
                                 }}
                               >
-                                <RefreshCw className="h-3 w-3 text-emerald-500" /> Update Progress
+                                <RefreshCw className="h-3 w-3 text-slate-700" /> Update Progress
                               </Button>
                             )}
                           </div>
 
                           <div className="mt-5 pt-3 border-t border-slate-200/60 space-y-2">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-emerald-800 font-extrabold flex items-center gap-1"><Award className="h-3.5 w-3.5 text-emerald-500" /> {m.badge || "Skilling Badge"}</span>
+                              <span className="text-slate-800 font-extrabold flex items-center gap-1"><Award className="h-3.5 w-3.5 text-slate-700" /> {m.badge || "Skilling Badge"}</span>
                               {m.estimated_hours && (
                                 <span className="text-[10px] text-slate-500 font-mono font-bold">{m.estimated_hours}h</span>
                               )}
@@ -2729,7 +2584,7 @@ function InternDashboard() {
                                 href={m.url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="flex-1 text-center px-2 py-1 rounded-xl bg-white hover:bg-emerald-50 text-[11px] font-black text-slate-800 inline-flex items-center justify-center gap-0.5 cursor-pointer border border-slate-200 shadow-xs"
+                                className="flex-1 text-center px-2 py-1 rounded-xl bg-white hover:bg-slate-50 text-[11px] font-black text-slate-800 inline-flex items-center justify-center gap-0.5 cursor-pointer border border-slate-200 shadow-xs"
                               >
                                 Open Course ↗
                               </a>
@@ -2757,7 +2612,7 @@ function InternDashboard() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-                <Layers className="h-5 w-5 text-emerald-600" /> Sprint Kanban Board
+                <Layers className="h-5 w-5 text-slate-700" /> Sprint Kanban Board
               </h2>
               <div className="text-xs text-slate-600 font-medium">Click arrows to move tasks across sprint status columns</div>
             </div>
@@ -2774,7 +2629,7 @@ function InternDashboard() {
                   <div key={col.status} className={`rounded-3xl border p-5 ${col.bg} min-h-[400px] flex flex-col shadow-xl shadow-slate-900/5 backdrop-blur-xl`}>
                     <div className="font-black text-xs uppercase tracking-wider text-slate-800 mb-3.5 flex items-center justify-between">
                       <span>{col.title}</span>
-                      <span className="bg-emerald-100 border border-slate-200 px-2.5 py-0.5 rounded-full text-emerald-900 text-[10px] font-mono">{colTasks.length}</span>
+                      <span className="bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full text-slate-900 text-[10px] font-mono">{colTasks.length}</span>
                     </div>
                     <div className="space-y-3 flex-1 overflow-y-auto">
                       {colTasks.map((t: any) => (
@@ -2785,8 +2640,8 @@ function InternDashboard() {
                             <span className="font-black text-slate-600 uppercase tracking-wider">{t.priority || "Medium"}</span>
                             <div className="flex gap-1.5">
                               {col.status !== 'pending' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-600 hover:text-slate-900 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'pending')}>←</Button>}
-                              {col.status !== 'in_progress' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-emerald-600 hover:bg-emerald-100 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'in_progress')}>→</Button>}
-                              {col.status !== 'completed' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-emerald-600 hover:bg-emerald-100 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'completed')}>✓</Button>}
+                              {col.status !== 'in_progress' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-700 hover:bg-slate-100 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'in_progress')}>→</Button>}
+                              {col.status !== 'completed' && <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-700 hover:bg-slate-100 cursor-pointer font-black" onClick={() => markTaskStatus(t.id, 'completed')}>✓</Button>}
                             </div>
                           </div>
                         </div>
@@ -2805,7 +2660,7 @@ function InternDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Standup Form */}
               <div className="lg:col-span-1 rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 sm:p-7 shadow-xl shadow-slate-900/5 backdrop-blur-xl space-y-4">
-                <h2 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><Send className="h-4 w-4 text-emerald-600" /> Submit Daily Standup Log</h2>
+                <h2 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><Send className="h-4 w-4 text-slate-700" /> Submit Daily Standup Log</h2>
                 
                 {/* Clock-in Button */}
                 <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between shadow-xs">
@@ -2858,7 +2713,7 @@ function InternDashboard() {
                       <div key={st.id} className="py-3.5 space-y-1">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-black text-slate-900">{st.date}</span>
-                          <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-black uppercase border ${st.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-slate-200' : 'bg-emerald-100 text-emerald-800 border-slate-200'}`}>{st.status}</span>
+                          <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-black uppercase border ${st.status === 'approved' ? 'bg-slate-100 text-slate-800 border-slate-200' : 'bg-slate-100 text-slate-800 border-slate-200'}`}>{st.status}</span>
                         </div>
                         <p className="text-xs text-slate-800 font-medium"><strong>Did Today:</strong> {st.did_today}</p>
                         <p className="text-xs text-slate-600 font-medium"><strong>Tomorrow:</strong> {st.will_do_tomorrow}</p>
@@ -2878,7 +2733,7 @@ function InternDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Submission Form */}
               <div className="lg:col-span-1 rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 sm:p-7 shadow-xl shadow-slate-900/5 backdrop-blur-xl space-y-4">
-                <h2 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><Upload className="h-4 w-4 text-emerald-600" /> Submit Assignment / Deliverable</h2>
+                <h2 className="font-extrabold text-sm flex items-center gap-2 text-slate-900"><Upload className="h-4 w-4 text-slate-700" /> Submit Assignment / Deliverable</h2>
                 <div className="space-y-3.5 text-xs">
                   {tasks && tasks.length > 0 && (
                     <div>
@@ -2983,11 +2838,11 @@ function InternDashboard() {
                       <div key={del.id} className="py-4 space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-extrabold text-slate-900">{del.title}</span>
-                          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${del.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-slate-200' : del.status === 'under_review' ? 'bg-emerald-100 text-emerald-800 border-slate-200' : 'bg-emerald-100 text-emerald-800 border-slate-200'}`}>{del.status}</span>
+                          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${del.status === 'approved' ? 'bg-slate-100 text-slate-800 border-slate-200' : del.status === 'under_review' ? 'bg-slate-100 text-slate-800 border-slate-200' : 'bg-slate-100 text-slate-800 border-slate-200'}`}>{del.status}</span>
                         </div>
-                        <a href={del.submission_url} target="_blank" rel="noreferrer" className="text-xs text-emerald-600 hover:underline inline-flex items-center gap-1 font-bold"><ExternalLink className="h-3 w-3" /> {del.submission_url}</a>
+                        <a href={del.submission_url} target="_blank" rel="noreferrer" className="text-xs text-slate-700 hover:underline inline-flex items-center gap-1 font-bold"><ExternalLink className="h-3 w-3" /> {del.submission_url}</a>
                         {del.notes && <p className="text-xs text-slate-600">{del.notes}</p>}
-                        {del.feedback && <p className="text-xs text-slate-900 bg-emerald-50 p-2.5 rounded-xl border border-slate-200 mt-2 font-medium"><strong>Mentor Feedback:</strong> {del.feedback}</p>}
+                        {del.feedback && <p className="text-xs text-slate-900 bg-slate-50 p-2.5 rounded-xl border border-slate-200 mt-2 font-medium"><strong>Mentor Feedback:</strong> {del.feedback}</p>}
                       </div>
                     ))
                   )}
@@ -3002,7 +2857,7 @@ function InternDashboard() {
           <div className="space-y-6">
             <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 sm:p-8 shadow-xl shadow-slate-900/5 backdrop-blur-xl">
               <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
-                <Sparkles className="h-5 w-5 text-emerald-500" /> Pre-Employment Offer (PPO) &amp; Automated Certificates
+                <Sparkles className="h-5 w-5 text-slate-700" /> Pre-Employment Offer (PPO) &amp; Automated Certificates
               </h2>
               <p className="text-xs text-slate-600 font-medium mb-6">Track your PPO conversion metrics and download official verifiable internship certificates upon offboarding.</p>
 
@@ -3010,12 +2865,12 @@ function InternDashboard() {
                 {/* PPO Status */}
                 <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50 space-y-4 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <span className="font-black text-xs uppercase text-emerald-900 tracking-wider">PPO Conversion Score</span>
-                    <span className="font-mono font-black text-lg text-emerald-600">
+                    <span className="font-black text-xs uppercase text-slate-900 tracking-wider">PPO Conversion Score</span>
+                    <span className="font-mono font-black text-lg text-slate-700">
                       {Math.min(100, Math.round(progress * 0.8 + Math.min(20, dayStreak * 2)))} / 100
                     </span>
                   </div>
-                  <div className="h-3 bg-emerald-100 rounded-full overflow-hidden border border-slate-200">
+                  <div className="h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                     <div className="h-full bg-slate-900 rounded-full" style={{ width: `${Math.min(100, Math.round(progress * 0.8 + Math.min(20, dayStreak * 2)))}%` }} />
                   </div>
                   <div className="text-xs text-slate-800 font-semibold space-y-1.5">
@@ -3035,15 +2890,15 @@ function InternDashboard() {
                   return (
                     <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50 space-y-4 shadow-xs">
                       <div className="flex items-center justify-between">
-                        <span className="font-black text-xs uppercase text-emerald-900 tracking-wider flex items-center gap-1.5">
-                          <Award className="h-4 w-4 text-emerald-600" /> Verifiable Credentials Engine
+                        <span className="font-black text-xs uppercase text-slate-900 tracking-wider flex items-center gap-1.5">
+                          <Award className="h-4 w-4 text-slate-700" /> Verifiable Credentials Engine
                         </span>
                         {isCredUnlocked ? (
-                          <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 border border-slate-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="text-[10px] font-black text-slate-800 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                             <Unlock className="h-3 w-3" /> Unlocked for Download
                           </span>
                         ) : (
-                          <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 border border-slate-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
+                          <span className="text-[10px] font-black text-slate-800 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
                             <Lock className="h-3 w-3" /> Unlocks 1 Day Before Completion
                           </span>
                         )}
@@ -3058,13 +2913,13 @@ function InternDashboard() {
                           <div key={idx} className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-200/80 text-xs shadow-xs hover:border-slate-200 transition-colors">
                             <div className="flex items-center gap-2.5">
                               {!isCredUnlocked ? (
-                                <div className="h-8 w-8 rounded-full bg-emerald-100 border border-slate-200 flex items-center justify-center shrink-0 relative">
-                                  <Lock className="h-4 w-4 text-emerald-600 animate-bounce" />
-                                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full animate-ping" />
+                                <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 relative">
+                                  <Lock className="h-4 w-4 text-slate-700 animate-bounce" />
+                                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-slate-500 rounded-full animate-ping" />
                                 </div>
                               ) : (
-                                <div className="h-8 w-8 rounded-full bg-emerald-100 border border-slate-200 flex items-center justify-center shrink-0">
-                                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600" />
+                                <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+                                  <CheckCircle2 className="h-4.5 w-4.5 text-slate-700" />
                                 </div>
                               )}
                               <div>
@@ -3077,7 +2932,7 @@ function InternDashboard() {
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="h-8 text-xs text-emerald-800 border-slate-200 bg-emerald-100 hover:bg-emerald-200 font-black cursor-pointer"
+                                className="h-8 text-xs text-slate-800 border-slate-200 bg-slate-100 hover:bg-emerald-200 font-black cursor-pointer"
                                 onClick={async () => {
                                   const loadingToast = toast.loading(`Generating ${c.name}...`);
                                   try {
@@ -3124,9 +2979,9 @@ function InternDashboard() {
                                 size="sm" 
                                 variant="outline" 
                                 disabled
-                                className="h-8 text-xs text-emerald-900 border-slate-200 bg-emerald-100 cursor-not-allowed font-bold opacity-80"
+                                className="h-8 text-xs text-slate-900 border-slate-200 bg-slate-100 cursor-not-allowed font-bold opacity-80"
                               >
-                                <Lock className="h-3.5 w-3.5 mr-1 text-emerald-600" /> Locked
+                                <Lock className="h-3.5 w-3.5 mr-1 text-slate-700" /> Locked
                               </Button>
                             )}
                           </div>
@@ -3134,29 +2989,29 @@ function InternDashboard() {
                       </div>
 
                       {/* Mandatory Final Certification Exam & Fee Guidelines Notice */}
-                      <div className="p-4 rounded-2xl border border-slate-200 bg-emerald-50/70 text-xs text-slate-800 space-y-2">
-                        <div className="font-extrabold text-emerald-900 flex items-center gap-1.5 text-xs">
-                          <Sparkles className="h-4 w-4 text-emerald-600" /> Mandatory Final Certification Exam &amp; Credential Guidelines
+                      <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 text-xs text-slate-800 space-y-2">
+                        <div className="font-extrabold text-slate-900 flex items-center gap-1.5 text-xs">
+                          <Sparkles className="h-4 w-4 text-slate-700" /> Mandatory Final Certification Exam &amp; Credential Guidelines
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[11px] text-slate-700 font-medium pt-1">
                           <div className="flex items-start gap-1.5">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                            <CheckCircle2 className="h-3.5 w-3.5 text-slate-700 shrink-0 mt-0.5" />
                             <span><strong>Exam Link:</strong> Shared by your Administrator upon completing your final module project.</span>
                           </div>
                           <div className="flex items-start gap-1.5">
-                            <CreditCard className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                            <CreditCard className="h-3.5 w-3.5 text-slate-700 shrink-0 mt-0.5" />
                             <span>
                               <strong>Exam Fee:</strong> <strong>{profile?.is_fee_exempted ? "FEE exemption provided by VYNTYRA" : `₹${profile?.exam_fee_amount} (Inclusive of all GST)`}</strong>
                               {!profile?.is_fee_exempted && " — Mandatory skilling & credential verification fee."}
                             </span>
                           </div>
                           <div className="flex items-start gap-1.5">
-                            <RefreshCw className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                            <RefreshCw className="h-3.5 w-3.5 text-slate-700 shrink-0 mt-0.5" />
                             <span><strong>Attempts Allowed:</strong> Maximum <strong>3 attempts</strong> permitted to achieve passing grade (70%).</span>
                           </div>
                           <div className="flex items-start gap-1.5">
-                            <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                            <Clock className="h-3.5 w-3.5 text-slate-700 shrink-0 mt-0.5" />
                             <span><strong>Unlock Date:</strong> Credentials unlock automatically <strong>1 day prior</strong> ({unlockDateObj.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}) to completion.</span>
                           </div>
                         </div>
@@ -3194,7 +3049,7 @@ function InternDashboard() {
                           {/* Live Animated Countdown Timer */}
                           <div className="p-4 bg-white text-slate-900 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-200 shadow-xs">
                             <div className="flex items-center gap-2.5">
-                              <Clock className="h-5 w-5 text-emerald-600 shrink-0 animate-spin duration-1000" />
+                              <Clock className="h-5 w-5 text-slate-700 shrink-0 animate-spin duration-1000" />
                               <div>
                                 <span className="text-xs font-black text-slate-900 block">Time Remaining to Complete Payment:</span>
                                 <span className="text-[10px] text-slate-600 font-medium">
@@ -3206,7 +3061,7 @@ function InternDashboard() {
                             <FeeCountdownTimer deadline={profile?.fee_payment_deadline} />
                           </div>
 
-                          <div className="p-3.5 bg-slate-100 border border-slate-200 rounded-2xl text-xs text-emerald-900 font-semibold leading-relaxed">
+                          <div className="p-3.5 bg-slate-100 border border-slate-200 rounded-2xl text-xs text-slate-900 font-semibold leading-relaxed">
                             <strong>Note / Information:</strong> Exam fee is payable to receive certificate and stipend will be provided for top 10% interns up to ₹5,000 to ₹15,000 (terms and eligibility apply). Once the payment is done, only then your dashboard will be fully functional.
                           </div>
                         </div>
@@ -3224,8 +3079,8 @@ function InternDashboard() {
           <div className="space-y-6">
             {poolTasks.length > 0 && (
               <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl overflow-hidden">
-                <div className="px-6 py-4.5 border-b border-slate-200 flex items-center justify-between bg-emerald-100/60">
-                  <h2 className="font-extrabold flex items-center gap-2 text-emerald-900"><ClipboardList className="h-5 w-5 text-emerald-600" />Available Pool Tasks</h2>
+                <div className="px-6 py-4.5 border-b border-slate-200 flex items-center justify-between bg-slate-100/60">
+                  <h2 className="font-extrabold flex items-center gap-2 text-slate-900"><ClipboardList className="h-5 w-5 text-slate-700" />Available Pool Tasks</h2>
                 </div>
                 <div className="divide-y divide-emerald-200/60">
                   {poolTasks.map((task: any) => (
@@ -3253,7 +3108,7 @@ function InternDashboard() {
               <div className="px-6 py-5 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50">
                 <div>
                   <h2 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
-                    <ClipboardList className="h-5 w-5 text-emerald-600" />
+                    <ClipboardList className="h-5 w-5 text-slate-700" />
                     My Assigned Tasks &amp; Project Deliverables
                   </h2>
                   <p className="text-xs text-slate-600 mt-0.5">Submit your deliverables for mentor review, grading, and completion verification.</p>
@@ -3268,7 +3123,7 @@ function InternDashboard() {
                   >
                     <MessageCircle className="h-3.5 w-3.5" /> Join Official WhatsApp Group
                   </a>
-                  <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-tasks"] })} className="gap-1.5 text-xs text-slate-700 hover:text-slate-900 hover:bg-emerald-100/60 cursor-pointer border border-slate-200 bg-white">
+                  <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-tasks"] })} className="gap-1.5 text-xs text-slate-700 hover:text-slate-900 hover:bg-slate-100/60 cursor-pointer border border-slate-200 bg-white">
                     <RefreshCw className={`h-3.5 w-3.5 ${tasksQ.isFetching ? "animate-spin" : ""}`} /> Refresh
                   </Button>
                 </div>
@@ -3291,14 +3146,14 @@ function InternDashboard() {
                       <div className="text-slate-700 text-xs mt-1 flex items-center gap-3 flex-wrap font-medium">
                         <span className="font-extrabold text-emerald-700">{mentor.position || mentor.department || "Lead Technical Director"}</span>
                         <span className="text-slate-700">•</span>
-                        <a href={`mailto:${mentor.email}`} className="text-emerald-700 hover:text-emerald-900 font-bold underline decoration-blue-300 flex items-center gap-1">
-                          <Mail className="h-3.5 w-3.5 text-emerald-600" /> {mentor.email}
+                        <a href={`mailto:${mentor.email}`} className="text-emerald-700 hover:text-slate-900 font-bold underline decoration-blue-300 flex items-center gap-1">
+                          <Mail className="h-3.5 w-3.5 text-slate-700" /> {mentor.email}
                         </a>
                         {mentor.phone_number && (
                           <>
                             <span className="text-slate-700">•</span>
-                            <a href={`tel:${mentor.phone_number}`} className="text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1">
-                              <Phone className="h-3.5 w-3.5 text-emerald-600" /> {mentor.phone_number}
+                            <a href={`tel:${mentor.phone_number}`} className="text-emerald-700 hover:text-slate-900 font-bold flex items-center gap-1">
+                              <Phone className="h-3.5 w-3.5 text-slate-700" /> {mentor.phone_number}
                             </a>
                           </>
                         )}
@@ -3325,13 +3180,13 @@ function InternDashboard() {
               )}
 
               {/* Task Status Filters Bar */}
-              <div className="px-6 py-3.5 bg-emerald-50/80 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+              <div className="px-6 py-3.5 bg-slate-50/80 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => setTaskFilterTab("all")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                      taskFilterTab === "all" ? "bg-slate-900 text-white shadow-md shadow-slate-900/10" : "bg-white border border-slate-200 text-slate-700 hover:bg-emerald-100/60"
+                      taskFilterTab === "all" ? "bg-slate-900 text-white shadow-md shadow-slate-900/10" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100/60"
                     }`}
                   >
                     All Tasks ({myTasks.length})
@@ -3340,7 +3195,7 @@ function InternDashboard() {
                     type="button"
                     onClick={() => setTaskFilterTab("in_progress")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                      taskFilterTab === "in_progress" ? "bg-slate-900 text-white shadow-md shadow-slate-900/10" : "bg-white border border-slate-200 text-slate-700 hover:bg-emerald-100/60"
+                      taskFilterTab === "in_progress" ? "bg-slate-900 text-white shadow-md shadow-slate-900/10" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100/60"
                     }`}
                   >
                     In Progress ({inProgressTasks.length})
@@ -3349,7 +3204,7 @@ function InternDashboard() {
                     type="button"
                     onClick={() => setTaskFilterTab("submitted")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                      taskFilterTab === "submitted" ? "bg-slate-900 text-white shadow-md shadow-slate-900/10" : "bg-white border border-slate-200 text-slate-700 hover:bg-emerald-100/60"
+                      taskFilterTab === "submitted" ? "bg-slate-900 text-white shadow-md shadow-slate-900/10" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100/60"
                     }`}
                   >
                     Submitted / Under Review ({submittedTasks.length})
@@ -3358,7 +3213,7 @@ function InternDashboard() {
                     type="button"
                     onClick={() => setTaskFilterTab("completed")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                      taskFilterTab === "completed" ? "bg-slate-900 text-white shadow-md shadow-slate-900/10" : "bg-white border border-slate-200 text-emerald-800 hover:bg-emerald-100/60"
+                      taskFilterTab === "completed" ? "bg-slate-900 text-white shadow-md shadow-slate-900/10" : "bg-white border border-slate-200 text-slate-800 hover:bg-slate-100/60"
                     }`}
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -3366,14 +3221,14 @@ function InternDashboard() {
                   </button>
                 </div>
                 {taskFilterTab === "completed" && (
-                  <span className="text-[11px] font-black text-emerald-900 bg-emerald-100 border border-slate-200 px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-xs">
-                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Permanent Deliverables Archive
+                  <span className="text-[11px] font-black text-slate-900 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-xs">
+                    <ShieldCheck className="h-3.5 w-3.5 text-slate-700" /> Permanent Deliverables Archive
                   </span>
                 )}
               </div>
 
               {tasksQ.isLoading ? (
-                <div className="p-12 flex items-center justify-center gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-emerald-500" />Loading tasks...</div>
+                <div className="p-12 flex items-center justify-center gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-slate-700" />Loading tasks...</div>
               ) : (taskFilterTab === "all" ? myTasks : taskFilterTab === "in_progress" ? inProgressTasks : taskFilterTab === "submitted" ? submittedTasks : verifiedTasks).length === 0 ? (
                 <div className="p-12 text-center text-slate-600 font-medium">
                   <ClipboardList className="h-10 w-10 mx-auto mb-3 text-slate-700" />
@@ -3393,7 +3248,7 @@ function InternDashboard() {
                     const pptTemplate = task.ppt_template_url || "https://docs.google.com/presentation/d/1tB6X0h8Z7_Sample_PPT_Template/edit?usp=sharing";
 
                     return (
-                      <div key={task.id} className="p-6 hover:bg-emerald-50/40 transition-all border-b border-slate-200/60 last:border-0 flex flex-col gap-4">
+                      <div key={task.id} className="p-6 hover:bg-slate-50/40 transition-all border-b border-slate-200/60 last:border-0 flex flex-col gap-4">
                         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                           <div className="flex-1 min-w-0 space-y-2.5">
                             {/* Title & Badges */}
@@ -3405,7 +3260,7 @@ function InternDashboard() {
                               {task.priority && (
                                 <span className={`text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold ${
                                   task.priority === "high" ? "bg-rose-100 text-rose-800 border border-rose-300" :
-                                  task.priority === "medium" ? "bg-emerald-100 text-emerald-900 border border-slate-200" :
+                                  task.priority === "medium" ? "bg-slate-100 text-slate-900 border border-slate-200" :
                                   "bg-slate-100 text-slate-800 border border-slate-300"
                                 }`}>
                                   {task.priority} Priority
@@ -3413,19 +3268,19 @@ function InternDashboard() {
                               )}
                               
                               {/* Level Badge */}
-                              <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-emerald-100 text-emerald-900 border border-slate-200">
+                              <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-slate-100 text-slate-900 border border-slate-200">
                                 {task.level || "Beginner"}
                               </span>
 
                               {/* Credits Badge */}
-                              <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-emerald-100 text-emerald-900 border border-slate-200 flex items-center gap-0.5">
-                                <CreditCard className="h-3 w-3 text-emerald-600" /> {task.credits || 10} Credits
+                              <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-slate-100 text-slate-900 border border-slate-200 flex items-center gap-0.5">
+                                <CreditCard className="h-3 w-3 text-slate-700" /> {task.credits || 10} Credits
                               </span>
 
                               {/* Collaborative Team Badge */}
                               {(task.team_name || task.team_id || task.assignment_mode === "team") && (
-                                <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-emerald-100 text-emerald-900 border border-slate-200 flex items-center gap-1">
-                                  <Users className="h-3 w-3 text-emerald-600" /> {task.team_name || `Collaborative Team (${task.team_size || 2})`}
+                                <span className="text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-extrabold bg-slate-100 text-slate-900 border border-slate-200 flex items-center gap-1">
+                                  <Users className="h-3 w-3 text-slate-700" /> {task.team_name || `Collaborative Team (${task.team_size || 2})`}
                                 </span>
                               )}
                             </div>
@@ -3455,20 +3310,20 @@ function InternDashboard() {
                                 </a>
                               )}
                               {reportTemplate && (
-                                <a href={reportTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white border border-slate-200 text-slate-800 hover:bg-emerald-50 text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer">
-                                  <FileText className="h-3.5 w-3.5 text-emerald-500" /> Report Template
+                                <a href={reportTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white border border-slate-200 text-slate-800 hover:bg-slate-50 text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer">
+                                  <FileText className="h-3.5 w-3.5 text-slate-700" /> Report Template
                                 </a>
                               )}
                               {pptTemplate && (
-                                <a href={pptTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white border border-slate-200 text-slate-800 hover:bg-emerald-50 text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer">
-                                  <Play className="h-3.5 w-3.5 text-emerald-500" /> PPT Template
+                                <a href={pptTemplate} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white border border-slate-200 text-slate-800 hover:bg-slate-50 text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer">
+                                  <Play className="h-3.5 w-3.5 text-slate-700" /> PPT Template
                                 </a>
                               )}
                             </div>
                             
                             {task.due_date && (
                               <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-slate-200/60 text-[11px] font-bold text-slate-600">
-                                <Clock className="h-3.5 w-3.5 text-emerald-500" /> Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                                <Clock className="h-3.5 w-3.5 text-slate-700" /> Due {new Date(task.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                               </div>
                             )}
 
@@ -3476,7 +3331,7 @@ function InternDashboard() {
                             {(task.admin_remarks || task.progress_notes) && (
                               <div className={`mt-3 p-4 rounded-2xl border text-xs space-y-1 ${
                                 task.status === "completed" 
-                                  ? "bg-emerald-50 border-slate-200 text-slate-900 font-medium" 
+                                  ? "bg-slate-50 border-slate-200 text-slate-900 font-medium" 
                                   : task.status === "blocked" || task.status === "rejected"
                                   ? "bg-rose-950/40 border-rose-500/40 text-rose-200"
                                   : "bg-slate-100/40 border-slate-200 text-emerald-200"
@@ -3518,7 +3373,7 @@ function InternDashboard() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 text-xs gap-1 border-slate-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-lg cursor-pointer"
+                                className="h-8 text-xs gap-1 border-slate-200 bg-slate-50 hover:bg-slate-100 text-emerald-700 font-bold rounded-lg cursor-pointer"
                                 onClick={() => {
                                   setDoubtTaskId(task.id);
                                   setDoubtTaskTitle(task.title);
@@ -3529,14 +3384,14 @@ function InternDashboard() {
                                   setDoubtModalOpen(true);
                                 }}
                               >
-                                <HelpCircle className="h-3.5 w-3.5 text-emerald-500" /> Request Doubt Session
+                                <HelpCircle className="h-3.5 w-3.5 text-slate-700" /> Request Doubt Session
                               </Button>
 
                               {/* Request Resources */}
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 text-xs gap-1 border-slate-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-lg cursor-pointer"
+                                className="h-8 text-xs gap-1 border-slate-200 bg-slate-50 hover:bg-slate-100 text-emerald-700 font-bold rounded-lg cursor-pointer"
                                 onClick={() => {
                                   setResourceTaskId(task.id);
                                   setResourceTaskTitle(task.title);
@@ -3546,7 +3401,7 @@ function InternDashboard() {
                                   setResourceModalOpen(true);
                                 }}
                               >
-                                <FolderOpen className="h-3.5 w-3.5 text-emerald-500" /> Request Resources
+                                <FolderOpen className="h-3.5 w-3.5 text-slate-700" /> Request Resources
                               </Button>
 
                               {/* Contact Mentor */}
@@ -3566,11 +3421,11 @@ function InternDashboard() {
                                   }
                                 }}
                               >
-                                <MessageCircle className="h-3.5 w-3.5 text-emerald-500" /> Contact Mentor
+                                <MessageCircle className="h-3.5 w-3.5 text-slate-700" /> Contact Mentor
                               </Button>
 
                               <Button size="sm" variant="outline" className="h-8 text-xs border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-lg cursor-pointer" onClick={() => setSelectedTaskWorkspace(task)}>
-                                <Layers className="h-3.5 w-3.5 mr-1 text-emerald-500" /> Open Workspace
+                                <Layers className="h-3.5 w-3.5 mr-1 text-slate-700" /> Open Workspace
                               </Button>
                             </div>
                           </div>
@@ -3578,12 +3433,12 @@ function InternDashboard() {
 
                         {/* Submission Link & Deadline Extension request section */}
                         {isFeePaymentPending ? (
-                          <div className="mt-2 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-emerald-50 p-4 rounded-xl border border-slate-200 shadow-sm">
+                          <div className="mt-2 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm">
                             <div className="flex-1 space-y-1">
-                              <div className="flex items-center gap-1.5 font-bold text-emerald-900 text-xs">
-                                <Lock className="h-4 w-4 text-emerald-600 shrink-0" /> Task Submission Locked — Exam Fee Payment Required
+                              <div className="flex items-center gap-1.5 font-bold text-slate-900 text-xs">
+                                <Lock className="h-4 w-4 text-slate-700 shrink-0" /> Task Submission Locked — Exam Fee Payment Required
                               </div>
-                              <p className="text-[11px] text-emerald-800 leading-relaxed font-medium">
+                              <p className="text-[11px] text-slate-800 leading-relaxed font-medium">
                                 Please pay the mandatory exam fee of <strong>₹{profile?.exam_fee_amount || 199}</strong> to enable task deliverable submissions and activate your verified certificate upon completion.
                               </p>
                               <p className="text-[10px] text-emerald-700 italic">
@@ -3728,7 +3583,7 @@ function InternDashboard() {
                                 <Button 
                                   size="sm" 
                                   variant="outline" 
-                                  className="h-8 text-xs text-emerald-900 border-slate-200 bg-white hover:bg-emerald-50 font-bold rounded-xl cursor-pointer shadow-xs"
+                                  className="h-8 text-xs text-slate-900 border-slate-200 bg-white hover:bg-slate-50 font-bold rounded-xl cursor-pointer shadow-xs"
                                   onClick={() => {
                                     setShowExtensionModal(task);
                                     setExtensionReason("");
@@ -3754,13 +3609,13 @@ function InternDashboard() {
         {activeTab === "meetings" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1 space-y-3">
-              <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-emerald-600" />Calendar</h2>
+              <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-slate-700" />Calendar</h2>
               <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-5 shadow-xl shadow-slate-900/5 backdrop-blur-xl">
                 <MonthlyCalendar events={[...schedules, ...meetings]} holidays={holidaysQ.data || []} />
               </div>
             </div>
             <div className="lg:col-span-2 space-y-3">
-              <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2"><Video className="h-4 w-4 text-emerald-600" />Meetings</h2>
+              <h2 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-2"><Video className="h-4 w-4 text-slate-700" />Meetings</h2>
               <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 shadow-xl shadow-slate-900/5 backdrop-blur-xl">
                 <MeetingsSection meetings={meetings} isLoading={meetingsQ.isLoading} isError={meetingsQ.isError} /><div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800"><VyntyraMeetAdmin role="intern" /></div>
               </div>
@@ -3772,16 +3627,16 @@ function InternDashboard() {
         {activeTab === "resources" && (
           <div className="space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><BookOpen className="h-5 w-5 text-emerald-600" />Learning Resources</h2>
-              <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-resources"] })} className="gap-1.5 text-slate-700 hover:text-emerald-600 hover:bg-emerald-50 cursor-pointer font-bold">
+              <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><BookOpen className="h-5 w-5 text-slate-700" />Learning Resources</h2>
+              <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["my-resources"] })} className="gap-1.5 text-slate-700 hover:text-slate-700 hover:bg-slate-50 cursor-pointer font-bold">
                 <RefreshCw className={`h-3.5 w-3.5 ${resourcesQ.isFetching ? "animate-spin" : ""}`} />Refresh
               </Button>
             </div>
             {resourcesQ.isLoading ? (
-              <div className="flex items-center justify-center py-12 gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-emerald-500" />Loading...</div>
+              <div className="flex items-center justify-center py-12 gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-slate-700" />Loading...</div>
             ) : resources.length === 0 ? (
               <div className="text-center py-12 text-slate-600 font-medium rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl">
-                <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-20 text-emerald-600" />
+                <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-20 text-slate-700" />
                 <p className="font-extrabold text-slate-900">No resources posted yet</p>
                 <p className="text-xs mt-1 text-slate-600">Your mentor and admin will post guides and documents here</p>
               </div>
@@ -3793,11 +3648,11 @@ function InternDashboard() {
                     <a key={r.id} href={r.url} target="_blank" rel="noreferrer"
                       className="block rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 hover:border-slate-200 transition-all hover:-translate-y-0.5 group shadow-xl shadow-slate-900/5 backdrop-blur-xl">
                       <div className={`h-12 w-12 rounded-2xl border flex items-center justify-center mb-4 ${ri.color}`}>{ri.icon}</div>
-                      <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-emerald-600 transition-colors">{r.title}</h3>
+                      <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-slate-700 transition-colors">{r.title}</h3>
                       {r.description && <p className="text-xs text-slate-600 font-medium mt-1.5 line-clamp-2">{r.description}</p>}
                       <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-200/60">
                         <span className="text-[10px] uppercase tracking-wider font-black text-slate-600 capitalize">{r.type}</span>
-                        <ExternalLink className="h-3.5 w-3.5 text-slate-500 group-hover:text-emerald-600 transition-colors" />
+                        <ExternalLink className="h-3.5 w-3.5 text-slate-500 group-hover:text-slate-700 transition-colors" />
                       </div>
                     </a>
                   );
@@ -3811,9 +3666,9 @@ function InternDashboard() {
         {activeTab === "announcements" && (
           <div className="space-y-4">
             {announcementsQ.isLoading ? (
-              <div className="flex items-center justify-center py-12 gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-emerald-500" />Loading...</div>
+              <div className="flex items-center justify-center py-12 gap-2 text-slate-600 font-medium"><Loader2 className="h-5 w-5 animate-spin text-slate-700" />Loading...</div>
             ) : announcements.length === 0 ? (
-              <div className="text-center py-12 text-slate-600 font-medium rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl"><Bell className="h-10 w-10 mx-auto mb-3 opacity-20 text-emerald-600" />No announcements yet</div>
+              <div className="text-center py-12 text-slate-600 font-medium rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl"><Bell className="h-10 w-10 mx-auto mb-3 opacity-20 text-slate-700" />No announcements yet</div>
             ) : (
               announcements.map((a: any) => (
                 <div key={a.id} className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl backdrop-blur-xl p-6 space-y-3">
@@ -3822,7 +3677,7 @@ function InternDashboard() {
                       <h3 className="font-extrabold text-slate-900">{a.title}</h3>
                       <div className="text-xs text-slate-600 font-semibold mt-0.5">{new Date(a.created_at).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</div>
                     </div>
-                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-slate-200 font-black uppercase tracking-wide shrink-0">
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-900 border border-slate-200 font-black uppercase tracking-wide shrink-0">
                       {a.source === "news" ? "News" : a.target_role === "all" ? "Everyone" : a.target_role}
                     </span>
                   </div>
@@ -3836,7 +3691,7 @@ function InternDashboard() {
         {/* ─── NOTES ─── */}
         {activeTab === "notes" && (
           <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl backdrop-blur-xl p-6 sm:p-8 space-y-6">
-            <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><FileText className="h-5 w-5 text-emerald-600" />My Notes</h2>
+            <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><FileText className="h-5 w-5 text-slate-700" />My Notes</h2>
             <div className="flex gap-2">
               <textarea 
                 className="flex-1 rounded-2xl border border-slate-200 bg-white p-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-300 shadow-xs"
@@ -3886,7 +3741,7 @@ function InternDashboard() {
         {/* ─── FEEDBACK ─── */}
         {activeTab === "feedback" && (
           <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl backdrop-blur-xl p-6 sm:p-8 max-w-2xl mx-auto space-y-6">
-            <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><Mail className="h-5 w-5 text-emerald-600" />Submit Feedback</h2>
+            <h2 className="font-extrabold text-slate-900 flex items-center gap-2"><Mail className="h-5 w-5 text-slate-700" />Submit Feedback</h2>
             <p className="text-xs text-slate-600 font-medium">We value your thoughts! Let us know how we can improve your intern experience.</p>
             <textarea 
               className="w-full rounded-2xl border border-slate-200 bg-white p-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-300 shadow-xs"
@@ -3915,7 +3770,7 @@ function InternDashboard() {
               {/* Raise Leave Form */}
               <div className="lg:col-span-1 rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 sm:p-7 shadow-xl shadow-slate-900/5 backdrop-blur-xl h-fit">
                 <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
-                  <CalendarDays className="h-5 w-5 text-emerald-600" /> Request Leave
+                  <CalendarDays className="h-5 w-5 text-slate-700" /> Request Leave
                 </h2>
                 <p className="text-xs text-slate-600 font-medium mb-4">Request authorization for upcoming absence. Please coordinate tasks first.</p>
                 
@@ -3985,7 +3840,7 @@ function InternDashboard() {
               {/* Leave History List */}
               <div className="lg:col-span-2 rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 sm:p-7 shadow-xl shadow-slate-900/5 backdrop-blur-xl overflow-hidden">
                 <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-4">
-                  <Clock className="h-5 w-5 text-emerald-600" /> Leave History Requests
+                  <Clock className="h-5 w-5 text-slate-700" /> Leave History Requests
                 </h2>
                 
                 <div className="divide-y divide-emerald-200/60 max-h-[500px] overflow-y-auto">
@@ -4000,9 +3855,9 @@ function InternDashboard() {
                               {new Date(l.start_date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })} — {new Date(l.end_date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
                             </span>
                             <span className={`text-[9px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-full border ${
-                              l.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-slate-200' :
+                              l.status === 'approved' ? 'bg-slate-100 text-slate-800 border-slate-200' :
                               l.status === 'rejected' ? 'bg-rose-100 text-rose-800 border-rose-300' :
-                              'bg-emerald-100 text-emerald-800 border-slate-200'
+                              'bg-slate-100 text-slate-800 border-slate-200'
                             }`}>
                               {l.status}
                             </span>
@@ -4025,7 +3880,7 @@ function InternDashboard() {
               {/* Raise Support Ticket Form */}
               <div className="lg:col-span-1 rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 sm:p-7 shadow-xl shadow-slate-900/5 backdrop-blur-xl h-fit">
                 <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
-                  <HelpCircle className="h-5 w-5 text-emerald-600" /> Raise Support Query
+                  <HelpCircle className="h-5 w-5 text-slate-700" /> Raise Support Query
                 </h2>
                 <p className="text-xs text-slate-600 font-medium mb-4">Need help? Open a query and a mentor/supervisor will assist you.</p>
                 
@@ -4100,7 +3955,7 @@ function InternDashboard() {
               {/* Support History & Meeting Sync */}
               <div className="lg:col-span-2 rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 sm:p-7 shadow-xl shadow-slate-900/5 backdrop-blur-xl overflow-hidden">
                 <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-4">
-                  <MessageCircle className="h-5 w-5 text-emerald-600" /> Support Query Tickets
+                  <MessageCircle className="h-5 w-5 text-slate-700" /> Support Query Tickets
                 </h2>
                 
                 <div className="divide-y divide-emerald-200/60 max-h-[550px] overflow-y-auto space-y-4">
@@ -4115,11 +3970,11 @@ function InternDashboard() {
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-black text-sm text-slate-900">{q.subject}</span>
-                                <span className="text-[10px] bg-emerald-100 text-emerald-900 px-2.5 py-0.5 rounded-full font-black border border-slate-200">{q.category}</span>
+                                <span className="text-[10px] bg-slate-100 text-slate-900 px-2.5 py-0.5 rounded-full font-black border border-slate-200">{q.category}</span>
                                 <span className={`text-[9px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-full border ${
-                                  q.status === 'resolved' ? 'bg-emerald-100 text-emerald-800 border-slate-200' :
-                                  q.status === 'assigned' ? 'bg-emerald-100 text-emerald-800 border-slate-200' :
-                                  'bg-emerald-100 text-emerald-800 border-slate-200'
+                                  q.status === 'resolved' ? 'bg-slate-100 text-slate-800 border-slate-200' :
+                                  q.status === 'assigned' ? 'bg-slate-100 text-slate-800 border-slate-200' :
+                                  'bg-slate-100 text-slate-800 border-slate-200'
                                 }`}>
                                   {q.status.replace("_", " ")}
                                 </span>
@@ -4314,20 +4169,20 @@ function InternDashboard() {
     <div className="bg-white/95 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto border border-slate-200/80 text-slate-900">
       <div className="flex items-start justify-between border-b border-slate-200/80 pb-4">
         <div>
-          <span className="text-[10px] font-mono font-black uppercase bg-emerald-100 text-emerald-900 border border-slate-200 px-2.5 py-0.5 rounded-full">Task Workspace</span>
+          <span className="text-[10px] font-mono font-black uppercase bg-slate-100 text-slate-900 border border-slate-200 px-2.5 py-0.5 rounded-full">Task Workspace</span>
           <h2 className="text-lg font-black text-slate-900 mt-1.5">{selectedTaskWorkspace.title}</h2>
           {selectedTaskWorkspace.accepted_at && (
             <p className="text-xs text-emerald-700 font-bold mt-1">✓ You accepted this task on {new Date(selectedTaskWorkspace.accepted_at).toLocaleString()}</p>
           )}
         </div>
-        <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-900 hover:bg-emerald-100 rounded-full cursor-pointer font-bold" onClick={() => setSelectedTaskWorkspace(null)}>✕</Button>
+        <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full cursor-pointer font-bold" onClick={() => setSelectedTaskWorkspace(null)}>✕</Button>
       </div>
 
       {/* Mentor Review Feedback if present */}
       {(selectedTaskWorkspace.admin_remarks || (selectedTaskWorkspace.progress_notes && selectedTaskWorkspace.status === "completed")) && (
-        <div className="p-4 bg-emerald-50 border border-slate-200 rounded-2xl text-xs space-y-1">
-          <div className="flex items-center gap-1.5 font-black text-emerald-900">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Official Mentor Feedback &amp; Review
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-1">
+          <div className="flex items-center gap-1.5 font-black text-slate-900">
+            <CheckCircle2 className="h-4 w-4 text-slate-700" /> Official Mentor Feedback &amp; Review
           </div>
           <p className="text-slate-900 leading-relaxed font-medium whitespace-pre-wrap">{selectedTaskWorkspace.admin_remarks || selectedTaskWorkspace.progress_notes}</p>
         </div>
@@ -4547,13 +4402,13 @@ function InternDashboard() {
             <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950 text-white p-5 sm:p-6 border-b border-white/10 relative">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="h-11 w-11 rounded-2xl bg-emerald-500/20 border border-slate-200 text-slate-600 flex items-center justify-center shrink-0 shadow-inner">
+                  <div className="h-11 w-11 rounded-2xl bg-slate-500/20 border border-slate-200 text-slate-600 flex items-center justify-center shrink-0 shadow-inner">
                     <Building2 className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-lg sm:text-xl font-black tracking-tight text-white truncate">Corporate Checkout</h3>
-                      <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-slate-700 border border-slate-200 shrink-0">
+                      <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-700 border border-slate-200 shrink-0">
                         <Lock className="h-2.5 w-2.5" /> 256-Bit SSL
                       </span>
                       <span className="hidden sm:inline-flex text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-slate-300 border border-white/10 shrink-0">
@@ -4595,7 +4450,7 @@ function InternDashboard() {
                       onClick={() => setPaymentModalTab(tab.id as any)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                         isActive
-                          ? "bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30 font-black"
+                          ? "bg-slate-500 text-slate-950 shadow-sm shadow-emerald-500/30 font-black"
                           : "text-slate-300 hover:text-white hover:bg-white/10"
                       }`}
                     >
@@ -4613,7 +4468,7 @@ function InternDashboard() {
                 <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-800/60 p-4 sm:p-5 space-y-4 shadow-2xs">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-200 dark:border-slate-700 pb-3.5">
                     <div className="min-w-0">
-                      <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-slate-600 flex items-center gap-1">
+                      <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-600 flex items-center gap-1">
                         <Award className="h-3.5 w-3.5" /> Internship Certification &amp; Verification
                       </div>
                       <h4 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white mt-1 truncate">
@@ -4629,7 +4484,7 @@ function InternDashboard() {
                       <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono leading-tight">
                         ₹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))}
                       </div>
-                      <div className="text-[9px] text-emerald-600 dark:text-slate-600 font-extrabold uppercase">
+                      <div className="text-[9px] text-slate-700 dark:text-slate-600 font-extrabold uppercase">
                         Incl. 18% GST (CGST+SGST)
                       </div>
                     </div>
@@ -4638,19 +4493,19 @@ function InternDashboard() {
                   {/* Included Deliverables Badges */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                     <div className="flex items-center gap-2">
-                      <CheckCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <CheckCheck className="h-4 w-4 text-slate-700 shrink-0" />
                       <span>ISO-Certified QR Verified Certificate</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CheckCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <CheckCheck className="h-4 w-4 text-slate-700 shrink-0" />
                       <span>Full Task Submissions &amp; Code Review</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CheckCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <CheckCheck className="h-4 w-4 text-slate-700 shrink-0" />
                       <span>Top 10% Stipend (₹5,000–₹15,000)</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CheckCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <CheckCheck className="h-4 w-4 text-slate-700 shrink-0" />
                       <span>25%–50% Referral Cashbacks</span>
                     </div>
                   </div>
@@ -4658,10 +4513,10 @@ function InternDashboard() {
                   {/* Promo Voucher Code Input */}
                   <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
                     {appliedPromo ? (
-                      <div className="flex items-center justify-between p-2.5 bg-emerald-50 dark:bg-slate-100/40 border border-slate-200 dark:border-emerald-800 rounded-xl text-xs">
+                      <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-100/40 border border-slate-200 dark:border-emerald-800 rounded-xl text-xs">
                         <div className="flex items-center gap-2">
-                          <Tag className="h-4 w-4 text-emerald-600" />
-                          <span className="font-bold text-emerald-900 dark:text-emerald-200">
+                          <Tag className="h-4 w-4 text-slate-700" />
+                          <span className="font-bold text-slate-900 dark:text-emerald-200">
                             Code <strong>{appliedPromo.code}</strong> Applied: Saved ₹{appliedPromo.discount}!
                           </span>
                         </div>
@@ -4741,7 +4596,7 @@ function InternDashboard() {
                           <div>
                             <div className="flex items-center gap-2">
                               <h4 className="font-extrabold text-slate-900 dark:text-white text-base">PayU Enterprise Gateway</h4>
-                              <span className="text-[9px] font-bold text-emerald-700 dark:text-slate-700 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full uppercase">
+                              <span className="text-[9px] font-bold text-emerald-700 dark:text-slate-700 bg-slate-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full uppercase">
                                 Recommended
                               </span>
                             </div>
@@ -4821,7 +4676,7 @@ function InternDashboard() {
                         <div>
                           <div className="flex items-center gap-2">
                             <h5 className="font-bold text-slate-600 dark:text-slate-400 text-sm">RazorPay Corporate Gateway</h5>
-                            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full uppercase">Enabled Shortly</span>
+                            <span className="text-[9px] font-bold text-emerald-700 bg-slate-100 px-2 py-0.5 rounded-full uppercase">Enabled Shortly</span>
                           </div>
                           <p className="text-[11px] text-slate-400">Secondary gateway backup</p>
                         </div>
@@ -4834,17 +4689,17 @@ function InternDashboard() {
                 {/* Compliance & Security Strip */}
                 <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
                   <div className="space-y-0.5">
-                    <ShieldCheck className="h-4 w-4 text-emerald-600 mx-auto" />
+                    <ShieldCheck className="h-4 w-4 text-slate-700 mx-auto" />
                     <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200">PCI-DSS Level 1</div>
                     <div className="text-[9px] text-slate-400">Compliant</div>
                   </div>
                   <div className="space-y-0.5 border-x border-slate-200 dark:border-slate-700">
-                    <Lock className="h-4 w-4 text-emerald-600 mx-auto" />
+                    <Lock className="h-4 w-4 text-slate-700 mx-auto" />
                     <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200">RBI 3D Secure</div>
                     <div className="text-[9px] text-slate-400">Verified</div>
                   </div>
                   <div className="space-y-0.5">
-                    <Zap className="h-4 w-4 text-emerald-600 mx-auto" />
+                    <Zap className="h-4 w-4 text-slate-700 mx-auto" />
                     <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200">Instant Sync</div>
                     <div className="text-[9px] text-slate-400">Auto Active</div>
                   </div>
@@ -5004,7 +4859,7 @@ function InternDashboard() {
                       <button 
                         type="button"
                         onClick={() => setPaymentModalTab("invoice")} 
-                        className="hover:text-emerald-600 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
+                        className="hover:text-slate-700 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
                       >
                         View Proforma Invoice
                       </button>
@@ -5012,7 +4867,7 @@ function InternDashboard() {
                       <button 
                         type="button"
                         onClick={() => setPaymentModalTab("privacy")} 
-                        className="hover:text-emerald-600 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
+                        className="hover:text-slate-700 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
                       >
                         Privacy Policy (DPDPA 2023)
                       </button>
@@ -5020,7 +4875,7 @@ function InternDashboard() {
                       <button 
                         type="button"
                         onClick={() => setPaymentModalTab("refunds")} 
-                        className="hover:text-emerald-600 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
+                        className="hover:text-slate-700 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
                       >
                         Cancellation &amp; Refund Policy
                       </button>
@@ -5037,7 +4892,7 @@ function InternDashboard() {
                   <button
                     type="button"
                     onClick={() => setPaymentModalTab("checkout")}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-emerald-700 hover:underline"
                   >
                     <ArrowLeft className="h-3.5 w-3.5" /> Back to Checkout
                   </button>
@@ -5058,7 +4913,7 @@ function InternDashboard() {
                           PROFORMA #{profile?.intern_id ? `VCS-2026-${profile.intern_id}` : "VCS-2026-PROV"}
                         </div>
                         <div className="text-[10px] text-slate-400">Date: {new Date().toLocaleDateString("en-IN")}</div>
-                        <div className="text-[10px] text-emerald-600 font-bold">Status: Pending Verification Payment</div>
+                        <div className="text-[10px] text-slate-700 font-bold">Status: Pending Verification Payment</div>
                       </div>
                     </div>
 
@@ -5110,8 +4965,8 @@ function InternDashboard() {
                             </td>
                           </tr>
                           <tr className="bg-slate-50 dark:bg-slate-100/30 font-bold">
-                            <td colSpan={2} className="p-2.5 text-right text-emerald-900 dark:text-emerald-200">Total Net Amount Payable (INR):</td>
-                            <td className="p-2.5 text-right font-mono text-sm text-emerald-900 dark:text-emerald-200">
+                            <td colSpan={2} className="p-2.5 text-right text-slate-900 dark:text-emerald-200">Total Net Amount Payable (INR):</td>
+                            <td className="p-2.5 text-right font-mono text-sm text-slate-900 dark:text-emerald-200">
                               ₹{Math.max(0, (profile?.exam_fee_amount !== undefined ? profile.exam_fee_amount : 199) - (appliedPromo?.discount || 0))}
                             </td>
                           </tr>
@@ -5144,7 +4999,7 @@ function InternDashboard() {
                   <button
                     type="button"
                     onClick={() => setPaymentModalTab("checkout")}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-emerald-700 hover:underline"
                   >
                     <ArrowLeft className="h-3.5 w-3.5" /> Back to Checkout
                   </button>
@@ -5181,7 +5036,7 @@ function InternDashboard() {
                 </div>
 
                 <div className="pt-3 border-t flex items-center justify-between gap-3">
-                  <Link to="/privacy" target="_blank" className="text-xs text-slate-500 hover:text-emerald-600 flex items-center gap-1 font-semibold">
+                  <Link to="/privacy" target="_blank" className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1 font-semibold">
                     Open Full Page <ExternalLink className="h-3 w-3" />
                   </Link>
 
@@ -5199,7 +5054,7 @@ function InternDashboard() {
                   <button
                     type="button"
                     onClick={() => setPaymentModalTab("checkout")}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-emerald-700 hover:underline"
                   >
                     <ArrowLeft className="h-3.5 w-3.5" /> Back to Checkout
                   </button>
@@ -5235,7 +5090,7 @@ function InternDashboard() {
                 </div>
 
                 <div className="pt-3 border-t flex items-center justify-between gap-3">
-                  <Link to="/refunds" target="_blank" className="text-xs text-slate-500 hover:text-emerald-600 flex items-center gap-1 font-semibold">
+                  <Link to="/refunds" target="_blank" className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1 font-semibold">
                     Open Full Page <ExternalLink className="h-3 w-3" />
                   </Link>
 
@@ -5255,7 +5110,7 @@ function InternDashboard() {
         <div className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4" style={{ pointerEvents: 'all' }}>
           <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-slate-100 space-y-6 animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
             <div className="text-center space-y-2">
-              <div className="inline-flex p-3 rounded-full bg-emerald-50 text-emerald-600 mb-2">
+              <div className="inline-flex p-3 rounded-full bg-slate-50 text-slate-700 mb-2">
                 <ShieldCheck className="h-8 w-8" />
               </div>
               <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
@@ -5344,7 +5199,7 @@ function InternDashboard() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
             <div className="flex items-start justify-between border-b pb-3">
-              <div className="flex items-center gap-2 text-emerald-600">
+              <div className="flex items-center gap-2 text-slate-700">
                 <Video className="h-5 w-5 animate-bounce" />
                 <h2 className="text-base font-bold">Meeting Reminder</h2>
               </div>
@@ -5373,7 +5228,7 @@ function InternDashboard() {
                 </div>
                 <div>
                   <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Countdown</div>
-                  <div className="text-xs font-bold text-emerald-600">
+                  <div className="text-xs font-bold text-slate-700">
                     <MeetingCountdown targetDate={meetingAlert.scheduled_at} />
                   </div>
                 </div>
@@ -5420,9 +5275,9 @@ function InternDashboard() {
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-500"></span>
                 </span>
-                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 bg-slate-50 px-2 py-0.5 rounded">
                   New in Portal: REFER & EARN
                 </span>
               </div>
@@ -5486,7 +5341,7 @@ function InternDashboard() {
                   <PartyPopper className="h-7 w-7 animate-bounce" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-sans">
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-500 text-slate-950 font-sans">
                     Official Holiday Today
                   </span>
                   <h3 className="font-extrabold text-white text-lg mt-1">
@@ -5512,7 +5367,7 @@ function InternDashboard() {
                     setHolidayPopupDismissed(true);
                     toast.info("Enjoy your holiday with your family!");
                   }}
-                  className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-slate-900/10"
+                  className="w-full h-12 bg-slate-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-slate-900/10"
                 >
                   🎉 Enjoy the Holiday
                 </Button>
@@ -5554,7 +5409,7 @@ function InternDashboard() {
             </div>
 
             {/* Countdown timer in modal */}
-            <div className="p-4 bg-emerald-50/70 text-slate-900 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs border border-slate-200">
+            <div className="p-4 bg-slate-50/70 text-slate-900 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs border border-slate-200">
               <div>
                 <span className="text-xs font-black text-slate-900 block">Payment Due Deadline:</span>
                 <span className="text-[10px] text-slate-600 font-medium">
@@ -5564,7 +5419,7 @@ function InternDashboard() {
               <FeeCountdownTimer deadline={profile?.fee_payment_deadline} />
             </div>
 
-            <div className="p-3.5 bg-emerald-50 border border-slate-200 rounded-2xl text-[11px] text-emerald-900 leading-relaxed font-semibold">
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] text-slate-900 leading-relaxed font-semibold">
               <strong>Dashboard Restriction:</strong> Deliverable submissions and final verified certification remain locked until payment is verified.
             </div>
 
@@ -5608,7 +5463,7 @@ function InternDashboard() {
         <DialogContent className="sm:max-w-md bg-white border border-slate-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-900">
-              <HelpCircle className="h-5 w-5 text-emerald-600" />
+              <HelpCircle className="h-5 w-5 text-slate-700" />
               Request Doubt Solving Session
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-600 font-medium">
@@ -5711,7 +5566,7 @@ function InternDashboard() {
         <DialogContent className="sm:max-w-md bg-white border border-slate-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-900">
-              <FolderOpen className="h-5 w-5 text-emerald-600" />
+              <FolderOpen className="h-5 w-5 text-slate-700" />
               Request Project Resources
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-600 font-medium">
@@ -5868,7 +5723,7 @@ function CbtAvailableExamsSection() {
                       Retake Available ({exam.attemptsUsed} used)
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-slate-200 shrink-0">
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-800 border border-slate-200 shrink-0">
                       New Assessment
                     </span>
                   )}
