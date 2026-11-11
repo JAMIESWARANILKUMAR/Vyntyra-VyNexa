@@ -793,21 +793,36 @@ function AdminDashboard() {
           <div className="relative px-6 sm:px-8 py-8 sm:py-10">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[10px] font-medium text-slate-900 uppercase tracking-[0.18em] mb-4">
-                  <span className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse" />
+                <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 backdrop-blur-xs px-3.5 py-1 text-[10px] font-bold text-amber-300 uppercase tracking-[0.2em] mb-4 shadow-[0_0_12px_rgba(251,191,36,0.18)]">
+                  <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.9)]" />
                   Super Admin Dashboard
                 </div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight leading-tight">
-                  Hello, <span className="text-slate-900">Super Admin</span>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight text-white">
+                  Hello,{" "}
+                  <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-200 bg-clip-text text-transparent drop-shadow-[0_2px_14px_rgba(251,191,36,0.35)]">
+                    Super Admin
+                  </span>
                 </h1>
-                <p className="text-lg sm:text-xl text-primary-foreground/80 mt-1">
-                  @ <span className="font-medium text-primary-foreground">Vyntyra Consultancy Services</span>
+                <p className="text-lg sm:text-xl text-slate-200 mt-1.5 flex items-center gap-1.5 flex-wrap">
+                  <span className="text-amber-400 font-bold">@</span>
+                  <span className="font-semibold text-white tracking-wide">Vyntyra Consultancy Services</span>
                 </p>
-                <p className="text-sm text-primary-foreground/60 mt-3 max-w-xl">
-                  {new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-                  {" · "}
-                  {stats.total} total applications · {stats.new} new · {stats.shortlisted} shortlisted
-                </p>
+                <div className="text-xs sm:text-sm text-slate-300 mt-3 max-w-2xl flex items-center gap-2 flex-wrap font-medium">
+                  <span className="text-slate-300">
+                    {new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                  </span>
+                  <span className="text-slate-500">·</span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/10 text-white font-mono text-[11px] font-bold border border-white/15">
+                    {stats.total} total applications
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-bold border border-emerald-500/30">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    {stats.new} new
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-[11px] font-bold border border-amber-500/30">
+                    {stats.shortlisted} shortlisted
+                  </span>
+                </div>
               </div>
               <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto mt-4 sm:mt-0">
                 <div className="text-left sm:text-right hidden sm:block">
