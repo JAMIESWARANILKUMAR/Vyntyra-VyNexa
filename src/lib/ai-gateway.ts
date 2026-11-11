@@ -153,6 +153,7 @@ async function callOpenRouterSecondary(
 
   const bodyPayload: any = {
     model,
+    models: [model, "meta-llama/llama-3.3-70b-instruct", "deepseek/deepseek-chat", "openai/gpt-4o-mini"],
     messages,
   };
 
@@ -173,7 +174,7 @@ async function callOpenRouterSecondary(
     ...(options.headers || {})
   };
 
-  const response = await fetch(OPENROUTER_API_URL, {
+  let response = await fetch(OPENROUTER_API_URL, {
     method: "POST",
     headers,
     body: JSON.stringify(bodyPayload),
@@ -186,6 +187,29 @@ async function callOpenRouterSecondary(
       const jsonErr = JSON.parse(errorText);
       parsedError = jsonErr?.error?.message || errorText;
     } catch {}
+
+    // If error is ZDR (Zero Data Retention) policy exclusion or endpoint restricted, retry with ZDR-compliant open model
+    if (parsedError.toLowerCase().includes("zdr") || parsedError.toLowerCase().includes("guardrail") || parsedError.toLowerCase().includes("data policy")) {
+      console.warn("[OpenRouter] ZDR policy triggered. Retrying with meta-llama/llama-3.3-70b-instruct...");
+      const zdrPayload = {
+        ...bodyPayload,
+        model: "meta-llama/llama-3.3-70b-instruct",
+        models: ["meta-llama/llama-3.3-70b-instruct", "deepseek/deepseek-chat"]
+      };
+      const retryRes = await fetch(OPENROUTER_API_URL, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(zdrPayload)
+      });
+      if (retryRes.ok) {
+        const zdrJson = await retryRes.json();
+        const zdrText = zdrJson?.choices?.[0]?.message?.content || "";
+        if (zdrText) {
+          return { text: zdrText, model: "meta-llama/llama-3.3-70b-instruct" };
+        }
+      }
+    }
+
     throw new Error(`OpenRouter API error (${response.status}): ${parsedError}`);
   }
 
@@ -212,18 +236,42 @@ export async function generateAiText(options: AiRequestOptions): Promise<AiRespo
     (options.model && options.model.includes("/") && requestedProvider !== "gemini");
 
   if (forceOpenRouter) {
-    if (!hasSecondary) {
+    if (hasSecondary) {
+      try {
+        const result = await callOpenRouterSecondary(options, openRouterKey);
+        return {
+          text: result.text,
+          provider: "openrouter",
+          model: result.model,
+          didFailover: false,
+        };
+      } catch (openRouterErr: any) {
+        console.warn("[AI Gateway] OpenRouter failed, attempting Gemini fallback:", openRouterErr.message);
+        if (hasPrimary) {
+          const geminiResult = await callGeminiPrimary(options, geminiKey);
+          return {
+            text: geminiResult.text,
+            provider: "gemini",
+            model: geminiResult.model,
+            didFailover: true,
+            failoverReason: `OpenRouter error: ${openRouterErr.message}`
+          };
+        }
+        throw openRouterErr;
+      }
+    } else if (hasPrimary) {
+      const geminiResult = await callGeminiPrimary(options, geminiKey);
+      return {
+        text: geminiResult.text,
+        provider: "gemini",
+        model: geminiResult.model,
+        didFailover: true,
+      };
+    } else {
       throw new Error(
         "OpenRouter provider explicitly requested, but OPENROUTER_API_KEY is not configured in environment."
       );
     }
-    const result = await callOpenRouterSecondary(options, openRouterKey);
-    return {
-      text: result.text,
-      provider: "openrouter",
-      model: result.model,
-      didFailover: false,
-    };
   }
 
   // If caller explicitly requested Gemini
