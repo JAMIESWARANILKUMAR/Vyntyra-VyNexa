@@ -241,33 +241,33 @@ export function AdminMockInterviewsOperationsView() {
           <div className="text-[10px] text-slate-400 truncate">All-time sessions</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-emerald-200/80 bg-emerald-50/30 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
-          <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5 truncate">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-slate-200 bg-slate-50 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
+          <div className="text-[11px] font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 truncate">
+            <span className="h-2 w-2 rounded-full bg-slate-900 animate-pulse shrink-0 text-white" />
             Active Live
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-emerald-700 my-1">{metrics.activeLive}</div>
-          <div className="text-[10px] text-emerald-600/80 truncate">In room right now</div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 my-1">{metrics.activeLive}</div>
+          <div className="text-[10px] text-slate-900/80 truncate">In room right now</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-blue-200/80 bg-blue-50/30 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
-          <div className="text-[11px] font-bold text-blue-700 uppercase tracking-wider truncate">Scheduled</div>
-          <div className="text-2xl sm:text-3xl font-black text-blue-700 my-1">{metrics.scheduled}</div>
-          <div className="text-[10px] text-blue-600/80 truncate">Upcoming slots</div>
+        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-slate-200 bg-slate-50 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
+          <div className="text-[11px] font-bold text-slate-900 uppercase tracking-wider truncate">Scheduled</div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 my-1">{metrics.scheduled}</div>
+          <div className="text-[10px] text-slate-900/80 truncate">Upcoming slots</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-purple-200/80 bg-purple-50/30 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
-          <div className="text-[11px] font-bold text-purple-700 uppercase tracking-wider truncate">Completed</div>
-          <div className="text-2xl sm:text-3xl font-black text-purple-700 my-1">{metrics.completed}</div>
-          <div className="text-[10px] text-purple-600/80 truncate">Evaluations ready</div>
+        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-slate-200 bg-slate-50 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
+          <div className="text-[11px] font-bold text-slate-900 uppercase tracking-wider truncate">Completed</div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 my-1">{metrics.completed}</div>
+          <div className="text-[10px] text-slate-900/80 truncate">Evaluations ready</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-amber-200/80 bg-amber-50/30 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
-          <div className="text-[11px] font-bold text-amber-700 uppercase tracking-wider truncate">Avg Score</div>
-          <div className="text-2xl sm:text-3xl font-black text-amber-700 my-1">
+        <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-slate-200 bg-slate-50 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
+          <div className="text-[11px] font-bold text-slate-900 uppercase tracking-wider truncate">Avg Score</div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 my-1">
             {metrics.averageScore}<span className="text-xs font-semibold text-slate-400">/100</span>
           </div>
-          <div className="text-[10px] text-amber-600/80 truncate">Across all domains</div>
+          <div className="text-[10px] text-slate-900/80 truncate">Across all domains</div>
         </div>
 
         <div className="bg-white rounded-2xl p-4 sm:p-4.5 border border-slate-200 shadow-sm flex flex-col justify-between min-h-[96px] transition-all hover:shadow-md">
@@ -327,14 +327,14 @@ export function AdminMockInterviewsOperationsView() {
             <span className="text-xs text-slate-400">({sessions.length} sessions listed)</span>
           </div>
           <div className="text-xs text-slate-500 flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block animate-ping" />
+            <span className="h-2 w-2 rounded-full bg-slate-900 inline-block animate-ping text-white" />
             Auto-polling enabled
           </div>
         </div>
 
         {isLoading ? (
           <div className="p-12 text-center text-slate-400 text-xs flex flex-col items-center gap-2">
-            <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
+            <RefreshCw className="h-6 w-6 animate-spin text-slate-900" />
             Loading real-time interview roster...
           </div>
         ) : sessions.length === 0 ? (
@@ -399,16 +399,16 @@ export function AdminMockInterviewsOperationsView() {
 
                       <td className="py-3 px-4">
                         {isLive ? (
-                          <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold gap-1 text-[10px] animate-pulse">
+                          <Badge className="bg-slate-900 hover:bg-black text-white font-bold gap-1 text-[10px] animate-pulse">
                             <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
                             Active Live
                           </Badge>
                         ) : isScheduled ? (
-                          <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50 text-[10px] font-bold">
+                          <Badge variant="outline" className="border-slate-300 text-slate-900 bg-slate-50 text-[10px] font-bold">
                             Scheduled
                           </Badge>
                         ) : isCompleted ? (
-                          <Badge variant="outline" className="border-purple-300 text-purple-700 bg-purple-50 text-[10px] font-bold">
+                          <Badge variant="outline" className="border-slate-300 text-slate-900 bg-slate-50 text-[10px] font-bold">
                             Completed
                           </Badge>
                         ) : (
@@ -421,7 +421,7 @@ export function AdminMockInterviewsOperationsView() {
                       <td className="py-3 px-4">
                         {s.overall_score !== null && s.overall_score !== undefined ? (
                           <div>
-                            <div className={`font-black text-sm ${s.overall_score >= 70 ? "text-emerald-600" : s.overall_score >= 50 ? "text-amber-600" : "text-rose-600"}`}>
+                            <div className={`font-black text-sm ${s.overall_score >= 70 ? "text-slate-900" : s.overall_score >= 50 ? "text-slate-900" : "text-rose-600"}`}>
                               {Math.round(s.overall_score)}/100
                             </div>
                             {s.hiring_verdict && (
@@ -438,7 +438,7 @@ export function AdminMockInterviewsOperationsView() {
                       <td className="py-3 px-4">
                         {s.mentor_grade ? (
                           <div>
-                            <span className="font-bold text-indigo-700 text-xs">
+                            <span className="font-bold text-slate-900 text-xs">
                               {Math.round(s.mentor_grade)}/100
                             </span>
                             <div className="text-[10px] text-slate-400 truncate max-w-[140px]" title={s.mentor_notes}>
@@ -456,7 +456,7 @@ export function AdminMockInterviewsOperationsView() {
                             <Button
                               asChild
                               size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] h-7 px-2.5 rounded-lg gap-1 shadow-xs"
+                              className="bg-slate-900 hover:bg-black text-white font-bold text-[11px] h-7 px-2.5 rounded-lg gap-1 shadow-xs"
                             >
                               <a href={`/interview/${s.id}?observer=true`} target="_blank" rel="noreferrer">
                                 <Eye className="h-3 w-3" />
@@ -471,7 +471,7 @@ export function AdminMockInterviewsOperationsView() {
                               className="border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-[11px] h-7 px-2.5 rounded-lg gap-1"
                             >
                               <a href={`/interview/report/${s.id}`} target="_blank" rel="noreferrer">
-                                <FileText className="h-3 w-3 text-purple-600" />
+                                <FileText className="h-3 w-3 text-slate-900" />
                                 View Report
                               </a>
                             </Button>
@@ -483,7 +483,7 @@ export function AdminMockInterviewsOperationsView() {
                               className="border-slate-200 text-slate-600 hover:bg-slate-50 text-[11px] h-7 px-2.5 rounded-lg gap-1"
                             >
                               <a href={`/interview/${s.id}`} target="_blank" rel="noreferrer">
-                                <Play className="h-3 w-3 text-blue-600" />
+                                <Play className="h-3 w-3 text-slate-900" />
                                 Open Room
                               </a>
                             </Button>
@@ -504,7 +504,7 @@ export function AdminMockInterviewsOperationsView() {
         <DialogContent className="max-w-lg w-[95vw] rounded-3xl bg-white text-slate-900 border border-slate-200 shadow-2xl p-6 sm:p-7 max-h-[92vh] overflow-y-auto">
           <DialogHeader className="space-y-1.5 pb-2 border-b border-slate-100">
             <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2 text-slate-900">
-              <Calendar className="h-5 w-5 text-blue-600 shrink-0" />
+              <Calendar className="h-5 w-5 text-slate-900 shrink-0" />
               Schedule Candidate Mock Interview
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
@@ -522,7 +522,7 @@ export function AdminMockInterviewsOperationsView() {
                 onClick={() => setScheduleMode("intern")}
                 className={`text-xs h-8 sm:h-9 rounded-xl font-bold cursor-pointer transition-all ${
                   scheduleMode === "intern"
-                    ? "bg-blue-600 text-white shadow-sm"
+                    ? "bg-slate-900 text-white shadow-sm"
                     : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
                 }`}
               >
@@ -536,7 +536,7 @@ export function AdminMockInterviewsOperationsView() {
                 onClick={() => setScheduleMode("manual")}
                 className={`text-xs h-8 sm:h-9 rounded-xl font-bold cursor-pointer transition-all ${
                   scheduleMode === "manual"
-                    ? "bg-blue-600 text-white shadow-sm"
+                    ? "bg-slate-900 text-white shadow-sm"
                     : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
                 }`}
               >
@@ -545,10 +545,10 @@ export function AdminMockInterviewsOperationsView() {
             </div>
 
             {scheduleMode === "intern" && (
-              <div className="space-y-1.5 p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200/80">
-                <Label className="text-xs font-bold text-blue-900 flex items-center justify-between">
+              <div className="space-y-1.5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                <Label className="text-xs font-bold text-slate-900 flex items-center justify-between">
                   <span>Pick Registered Intern *</span>
-                  <span className="text-[10px] text-blue-600 font-normal">Auto-fills name, email &amp; intern ID</span>
+                  <span className="text-[10px] text-slate-900 font-normal">Auto-fills name, email &amp; intern ID</span>
                 </Label>
                 <Select
                   value={selectedInternId}
@@ -571,7 +571,7 @@ export function AdminMockInterviewsOperationsView() {
                     }
                   }}
                 >
-                  <SelectTrigger className="h-10 text-xs rounded-xl bg-white border-blue-300 text-slate-900 shadow-xs">
+                  <SelectTrigger className="h-10 text-xs rounded-xl bg-white border-slate-300 text-slate-900 shadow-xs">
                     <SelectValue placeholder={isLoadingInterns ? "Loading interns list..." : "Choose intern..."} />
                   </SelectTrigger>
                   <SelectContent className="max-h-60 bg-white border-slate-200 text-slate-900 shadow-xl rounded-xl z-50">
@@ -598,7 +598,7 @@ export function AdminMockInterviewsOperationsView() {
                   value={formCandidateName}
                   onChange={(e) => setFormCandidateName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
-                  className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                  className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
                 />
               </div>
               <div className="space-y-1">
@@ -608,7 +608,7 @@ export function AdminMockInterviewsOperationsView() {
                   value={formCandidateEmail}
                   onChange={(e) => setFormCandidateEmail(e.target.value)}
                   placeholder="candidate@example.com"
-                  className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                  className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
                 />
               </div>
             </div>
@@ -620,14 +620,14 @@ export function AdminMockInterviewsOperationsView() {
                   value={formInternId}
                   onChange={(e) => setFormInternId(e.target.value)}
                   placeholder="VCS-INT-2026-..."
-                  className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                  className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
                 />
               </div>
 
               <div className="space-y-1">
                 <Label className="text-xs font-bold text-slate-800">Difficulty Level</Label>
                 <Select value={formDifficulty} onValueChange={(v: any) => setFormDifficulty(v)}>
-                  <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
+                  <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-slate-200 text-slate-900 shadow-xl rounded-xl z-50">
@@ -649,7 +649,7 @@ export function AdminMockInterviewsOperationsView() {
                   if (meta) setFormRole(meta.recommendedRole);
                 }}
               >
-                <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
+                <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-slate-200 text-slate-900 shadow-xl rounded-xl z-50 max-h-60">
@@ -666,7 +666,7 @@ export function AdminMockInterviewsOperationsView() {
                 value={formRole}
                 onChange={(e) => setFormRole(e.target.value)}
                 placeholder="e.g. Senior Full-Stack Engineer"
-                className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
               />
             </div>
 
@@ -677,7 +677,7 @@ export function AdminMockInterviewsOperationsView() {
                   type="datetime-local"
                   value={formScheduledAt}
                   onChange={(e) => setFormScheduledAt(e.target.value)}
-                  className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                  className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
                 />
               </div>
 
@@ -691,7 +691,7 @@ export function AdminMockInterviewsOperationsView() {
                     if (user) setFormMentorName(user.name || user.email);
                   }}
                 >
-                  <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
+                  <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
                     <SelectValue placeholder="Select staff..." />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-slate-200 text-slate-900 shadow-xl rounded-xl z-50 max-h-60">
@@ -722,7 +722,7 @@ export function AdminMockInterviewsOperationsView() {
               size="sm"
               onClick={() => scheduleMut.mutate()}
               disabled={scheduleMut.isPending || !formCandidateName || !formCandidateEmail}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl gap-1.5 h-9 px-5 shadow-md shadow-blue-600/20"
+              className="bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-xl gap-1.5 h-9 px-5 shadow-md shadow-blue-600/20"
             >
               {scheduleMut.isPending ? "Scheduling..." : "Confirm & Schedule"}
             </Button>
@@ -735,7 +735,7 @@ export function AdminMockInterviewsOperationsView() {
         <DialogContent className="max-w-md w-[95vw] rounded-3xl bg-white text-slate-900 border border-slate-200 shadow-2xl p-6 sm:p-7">
           <DialogHeader className="space-y-1.5 pb-2 border-b border-slate-100">
             <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2 text-slate-900">
-              <Shield className="h-5 w-5 text-indigo-600 shrink-0" />
+              <Shield className="h-5 w-5 text-slate-900 shrink-0" />
               Manage User Interview Access Role
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
@@ -750,7 +750,7 @@ export function AdminMockInterviewsOperationsView() {
                 value={selectedUserEmail}
                 onValueChange={(val) => setSelectedUserEmail(val)}
               >
-                <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600">
+                <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
                   <SelectValue placeholder={isLoadingUsers ? "Loading user list..." : "Choose staff / user from platform..."} />
                 </SelectTrigger>
                 <SelectContent className="max-h-60 bg-white border-slate-200 text-slate-900 shadow-xl rounded-xl z-50">
@@ -758,7 +758,7 @@ export function AdminMockInterviewsOperationsView() {
                     <SelectItem key={u.id} value={u.email}>
                       <span className="font-semibold text-slate-900">{u.full_name || u.email}</span>
                       <span className="text-slate-500 text-[11px] ml-1">({u.email})</span>
-                      <span className="ml-1 text-[10px] uppercase font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+                      <span className="ml-1 text-[10px] uppercase font-bold text-slate-900 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
                         {u.role || "candidate"}
                       </span>
                     </SelectItem>
@@ -774,32 +774,32 @@ export function AdminMockInterviewsOperationsView() {
                 value={selectedUserEmail}
                 onChange={(e) => setSelectedUserEmail(e.target.value)}
                 placeholder="staff@vyntyraconsultancyservices.in"
-                className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+                className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
               />
             </div>
 
             <div className="space-y-1.5">
               <Label className="text-xs font-bold text-slate-800">Select Role Tier</Label>
               <Select value={selectedRole} onValueChange={(v: any) => setSelectedRole(v)}>
-                <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600">
+                <SelectTrigger className="h-10 text-xs rounded-xl bg-slate-50 hover:bg-white text-slate-900 border-slate-300 focus:bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-slate-200 text-slate-900 shadow-xl rounded-xl z-50">
                   <SelectItem value="super_admin">
                     <div className="py-0.5">
-                      <div className="font-bold text-indigo-700">Super Admin</div>
+                      <div className="font-bold text-slate-900">Super Admin</div>
                       <div className="text-[10px] text-slate-500">Global Full Access &amp; Operations Command</div>
                     </div>
                   </SelectItem>
                   <SelectItem value="admin">
                     <div className="py-0.5">
-                      <div className="font-bold text-blue-700">Admin</div>
+                      <div className="font-bold text-slate-900">Admin</div>
                       <div className="text-[10px] text-slate-500">Org-wide Live Monitoring &amp; Scheduling</div>
                     </div>
                   </SelectItem>
                   <SelectItem value="employee">
                     <div className="py-0.5">
-                      <div className="font-bold text-emerald-700">Employee / Mentor</div>
+                      <div className="font-bold text-slate-900">Employee / Mentor</div>
                       <div className="text-[10px] text-slate-500">Assigned Mentees &amp; Manual Grading</div>
                     </div>
                   </SelectItem>
@@ -827,7 +827,7 @@ export function AdminMockInterviewsOperationsView() {
               size="sm"
               onClick={() => roleMut.mutate()}
               disabled={roleMut.isPending || !selectedUserEmail}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl h-9 px-5 shadow-md shadow-indigo-600/20"
+              className="bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-xl h-9 px-5 shadow-md shadow-indigo-600/20"
             >
               {roleMut.isPending ? "Saving..." : "Update Role"}
             </Button>

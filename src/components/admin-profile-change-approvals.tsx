@@ -82,13 +82,13 @@ export function AdminProfileChangeApprovals() {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-3xl text-white shadow-lg">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r bg-slate-950 border border-slate-800 text-white p-6 rounded-3xl text-white shadow-lg">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <span className="p-2 bg-indigo-500/20 border border-indigo-400/30 rounded-xl text-indigo-300">
+            <span className="p-2 bg-slate-900/20 border border-slate-300 rounded-xl text-indigo-300 text-white">
               <UserCheck className="h-5 w-5" />
             </span>
-            <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-500/30 text-indigo-200 px-2.5 py-0.5 rounded-full border border-indigo-400/30">
+            <span className="text-[10px] font-black uppercase tracking-wider bg-slate-900/30 text-indigo-200 px-2.5 py-0.5 rounded-full border border-slate-300 text-white">
               Directorate Governance
             </span>
           </div>
@@ -121,7 +121,7 @@ export function AdminProfileChangeApprovals() {
             onClick={() => setActiveTab("pending")}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
               activeTab === "pending"
-                ? "bg-amber-500 text-white shadow-xs"
+                ? "bg-slate-900 hover:bg-black text-white shadow-xs"
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
@@ -133,7 +133,7 @@ export function AdminProfileChangeApprovals() {
             onClick={() => setActiveTab("approved")}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
               activeTab === "approved"
-                ? "bg-emerald-600 text-white shadow-xs"
+                ? "bg-slate-900 text-white shadow-xs"
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
@@ -213,7 +213,7 @@ export function AdminProfileChangeApprovals() {
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-sm text-slate-900">{req.user_name}</span>
                       <Badge className={`text-[9px] uppercase font-bold px-2 py-0.5 rounded-full ${
-                        req.user_role === "employee" ? "bg-purple-100 text-purple-800 border-purple-200" : "bg-indigo-100 text-indigo-800 border-indigo-200"
+                        req.user_role === "employee" ? "bg-slate-100 text-slate-800 border-slate-300 font-mono" : "bg-slate-100 text-slate-800 border-slate-300 font-mono"
                       }`}>
                         {req.user_role}
                       </Badge>
@@ -225,17 +225,17 @@ export function AdminProfileChangeApprovals() {
                   </div>
 
                   {req.status === "pending" && (
-                    <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-[10px] font-bold">
+                    <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] font-bold">
                       <Clock className="h-3 w-3 mr-1" /> Pending
                     </Badge>
                   )}
                   {req.status === "approved" && (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px] font-bold">
+                    <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] font-bold">
                       <CheckCircle2 className="h-3 w-3 mr-1" /> Approved
                     </Badge>
                   )}
                   {req.status === "rejected" && (
-                    <Badge className="bg-rose-100 text-rose-800 border-rose-300 text-[10px] font-bold">
+                    <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] font-bold">
                       <XCircle className="h-3 w-3 mr-1" /> Rejected
                     </Badge>
                   )}
@@ -252,11 +252,11 @@ export function AdminProfileChangeApprovals() {
                     {req.requested_values.email && req.requested_values.email !== req.current_values.email && (
                       <div className="pt-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px]">
                         <span className="font-semibold text-slate-600 flex items-center gap-1">
-                          <Mail className="h-3 w-3 text-indigo-500" /> Email:
+                          <Mail className="h-3 w-3 text-slate-600" /> Email:
                         </span>
                         <div className="flex items-center gap-2">
                           <span className="line-through text-slate-400 text-[10px]">{req.current_values.email || "Empty"}</span>
-                          <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                          <span className="text-slate-900 font-bold bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
                             {req.requested_values.email}
                           </span>
                         </div>
@@ -267,11 +267,11 @@ export function AdminProfileChangeApprovals() {
                     {req.requested_values.phone && req.requested_values.phone !== req.current_values.phone && (
                       <div className="pt-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px]">
                         <span className="font-semibold text-slate-600 flex items-center gap-1">
-                          <Phone className="h-3 w-3 text-emerald-500" /> Phone:
+                          <Phone className="h-3 w-3 text-slate-600" /> Phone:
                         </span>
                         <div className="flex items-center gap-2">
                           <span className="line-through text-slate-400 text-[10px]">{req.current_values.phone || "Empty"}</span>
-                          <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                          <span className="text-slate-900 font-bold bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
                             {req.requested_values.phone}
                           </span>
                         </div>
@@ -282,19 +282,19 @@ export function AdminProfileChangeApprovals() {
                     {req.requested_values.avatar_url && req.requested_values.avatar_url !== req.current_values.avatar_url && (
                       <div className="pt-1.5 flex items-center justify-between gap-2 text-[11px]">
                         <span className="font-semibold text-slate-600 flex items-center gap-1">
-                          <ImageIcon className="h-3 w-3 text-purple-500" /> Photo:
+                          <ImageIcon className="h-3 w-3 text-slate-600" /> Photo:
                         </span>
                         <div className="flex items-center gap-2">
                           <img
                             src={req.requested_values.avatar_url}
                             alt="New Photo Preview"
-                            className="h-8 w-8 rounded-lg object-cover border border-indigo-200 shadow-2xs"
+                            className="h-8 w-8 rounded-lg object-cover border border-slate-200 shadow-2xs"
                           />
                           <a
                             href={req.requested_values.avatar_url}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-[10px] text-indigo-600 underline font-medium"
+                            className="text-[10px] text-slate-900 underline font-medium"
                           >
                             View Full Photo ↗
                           </a>
@@ -323,9 +323,9 @@ export function AdminProfileChangeApprovals() {
                 )}
 
                 {req.admin_remarks && (
-                  <div className="text-[11px] p-2.5 rounded-xl bg-indigo-50/80 border border-indigo-100 text-indigo-950 space-y-0.5">
+                  <div className="text-[11px] p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-indigo-950 space-y-0.5">
                     <div className="font-bold flex items-center gap-1">
-                      <Sparkles className="h-3 w-3 text-indigo-600" /> Admin Feedback / Note:
+                      <Sparkles className="h-3 w-3 text-slate-900" /> Admin Feedback / Note:
                     </div>
                     <p>{req.admin_remarks}</p>
                   </div>
@@ -343,7 +343,7 @@ export function AdminProfileChangeApprovals() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-rose-200 text-rose-700 hover:bg-rose-50 text-[11px] font-bold h-7 px-2.5 rounded-lg"
+                      className="border-slate-200 text-rose-700 hover:bg-slate-50 text-[11px] font-bold h-7 px-2.5 rounded-lg"
                       onClick={() => {
                         setSelectedReq(req);
                         setReviewAction("rejected");
@@ -354,7 +354,7 @@ export function AdminProfileChangeApprovals() {
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold h-7 px-3 rounded-lg shadow-2xs"
+                      className="bg-slate-900 hover:bg-black text-white text-[11px] font-bold h-7 px-3 rounded-lg shadow-2xs"
                       onClick={() => {
                         setSelectedReq(req);
                         setReviewAction("approved");
@@ -383,7 +383,7 @@ export function AdminProfileChangeApprovals() {
               <DialogTitle className="flex items-center gap-2 text-base font-bold">
                 {reviewAction === "approved" ? (
                   <>
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                    <CheckCircle2 className="h-5 w-5 text-slate-900" />
                     Approve Profile Change
                   </>
                 ) : (
@@ -427,7 +427,7 @@ export function AdminProfileChangeApprovals() {
                 size="sm"
                 disabled={isSubmitting || (reviewAction === "rejected" && !adminRemarks.trim())}
                 onClick={handleReviewSubmit}
-                className={reviewAction === "approved" ? "bg-emerald-600 hover:bg-emerald-700 text-white font-bold" : "bg-rose-600 hover:bg-rose-700 text-white font-bold"}
+                className={reviewAction === "approved" ? "bg-slate-900 hover:bg-black text-white font-bold" : "bg-slate-900 hover:bg-black text-white font-bold"}
               >
                 {isSubmitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

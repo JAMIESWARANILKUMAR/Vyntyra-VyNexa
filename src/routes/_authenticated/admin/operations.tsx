@@ -983,14 +983,14 @@ function OperationsDashboard() {
 
   const priorityStyles: Record<string, string> = {
     high: "bg-red-100 text-red-700 border-red-200",
-    medium: "bg-amber-100 text-amber-700 border-amber-200",
-    low: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    medium: "bg-slate-100 text-slate-800 border-slate-300 font-mono",
+    low: "bg-slate-100 text-slate-800 border-slate-300 font-mono",
   };
 
   const taskStatusStyles: Record<string, string> = {
     pending: "bg-slate-100 text-slate-600",
-    in_progress: "bg-blue-100 text-blue-700",
-    completed: "bg-emerald-100 text-emerald-700",
+    in_progress: "bg-slate-100 text-slate-800 border-slate-300 font-mono",
+    completed: "bg-slate-100 text-slate-800 border-slate-300 font-mono",
     blocked: "bg-red-100 text-red-700",
   };
 
@@ -1189,7 +1189,7 @@ function OperationsDashboard() {
                   await supabase.auth.signOut();
                   window.location.href = "/auth/admin";
                 }}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-rose-600 hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 <span>Sign Out</span>
@@ -1212,7 +1212,7 @@ function OperationsDashboard() {
                   await supabase.auth.signOut();
                   window.location.href = "/auth/admin";
                 }}
-                className="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                className="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-slate-50 transition-colors cursor-pointer"
                 title="Sign Out"
               >
                 <LogOut className="h-4 w-4" />
@@ -1232,7 +1232,7 @@ function OperationsDashboard() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs text-white"
             />
 
             {/* Drawer */}
@@ -1322,7 +1322,7 @@ function OperationsDashboard() {
                     await supabase.auth.signOut();
                     window.location.href = "/auth/admin";
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 cursor-pointer"
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-slate-50 cursor-pointer"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   <span>Sign Out</span>
@@ -1462,7 +1462,7 @@ function OperationsDashboard() {
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2 text-slate-900">
-                    <ShieldCheck className="h-5 w-5 text-indigo-600" /> Reset Password for User
+                    <ShieldCheck className="h-5 w-5 text-slate-900" /> Reset Password for User
                   </DialogTitle>
                   <DialogDescription>
                     Instantly set a new secure password for {resetUserTarget?.full_name || resetUserTarget?.email || "this account"}.
@@ -1471,7 +1471,7 @@ function OperationsDashboard() {
                 <form onSubmit={handleAdminResetPassword} className="space-y-4 py-2">
                   <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1">
                     <div><strong className="text-slate-900">Account:</strong> {resetUserTarget?.full_name || "—"} ({resetUserTarget?.email})</div>
-                    <div><strong className="text-slate-900">Role:</strong> <span className="uppercase font-bold text-indigo-600">{resetUserTarget?.role}</span> &middot; ID: {resetUserTarget?.employee_id || resetUserTarget?.intern_id || resetUserTarget?.id}</div>
+                    <div><strong className="text-slate-900">Role:</strong> <span className="uppercase font-bold text-slate-900">{resetUserTarget?.role}</span> &middot; ID: {resetUserTarget?.employee_id || resetUserTarget?.intern_id || resetUserTarget?.id}</div>
                   </div>
 
                   <div className="space-y-1.5">
@@ -1491,7 +1491,7 @@ function OperationsDashboard() {
                     <Button type="button" variant="ghost" size="sm" onClick={() => setResetPasswordOpen(false)}>
                       Cancel
                     </Button>
-                    <Button type="submit" size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold gap-1.5">
+                    <Button type="submit" size="sm" className="bg-slate-900 hover:bg-black text-white font-semibold gap-1.5">
                       <ShieldCheck className="h-4 w-4" /> Set & Update Password
                     </Button>
                   </DialogFooter>
@@ -1503,14 +1503,14 @@ function OperationsDashboard() {
             <Dialog open={holidayModalOpen} onOpenChange={setHolidayModalOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline" className="gap-1.5 text-xs bg-white text-slate-700 border-slate-200 hover:bg-slate-50 font-bold h-9 px-3 rounded-xl">
-                  <PartyPopper className="h-3.5 w-3.5 text-amber-500" />
+                  <PartyPopper className="h-3.5 w-3.5 text-slate-600" />
                   <span className="hidden sm:inline">Add Holiday</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2 text-slate-900">
-                    <PartyPopper className="h-5 w-5 text-amber-600" /> Add Official Holiday
+                    <PartyPopper className="h-5 w-5 text-slate-900" /> Add Official Holiday
                   </DialogTitle>
                   <DialogDescription>
                     This holiday will be reflected in the calendar and dashboard across all Admin, Employee, and Intern portals.
@@ -1581,7 +1581,7 @@ function OperationsDashboard() {
                     <Button type="button" variant="ghost" size="sm" onClick={() => setHolidayModalOpen(false)}>
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={isSavingHoliday} size="sm" className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-1.5">
+                    <Button type="submit" disabled={isSavingHoliday} size="sm" className="bg-slate-900 hover:bg-black text-white font-bold gap-1.5">
                       {isSavingHoliday ? <Loader2 className="h-4 w-4 animate-spin" /> : <PartyPopper className="h-4 w-4" />}
                       Save Holiday
                     </Button>
@@ -1600,9 +1600,9 @@ function OperationsDashboard() {
             {/* Stats Row */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <StatCard icon={<Users className="h-5 w-5 text-primary" />} label="Total Members" value={team.length} color="bg-primary/10" />
-              <StatCard icon={<Briefcase className="h-5 w-5 text-blue-600" />} label="Employees" value={employees.length} color="bg-blue-50" />
-              <StatCard icon={<GraduationCap className="h-5 w-5 text-emerald-600" />} label="Interns" value={interns.length} color="bg-emerald-50" />
-              <StatCard icon={<ClipboardList className="h-5 w-5 text-amber-600" />} label="Active Tasks" value={(tasksQ.data || []).filter((t: any) => t.status !== "completed").length} color="bg-amber-50" />
+              <StatCard icon={<Briefcase className="h-5 w-5 text-slate-900" />} label="Employees" value={employees.length} color="bg-slate-50" />
+              <StatCard icon={<GraduationCap className="h-5 w-5 text-slate-900" />} label="Interns" value={interns.length} color="bg-slate-50" />
+              <StatCard icon={<ClipboardList className="h-5 w-5 text-slate-900" />} label="Active Tasks" value={(tasksQ.data || []).filter((t: any) => t.status !== "completed").length} color="bg-slate-50" />
             </div>
 
             {/* Quick Navigation Cards */}
@@ -1610,18 +1610,18 @@ function OperationsDashboard() {
               <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Explore Admin Dashboard Sub-Pages</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
-                  { id: "directory", title: "Directory & User Management", desc: "Provision accounts, reset passwords, and assign unassigned interns to mentors.", icon: Users, color: "text-blue-600 bg-blue-50 border-blue-200", badge: `${team.length} Members` },
-                  { id: "tasks", title: "Intern Task Hub & Deliverables", desc: "Assign milestones, track progress, review submissions, and manage pool tasks.", icon: ClipboardList, color: "text-amber-600 bg-amber-50 border-amber-200", badge: `${(tasksQ.data || []).filter((t: any) => t.status !== "completed").length} Active` },
-                  { id: "attendance", title: "Attendance & Punch Logs", desc: "Monitor daily check-ins, clock-in times, and view shift attendance metrics.", icon: Clock, color: "text-emerald-600 bg-emerald-50 border-emerald-200", badge: "Live Logs" },
-                  { id: "holidays", title: "Holidays & Calendar Schedule", desc: "Manage company & public holidays, festive observances, and sync team calendar.", icon: CalendarDays, color: "text-amber-600 bg-amber-50 border-amber-200", badge: `${(holidaysQ.data || []).length} Holidays` },
-                  { id: "leaves", title: "Leaves & Access Requests", desc: "Review leave applications, grant tool access, and approve time-off requests.", icon: FileText, color: "text-rose-600 bg-rose-50 border-rose-200", badge: `${(leavesQ.data || []).filter((l: any) => l.status === "pending").length} Pending` },
-                  { id: "meetings", title: "Meetings & Daily Standups", desc: "Schedule Google Meet syncs, 1-on-1 reviews, and track daily standup blockers.", icon: Video, color: "text-indigo-600 bg-indigo-50 border-indigo-200", badge: `${(meetingsQ.data || []).length} Meetings` },
-                  { id: "announcements", title: "Communication, Email & SMS Hub", desc: "Broadcast company notices, kudos recognition, and promotional email & SMS campaigns.", icon: Megaphone, color: "text-purple-600 bg-purple-50 border-purple-200", badge: "Omni-Hub" },
-                  { id: "finances", title: "Finances & Payouts Engine", desc: "Approve stipend payouts, review expense claims, and track compensation records.", icon: DollarSign, color: "text-emerald-700 bg-emerald-50 border-emerald-200", badge: `${(payoutsQ.data || []).length} Payouts` },
-                  { id: "cbt", title: "AI CBT Engine V2", desc: "Generate and monitor proctored AI tests and candidate exams.", icon: BrainCircuit, color: "text-indigo-600 bg-indigo-50 border-indigo-200", badge: "Proctored" },
-                  { id: "vyntyra-meet", title: "Vyntyra Meet", desc: "Enterprise-grade, E2EE secure video meeting rooms and controls.", icon: ShieldCheck, color: "text-blue-600 bg-blue-50 border-blue-200", badge: "Secure" },
-                  { id: "support", title: "Helpdesk & Resolution Hub", desc: "Assign customer and intern support tickets to employee resolvers and approve syncs.", icon: LifeBuoy, color: "text-cyan-600 bg-cyan-50 border-cyan-200", badge: `${(supportQueries || []).filter((q: any) => q.status === "open").length} Open` },
-                  { id: "profile_approvals", title: "Profile Change Approvals", desc: "Review and approve/reject sensitive profile updates (Email, Phone, Photo, Address) requested by interns and employees.", icon: UserCheck, color: "text-indigo-600 bg-indigo-50 border-indigo-200", badge: "Identity Approval" },
+                  { id: "directory", title: "Directory & User Management", desc: "Provision accounts, reset passwords, and assign unassigned interns to mentors.", icon: Users, color: "text-slate-900 bg-slate-50 border-slate-200", badge: `${team.length} Members` },
+                  { id: "tasks", title: "Intern Task Hub & Deliverables", desc: "Assign milestones, track progress, review submissions, and manage pool tasks.", icon: ClipboardList, color: "text-slate-900 bg-slate-50 border-slate-200", badge: `${(tasksQ.data || []).filter((t: any) => t.status !== "completed").length} Active` },
+                  { id: "attendance", title: "Attendance & Punch Logs", desc: "Monitor daily check-ins, clock-in times, and view shift attendance metrics.", icon: Clock, color: "text-slate-900 bg-slate-50 border-slate-200", badge: "Live Logs" },
+                  { id: "holidays", title: "Holidays & Calendar Schedule", desc: "Manage company & public holidays, festive observances, and sync team calendar.", icon: CalendarDays, color: "text-slate-900 bg-slate-50 border-slate-200", badge: `${(holidaysQ.data || []).length} Holidays` },
+                  { id: "leaves", title: "Leaves & Access Requests", desc: "Review leave applications, grant tool access, and approve time-off requests.", icon: FileText, color: "text-rose-600 bg-slate-50 border-slate-200", badge: `${(leavesQ.data || []).filter((l: any) => l.status === "pending").length} Pending` },
+                  { id: "meetings", title: "Meetings & Daily Standups", desc: "Schedule Google Meet syncs, 1-on-1 reviews, and track daily standup blockers.", icon: Video, color: "text-slate-900 bg-slate-50 border-slate-200", badge: `${(meetingsQ.data || []).length} Meetings` },
+                  { id: "announcements", title: "Communication, Email & SMS Hub", desc: "Broadcast company notices, kudos recognition, and promotional email & SMS campaigns.", icon: Megaphone, color: "text-slate-900 bg-slate-50 border-slate-200", badge: "Omni-Hub" },
+                  { id: "finances", title: "Finances & Payouts Engine", desc: "Approve stipend payouts, review expense claims, and track compensation records.", icon: DollarSign, color: "text-slate-900 bg-slate-50 border-slate-200", badge: `${(payoutsQ.data || []).length} Payouts` },
+                  { id: "cbt", title: "AI CBT Engine V2", desc: "Generate and monitor proctored AI tests and candidate exams.", icon: BrainCircuit, color: "text-slate-900 bg-slate-50 border-slate-200", badge: "Proctored" },
+                  { id: "vyntyra-meet", title: "Vyntyra Meet", desc: "Enterprise-grade, E2EE secure video meeting rooms and controls.", icon: ShieldCheck, color: "text-slate-900 bg-slate-50 border-slate-200", badge: "Secure" },
+                  { id: "support", title: "Helpdesk & Resolution Hub", desc: "Assign customer and intern support tickets to employee resolvers and approve syncs.", icon: LifeBuoy, color: "text-slate-900 bg-slate-50 border-slate-200", badge: `${(supportQueries || []).filter((q: any) => q.status === "open").length} Open` },
+                  { id: "profile_approvals", title: "Profile Change Approvals", desc: "Review and approve/reject sensitive profile updates (Email, Phone, Photo, Address) requested by interns and employees.", icon: UserCheck, color: "text-slate-900 bg-slate-50 border-slate-200", badge: "Identity Approval" },
                   { id: "ambassador", title: "Campus Ambassador Program Controls", desc: "Manage product photography, swags/gadgets catalog, toggle application entry (open/closed), and customize coming soon popup messages.", icon: Award, color: "text-slate-900 bg-slate-100 border-slate-200", badge: "Cohort 1.0" },
                   { id: "dataset-vault", title: "Dataset Vault & CSV Extraction Hub", desc: "Extract CSV files, select what to store, manage master records across Companies, Colleges, Students, Interns & Employees with password-protected exports.", icon: Database, color: "text-slate-900 bg-slate-100 border-slate-200", badge: "Master Hub" },
                   { id: "b2b-playbook", title: "B2B Sales Playbook", desc: "Access high-converting outreach scripts, business pitch decks, target industry playbooks, and pipeline collateral.", icon: BookOpen, color: "text-slate-900 bg-slate-100 border-slate-200", badge: "Enterprise" },
@@ -1661,7 +1661,7 @@ function OperationsDashboard() {
               <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
                 <div className="flex items-center justify-between border-b pb-3">
                   <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                    <PartyPopper className="h-4 w-4 text-amber-500" /> Upcoming Official Holidays
+                    <PartyPopper className="h-4 w-4 text-slate-600" /> Upcoming Official Holidays
                   </h3>
                   <Button variant="ghost" size="sm" onClick={() => switchTab("holidays")} className="text-xs text-primary font-bold">
                     View All Holidays &rarr;
@@ -1669,14 +1669,14 @@ function OperationsDashboard() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {(holidaysQ.data || []).slice(0, 4).map((h: any) => (
-                    <div key={h.id} className="p-3 rounded-xl bg-amber-50/50 border border-amber-200/70 flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg bg-amber-500 text-white font-bold flex flex-col items-center justify-center text-xs shrink-0">
+                    <div key={h.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-lg bg-slate-900 hover:bg-black text-white font-bold flex flex-col items-center justify-center text-xs shrink-0">
                         <span className="text-[8px] uppercase">{new Date(h.date).toLocaleString('default', { month: 'short' })}</span>
                         <span className="leading-none">{new Date(h.date).getDate()}</span>
                       </div>
                       <div className="min-w-0 text-xs">
                         <div className="font-bold text-slate-900 truncate">{h.name}</div>
-                        <div className="text-[10px] text-amber-800 font-semibold uppercase">{h.type || "Holiday"}</div>
+                        <div className="text-[10px] text-slate-900 font-semibold uppercase">{h.type || "Holiday"}</div>
                       </div>
                     </div>
                   ))}
@@ -1831,10 +1831,10 @@ function OperationsDashboard() {
                             <span className={`text-[10px] px-1.5 py-0.5 rounded border font-semibold uppercase tracking-wide ${priorityStyles[t.priority] || priorityStyles.medium}`}>{t.priority}</span>
                             <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium capitalize ${taskStatusStyles[t.status] || taskStatusStyles.pending}`}>{(t.status || "pending").replace("_", " ")}</span>
                             {t.is_pool_task ? (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-semibold">INTERN POOL</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 border-slate-300 font-mono font-semibold">INTERN POOL</span>
                             ) : (t.team_id || t.assignment_mode === "team") ? (
-                              <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 flex items-center gap-1">
-                                <Users className="h-3 w-3 text-purple-600" /> {t.team_name || "Collaborative Team"} {t.team_member_names?.length ? `(${t.team_member_names.join(", ")})` : ""}
+                              <span className="text-xs font-semibold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 flex items-center gap-1">
+                                <Users className="h-3 w-3 text-slate-900" /> {t.team_name || "Collaborative Team"} {t.team_member_names?.length ? `(${t.team_member_names.join(", ")})` : ""}
                               </span>
                             ) : (
                               <span className="text-xs text-muted-foreground">→ {t.profiles?.full_name || getMemberName(t.assigned_to)}</span>
@@ -1848,24 +1848,24 @@ function OperationsDashboard() {
                           {/* Acceptance & Execution Details */}
                           <div className="mt-2 text-xs space-y-1 bg-slate-50 p-2.5 rounded-md border border-slate-200">
                             {t.accepted_at ? (
-                              <div className="text-emerald-700 font-medium flex items-center gap-1">
-                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Accepted on {new Date(t.accepted_at).toLocaleString()}
+                              <div className="text-slate-900 font-medium flex items-center gap-1">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-slate-900" /> Accepted on {new Date(t.accepted_at).toLocaleString()}
                               </div>
                             ) : (
-                              <div className="text-amber-700 font-medium">Not accepted yet</div>
+                              <div className="text-slate-900 font-medium">Not accepted yet</div>
                             )}
                             {t.progress_percentage !== undefined && (
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="font-bold text-slate-700">{t.progress_percentage}% Done</span>
                                 <div className="h-1.5 w-24 bg-slate-200 rounded-full overflow-hidden">
-                                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${t.progress_percentage}%` }} />
+                                  <div className="h-full bg-slate-900 rounded-full text-white" style={{ width: `${t.progress_percentage}%` }} />
                                 </div>
                               </div>
                             )}
                             {t.progress_notes && <p className="text-slate-600 italic mt-1">"Notes: {t.progress_notes}"</p>}
                             {t.project_requirements && <p className="text-slate-500 font-mono text-[10px] mt-1">Specs: {t.project_requirements}</p>}
                             {t.deliverable_url && (
-                              <a href={t.deliverable_url} target="_blank" rel="noreferrer" className="text-purple-600 hover:underline flex items-center gap-1 mt-1">
+                              <a href={t.deliverable_url} target="_blank" rel="noreferrer" className="text-slate-900 hover:underline flex items-center gap-1 mt-1">
                                 <FileText className="h-3 w-3" /> Deliverable: {t.deliverable_url}
                               </a>
                             )}
@@ -1873,14 +1873,14 @@ function OperationsDashboard() {
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
-                          <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => setEditingTaskByAdmin(t)}>
+                          <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-slate-900 border-slate-200 hover:bg-slate-50" onClick={() => setEditingTaskByAdmin(t)}>
                             Edit Task
                           </Button>
                           {t.assigned_to && (
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="h-7 text-xs px-2 text-purple-600 border-purple-200 hover:bg-purple-50 flex items-center gap-1" 
+                              className="h-7 text-xs px-2 text-slate-900 border-slate-200 hover:bg-slate-50 flex items-center gap-1" 
                               onClick={() => {
                                 setManageTeamTask(t);
                                 setIsManageTeamOpen(true);
@@ -1929,7 +1929,7 @@ function OperationsDashboard() {
             <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b flex items-center justify-between">
                 <div>
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><Mail className="h-4 w-4 text-amber-500" /> Broadcast Announcements</h2>
+                  <h2 className="font-semibold text-sm flex items-center gap-2"><Mail className="h-4 w-4 text-slate-600" /> Broadcast Announcements</h2>
                   <p className="text-xs text-slate-500">Publish organization-wide or targeted role announcements.</p>
                 </div>
                 <Dialog open={announcementOpen} onOpenChange={setAnnouncementOpen}>
@@ -1938,7 +1938,7 @@ function OperationsDashboard() {
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2"><Mail className="h-5 w-5 text-amber-500" /> Post Announcement</DialogTitle>
+                      <DialogTitle className="flex items-center gap-2"><Mail className="h-5 w-5 text-slate-600" /> Post Announcement</DialogTitle>
                       <DialogDescription>This will be visible to the selected audience in their dashboards.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleCreateAnnouncement} className="space-y-4 py-2">
@@ -1983,7 +1983,7 @@ function OperationsDashboard() {
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-sm truncate">{a.title}</h4>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${a.target_role === "all" ? "bg-slate-100 text-slate-600" : a.target_role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${a.target_role === "all" ? "bg-slate-100 text-slate-600" : a.target_role === "employee" ? "bg-slate-100 text-slate-800 border-slate-300 font-mono" : "bg-slate-100 text-slate-800 border-slate-300 font-mono"}`}>
                               {a.target_role === "all" ? "Everyone" : a.target_role}
                             </span>
                             <span className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
@@ -2022,7 +2022,7 @@ function OperationsDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
               <div className="space-y-1">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <PartyPopper className="h-5 w-5 text-amber-500" /> Organization & National Holiday Manager
+                  <PartyPopper className="h-5 w-5 text-slate-600" /> Organization & National Holiday Manager
                 </h2>
                 <p className="text-xs text-slate-500">
                   Manage official company holidays, public observances, and non-working days. These dates are highlighted across all employee & intern calendar views.
@@ -2044,7 +2044,7 @@ function OperationsDashboard() {
                 <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
                   <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between">
                     <div className="font-bold text-xs uppercase tracking-wider text-slate-900 flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4 text-amber-600" /> Official Holidays & Observances
+                      <CalendarDays className="h-4 w-4 text-slate-900" /> Official Holidays & Observances
                     </div>
                     <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-mono">
                       {(holidaysQ.data || []).length} Holidays
@@ -2067,15 +2067,15 @@ function OperationsDashboard() {
                                 <div className="font-bold text-sm text-slate-900 truncate flex items-center gap-2">
                                   <span>{h.name}</span>
                                   <span className={`text-[9px] uppercase font-extrabold px-2 py-0.5 rounded-full ${
-                                    h.type === 'festive' ? 'bg-purple-100 text-purple-800' :
-                                    h.type === 'public' ? 'bg-blue-100 text-blue-800' :
-                                    h.type === 'company' ? 'bg-amber-100 text-amber-800' :
+                                    h.type === 'festive' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' :
+                                    h.type === 'public' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' :
+                                    h.type === 'company' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' :
                                     'bg-slate-100 text-slate-700'
                                   }`}>
                                     {h.type || 'Holiday'}
                                   </span>
                                   {h.is_recurring && (
-                                    <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-semibold">Annual</span>
+                                    <span className="text-[9px] bg-slate-100 text-slate-800 border-slate-300 font-mono px-1.5 py-0.2 rounded font-semibold">Annual</span>
                                   )}
                                 </div>
                                 <div className="text-xs text-slate-500 mt-0.5">
@@ -2115,7 +2115,7 @@ function OperationsDashboard() {
             <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b flex items-center justify-between">
                 <div>
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><CalendarDays className="h-4 w-4 text-emerald-600" /> Schedules & Company Events</h2>
+                  <h2 className="font-semibold text-sm flex items-center gap-2"><CalendarDays className="h-4 w-4 text-slate-900" /> Schedules & Company Events</h2>
                   <p className="text-xs text-slate-500">Add webinars, sprint planning calls, and company milestones.</p>
                 </div>
                 <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
@@ -2124,7 +2124,7 @@ function OperationsDashboard() {
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-emerald-600" /> Schedule an Event</DialogTitle>
+                      <DialogTitle className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-slate-900" /> Schedule an Event</DialogTitle>
                       <DialogDescription>Events will appear in the targeted team's schedule view.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleCreateSchedule} className="space-y-4 py-2">
@@ -2196,7 +2196,7 @@ function OperationsDashboard() {
                           <h4 className="font-medium text-sm truncate">{s.title}</h4>
                           {s.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{s.description}</p>}
                           <div className="flex items-center gap-2 mt-2">
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${s.target_role === "all" ? "bg-slate-100 text-slate-600" : s.target_role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${s.target_role === "all" ? "bg-slate-100 text-slate-600" : s.target_role === "employee" ? "bg-slate-100 text-slate-800 border-slate-300 font-mono" : "bg-slate-100 text-slate-800 border-slate-300 font-mono"}`}>
                               {s.target_role === "all" ? "Everyone" : s.target_role}
                             </span>
                             <span className="text-xs font-semibold text-slate-700">{s.event_date} {s.event_time ? `at ${s.event_time}` : ""}</span>
@@ -2234,7 +2234,7 @@ function OperationsDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
               <div className="space-y-1">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Video className="h-5 w-5 text-indigo-600" /> Meetings & Daily Standups
+                  <Video className="h-5 w-5 text-slate-900" /> Meetings & Daily Standups
                 </h2>
                 <p className="text-xs text-slate-500">
                   Host team video syncs, 1-on-1 reviews, and verify daily standup progress logs.
@@ -2242,13 +2242,13 @@ function OperationsDashboard() {
               </div>
               <Dialog open={meetingOpen} onOpenChange={setMeetingOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="gap-1.5 text-xs h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold">
+                  <Button size="sm" className="gap-1.5 text-xs h-9 px-4 bg-slate-900 hover:bg-black text-white font-bold">
                     <Plus className="h-3.5 w-3.5" /> Schedule New Meeting
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-lg">
                   <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2"><Video className="h-5 w-5 text-indigo-600" /> Schedule Meeting</DialogTitle>
+                    <DialogTitle className="flex items-center gap-2"><Video className="h-5 w-5 text-slate-900" /> Schedule Meeting</DialogTitle>
                     <DialogDescription>Add a new meeting for your team, specific department, or an individual member.</DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleCreateMeeting} className="space-y-3.5 py-2">
@@ -2276,7 +2276,7 @@ function OperationsDashboard() {
                             setMeetingForm({ ...meetingForm, meeting_link: `${origin}/meet/${shortCode}` });
                             toast.success(`Generated Short Vyntyra Meet link (${shortCode})!`);
                           }}
-                          className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 hover:underline"
+                          className="text-xs font-semibold text-slate-900 hover:text-slate-900 flex items-center gap-1 hover:underline"
                         >
                           <Sparkles className="h-3 w-3" /> Auto-generate Short Vyntyra Link
                         </button>
@@ -2330,7 +2330,7 @@ function OperationsDashboard() {
 
                     <div className="space-y-1.5">
                       <Label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                        <Bell className="h-3.5 w-3.5 text-amber-600" /> Automated Reminder Email Lead Time
+                        <Bell className="h-3.5 w-3.5 text-slate-900" /> Automated Reminder Email Lead Time
                       </Label>
                       <Select 
                         value={String(meetingForm.reminder_lead_time_minutes || 15)} 
@@ -2354,7 +2354,7 @@ function OperationsDashboard() {
                         id="send_meeting_email"
                         checked={meetingForm.send_email_notification}
                         onChange={(e) => setMeetingForm({ ...meetingForm, send_email_notification: e.target.checked })}
-                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                       />
                       <Label htmlFor="send_meeting_email" className="text-xs text-slate-700 font-medium cursor-pointer">
                         Send initial automated email invitation with Google Calendar link to all participants
@@ -2363,7 +2363,7 @@ function OperationsDashboard() {
 
                     <DialogFooter className="pt-2">
                       <Button type="button" variant="ghost" onClick={() => setMeetingOpen(false)}>Cancel</Button>
-                      <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold">Schedule Meeting</Button>
+                      <Button type="submit" className="bg-slate-900 hover:bg-black text-white font-bold">Schedule Meeting</Button>
                     </DialogFooter>
                   </form>
                 </DialogContent>
@@ -2374,7 +2374,7 @@ function OperationsDashboard() {
                 <DialogContent className="sm:max-w-lg">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                      <Pencil className="h-5 w-5 text-indigo-600" /> Update Meeting Timelines & Details
+                      <Pencil className="h-5 w-5 text-slate-900" /> Update Meeting Timelines & Details
                     </DialogTitle>
                     <DialogDescription>
                       Modify the scheduled time window, agenda, reminder interval, or platform link.
@@ -2415,7 +2415,7 @@ function OperationsDashboard() {
                             setEditMeetingForm({ ...editMeetingForm, meeting_link: `${origin}/meet/${shortCode}` });
                             toast.success(`Generated Short Vyntyra Meet link (${shortCode})!`);
                           }}
-                          className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 hover:underline"
+                          className="text-xs font-semibold text-slate-900 hover:text-slate-900 flex items-center gap-1 hover:underline"
                         >
                           <Sparkles className="h-3 w-3" /> Auto-generate Short Vyntyra Link
                         </button>
@@ -2496,7 +2496,7 @@ function OperationsDashboard() {
 
                     <div className="space-y-1.5">
                       <Label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                        <Bell className="h-3.5 w-3.5 text-amber-600" /> Automated Reminder Email Lead Time
+                        <Bell className="h-3.5 w-3.5 text-slate-900" /> Automated Reminder Email Lead Time
                       </Label>
                       <Select 
                         value={String(editMeetingForm.reminder_lead_time_minutes || 15)} 
@@ -2520,7 +2520,7 @@ function OperationsDashboard() {
                         id="edit_send_meeting_email"
                         checked={editMeetingForm.send_email_notification}
                         onChange={(e) => setEditMeetingForm({ ...editMeetingForm, send_email_notification: e.target.checked })}
-                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                       />
                       <Label htmlFor="edit_send_meeting_email" className="text-xs text-slate-700 font-medium cursor-pointer">
                         Send updated reschedule email notification with Google Calendar link to participants
@@ -2532,7 +2532,7 @@ function OperationsDashboard() {
                       <Button 
                         type="submit" 
                         disabled={isUpdatingMeeting}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                        className="bg-slate-900 hover:bg-black text-white font-bold"
                       >
                         {isUpdatingMeeting ? "Updating..." : "Save Timeline Changes"}
                       </Button>
@@ -2546,7 +2546,7 @@ function OperationsDashboard() {
               {/* Scheduled Meetings List */}
               <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
                 <div className="px-5 py-4 border-b flex items-center justify-between">
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><Video className="h-4 w-4 text-indigo-500" /> Scheduled Meetings</h2>
+                  <h2 className="font-semibold text-sm flex items-center gap-2"><Video className="h-4 w-4 text-slate-600" /> Scheduled Meetings</h2>
                   <span className="text-xs text-slate-400">{(meetingsQ.data || []).length} Meetings</span>
                 </div>
                 <div className="divide-y max-h-[500px] overflow-y-auto">
@@ -2586,15 +2586,15 @@ function OperationsDashboard() {
                             <div className="flex-1 min-w-0 space-y-1.5">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <h4 className="font-semibold text-sm text-slate-900 truncate">{m.title}</h4>
-                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${m.target_role === "all" ? "bg-slate-100 text-slate-700" : m.target_role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${m.target_role === "all" ? "bg-slate-100 text-slate-700" : m.target_role === "employee" ? "bg-slate-100 text-slate-800 border-slate-300 font-mono" : "bg-slate-100 text-slate-800 border-slate-300 font-mono"}`}>
                                   {m.target_role === "all" ? "Everyone" : m.target_role}
                                 </span>
                               </div>
 
                               <div className="flex items-center gap-3 text-xs text-slate-600 flex-wrap">
                                 <span className="flex items-center gap-1 font-medium"><Calendar className="h-3 w-3 text-slate-400" /> {dateStr}</span>
-                                <span className="flex items-center gap-1 font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
-                                  <Clock className="h-3 w-3 text-indigo-600" /> {rangeStr}
+                                <span className="flex items-center gap-1 font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                                  <Clock className="h-3 w-3 text-slate-900" /> {rangeStr}
                                 </span>
                                 <span className="text-slate-400 text-[11px]">({durationMins} Mins)</span>
                               </div>
@@ -2604,7 +2604,7 @@ function OperationsDashboard() {
                               )}
 
                               <div className="flex items-center gap-2 pt-1 flex-wrap">
-                                <a href={m.meeting_link} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 hover:underline font-mono truncate max-w-[200px]">
+                                <a href={m.meeting_link} target="_blank" rel="noreferrer" className="text-xs text-slate-900 hover:underline font-mono truncate max-w-[200px]">
                                   {m.meeting_link}
                                 </a>
 
@@ -2613,10 +2613,10 @@ function OperationsDashboard() {
                                   href={gcalUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded transition-colors"
+                                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-2 py-0.5 rounded transition-colors"
                                   title="Add to Google Calendar"
                                 >
-                                  <CalendarPlus className="h-3 w-3 text-indigo-600" /> Google Calendar
+                                  <CalendarPlus className="h-3 w-3 text-slate-900" /> Google Calendar
                                 </a>
 
                                 {/* Instant Reminder Email Button */}
@@ -2625,13 +2625,13 @@ function OperationsDashboard() {
                                   variant="outline"
                                   disabled={sendingReminderMeetingId === m.id}
                                   onClick={() => handleSendInstantReminder(m)}
-                                  className="h-6 px-2 text-[10px] font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-300 gap-1 transition-all"
+                                  className="h-6 px-2 text-[10px] font-bold text-slate-900 bg-slate-50 hover:bg-slate-100 border-slate-300 gap-1 transition-all"
                                   title="Send instant automated reminder email to all attendees"
                                 >
                                   {sendingReminderMeetingId === m.id ? (
-                                    <Loader2 className="h-3 w-3 animate-spin text-amber-600" />
+                                    <Loader2 className="h-3 w-3 animate-spin text-slate-900" />
                                   ) : (
-                                    <Bell className="h-3 w-3 text-amber-600" />
+                                    <Bell className="h-3 w-3 text-slate-900" />
                                   )}
                                   {sendingReminderMeetingId === m.id ? "Sending..." : "Send Reminder Email"}
                                 </Button>
@@ -2641,9 +2641,9 @@ function OperationsDashboard() {
                                   size="sm"
                                   variant="outline"
                                   onClick={handleWhatsAppNotice}
-                                  className="h-6 px-2 text-[10px] font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border-teal-200 gap-1"
+                                  className="h-6 px-2 text-[10px] font-semibold text-slate-900 bg-slate-50 hover:bg-slate-100 border-slate-200 gap-1"
                                 >
-                                  <Share2 className="h-3 w-3 text-teal-600" /> WhatsApp
+                                  <Share2 className="h-3 w-3 text-slate-900" /> WhatsApp
                                 </Button>
 
                                 {/* Edit Timeline Button */}
@@ -2651,10 +2651,10 @@ function OperationsDashboard() {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleOpenEditMeeting(m)}
-                                  className="h-6 px-2 text-[10px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-200 gap-1"
+                                  className="h-6 px-2 text-[10px] font-semibold text-slate-900 bg-slate-50 hover:bg-slate-100 border-slate-200 gap-1"
                                   title="Edit scheduled time and details"
                                 >
-                                  <Pencil className="h-3 w-3 text-indigo-600" /> Edit Timeline
+                                  <Pencil className="h-3 w-3 text-slate-900" /> Edit Timeline
                                 </Button>
 
                                 <Button
@@ -2672,7 +2672,7 @@ function OperationsDashboard() {
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-7 w-7 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                                className="h-7 w-7 text-slate-900 hover:text-slate-900 hover:bg-slate-50"
                                 onClick={() => handleOpenEditMeeting(m)}
                                 title="Edit Meeting"
                               >
@@ -2708,8 +2708,8 @@ function OperationsDashboard() {
               {/* Daily Standups Review */}
               <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
                 <div className="px-5 py-4 border-b flex items-center justify-between">
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><Clock className="h-4 w-4 text-blue-600" /> Daily Standups Review</h2>
-                  <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">{(standupsAdminQ.data || []).length} Logs</span>
+                  <h2 className="font-semibold text-sm flex items-center gap-2"><Clock className="h-4 w-4 text-slate-900" /> Daily Standups Review</h2>
+                  <span className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] font-bold px-2 py-0.5 rounded-full">{(standupsAdminQ.data || []).length} Logs</span>
                 </div>
                 <div className="divide-y max-h-[420px] overflow-y-auto">
                   {(standupsAdminQ.data || []).length === 0 ? (
@@ -2734,7 +2734,7 @@ function OperationsDashboard() {
                               qc.invalidateQueries({ queryKey: ["admin-standups"] });
                             }}>Approve</Button>
                           ) : (
-                            <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Approved</span>
+                            <span className="text-[10px] uppercase font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">Approved</span>
                           )}
                         </div>
                       </div>
@@ -2753,7 +2753,7 @@ function OperationsDashboard() {
             <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b flex items-center justify-between">
                 <div>
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><Award className="h-4 w-4 text-amber-500" /> Peer Kudos & Appreciation Feed</h2>
+                  <h2 className="font-semibold text-sm flex items-center gap-2"><Award className="h-4 w-4 text-slate-600" /> Peer Kudos & Appreciation Feed</h2>
                   <p className="text-xs text-slate-500">Live shoutouts, badges, and recognition from teammates.</p>
                 </div>
               </div>
@@ -2765,12 +2765,12 @@ function OperationsDashboard() {
                 ) : (
                   (kudosQ.data as any[]).map((kud: any) => (
                     <div key={kud.id} className="p-4 hover:bg-slate-50 transition-colors flex items-start gap-3">
-                      <div className="h-8 w-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 font-bold text-xs">
+                      <div className="h-8 w-8 rounded-full bg-slate-100 text-slate-800 border-slate-300 font-mono flex items-center justify-center shrink-0 font-bold text-xs">
                         <Award className="h-4 w-4" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">{kud.badge}</span>
+                          <span className="font-bold text-xs text-slate-900 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">{kud.badge}</span>
                           <span className="text-xs text-slate-400">• {new Date(kud.created_at).toLocaleDateString()}</span>
                         </div>
                         <p className="text-xs text-slate-700 font-light mt-1.5 italic">"{kud.message}"</p>
@@ -2794,13 +2794,13 @@ function OperationsDashboard() {
               <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
                 <div>
                   <h2 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-emerald-600" /> Multi-Provider Free SMS Gateway Hub
+                    <MessageSquare className="h-5 w-5 text-slate-900" /> Multi-Provider Free SMS Gateway Hub
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Send candidate interview updates, selection alerts, and emergency notifications using free SMS gateways.
                   </p>
                 </div>
-                <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full">
+                <span className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-xs font-bold px-3 py-1 rounded-full">
                   500 Total SMS / month
                 </span>
               </div>
@@ -2908,7 +2908,7 @@ function OperationsDashboard() {
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-sm truncate">{r.title}</h4>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${r.target_role === "all" ? "bg-slate-100 text-slate-600" : r.target_role === "employee" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${r.target_role === "all" ? "bg-slate-100 text-slate-600" : r.target_role === "employee" ? "bg-slate-100 text-slate-800 border-slate-300 font-mono" : "bg-slate-100 text-slate-800 border-slate-300 font-mono"}`}>
                               {r.target_role === "all" ? "Everyone" : r.target_role}
                             </span>
                             <span className="text-[10px] px-1.5 py-0.5 rounded font-medium capitalize bg-gray-100 text-gray-700">{r.type}</span>
@@ -3018,8 +3018,8 @@ function OperationsDashboard() {
               {/* Tooling Access Requests */}
               <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
                 <div className="px-5 py-4 border-b flex items-center justify-between">
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><Shield className="h-4 w-4 text-emerald-600" /> Tooling & Software Access Requests</h2>
-                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">{(accessRequestsAdminQ.data || []).length} Requests</span>
+                  <h2 className="font-semibold text-sm flex items-center gap-2"><Shield className="h-4 w-4 text-slate-900" /> Tooling & Software Access Requests</h2>
+                  <span className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] font-bold px-2 py-0.5 rounded-full">{(accessRequestsAdminQ.data || []).length} Requests</span>
                 </div>
                 <div className="divide-y max-h-[420px] overflow-y-auto">
                   {(accessRequestsAdminQ.data || []).length === 0 ? (
@@ -3031,7 +3031,7 @@ function OperationsDashboard() {
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-slate-900 text-xs">{a.tool_name}</span>
                             <span className={`text-[9px] uppercase font-bold px-2 py-0.5 rounded-full ${
-                              a.status === 'provisioned' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                              a.status === 'provisioned' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : 'bg-slate-100 text-slate-800 border-slate-300 font-mono'
                             }`}>
                               {a.status}
                             </span>
@@ -3047,7 +3047,7 @@ function OperationsDashboard() {
                               qc.invalidateQueries({ queryKey: ["admin-access-requests"] });
                             }}>Provision</Button>
                           ) : (
-                            <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Provisioned</span>
+                            <span className="text-[10px] uppercase font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">Provisioned</span>
                           )}
                         </div>
                       </div>
@@ -3065,7 +3065,7 @@ function OperationsDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
               <div className="space-y-1">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-emerald-600" /> Stipend Payouts & Expense Reimbursements
+                  <DollarSign className="h-5 w-5 text-slate-900" /> Stipend Payouts & Expense Reimbursements
                 </h2>
                 <p className="text-xs text-slate-500">
                   Manage stipend disbursement cycles, authorize employee expense claims, and track compensation records.
@@ -3077,7 +3077,7 @@ function OperationsDashboard() {
             <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b flex items-center justify-between">
                 <div>
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><DollarSign className="h-4 w-4 text-emerald-600" /> Stipend & Compensation Payouts</h2>
+                  <h2 className="font-semibold text-sm flex items-center gap-2"><DollarSign className="h-4 w-4 text-slate-900" /> Stipend & Compensation Payouts</h2>
                   <p className="text-xs text-slate-500">Track and approve team compensation batches.</p>
                 </div>
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-mono">
@@ -3127,7 +3127,7 @@ function OperationsDashboard() {
             <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b flex items-center justify-between">
                 <div>
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><CreditCard className="h-4 w-4 text-emerald-600" /> Expense Claims & Reimbursements</h2>
+                  <h2 className="font-semibold text-sm flex items-center gap-2"><CreditCard className="h-4 w-4 text-slate-900" /> Expense Claims & Reimbursements</h2>
                   <p className="text-xs text-slate-500">Review bills, travel allowances, and uploaded receipts.</p>
                 </div>
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-mono">
@@ -3148,7 +3148,7 @@ function OperationsDashboard() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold text-slate-900 text-sm">{exp.title}</span>
-                            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">₹{exp.amount}</span>
+                            <span className="text-xs font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-200">₹{exp.amount}</span>
                             <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600">{exp.category}</span>
                           </div>
                           <div className="text-xs text-slate-500 font-light mt-0.5">
@@ -3156,18 +3156,18 @@ function OperationsDashboard() {
                           </div>
                           {exp.notes && <p className="text-xs text-slate-600 font-light mt-1.5">{exp.notes}</p>}
                           {exp.receipt_url && (
-                            <a href={exp.receipt_url} target="_blank" rel="noreferrer" className="text-xs text-emerald-600 hover:underline mt-1.5 inline-flex items-center gap-1">
+                            <a href={exp.receipt_url} target="_blank" rel="noreferrer" className="text-xs text-slate-900 hover:underline mt-1.5 inline-flex items-center gap-1">
                               <FileText className="h-3 w-3" /> View Uploaded Receipt
                             </a>
                           )}
                         </div>
                           <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${exp.status === 'approved' ? 'bg-blue-100 text-blue-800' : exp.status === 'paid' ? 'bg-emerald-100 text-emerald-800' : exp.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${exp.status === 'approved' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : exp.status === 'paid' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : exp.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-800 border-slate-300 font-mono'}`}>
                             {exp.status}
                           </span>
                           <div className="flex items-center gap-1">
                             {exp.status !== 'approved' && (
-                              <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={async () => {
+                              <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-slate-900 border-slate-200 hover:bg-slate-50" onClick={async () => {
                                 try {
                                   await doUpdateExpenseStatus({ data: { id: exp.id, status: 'approved' } });
                                   toast.success("Expense approved");
@@ -3210,7 +3210,7 @@ function OperationsDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
               <div className="space-y-1">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <LifeBuoy className="h-5 w-5 text-purple-600" /> Support Queries, IT Helpdesk & Feedback
+                  <LifeBuoy className="h-5 w-5 text-slate-900" /> Support Queries, IT Helpdesk & Feedback
                 </h2>
                 <p className="text-xs text-slate-500">
                   Assign resolvers, schedule support sync calls, handle IT tickets, and review user suggestions.
@@ -3222,10 +3222,10 @@ function OperationsDashboard() {
             <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b flex items-center justify-between">
                 <div>
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><LifeBuoy className="h-4 w-4 text-purple-600" /> Intern Support Queries</h2>
+                  <h2 className="font-semibold text-sm flex items-center gap-2"><LifeBuoy className="h-4 w-4 text-slate-900" /> Intern Support Queries</h2>
                   <p className="text-xs text-slate-500">Assign resolver employees and approve scheduled sync meetings.</p>
                 </div>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 border-slate-300 font-mono">
                   {supportQueries.length} Queries
                 </span>
               </div>
@@ -3245,11 +3245,11 @@ function OperationsDashboard() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <span className="font-semibold text-slate-900 text-sm">{q.subject}</span>
-                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-50 text-purple-700">{q.category}</span>
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border-slate-300 font-mono">{q.category}</span>
                               <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                                q.status === 'resolved' ? 'bg-emerald-100 text-emerald-800' :
-                                q.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
-                                'bg-amber-100 text-amber-800'
+                                q.status === 'resolved' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' :
+                                q.status === 'assigned' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' :
+                                'bg-slate-100 text-slate-800 border-slate-300 font-mono'
                               }`}>
                                 {q.status}
                               </span>
@@ -3289,10 +3289,10 @@ function OperationsDashboard() {
                             
                             {q.meeting_status === "requested" && (
                               <div className="flex items-center gap-1.5 mt-2">
-                                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1"><Video className="h-3 w-3 animate-pulse" /> Sync Meeting Requested</span>
+                                <span className="text-[10px] font-bold text-slate-900 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded flex items-center gap-1"><Video className="h-3 w-3 animate-pulse" /> Sync Meeting Requested</span>
                                 <Button 
                                   size="sm" 
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-7 text-xs"
+                                  className="bg-slate-900 hover:bg-black text-white font-bold h-7 text-xs"
                                   onClick={() => {
                                     setSelectedQueryForMeeting(q);
                                     setMeetingTimeInput(new Date(Date.now() + 1000 * 60 * 60).toISOString().slice(0, 16));
@@ -3304,7 +3304,7 @@ function OperationsDashboard() {
                             )}
 
                             {hasMeeting && (
-                              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded flex items-center gap-1">
+                              <span className="text-[10px] font-bold text-slate-900 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded flex items-center gap-1">
                                 ✓ Meeting Scheduled
                               </span>
                             )}
@@ -3321,10 +3321,10 @@ function OperationsDashboard() {
             <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b flex items-center justify-between">
                 <div>
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><LifeBuoy className="h-4 w-4 text-blue-600" /> Helpdesk & IT/HR Tickets</h2>
+                  <h2 className="font-semibold text-sm flex items-center gap-2"><LifeBuoy className="h-4 w-4 text-slate-900" /> Helpdesk & IT/HR Tickets</h2>
                   <p className="text-xs text-slate-500">Resolve employee support and infrastructure tickets.</p>
                 </div>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 border-slate-300 font-mono">
                   {(ticketsQ.data || []).length} Tickets
                 </span>
               </div>
@@ -3343,7 +3343,7 @@ function OperationsDashboard() {
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-[10px] font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">#{tick.id.slice(0, 8).toUpperCase()}</span>
                             <span className="font-semibold text-slate-900 text-sm">{tick.subject}</span>
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-700">{tick.category}</span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border-slate-300 font-mono">{tick.category}</span>
                           </div>
                           <div className="text-xs text-slate-500 font-light mt-0.5">
                             Raised by: <span className="font-medium text-slate-800">{tick.profiles?.full_name || tick.user_id?.slice(0, 8)}</span> ({tick.profiles?.email}) • Priority: <span className="font-bold text-slate-800">{tick.priority}</span>
@@ -3351,12 +3351,12 @@ function OperationsDashboard() {
                           <p className="text-sm text-slate-700 font-light mt-2 leading-relaxed">{tick.description}</p>
                         </div>
                           <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${tick.status === 'resolved' ? 'bg-emerald-100 text-emerald-800' : tick.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${tick.status === 'resolved' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : tick.status === 'in_progress' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : 'bg-slate-100 text-slate-800 border-slate-300 font-mono'}`}>
                             {tick.status}
                           </span>
                           <div className="flex items-center gap-1">
                             {tick.status !== 'in_progress' && (
-                              <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={async () => {
+                              <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-slate-900 border-slate-200 hover:bg-slate-50" onClick={async () => {
                                 try {
                                   await doUpdateTicketStatus({ data: { id: tick.id, status: 'in_progress' } });
                                   toast.success("Ticket set to In Progress");
@@ -3389,10 +3389,10 @@ function OperationsDashboard() {
             <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b flex items-center justify-between">
                 <div>
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><MessageSquare className="h-4 w-4 text-purple-500" /> User Feedback & Suggestions Inbox</h2>
+                  <h2 className="font-semibold text-sm flex items-center gap-2"><MessageSquare className="h-4 w-4 text-slate-600" /> User Feedback & Suggestions Inbox</h2>
                   <p className="text-xs text-slate-500">Anonymous and named feedback submitted from user dashboards.</p>
                 </div>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 border-slate-300 font-mono">
                   {(feedbacksQ.data || []).length} Feedbacks
                 </span>
               </div>
@@ -3405,12 +3405,12 @@ function OperationsDashboard() {
                   <EmptyState icon={<MessageSquare className="h-6 w-6" />} message="No feedback submitted yet." />
                 ) : (
                   (feedbacksQ.data as any[]).map((f: any) => (
-                    <div key={f.id} className={`p-4 hover:bg-slate-50 transition-colors ${!f.is_read ? "bg-purple-50/30" : ""}`}>
+                    <div key={f.id} className={`p-4 hover:bg-slate-50 transition-colors ${!f.is_read ? "bg-slate-50" : ""}`}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-medium text-sm">{f.profiles?.full_name || "Unknown User" || f.intern_id || "Anonymous"}</span>
-                            {!f.is_read && <span className="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">New</span>}
+                            {!f.is_read && <span className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">New</span>}
                             <span className="text-xs text-muted-foreground">{new Date(f.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
                           </div>
                           <p className="text-sm mt-1 text-slate-700 whitespace-pre-wrap">{f.content}</p>
@@ -3649,7 +3649,7 @@ function OperationsDashboard() {
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ClipboardList className="h-5 w-5 text-blue-600" /> Edit Task
+              <ClipboardList className="h-5 w-5 text-slate-900" /> Edit Task
             </DialogTitle>
           </DialogHeader>
           {editingTaskByAdmin && (
@@ -3768,7 +3768,7 @@ function OperationsDashboard() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="w-full sm:w-auto text-purple-700 border-purple-200 hover:bg-purple-50 flex items-center gap-1.5 text-xs h-9"
+                  className="w-full sm:w-auto text-slate-900 border-slate-200 hover:bg-slate-50 flex items-center gap-1.5 text-xs h-9"
                   onClick={() => {
                     setManageTeamTask(editingTaskByAdmin);
                     setIsManageTeamOpen(true);
@@ -3801,8 +3801,8 @@ function OperationsDashboard() {
 
 function MemberRow({ member, team, onRevoke, onResetPassword, onClick }: { member: any; team?: any[]; onRevoke: (id: string, name: string) => void; onResetPassword?: (member: any) => void; onClick: () => void }) {
   const roleStyles = member.role === "employee"
-    ? "bg-blue-100 text-blue-800"
-    : "bg-emerald-100 text-emerald-800";
+    ? "bg-slate-100 text-slate-800 border-slate-300 font-mono"
+    : "bg-slate-100 text-slate-800 border-slate-300 font-mono";
 
   const assignedMentor = member.mentor_id && team ? team.find((t: any) => (t.id === member.mentor_id || t.user_id === member.mentor_id)) : null;
   const mentorDisplayName = assignedMentor ? assignedMentor.full_name : member.mentor_id ? "Assigned Mentor" : "Lead Mentor (Jami Eswar Anil Kumar)";
@@ -3821,7 +3821,7 @@ function MemberRow({ member, team, onRevoke, onResetPassword, onClick }: { membe
             <span className="font-medium text-sm text-slate-900 group-hover:text-primary transition-colors">{member.full_name || "—"}</span>
             <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide ${roleStyles}`}>{member.role}</span>
             {member.role === "intern" && (
-              <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700 border-slate-300 font-mono border border-slate-200">
                 Mentor: {mentorDisplayName}
               </span>
             )}
@@ -3831,16 +3831,16 @@ function MemberRow({ member, team, onRevoke, onResetPassword, onClick }: { membe
           {member.role === "intern" && (
             <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
               {member.exam_fee_paid ? (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
-                  <Check className="h-3 w-3 text-emerald-600" /> Fee Paid (₹{member.exam_fee_amount || 199})
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-200 flex items-center gap-1">
+                  <Check className="h-3 w-3 text-slate-900" /> Fee Paid (₹{member.exam_fee_amount || 199})
                 </span>
               ) : member.is_fee_exempted ? (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-200">
                   Exempted
                 </span>
               ) : member.fee_payment_scheduled ? (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
-                  <Clock className="h-3 w-3 text-amber-600" /> Fee Scheduled (₹{member.exam_fee_amount || 199})
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-200 flex items-center gap-1">
+                  <Clock className="h-3 w-3 text-slate-900" /> Fee Scheduled (₹{member.exam_fee_amount || 199})
                 </span>
               ) : (
                 <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
@@ -3882,7 +3882,7 @@ function MemberRow({ member, team, onRevoke, onResetPassword, onClick }: { membe
               }
             }}
             title="Send Individual Payment Reminder"
-            className="h-8 px-2.5 text-xs font-bold text-blue-700 hover:text-blue-900 hover:bg-blue-50 rounded-lg gap-1.5"
+            className="h-8 px-2.5 text-xs font-bold text-slate-900 hover:text-slate-900 hover:bg-slate-50 rounded-lg gap-1.5"
           >
             <Mail className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Pay Reminder</span>
@@ -3897,7 +3897,7 @@ function MemberRow({ member, team, onRevoke, onResetPassword, onClick }: { membe
             title="Reset User Password"
             className="h-8 px-2.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg gap-1.5"
           >
-            <Key className="h-3.5 w-3.5 text-amber-600" />
+            <Key className="h-3.5 w-3.5 text-slate-900" />
             <span className="hidden sm:inline">Reset Pass</span>
           </Button>
         )}
@@ -4030,14 +4030,14 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
              
              {user.role === "intern" && (
                <div className="col-span-2 space-y-1.5">
-                 <Label className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-bold">
+                 <Label className="flex items-center gap-1.5 text-slate-900 dark:text-emerald-300 font-bold">
                    <Users className="h-4 w-4" /> Assigned Mentor / Supervisor
                  </Label>
                  <Select
                    value={form.mentor_id || "none"}
                    onValueChange={(val) => setForm({ ...form, mentor_id: val === "none" ? null : val })}
                  >
-                   <SelectTrigger className="h-9 bg-emerald-50/50 border-emerald-200">
+                   <SelectTrigger className="h-9 bg-slate-50 border-slate-200">
                      <SelectValue placeholder="Select official mentor..." />
                    </SelectTrigger>
                    <SelectContent>
@@ -4068,9 +4068,9 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
 
           {/* Intern Fee Schedule & Exam Policy Controls */}
           {user.role === "intern" && (
-            <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl space-y-3">
-              <div className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                <CreditCard className="h-4 w-4 text-amber-700" /> Exam Fee &amp; Payment Schedule Settings
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+              <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <CreditCard className="h-4 w-4 text-slate-900" /> Exam Fee &amp; Payment Schedule Settings
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -4185,14 +4185,14 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
           </div>
 
           {/* Offer Letter & NOC Management with 1-Click Delete & Regenerate */}
-          <div className="p-3.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+          <div className="p-3.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3 text-white">
             <div className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
-              <span className="flex items-center gap-1.5"><FileText className="h-4 w-4 text-amber-600" /> Offer Letter & NOC Documents</span>
+              <span className="flex items-center gap-1.5"><FileText className="h-4 w-4 text-slate-900" /> Offer Letter & NOC Documents</span>
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
-                className="h-7 text-[11px] gap-1 bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600"
+                className="h-7 text-[11px] gap-1 bg-slate-900 text-white hover:bg-slate-900 border-emerald-600"
                 onClick={() => {
                   const defaultGroup = "https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5";
                   const msg = `Hello ${form.full_name || "Intern"}!\n\nOfficial notice from Project VyNexa at Vyntyra Consultancy Services. Please join our official community group: ${defaultGroup}\n\nBest regards,\nVyntyra Directorate`;
@@ -4210,7 +4210,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Offer Letter PDF</span>
                   {form.offer_letter_url && (
-                    <a href={form.offer_letter_url} target="_blank" rel="noreferrer" className="text-[11px] text-blue-600 hover:underline flex items-center gap-0.5">
+                    <a href={form.offer_letter_url} target="_blank" rel="noreferrer" className="text-[11px] text-slate-900 hover:underline flex items-center gap-0.5">
                       View <ExternalLink className="h-3 w-3" />
                     </a>
                   )}
@@ -4219,7 +4219,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="w-full text-xs font-semibold h-7 bg-amber-50 text-amber-800 hover:bg-amber-100 border-amber-300 gap-1"
+                  className="w-full text-xs font-semibold h-7 bg-slate-100 text-slate-800 border-slate-300 font-mono hover:bg-slate-100 border-slate-300 gap-1"
                   onClick={async () => {
                     const lToast = toast.loading("Regenerating Offer Letter with 1-click...");
                     try {
@@ -4242,7 +4242,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">NOC Verification PDF</span>
                   {form.noc_url && (
-                    <a href={form.noc_url} target="_blank" rel="noreferrer" className="text-[11px] text-blue-600 hover:underline flex items-center gap-0.5">
+                    <a href={form.noc_url} target="_blank" rel="noreferrer" className="text-[11px] text-slate-900 hover:underline flex items-center gap-0.5">
                       View <ExternalLink className="h-3 w-3" />
                     </a>
                   )}
@@ -4251,7 +4251,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="w-full text-xs font-semibold h-7 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border-emerald-300 gap-1"
+                  className="w-full text-xs font-semibold h-7 bg-slate-100 text-slate-800 border-slate-300 font-mono hover:bg-slate-100 border-slate-300 gap-1"
                   onClick={async () => {
                     const lToast = toast.loading("Regenerating NOC with 1-click...");
                     try {
@@ -4294,7 +4294,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
             <div className="border-t pt-4 mt-4 space-y-4">
               <div>
                 <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                  <GraduationCap className="h-4.5 w-4.5 text-emerald-600" />
+                  <GraduationCap className="h-4.5 w-4.5 text-slate-900" />
                   Assigned Interns
                 </h4>
                 <p className="text-xs text-slate-400 font-light mt-0.5">Manage interns mentored/supervised by this employee.</p>
@@ -4355,7 +4355,7 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
                     <div className="flex-1 space-y-1.5">
                       <div className="flex items-center justify-between">
                         <Label className="text-xs font-semibold text-slate-600">Assign a new Intern (Unassigned Only)</Label>
-                        <span className="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full font-bold">
+                        <span className="text-[10px] text-slate-900 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full font-bold">
                           {unassignedInterns.length} Unassigned Remaining
                         </span>
                       </div>
@@ -4476,22 +4476,22 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
       {/* Provider Quota Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Twilio SMS Card */}
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 space-y-2 shadow-xs">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-900">Twilio SMS API</span>
-            <span className="bg-indigo-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-900">Twilio SMS API</span>
+            <span className="bg-slate-900 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
               Global SMS Gateway
             </span>
           </div>
           <div className="flex items-baseline justify-between">
             <div className="text-2xl font-black text-indigo-950">{(quota.twilioSentThisMonth || 0).toLocaleString()}</div>
-            <div className="text-xs text-indigo-800 font-medium">Sent This Month</div>
+            <div className="text-xs text-slate-900 font-medium">Sent This Month</div>
           </div>
-          <div className="flex items-center justify-between text-[11px] text-indigo-800 pt-0.5 font-mono">
+          <div className="flex items-center justify-between text-[11px] text-slate-900 pt-0.5 font-mono">
             <span>SID: {quota.twilioAccountSid ? quota.twilioAccountSid.slice(0, 12) + "..." : "AC2d14c4fd..."}</span>
-            <span className="text-emerald-700 font-bold">{quota.hasTwilio ? "âœ“ Configured" : "âš ï¸ Key Configured"}</span>
+            <span className="text-slate-900 font-bold">{quota.hasTwilio ? "âœ“ Configured" : "âš ï¸ Key Configured"}</span>
           </div>
-          <div className="text-[10.5px] text-indigo-900 font-medium pt-1 border-t border-indigo-200/60">
+          <div className="text-[10.5px] text-slate-900 font-medium pt-1 border-t border-slate-200">
             Twilio API Key: SK4d739a2e... (Direct Carrier SMS)
           </div>
         </div>
@@ -4500,7 +4500,7 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
         <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">TextBee Gateway (textbee.dev)</span>
-            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+            <span className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] font-extrabold px-2 py-0.5 rounded-full">
               300 SMS / month
             </span>
           </div>
@@ -4510,7 +4510,7 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
           </div>
           <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
             <div 
-              className="bg-emerald-500 h-full transition-all" 
+              className="bg-slate-900 h-full transition-all text-white" 
               style={{ width: `${Math.min(100, (quota.textbeeSentThisMonth / 300) * 100)}%` }} 
             />
           </div>
@@ -4554,7 +4554,7 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
       {/* Quick SMS Dispatcher Card */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
         <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-emerald-600" /> Send Instant Candidate SMS Notification
+          <MessageSquare className="h-4 w-4 text-slate-900" /> Send Instant Candidate SMS Notification
         </h3>
 
         <form onSubmit={handleSendSms} className="space-y-4">
@@ -4607,7 +4607,7 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
           </div>
 
           <div className="flex justify-end">
-            <Button type="submit" disabled={isSending} className="bg-emerald-600 hover:bg-emerald-700 text-xs gap-2">
+            <Button type="submit" disabled={isSending} className="bg-slate-900 hover:bg-slate-900 text-xs gap-2 text-white">
               <Send className="h-3.5 w-3.5" /> {isSending ? "Dispatching SMS..." : "Dispatch SMS Notification"}
             </Button>
           </div>
@@ -4652,7 +4652,7 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
                           HttpSMS
                         </span>
                       ) : (
-                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                        <span className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md">
                           TextBee
                         </span>
                       )}
@@ -4661,11 +4661,11 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
                     <td className="px-5 py-3.5 text-slate-500 font-mono">{new Date(log.sent_at).toLocaleString()}</td>
                     <td className="px-5 py-3.5">
                       {log.status === "sent" ? (
-                        <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                        <span className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md">
                           Sent
                         </span>
                       ) : (
-                        <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                        <span className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md">
                           Failed
                         </span>
                       )}
@@ -4681,7 +4681,7 @@ function SmsGatewayHub({ smsLogsQ, doSendSms, doDeleteSmsLog, qc }: any) {
                             toast.success("SMS log deleted.");
                           }
                         }}
-                        className="h-7 w-7 text-rose-600 hover:bg-rose-50"
+                        className="h-7 w-7 text-rose-600 hover:bg-slate-50"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>

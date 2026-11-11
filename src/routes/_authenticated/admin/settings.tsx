@@ -1059,7 +1059,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
               {selectedReferralCodes.size > 0 && (
                 <Button
                   onClick={() => setIsBulkPricingModalOpen(true)}
-                  className="bg-purple-600 hover:bg-purple-700 text-white gap-1.5 shadow-xs font-semibold text-xs h-9"
+                  className="bg-slate-900 hover:bg-black text-white gap-1.5 shadow-xs font-semibold text-xs h-9"
                 >
                   <Sparkles className="h-4 w-4" /> Bulk Edit Pricing ({selectedReferralCodes.size})
                 </Button>
@@ -1079,7 +1079,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                   });
                   setIsReferralModalOpen(true);
                 }} 
-                className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 shadow-xs font-semibold text-xs h-9"
+                className="bg-slate-900 hover:bg-black text-white gap-1.5 shadow-xs font-semibold text-xs h-9"
               >
                 <Plus className="h-4 w-4" /> Add Referral Code / Custom Pricing
               </Button>
@@ -1094,7 +1094,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
             </div>
             <div className="p-3.5">
               <span className="text-slate-500 font-medium block">Paid Candidates</span>
-              <span className="text-lg font-bold text-emerald-600 mt-0.5 block">{totalPaidCount} paid</span>
+              <span className="text-lg font-bold text-slate-900 mt-0.5 block">{totalPaidCount} paid</span>
             </div>
             <div className="p-3.5">
               <span className="text-slate-500 font-medium block">Gross Fee Collected</span>
@@ -1102,19 +1102,19 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
             </div>
             <div className="p-3.5">
               <span className="text-slate-500 font-medium block">PG Charge (2.58%)</span>
-              <span className="text-lg font-bold text-amber-700 mt-0.5 block">-₹{totalGatewayCosts.toLocaleString("en-IN")}</span>
+              <span className="text-lg font-bold text-slate-900 mt-0.5 block">-₹{totalGatewayCosts.toLocaleString("en-IN")}</span>
             </div>
             <div className="p-3.5">
               <span className="text-slate-500 font-medium block">Govt Certification (₹199/paid)</span>
-              <span className="text-lg font-bold text-blue-700 mt-0.5 block">-₹{totalGovtCertFees.toLocaleString("en-IN")}</span>
+              <span className="text-lg font-bold text-slate-900 mt-0.5 block">-₹{totalGovtCertFees.toLocaleString("en-IN")}</span>
             </div>
             <div className="p-3.5">
               <span className="text-slate-500 font-medium block">Partner Commissions</span>
-              <span className="text-lg font-bold text-purple-700 mt-0.5 block">-₹{totalCommissionPayable.toLocaleString("en-IN")}</span>
+              <span className="text-lg font-bold text-slate-900 mt-0.5 block">-₹{totalCommissionPayable.toLocaleString("en-IN")}</span>
             </div>
-            <div className="p-3.5 bg-emerald-50/50">
-              <span className="text-emerald-800 font-semibold block">Net Company Profit</span>
-              <span className="text-lg font-extrabold text-emerald-700 mt-0.5 block">₹{totalNetCompanyMargin.toLocaleString("en-IN")}</span>
+            <div className="p-3.5 bg-slate-50">
+              <span className="text-slate-900 font-semibold block">Net Company Profit</span>
+              <span className="text-lg font-extrabold text-slate-900 mt-0.5 block">₹{totalNetCompanyMargin.toLocaleString("en-IN")}</span>
             </div>
           </div>
 
@@ -1138,7 +1138,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                   onClick={toggleSelectAllReferrals}
                   className="text-xs h-8 gap-1.5 border-slate-300"
                 >
-                  <CheckCheck className="h-3.5 w-3.5 text-indigo-600" />
+                  <CheckCheck className="h-3.5 w-3.5 text-slate-900" />
                   {selectedReferralCodes.size === filteredReferralRules.length && filteredReferralRules.length > 0 
                     ? "Deselect All" 
                     : `Select All (${filteredReferralRules.length})`}
@@ -1158,9 +1158,9 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
 
             {/* Quick Bulk Pricing Action Banner */}
             {selectedReferralCodes.size > 0 && (
-              <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 border border-indigo-500/40 rounded-2xl p-4 text-white shadow-xl flex flex-wrap items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="bg-gradient-to-r bg-slate-950 border border-slate-800 text-white border border-slate-400 rounded-2xl p-4 text-white shadow-xl flex flex-wrap items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="flex items-center gap-3">
-                  <div className="bg-slate-1000/30 text-indigo-300 px-3 py-1.5 rounded-xl border border-indigo-400/40 text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <div className="bg-slate-1000/30 text-indigo-300 px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
                     <Tag className="h-3.5 w-3.5" />
                     {selectedReferralCodes.size} Selected {selectedReferralCodes.size === filteredReferralRules.length ? "(All Codes)" : ""}
                   </div>
@@ -1170,26 +1170,26 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2.5 text-xs">
-                  <div className="flex items-center gap-1 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700">
+                  <div className="flex items-center gap-1 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700 text-white">
                     <span className="text-[11px] text-slate-400 font-semibold">Candidate Fee: ₹</span>
                     <input 
                       type="number"
                       min="0"
                       value={bulkPricingForm.custom_exam_fee}
                       onChange={(e) => setBulkPricingForm({ ...bulkPricingForm, custom_exam_fee: Number(e.target.value) })}
-                      className="w-16 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-white focus:outline-hidden focus:border-indigo-400"
+                      className="w-16 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-white focus:outline-hidden focus:border-slate-300"
                       placeholder="499"
                     />
                   </div>
 
-                  <div className="flex items-center gap-1 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700">
+                  <div className="flex items-center gap-1 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700 text-white">
                     <span className="text-[11px] text-purple-300 font-semibold">Commission: ₹</span>
                     <input 
                       type="number"
                       min="0"
                       value={bulkPricingForm.commission_reward}
                       onChange={(e) => setBulkPricingForm({ ...bulkPricingForm, commission_reward: Number(e.target.value) })}
-                      className="w-16 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-purple-300 focus:outline-hidden focus:border-indigo-400"
+                      className="w-16 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-purple-300 focus:outline-hidden focus:border-slate-300 text-white"
                       placeholder="200"
                     />
                   </div>
@@ -1198,7 +1198,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                     size="sm"
                     disabled={isSavingBulkPricing}
                     onClick={() => handleApplyBulkPricing()}
-                    className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs h-8 px-4 rounded-xl shadow-lg gap-1.5 transition-all"
+                    className="bg-slate-900 hover:bg-black text-slate-950 font-black text-xs h-8 px-4 rounded-xl shadow-lg gap-1.5 transition-all text-white"
                   >
                     {isSavingBulkPricing ? <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-950" /> : <Sparkles className="h-3.5 w-3.5 fill-slate-950" />}
                     Apply to {selectedReferralCodes.size} Selected
@@ -1218,14 +1218,14 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
 
             {/* Policy transparency info */}
             <div className="text-xs text-slate-500 flex items-center gap-1.5 bg-slate-50 border px-3 py-2 rounded-xl">
-              <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+              <Sparkles className="h-3.5 w-3.5 text-slate-600 shrink-0" />
               <span>Equal PG & Tax Policy: Payment gateway fees, settlement costs, and taxes are divided 50% / 50% equally between Referrer Commission and Company Net Margin across all current and future transactions. ₹199/paid is allocated for Govt Certification.</span>
             </div>
 
             {/* Referral Table */}
             {referralRulesQ.isLoading ? (
               <div className="p-12 flex items-center justify-center gap-2 text-slate-400">
-                <Loader2 className="h-5 w-5 animate-spin text-indigo-600" /> Loading referral pricing matrix...
+                <Loader2 className="h-5 w-5 animate-spin text-slate-900" /> Loading referral pricing matrix...
               </div>
             ) : filteredReferralRules.length === 0 ? (
               <div className="p-12 text-center text-slate-400 border rounded-xl bg-slate-50/50">
@@ -1276,12 +1276,12 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                 className="h-4 w-4 rounded accent-indigo-600 cursor-pointer"
                               />
                             </td>
-                            <td className="p-3.5 font-mono font-bold text-indigo-900 flex items-center gap-2">
+                            <td className="p-3.5 font-mono font-bold text-slate-900 flex items-center gap-2">
                               <span className={`px-2 py-0.5 rounded text-xs border ${isSelected ? "bg-slate-900 text-white border-indigo-700" : "bg-slate-100 text-slate-900 border-slate-300"}`}>
                                 {rule.code}
                               </span>
                               {isCustom && (
-                                <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                                <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 border-slate-300 font-mono">
                                   Custom
                                 </span>
                               )}
@@ -1295,38 +1295,38 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                 ₹{rule.custom_exam_fee}
                               </span>
                             </td>
-                            <td className="p-3.5 text-purple-700 font-bold">
+                            <td className="p-3.5 text-slate-900 font-bold">
                               ₹{rule.commission_reward} <span className="text-[10px] font-normal text-slate-500">/paid</span>
                             </td>
                             <td className="p-3.5">
                               <div className="font-bold text-slate-900">{rule.usage_count || 0} referred</div>
-                              <div className="text-emerald-700 font-semibold text-[10px]">{rule.paid_count || 0} paid ({rule.selected_count || 0} hired)</div>
+                              <div className="text-slate-900 font-semibold text-[10px]">{rule.paid_count || 0} paid ({rule.selected_count || 0} hired)</div>
                             </td>
                             <td className="p-3.5 font-bold text-slate-900">
                               ₹{(rule.gross_revenue || 0).toLocaleString("en-IN")}
                             </td>
-                            <td className="p-3.5 text-amber-800 font-medium">
+                            <td className="p-3.5 text-slate-900 font-medium">
                               -₹{(rule.total_gateway_cost || 0).toLocaleString("en-IN")}
                               <span className="text-[9px] text-slate-400 block">(50% split)</span>
                             </td>
-                            <td className="p-3.5 text-blue-800 font-medium">
+                            <td className="p-3.5 text-slate-900 font-medium">
                               -₹{(rule.govt_cert_fee || 0).toLocaleString("en-IN")}
                               <span className="text-[9px] text-slate-400 block">(₹199/paid)</span>
                             </td>
-                            <td className="p-3.5 font-extrabold text-purple-700">
+                            <td className="p-3.5 font-extrabold text-slate-900">
                               ₹{(rule.net_commission_payable ?? rule.total_commission_payable ?? 0).toLocaleString("en-IN")}
                               <span className="text-[9px] text-slate-400 block font-normal">(after 50% PG share)</span>
                             </td>
                             <td className="p-3.5">
-                              <span className="px-2 py-0.5 rounded-lg text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-200">
+                              <span className="px-2 py-0.5 rounded-lg text-xs font-black bg-slate-100 text-slate-900 border border-slate-200">
                                 ₹{(rule.net_company_margin || 0).toLocaleString("en-IN")}
                               </span>
                             </td>
                             <td className="p-3.5">
                               <span className={`inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
-                                rule.is_active ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-500"
+                                rule.is_active ? "bg-slate-100 text-slate-700 border-slate-300 font-mono border border-slate-200" : "bg-slate-100 text-slate-500"
                               }`}>
-                                <span className={`h-1.5 w-1.5 rounded-full ${rule.is_active ? "bg-emerald-500" : "bg-slate-400"}`} />
+                                <span className={`h-1.5 w-1.5 rounded-full ${rule.is_active ? "bg-slate-900" : "bg-slate-400"}`} />
                                 {rule.is_active ? "Active" : "Inactive"}
                               </span>
                             </td>
@@ -1335,7 +1335,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-7 px-2 text-xs text-indigo-600 hover:bg-slate-100 font-semibold"
+                                  className="h-7 px-2 text-xs text-slate-900 hover:bg-slate-100 font-semibold"
                                   onClick={() => {
                                     setReferralForm({
                                       id: rule.id || "",
@@ -1382,14 +1382,14 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
         {activeTab === "system_modules" && (
           <div className="space-y-6">
             {/* Top Overview & Master Controls Banner */}
-            <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-indigo-500/30 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+            <div className="bg-gradient-to-r bg-slate-950 border border-slate-800 text-white rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-slate-400 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-80 h-80 bg-slate-1000/10 rounded-full blur-3xl pointer-events-none" />
               <div className="relative z-10 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="p-2 bg-slate-1000/20 border border-indigo-400/30 rounded-xl text-indigo-300">
+                  <span className="p-2 bg-slate-1000/20 border border-slate-300 rounded-xl text-indigo-300">
                     <ShieldCheck className="h-5 w-5" />
                   </span>
-                  <span className="text-[10px] font-black uppercase tracking-wider bg-slate-1000/30 text-indigo-200 px-3 py-1 rounded-full border border-indigo-400/30">
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-slate-1000/30 text-indigo-200 px-3 py-1 rounded-full border border-slate-300">
                     Portal Governance &amp; Live Control Hub
                   </span>
                 </div>
@@ -1456,7 +1456,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 <Button
                   size="sm"
                   onClick={() => handleBulkTogglePortal(modulePortalTab, true)}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3 rounded-xl font-bold gap-1 shadow-xs"
+                  className="bg-slate-900 hover:bg-black text-white text-xs h-8 px-3 rounded-xl font-bold gap-1 shadow-xs"
                 >
                   <CheckCircle2 className="h-3.5 w-3.5" /> Enable All {modulePortalTab === "intern" ? "Intern" : "Employee"}
                 </Button>
@@ -1464,7 +1464,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                   size="sm"
                   variant="outline"
                   onClick={() => handleBulkTogglePortal(modulePortalTab, false)}
-                  className="border-rose-300 text-rose-700 hover:bg-rose-50 text-xs h-8 px-3 rounded-xl font-bold gap-1"
+                  className="border-slate-300 text-rose-700 hover:bg-slate-50 text-xs h-8 px-3 rounded-xl font-bold gap-1"
                 >
                   <Lock className="h-3.5 w-3.5" /> Disable All
                 </Button>
@@ -1474,7 +1474,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
             {/* Modules Grid */}
             {settingsQ.isLoading ? (
               <div className="flex items-center justify-center p-16 bg-white rounded-2xl border border-slate-200 shadow-sm">
-                <Loader2 className="h-6 w-6 animate-spin text-indigo-600 mr-2" />
+                <Loader2 className="h-6 w-6 animate-spin text-slate-900 mr-2" />
                 <span className="text-xs font-semibold text-slate-500">Loading module configuration matrix...</span>
               </div>
             ) : (
@@ -1540,7 +1540,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                         key={setting.id} 
                         className={`p-5 rounded-2xl border transition-all duration-200 space-y-3 ${
                           setting.is_enabled 
-                            ? "bg-white border-slate-200 shadow-xs hover:shadow-md hover:border-indigo-300" 
+                            ? "bg-white border-slate-200 shadow-xs hover:shadow-md hover:border-slate-300" 
                             : "bg-slate-50/80 border-slate-200/60 opacity-75"
                         }`}
                       >
@@ -1553,7 +1553,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                 {meta.tag}
                               </span>
                               <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                                setting.is_enabled ? "text-emerald-600" : "text-slate-400"
+                                setting.is_enabled ? "text-slate-900" : "text-slate-400"
                               }`}>
                                 {setting.is_enabled ? "● Active" : "○ Disabled"}
                               </span>
@@ -1595,9 +1595,9 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
         {activeTab === "intern_fees" && (
           <div className="space-y-8">
             <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-5 border-b bg-amber-50 flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-amber-600" />
-            <h2 className="text-lg font-bold text-amber-900">Direct Intern Fee Override</h2>
+          <div className="p-5 border-b bg-slate-50 flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-slate-900" />
+            <h2 className="text-lg font-bold text-slate-900">Direct Intern Fee Override</h2>
           </div>
           <div className="p-6 space-y-6">
             <p className="text-sm text-slate-600">Update the final certification exam fee for a specific intern, grant fee exemptions (provided by VYNTYRA), or schedule payment announcements.</p>
@@ -1696,7 +1696,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
             </div>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Button onClick={handleUpdateFee} className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-1.5 shadow-xs">
+              <Button onClick={handleUpdateFee} className="bg-slate-900 hover:bg-black text-white font-bold gap-1.5 shadow-xs">
                 <Save className="h-4 w-4" /> Save Fee Profile &amp; Deadline
               </Button>
 
@@ -1724,7 +1724,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
           <div className="p-5 border-b bg-gradient-to-r from-slate-900 to-slate-800 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-amber-400" />
+                <CreditCard className="h-5 w-5 text-slate-500" />
                 <h2 className="text-lg font-bold">Scheduled Intern Fee &amp; Mentor Overview</h2>
               </div>
               <p className="text-xs text-slate-300 mt-1">Live visibility of all assigned mentors, scheduled fee amounts, deadlines, and payment statuses.</p>
@@ -1735,7 +1735,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 size="sm" 
                 onClick={handleBulkPaymentReminders}
                 disabled={isBulkSendingEmail}
-                className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs gap-1.5"
+                className="h-8 text-xs font-bold bg-slate-900 hover:bg-black text-white shadow-xs gap-1.5"
               >
                 {isBulkSendingEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                 Send Bulk Payment Reminders (Email)
@@ -1788,16 +1788,16 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
             </div>
 
             {/* Global NOC Download & Automation Controls */}
-            <div className="p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                <div className="h-9 w-9 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-sm">
                   <Award className="h-5 w-5" />
                 </div>
                 <div>
                   <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
                     <span>Intern Dashboard NOC Download Controls</span>
                     {nocSettingsQ.data?.global_noc_download_enabled ? (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-300">
                         ✓ Download Active Globally
                       </span>
                     ) : (
@@ -1813,7 +1813,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-emerald-200 shadow-2xs">
+                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
                   <span className="text-xs font-semibold text-slate-700">Global Download:</span>
                   <Switch
                     checked={!!nocSettingsQ.data?.global_noc_download_enabled}
@@ -1825,7 +1825,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                   size="sm"
                   disabled={isBulkGeneratingNoc}
                   onClick={handleBulkGenerateAndPublishNoc}
-                  className="h-8 px-3 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-2xs gap-1.5"
+                  className="h-8 px-3 text-xs font-bold text-white bg-slate-900 hover:bg-black shadow-2xs gap-1.5"
                 >
                   {isBulkGeneratingNoc ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1898,7 +1898,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-6 w-6 p-0 text-slate-400 hover:text-indigo-600"
+                                    className="h-6 w-6 p-0 text-slate-400 hover:text-slate-900"
                                     title="Edit / Reassign Referral Code"
                                     onClick={() => openAssignReferralModal(intern)}
                                   >
@@ -1909,7 +1909,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="h-6 px-2 text-[10px] font-bold text-slate-900 bg-slate-100 hover:bg-indigo-100 border-slate-300 gap-1"
+                                  className="h-6 px-2 text-[10px] font-bold text-slate-900 bg-slate-100 hover:bg-slate-100 border-slate-300 gap-1"
                                   onClick={() => openAssignReferralModal(intern)}
                                 >
                                   <Plus className="h-2.5 w-2.5" /> Add Referral ID
@@ -1924,7 +1924,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                   <span className="text-[10px] text-slate-400">{assignedMentor.email}</span>
                                 </div>
                               ) : intern.mentor_id ? (
-                                <span className="font-semibold text-indigo-600">Assigned Mentor</span>
+                                <span className="font-semibold text-slate-900">Assigned Mentor</span>
                               ) : (
                                 <span className="text-slate-500 font-medium text-[11px]">Lead Mentor (Jami Eswar Anil Kumar)</span>
                               )}
@@ -1936,7 +1936,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
 
                             <td className="py-3 px-4">
                               {intern.fee_payment_scheduled ? (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-300">
                                   Scheduled
                                 </span>
                               ) : (
@@ -1964,7 +1964,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                             <td className="py-3 px-4">
                               {intern.exam_fee_paid ? (
                                 <div>
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 w-fit">
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-300 flex items-center gap-1 w-fit">
                                     <CheckCircle2 className="h-3 w-3" /> Paid
                                   </span>
                                   <div className="text-[10px] text-slate-600 font-mono mt-0.5">
@@ -1975,18 +1975,18 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                   </div>
                                 </div>
                               ) : intern.is_fee_exempted ? (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-300">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-300">
                                   Exempted
                                 </span>
                               ) : (
                                 <div className="space-y-1">
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-200">
                                     Unpaid
                                   </span>
                                   <button
                                     type="button"
                                     onClick={() => openManualPaymentModal(intern)}
-                                    className="text-[10px] text-emerald-700 hover:text-emerald-800 font-bold block hover:underline"
+                                    className="text-[10px] text-slate-900 hover:text-slate-900 font-bold block hover:underline"
                                   >
                                     + Record Manual Payment
                                   </button>
@@ -2001,7 +2001,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                   onCheckedChange={(checked) => handleToggleIndividualNoc(intern, checked)}
                                   title={intern.noc_download_enabled ? "Disable NOC Download for this intern" : "Enable NOC Download for this intern"}
                                 />
-                                <span className={`text-[10px] font-bold ${intern.noc_download_enabled ? "text-emerald-700" : "text-slate-400"}`}>
+                                <span className={`text-[10px] font-bold ${intern.noc_download_enabled ? "text-slate-900" : "text-slate-400"}`}>
                                   {intern.noc_download_enabled ? "Active" : "Off"}
                                 </span>
                               </div>
@@ -2010,7 +2010,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                   href={intern.noc_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-[9px] text-blue-600 hover:underline flex items-center gap-0.5 mt-0.5"
+                                  className="text-[9px] text-slate-900 hover:underline flex items-center gap-0.5 mt-0.5"
                                 >
                                   <ExternalLink className="h-2.5 w-2.5" /> View PDF
                                 </a>
@@ -2034,7 +2034,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                   <Button
                                     size="sm"
                                     title="Record offline / manual payment (UPI, Bank Transfer, QR, Cash)"
-                                    className="h-7 px-2 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-2xs gap-1"
+                                    className="h-7 px-2 text-[10px] font-bold text-white bg-slate-900 hover:bg-slate-900 shadow-2xs gap-1"
                                     onClick={() => openManualPaymentModal(intern)}
                                   >
                                     <CreditCard className="h-3 w-3" /> Record Payment
@@ -2046,7 +2046,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                   size="sm"
                                   variant="outline"
                                   title="Add or update referral code for this intern"
-                                  className="h-7 px-2 text-[10px] font-bold text-slate-900 bg-slate-100 hover:bg-indigo-100 border-slate-300 gap-1"
+                                  className="h-7 px-2 text-[10px] font-bold text-slate-900 bg-slate-100 hover:bg-slate-100 border-slate-300 gap-1"
                                   onClick={() => openAssignReferralModal(intern)}
                                 >
                                   <Tag className="h-3 w-3" /> Referral ID
@@ -2056,7 +2056,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                 <Button
                                   size="sm"
                                   title="Generate customized NOC & enable instant download in this intern's dashboard"
-                                  className="h-7 px-2 text-[10px] font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-2xs gap-1"
+                                  className="h-7 px-2 text-[10px] font-bold text-white bg-slate-900 hover:bg-black shadow-2xs gap-1"
                                   onClick={() => handleGenerateIndividualNoc(intern)}
                                 >
                                   <Sparkles className="h-3 w-3" /> Gen &amp; Enable NOC
@@ -2067,7 +2067,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                   <Button
                                     size="sm"
                                     title="Open Individual Payment Reminder Console (Email & WhatsApp)"
-                                    className="h-7 px-2.5 text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-2xs gap-1"
+                                    className="h-7 px-2.5 text-[10px] font-bold text-white bg-slate-900 hover:bg-slate-900 shadow-2xs gap-1"
                                     onClick={() => openPaymentReminderModal(intern)}
                                   >
                                     <Mail className="h-3 w-3" /> Payment Reminder
@@ -2080,7 +2080,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                     size="sm"
                                     variant="outline"
                                     title="Quick WhatsApp payment reminder"
-                                    className="h-7 px-2 text-[10px] font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border-teal-300 gap-1"
+                                    className="h-7 px-2 text-[10px] font-bold text-slate-900 bg-slate-50 hover:bg-slate-100 border-slate-300 gap-1"
                                     onClick={() => handleSendIndividualWhatsApp(intern)}
                                   >
                                     <MessageSquare className="h-3 w-3" /> WhatsApp
@@ -2090,7 +2090,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="h-7 px-2 text-[10px] font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-300"
+                                  className="h-7 px-2 text-[10px] font-bold text-slate-900 bg-slate-50 hover:bg-slate-100 border-slate-300"
                                   onClick={() => {
                                     setTargetType("single");
                                     setInternId(intern.id);
@@ -2139,10 +2139,10 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
 
         {/* ─── TAB: BRANDING & FOUNDER SIGNATURE / LOGO CUSTOMIZER ─── */}
         {activeTab === "branding" && (
-          <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-emerald-100">
+          <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-slate-200">
           <div className="p-5 border-b bg-gradient-to-r from-emerald-50/80 via-white to-emerald-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-xs">
+              <div className="p-2 bg-slate-900 text-white rounded-xl shadow-xs">
                 <Award className="h-5 w-5" />
               </div>
               <div>
@@ -2155,7 +2155,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
             <Button
               onClick={handleSaveBranding}
               disabled={isSavingBranding}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 gap-1.5 shadow-xs"
+              className="bg-slate-900 hover:bg-black text-white font-bold text-xs h-9 gap-1.5 shadow-xs"
             >
               {isSavingBranding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               Save Branding Settings
@@ -2168,7 +2168,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
               <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <FileText className="h-4 w-4 text-emerald-600" /> Founder Signature Image URL
+                    <FileText className="h-4 w-4 text-slate-900" /> Founder Signature Image URL
                   </label>
                   <span className="text-[10px] text-slate-400">PNG / WebP / JPG</span>
                 </div>
@@ -2202,7 +2202,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
               <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Image className="h-4 w-4 text-emerald-600" /> Vyntyra Official Logo URL
+                    <Image className="h-4 w-4 text-slate-900" /> Vyntyra Official Logo URL
                   </label>
                   <span className="text-[10px] text-slate-400">PNG / WebP / SVG</span>
                 </div>
@@ -2217,7 +2217,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Logo Preview</span>
                     <span className="text-xs text-slate-600 font-semibold">Project VyNexa</span>
                   </div>
-                  <div className="h-12 w-16 bg-slate-900 rounded flex items-center justify-center overflow-hidden p-1">
+                  <div className="h-12 w-16 bg-slate-900 rounded flex items-center justify-center overflow-hidden p-1 text-white">
                     {brandingForm.vyntyra_logo_url ? (
                       <img
                         src={brandingForm.vyntyra_logo_url}
@@ -2257,10 +2257,10 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
 
         {/* ─── TAB: DYNAMIC APPLICATION DOMAINS & SUB-DOMAINS MANAGER ─── */}
         {activeTab === "career_tracks" && (
-          <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-blue-100">
+          <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-slate-200">
           <div className="p-5 border-b bg-gradient-to-r from-blue-50/80 via-white to-blue-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-blue-600 text-white rounded-xl shadow-xs">
+              <div className="p-2 bg-slate-900 text-white rounded-xl shadow-xs">
                 <Layers className="h-5 w-5" />
               </div>
               <div>
@@ -2286,7 +2286,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
               {/* Add Primary Domain */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Plus className="h-4 w-4 text-blue-600" />
+                  <Plus className="h-4 w-4 text-slate-900" />
                   <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Add Primary Domain / Department</h3>
                 </div>
                 <div className="space-y-2">
@@ -2302,7 +2302,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                         type="checkbox"
                         checked={domainIsNewInput}
                         onChange={(e) => setDomainIsNewInput(e.target.checked)}
-                        className="rounded text-blue-600"
+                        className="rounded text-slate-900"
                       />
                       <span>Mark with <strong>"NEW"</strong> Badge</span>
                     </label>
@@ -2310,7 +2310,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                       size="sm"
                       onClick={handleAddDomain}
                       disabled={isSavingDomain || !domainNameInput.trim()}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 font-bold"
+                      className="bg-slate-900 hover:bg-black text-white text-xs h-8 font-bold"
                     >
                       {isSavingDomain ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
                       Add Domain
@@ -2322,7 +2322,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
               {/* Add Sub-domain / Track */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Plus className="h-4 w-4 text-blue-600" />
+                  <Plus className="h-4 w-4 text-slate-900" />
                   <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Add Sub-Domain / Track under Domain</h3>
                 </div>
                 <div className="space-y-2">
@@ -2348,7 +2348,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                         type="checkbox"
                         checked={subdomainIsNewInput}
                         onChange={(e) => setSubdomainIsNewInput(e.target.checked)}
-                        className="rounded text-blue-600"
+                        className="rounded text-slate-900"
                       />
                       <span>Mark with <strong>"NEW"</strong> Badge</span>
                     </label>
@@ -2356,7 +2356,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                       size="sm"
                       onClick={handleAddSubdomain}
                       disabled={isSavingDomain || !selectedParentDomain || !subdomainNameInput.trim()}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-8 font-bold"
+                      className="bg-slate-900 hover:bg-black text-white text-xs h-8 font-bold"
                     >
                       {isSavingDomain ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
                       Add Sub-Domain Track
@@ -2379,7 +2379,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-bold text-slate-900 text-sm">{dom.name}</span>
                           {dom.is_new && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-emerald-600 text-white shadow-xs">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-slate-900 text-white shadow-xs">
                               <Sparkles className="h-2.5 w-2.5" /> NEW
                             </span>
                           )}
@@ -2406,7 +2406,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                         >
                           {sub.name}
                           {sub.is_new && (
-                            <span className="text-[8px] font-black text-emerald-700 bg-emerald-100 px-1 rounded uppercase">NEW</span>
+                            <span className="text-[8px] font-black text-slate-900 bg-slate-100 px-1 rounded uppercase">NEW</span>
                           )}
                           <button
                             onClick={() => handleDeleteDomainOrSubdomain(dom.id, sub.id)}
@@ -2429,7 +2429,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
         {/* ─── TAB: NOC CERTIFICATE CONTROLS ─── */}
         {activeTab === "noc_controls" && (
           <div className="space-y-6">
-            <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-rose-100">
+            <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-slate-200">
               <div className="p-5 border-b bg-gradient-to-r from-rose-50/80 via-white to-rose-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-rose-600 text-white rounded-xl shadow-xs">
@@ -2447,7 +2447,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                   <Button
                     onClick={handleBulkGenerateAndPublishNoc}
                     disabled={isBulkGeneratingNoc || allInterns.length === 0}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 gap-1.5 shadow-xs"
+                    className="bg-slate-900 hover:bg-black text-white font-bold text-xs h-9 gap-1.5 shadow-xs"
                   >
                     {isBulkGeneratingNoc ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                     Generate &amp; Enable NOCs for All Interns ({allInterns.length})
@@ -2460,7 +2460,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50/70">
                   <div className="space-y-0.5">
                     <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                      <Download className="h-4 w-4 text-indigo-600" />
+                      <Download className="h-4 w-4 text-slate-900" />
                       Global Intern NOC Download Access
                     </div>
                     <div className="text-xs text-slate-500">
@@ -2468,7 +2468,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`text-xs font-bold ${nocSettingsQ.data?.global_noc_download_enabled ? "text-emerald-600" : "text-slate-400"}`}>
+                    <span className={`text-xs font-bold ${nocSettingsQ.data?.global_noc_download_enabled ? "text-slate-900" : "text-slate-400"}`}>
                       {nocSettingsQ.data?.global_noc_download_enabled ? "Enabled for All" : "Disabled"}
                     </span>
                     <Switch
@@ -2489,7 +2489,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 </div>
 
                 {/* Force Purge & Regenerate Section */}
-                <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="font-bold text-sm text-rose-950 flex items-center gap-2">
                       <RefreshCw className="h-4 w-4 text-rose-600" />
@@ -2531,7 +2531,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
 
       {/* ─── REFERRAL CODE & PRICING MODAL ─── */}
       {isReferralModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 text-white">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b pb-4">
               <div className="flex items-center gap-2">
@@ -2592,7 +2592,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                     value={referralForm.commission_reward}
                     onChange={(e) => setReferralForm({ ...referralForm, commission_reward: Number(e.target.value) })}
                     required
-                    className="font-bold text-purple-700"
+                    className="font-bold text-slate-900"
                   />
                   <span className="text-[10px] text-slate-400 mt-1 block">Payable to referrer per paid candidate (e.g. ₹200).</span>
                 </div>
@@ -2638,7 +2638,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 <Button 
                   type="submit" 
                   disabled={isSavingReferral}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                  className="bg-slate-900 hover:bg-black text-white font-bold"
                 >
                   {isSavingReferral ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Saving...</> : "Save Pricing Rule"}
                 </Button>
@@ -2650,11 +2650,11 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
 
       {/* ─── BULK REFERRAL PRICING & COMMISSION OVERRIDE MODAL ─── */}
       {isBulkPricingModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 text-white">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b pb-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-purple-600 text-white rounded-lg">
+                <div className="p-2 bg-slate-900 text-white rounded-lg">
                   <Sparkles className="h-4 w-4" />
                 </div>
                 <div>
@@ -2672,18 +2672,18 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
               <div>
                 <label className="font-bold text-slate-700 block mb-1.5 flex items-center justify-between">
                   <span>Selected Codes ({selectedReferralCodes.size})</span>
-                  <span className="text-[10px] text-indigo-600 font-normal">
+                  <span className="text-[10px] text-slate-900 font-normal">
                     {selectedReferralCodes.size === filteredReferralRules.length ? "All Filtered Codes Selected" : "Selected Subset"}
                   </span>
                 </label>
                 <div className="max-h-24 overflow-y-auto p-2.5 bg-slate-50 border rounded-xl flex flex-wrap gap-1.5">
                   {Array.from(selectedReferralCodes).map((c) => (
-                    <span key={c} className="bg-indigo-100 text-slate-900 border border-slate-300 font-mono font-bold text-[11px] px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <span key={c} className="bg-slate-100 text-slate-900 border border-slate-300 font-mono font-bold text-[11px] px-2 py-0.5 rounded-md flex items-center gap-1">
                       {c}
                       <button 
                         type="button" 
                         onClick={() => toggleSelectReferral(c)}
-                        className="text-indigo-400 hover:text-slate-900 ml-0.5"
+                        className="text-slate-500 hover:text-slate-900 ml-0.5"
                       >
                         ×
                       </button>
@@ -2714,7 +2714,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                     value={bulkPricingForm.commission_reward}
                     onChange={(e) => setBulkPricingForm({ ...bulkPricingForm, commission_reward: Number(e.target.value) })}
                     required
-                    className="font-bold text-purple-700"
+                    className="font-bold text-slate-900"
                   />
                   <span className="text-[10px] text-slate-400 mt-1 block">Payable to referrer per paid candidate.</span>
                 </div>
@@ -2723,7 +2723,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
               {/* Real-time Accounting Breakdown Preview */}
               <div className="p-3 bg-slate-50 border rounded-xl space-y-1 text-[11px] text-slate-600">
                 <div className="font-bold text-slate-800 text-xs flex items-center gap-1">
-                  <CreditCard className="h-3.5 w-3.5 text-indigo-600" /> Unit Economics per Paid Candidate:
+                  <CreditCard className="h-3.5 w-3.5 text-slate-900" /> Unit Economics per Paid Candidate:
                 </div>
                 <div className="flex justify-between pt-1">
                   <span>Gross Candidate Fee:</span>
@@ -2731,19 +2731,19 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 </div>
                 <div className="flex justify-between">
                   <span>Est. Payment Gateway Charge (~2.58%):</span>
-                  <span className="text-amber-700 font-medium">₹{(Math.round((bulkPricingForm.custom_exam_fee * (25.78 / 998)) * 100) / 100).toFixed(2)} (50% Referrer / 50% Company)</span>
+                  <span className="text-slate-900 font-medium">₹{(Math.round((bulkPricingForm.custom_exam_fee * (25.78 / 998)) * 100) / 100).toFixed(2)} (50% Referrer / 50% Company)</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Govt Certification Allocation:</span>
-                  <span className="text-blue-700 font-medium">₹199.00</span>
+                  <span className="text-slate-900 font-medium">₹199.00</span>
                 </div>
                 <div className="flex justify-between border-t pt-1">
                   <span>Referrer Net Commission:</span>
-                  <span className="font-bold text-purple-700">₹{(Math.max(0, Math.round((bulkPricingForm.commission_reward - (bulkPricingForm.custom_exam_fee * (25.78 / 998) / 2)) * 100) / 100)).toFixed(2)}</span>
+                  <span className="font-bold text-slate-900">₹{(Math.max(0, Math.round((bulkPricingForm.commission_reward - (bulkPricingForm.custom_exam_fee * (25.78 / 998) / 2)) * 100) / 100)).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Company Net Margin:</span>
-                  <span className="font-extrabold text-emerald-700">₹{(Math.round((bulkPricingForm.custom_exam_fee - bulkPricingForm.commission_reward - 199 - (bulkPricingForm.custom_exam_fee * (25.78 / 998) / 2)) * 100) / 100).toFixed(2)}</span>
+                  <span className="font-extrabold text-slate-900">₹{(Math.round((bulkPricingForm.custom_exam_fee - bulkPricingForm.commission_reward - 199 - (bulkPricingForm.custom_exam_fee * (25.78 / 998) / 2)) * 100) / 100).toFixed(2)}</span>
                 </div>
               </div>
 
@@ -2778,7 +2778,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 <Button 
                   type="submit" 
                   disabled={isSavingBulkPricing || selectedReferralCodes.size === 0}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
+                  className="bg-slate-900 hover:bg-black text-white font-bold"
                 >
                   {isSavingBulkPricing ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Updating {selectedReferralCodes.size} Codes...</> : `Update ${selectedReferralCodes.size} Referral Codes`}
                 </Button>
@@ -2790,7 +2790,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
 
       {/* ─── URGENT POPUP NOTIFICATION DISPATCH MODAL ─── */}
       {isPopupModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 text-white">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b pb-4">
               <div className="flex items-center gap-2">
@@ -2875,11 +2875,11 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
 
       {/* ─── INDIVIDUAL PAYMENT REMINDER MODAL ─── */}
       {isReminderModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 text-white">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200 space-y-4">
             <div className="flex items-center justify-between border-b pb-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-blue-600 text-white rounded-xl shadow-xs">
+                <div className="p-2 bg-slate-900 text-white rounded-xl shadow-xs">
                   <Mail className="h-5 w-5" />
                 </div>
                 <div>
@@ -2934,7 +2934,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 />
               </div>
 
-              <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl text-blue-900 text-xs">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs">
                 <strong>Email Template:</strong> Includes corporate Vyntyra branding, deadline box, and a direct <strong>"Pay Exam Fee Online"</strong> CTA button.
               </div>
 
@@ -2946,7 +2946,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                   type="button"
                   variant="outline"
                   onClick={handleSendReminderWhatsAppFromModal}
-                  className="text-teal-700 border-teal-300 hover:bg-teal-50 font-bold gap-1 text-xs"
+                  className="text-slate-900 border-slate-300 hover:bg-slate-50 font-bold gap-1 text-xs"
                 >
                   <MessageSquare className="h-3.5 w-3.5" /> Send via WhatsApp
                 </Button>
@@ -2954,7 +2954,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                   type="button"
                   disabled={isSendingReminderEmail}
                   onClick={handleSendReminderEmailFromModal}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-1 text-xs"
+                  className="bg-slate-900 hover:bg-black text-white font-bold gap-1 text-xs"
                 >
                   {isSendingReminderEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
                   Dispatch Email Reminder
@@ -2967,11 +2967,11 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
 
       {/* ─── MANUAL PAYMENT RECORD MODAL ─── */}
       {isManualPaymentModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 text-white">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200 space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-xs">
+                <div className="p-2 bg-slate-900 text-white rounded-xl shadow-xs">
                   <CreditCard className="h-5 w-5" />
                 </div>
                 <div>
@@ -3024,7 +3024,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                   <button
                     type="button"
                     onClick={() => setManualPaymentForm({ ...manualPaymentForm, referenceNo: `UTR-${Date.now().toString().slice(-8)}` })}
-                    className="text-[10px] text-indigo-600 hover:underline font-semibold"
+                    className="text-[10px] text-slate-900 hover:underline font-semibold"
                   >
                     Generate UTR
                   </button>
@@ -3055,7 +3055,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 />
               </div>
 
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs">
                 <strong>Instant Effect:</strong> This will mark the candidate's fee as <strong>Paid</strong>, dismiss payment popups, and immediately unlock their Intern Dashboard.
               </div>
 
@@ -3066,7 +3066,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 <Button
                   type="submit"
                   disabled={isRecordingPayment}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                  className="bg-slate-900 hover:bg-black text-white font-bold"
                 >
                   {isRecordingPayment ? (
                     <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Recording...</>
@@ -3082,7 +3082,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
 
       {/* ─── ASSIGN REFERRAL ID MODAL ─── */}
       {isAssignReferralModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 text-white">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200 space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
@@ -3102,8 +3102,8 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 <div className="font-bold text-slate-800 text-sm">{assignReferralForm.internName}</div>
                 <div className="text-slate-500">{assignReferralForm.internEmail}</div>
                 {assignReferralForm.currentReferralCode && (
-                  <div className="text-indigo-600 font-semibold text-[11px] pt-1">
-                    Current Code: <span className="font-mono bg-indigo-100 px-1.5 py-0.5 rounded">{assignReferralForm.currentReferralCode}</span>
+                  <div className="text-slate-900 font-semibold text-[11px] pt-1">
+                    Current Code: <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">{assignReferralForm.currentReferralCode}</span>
                   </div>
                 )}
               </div>
@@ -3161,7 +3161,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 <Button
                   type="submit"
                   disabled={isAssigningReferral}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                  className="bg-slate-900 hover:bg-black text-white font-bold"
                 >
                   {isAssigningReferral ? (
                     <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Linking...</>

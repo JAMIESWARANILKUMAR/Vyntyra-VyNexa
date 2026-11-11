@@ -88,11 +88,11 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 });
 
 const STATUS_COLORS: Record<string, string> = {
-  new: "bg-secondary/15 text-secondary border-secondary/30",
-  reviewing: "bg-amber-100 text-amber-800 border-amber-300",
-  shortlisted: "bg-emerald-100 text-emerald-800 border-emerald-300",
-  rejected: "bg-destructive/10 text-destructive border-destructive/30",
-  hired: "bg-primary text-primary-foreground border-primary",
+  new: "bg-slate-100 text-slate-800 border-slate-300 font-mono",
+  reviewing: "bg-slate-100 text-slate-900 border-slate-300 font-mono",
+  shortlisted: "bg-slate-900 text-white border-slate-900 font-mono",
+  rejected: "bg-slate-50 text-slate-400 border-slate-200 font-mono",
+  hired: "bg-black text-white border-black font-mono",
 };
 
 const STATUS_OPTIONS: (AppStatus | "all")[] = ["all", "new", "reviewing", "shortlisted", "hired", "rejected"];
@@ -648,7 +648,7 @@ function AdminDashboard() {
                 await supabase.auth.signOut();
                 window.location.href = "/auth/admin";
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-rose-600 hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
               <span>Sign Out</span>
@@ -661,7 +661,7 @@ function AdminDashboard() {
                 await supabase.auth.signOut();
                 window.location.href = "/auth/admin";
               }}
-              className="w-full flex justify-center p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              className="w-full flex justify-center p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-slate-50 transition-colors cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="h-4 w-4" />
@@ -679,7 +679,7 @@ function AdminDashboard() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs text-white"
             />
             <motion.div
               initial={{ x: "-100%" }}
@@ -746,7 +746,7 @@ function AdminDashboard() {
                     await supabase.auth.signOut();
                     window.location.href = "/auth/admin";
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50"
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-slate-50"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Sign Out</span>
@@ -793,12 +793,12 @@ function AdminDashboard() {
           <div className="relative px-6 sm:px-8 py-8 sm:py-10">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[10px] font-medium text-gold uppercase tracking-[0.18em] mb-4">
+                <div className="inline-flex items-center gap-2 rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[10px] font-medium text-slate-900 uppercase tracking-[0.18em] mb-4">
                   <span className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse" />
                   Super Admin Dashboard
                 </div>
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight leading-tight">
-                  Hello, <span className="text-gold">Super Admin</span>
+                  Hello, <span className="text-slate-900">Super Admin</span>
                 </h1>
                 <p className="text-lg sm:text-xl text-primary-foreground/80 mt-1">
                   @ <span className="font-medium text-primary-foreground">Vyntyra Consultancy Services</span>
@@ -1002,8 +1002,8 @@ function AdminDashboard() {
           {/* Two-Factor Authentication Card */}
           <div className="rounded-md border border-border bg-card shadow-corp p-4 sm:p-5 flex items-center justify-between gap-3">
             <div className="flex items-start gap-3 min-w-0">
-              <div className="mt-0.5 h-9 w-9 rounded-sm flex items-center justify-center bg-gold/10 shrink-0">
-                <Shield className="h-4.5 w-4.5 text-gold" />
+              <div className="mt-0.5 h-9 w-9 rounded-lg flex items-center justify-center bg-slate-100 border border-slate-200 shrink-0">
+                <Shield className="h-4.5 w-4.5 text-slate-900" />
               </div>
               <div className="min-w-0">
                 <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-secondary">Super Admin 2FA</div>
@@ -1017,7 +1017,7 @@ function AdminDashboard() {
             </div>
             <div className="shrink-0">
               {mfaStatus === "checking" ? (
-                <Loader2 className="h-4 w-4 animate-spin text-gold" />
+                <Loader2 className="h-4 w-4 animate-spin text-slate-900" />
               ) : mfaStatus === "enrolled" ? (
                 <Button 
                   onClick={handleDisableMfa} 
@@ -1031,7 +1031,7 @@ function AdminDashboard() {
                 <Button 
                   asChild
                   size="sm"
-                  className="bg-gold hover:bg-gold/90 text-primary font-bold shadow-[0_0_10px_rgba(212,175,55,0.1)] h-9 text-xs tracking-wider uppercase px-3 border-0"
+                  className="bg-slate-900 hover:bg-black text-white font-bold h-9 text-xs tracking-wider uppercase px-3 border border-slate-900"
                 >
                   <Link to="/admin/security" className="hover:no-underline">ADD 2FA</Link>
                 </Button>
@@ -1166,7 +1166,7 @@ function AdminDashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200"
+                className="bg-slate-900 text-white hover:bg-black font-semibold border-slate-900"
                 onClick={async () => {
                   const confirmBulk = window.confirm("Are you sure you want to send selection emails and activate accounts for ALL applications marked as 'Hired'?");
                   if (!confirmBulk) return;
@@ -1219,7 +1219,7 @@ function AdminDashboard() {
                 <Button size="sm" variant="outline" className="h-8 text-xs bg-white" onClick={() => handleBulkStatusChange('reviewing')}>
                   Mark Reviewing
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200" onClick={() => handleBulkStatusChange('shortlisted')}>
+                <Button size="sm" variant="outline" className="h-8 text-xs bg-slate-900 text-white hover:bg-black font-semibold border-slate-900" onClick={() => handleBulkStatusChange('shortlisted')}>
                   Shortlist
                 </Button>
                 <Button size="sm" variant="outline" className="h-8 text-xs bg-destructive/5 text-destructive hover:bg-destructive/10 border-destructive/20" onClick={() => handleBulkStatusChange('rejected')}>
@@ -1298,7 +1298,7 @@ function AdminDashboard() {
                       <td className="px-6 py-4">
                         <div className="font-medium text-foreground">{a.role_applied}</div>
                         {a.sub_domain && (
-                          <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                          <div className="text-xs font-semibold text-slate-900 dark:text-slate-500 mt-0.5">
                             Sub-Domain: {a.sub_domain}
                           </div>
                         )}
@@ -1359,7 +1359,7 @@ function AdminDashboard() {
                         <div className="font-semibold">{l.profiles?.full_name || 'Unknown User'}</div>
                         <div className="text-xs text-muted-foreground">{new Date(l.start_date).toLocaleDateString()} to {new Date(l.end_date).toLocaleDateString()}</div>
                       </div>
-                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${l.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : l.status === 'rejected' ? 'bg-destructive/10 text-destructive' : 'bg-amber-100 text-amber-800'}`}>{l.status}</span>
+                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${l.status === 'approved' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : l.status === 'rejected' ? 'bg-destructive/10 text-destructive' : 'bg-slate-100 text-slate-800 border-slate-300 font-mono'}`}>{l.status}</span>
                     </div>
                     <div className="text-muted-foreground text-xs mt-1 bg-surface p-2 rounded">{l.reason}</div>
                     {l.status === 'pending' && (
@@ -1373,7 +1373,7 @@ function AdminDashboard() {
                             .catch((err: any) => {
                               toast.error(err.message || 'Failed to approve leave');
                             });
-                        }} className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 text-xs">Approve</Button>
+                        }} className="bg-slate-900 hover:bg-black text-white h-7 text-xs">Approve</Button>
                         <Button size="sm" variant="destructive" onClick={() => {
                           doUpdateLeave({ data: { id: l.id, status: 'rejected' } })
                             .then(() => { 
@@ -1532,7 +1532,7 @@ function JobPostingsSection({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-foreground truncate">{j.title}</span>
-                  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${j.is_active ? "border-emerald-300 bg-emerald-100 text-emerald-800" : "border-border bg-muted text-muted-foreground"}`}>
+                  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${j.is_active ? "border-slate-300 bg-slate-100 text-slate-800 border-slate-300 font-mono" : "border-border bg-muted text-muted-foreground"}`}>
                     {j.is_active ? "Active" : "Inactive"}
                   </span>
                 </div>
@@ -1680,10 +1680,10 @@ function Stat({ label, value, tone = "default", onClick }: { label: string; valu
   const toneDot: Record<string, string> = {
     default: "bg-slate-400",
     secondary: "bg-slate-500",
-    amber: "bg-amber-500",
-    emerald: "bg-emerald-500",
-    primary: "bg-slate-900",
-    destructive: "bg-rose-500",
+    amber: "bg-slate-600",
+    emerald: "bg-slate-900",
+    primary: "bg-black",
+    destructive: "bg-slate-400",
   };
   return (
     <div 
@@ -1758,8 +1758,8 @@ function CustomWhatsAppModal({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-emerald-700 font-bold">
-            <MessageCircle className="h-5 w-5 text-emerald-600" />
+          <DialogTitle className="flex items-center gap-2 text-slate-900 font-bold">
+            <MessageCircle className="h-5 w-5 text-slate-900" />
             Send Custom WhatsApp Message
           </DialogTitle>
           <DialogDescription>
@@ -1773,7 +1773,7 @@ function CustomWhatsAppModal({
               type="button"
               variant={targetType === "group" ? "default" : "outline"}
               size="sm"
-              className={targetType === "group" ? "bg-emerald-700 text-white hover:bg-emerald-800 font-semibold" : ""}
+              className={targetType === "group" ? "bg-slate-900 text-white hover:bg-black font-semibold" : ""}
               onClick={() => setTargetType("group")}
             >
               📢 Official Group Link
@@ -1782,7 +1782,7 @@ function CustomWhatsAppModal({
               type="button"
               variant={targetType === "direct" ? "default" : "outline"}
               size="sm"
-              className={targetType === "direct" ? "bg-emerald-700 text-white hover:bg-emerald-800 font-semibold" : ""}
+              className={targetType === "direct" ? "bg-slate-900 text-white hover:bg-black font-semibold" : ""}
               onClick={() => setTargetType("direct")}
             >
               👤 Direct Message
@@ -1809,7 +1809,7 @@ function CustomWhatsAppModal({
                   key={idx}
                   type="button"
                   onClick={() => setMessage(p.text)}
-                  className="px-2.5 py-1 text-[11px] rounded-md bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 transition-colors font-medium text-slate-700"
+                  className="px-2.5 py-1 text-[11px] rounded-md bg-slate-100 hover:bg-slate-50 hover:text-slate-900 border border-slate-200 transition-colors font-medium text-slate-700"
                 >
                   {p.title}
                 </button>
@@ -1827,13 +1827,13 @@ function CustomWhatsAppModal({
             />
           </div>
 
-          <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-[11px] text-emerald-900 flex items-center justify-between gap-2">
+          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-[11px] text-slate-900 flex items-center justify-between gap-2">
             <span className="truncate">Official Group: <strong className="font-mono">https://chat.whatsapp.com/FXsC4CT1hVRHvKzGH0k5y5</strong></span>
             <a
               href={defaultGroupUrl}
               target="_blank"
               rel="noreferrer"
-              className="underline font-bold text-emerald-700 hover:text-emerald-900 shrink-0"
+              className="underline font-bold text-slate-900 hover:text-black shrink-0"
             >
               Open Link
             </a>
@@ -1845,7 +1845,7 @@ function CustomWhatsAppModal({
             </Button>
             <Button
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5 shadow-sm"
+              className="bg-slate-900 hover:bg-black text-white font-bold gap-1.5 shadow-xs"
               onClick={handleSend}
             >
               <Send className="h-3.5 w-3.5" /> Open & Send via WhatsApp
@@ -2213,11 +2213,11 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
               <span>{new Date(app.created_at).toLocaleDateString()}</span>
             </DialogDescription>
             <div className="flex items-center gap-2 flex-wrap pt-1">
-              <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${app.status === 'hired' ? 'bg-emerald-100 text-emerald-800' : 'bg-secondary/15 text-secondary'}`}>
+              <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${app.status === 'hired' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : 'bg-secondary/15 text-secondary'}`}>
                 Status: {app.status}
               </span>
               {app.sub_domain && (
-                <span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold px-2 py-0.5 rounded-md">
+                <span className="bg-slate-100 dark:bg-emerald-950/60 text-slate-900 dark:text-emerald-300 text-xs font-semibold px-2 py-0.5 rounded-md">
                   Sub-Domain: {app.sub_domain}
                 </span>
               )}
@@ -2238,7 +2238,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
               size="sm"
               onClick={handleRegenerateOfferLetter}
               disabled={isRegeneratingOffer}
-              className="bg-amber-50 text-amber-800 hover:bg-amber-100 border-amber-300 font-semibold"
+              className="bg-white text-slate-800 hover:bg-slate-100 border-slate-300 font-semibold"
               title="Delete stored Offer Letter & Regenerate in 1-Click"
             >
               <RefreshCw className={`h-4 w-4 mr-1.5 ${isRegeneratingOffer ? "animate-spin" : ""}`} />
@@ -2249,7 +2249,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
               size="sm"
               onClick={handleRegenerateNoc}
               disabled={isRegeneratingNoc}
-              className="bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border-emerald-300 font-semibold"
+              className="bg-white text-slate-800 hover:bg-slate-100 border-slate-300 font-semibold"
               title="Delete stored NOC & Regenerate in 1-Click"
             >
               <RefreshCw className={`h-4 w-4 mr-1.5 ${isRegeneratingNoc ? "animate-spin" : ""}`} />
@@ -2259,7 +2259,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
               variant="outline"
               size="sm"
               onClick={() => setWhatsAppOpen(true)}
-              className="bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600 font-bold shadow-sm"
+              className="bg-slate-900 text-white hover:bg-black border-slate-900 font-bold shadow-xs"
               title="Send custom message or official group invite via WhatsApp"
             >
               <MessageCircle className="h-4 w-4 mr-1.5" />
@@ -2271,7 +2271,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
               onClick={() => setPayslipOpen(true)}
               className="bg-slate-900 text-white hover:bg-slate-800 border-slate-900"
             >
-              <FileSpreadsheet className="h-4 w-4 mr-1.5 text-emerald-400" />
+              <FileSpreadsheet className="h-4 w-4 mr-1.5 text-slate-500" />
               Payslip PDF
             </Button>
             <Button
@@ -2297,7 +2297,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
             <InfoRow icon={Phone} label="Phone" value={app.phone} />
             <InfoRow label="Opportunity Type" value={app.opportunity_type ? <span className="font-semibold text-secondary">{app.opportunity_type}</span> : "—"} />
             <InfoRow label="Domain / Specialization" value={app.domain || "—"} />
-            <InfoRow label="Sub-Domain Track" value={app.sub_domain ? <span className="font-semibold text-emerald-600 dark:text-emerald-400">{app.sub_domain}</span> : "—"} />
+            <InfoRow label="Sub-Domain Track" value={app.sub_domain ? <span className="font-semibold text-slate-900 dark:text-slate-500">{app.sub_domain}</span> : "—"} />
             <InfoRow icon={Briefcase} label="Company" value={app.company || "—"} />
             <InfoRow icon={Briefcase} label="Position" value={app.position || "—"} />
             <InfoRow label="Experience" value={app.years_experience || "—"} />
@@ -2451,7 +2451,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
           <div className="rounded-md border border-border bg-surface overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <div className="text-sm font-semibold text-primary flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-amber-500" /> AI-Generated Interview Kit
+                <Sparkles className="h-4 w-4 text-slate-600" /> AI-Generated Interview Kit
               </div>
               <Button size="sm" variant="ghost" onClick={regenerate} disabled={regenerating}>
                 {regenerating
@@ -2484,9 +2484,9 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
           )}
 
           {app.status === "hired" && (
-            <div className="rounded-md border border-emerald-200 bg-emerald-50/30 p-5 space-y-4">
-              <div className="flex items-center gap-2 text-emerald-800 font-semibold text-sm">
-                <GraduationCap className="h-5 w-5 text-emerald-600" /> 
+            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5 space-y-4">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
+                <GraduationCap className="h-5 w-5 text-slate-900" /> 
                 Selection Email & Portal Activation Hub
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -2494,22 +2494,22 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
               </p>
 
               {profileExists ? (
-                <div className="bg-emerald-100/50 border border-emerald-200 text-emerald-800 text-xs rounded-lg p-3 flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
+                <div className="bg-slate-100 border border-slate-200 text-slate-800 text-xs rounded-lg p-3 flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 shrink-0 text-slate-900" />
                   <div>
                     <strong>Intern Profile Active:</strong> Account has been fully activated and credentials sent.
                   </div>
                 </div>
               ) : scheduledEmail && scheduledEmail.status === "pending" ? (
-                <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg p-3 space-y-2">
+                <div className="bg-slate-50 border border-slate-200 text-slate-900 text-xs rounded-lg p-3 space-y-2">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 shrink-0 text-amber-600 animate-pulse" />
+                    <Clock className="h-4 w-4 shrink-0 text-slate-900 animate-pulse" />
                     <strong>Selection Email Scheduled:</strong> Will be dispatched on <strong>{new Date(scheduledEmail.send_at).toLocaleString()}</strong>.
                   </div>
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    className="h-7 text-xs border-amber-300 text-amber-800 bg-white hover:bg-amber-50"
+                    className="h-7 text-xs border-slate-300 text-slate-900 bg-white hover:bg-slate-50"
                     disabled={isScheduling}
                     onClick={async () => {
                       setIsScheduling(true);
@@ -2543,7 +2543,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
                   <div className="flex flex-wrap gap-2">
                     <Button 
                       size="sm"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5 h-9"
+                      className="bg-slate-900 hover:bg-black text-white font-semibold gap-1.5 h-9 shadow-xs"
                       disabled={isScheduling}
                       onClick={async () => {
                         setIsScheduling(true);
@@ -2565,7 +2565,7 @@ function ApplicationDialog({ app, onClose }: { app: any; onClose: () => void }) 
                     <Button 
                       size="sm"
                       variant="outline"
-                      className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-semibold gap-1.5 h-9"
+                      className="border-slate-300 text-slate-800 hover:bg-slate-100 font-semibold gap-1.5 h-9"
                       disabled={isScheduling || !scheduleTime}
                       onClick={async () => {
                         setIsScheduling(true);
@@ -3200,7 +3200,7 @@ function PayslipModalDialog({ app, open, onClose }: { app: any; open: boolean; o
       <DialogContent className="max-w-xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl text-primary font-semibold flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5 text-emerald-600" /> Corporate Payslip Generator
+            <FileSpreadsheet className="h-5 w-5 text-slate-900" /> Corporate Payslip Generator
           </DialogTitle>
         </DialogHeader>
 
@@ -3212,7 +3212,7 @@ function PayslipModalDialog({ app, open, onClose }: { app: any; open: boolean; o
             </div>
             <div className="text-right">
               <div className="text-xs uppercase text-slate-400 font-medium">Net Take-Home</div>
-              <div className="text-lg font-bold text-emerald-400">₹ {net.toLocaleString("en-IN")}</div>
+              <div className="text-lg font-bold text-slate-500">₹ {net.toLocaleString("en-IN")}</div>
             </div>
           </div>
 

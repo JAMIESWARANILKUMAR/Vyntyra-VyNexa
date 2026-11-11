@@ -166,13 +166,13 @@ export function AdminLmsManager() {
       {/* Header & Action Bar */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="h-12 w-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100 shadow-xs">
+          <div className="h-12 w-12 rounded-xl bg-slate-100 text-slate-700 border-slate-300 font-mono flex items-center justify-center border border-slate-200 shadow-xs">
             <BookMarked className="h-6 w-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-slate-900">LMS &amp; Skilling Courses Directorate</h2>
-              <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 font-mono text-[10px]">
+              <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono font-mono text-[10px]">
                 {courses.length} Active Modules
               </Badge>
             </div>
@@ -185,7 +185,7 @@ export function AdminLmsManager() {
         <div className="flex items-center gap-2.5 w-full md:w-auto">
           <Button
             onClick={openCreateModal}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 px-4 rounded-xl shadow-sm gap-2 w-full md:w-auto"
+            className="bg-slate-900 hover:bg-black text-white font-bold text-xs h-10 px-4 rounded-xl shadow-sm gap-2 w-full md:w-auto"
           >
             <Plus className="h-4 w-4" />
             Add Course or Video Link
@@ -265,7 +265,7 @@ export function AdminLmsManager() {
                 <div>
                   {/* Card Header Top */}
                   <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                    <span className="text-[10px] font-extrabold uppercase font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <span className="text-[10px] font-extrabold uppercase font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-200">
                       {course.source}
                     </span>
                     <Badge variant="outline" className="text-[9px] uppercase font-bold text-slate-600 border-slate-300">
@@ -287,10 +287,10 @@ export function AdminLmsManager() {
 
                     {/* Metadata Badges */}
                     <div className="flex items-center gap-2 flex-wrap pt-1">
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
-                        <Award className="h-3 w-3 text-amber-600" /> {course.badge}
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-200 flex items-center gap-1">
+                        <Award className="h-3 w-3 text-slate-900" /> {course.badge}
                       </span>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border-slate-300 font-mono border border-slate-200">
                         {course.level}
                       </span>
                       {course.estimated_hours && (
@@ -328,7 +328,7 @@ export function AdminLmsManager() {
                         href={course.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline px-2 py-1"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-slate-900 hover:underline px-2 py-1"
                       >
                         <ExternalLink className="h-3.5 w-3.5" /> Open Link
                       </a>
@@ -367,7 +367,7 @@ export function AdminLmsManager() {
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
-              <BookMarked className="h-5 w-5 text-emerald-600" />
+              <BookMarked className="h-5 w-5 text-slate-900" />
               {editingCourse ? "Edit LMS Course / Masterclass" : "Add New Course or Video Masterclass"}
             </DialogTitle>
             <DialogDescription className="text-xs">
@@ -480,7 +480,7 @@ export function AdminLmsManager() {
             {/* Target Audience Visibility Controls */}
             <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-emerald-600" />
+                <Users className="h-4 w-4 text-slate-900" />
                 <Label className="text-xs font-bold text-slate-800">Who Should This Course Be Displayed To? *</Label>
               </div>
 
@@ -496,7 +496,7 @@ export function AdminLmsManager() {
                     key={aud.id}
                     className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer font-semibold transition-all ${
                       formAudience === aud.id
-                        ? "bg-white border-emerald-500 text-emerald-900 shadow-2xs"
+                        ? "bg-white border-slate-400 text-slate-900 shadow-2xs"
                         : "bg-white/60 border-slate-200 text-slate-600 hover:bg-white"
                     }`}
                   >
@@ -574,7 +574,7 @@ export function AdminLmsManager() {
               <Button type="button" variant="ghost" size="sm" onClick={() => setCourseModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSaving} size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5">
+              <Button type="submit" disabled={isSaving} size="sm" className="bg-slate-900 hover:bg-black text-white font-bold gap-1.5">
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                 {editingCourse ? "Update Course" : "Save Course to LMS"}
               </Button>
@@ -585,7 +585,7 @@ export function AdminLmsManager() {
 
       {/* YouTube Video Preview Dialog */}
       <Dialog open={!!previewVideoId} onOpenChange={(open) => !open && setPreviewVideoId(null)}>
-        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-black border-slate-800">
+        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-black border-slate-800 text-white">
           <div className="relative aspect-video w-full">
             {previewVideoId && (
               <iframe

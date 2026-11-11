@@ -83,12 +83,12 @@ import { exportDataset, ExportFormat } from "@/lib/dataset-export.utils";
 // ─── Standard Category Config ──────────────────────────────────────
 const DATASET_CATEGORIES = [
   { id: "all", label: "All Categories", icon: Layers, color: "bg-slate-100 text-slate-800 border-slate-300" },
-  { id: "companies", label: "Companies", icon: Building2, color: "bg-blue-100 text-blue-800 border-blue-300" },
-  { id: "colleges", label: "Colleges", icon: GraduationCap, color: "bg-purple-100 text-purple-800 border-purple-300" },
-  { id: "students", label: "Students", icon: Users, color: "bg-emerald-100 text-emerald-800 border-emerald-300" },
-  { id: "interns", label: "Interns", icon: Briefcase, color: "bg-amber-100 text-amber-800 border-amber-300" },
-  { id: "employees", label: "Employees", icon: UserCheck, color: "bg-indigo-100 text-indigo-800 border-indigo-300" },
-  { id: "leads", label: "Leads & B2B", icon: Sparkles, color: "bg-rose-100 text-rose-800 border-rose-300" },
+  { id: "companies", label: "Companies", icon: Building2, color: "bg-slate-100 text-slate-800 border-slate-300 font-mono" },
+  { id: "colleges", label: "Colleges", icon: GraduationCap, color: "bg-slate-100 text-slate-800 border-slate-300 font-mono" },
+  { id: "students", label: "Students", icon: Users, color: "bg-slate-100 text-slate-800 border-slate-300 font-mono" },
+  { id: "interns", label: "Interns", icon: Briefcase, color: "bg-slate-100 text-slate-800 border-slate-300 font-mono" },
+  { id: "employees", label: "Employees", icon: UserCheck, color: "bg-slate-100 text-slate-800 border-slate-300 font-mono" },
+  { id: "leads", label: "Leads & B2B", icon: Sparkles, color: "bg-slate-100 text-slate-800 border-slate-300 font-mono" },
 ];
 
 export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAdmin?: boolean }) {
@@ -676,7 +676,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
 
       {/* ─── Security Lock Screens (If Employee Access Restricted or Passcode Locked) ─── */}
       {isEmployeeBlocked && (
-        <div className="bg-rose-50 border border-rose-200 p-8 rounded-3xl text-center space-y-3">
+        <div className="bg-slate-50 border border-slate-200 p-8 rounded-3xl text-center space-y-3">
           <ShieldAlert className="h-12 w-12 text-rose-600 mx-auto" />
           <h3 className="text-lg font-black text-rose-950">Dataset Vault Access Restricted</h3>
           <p className="text-xs sm:text-sm text-rose-700 max-w-md mx-auto">
@@ -688,7 +688,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
 
       {isPasscodeLocked && !isEmployeeBlocked && (
         <div className="bg-slate-900 border border-slate-700 p-8 rounded-3xl text-center text-white space-y-4 max-w-lg mx-auto shadow-2xl">
-          <div className="w-14 h-14 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto border border-amber-500/30">
+          <div className="w-14 h-14 bg-amber-500/20 text-slate-500 rounded-2xl flex items-center justify-center mx-auto border border-slate-400">
             <Lock className="h-7 w-7" />
           </div>
           <div className="space-y-1">
@@ -709,7 +709,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
             <Button
               type="submit"
               disabled={isVerifyingPasscode}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-2 py-2.5 rounded-xl cursor-pointer"
+              className="w-full bg-slate-900 hover:bg-black text-white font-bold text-xs gap-2 py-2.5 rounded-xl cursor-pointer"
             >
               {isVerifyingPasscode ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlock className="h-4 w-4" />}
               Unlock Dataset Vault
@@ -784,7 +784,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                   variant={showSelectedOnly ? "default" : "outline"}
                   size="sm"
                   className={`text-xs font-bold gap-1.5 rounded-xl cursor-pointer ${
-                    showSelectedOnly ? "bg-blue-600 text-white hover:bg-blue-700" : "text-slate-700"
+                    showSelectedOnly ? "bg-slate-900 text-white hover:bg-slate-900" : "text-slate-700"
                   }`}
                 >
                   <CheckSquare className="h-3.5 w-3.5" />
@@ -917,7 +917,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             {recordsQ.isLoading ? (
               <div className="py-20 text-center space-y-3">
-                <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto" />
+                <Loader2 className="h-8 w-8 text-slate-900 animate-spin mx-auto" />
                 <p className="text-xs text-slate-500 font-medium">Loading enterprise dataset records...</p>
               </div>
             ) : filteredRecords.length === 0 ? (
@@ -964,7 +964,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                           title="Select / Deselect All Filtered"
                         >
                           {selectedIds.size === filteredRecords.length && filteredRecords.length > 0 ? (
-                            <CheckSquare className="h-4 w-4 text-amber-400" />
+                            <CheckSquare className="h-4 w-4 text-slate-500" />
                           ) : (
                             <Square className="h-4 w-4" />
                           )}
@@ -985,8 +985,8 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                       return (
                         <tr
                           key={record.id}
-                          className={`hover:bg-blue-50/40 transition-colors ${
-                            isSelected ? "bg-blue-50/60 font-semibold" : ""
+                          className={`hover:bg-slate-50 transition-colors ${
+                            isSelected ? "bg-slate-50 font-semibold" : ""
                           }`}
                         >
                           {/* Checkbox */}
@@ -994,10 +994,10 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                             <button
                               type="button"
                               onClick={() => toggleSelectRow(record.id)}
-                              className="text-slate-400 hover:text-blue-600 cursor-pointer"
+                              className="text-slate-400 hover:text-slate-900 cursor-pointer"
                             >
                               {isSelected ? (
-                                <CheckSquare className="h-4 w-4 text-blue-600" />
+                                <CheckSquare className="h-4 w-4 text-slate-900" />
                               ) : (
                                 <Square className="h-4 w-4" />
                               )}
@@ -1017,7 +1017,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                                   }
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-800 shrink-0"
+                                  className="text-slate-900 hover:text-slate-900 shrink-0"
                                   title="Open Website"
                                 >
                                   <Globe className="h-3 w-3" />
@@ -1102,7 +1102,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                                   onClick={() => handleDeleteSingle(record.id, record.title)}
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer"
+                                  className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600 hover:bg-slate-50 rounded-lg cursor-pointer"
                                   title="Delete Record"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
@@ -1124,7 +1124,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                 Showing <span className="font-bold text-slate-800">{filteredRecords.length}</span> of{" "}
                 <span className="font-bold text-slate-800">{allRecords.length}</span> total records
                 {selectedIds.size > 0 && (
-                  <span className="ml-2 font-semibold text-blue-600">
+                  <span className="ml-2 font-semibold text-slate-900">
                     ({selectedIds.size} row{selectedIds.size > 1 ? "s" : ""} selected)
                   </span>
                 )}
@@ -1141,7 +1141,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
       <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-slate-900 font-bold text-xs uppercase tracking-wider">
               <Sparkles className="h-4 w-4" />
               <span>Step 2: Column Selection & Database Mapping</span>
             </div>
@@ -1180,7 +1180,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                       onClick={() => setTargetCategory(c.id)}
                       className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                         isCur
-                          ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                          ? "bg-slate-900 text-white border-blue-600 shadow-sm"
                           : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
                       }`}
                     >
@@ -1219,7 +1219,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="text-[10px] h-6 px-2 text-blue-600 cursor-pointer"
+                    className="text-[10px] h-6 px-2 text-slate-900 cursor-pointer"
                     onClick={() => {
                       const sel: Record<string, boolean> = {};
                       parsedHeaders.forEach((h) => (sel[h] = true));
@@ -1252,7 +1252,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                       key={col}
                       className={`flex items-center gap-2 p-2 rounded-lg text-xs cursor-pointer border transition-colors ${
                         isChecked
-                          ? "bg-blue-50/60 border-blue-200 text-blue-900 font-semibold"
+                          ? "bg-slate-50 border-slate-200 text-slate-900 font-semibold"
                           : "bg-slate-50 border-slate-200 text-slate-400"
                       }`}
                     >
@@ -1262,7 +1262,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                         onChange={(e) =>
                           setSelectedColumns({ ...selectedColumns, [col]: e.target.checked })
                         }
-                        className="rounded text-blue-600 focus:ring-blue-500"
+                        className="rounded text-slate-900 focus:ring-slate-900"
                       />
                       <span className="truncate">{col}</span>
                     </label>
@@ -1476,7 +1476,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
               <div className="p-3 bg-slate-900 text-white rounded-xl text-[11px] font-mono space-y-2 overflow-x-auto">
                 {parsedRows.slice(0, 3).map((r, i) => (
                   <div key={i} className="pb-1 border-b border-slate-800 last:border-none">
-                    <span className="text-blue-400 font-bold">Record #{i + 1}: </span>
+                    <span className="text-slate-500 font-bold">Record #{i + 1}: </span>
                     <span className="text-amber-300 font-bold">{r[fieldMappings.title] || "No title mapped"}</span>
                     <span className="text-slate-400 ml-2">
                       | Loc: {r[fieldMappings.city] || r[fieldMappings.state] || "-"} | Role: {r[fieldMappings.role] || "-"}
@@ -1500,7 +1500,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
               type="button"
               onClick={handleStoreData}
               disabled={isStoringData}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-2 rounded-xl shadow-md cursor-pointer"
+              className="bg-slate-900 hover:bg-black text-white font-bold text-xs gap-2 rounded-xl shadow-md cursor-pointer"
             >
               {isStoringData ? (
                 <>
@@ -1522,7 +1522,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
       <Dialog open={isExportModalOpen} onOpenChange={setIsExportModalOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-slate-900 font-bold text-xs uppercase tracking-wider">
               <Download className="h-4 w-4" />
               <span>Multi-Format Dataset Export</span>
             </div>
@@ -1572,7 +1572,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                   onClick={() => setExportScope("filtered")}
                   className={`p-2.5 rounded-xl border text-xs font-bold text-left transition-all cursor-pointer ${
                     exportScope === "filtered"
-                      ? "bg-blue-50 border-blue-500 text-blue-900 font-extrabold"
+                      ? "bg-slate-50 border-slate-400 text-slate-900 font-extrabold"
                       : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -1586,7 +1586,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                   disabled={selectedIds.size === 0}
                   className={`p-2.5 rounded-xl border text-xs font-bold text-left transition-all cursor-pointer ${
                     exportScope === "selected"
-                      ? "bg-blue-50 border-blue-500 text-blue-900 font-extrabold"
+                      ? "bg-slate-50 border-slate-400 text-slate-900 font-extrabold"
                       : selectedIds.size === 0
                       ? "opacity-50 cursor-not-allowed bg-slate-50 border-slate-200 text-slate-400"
                       : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -1599,10 +1599,10 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
             </div>
 
             {/* Password Protection Control */}
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-3">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-amber-700" />
+                  <Lock className="h-4 w-4 text-slate-900" />
                   <Label className="text-xs font-bold text-amber-950 cursor-pointer">
                     Enable Password Protection for Export
                   </Label>
@@ -1614,8 +1614,8 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
               </div>
 
               {exportPasswordEnabled && (
-                <div className="space-y-2 pt-2 border-t border-amber-200/80 animate-in fade-in duration-200">
-                  <Label className="text-[11px] font-bold text-amber-900">
+                <div className="space-y-2 pt-2 border-t border-slate-200 animate-in fade-in duration-200">
+                  <Label className="text-[11px] font-bold text-slate-900">
                     Allocate Security Password for This File
                   </Label>
                   <Input
@@ -1623,10 +1623,10 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                     placeholder="e.g. VynSecure@2026 or CompanyPIN"
                     value={exportPassword}
                     onChange={(e) => setExportPassword(e.target.value)}
-                    className="bg-white border-amber-300 text-xs font-mono font-semibold"
+                    className="bg-white border-slate-300 text-xs font-mono font-semibold"
                     autoFocus
                   />
-                  <p className="text-[10px] text-amber-800">
+                  <p className="text-[10px] text-slate-900">
                     🛡️ The export will be packaged in a 256-bit AES encrypted security capsule. Recipients
                     will be required to enter this exact password to unlock and access the file.
                   </p>
@@ -1648,7 +1648,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
               type="button"
               onClick={handleTriggerExport}
               disabled={isExporting}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-2 rounded-xl shadow-md cursor-pointer"
+              className="bg-slate-900 hover:bg-black text-white font-bold text-xs gap-2 rounded-xl shadow-md cursor-pointer"
             >
               {isExporting ? (
                 <>
@@ -1686,7 +1686,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <div className="flex items-center gap-2">
-                <Badge className="bg-blue-100 text-blue-800 border-blue-300 uppercase text-[10px] font-bold">
+                <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono uppercase text-[10px] font-bold">
                   {viewRecordDetail.category}
                 </Badge>
                 {viewRecordDetail.source_filename && (
@@ -1755,7 +1755,7 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
                     }
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline font-semibold mt-0.5 flex items-center gap-1"
+                    className="text-slate-900 hover:underline font-semibold mt-0.5 flex items-center gap-1"
                   >
                     <Globe className="h-3 w-3" />
                     {viewRecordDetail.website_url}
@@ -1774,13 +1774,13 @@ export function EnterpriseDatasetVaultView({ isSuperAdmin = false }: { isSuperAd
               {viewRecordDetail.raw_attributes && Object.keys(viewRecordDetail.raw_attributes).length > 0 && (
                 <div className="space-y-2">
                   <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Layers className="h-3.5 w-3.5 text-blue-600" />
+                    <Layers className="h-3.5 w-3.5 text-slate-900" />
                     <span>Dynamic Extracted Attributes ({Object.keys(viewRecordDetail.raw_attributes).length})</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs p-3 bg-slate-900 text-slate-100 rounded-2xl max-h-56 overflow-y-auto font-mono">
                     {Object.entries(viewRecordDetail.raw_attributes).map(([k, v]) => (
                       <div key={k} className="p-2 rounded-lg bg-slate-800/60 border border-slate-700/60">
-                        <div className="text-[10px] text-blue-400 font-bold uppercase truncate">{k}</div>
+                        <div className="text-[10px] text-slate-500 font-bold uppercase truncate">{k}</div>
                         <div className="text-white font-medium text-[11px] truncate mt-0.5">
                           {String(v ?? "—")}
                         </div>
@@ -1876,7 +1876,7 @@ function DatasetVaultSettingsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <div className="flex items-center gap-2 text-amber-600 font-bold text-xs uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-slate-900 font-bold text-xs uppercase tracking-wider">
             <Shield className="h-4 w-4" />
             <span>Super Admin Governance</span>
           </div>
@@ -1957,7 +1957,7 @@ function DatasetVaultSettingsModal({
                     key={cat.id}
                     className={`flex items-center gap-2 p-2 rounded-xl border text-xs cursor-pointer transition-colors ${
                       isSelected
-                        ? "bg-blue-50 border-blue-200 text-blue-900 font-bold"
+                        ? "bg-slate-50 border-slate-200 text-slate-900 font-bold"
                         : "bg-white border-slate-200 text-slate-500"
                     }`}
                   >
@@ -1965,7 +1965,7 @@ function DatasetVaultSettingsModal({
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleCategory(cat.id)}
-                      className="rounded text-blue-600"
+                      className="rounded text-slate-900"
                     />
                     <span>{cat.label}</span>
                   </label>

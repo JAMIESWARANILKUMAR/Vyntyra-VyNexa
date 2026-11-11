@@ -184,9 +184,9 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                   </div>
 
                   {/* 8-Digit Vyntyra Access Code */}
-                  <div className="p-3 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/30 rounded-xl space-y-1.5">
+                  <div className="p-3 bg-slate-50 dark:bg-blue-950/20 border border-slate-200 dark:border-blue-900/30 rounded-xl space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1">
+                      <label className="text-xs font-bold text-slate-900 dark:text-blue-300 flex items-center gap-1">
                         <KeyRound className="h-3.5 w-3.5 text-[#0b5cff]" />
                         <span>8-Digit Vyntyra Access Code</span>
                       </label>
@@ -203,7 +203,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                       value={accessCode}
                       onChange={e => setAccessCode(e.target.value.toUpperCase().slice(0, 10))}
                       placeholder="e.g. VYN89201"
-                      className="font-mono text-sm tracking-widest uppercase font-bold text-[#0b5cff] bg-white dark:bg-slate-900 h-9"
+                      className="font-mono text-sm tracking-widest uppercase font-bold text-[#0b5cff] bg-white dark:bg-slate-900 h-9 text-white"
                       required
                     />
                     <span className="text-[10px] text-slate-500 block">
@@ -306,7 +306,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
           <Dialog open={!!createdMeetDetails} onOpenChange={(open) => !open && setCreatedMeetDetails(null)}>
             <DialogContent className="sm:max-w-[540px]">
               <DialogHeader>
-                <div className="flex items-center gap-2 text-emerald-600">
+                <div className="flex items-center gap-2 text-slate-900">
                   <CheckCircle2 className="h-6 w-6 shrink-0" />
                   <DialogTitle className="text-xl">Meeting Room Ready!</DialogTitle>
                 </div>
@@ -326,7 +326,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                         <Input
                           readOnly
                           value={createdMeetDetails.url}
-                          className="bg-white dark:bg-slate-900 font-mono text-xs select-all h-9 text-blue-600 dark:text-blue-400 font-semibold"
+                          className="bg-white dark:bg-slate-900 font-mono text-xs select-all h-9 text-slate-900 dark:text-slate-500 font-semibold text-white"
                         />
                         <Button
                           size="sm"
@@ -339,9 +339,9 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 rounded-xl">
+                    <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-blue-950/30 border border-slate-200 dark:border-blue-900/40 rounded-xl">
                       <div>
-                        <div className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider">Quick Room Code</div>
+                        <div className="text-[10px] text-slate-900 dark:text-slate-500 font-bold uppercase tracking-wider">Quick Room Code</div>
                         <div className="font-mono text-base font-bold text-slate-900 dark:text-white mt-0.5 tracking-wide">{createdMeetDetails.roomId}</div>
                       </div>
                       <Button
@@ -358,9 +358,9 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                     </div>
 
                     {/* 8-Digit Vyntyra Access Code */}
-                    <div className="flex items-center justify-between p-3 bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-900/40 rounded-xl">
+                    <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-indigo-950/30 border border-slate-200 dark:border-indigo-900/40 rounded-xl">
                       <div>
-                        <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                        <div className="text-[10px] text-slate-900 dark:text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1">
                           <KeyRound className="h-3 w-3" /> 8-Digit Vyntyra Access Code
                         </div>
                         <div className="font-mono text-base font-bold text-indigo-950 dark:text-indigo-200 mt-0.5 tracking-widest">{createdMeetDetails.accessCode}</div>
@@ -455,30 +455,30 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
           {role === 'admin' && (
             <TabsContent value="global" className="mt-0 outline-none space-y-6 pb-24">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-5 shadow-sm text-white">
                   <div className="text-sm text-slate-500 font-medium">Total Active Rooms</div>
                   <div className="text-3xl font-bold text-slate-900 dark:text-white mt-1">{meetings?.length || 0}</div>
                 </div>
-                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-5 shadow-sm text-white">
                   <div className="text-sm text-slate-500 font-medium">Peak Participant Count</div>
-                  <div className="text-3xl font-bold text-emerald-600 mt-1">1,248</div>
-                  <div className="text-xs text-emerald-500 mt-1">+14% from last week</div>
+                  <div className="text-3xl font-bold text-slate-900 mt-1">1,248</div>
+                  <div className="text-xs text-slate-600 mt-1">+14% from last week</div>
                 </div>
-                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-5 shadow-sm text-white">
                   <div className="text-sm text-slate-500 font-medium">Data Bandwidth (7d)</div>
-                  <div className="text-3xl font-bold text-indigo-600 mt-1">842 GB</div>
-                  <div className="text-xs text-indigo-500 mt-1">Cloudflare WebRTC</div>
+                  <div className="text-3xl font-bold text-slate-900 mt-1">842 GB</div>
+                  <div className="text-xs text-slate-600 mt-1">Cloudflare WebRTC</div>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-between items-center">
+              <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden text-white">
+                <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-between items-center text-white">
                   <h3 className="font-bold text-slate-900 dark:text-white">Global Meeting Audit Log</h3>
                   <Badge variant="outline" className="text-xs">Live Sync</Badge>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
+                    <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800 text-white">
                       <tr>
                         <th className="px-4 py-3">Meeting Topic</th>
                         <th className="px-4 py-3">Meeting Link</th>
@@ -502,11 +502,11 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                               <div className="font-semibold">{room.title}</div>
                               <div className="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1.5 flex-wrap">
                                 <span>Code:</span>
-                                <span className="text-blue-600 dark:text-blue-400 font-semibold" title={room.id}>
+                                <span className="text-slate-900 dark:text-slate-500 font-semibold" title={room.id}>
                                   {room.id.length > 15 ? `#${room.id.slice(0, 8)}` : room.id}
                                 </span>
                                 <span>·</span>
-                                <span className="text-indigo-600 dark:text-indigo-400 font-bold tracking-wider bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                                <span className="text-slate-900 dark:text-slate-500 font-bold tracking-wider bg-slate-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded border border-slate-200 dark:border-indigo-800">
                                   {room.accessCode || room.access_code}
                                 </span>
                                 <button
@@ -514,7 +514,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                                     copyToClipboard(room.accessCode || room.access_code);
                                     toast.success(`Access code copied: ${room.accessCode || room.access_code}`);
                                   }}
-                                  className="text-slate-400 hover:text-indigo-600"
+                                  className="text-slate-400 hover:text-slate-900"
                                   title="Copy 8-digit access code"
                                 >
                                   <Copy className="h-2.5 w-2.5" />
@@ -560,10 +560,10 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                               )}
                             </td>
                             <td className="px-4 py-3">
-                              <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                              <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-900">
                                 <span className="relative flex h-2 w-2">
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-900 text-white"></span>
                                 </span>
                                 Active
                               </span>
@@ -608,7 +608,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
 
           {role !== 'intern' && (
             <TabsContent value="personal" className="mt-0 outline-none pb-24">
-              <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-8 shadow-sm text-white">
                 <h2 className="text-[22px] font-semibold text-slate-900 dark:text-white">Personal Meeting Room</h2>
                 <div className="grid grid-cols-[140px_1fr] md:grid-cols-[240px_1fr] gap-4 md:gap-8 items-start py-4 border-b border-slate-100 dark:border-slate-800/60 mt-6">
                   <span className="text-[14px] text-slate-500 dark:text-slate-400">Meeting ID</span>
@@ -646,12 +646,12 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
               {isLoading ? (
                 <div className="py-12 text-center text-slate-500"><Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" /> Loading rooms...</div>
               ) : !meetings?.length ? (
-                <div className="py-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
+                <div className="py-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm text-white">
                   <Calendar className="h-12 w-12 text-slate-300 mx-auto mb-3" />
                   <p className="text-slate-500 font-medium">No upcoming meetings.</p>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm divide-y divide-slate-100 dark:divide-slate-800/60">
+                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm divide-y divide-slate-100 dark:divide-slate-800/60 text-white">
                   {meetings.map((room: any) => {
                     const settings = room.settings ? JSON.parse(room.settings) : {};
                     const meetUrl = buildMeetingUrl(room.id);
@@ -677,7 +677,7 @@ export function VyntyraMeetAdmin({ role = 'admin' }: { role?: 'admin' | 'super_a
                             </button>
                           </div>
                           <div className="flex flex-wrap items-center gap-3 text-[13px] text-slate-500">
-                            <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 flex items-center gap-1">
+                            <span className="font-mono text-xs font-bold text-slate-900 dark:text-slate-500 bg-slate-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded border border-slate-200 dark:border-indigo-800 flex items-center gap-1">
                               <KeyRound className="h-3 w-3" /> Access: {room.accessCode || room.access_code}
                             </span>
                             <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs">

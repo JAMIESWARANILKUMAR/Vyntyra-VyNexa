@@ -65,7 +65,7 @@ export function AdminDynamicFeedbacksView() {
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
+            <Button className="bg-slate-900 hover:bg-black text-white gap-2">
               <Plus className="h-4 w-4" /> Create Form
             </Button>
           </DialogTrigger>
@@ -111,7 +111,7 @@ export function AdminDynamicFeedbacksView() {
                   </div>
                 ))}
               </div>
-              <Button onClick={() => createMut.mutate()} disabled={createMut.isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+              <Button onClick={() => createMut.mutate()} disabled={createMut.isPending} className="w-full bg-slate-900 hover:bg-black text-white">
                 {createMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Feedback Form"}
               </Button>
             </div>
@@ -140,7 +140,7 @@ export function AdminDynamicFeedbacksView() {
                   <td className="px-4 py-3 font-medium text-slate-900">{form.title}</td>
                   <td className="px-4 py-3 text-slate-500">{(form.questions || []).length} questions</td>
                   <td className="px-4 py-3">
-                    <Badge variant={form.is_active ? "default" : "secondary"} className={form.is_active ? "bg-emerald-100 text-emerald-800" : ""}>
+                    <Badge variant={form.is_active ? "default" : "secondary"} className={form.is_active ? "bg-slate-100 text-slate-800 border-slate-300 font-mono" : ""}>
                       {form.is_active ? "Active" : "Draft"}
                     </Badge>
                   </td>

@@ -48,7 +48,7 @@ export function CbtOperationsTab() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-            <BrainCircuit className="h-6 w-6 text-indigo-600" />
+            <BrainCircuit className="h-6 w-6 text-slate-900" />
             AI & Manual CBT Engine Control Hub
           </h2>
           <p className="text-sm text-slate-500 font-medium mt-1">
@@ -60,7 +60,7 @@ export function CbtOperationsTab() {
             onClick={() => setActiveSubTab("monitor")}
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
               activeSubTab === "monitor"
-                ? "bg-white text-indigo-700 shadow-sm"
+                ? "bg-white text-slate-900 shadow-sm"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-200"
             }`}
           >
@@ -70,7 +70,7 @@ export function CbtOperationsTab() {
             onClick={() => setActiveSubTab("generate")}
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
               activeSubTab === "generate"
-                ? "bg-white text-indigo-700 shadow-sm"
+                ? "bg-white text-slate-900 shadow-sm"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-200"
             }`}
           >
@@ -387,19 +387,19 @@ function AdminCbtGenerateView() {
         <button
           onClick={() => setCreationMode("ai")}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-            creationMode === "ai" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600 hover:text-slate-900"
+            creationMode === "ai" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
           }`}
         >
-          <Sparkles className="h-4 w-4 text-indigo-600" />
+          <Sparkles className="h-4 w-4 text-slate-900" />
           AI Generation (Gemini 1.5)
         </button>
         <button
           onClick={() => setCreationMode("manual")}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-            creationMode === "manual" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-600 hover:text-slate-900"
+            creationMode === "manual" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
           }`}
         >
-          <Edit3 className="h-4 w-4 text-emerald-600" />
+          <Edit3 className="h-4 w-4 text-slate-900" />
           Manual Question Builder
         </button>
       </div>
@@ -409,14 +409,14 @@ function AdminCbtGenerateView() {
         <div className="space-y-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div>
             <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-              <FileText className="h-5 w-5 text-indigo-500"/> Exam Configuration & Rules
+              <FileText className="h-5 w-5 text-slate-600"/> Exam Configuration & Rules
             </h3>
             <div className="space-y-4">
               <div>
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Exam Title *</label>
                 <input 
                   type="text" 
-                  className="w-full p-2.5 border rounded-lg mt-1 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
+                  className="w-full p-2.5 border rounded-lg mt-1 text-sm focus:ring-2 focus:ring-slate-900 outline-none" 
                   placeholder="e.g., Task 3 Evaluation - Frontend Performance & Architecture"
                   value={title} onChange={e => setTitle(e.target.value)}
                 />
@@ -425,7 +425,7 @@ function AdminCbtGenerateView() {
               <div>
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Description</label>
                 <textarea 
-                  className="w-full p-2.5 border rounded-lg mt-1 text-sm resize-none focus:ring-2 focus:ring-indigo-500 outline-none" 
+                  className="w-full p-2.5 border rounded-lg mt-1 text-sm resize-none focus:ring-2 focus:ring-slate-900 outline-none" 
                   rows={2}
                   placeholder="Instructions or guidelines shown to the candidate..."
                   value={description} onChange={e => setDescription(e.target.value)}
@@ -454,11 +454,11 @@ function AdminCbtGenerateView() {
               </div>
 
               {/* Question Count & Default Per-Question Timer */}
-              <div className="grid grid-cols-2 gap-4 p-3 bg-indigo-50/40 border border-indigo-100 rounded-xl">
+              <div className="grid grid-cols-2 gap-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
                 <div>
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-indigo-950 uppercase tracking-wider">Total Questions</label>
-                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100/80 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded">
                       {questionCount} Qs
                     </span>
                   </div>
@@ -477,7 +477,7 @@ function AdminCbtGenerateView() {
                         onClick={() => setQuestionCount(cnt)}
                         className={`text-[10px] px-2 py-0.5 rounded font-bold transition-all ${
                           questionCount === cnt 
-                            ? "bg-indigo-600 text-white shadow-xs" 
+                            ? "bg-slate-900 text-white shadow-xs" 
                             : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
                         }`}
                       >
@@ -490,7 +490,7 @@ function AdminCbtGenerateView() {
                 <div>
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-indigo-950 uppercase tracking-wider">Default Q-Timer</label>
-                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100/80 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded">
                       {defaultQuestionTime}s
                     </span>
                   </div>
@@ -509,7 +509,7 @@ function AdminCbtGenerateView() {
                         onClick={() => setDefaultQuestionTime(sec)}
                         className={`text-[10px] px-2 py-0.5 rounded font-bold transition-all ${
                           defaultQuestionTime === sec 
-                            ? "bg-indigo-600 text-white shadow-xs" 
+                            ? "bg-slate-900 text-white shadow-xs" 
                             : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
                         }`}
                       >
@@ -531,7 +531,7 @@ function AdminCbtGenerateView() {
                     onClick={() => { setProctoringMode("camera_malpractice"); setEnableCamera(true); }}
                     className={`flex flex-col gap-1.5 p-3 rounded-xl border text-xs font-bold transition-all text-left ${
                       proctoringMode === "camera_malpractice"
-                        ? "bg-indigo-50/90 border-indigo-500 text-indigo-950 shadow-xs ring-2 ring-indigo-500/20" 
+                        ? "bg-slate-50 border-slate-400 text-indigo-950 shadow-xs ring-2 ring-slate-400" 
                         : "bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-white"
                     }`}
                   >
@@ -549,12 +549,12 @@ function AdminCbtGenerateView() {
                     onClick={() => { setProctoringMode("camera_monitoring"); setEnableCamera(true); }}
                     className={`flex flex-col gap-1.5 p-3 rounded-xl border text-xs font-bold transition-all text-left ${
                       proctoringMode === "camera_monitoring"
-                        ? "bg-amber-50/90 border-amber-500 text-amber-950 shadow-xs ring-2 ring-amber-500/20" 
+                        ? "bg-slate-50 border-slate-400 text-amber-950 shadow-xs ring-2 ring-slate-400" 
                         : "bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-white"
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-amber-600 shrink-0" />
+                      <Shield className="h-4 w-4 text-slate-900 shrink-0" />
                       <span className="font-extrabold text-slate-900">Only Camera Monitoring</span>
                     </div>
                     <div className="text-[10px] font-normal text-slate-600 leading-snug">
@@ -567,12 +567,12 @@ function AdminCbtGenerateView() {
                     onClick={() => { setProctoringMode("focus_only"); setEnableCamera(false); }}
                     className={`flex flex-col gap-1.5 p-3 rounded-xl border text-xs font-bold transition-all text-left ${
                       proctoringMode === "focus_only"
-                        ? "bg-emerald-50/90 border-emerald-500 text-emerald-950 shadow-xs ring-2 ring-emerald-500/20" 
+                        ? "bg-slate-50 border-slate-400 text-emerald-950 shadow-xs ring-2 ring-slate-400" 
                         : "bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-white"
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <CameraOff className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <CameraOff className="h-4 w-4 text-slate-900 shrink-0" />
                       <span className="font-extrabold text-slate-900">Focus Only (No Cam)</span>
                     </div>
                     <div className="text-[10px] font-normal text-slate-600 leading-snug">
@@ -586,7 +586,7 @@ function AdminCbtGenerateView() {
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
                 <div>
                   <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Terminal className="h-3.5 w-3.5 text-indigo-600" />
+                    <Terminal className="h-3.5 w-3.5 text-slate-900" />
                     Allow Ctrl Keys & Shortcuts
                   </div>
                   <div className="text-[10px] text-slate-500">
@@ -597,7 +597,7 @@ function AdminCbtGenerateView() {
                   type="checkbox"
                   checked={allowCtrlKeys}
                   onChange={e => setAllowCtrlKeys(e.target.checked)}
-                  className="h-4 w-4 text-indigo-600 rounded cursor-pointer"
+                  className="h-4 w-4 text-slate-900 rounded cursor-pointer"
                 />
               </div>
 
@@ -605,7 +605,7 @@ function AdminCbtGenerateView() {
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
                 <div>
                   <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Monitor className="h-3.5 w-3.5 text-indigo-600" />
+                    <Monitor className="h-3.5 w-3.5 text-slate-900" />
                     External Screen Sharing
                   </div>
                   <div className="text-[10px] text-slate-500">
@@ -616,19 +616,19 @@ function AdminCbtGenerateView() {
                   type="checkbox"
                   checked={allowScreenShare}
                   onChange={e => setAllowScreenShare(e.target.checked)}
-                  className="h-4 w-4 text-indigo-600 rounded cursor-pointer"
+                  className="h-4 w-4 text-slate-900 rounded cursor-pointer"
                 />
               </div>
 
               {/* Camera Strictness Selector (Visible when Camera is Enforced) */}
               {enableCamera && (
-                <div className="p-3.5 bg-indigo-50/40 border border-indigo-200/80 rounded-xl space-y-2 animate-in fade-in">
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 animate-in fade-in">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
-                      <Shield className="h-4 w-4 text-indigo-600" />
+                    <label className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <Shield className="h-4 w-4 text-slate-900" />
                       Proctoring Strictness Level
                     </label>
-                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full">
                       {cameraStrictness === "strict" ? "Zero Tolerance" : cameraStrictness === "lenient" ? "Flexible Mode" : "Balanced"}
                     </span>
                   </div>
@@ -639,15 +639,15 @@ function AdminCbtGenerateView() {
                       onClick={() => setCameraStrictness("lenient")}
                       className={`p-2.5 rounded-xl border text-left transition-all ${
                         cameraStrictness === "lenient"
-                          ? "bg-white border-emerald-500 shadow-sm ring-2 ring-emerald-500/20"
+                          ? "bg-white border-slate-400 shadow-sm ring-2 ring-slate-400"
                           : "bg-slate-50/70 border-slate-200 hover:bg-white text-slate-600"
                       }`}
                     >
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                        <div className="h-2 w-2 rounded-full bg-slate-900 text-white" />
                         <span className="text-xs font-bold text-slate-800">Lenient</span>
                       </div>
-                      <div className="text-[11px] font-black text-emerald-700">3 Strikes Allowed</div>
+                      <div className="text-[11px] font-black text-slate-900">3 Strikes Allowed</div>
                       <div className="text-[9px] text-slate-500 mt-0.5 leading-tight">6s gaze tolerance, generous head tilt</div>
                     </button>
 
@@ -656,7 +656,7 @@ function AdminCbtGenerateView() {
                       onClick={() => setCameraStrictness("standard")}
                       className={`p-2.5 rounded-xl border text-left transition-all ${
                         cameraStrictness === "standard"
-                          ? "bg-white border-amber-500 shadow-sm ring-2 ring-amber-500/20"
+                          ? "bg-white border-slate-400 shadow-sm ring-2 ring-slate-400"
                           : "bg-slate-50/70 border-slate-200 hover:bg-white text-slate-600"
                       }`}
                     >
@@ -664,7 +664,7 @@ function AdminCbtGenerateView() {
                         <div className="h-2 w-2 rounded-full bg-amber-500" />
                         <span className="text-xs font-bold text-slate-800">Standard</span>
                       </div>
-                      <div className="text-[11px] font-black text-amber-700">2 Strikes Allowed</div>
+                      <div className="text-[11px] font-black text-slate-900">2 Strikes Allowed</div>
                       <div className="text-[9px] text-slate-500 mt-0.5 leading-tight">3s gaze tolerance, corporate benchmark</div>
                     </button>
 
@@ -673,7 +673,7 @@ function AdminCbtGenerateView() {
                       onClick={() => setCameraStrictness("strict")}
                       className={`p-2.5 rounded-xl border text-left transition-all ${
                         cameraStrictness === "strict"
-                          ? "bg-white border-rose-500 shadow-sm ring-2 ring-rose-500/20"
+                          ? "bg-white border-slate-400 shadow-sm ring-2 ring-rose-500/20"
                           : "bg-slate-50/70 border-slate-200 hover:bg-white text-slate-600"
                       }`}
                     >
@@ -697,7 +697,7 @@ function AdminCbtGenerateView() {
                 <div className="relative">
                   <input 
                     type="datetime-local" 
-                    className="w-full p-2.5 border rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full p-2.5 border rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-slate-900 outline-none"
                     value={deadline}
                     onChange={e => setDeadline(e.target.value)}
                   />
@@ -712,7 +712,7 @@ function AdminCbtGenerateView() {
                   className="w-full p-3 bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-xs font-bold text-slate-700"
                 >
                   <span className="flex items-center gap-1.5">
-                    <Sliders className="h-4 w-4 text-indigo-600" />
+                    <Sliders className="h-4 w-4 text-slate-900" />
                     Advanced Assessment Delivery Settings
                   </span>
                   {showAdvancedSettings ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -726,7 +726,7 @@ function AdminCbtGenerateView() {
                           type="checkbox" 
                           checked={shuffleQuestions} 
                           onChange={e => setShuffleQuestions(e.target.checked)}
-                          className="h-4 w-4 text-indigo-600 rounded" 
+                          className="h-4 w-4 text-slate-900 rounded" 
                         />
                         <span>Shuffle Question Order</span>
                       </label>
@@ -736,7 +736,7 @@ function AdminCbtGenerateView() {
                           type="checkbox" 
                           checked={showInstantResults} 
                           onChange={e => setShowInstantResults(e.target.checked)}
-                          className="h-4 w-4 text-indigo-600 rounded" 
+                          className="h-4 w-4 text-slate-900 rounded" 
                         />
                         <span>Show Score Immediately</span>
                       </label>
@@ -767,9 +767,9 @@ function AdminCbtGenerateView() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                <Users className="h-5 w-5 text-indigo-500"/> Candidate Allocation & Automated Email
+                <Users className="h-5 w-5 text-slate-600"/> Candidate Allocation & Automated Email
               </h3>
-              <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+              <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 border-slate-300 font-mono">
                 {targetType === "intern" 
                   ? `${selectedInternIds.length} Candidate(s) Selected` 
                   : targetType === "team" 
@@ -788,7 +788,7 @@ function AdminCbtGenerateView() {
                 onClick={() => setTargetType("intern")}
                 className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   targetType === "intern"
-                    ? "bg-white text-indigo-700 shadow-xs"
+                    ? "bg-white text-slate-900 shadow-xs"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
@@ -799,7 +799,7 @@ function AdminCbtGenerateView() {
                 onClick={() => setTargetType("team")}
                 className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   targetType === "team"
-                    ? "bg-white text-indigo-700 shadow-xs"
+                    ? "bg-white text-slate-900 shadow-xs"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
@@ -810,7 +810,7 @@ function AdminCbtGenerateView() {
                 onClick={() => setTargetType("manual")}
                 className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   targetType === "manual"
-                    ? "bg-white text-indigo-700 shadow-xs"
+                    ? "bg-white text-slate-900 shadow-xs"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
@@ -827,7 +827,7 @@ function AdminCbtGenerateView() {
                   placeholder="Filter candidates or teams by name or email..."
                   value={targetSearchQuery}
                   onChange={e => setTargetSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-slate-900"
                 />
               </div>
               <Button
@@ -888,7 +888,7 @@ function AdminCbtGenerateView() {
                         <label
                           key={intern.id}
                           className={`flex items-center justify-between p-2.5 cursor-pointer text-xs transition-colors hover:bg-slate-50 ${
-                            isChecked ? "bg-indigo-50/50" : ""
+                            isChecked ? "bg-slate-50" : ""
                           }`}
                         >
                           <div className="flex items-center gap-2.5">
@@ -902,7 +902,7 @@ function AdminCbtGenerateView() {
                                   setSelectedInternIds(selectedInternIds.filter(id => id !== intern.id));
                                 }
                               }}
-                              className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                              className="h-4 w-4 rounded text-slate-900 focus:ring-slate-900 border-slate-300"
                             />
                             <div>
                               <div className="font-bold text-slate-900">{intern.full_name}</div>
@@ -910,7 +910,7 @@ function AdminCbtGenerateView() {
                             </div>
                           </div>
                           {isChecked && (
-                            <span className="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full">
                               Selected
                             </span>
                           )}
@@ -939,7 +939,7 @@ function AdminCbtGenerateView() {
                         <label
                           key={team.id}
                           className={`flex items-center justify-between p-2.5 cursor-pointer text-xs transition-colors hover:bg-slate-50 ${
-                            isChecked ? "bg-indigo-50/50" : ""
+                            isChecked ? "bg-slate-50" : ""
                           }`}
                         >
                           <div className="flex items-center gap-2.5">
@@ -953,7 +953,7 @@ function AdminCbtGenerateView() {
                                   setSelectedTeamIds(selectedTeamIds.filter(id => id !== team.id));
                                 }
                               }}
-                              className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                              className="h-4 w-4 rounded text-slate-900 focus:ring-slate-900 border-slate-300"
                             />
                             <div>
                               <div className="font-bold text-slate-900">{team.name}</div>
@@ -961,7 +961,7 @@ function AdminCbtGenerateView() {
                             </div>
                           </div>
                           {isChecked && (
-                            <span className="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full">
                               Selected
                             </span>
                           )}
@@ -982,7 +982,7 @@ function AdminCbtGenerateView() {
                   {selectedInternIds.map(id => {
                     const intern = targets.interns.find(i => i.id === id);
                     return (
-                      <span key={id} className="inline-flex items-center gap-1 text-[11px] font-medium bg-white text-indigo-800 border border-indigo-200 px-2 py-0.5 rounded-full shadow-2xs">
+                      <span key={id} className="inline-flex items-center gap-1 text-[11px] font-medium bg-white text-slate-900 border border-slate-200 px-2 py-0.5 rounded-full shadow-2xs">
                         <span>👤 {intern?.full_name || id}</span>
                         <button
                           type="button"
@@ -997,7 +997,7 @@ function AdminCbtGenerateView() {
                   {selectedTeamIds.map(id => {
                     const team = targets.teams.find(t => t.id === id);
                     return (
-                      <span key={id} className="inline-flex items-center gap-1 text-[11px] font-medium bg-white text-purple-800 border border-purple-200 px-2 py-0.5 rounded-full shadow-2xs">
+                      <span key={id} className="inline-flex items-center gap-1 text-[11px] font-medium bg-white text-slate-900 border border-slate-200 px-2 py-0.5 rounded-full shadow-2xs">
                         <span>👥 Team: {team?.name || id}</span>
                         <button
                           type="button"
@@ -1020,13 +1020,13 @@ function AdminCbtGenerateView() {
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col space-y-6">
             <div>
               <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                <BrainCircuit className="h-5 w-5 text-indigo-500"/> AI Context & Reference Data
+                <BrainCircuit className="h-5 w-5 text-slate-600"/> AI Context & Reference Data
               </h3>
               <p className="text-xs text-slate-500 mb-3">
                 Paste syllabus, lecture notes, textbook chapters, or upload resources (.pdf, .txt, .md, .csv, .json, .doc). AI strictly generates questions customized to your specific content.
               </p>
               <textarea 
-                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-sm" 
+                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-slate-900 outline-none resize-none text-sm" 
                 rows={5} 
                 placeholder="Paste the syllabus, task documentation, course modules, or specific scenario details here..."
                 value={taskContext}
@@ -1046,8 +1046,8 @@ function AdminCbtGenerateView() {
                 {ALL_MODULES.map(m => {
                   const checked = modules.includes(m.id);
                   return (
-                    <label key={m.id} className={`flex items-start gap-2.5 p-2.5 border rounded-xl cursor-pointer text-xs transition-colors ${checked ? "bg-indigo-50 border-indigo-300 font-bold text-indigo-900" : "hover:bg-slate-50 text-slate-700"}`}>
-                      <input type="checkbox" className="mt-0.5 h-3.5 w-3.5 text-indigo-600" checked={checked} onChange={() => toggleModule(m.id)} />
+                    <label key={m.id} className={`flex items-start gap-2.5 p-2.5 border rounded-xl cursor-pointer text-xs transition-colors ${checked ? "bg-slate-50 border-slate-300 font-bold text-slate-900" : "hover:bg-slate-50 text-slate-700"}`}>
+                      <input type="checkbox" className="mt-0.5 h-3.5 w-3.5 text-slate-900" checked={checked} onChange={() => toggleModule(m.id)} />
                       <span>{m.label}</span>
                     </label>
                   );
@@ -1056,7 +1056,7 @@ function AdminCbtGenerateView() {
             </div>
 
             <div className="mt-auto pt-4">
-              <Button onClick={handleGenerate} disabled={isGenerating} className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 font-bold rounded-xl shadow-md text-sm">
+              <Button onClick={handleGenerate} disabled={isGenerating} className="w-full h-12 bg-slate-900 hover:bg-slate-900 font-bold rounded-xl shadow-md text-sm text-white">
                 {isGenerating ? <><Loader2 className="mr-2 animate-spin h-4 w-4" /> Generating via Gemini AI...</> : <><Sparkles className="mr-2 h-4 w-4" /> Step 1: Generate AI Questions</>}
               </Button>
             </div>
@@ -1067,11 +1067,11 @@ function AdminCbtGenerateView() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                  <Edit3 className="h-5 w-5 text-emerald-600"/> Manual Question Builder
+                  <Edit3 className="h-5 w-5 text-slate-900"/> Manual Question Builder
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">Author questions, options, correct answers, points, and timers manually.</p>
               </div>
-              <Button size="sm" onClick={handleAddManualQuestion} className="bg-emerald-600 hover:bg-emerald-700 font-bold text-xs gap-1">
+              <Button size="sm" onClick={handleAddManualQuestion} className="bg-slate-900 hover:bg-slate-900 font-bold text-xs gap-1 text-white">
                 <Plus className="h-3.5 w-3.5" /> Add Question
               </Button>
             </div>
@@ -1137,7 +1137,7 @@ function AdminCbtGenerateView() {
                   </div>
 
                   <textarea 
-                    className="w-full p-2.5 border rounded-lg text-xs resize-none focus:ring-1 focus:ring-emerald-500 outline-none" 
+                    className="w-full p-2.5 border rounded-lg text-xs resize-none focus:ring-1 focus:ring-slate-900 outline-none" 
                     rows={2}
                     placeholder="Enter question text..."
                     value={q.question_text}
@@ -1163,7 +1163,7 @@ function AdminCbtGenerateView() {
                               updated[idx].correct_answer = opt.id;
                               setManualQuestions(updated);
                             }}
-                            className="text-emerald-600"
+                            className="text-slate-900"
                           />
                           <span className="text-xs font-bold w-4 text-slate-600">{opt.id}:</span>
                           <input 
@@ -1238,14 +1238,14 @@ function AdminCbtGenerateView() {
                 type="button"
                 variant="outline"
                 onClick={() => handleOpenPreview(manualQuestions)}
-                className="w-full sm:w-1/2 h-12 border-emerald-500 text-emerald-700 hover:bg-emerald-50 font-bold rounded-xl text-xs gap-1.5 shadow-xs"
+                className="w-full sm:w-1/2 h-12 border-slate-400 text-slate-900 hover:bg-slate-50 font-bold rounded-xl text-xs gap-1.5 shadow-xs"
               >
-                <Eye className="h-4 w-4 text-emerald-600" /> Preview Questions Mode
+                <Eye className="h-4 w-4 text-slate-900" /> Preview Questions Mode
               </Button>
               <Button 
                 onClick={() => handleOpenPreview(manualQuestions)} 
                 disabled={isSaving}
-                className="w-full sm:w-1/2 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md text-xs gap-1.5"
+                className="w-full sm:w-1/2 h-12 bg-slate-900 hover:bg-black text-white font-bold rounded-xl shadow-md text-xs gap-1.5"
               >
                 {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing & Notifying...</> : <><CheckCircle2 className="mr-2 h-4 w-4" /> Preview & Allocate Test</>}
               </Button>
@@ -1266,7 +1266,7 @@ function AdminCbtGenerateView() {
 
       {/* AI Generated Review Panel */}
       {creationMode === "ai" && generated && (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-200 animate-in fade-in slide-in-from-bottom-4">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-in fade-in slide-in-from-bottom-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div>
               <h2 className="text-xl font-black text-slate-900">Generated Exam Questions ({generated.questions?.length})</h2>
@@ -1300,14 +1300,14 @@ function AdminCbtGenerateView() {
                 type="button"
                 variant="outline"
                 onClick={() => handleOpenPreview(generated.questions)}
-                className="font-bold border-indigo-300 text-indigo-700 hover:bg-indigo-50 gap-1.5"
+                className="font-bold border-slate-300 text-slate-900 hover:bg-slate-50 gap-1.5"
               >
-                <Eye className="h-4 w-4 text-indigo-600" /> Preview Questions Mode
+                <Eye className="h-4 w-4 text-slate-900" /> Preview Questions Mode
               </Button>
               <Button 
                 onClick={() => handleOpenPreview(generated.questions)} 
                 disabled={isSaving}
-                className="bg-emerald-600 hover:bg-emerald-700 font-bold px-6 shadow-md shadow-emerald-500/20"
+                className="bg-slate-900 hover:bg-slate-900 font-bold px-6 shadow-md shadow-emerald-500/20 text-white"
               >
                 {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="mr-2 h-5 w-5" />}
                 Preview & Allocate Test
@@ -1338,12 +1338,12 @@ function AdminCbtGenerateView() {
                       <span className="text-[10px] text-slate-500">secs</span>
                     </div>
                   </div>
-                  <span className="text-[10px] uppercase font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] uppercase font-bold bg-slate-100 text-slate-800 border-slate-300 font-mono px-2 py-0.5 rounded-full">
                     {q.max_points || 10} pts
                   </span>
                 </div>
                 <textarea 
-                  className="w-full p-2 text-slate-700 text-xs border rounded-lg resize-none focus:ring-1 focus:ring-indigo-500" 
+                  className="w-full p-2 text-slate-700 text-xs border rounded-lg resize-none focus:ring-1 focus:ring-slate-900" 
                   rows={2}
                   value={q.question_text}
                   onChange={(e) => {
@@ -1357,10 +1357,10 @@ function AdminCbtGenerateView() {
                     {q.options.map((o: any, idx: number) => {
                       const isCorrect = q.correct_answer === o.id || (typeof q.correct_answer === "object" && q.correct_answer?.id === o.id);
                       return (
-                        <li key={idx} className={`flex items-center gap-2 p-1 rounded ${isCorrect ? "bg-emerald-50 text-emerald-800 font-bold" : ""}`}>
+                        <li key={idx} className={`flex items-center gap-2 p-1 rounded ${isCorrect ? "bg-slate-100 text-slate-800 border-slate-300 font-mono font-bold" : ""}`}>
                           <span className="h-4 w-4 flex items-center justify-center rounded-full border border-slate-300 text-[9px] font-bold">{o.id || idx+1}</span>
                           <span>{o.text}</span>
-                          {isCorrect && <Check className="h-3 w-3 text-emerald-600 ml-auto" />}
+                          {isCorrect && <Check className="h-3 w-3 text-slate-900 ml-auto" />}
                         </li>
                       );
                     })}
@@ -1377,7 +1377,7 @@ function AdminCbtGenerateView() {
         <Dialog open={!!savedExamDownloads} onOpenChange={() => setSavedExamDownloads(null)}>
           <DialogContent className="sm:max-w-md bg-white border border-slate-200 shadow-xl">
             <DialogHeader>
-              <div className="h-12 w-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-2">
+              <div className="h-12 w-12 rounded-full bg-slate-100 text-slate-900 flex items-center justify-center mx-auto mb-2">
                 <CheckCircle2 className="h-6 w-6" />
               </div>
               <DialogTitle className="text-center text-xl font-black text-slate-900">
@@ -1399,16 +1399,16 @@ function AdminCbtGenerateView() {
                   href={savedExamDownloads.pdfUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors text-amber-950 group"
+                  className="flex items-center justify-between p-3.5 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 transition-colors text-amber-950 group"
                 >
                   <div className="flex items-center gap-2.5">
-                    <FileText className="h-5 w-5 text-amber-600 shrink-0" />
+                    <FileText className="h-5 w-5 text-slate-900 shrink-0" />
                     <div>
                       <div className="text-xs font-bold">Official Question Paper & Solution Guide (.PDF)</div>
-                      <div className="text-[10px] text-amber-700">Vyntyra Branding • Founder Signature • Corporate Seal</div>
+                      <div className="text-[10px] text-slate-900">Vyntyra Branding • Founder Signature • Corporate Seal</div>
                     </div>
                   </div>
-                  <Download className="h-4 w-4 text-amber-700 group-hover:scale-110 transition-transform shrink-0" />
+                  <Download className="h-4 w-4 text-slate-900 group-hover:scale-110 transition-transform shrink-0" />
                 </a>
               ) : null}
 
@@ -1417,16 +1417,16 @@ function AdminCbtGenerateView() {
                   href={savedExamDownloads.csvUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 transition-colors text-emerald-950 group"
+                  className="flex items-center justify-between p-3.5 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 transition-colors text-emerald-950 group"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Download className="h-5 w-5 text-emerald-600 shrink-0" />
+                    <Download className="h-5 w-5 text-slate-900 shrink-0" />
                     <div>
                       <div className="text-xs font-bold">Structured Question Dataset (.CSV)</div>
-                      <div className="text-[10px] text-emerald-700">RFC-4180 • Full Options, Pre-Marked Answers & Timers</div>
+                      <div className="text-[10px] text-slate-900">RFC-4180 • Full Options, Pre-Marked Answers & Timers</div>
                     </div>
                   </div>
-                  <Download className="h-4 w-4 text-emerald-700 group-hover:scale-110 transition-transform shrink-0" />
+                  <Download className="h-4 w-4 text-slate-900 group-hover:scale-110 transition-transform shrink-0" />
                 </a>
               ) : null}
             </div>
@@ -1474,7 +1474,7 @@ function ExamQuestionPreviewModal({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-500 text-white tracking-widest">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-slate-900 text-white tracking-widest">
                   Assessment Preview Mode
                 </span>
                 <span className="text-xs text-slate-400 font-mono">
@@ -1492,7 +1492,7 @@ function ExamQuestionPreviewModal({
             <div className="flex items-center gap-2 text-right">
               <div className="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl text-xs">
                 <span className="text-slate-400 block text-[9px] uppercase font-bold">Total Points</span>
-                <span className="text-emerald-400 font-black text-base">{totalPoints} pts</span>
+                <span className="text-slate-500 font-black text-base">{totalPoints} pts</span>
               </div>
             </div>
           </div>
@@ -1526,8 +1526,8 @@ function ExamQuestionPreviewModal({
           <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
             <span>Pre-Marked Question Breakdown ({questions.length})</span>
             <div className="flex items-center gap-2">
-              <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px]">{mcqCount} MCQ</span>
-              {codingCount > 0 && <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px]">{codingCount} Coding</span>}
+              <span className="bg-slate-100 text-slate-800 border-slate-300 font-mono px-2 py-0.5 rounded text-[10px]">{mcqCount} MCQ</span>
+              {codingCount > 0 && <span className="bg-slate-100 text-slate-800 border-slate-300 font-mono px-2 py-0.5 rounded text-[10px]">{codingCount} Coding</span>}
               {otherCount > 0 && <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded text-[10px]">{otherCount} Subjective</span>}
             </div>
           </div>
@@ -1541,13 +1541,13 @@ function ExamQuestionPreviewModal({
                     <span className="h-6 w-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black">
                       {idx + 1}
                     </span>
-                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border-slate-300 font-mono border border-slate-200">
                       {q.question_type.replace('_', ' ')}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-slate-500 font-semibold">
                     <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-slate-400" /> {q.time_limit_seconds || 60}s</span>
-                    <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-black">{q.max_points || 10} pts</span>
+                    <span className="bg-slate-100 text-slate-800 border-slate-300 font-mono px-2 py-0.5 rounded font-black">{q.max_points || 10} pts</span>
                   </div>
                 </div>
 
@@ -1566,21 +1566,21 @@ function ExamQuestionPreviewModal({
                           key={optIdx} 
                           className={`p-3 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-start justify-between gap-2 transition-all ${
                             isPreMarked 
-                              ? "bg-emerald-50 border-emerald-400 text-emerald-900 font-bold shadow-xs ring-1 ring-emerald-500/30" 
+                              ? "bg-slate-50 border-slate-300 text-slate-900 font-bold shadow-xs ring-1 ring-slate-400" 
                               : "bg-slate-50/70 border-slate-200 text-slate-700"
                           }`}
                         >
                           <div className="flex items-start gap-2.5 flex-1 min-w-0">
                             <span className={`h-5 w-5 shrink-0 rounded-full flex items-center justify-center text-[10px] font-black mt-0.5 ${
-                              isPreMarked ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-700"
+                              isPreMarked ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-700"
                             }`}>
                               {opt.id || String.fromCharCode(65 + optIdx)}
                             </span>
                             <span className="leading-relaxed whitespace-pre-wrap">{opt.text}</span>
                           </div>
                           {isPreMarked && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-300 shrink-0 self-start sm:self-center">
-                              <Check className="h-3 w-3 text-emerald-600" /> Pre-Marked Solution
+                            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-slate-900 bg-white px-2 py-0.5 rounded-full border border-slate-300 shrink-0 self-start sm:self-center">
+                              <Check className="h-3 w-3 text-slate-900" /> Pre-Marked Solution
                             </span>
                           )}
                         </div>
@@ -1591,8 +1591,8 @@ function ExamQuestionPreviewModal({
 
                 {/* Pre-Solution Explanation */}
                 {q.explanation && (
-                  <div className="p-3 bg-amber-50/60 border border-amber-200/80 rounded-xl text-xs text-amber-900">
-                    <strong className="block text-[10px] uppercase font-bold text-amber-700 mb-0.5">💡 Solution Explanation / Reference Context:</strong>
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900">
+                    <strong className="block text-[10px] uppercase font-bold text-slate-900 mb-0.5">💡 Solution Explanation / Reference Context:</strong>
                     {q.explanation}
                   </div>
                 )}
@@ -1602,7 +1602,7 @@ function ExamQuestionPreviewModal({
                   <div className="space-y-2 pt-2 border-t border-slate-100">
                     {q.correct_answer && (
                       <div className="p-3 bg-slate-900 text-slate-100 rounded-xl font-mono text-xs">
-                        <div className="text-[10px] font-sans font-bold text-emerald-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <div className="text-[10px] font-sans font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                           <Check className="h-3 w-3" /> Pre-Marked Reference Solution Code
                         </div>
                         <pre className="whitespace-pre-wrap overflow-x-auto text-[11px]">
@@ -1611,13 +1611,13 @@ function ExamQuestionPreviewModal({
                       </div>
                     )}
                     {q.test_cases && Array.isArray(q.test_cases) && q.test_cases.length > 0 && (
-                      <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs space-y-1.5">
-                        <div className="text-[10px] font-bold text-indigo-900 uppercase tracking-wider">Automated Verification Test Cases ({q.test_cases.length}):</div>
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1.5">
+                        <div className="text-[10px] font-bold text-slate-900 uppercase tracking-wider">Automated Verification Test Cases ({q.test_cases.length}):</div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {q.test_cases.map((tc: any, tcIdx: number) => (
-                            <div key={tcIdx} className="bg-white p-2 rounded-lg border border-indigo-100 text-[11px] font-mono">
+                            <div key={tcIdx} className="bg-white p-2 rounded-lg border border-slate-200 text-[11px] font-mono">
                               <div className="text-slate-500">Input: <span className="text-slate-900 font-bold">{tc.input || "Default"}</span></div>
-                              <div className="text-emerald-700 font-bold">Required Output: {tc.expected_output}</div>
+                              <div className="text-slate-900 font-bold">Required Output: {tc.expected_output}</div>
                             </div>
                           ))}
                         </div>
@@ -1649,9 +1649,9 @@ function ExamQuestionPreviewModal({
                 variant="outline" 
                 size="sm" 
                 onClick={onDownloadPaper}
-                className="text-xs font-bold border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 gap-1.5"
+                className="text-xs font-bold border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-900 gap-1.5"
               >
-                <FileText className="h-3.5 w-3.5 text-amber-600" />
+                <FileText className="h-3.5 w-3.5 text-slate-900" />
                 Download Paper (PDF)
               </Button>
             )}
@@ -1660,7 +1660,7 @@ function ExamQuestionPreviewModal({
             <Button 
               onClick={onConfirmAllocate} 
               disabled={isAllocating}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-md shadow-emerald-500/20"
+              className="bg-slate-900 hover:bg-black text-white font-bold text-xs gap-1.5 shadow-md shadow-emerald-500/20"
             >
               {isAllocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
               Confirm Allocation & Dispatch Exam Emails
@@ -1896,15 +1896,15 @@ function AdminCbtSubmissionsView() {
       {/* Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Activity className="h-6 w-6" /></div>
+          <div className="h-12 w-12 rounded-xl bg-slate-50 text-slate-900 flex items-center justify-center"><Activity className="h-6 w-6" /></div>
           <div><p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Published</p><p className="text-2xl font-black text-slate-900">{tests.filter((t: any) => t.status === 'published').length}</p></div>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><Camera className="h-6 w-6" /></div>
+          <div className="h-12 w-12 rounded-xl bg-slate-50 text-slate-900 flex items-center justify-center"><Camera className="h-6 w-6" /></div>
           <div><p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Cam Proctoring</p><p className="text-2xl font-black text-slate-900">{tests.filter((t: any) => t.enable_camera !== false).length}</p></div>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center"><Calendar className="h-6 w-6" /></div>
+          <div className="h-12 w-12 rounded-xl bg-slate-50 text-slate-900 flex items-center justify-center"><Calendar className="h-6 w-6" /></div>
           <div><p className="text-xs font-bold text-slate-500 uppercase tracking-wider">With Deadlines</p><p className="text-2xl font-black text-slate-900">{tests.filter((t: any) => t.deadline).length}</p></div>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
@@ -1944,7 +1944,7 @@ function AdminCbtSubmissionsView() {
                           <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
                             {t.time_limit_minutes || 30} mins
                           </span>
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.enable_camera !== false ? "bg-indigo-50 text-indigo-700 border border-indigo-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.enable_camera !== false ? "bg-slate-100 text-slate-700 border-slate-300 font-mono border border-slate-200" : "bg-slate-100 text-slate-700 border-slate-300 font-mono border border-slate-200"}`}>
                             {t.enable_camera !== false ? "Camera Enforced" : "Focus Only"}
                           </span>
                           <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">
@@ -1966,13 +1966,13 @@ function AdminCbtSubmissionsView() {
                         ) : (
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1 ${
                             strictness === 'strict' 
-                              ? 'bg-rose-100 text-rose-800 border border-rose-300' 
+                              ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-300' 
                               : strictness === 'lenient'
-                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                              : 'bg-amber-100 text-amber-800 border border-amber-300'
+                              ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-300'
+                              : 'bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-300'
                           }`}>
                             <div className={`h-1.5 w-1.5 rounded-full ${
-                              strictness === 'strict' ? 'bg-rose-600' : strictness === 'lenient' ? 'bg-emerald-600' : 'bg-amber-600'
+                              strictness === 'strict' ? 'bg-rose-600' : strictness === 'lenient' ? 'bg-slate-900' : 'bg-amber-600'
                             }`} />
                             {strictness === 'strict' ? 'Ultra-Strict (1 Strike)' : strictness === 'lenient' ? 'Lenient (3 Strikes)' : 'Standard (2 Strikes)'}
                           </span>
@@ -1995,7 +1995,7 @@ function AdminCbtSubmissionsView() {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase flex w-fit items-center gap-1 ${t.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase flex w-fit items-center gap-1 ${t.status === 'published' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : 'bg-slate-100 text-slate-600'}`}>
                           {t.status === 'published' ? <CheckCircle className="h-3 w-3"/> : <XCircle className="h-3 w-3"/>}
                           {t.status}
                         </span>
@@ -2006,7 +2006,7 @@ function AdminCbtSubmissionsView() {
                           <div className="flex items-center gap-1.5 flex-wrap justify-end">
                             <Button
                               size="sm"
-                              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs gap-1 shadow-xs h-7 px-2.5"
+                              className="bg-slate-900 hover:bg-black text-white font-bold text-xs gap-1 shadow-xs h-7 px-2.5"
                               onClick={() => {
                                 setAssignTargetType(t.allocation_mode === 'team' ? 'team' : 'intern');
                                 setAssignSelectedInternIds(t.intern_ids || []);
@@ -2030,7 +2030,7 @@ function AdminCbtSubmissionsView() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-xs gap-1 border-indigo-200 hover:bg-indigo-50 text-indigo-700 font-semibold h-7 px-2.5"
+                              className="text-xs gap-1 border-slate-200 hover:bg-slate-100 text-slate-700 border-slate-300 font-mono font-semibold h-7 px-2.5"
                               onClick={() => handlePreviewExistingExam(t)}
                               disabled={isLoadingExistingQuestions}
                             >
@@ -2064,15 +2064,15 @@ function AdminCbtSubmissionsView() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-xs gap-1 border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-semibold h-7 px-2"
+                              className="text-xs gap-1 border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-900 font-semibold h-7 px-2"
                               onClick={() => handleDownloadPaper(t, 'pdf')}
                               disabled={downloadingFormat?.testId === t.id && downloadingFormat?.format === 'pdf'}
                               title="Download Vyntyra Branded Official Exam Paper (.PDF) with Founder Signature"
                             >
                               {downloadingFormat?.testId === t.id && downloadingFormat?.format === 'pdf' ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-600" />
+                                <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-900" />
                               ) : (
-                                <FileText className="h-3.5 w-3.5 text-amber-600" />
+                                <FileText className="h-3.5 w-3.5 text-slate-900" />
                               )}
                               PDF
                             </Button>
@@ -2080,15 +2080,15 @@ function AdminCbtSubmissionsView() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-xs gap-1 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-semibold h-7 px-2"
+                              className="text-xs gap-1 border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-900 font-semibold h-7 px-2"
                               onClick={() => handleDownloadPaper(t, 'csv')}
                               disabled={downloadingFormat?.testId === t.id && downloadingFormat?.format === 'csv'}
                               title="Download Structured Questions Dataset (.CSV)"
                             >
                               {downloadingFormat?.testId === t.id && downloadingFormat?.format === 'csv' ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" />
+                                <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-900" />
                               ) : (
-                                <Download className="h-3.5 w-3.5 text-emerald-600" />
+                                <Download className="h-3.5 w-3.5 text-slate-900" />
                               )}
                               CSV
                             </Button>
@@ -2096,7 +2096,7 @@ function AdminCbtSubmissionsView() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-xs gap-1 border-purple-200 hover:bg-purple-50 text-purple-700 font-semibold h-7 px-2"
+                              className="text-xs gap-1 border-slate-200 hover:bg-slate-100 text-slate-700 border-slate-300 font-mono font-semibold h-7 px-2"
                               onClick={() => {
                                 setExtendingExam(t);
                                 setNewDeadline(t.deadline ? new Date(t.deadline).toISOString().slice(0, 16) : "");
@@ -2119,7 +2119,7 @@ function AdminCbtSubmissionsView() {
                             <Button
                               variant="destructive"
                               size="sm"
-                              className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs gap-1 h-7 px-2.5 shadow-xs"
+                              className="bg-slate-900 hover:bg-black text-white font-bold text-xs gap-1 h-7 px-2.5 shadow-xs"
                               onClick={() => setDeletingExam(t)}
                               title="Permanently Delete Test and All Submissions"
                             >
@@ -2305,7 +2305,7 @@ function AdminCbtSubmissionsView() {
               <DialogDescription className="text-slate-600 pt-2 leading-relaxed">
                 Are you sure you want to delete <strong className="text-slate-900 font-bold">{deletingExam.title}</strong>?
                 <br /><br />
-                <span className="text-rose-700 font-semibold bg-rose-50 p-2.5 rounded-lg border border-rose-200 block text-xs">
+                <span className="text-rose-700 font-semibold bg-slate-50 p-2.5 rounded-lg border border-slate-200 block text-xs">
                   ⚠️ This action is irreversible. All generated questions, candidate submissions, answer sheets, and malpractice proctoring logs for this test will be permanently erased.
                 </span>
               </DialogDescription>
@@ -2326,7 +2326,7 @@ function AdminCbtSubmissionsView() {
                   }
                 }}
                 disabled={deleteMut.isPending}
-                className="bg-rose-600 hover:bg-rose-700 text-white font-bold gap-1.5"
+                className="bg-slate-900 hover:bg-black text-white font-bold gap-1.5"
               >
                 {deleteMut.isPending ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Deleting...</>
@@ -2345,7 +2345,7 @@ function AdminCbtSubmissionsView() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-purple-600" />
+                <Calendar className="h-5 w-5 text-slate-900" />
                 Extend Assessment Deadline
               </DialogTitle>
               <DialogDescription>
@@ -2371,7 +2371,7 @@ function AdminCbtSubmissionsView() {
                   type="checkbox" 
                   checked={notifyInternsOnExtend} 
                   onChange={e => setNotifyInternsOnExtend(e.target.checked)}
-                  className="h-4 w-4 text-purple-600 rounded"
+                  className="h-4 w-4 text-slate-900 rounded"
                 />
                 Dispatch automated email notification with new deadline to assigned intern(s)
               </label>
@@ -2382,7 +2382,7 @@ function AdminCbtSubmissionsView() {
               <Button 
                 onClick={handleConfirmExtend} 
                 disabled={isExtending || !newDeadline}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
+                className="bg-slate-900 hover:bg-black text-white font-bold"
               >
                 {isExtending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Extending...</> : "Confirm & Extend"}
               </Button>
@@ -2397,7 +2397,7 @@ function AdminCbtSubmissionsView() {
           <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-indigo-600" />
+                <UserPlus className="h-5 w-5 text-slate-900" />
                 Assign CBT Exam & Dispatch Email
               </DialogTitle>
               <DialogDescription>
@@ -2409,7 +2409,7 @@ function AdminCbtSubmissionsView() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Target Allocation Mode</label>
-                  <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                  <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border-slate-300 font-mono">
                     {assignTargetType === "intern" 
                       ? `${assignSelectedInternIds.length} Candidate(s)` 
                       : assignTargetType === "team" 
@@ -2423,7 +2423,7 @@ function AdminCbtSubmissionsView() {
                     onClick={() => setAssignTargetType("intern")}
                     className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                       assignTargetType === "intern"
-                        ? "bg-white text-indigo-700 shadow-xs"
+                        ? "bg-white text-slate-900 shadow-xs"
                         : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
@@ -2434,7 +2434,7 @@ function AdminCbtSubmissionsView() {
                     onClick={() => setAssignTargetType("team")}
                     className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                       assignTargetType === "team"
-                        ? "bg-white text-indigo-700 shadow-xs"
+                        ? "bg-white text-slate-900 shadow-xs"
                         : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
@@ -2445,7 +2445,7 @@ function AdminCbtSubmissionsView() {
                     onClick={() => setAssignTargetType("manual")}
                     className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                       assignTargetType === "manual"
-                        ? "bg-white text-indigo-700 shadow-xs"
+                        ? "bg-white text-slate-900 shadow-xs"
                         : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
@@ -2463,7 +2463,7 @@ function AdminCbtSubmissionsView() {
                     placeholder="Search candidates or teams..."
                     value={assignSearchQuery}
                     onChange={e => setAssignSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-slate-900"
                   />
                 </div>
                 <Button
@@ -2522,7 +2522,7 @@ function AdminCbtSubmissionsView() {
                         return (
                           <label 
                             key={intern.id} 
-                            className={`flex items-center gap-3 p-2.5 text-xs hover:bg-slate-50 cursor-pointer transition-colors ${isSelected ? "bg-indigo-50/50" : ""}`}
+                            className={`flex items-center gap-3 p-2.5 text-xs hover:bg-slate-50 cursor-pointer transition-colors ${isSelected ? "bg-slate-50" : ""}`}
                           >
                             <input
                               type="checkbox"
@@ -2534,7 +2534,7 @@ function AdminCbtSubmissionsView() {
                                   setAssignSelectedInternIds(assignSelectedInternIds.filter(id => id !== intern.id));
                                 }
                               }}
-                              className="h-4 w-4 text-indigo-600 rounded"
+                              className="h-4 w-4 text-slate-900 rounded"
                             />
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold text-slate-900 truncate">{intern.full_name}</p>
@@ -2563,7 +2563,7 @@ function AdminCbtSubmissionsView() {
                         return (
                           <label 
                             key={team.id} 
-                            className={`flex items-center gap-3 p-2.5 text-xs hover:bg-slate-50 cursor-pointer transition-colors ${isSelected ? "bg-indigo-50/50" : ""}`}
+                            className={`flex items-center gap-3 p-2.5 text-xs hover:bg-slate-50 cursor-pointer transition-colors ${isSelected ? "bg-slate-50" : ""}`}
                           >
                             <input
                               type="checkbox"
@@ -2575,7 +2575,7 @@ function AdminCbtSubmissionsView() {
                                   setAssignSelectedTeamIds(assignSelectedTeamIds.filter(id => id !== team.id));
                                 }
                               }}
-                              className="h-4 w-4 text-indigo-600 rounded"
+                              className="h-4 w-4 text-slate-900 rounded"
                             />
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold text-slate-900 truncate">{team.name}</p>
@@ -2594,7 +2594,7 @@ function AdminCbtSubmissionsView() {
                   {assignSelectedInternIds.map(id => {
                     const intern = (targets?.interns || []).find((i: any) => i.id === id);
                     return (
-                      <span key={id} className="inline-flex items-center gap-1 text-[11px] font-medium bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
+                      <span key={id} className="inline-flex items-center gap-1 text-[11px] font-medium bg-slate-100 text-slate-800 border-slate-300 font-mono px-2 py-0.5 rounded-full">
                         {intern?.full_name || id}
                         <button
                           type="button"
@@ -2609,7 +2609,7 @@ function AdminCbtSubmissionsView() {
                   {assignSelectedTeamIds.map(id => {
                     const team = (targets?.teams || []).find((t: any) => t.id === id);
                     return (
-                      <span key={id} className="inline-flex items-center gap-1 text-[11px] font-medium bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
+                      <span key={id} className="inline-flex items-center gap-1 text-[11px] font-medium bg-slate-100 text-slate-800 border-slate-300 font-mono px-2 py-0.5 rounded-full">
                         {team?.name || id}
                         <button
                           type="button"
@@ -2648,7 +2648,7 @@ function AdminCbtSubmissionsView() {
               <Button 
                 onClick={handleConfirmAssign} 
                 disabled={isReassigning || (assignSelectedInternIds.length === 0 && assignSelectedTeamIds.length === 0)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                className="bg-slate-900 hover:bg-black text-white font-bold"
               >
                 {isReassigning ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Allocating...</> : "Confirm & Send Email"}
               </Button>
@@ -2846,7 +2846,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
               {test?.deadline && (
                 <>
                   <span>•</span>
-                  <span>Deadline: <strong className="text-purple-700">{new Date(test.deadline).toLocaleString()}</strong></span>
+                  <span>Deadline: <strong className="text-slate-900">{new Date(test.deadline).toLocaleString()}</strong></span>
                 </>
               )}
             </div>
@@ -2856,7 +2856,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
         <Button 
           variant="outline" 
           size="sm"
-          className="border-purple-200 text-purple-700 hover:bg-purple-50 font-semibold gap-1.5"
+          className="border-slate-200 text-slate-900 hover:bg-slate-50 font-semibold gap-1.5"
           onClick={() => {
             setNewDeadline(test?.deadline ? new Date(test.deadline).toISOString().slice(0, 16) : "");
             setShowExtendModal(true);
@@ -2897,12 +2897,12 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                       {new Date(sub.submitted_at || sub.started_at).toLocaleString()}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-mono font-black text-lg text-indigo-700">{sub.total_score || 0} / {testMaxScore} pts</span>
+                      <span className="font-mono font-black text-lg text-slate-900">{sub.total_score || 0} / {testMaxScore} pts</span>
                       <span className="text-[11px] text-slate-400 block font-semibold">{subPercentage}%</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase flex w-fit items-center gap-1 ${
-                        isPassed ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                        isPassed ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : 'bg-slate-100 text-slate-800 border-slate-300 font-mono'
                       }`}>
                         {isPassed ? <CheckCircle className="h-3.5 w-3.5"/> : <XCircle className="h-3.5 w-3.5"/>}
                         {isPassed ? `Passed (${subPercentage}%)` : `Needs Retest (${subPercentage}%)`}
@@ -2912,7 +2912,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="text-xs font-semibold gap-1 text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                        className="text-xs font-semibold gap-1 text-slate-900 border-slate-200 hover:bg-slate-50"
                         onClick={() => {
                           setRetakeSubmission(sub);
                           setRetakeReason("");
@@ -2922,7 +2922,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                       </Button>
                       <Button 
                         size="sm" 
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs gap-1"
+                        className="bg-slate-900 hover:bg-black text-white font-bold text-xs gap-1"
                         onClick={() => handleOpenDetail(sub.id)}
                       >
                         <Eye className="h-3.5 w-3.5" /> Mark Sheet
@@ -2942,7 +2942,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <RotateCcw className="h-5 w-5 text-emerald-600" />
+                <RotateCcw className="h-5 w-5 text-slate-900" />
                 Grant Retake / Reset Candidate Session
               </DialogTitle>
               <DialogDescription>
@@ -2968,7 +2968,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
               <Button 
                 onClick={handleConfirmRetake} 
                 disabled={isResettingAttempt}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                className="bg-slate-900 hover:bg-black text-white font-bold"
               >
                 {isResettingAttempt ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Resetting...</> : "Confirm Retake & Send Email"}
               </Button>
@@ -3060,21 +3060,21 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
               <DialogHeader>
                 <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <span className="flex items-center gap-2">
-                    <Award className="h-6 w-6 text-indigo-600 shrink-0" />
+                    <Award className="h-6 w-6 text-slate-900 shrink-0" />
                     Candidate Mark Sheet & Proctoring Audit
                   </span>
                   <div className="flex items-center gap-2">
                     <Button 
                       size="sm"
                       onClick={handleDownloadAuditPdf}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+                      className="bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
                     >
                       <Download className="h-3.5 w-3.5" /> Download Detailed Report (PDF)
                     </Button>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase shrink-0 ${
                       passed
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-rose-100 text-rose-800"
+                        ? "bg-slate-100 text-slate-800 border-slate-300 font-mono"
+                        : "bg-slate-100 text-slate-800 border-slate-300 font-mono"
                     }`}>
                       {passed ? "Passed" : "Failed"} ({percentage}%)
                     </span>
@@ -3100,25 +3100,25 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                   </div>
                   <div>
                     <span className="text-slate-400 font-bold uppercase block">Total Points Awarded</span>
-                    <span className="text-2xl font-black text-indigo-600">{totalScore} / {maxScore} pts</span>
+                    <span className="text-2xl font-black text-slate-900">{totalScore} / {maxScore} pts</span>
                     <span className="text-slate-500 block font-semibold">{percentage}% (Passing Benchmark: {passingScore}%)</span>
                   </div>
                 </div>
 
                 {/* Accuracy & Correct Answers Metric Bar */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-100 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs">
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-slate-900 shrink-0" />
                     <div>
                       <span className="text-slate-500 text-[10px] uppercase font-bold block">Correct</span>
-                      <span className="font-black text-emerald-700 text-sm">{correctCount} / {questionsList.length}</span>
+                      <span className="font-black text-slate-900 text-sm">{correctCount} / {questionsList.length}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+                    <AlertCircle className="h-4 w-4 text-slate-600 shrink-0" />
                     <div>
                       <span className="text-slate-500 text-[10px] uppercase font-bold block">Partial</span>
-                      <span className="font-black text-amber-700 text-sm">{partialCount}</span>
+                      <span className="font-black text-slate-900 text-sm">{partialCount}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -3129,28 +3129,28 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Award className="h-4 w-4 text-indigo-600 shrink-0" />
+                    <Award className="h-4 w-4 text-slate-900 shrink-0" />
                     <div>
                       <span className="text-slate-500 text-[10px] uppercase font-bold block">Accuracy Rate</span>
-                      <span className="font-black text-indigo-700 text-sm">{accuracyRate}%</span>
+                      <span className="font-black text-slate-900 text-sm">{accuracyRate}%</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Suggestions for Next Attempt */}
-                <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-xl space-y-3">
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
-                    <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+                    <Sparkles className="h-4 w-4 text-slate-900 shrink-0" />
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                       Examiner Guidance: Suggestions for Next Attempt ({suggestions.length} Recommendations)
                     </h4>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {suggestions.map((s, idx) => (
-                      <div key={idx} className="p-3 bg-white/90 border border-amber-200/80 rounded-lg text-xs space-y-1 shadow-2xs">
+                      <div key={idx} className="p-3 bg-white/90 border border-slate-200 rounded-lg text-xs space-y-1 shadow-2xs">
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-amber-950">{s.title}</span>
-                          <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                          <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 border-slate-300 font-mono">
                             {s.category}
                           </span>
                         </div>
@@ -3171,7 +3171,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="text-[10px] h-7 text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+                        className="text-[10px] h-7 text-slate-900 border-slate-300 hover:bg-slate-50"
                         onClick={() => handleClearStrikes(activeSubmissionDetail.submission?.id)}
                       >
                         Clear Strikes / Forgive Infractions
@@ -3180,14 +3180,14 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                   </div>
 
                   {activeSubmissionDetail.malpracticeLogs?.length === 0 ? (
-                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 font-semibold flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-emerald-600" />
+                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 font-semibold flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-slate-900" />
                       Zero infractions detected. Candidate adhered strictly to fullscreen and focus requirements.
                     </div>
                   ) : (
                     <div className="space-y-1.5 max-h-36 overflow-y-auto">
                       {activeSubmissionDetail.malpracticeLogs.map((log: any, lIdx: number) => (
-                        <div key={lIdx} className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs flex items-center justify-between">
+                        <div key={lIdx} className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
                             <span className="font-bold text-rose-900">{log.infraction_type}</span>
@@ -3205,7 +3205,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                 {/* Detailed Question Mark Sheet */}
                 <div>
                   <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-indigo-500" />
+                    <FileText className="h-4 w-4 text-slate-600" />
                     Question-by-Question Response Audit ({activeSubmissionDetail.questions?.length} Questions)
                   </h4>
 
@@ -3228,7 +3228,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                               Q{qIdx + 1}: {q.question_text}
                             </span>
                             <span className={`px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
-                              isFullScore ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                              isFullScore ? "bg-slate-100 text-slate-800 border-slate-300 font-mono" : "bg-slate-100 text-slate-800 border-slate-300 font-mono"
                             }`}>
                               {ans?.ai_score ?? 0} / {q.max_points || 10} pts
                             </span>
@@ -3241,8 +3241,8 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                               <span className="font-semibold text-slate-800 break-words">{String(candidateResponse)}</span>
                             </div>
 
-                            <div className="p-2.5 bg-white border border-emerald-200 rounded-lg">
-                              <span className="text-[10px] uppercase font-bold text-emerald-600 block mb-0.5">Benchmark / Correct Answer:</span>
+                            <div className="p-2.5 bg-white border border-slate-200 rounded-lg">
+                              <span className="text-[10px] uppercase font-bold text-slate-900 block mb-0.5">Benchmark / Correct Answer:</span>
                               <span className="font-semibold text-slate-800 break-words">
                                 {typeof q.correct_answer === "object" ? JSON.stringify(q.correct_answer) : String(q.correct_answer)}
                               </span>
@@ -3250,8 +3250,8 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                           </div>
 
                           {ans?.ai_feedback && (
-                            <div className="p-2 bg-indigo-50/70 border border-indigo-100 rounded text-slate-700 text-[11px]">
-                              <strong className="text-indigo-800 font-bold">Feedback / Remarks:</strong> {ans.ai_feedback}
+                            <div className="p-2 bg-slate-50 border border-slate-200 rounded text-slate-700 text-[11px]">
+                              <strong className="text-slate-900 font-bold">Feedback / Remarks:</strong> {ans.ai_feedback}
                             </div>
                           )}
                         </div>
@@ -3261,9 +3261,9 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                 </div>
 
                 {/* Admin Score Adjustment & Override Panel */}
-                <div className="p-4 bg-indigo-50/50 border border-indigo-200 rounded-xl space-y-3">
-                  <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-2">
-                    <Edit3 className="h-4 w-4 text-indigo-600" />
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <Edit3 className="h-4 w-4 text-slate-900" />
                     Manual Score Adjustment & Admin Override
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -3291,7 +3291,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                   <div className="flex justify-end gap-2">
                     <Button 
                       variant="outline"
-                      className="text-xs text-emerald-700 border-emerald-300"
+                      className="text-xs text-slate-900 border-slate-300"
                       onClick={() => {
                         setRetakeSubmission(activeSubmissionDetail.submission);
                         setRetakeReason("");
@@ -3302,7 +3302,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
                     <Button 
                       onClick={handleSaveOverride} 
                       disabled={isOverriding}
-                      className="bg-indigo-600 hover:bg-indigo-700 font-bold text-xs"
+                      className="bg-slate-900 hover:bg-slate-900 font-bold text-xs text-white"
                     >
                       {isOverriding ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
                       Save Score Override
@@ -3325,7 +3325,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-purple-600" />
+                <Calendar className="h-5 w-5 text-slate-900" />
                 Extend Assessment Deadline
               </DialogTitle>
               <DialogDescription>
@@ -3352,7 +3352,7 @@ function AdminCbtTestReviewView({ testId, test, onBack }: { testId: string, test
               <Button 
                 onClick={handleExtendTestDeadline} 
                 disabled={isExtending || !newDeadline}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
+                className="bg-slate-900 hover:bg-black text-white font-bold"
               >
                 {isExtending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Extending...</> : "Confirm Extension"}
               </Button>

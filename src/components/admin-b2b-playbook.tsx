@@ -439,11 +439,11 @@ export function AdminB2bPlaybook() {
   return (
     <div className="space-y-8">
       {/* Header Banner */}
-      <div className="relative rounded-xl overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/20 text-white p-6 sm:p-8 shadow-2xl">
+      <div className="relative rounded-xl overflow-hidden bg-gradient-to-r bg-slate-950 border border-slate-800 text-white border border-slate-400 text-white p-6 sm:p-8 shadow-2xl">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(99,102,241,0.15),transparent_70%)] pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-400/30 bg-indigo-500/10 px-3.5 py-1 text-xs font-semibold text-indigo-300 backdrop-blur-md">
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-slate-900/10 px-3.5 py-1 text-xs font-semibold text-indigo-300 backdrop-blur-md text-white">
               <Zap className="h-3.5 w-3.5 text-gold animate-pulse" />
               High-Converting B2B Cold Email, WhatsApp & Pitch Engine
             </div>
@@ -459,7 +459,7 @@ export function AdminB2bPlaybook() {
               <>
                 <Button
                   onClick={handleSaveCustomTemplates}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5"
+                  className="bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-lg flex items-center gap-1.5"
                 >
                   <Save className="h-4 w-4" /> Save Edits
                 </Button>
@@ -474,7 +474,7 @@ export function AdminB2bPlaybook() {
             ) : (
               <Button
                 onClick={() => setIsEditing(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg flex items-center gap-1.5"
+                className="bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-lg flex items-center gap-1.5"
               >
                 <Edit3 className="h-4 w-4" /> Edit Templates
               </Button>
@@ -513,7 +513,7 @@ export function AdminB2bPlaybook() {
               value="best-practices"
               className="data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm px-4 py-2.5 rounded-md text-xs font-semibold flex items-center gap-2 transition-all"
             >
-              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              <ShieldCheck className="h-4 w-4 text-slate-600" />
               Outreach Best Practices & Cadence
             </TabsTrigger>
           </TabsList>
@@ -538,14 +538,14 @@ export function AdminB2bPlaybook() {
                   </CardContent>
                 </Card>
 
-                <Card className="border border-amber-500/20 bg-amber-500/5 shadow-sm">
+                <Card className="border border-slate-400 bg-amber-500/5 shadow-sm">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-xs uppercase tracking-widest text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                    <CardTitle className="text-xs uppercase tracking-widest text-slate-900 dark:text-slate-500 flex items-center gap-1.5">
                       <AlertTriangle className="h-3.5 w-3.5" /> Revenue & Operational Bottleneck
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">{ind.painPoint}</div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-amber-200">{ind.painPoint}</div>
                   </CardContent>
                 </Card>
               </div>
@@ -558,7 +558,7 @@ export function AdminB2bPlaybook() {
                       <Sparkles className="h-4 w-4 text-gold" />
                       Outreach Variable Personalizer & Contact Setup
                     </span>
-                    <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                    <Badge variant="outline" className="text-[10px] bg-slate-900/10 text-slate-900 border-slate-400 text-white">
                       Live Variable Substitution
                     </Badge>
                   </CardTitle>
@@ -604,25 +604,25 @@ export function AdminB2bPlaybook() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <label className="text-[11px] font-semibold text-slate-900 dark:text-slate-500 flex items-center gap-1">
                       <MessageSquare className="h-3.5 w-3.5" /> Target WhatsApp Number
                     </label>
                     <Input
                       value={targetPhone}
                       onChange={(e) => setTargetPhone(e.target.value)}
                       placeholder="919876543210"
-                      className="h-8 text-xs border-emerald-500/40 focus:border-emerald-500 font-mono"
+                      className="h-8 text-xs border-slate-400 focus:border-slate-400 font-mono"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                    <label className="text-[11px] font-semibold text-slate-900 dark:text-slate-500 flex items-center gap-1">
                       <Mail className="h-3.5 w-3.5" /> Target Email Address
                     </label>
                     <Input
                       value={targetEmail}
                       onChange={(e) => setTargetEmail(e.target.value)}
                       placeholder="owner@business.com"
-                      className="h-8 text-xs border-indigo-500/40 focus:border-indigo-500 font-mono"
+                      className="h-8 text-xs border-slate-400 focus:border-slate-400 font-mono"
                     />
                   </div>
                 </CardContent>
@@ -630,7 +630,7 @@ export function AdminB2bPlaybook() {
 
               {/* Template Editor Drawer if in Editing Mode */}
               {isEditing && (
-                <Card className="border-2 border-indigo-500 bg-card shadow-xl animate-in slide-in-from-top-4 duration-300">
+                <Card className="border-2 border-slate-400 bg-card shadow-xl animate-in slide-in-from-top-4 duration-300">
                   <CardHeader className="bg-indigo-950 text-white p-4">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-sm font-bold flex items-center gap-2">
@@ -676,14 +676,14 @@ export function AdminB2bPlaybook() {
                         </div>
 
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                          <label className="text-xs font-bold text-slate-900 dark:text-slate-500 flex items-center gap-1">
                             <MessageSquare className="h-3.5 w-3.5" /> WhatsApp Message Template
                           </label>
                           <Textarea
                             value={editWhatsApp}
                             onChange={(e) => setEditWhatsApp(e.target.value)}
                             rows={5}
-                            className="text-xs font-mono leading-relaxed border-emerald-500/40"
+                            className="text-xs font-mono leading-relaxed border-slate-400"
                           />
                         </div>
                       </div>
@@ -693,7 +693,7 @@ export function AdminB2bPlaybook() {
                       <Button
                         size="sm"
                         onClick={handleSaveCustomTemplates}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5"
+                        className="bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center gap-1.5"
                       >
                         <Save className="h-4 w-4" /> Save All Templates
                       </Button>
@@ -719,7 +719,7 @@ export function AdminB2bPlaybook() {
                           onClick={() => copyToClipboard(`${renderedSubject}\n\n${renderedBody}`, `email_${ind.id}`, "Cold Email")}
                           className="h-7 text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
                         >
-                          {copiedKey === `email_${ind.id}` ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                          {copiedKey === `email_${ind.id}` ? <Check className="h-3.5 w-3.5 text-slate-600" /> : <Copy className="h-3.5 w-3.5" />}
                           Copy Full Email
                         </Button>
                       </div>
@@ -741,12 +741,12 @@ export function AdminB2bPlaybook() {
                       </div>
                     </CardContent>
                   </div>
-                  <div className="p-4 border-t border-border bg-indigo-500/5 flex flex-wrap items-center justify-between gap-2">
+                  <div className="p-4 border-t border-border bg-slate-900/5 flex flex-wrap items-center justify-between gap-2 text-white">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Button
                         size="sm"
                         onClick={() => openEmailLink(renderedSubject, renderedBody)}
-                        className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-1.5 shadow-sm"
+                        className="h-8 text-xs bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-1.5 shadow-sm"
                         title="Open default email client (Gmail, Outlook, Apple Mail) with pre-filled pitch"
                       >
                         <Send className="h-3.5 w-3.5" /> 1-Click Send Email
@@ -756,7 +756,7 @@ export function AdminB2bPlaybook() {
                         variant="outline"
                         disabled={isSendingDirectEmail}
                         onClick={() => handleDirectSendEmail(renderedSubject, renderedBody, ind.name)}
-                        className="h-8 text-xs border-indigo-500/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/10 font-semibold flex items-center gap-1.5"
+                        className="h-8 text-xs border-slate-400 text-slate-900 dark:text-indigo-300 hover:bg-slate-900/10 font-semibold flex items-center gap-1.5 text-white"
                         title="Dispatch email directly via Vyntyra official mail gateway"
                       >
                         {isSendingDirectEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
@@ -818,7 +818,7 @@ export function AdminB2bPlaybook() {
 
                         <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
                           <span>Vyntyra Consultancy Services Pvt. Ltd.</span>
-                          <a href={formVars.Website_URL} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline font-semibold flex items-center gap-1">
+                          <a href={formVars.Website_URL} target="_blank" rel="noreferrer" className="text-slate-900 hover:underline font-semibold flex items-center gap-1">
                             Visit Portal <ExternalLink className="h-3 w-3" />
                           </a>
                         </div>
@@ -853,7 +853,7 @@ export function AdminB2bPlaybook() {
                     <CardHeader className="border-b border-border bg-muted/30 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-sm font-bold flex items-center gap-2">
-                          <PhoneCall className="h-4 w-4 text-emerald-600" />
+                          <PhoneCall className="h-4 w-4 text-slate-900" />
                           45-Second Phone / Walk-in Pitch Script
                         </CardTitle>
                         <Button
@@ -862,13 +862,13 @@ export function AdminB2bPlaybook() {
                           onClick={() => copyToClipboard(renderedPitch, `pitch_${ind.id}`, "Pitch Script")}
                           className="h-7 text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
                         >
-                          {copiedKey === `pitch_${ind.id}` ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                          {copiedKey === `pitch_${ind.id}` ? <Check className="h-3.5 w-3.5 text-slate-600" /> : <Copy className="h-3.5 w-3.5" />}
                           Copy Script
                         </Button>
                       </div>
                     </CardHeader>
                     <CardContent className="pt-4 space-y-4">
-                      <div className="bg-emerald-500/5 rounded-md p-4 border border-emerald-500/20 text-xs text-foreground/90 leading-relaxed font-sans italic whitespace-pre-wrap select-all">
+                      <div className="bg-slate-900/5 rounded-md p-4 border border-slate-400 text-xs text-foreground/90 leading-relaxed font-sans italic whitespace-pre-wrap select-all text-white">
                         {renderedPitch}
                       </div>
 
@@ -876,15 +876,15 @@ export function AdminB2bPlaybook() {
                         <div className="text-xs font-semibold text-foreground">Key Pitch Objectives:</div>
                         <ul className="space-y-1.5 text-xs text-muted-foreground">
                           <li className="flex items-start gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                            <CheckCircle2 className="h-4 w-4 text-slate-600 shrink-0 mt-0.5" />
                             Hook within 10 seconds by mentioning their exact business name and core product.
                           </li>
                           <li className="flex items-start gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                            <CheckCircle2 className="h-4 w-4 text-slate-600 shrink-0 mt-0.5" />
                             Highlight immediate ROI: 0% commissions, automated workflow, or zero no-shows.
                           </li>
                           <li className="flex items-start gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                            <CheckCircle2 className="h-4 w-4 text-slate-600 shrink-0 mt-0.5" />
                             Low-friction call-to-action: Offer a 1-page breakdown or quick 5-minute off-peak chat.
                           </li>
                         </ul>
@@ -898,7 +898,7 @@ export function AdminB2bPlaybook() {
                     <Button
                       size="sm"
                       onClick={() => copyToClipboard(renderedPitch, `pitch_btn_${ind.id}`, "Phone Pitch")}
-                      className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                      className="h-8 text-xs bg-slate-900 hover:bg-black text-white font-semibold"
                     >
                       Copy Phone Pitch
                     </Button>
@@ -906,15 +906,15 @@ export function AdminB2bPlaybook() {
                 </Card>
 
                 {/* 2. One-Click WhatsApp Action & Authentic Mobile WhatsApp Preview */}
-                <Card className="border border-emerald-500/30 bg-card shadow-corp flex flex-col justify-between overflow-hidden">
+                <Card className="border border-slate-400 bg-card shadow-corp flex flex-col justify-between overflow-hidden">
                   <div>
-                    <CardHeader className="border-b border-emerald-500/30 bg-emerald-950 text-white pb-3">
+                    <CardHeader className="border-b border-slate-400 bg-emerald-950 text-white pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-sm font-bold flex items-center gap-2">
-                          <MessageSquare className="h-4 w-4 text-emerald-400" />
+                          <MessageSquare className="h-4 w-4 text-slate-500" />
                           One-Click WhatsApp Outreach & Mobile Preview
                         </CardTitle>
-                        <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/40 text-[10px]">
+                        <Badge className="bg-slate-900/20 text-emerald-300 border-slate-300 text-[10px] text-white">
                           Direct WA API
                         </Badge>
                       </div>
@@ -922,11 +922,11 @@ export function AdminB2bPlaybook() {
 
                     <CardContent className="p-4 space-y-4">
                       {/* WhatsApp Mobile Chat Interface Mockup */}
-                      <div className="rounded-xl overflow-hidden border border-emerald-800/40 bg-slate-950 shadow-2xl">
+                      <div className="rounded-xl overflow-hidden border border-emerald-800/40 bg-slate-950 shadow-2xl text-white">
                         {/* WhatsApp Top Header Bar */}
                         <div className="bg-emerald-900 px-4 py-2.5 flex items-center justify-between text-white border-b border-emerald-800">
                           <div className="flex items-center gap-2.5">
-                            <div className="h-8 w-8 rounded-full bg-emerald-700 flex items-center justify-center font-bold text-xs text-white">
+                            <div className="h-8 w-8 rounded-full bg-slate-900 flex items-center justify-center font-bold text-xs text-white">
                               {formVars.First_Name?.[0] || "B"}
                             </div>
                             <div>
@@ -954,11 +954,11 @@ export function AdminB2bPlaybook() {
                     </CardContent>
                   </div>
 
-                  <div className="p-4 border-t border-border bg-emerald-500/5 flex flex-wrap items-center justify-between gap-2">
+                  <div className="p-4 border-t border-border bg-slate-900/5 flex flex-wrap items-center justify-between gap-2 text-white">
                     <Button
                       size="sm"
                       onClick={() => openWhatsAppLink(renderedWhatsApp)}
-                      className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5 shadow-md"
+                      className="h-8 text-xs bg-slate-900 hover:bg-black text-white font-bold flex items-center gap-1.5 shadow-md"
                     >
                       <Send className="h-3.5 w-3.5" /> 1-Click Send on WhatsApp
                     </Button>
@@ -966,7 +966,7 @@ export function AdminB2bPlaybook() {
                       size="sm"
                       variant="outline"
                       onClick={() => copyToClipboard(renderedWhatsApp, `wa_${ind.id}`, "WhatsApp Message")}
-                      className="h-8 text-xs border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 font-semibold"
+                      className="h-8 text-xs border-slate-400 text-slate-900 dark:text-emerald-300 hover:bg-slate-900/10 font-semibold text-white"
                     >
                       <Copy className="h-3.5 w-3.5" /> Copy Message Text
                     </Button>
@@ -992,7 +992,7 @@ export function AdminB2bPlaybook() {
 
             <Card className="border border-border bg-card shadow-sm">
               <CardHeader className="pb-2">
-                <Badge variant="outline" className="w-fit text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 mb-1">Stage 2</Badge>
+                <Badge variant="outline" className="w-fit text-[10px] bg-amber-500/10 text-slate-900 border-slate-400 mb-1">Stage 2</Badge>
                 <CardTitle className="text-sm font-bold">Follow-Up 1 (Day 3)</CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground leading-relaxed">
@@ -1003,7 +1003,7 @@ export function AdminB2bPlaybook() {
 
             <Card className="border border-border bg-card shadow-sm">
               <CardHeader className="pb-2">
-                <Badge variant="outline" className="w-fit text-[10px] bg-indigo-500/10 text-indigo-600 border-indigo-500/30 mb-1">Stage 3</Badge>
+                <Badge variant="outline" className="w-fit text-[10px] bg-slate-900/10 text-slate-900 border-slate-400 mb-1 text-white">Stage 3</Badge>
                 <CardTitle className="text-sm font-bold">Follow-Up 2 (Day 6)</CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground leading-relaxed">
@@ -1023,10 +1023,10 @@ export function AdminB2bPlaybook() {
             </Card>
           </div>
 
-          <Card className="border border-indigo-500/20 bg-indigo-500/5 shadow-sm">
+          <Card className="border border-slate-400 bg-slate-900/5 shadow-sm text-white">
             <CardHeader>
               <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-indigo-600" />
+                <ShieldCheck className="h-5 w-5 text-slate-900" />
                 Delivery Mechanism & Domain Security Compliance
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
@@ -1035,21 +1035,21 @@ export function AdminB2bPlaybook() {
             </CardHeader>
             <CardContent className="space-y-3 text-xs text-foreground/90">
               <div className="flex items-start gap-3 p-3 bg-card rounded-md border border-border">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-4 w-4 text-slate-600 shrink-0 mt-0.5" />
                 <div>
                   <span className="font-semibold text-foreground">Verified Domain Sender:</span> Always send cold emails from a verified corporate domain email address (e.g., <code className="bg-muted px-1 py-0.5 rounded text-foreground font-mono">anil@vyntyra.com</code>).
                 </div>
               </div>
 
               <div className="flex items-start gap-3 p-3 bg-card rounded-md border border-border">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-4 w-4 text-slate-600 shrink-0 mt-0.5" />
                 <div>
                   <span className="font-semibold text-foreground">SPF, DKIM, and DMARC Records:</span> Ensure your DNS records are configured with valid SPF, DKIM, and DMARC policies to prevent emails from landing in spam/junk folders.
                 </div>
               </div>
 
               <div className="flex items-start gap-3 p-3 bg-card rounded-md border border-border">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-4 w-4 text-slate-600 shrink-0 mt-0.5" />
                 <div>
                   <span className="font-semibold text-foreground">Gradual Warmup:</span> Limit new outreach volume to 30–50 targeted personalized emails per day per inbox.
                 </div>

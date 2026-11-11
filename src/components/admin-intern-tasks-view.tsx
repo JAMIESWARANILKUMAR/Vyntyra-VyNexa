@@ -814,20 +814,20 @@ export function AdminInternTasksView() {
   return (
     <div className="w-full max-w-full overflow-x-hidden space-y-6">
       {/* ── Top View Navigation Tabs ── */}
-      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl w-full sm:w-fit border shadow-xs">
+      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl w-full sm:w-fit border shadow-xs text-white">
         <button
           type="button"
           onClick={() => setActiveViewTab("active")}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
             activeViewTab === "active"
-              ? "bg-white dark:bg-slate-950 text-indigo-600 dark:text-indigo-400 shadow-sm border"
+              ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
           }`}
         >
           <ClipboardList className="h-4 w-4" />
           <span className="hidden sm:inline">Active Assigned Tasks</span>
           <span className="sm:hidden">Active</span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "active" ? "bg-indigo-100 text-indigo-700" : "bg-slate-200 text-slate-700"}`}>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "active" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}>
             {activeAssignedTasks.length}
           </span>
         </button>
@@ -835,12 +835,12 @@ export function AdminInternTasksView() {
         <button
           type="button"
           onClick={() => setActiveViewTab("submissions")}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer h-auto ${activeViewTab === "submissions" ? "bg-white dark:bg-slate-950 text-rose-600 dark:text-rose-400 shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer h-auto ${activeViewTab === "submissions" ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
         >
           <CheckCheck className="h-4 w-4 text-rose-600" />
           <span className="hidden sm:inline">Pending Submissions</span>
           <span className="sm:hidden">Submissions</span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "submissions" ? "bg-rose-100 text-rose-700" : "bg-slate-200 text-slate-700"}`}>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "submissions" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}>
             {pendingSubmissions.length}
           </span>
         </button>
@@ -848,9 +848,9 @@ export function AdminInternTasksView() {
         <button
           type="button"
           onClick={() => setActiveViewTab("submissions")}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer h-auto ${activeViewTab === "submissions" ? "bg-white dark:bg-slate-950 text-blue-600 dark:text-blue-400 shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer h-auto ${activeViewTab === "submissions" ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
         >
-          <CheckCircle2 className="h-4 w-4 text-blue-600" />
+          <CheckCircle2 className="h-4 w-4 text-slate-900" />
           <span className="hidden sm:inline">Reviewed & Completed</span>
           <span className="sm:hidden">Reviewed</span>
         </button>
@@ -858,21 +858,21 @@ export function AdminInternTasksView() {
         <button
           type="button"
           onClick={() => setActiveViewTab("stored_bank")}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeViewTab === "stored_bank" ? "bg-white dark:bg-slate-950 text-emerald-600 dark:text-emerald-400 shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeViewTab === "stored_bank" ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
         >
-          <FolderArchive className="h-4 w-4 text-emerald-600" />
+          <FolderArchive className="h-4 w-4 text-slate-900" />
           <span className="hidden sm:inline">Stored Task Bank</span>
           <span className="sm:hidden">Task Bank</span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "stored_bank" ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-700"}`}>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "stored_bank" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}>
             {storedBankTasks.length}
           </span>
         </button>
         <button
           type="button"
           onClick={() => setActiveViewTab("intern_points")}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeViewTab === "intern_points" ? "bg-white dark:bg-slate-950 text-amber-600 dark:text-amber-400 shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeViewTab === "intern_points" ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
         >
-          <Award className="h-4 w-4 text-amber-600" />
+          <Award className="h-4 w-4 text-slate-900" />
           <span className="hidden sm:inline">Intern Progress & Points</span>
           <span className="sm:hidden">Points</span>
         </button>
@@ -881,10 +881,10 @@ export function AdminInternTasksView() {
       {activeViewTab === "active" && (
         <div className="space-y-6 w-full max-w-full">
           {/* Header Banner & Stat Cards */}
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white dark:bg-slate-950 p-5 sm:p-6 rounded-2xl border shadow-sm">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white dark:bg-slate-950 p-5 sm:p-6 rounded-2xl border shadow-sm text-white">
             <div className="min-w-0 flex-1">
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <ClipboardList className="h-6 w-6 text-indigo-600 shrink-0" /> Active Intern Tasks &amp; Progress Tracker
+                <ClipboardList className="h-6 w-6 text-slate-900 shrink-0" /> Active Intern Tasks &amp; Progress Tracker
               </h2>
               <p className="text-xs text-slate-500 mt-1">
                 Monitor and verify live intern milestone submissions. Move completed or reusable tasks directly to the Stored Bank for future cohorts with 1 click.
@@ -902,7 +902,7 @@ export function AdminInternTasksView() {
                   }
                   await handleMoveToStoredBank(completedIds);
                 }}
-                className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-md gap-2 cursor-pointer text-xs h-9"
+                className="bg-slate-900 hover:bg-black text-white font-bold shadow-xs gap-2 cursor-pointer text-xs h-9"
                 title="Immediately moves all completed tasks to the Stored Task Bank for future cohorts without needing to assign them first"
               >
                 <FolderArchive className="h-4 w-4" /> Move Completed Tasks to Stored Bank (For Future)
@@ -916,7 +916,7 @@ export function AdminInternTasksView() {
               </Button>
               <Button
                 onClick={() => setAssignModalOpen(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md shrink-0 text-xs h-9 cursor-pointer"
+                className="bg-slate-900 hover:bg-black text-white font-semibold shadow-xs shrink-0 text-xs h-9 cursor-pointer"
               >
                 <Plus className="h-4 w-4 mr-1.5" /> Assign Tasks (CSV / Manual)
               </Button>
@@ -925,26 +925,26 @@ export function AdminInternTasksView() {
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border bg-white dark:bg-slate-950 shadow-sm">
+        <div className="p-4 rounded-xl border bg-white dark:bg-slate-950 shadow-sm text-white">
           <div className="text-xs font-semibold text-slate-500">Total Intern Tasks</div>
           <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1">{totalCount}</div>
         </div>
-        <div className="p-4 rounded-xl border bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900 shadow-sm">
-          <div className="text-xs font-semibold text-amber-700 dark:text-amber-400">In Progress</div>
-          <div className="text-2xl font-black text-amber-900 dark:text-amber-300 mt-1">{inProgressCount}</div>
+        <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs">
+          <div className="text-xs font-semibold text-slate-600">In Progress</div>
+          <div className="text-2xl font-black text-slate-900 font-mono mt-1">{inProgressCount}</div>
         </div>
-        <div className="p-4 rounded-xl border bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900 shadow-sm">
-          <div className="text-xs font-semibold text-indigo-700 dark:text-indigo-400">Submitted / Under Review</div>
-          <div className="text-2xl font-black text-indigo-900 dark:text-indigo-300 mt-1">{submittedCount}</div>
+        <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs">
+          <div className="text-xs font-semibold text-slate-600">Submitted / Under Review</div>
+          <div className="text-2xl font-black text-slate-900 font-mono mt-1">{submittedCount}</div>
         </div>
-        <div className="p-4 rounded-xl border bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900 shadow-sm">
-          <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Completed</div>
-          <div className="text-2xl font-black text-emerald-900 dark:text-emerald-300 mt-1">{completedCount}</div>
+        <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs">
+          <div className="text-xs font-semibold text-slate-600">Completed</div>
+          <div className="text-2xl font-black text-slate-900 font-mono mt-1">{completedCount}</div>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-950 p-4 rounded-xl border">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-950 p-4 rounded-xl border text-white">
         <div className="relative w-full sm:w-80">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           <Input
@@ -984,7 +984,7 @@ export function AdminInternTasksView() {
       </div>
 
       {/* Bulk Actions & Select All */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-slate-900 border rounded-xl p-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-slate-900 border rounded-xl p-4 text-white">
         <div className="flex items-center gap-3">
           <Checkbox 
             id="select-all" 
@@ -1001,14 +1001,14 @@ export function AdminInternTasksView() {
               <>
                 <div className="flex items-center gap-1.5 mr-2 border-r pr-3 border-slate-300">
                   <Input type="date" value={bulkDueDate} onChange={(e) => setBulkDueDate(e.target.value)} className="h-8 text-xs w-[130px]" />
-                  <Button size="sm" onClick={handleBulkUpdateDueDate} className="h-8 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-xs cursor-pointer">
+                  <Button size="sm" onClick={handleBulkUpdateDueDate} className="h-8 text-xs font-semibold bg-slate-900 hover:bg-black text-white shadow-xs cursor-pointer">
                     Update Deadline
                   </Button>
                 </div>
               <Button 
                 size="sm" 
                 onClick={() => handleMoveToStoredBank(selectedTaskIds)} 
-                className="h-8 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs gap-1.5 cursor-pointer"
+                className="h-8 text-xs font-bold bg-slate-900 hover:bg-black text-white shadow-xs gap-1.5 cursor-pointer"
                 title="Unassign selected tasks from current interns and preserve in Stored Bank for future cohorts"
               >
                 <FolderArchive className="h-3.5 w-3.5" /> Move to Stored Bank ({selectedTaskIds.length})
@@ -1018,8 +1018,8 @@ export function AdminInternTasksView() {
               </Button>
             </>
           )}
-          <Button size="sm" variant="outline" onClick={handleExtractAll} className="h-8 text-xs font-semibold bg-white dark:bg-slate-950 cursor-pointer">
-            <Download className="h-3.5 w-3.5 mr-1.5 text-indigo-600" /> Extract {selectedTaskIds.length > 0 ? "Selected" : "All"}
+          <Button size="sm" variant="outline" onClick={handleExtractAll} className="h-8 text-xs font-semibold bg-white dark:bg-slate-950 cursor-pointer text-white">
+            <Download className="h-3.5 w-3.5 mr-1.5 text-slate-900" /> Extract {selectedTaskIds.length > 0 ? "Selected" : "All"}
           </Button>
         </div>
       </div>
@@ -1027,10 +1027,10 @@ export function AdminInternTasksView() {
 
 
       {/* Intern Tasks Progress Table */}
-      <div className="rounded-xl border bg-white dark:bg-slate-950 shadow-sm overflow-hidden divide-y">
+      <div className="rounded-xl border bg-white dark:bg-slate-950 shadow-sm overflow-hidden divide-y text-white">
         {groupedTaskEntries.length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-xs">
-            No intern tasks found matching criteria. Click <strong className="text-indigo-600">Assign Tasks</strong> to start!
+            No intern tasks found matching criteria. Click <strong className="text-slate-900">Assign Tasks</strong> to start!
           </div>
         ) : (
           groupedTaskEntries.map((group) => {
@@ -1063,7 +1063,7 @@ export function AdminInternTasksView() {
               const taskFile = t.project_requirements || t.task_file_url;
               const submissionFile = t.deliverable_url;
               return (
-                <div key={t.id} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0">
+                <div key={t.id} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0 text-white">
                   {/* Left: Bulk Checkbox & Intern & Task Info */}
                   <div className="flex items-start gap-3 flex-1 min-w-0 w-full">
                     <div className="mt-1 shrink-0">
@@ -1080,17 +1080,17 @@ export function AdminInternTasksView() {
 
                         {/* Status Badge */}
                         {t.status === "completed" && (
-                          <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px]">
+                          <Badge className="bg-slate-900 text-white font-mono border-slate-900 text-[10px]">
                             <CheckCircle2 className="h-3 w-3 mr-1" /> Completed
                           </Badge>
                         )}
                         {(t.status === "submitted" || submissionFile) && t.status !== "completed" && (
-                          <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200 text-[10px]">
+                          <Badge className="bg-slate-100 text-slate-800 font-mono border-slate-300 text-[10px]">
                             <Sparkles className="h-3 w-3 mr-1" /> Submitted
                           </Badge>
                         )}
                         {t.status === "in_progress" && (
-                          <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px]">
+                          <Badge className="bg-slate-50 text-slate-700 font-mono border-slate-200 text-[10px]">
                             <Clock className="h-3 w-3 mr-1" /> In Progress
                           </Badge>
                         )}
@@ -1104,23 +1104,23 @@ export function AdminInternTasksView() {
                           Priority: {t.priority || "medium"}
                         </Badge>
 
-                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-900 bg-slate-50 border-slate-200">
                           Level: {t.level || "Beginner"}
                         </Badge>
 
-                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 border-amber-200 flex items-center gap-0.5">
-                          <CreditCard className="h-3 w-3 text-amber-600" /> {t.credits || 10} Credits
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-900 bg-slate-50 border-slate-200 flex items-center gap-0.5">
+                          <CreditCard className="h-3 w-3 text-slate-900" /> {t.credits || 10} Credits
                         </Badge>
 
                         {(t.team_name || t.team_id || t.assignment_mode === "team") ? (
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[10px] flex items-center gap-1">
-                              <Users className="h-3 w-3 text-purple-700" /> {t.team_name || `Collaborative Team (${t.team_size || 2})`}
+                            <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] flex items-center gap-1">
+                              <Users className="h-3 w-3 text-slate-900" /> {t.team_name || `Collaborative Team (${t.team_size || 2})`}
                             </Badge>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-5 text-[10px] px-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 font-semibold flex items-center gap-1 shadow-none"
+                              className="h-5 text-[10px] px-2 bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-300 font-mono font-semibold flex items-center gap-1 shadow-none"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setManageTeamTask(t);
@@ -1135,7 +1135,7 @@ export function AdminInternTasksView() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-5 text-[10px] px-2 bg-slate-50 hover:bg-purple-50 text-slate-600 hover:text-purple-700 border-slate-200 hover:border-purple-200 flex items-center gap-1 font-medium shadow-none"
+                            className="h-5 text-[10px] px-2 bg-slate-50 hover:bg-slate-50 text-slate-600 hover:text-slate-900 border-slate-200 hover:border-slate-200 flex items-center gap-1 font-medium shadow-none"
                             onClick={(e) => {
                               e.stopPropagation();
                               setManageTeamTask(t);
@@ -1154,7 +1154,7 @@ export function AdminInternTasksView() {
 
                       <div className="flex items-center gap-3 sm:gap-4 text-[11px] text-slate-500 flex-wrap pt-1">
                         <span className="flex items-center gap-1 font-semibold text-slate-800 dark:text-slate-200">
-                          <User className="h-3.5 w-3.5 text-indigo-500 shrink-0" /> {internName} {internProfile?.intern_id ? `(${internProfile.intern_id})` : ""}
+                          <User className="h-3.5 w-3.5 text-slate-600 shrink-0" /> {internName} {internProfile?.intern_id ? `(${internProfile.intern_id})` : ""}
                         </span>
 
                         {t.due_date && (
@@ -1164,7 +1164,7 @@ export function AdminInternTasksView() {
                         {taskFile && (
                           <button
                             onClick={() => setPreviewTask({...t, _previewUrl: taskFile})}
-                            className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
+                            className="text-slate-900 hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
                           >
                             <FileText className="h-3.5 w-3.5" /> View Task File
                           </button>
@@ -1175,17 +1175,17 @@ export function AdminInternTasksView() {
                             href={t.task_meet_link}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-blue-700 hover:underline inline-flex items-center gap-1 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200"
+                            className="text-slate-900 hover:underline inline-flex items-center gap-1 font-bold bg-slate-50 px-2 py-0.5 rounded border border-slate-200"
                           >
-                            <Video className="h-3.5 w-3.5 text-blue-600" /> Meet Link
+                            <Video className="h-3.5 w-3.5 text-slate-900" /> Meet Link
                           </a>
                         )}
                       </div>
 
                       {/* Mentor Feedback / Progress notes */}
                       {(t.mentor_report || t.progress_notes) && (
-                        <div className="mt-2 p-2.5 rounded-lg bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 text-xs">
-                          <span className="font-semibold text-indigo-900 dark:text-indigo-300">Admin/Mentor Notes:</span>{" "}
+                        <div className="mt-2 p-2.5 rounded-lg bg-slate-50 dark:bg-indigo-950/20 border border-slate-200 text-xs">
+                          <span className="font-semibold text-slate-900 font-mono">Admin/Mentor Notes:</span>{" "}
                           <p className="text-slate-600 dark:text-slate-300 italic inline">
                             "{t.mentor_report || t.progress_notes}"
                           </p>
@@ -1194,9 +1194,9 @@ export function AdminInternTasksView() {
 
                       {/* Deadline Extension Review block */}
                       {t.extension_status === "requested" && (
-                        <div className="mt-2 p-3 rounded-lg bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200 text-xs space-y-1.5">
-                          <div className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5 text-amber-700" /> Intern Requested Deadline Extension:
+                        <div className="mt-2 p-3 rounded-lg bg-slate-50 dark:bg-amber-950/20 border border-slate-200 text-xs space-y-1.5">
+                          <div className="font-bold text-slate-900 font-mono flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5 text-slate-900" /> Intern Requested Deadline Extension:
                           </div>
                           <div className="text-slate-700 dark:text-slate-200">
                             <strong>Reason:</strong> "{t.extension_reason || 'No explanation provided.'}"
@@ -1207,7 +1207,7 @@ export function AdminInternTasksView() {
                           <div className="flex items-center gap-2 mt-1.5">
                             <Button 
                               size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-6 px-2 text-[10px]"
+                              className="bg-slate-900 hover:bg-black text-white font-bold h-6 px-2 text-[10px]"
                               onClick={async () => {
                                 try {
                                   await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'approved' } });
@@ -1223,7 +1223,7 @@ export function AdminInternTasksView() {
                             <Button 
                               size="sm"
                               variant="outline"
-                              className="border-slate-300 text-rose-600 hover:bg-rose-50 font-bold h-6 px-2 text-[10px]"
+                              className="border-slate-300 text-rose-600 hover:bg-slate-50 font-bold h-6 px-2 text-[10px]"
                               onClick={async () => {
                                 try {
                                   await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'rejected' } });
@@ -1247,7 +1247,7 @@ export function AdminInternTasksView() {
                     {t.mentor_verification_status === "mentor_verified" && t.status !== "completed" ? (
                       <Button
                         size="sm"
-                        className="h-8 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white gap-1 shadow-xs cursor-pointer"
+                        className="h-8 text-xs font-bold bg-slate-900 hover:bg-black text-white gap-1 shadow-xs cursor-pointer"
                         onClick={async () => {
                           try {
                             const pts = t.mentor_recommended_credits || t.credits || 10;
@@ -1265,7 +1265,7 @@ export function AdminInternTasksView() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-8 text-xs font-bold bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 cursor-pointer"
+                        className="h-8 text-xs font-bold bg-slate-900 text-white hover:bg-black cursor-pointer"
                         onClick={() => handleUpdateStatus(t.id, "completed")}
                       >
                         <Check className="h-3.5 w-3.5 mr-1" /> Approve
@@ -1275,7 +1275,7 @@ export function AdminInternTasksView() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs text-amber-700 border-amber-200 hover:bg-amber-50 cursor-pointer"
+                      className="h-8 text-xs text-slate-900 border-slate-200 hover:bg-slate-50 cursor-pointer"
                       onClick={() => {
                         setSelectedTaskForReview(t);
                         setAdminRemarks(t.progress_notes || "");
@@ -1287,7 +1287,7 @@ export function AdminInternTasksView() {
                     {editingDeadlineTaskId === t.id ? (
                       <div className="flex items-center gap-1">
                         <Input type="date" autoFocus value={inlineDueDate} onChange={e => setInlineDueDate(e.target.value)} className="h-8 text-xs w-[130px]" />
-                        <Button size="sm" className="h-8 bg-blue-600 hover:bg-blue-700 text-white px-2 cursor-pointer" onClick={() => handleInlineDeadlineUpdate(t.id)}>Save</Button>
+                        <Button size="sm" className="h-8 bg-slate-900 hover:bg-black text-white px-2 cursor-pointer" onClick={() => handleInlineDeadlineUpdate(t.id)}>Save</Button>
                         <Button size="sm" variant="ghost" className="h-8 px-2 cursor-pointer" onClick={() => setEditingDeadlineTaskId(null)}>Cancel</Button>
                       </div>
                     ) : (
@@ -1308,7 +1308,7 @@ export function AdminInternTasksView() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs font-bold text-blue-700 bg-blue-50/70 border-blue-200 hover:bg-blue-100 gap-1.5 shadow-2xs cursor-pointer"
+                      className="h-8 text-xs font-bold text-slate-900 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1.5 shadow-2xs cursor-pointer"
                       onClick={() => openTaskEmailModal(t)}
                       title="Send tailored Task Status email to this intern"
                     >
@@ -1318,7 +1318,7 @@ export function AdminInternTasksView() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs font-bold text-teal-700 bg-teal-50/70 border-teal-200 hover:bg-teal-100 gap-1.5 shadow-2xs cursor-pointer"
+                      className="h-8 text-xs font-bold text-slate-900 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1.5 shadow-2xs cursor-pointer"
                       onClick={() => openTaskEmailModal(t)}
                       title="Open formatted WhatsApp task status"
                     >
@@ -1328,11 +1328,11 @@ export function AdminInternTasksView() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs font-bold text-amber-700 bg-amber-50/80 border-amber-200 hover:bg-amber-100 gap-1 shadow-2xs cursor-pointer"
+                      className="h-8 text-xs font-bold text-slate-900 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1 shadow-2xs cursor-pointer"
                       onClick={() => handleMoveToStoredBank([t.id])}
                       title="Move task to Stored Bank (Unassigns from current intern and saves for future cohorts)"
                     >
-                      <FolderArchive className="h-3.5 w-3.5 text-amber-600" /> Store for Future
+                      <FolderArchive className="h-3.5 w-3.5 text-slate-900" /> Store for Future
                     </Button>
 
                     <Button
@@ -1358,7 +1358,7 @@ export function AdminInternTasksView() {
               const teamStatus = allCompleted ? "completed" : anySubmitted ? "submitted" : anyInProgress ? "in_progress" : (rep.status || "pending");
 
               return (
-                <div key={groupKey} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0 border-b last:border-0 bg-purple-50/10">
+                <div key={groupKey} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0 border-b last:border-0 bg-slate-50 text-white">
                   {/* Left: Checkbox & Team Info */}
                   <div className="flex items-start gap-3 flex-1 min-w-0 w-full">
                     <div className="mt-1 shrink-0">
@@ -1380,17 +1380,17 @@ export function AdminInternTasksView() {
 
                         {/* Status Badge */}
                         {teamStatus === "completed" && (
-                          <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px]">
+                          <Badge className="bg-slate-900 text-white font-mono border-slate-900 text-[10px]">
                             <CheckCircle2 className="h-3 w-3 mr-1" /> All Completed
                           </Badge>
                         )}
                         {teamStatus === "submitted" && (
-                          <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200 text-[10px]">
+                          <Badge className="bg-slate-100 text-slate-800 font-mono border-slate-300 text-[10px]">
                             <Sparkles className="h-3 w-3 mr-1" /> Submissions Received
                           </Badge>
                         )}
                         {teamStatus === "in_progress" && (
-                          <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px]">
+                          <Badge className="bg-slate-50 text-slate-700 font-mono border-slate-200 text-[10px]">
                             <Clock className="h-3 w-3 mr-1" /> In Progress
                           </Badge>
                         )}
@@ -1404,23 +1404,23 @@ export function AdminInternTasksView() {
                           Priority: {rep.priority || "medium"}
                         </Badge>
 
-                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-900 bg-slate-50 border-slate-200">
                           Level: {rep.level || "Beginner"}
                         </Badge>
 
-                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 border-amber-200 flex items-center gap-0.5">
-                          <CreditCard className="h-3 w-3 text-amber-600" /> {rep.credits || 10} Credits
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-900 bg-slate-50 border-slate-200 flex items-center gap-0.5">
+                          <CreditCard className="h-3 w-3 text-slate-900" /> {rep.credits || 10} Credits
                         </Badge>
 
                         {/* Team Badge & Manage Team Button */}
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[10px] flex items-center gap-1 font-semibold">
-                            <Users className="h-3 w-3 text-purple-700" /> {rep.team_name || `Collaborative Team (${group.length})`}
+                          <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] flex items-center gap-1 font-semibold">
+                            <Users className="h-3 w-3 text-slate-900" /> {rep.team_name || `Collaborative Team (${group.length})`}
                           </Badge>
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-5 text-[10px] px-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300 font-bold flex items-center gap-1 shadow-2xs cursor-pointer"
+                            className="h-5 text-[10px] px-2 bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-300 font-mono font-bold flex items-center gap-1 shadow-2xs cursor-pointer"
                             onClick={(e) => {
                               e.stopPropagation();
                               setManageTeamTask(rep);
@@ -1444,7 +1444,7 @@ export function AdminInternTasksView() {
                       {/* Team Members List Row */}
                       <div className="flex items-center gap-2 flex-wrap pt-1">
                         <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
-                          <Users className="h-3 w-3 text-purple-600" /> Team Members:
+                          <Users className="h-3 w-3 text-slate-900" /> Team Members:
                         </span>
                         {group.map((t: any) => {
                           const p = t.assigned_profile;
@@ -1454,21 +1454,21 @@ export function AdminInternTasksView() {
                               key={t.id} 
                               className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md px-2 py-0.5 text-xs text-slate-800 dark:text-slate-200"
                             >
-                              <User className="h-3 w-3 text-purple-600 shrink-0" />
+                              <User className="h-3 w-3 text-slate-900 shrink-0" />
                               <span className="font-semibold">{internName}</span>
                               {p?.intern_id && <span className="text-[10px] text-slate-400">({p.intern_id})</span>}
                               {t.status === "completed" && (
-                                <Badge className="bg-emerald-100 text-emerald-800 text-[9px] px-1 py-0 h-4 font-bold">Completed</Badge>
+                                <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[9px] px-1 py-0 h-4 font-bold">Completed</Badge>
                               )}
                               {(t.status === "submitted" || t.deliverable_url) && t.status !== "completed" && (
-                                <Badge className="bg-indigo-100 text-indigo-800 text-[9px] px-1 py-0 h-4 font-bold">Submitted</Badge>
+                                <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[9px] px-1 py-0 h-4 font-bold">Submitted</Badge>
                               )}
                               {t.deliverable_url && (
                                 <a 
                                   href={t.deliverable_url} 
                                   target="_blank" 
                                   rel="noreferrer" 
-                                  className="text-purple-600 hover:underline font-bold text-[10px]"
+                                  className="text-slate-900 hover:underline font-bold text-[10px]"
                                   title="View submitted deliverable"
                                 >
                                   [Deliverable]
@@ -1480,7 +1480,7 @@ export function AdminInternTasksView() {
                                   e.stopPropagation();
                                   openTaskEmailModal(t);
                                 }}
-                                className="text-blue-600 hover:text-blue-800 ml-1 cursor-pointer transition-colors"
+                                className="text-slate-900 hover:text-slate-900 ml-1 cursor-pointer transition-colors"
                                 title={`Send individual email/WhatsApp to ${internName}`}
                               >
                                 <Mail className="h-3 w-3 inline" />
@@ -1499,7 +1499,7 @@ export function AdminInternTasksView() {
                         {taskFile && (
                           <button
                             onClick={() => setPreviewTask({...rep, _previewUrl: taskFile})}
-                            className="text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
+                            className="text-slate-900 hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
                           >
                             <FileText className="h-3.5 w-3.5" /> View Task File
                           </button>
@@ -1510,9 +1510,9 @@ export function AdminInternTasksView() {
                             href={rep.task_meet_link}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-blue-700 hover:underline inline-flex items-center gap-1 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200"
+                            className="text-slate-900 hover:underline inline-flex items-center gap-1 font-bold bg-slate-50 px-2 py-0.5 rounded border border-slate-200"
                           >
-                            <Video className="h-3.5 w-3.5 text-blue-600" /> Meet Link
+                            <Video className="h-3.5 w-3.5 text-slate-900" /> Meet Link
                           </a>
                         )}
                       </div>
@@ -1524,7 +1524,7 @@ export function AdminInternTasksView() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs font-bold bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 cursor-pointer"
+                      className="h-8 text-xs font-bold bg-slate-900 text-white hover:bg-black cursor-pointer"
                       onClick={() => handleUpdateTeamStatus(allGroupIds, "completed")}
                       title="Mark task completed for all team members"
                     >
@@ -1534,7 +1534,7 @@ export function AdminInternTasksView() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs text-amber-700 border-amber-200 hover:bg-amber-50 cursor-pointer"
+                      className="h-8 text-xs text-slate-900 border-slate-200 hover:bg-slate-50 cursor-pointer"
                       onClick={() => {
                         setSelectedTaskForReview(rep);
                         setAdminRemarks(rep.progress_notes || "");
@@ -1546,7 +1546,7 @@ export function AdminInternTasksView() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs font-bold text-blue-700 bg-blue-50/70 border-blue-200 hover:bg-blue-100 gap-1.5 shadow-2xs cursor-pointer"
+                      className="h-8 text-xs font-bold text-slate-900 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1.5 shadow-2xs cursor-pointer"
                       onClick={() => openTaskEmailModal(rep, undefined, group)}
                       title="Send tailored Task Status email to entire collaborative team"
                     >
@@ -1556,7 +1556,7 @@ export function AdminInternTasksView() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs font-bold text-teal-700 bg-teal-50/70 border-teal-200 hover:bg-teal-100 gap-1.5 shadow-2xs cursor-pointer"
+                      className="h-8 text-xs font-bold text-slate-900 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1.5 shadow-2xs cursor-pointer"
                       onClick={() => openTaskEmailModal(rep, undefined, group)}
                       title="Open formatted WhatsApp task status for team"
                     >
@@ -1566,11 +1566,11 @@ export function AdminInternTasksView() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs font-bold text-amber-700 bg-amber-50/80 border-amber-200 hover:bg-amber-100 gap-1 shadow-2xs cursor-pointer"
+                      className="h-8 text-xs font-bold text-slate-900 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1 shadow-2xs cursor-pointer"
                       onClick={() => handleMoveToStoredBank(allGroupIds)}
                       title="Move team task to Stored Bank for future cohorts"
                     >
-                      <FolderArchive className="h-3.5 w-3.5 text-amber-600" /> Store for Future
+                      <FolderArchive className="h-3.5 w-3.5 text-slate-900" /> Store for Future
                     </Button>
 
                     <Button
@@ -1592,11 +1592,11 @@ export function AdminInternTasksView() {
             return (
               <div key={groupKey} className="flex flex-col border-b last:border-0 border-slate-200 dark:border-slate-800">
                 <div 
-                  className="p-4 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-between cursor-pointer" 
+                  className="p-4 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-between cursor-pointer text-white" 
                   onClick={() => toggleExpand(groupKey)}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                    <Badge variant="outline" className="w-fit bg-indigo-100 text-indigo-700 border-indigo-200 flex items-center gap-1 px-2.5">
+                    <Badge variant="outline" className="w-fit bg-slate-100 text-slate-800 border-slate-300 font-mono flex items-center gap-1 px-2.5">
                       <Sparkles className="h-3 w-3" /> Mass Assigned Batch
                     </Badge>
                     <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{rep.title}</span>
@@ -1618,7 +1618,7 @@ export function AdminInternTasksView() {
                 </div>
                 
                 {isExpanded && (
-                  <div className="border-l-2 sm:border-l-4 border-indigo-200 dark:border-indigo-800 ml-4 sm:ml-6 divide-y bg-white dark:bg-slate-950">
+                  <div className="border-l-2 sm:border-l-4 border-slate-200 dark:border-indigo-800 ml-4 sm:ml-6 divide-y bg-white dark:bg-slate-950 text-white">
                     {group.map((t: any) => renderTask(t))}
                   </div>
                 )}
@@ -1635,7 +1635,7 @@ export function AdminInternTasksView() {
       {/* PENDING SUBMISSIONS QUEUE VIEW */}
       {activeViewTab === "submissions" && (
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-950 p-5 rounded-2xl border shadow-sm">
+          <div className="bg-white dark:bg-slate-950 p-5 rounded-2xl border shadow-sm text-white">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold flex items-center gap-2"><CheckCheck className="h-5 w-5 text-rose-600" /> Pending Submissions Review Queue</h2>
               <Input
@@ -1648,7 +1648,7 @@ export function AdminInternTasksView() {
             
             <div className="space-y-3">
               {filteredSubmissions.length === 0 ? (
-                <div className="p-8 text-center bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-200">
+                <div className="p-8 text-center bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-200 text-white">
                   <p className="text-slate-500 font-medium">No pending submissions to review. You're all caught up!</p>
                 </div>
               ) : (
@@ -1657,7 +1657,7 @@ export function AdminInternTasksView() {
                     <div className="space-y-1.5 flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-sm">{t.title}</span>
-                        <Badge className="bg-indigo-100 text-indigo-800 text-[10px]">Submitted</Badge>
+                        <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px]">Submitted</Badge>
                       </div>
                       <div className="text-xs text-slate-600 flex items-center gap-2">
                         <User className="h-3 w-3" /> 
@@ -1670,7 +1670,7 @@ export function AdminInternTasksView() {
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 h-8 text-xs cursor-pointer"
+                        className="bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-300 font-mono h-8 text-xs cursor-pointer"
                         onClick={() => {
                           setSelectedTaskForReview(t);
                           setAdminRemarks(t.progress_notes || "");
@@ -1689,9 +1689,9 @@ export function AdminInternTasksView() {
 
       {activeViewTab === "submissions" && (
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-950 p-5 rounded-2xl border shadow-sm">
+          <div className="bg-white dark:bg-slate-950 p-5 rounded-2xl border shadow-sm text-white">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-blue-600" /> Reviewed & Completed Tasks</h2>
+              <h2 className="text-xl font-bold flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-slate-900" /> Reviewed & Completed Tasks</h2>
               <Input
                 placeholder="Search reviewed tasks..."
                 value={searchQuery}
@@ -1702,7 +1702,7 @@ export function AdminInternTasksView() {
             
             <div className="space-y-3">
               {reviewedTasks.length === 0 ? (
-                <div className="p-8 text-center bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-200">
+                <div className="p-8 text-center bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-200 text-white">
                   <p className="text-slate-500 font-medium">No tasks have been reviewed yet.</p>
                 </div>
               ) : (
@@ -1711,7 +1711,7 @@ export function AdminInternTasksView() {
                     <div className="space-y-1.5 flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-sm">{t.title}</span>
-                        <Badge className={`text-[10px] ${t.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : t.status === 'under_review' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>
+                        <Badge className={`text-[10px] ${t.status === 'completed' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : t.status === 'under_review' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : 'bg-slate-100 text-slate-800 border-slate-300 font-mono'}`}>
                           {(t.status || "").replace("_", " ")}
                         </Badge>
                       </div>
@@ -1726,7 +1726,7 @@ export function AdminInternTasksView() {
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 h-8 text-xs cursor-pointer"
+                        className="bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-300 font-mono h-8 text-xs cursor-pointer"
                         onClick={() => {
                           setSelectedTaskForReview(t);
                           setAdminRemarks(t.progress_notes || t.admin_remarks || "");
@@ -1747,10 +1747,10 @@ export function AdminInternTasksView() {
 
         <div className="space-y-6">
           {/* Stored Bank Banner */}
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white dark:bg-slate-950 p-6 rounded-2xl border shadow-sm">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white dark:bg-slate-950 p-6 rounded-2xl border shadow-sm text-white">
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <FolderArchive className="h-6 w-6 text-emerald-600" /> Stored Task Bank &amp; Future Repository
+                <FolderArchive className="h-6 w-6 text-slate-900" /> Stored Task Bank &amp; Future Repository
               </h2>
               <p className="text-xs text-slate-500 mt-1">
                 Preserved project tasks and milestone templates ready to be assigned to upcoming cohorts or newly enrolled interns on demand.
@@ -1766,13 +1766,13 @@ export function AdminInternTasksView() {
                   setAssignStoredModalOpen(true);
                 }}
                 disabled={selectedStoredTaskIds.length === 0}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md gap-2 cursor-pointer disabled:opacity-50"
+                className="bg-slate-900 hover:bg-black text-white font-bold shadow-md gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Send className="h-4 w-4" /> Assign Selected Tasks ({selectedStoredTaskIds.length})
               </Button>
               <Button
                 onClick={() => setAssignModalOpen(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md shrink-0 cursor-pointer"
+                className="bg-slate-900 hover:bg-black text-white font-semibold shadow-md shrink-0 cursor-pointer"
               >
                 <Plus className="h-4 w-4 mr-2" /> Create / CSV Import
               </Button>
@@ -1780,7 +1780,7 @@ export function AdminInternTasksView() {
           </div>
 
           {/* Stored Bank Filter Bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-950 p-4 rounded-xl border">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-950 p-4 rounded-xl border text-white">
             <div className="relative w-full sm:w-80">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <Input
@@ -1807,7 +1807,7 @@ export function AdminInternTasksView() {
           </div>
 
           {/* Stored Bank Bulk Actions */}
-          <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-slate-900 border rounded-xl p-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-slate-900 border rounded-xl p-4 text-white">
             <div className="flex items-center gap-3">
               <Checkbox 
                 id="select-all-stored" 
@@ -1830,7 +1830,7 @@ export function AdminInternTasksView() {
                 <Button
                   size="sm"
                   onClick={() => setAssignStoredModalOpen(true)}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 gap-1.5 shadow-xs cursor-pointer"
+                  className="bg-slate-900 hover:bg-black text-white font-bold text-xs h-8 gap-1.5 shadow-xs cursor-pointer"
                 >
                   <Send className="h-3.5 w-3.5" /> Assign to Intern(s) ({selectedStoredTaskIds.length})
                 </Button>
@@ -1857,7 +1857,7 @@ export function AdminInternTasksView() {
           </div>
 
           {/* Stored Tasks List */}
-          <div className="rounded-xl border bg-white dark:bg-slate-950 shadow-sm overflow-hidden divide-y">
+          <div className="rounded-xl border bg-white dark:bg-slate-950 shadow-sm overflow-hidden divide-y text-white">
             {filteredStoredTasks.length === 0 ? (
               <div className="p-12 text-center text-slate-500 text-xs space-y-2">
                 <FolderArchive className="h-8 w-8 text-slate-400 mx-auto opacity-60" />
@@ -1870,7 +1870,7 @@ export function AdminInternTasksView() {
               filteredStoredTasks.map((t) => {
                 const isSelected = selectedStoredTaskIds.includes(t.id);
                 return (
-                  <div key={t.id} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0">
+                  <div key={t.id} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0 text-white">
                     <div className="flex items-start gap-3 flex-1 min-w-0 w-full">
                       <div className="mt-1 shrink-0">
                         <Checkbox
@@ -1887,17 +1887,17 @@ export function AdminInternTasksView() {
                       <div className="space-y-1.5 flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-bold text-sm text-slate-900 dark:text-slate-100 break-words">{t.title}</span>
-                          <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] flex items-center gap-1 font-bold">
-                            <FolderArchive className="h-3 w-3 text-emerald-700" /> Stored in Repository
+                          <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] flex items-center gap-1 font-bold">
+                            <FolderArchive className="h-3 w-3 text-slate-900" /> Stored in Repository
                           </Badge>
                           <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-600">
                             Priority: {t.priority || "medium"}
                           </Badge>
-                          <Badge variant="outline" className="text-[10px] uppercase font-bold text-amber-700 bg-amber-50 border-amber-200">
-                            <CreditCard className="h-3 w-3 text-amber-600 inline mr-1" /> {t.credits || 10} Credits
+                          <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-900 bg-slate-50 border-slate-200">
+                            <CreditCard className="h-3 w-3 text-slate-900 inline mr-1" /> {t.credits || 10} Credits
                           </Badge>
                           {t.task_domain && (
-                            <Badge variant="outline" className="text-[10px] uppercase font-bold text-indigo-700 bg-indigo-50 border-indigo-200">
+                            <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-900 bg-slate-50 border-slate-200">
                               Domain: {t.task_domain}
                             </Badge>
                           )}
@@ -1910,12 +1910,12 @@ export function AdminInternTasksView() {
                         <div className="flex items-center gap-3 sm:gap-4 text-[11px] text-slate-400 flex-wrap pt-1">
                           <span>Created: {new Date(t.created_at).toLocaleDateString()}</span>
                           {t.task_file_url && (
-                            <a href={t.task_file_url} target="_blank" rel="noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1 font-bold">
+                            <a href={t.task_file_url} target="_blank" rel="noreferrer" className="text-slate-900 dark:text-white hover:underline inline-flex items-center gap-1 font-bold">
                               <FileText className="h-3.5 w-3.5" /> Task Spec/Files
                             </a>
                           )}
                           {t.task_doc_url && (
-                            <a href={t.task_doc_url} target="_blank" rel="noreferrer" className="text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 font-bold">
+                            <a href={t.task_doc_url} target="_blank" rel="noreferrer" className="text-slate-900 dark:text-white hover:underline inline-flex items-center gap-1 font-bold">
                               <BookOpen className="h-3.5 w-3.5" /> Handbook
                             </a>
                           )}
@@ -1925,13 +1925,13 @@ export function AdminInternTasksView() {
                             </a>
                           )}
                           {t.ppt_template_url && (
-                            <a href={t.ppt_template_url} target="_blank" rel="noreferrer" className="text-amber-600 dark:text-amber-400 hover:underline inline-flex items-center gap-1 font-bold">
+                            <a href={t.ppt_template_url} target="_blank" rel="noreferrer" className="text-slate-900 dark:text-white hover:underline inline-flex items-center gap-1 font-bold">
                               <Play className="h-3.5 w-3.5" /> PPT File
                             </a>
                           )}
                           {t.task_meet_link && (
-                            <a href={t.task_meet_link} target="_blank" rel="noreferrer" className="text-blue-700 dark:text-blue-400 hover:underline inline-flex items-center gap-1 font-bold bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
-                              <Video className="h-3.5 w-3.5 text-blue-600" /> Meet Link
+                            <a href={t.task_meet_link} target="_blank" rel="noreferrer" className="text-slate-900 dark:text-slate-500 hover:underline inline-flex items-center gap-1 font-bold bg-slate-50 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-slate-200 dark:border-blue-800">
+                              <Video className="h-3.5 w-3.5 text-slate-900" /> Meet Link
                             </a>
                           )}
                         </div>
@@ -1945,7 +1945,7 @@ export function AdminInternTasksView() {
                           setSelectedStoredTaskIds([t.id]);
                           setAssignStoredModalOpen(true);
                         }}
-                        className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-xs cursor-pointer"
+                        className="h-8 text-xs font-bold bg-slate-900 hover:bg-black text-white gap-1.5 shadow-xs cursor-pointer"
                       >
                         <Send className="h-3.5 w-3.5" /> Pick &amp; Assign to Intern(s)
                       </Button>
@@ -1974,7 +1974,7 @@ export function AdminInternTasksView() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                  <Award className="h-6 w-6 text-amber-600" />
+                  <Award className="h-6 w-6 text-slate-900" />
                   Corporate Intern Curriculum &amp; Points Evaluation Matrix
                 </h2>
                 <p className="text-xs text-slate-500 font-medium mt-1">
@@ -2025,7 +2025,7 @@ export function AdminInternTasksView() {
                     return (
                       <tr 
                         key={intern.id} 
-                        className={`hover:bg-slate-50/80 cursor-pointer transition-colors ${isSelected ? "bg-amber-50/60 font-semibold" : ""}`}
+                        className={`hover:bg-slate-50/80 cursor-pointer transition-colors ${isSelected ? "bg-slate-50 font-semibold" : ""}`}
                         onClick={() => setSelectedMatrixInternId(intern.id)}
                       >
                         <td className="px-4 py-3">
@@ -2037,10 +2037,10 @@ export function AdminInternTasksView() {
                         <td className="px-4 py-3 text-xs text-slate-500 font-mono">
                           {intern.intern_id || "N/A"} · {intern.email}
                         </td>
-                        <td className="px-4 py-3 text-emerald-600 font-medium">
+                        <td className="px-4 py-3 text-slate-900 font-medium">
                           {completedTasks.length} / {internTasks.length} Tasks
                         </td>
-                        <td className="px-4 py-3 text-right font-black text-amber-600 text-base">
+                        <td className="px-4 py-3 text-right font-black text-slate-900 text-base">
                           {totalCredits} <span className="text-xs font-semibold text-slate-400">pts</span>
                         </td>
                         <td className="px-4 py-3 text-right space-x-2">
@@ -2091,24 +2091,24 @@ export function AdminInternTasksView() {
             ];
 
             return (
-              <div className="bg-white p-6 rounded-2xl border border-indigo-200 shadow-md space-y-5 animate-in fade-in duration-300">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-md space-y-5 animate-in fade-in duration-300">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-900 bg-slate-50 border border-slate-200 px-2.5 py-0.5 rounded-full">
                       Intern Evaluation Matrix
                     </span>
                     <h3 className="text-xl font-black text-slate-900 mt-1 flex items-center gap-2">
                       {currentIntern.full_name}
                       <span className="text-xs font-mono font-normal text-slate-500">({currentIntern.intern_id || currentIntern.email})</span>
                     </h3>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">Domain: <strong>{currentIntern.department || "Technology"}</strong> · Accumulated Credits: <strong className="text-amber-600">{totalCredits} pts</strong></p>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">Domain: <strong>{currentIntern.department || "Technology"}</strong> · Accumulated Credits: <strong className="text-slate-900">{totalCredits} pts</strong></p>
                   </div>
 
                   <Button 
                     onClick={() => handleDownloadMarksheet(currentIntern, internTasks, totalCredits, internCbtSubs)}
                     className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs gap-1.5 shadow-sm h-10 px-5"
                   >
-                    <Download className="h-4 w-4 text-amber-400" /> Download Experience Marksheet PDF
+                    <Download className="h-4 w-4 text-slate-500" /> Download Experience Marksheet PDF
                   </Button>
                 </div>
 
@@ -2134,7 +2134,7 @@ export function AdminInternTasksView() {
                           <tr key={curr.name} className="hover:bg-slate-50">
                             <td className="px-4 py-3 font-bold text-slate-900 whitespace-nowrap">
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold border">
-                                <BookmarkPlus className="h-3.5 w-3.5 text-indigo-600" />
+                                <BookmarkPlus className="h-3.5 w-3.5 text-slate-900" />
                                 {curr.name}
                               </span>
                             </td>
@@ -2148,7 +2148,7 @@ export function AdminInternTasksView() {
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               {matchingTask ? (
-                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${matchingTask.status === 'completed' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'}`}>
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${matchingTask.status === 'completed' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-300' : 'bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-300'}`}>
                                   {matchingTask.status}
                                 </span>
                               ) : (
@@ -2157,12 +2157,12 @@ export function AdminInternTasksView() {
                                 </span>
                               )}
                             </td>
-                            <td className="px-4 py-3 text-center font-black text-amber-600 text-base whitespace-nowrap">
+                            <td className="px-4 py-3 text-center font-black text-slate-900 text-base whitespace-nowrap">
                               {matchingTask ? (matchingTask.credits || 10) : 0} <span className="text-xs font-normal text-slate-400">pts</span>
                             </td>
                             <td className="px-4 py-3 text-center whitespace-nowrap">
                               {matchingCbt ? (
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${matchingCbt.passed ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${matchingCbt.passed ? 'bg-slate-100 text-slate-700 border-slate-300 font-mono border border-slate-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
                                   <Sparkles className="h-3 w-3" /> {matchingCbt.score || 0}% ({matchingCbt.passed ? 'Passed' : 'Completed'})
                                 </span>
                               ) : (
@@ -2183,7 +2183,7 @@ export function AdminInternTasksView() {
                                     status: matchingTask?.status || "completed"
                                   });
                                 }}
-                                className="h-7 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white gap-1 shadow-xs"
+                                className="h-7 text-xs font-bold bg-slate-900 hover:bg-black text-white gap-1 shadow-xs"
                               >
                                 <Award className="h-3.5 w-3.5" /> {matchingTask ? "Edit Credits" : "Assign Credits"}
                               </Button>
@@ -2206,7 +2206,7 @@ export function AdminInternTasksView() {
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                <CheckCircle2 className="h-5 w-5 text-slate-900" />
                 Verify & Review Task: {selectedTaskForReview.title}
               </DialogTitle>
               <DialogDescription>
@@ -2223,7 +2223,7 @@ export function AdminInternTasksView() {
                     href={selectedTaskForReview.deliverable_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs text-blue-600 hover:underline flex items-center gap-1 font-mono break-all mb-2"
+                    className="text-xs text-slate-900 hover:underline flex items-center gap-1 font-mono break-all mb-2"
                   >
                     <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                     {selectedTaskForReview.deliverable_url}
@@ -2324,7 +2324,7 @@ export function AdminInternTasksView() {
                   <Check className="h-4 w-4" /> Save Review
                 </Button>
                 <Button
-                  className="sm:w-3/8 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5 shadow-sm"
+                  className="sm:w-3/8 bg-slate-900 hover:bg-black text-white font-bold text-xs gap-1.5 shadow-sm"
                   disabled={isUpdating}
                   onClick={async () => {
                     setIsUpdating(true);
@@ -2378,7 +2378,7 @@ export function AdminInternTasksView() {
           <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <Mail className="h-5 w-5 text-blue-600" />
+                <Mail className="h-5 w-5 text-slate-900" />
                 {taskEmailRecipients.length > 1 
                   ? `Send Task Notification to Team (${taskEmailRecipients.length} Members)`
                   : "Send Task Status Email to Intern"}
@@ -2391,17 +2391,17 @@ export function AdminInternTasksView() {
             <div className="space-y-4 py-2 text-xs">
               {/* If multiple team members, show team member selection box */}
               {taskEmailRecipients.length > 1 ? (
-                <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl p-3 space-y-2.5">
+                <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl p-3 space-y-2.5 text-white">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 text-xs">
-                      <Users className="h-4 w-4 text-purple-600" />
+                      <Users className="h-4 w-4 text-slate-900" />
                       Select Team Recipients ({taskEmailRecipients.filter(r => r.selected).length}/{taskEmailRecipients.length})
                     </span>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setTaskEmailRecipients(prev => prev.map(r => ({ ...r, selected: true })))}
-                        className="text-[11px] text-blue-600 hover:underline font-semibold cursor-pointer"
+                        className="text-[11px] text-slate-900 hover:underline font-semibold cursor-pointer"
                       >
                         Select All
                       </button>
@@ -2440,13 +2440,13 @@ export function AdminInternTasksView() {
                               const val = e.target.value;
                               setTaskEmailRecipients(prev => prev.map((x, i) => i === idx ? { ...x, phone: val } : x));
                             }}
-                            className="h-7 w-32 text-[11px] px-2 bg-white dark:bg-slate-950"
+                            className="h-7 w-32 text-[11px] px-2 bg-white dark:bg-slate-950 text-white"
                           />
                           <Button
                             type="button"
                             size="sm"
                             variant="outline"
-                            className="h-7 px-2 text-teal-700 bg-teal-50 hover:bg-teal-100 border-teal-200 text-[11px] font-bold gap-1 cursor-pointer"
+                            className="h-7 px-2 text-slate-900 bg-slate-50 hover:bg-slate-100 border-slate-200 text-[11px] font-bold gap-1 cursor-pointer"
                             onClick={() => handleSendTaskWhatsAppSubmit(r)}
                             title={`Open WhatsApp chat with ${r.name}`}
                           >
@@ -2484,7 +2484,7 @@ export function AdminInternTasksView() {
                   <div>
                     <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center justify-between">
                       <span>WhatsApp Phone</span>
-                      {!taskEmailRecipients[0]?.phone && <span className="text-[10px] text-amber-600 font-normal">(For WhatsApp)</span>}
+                      {!taskEmailRecipients[0]?.phone && <span className="text-[10px] text-slate-900 font-normal">(For WhatsApp)</span>}
                     </label>
                     <Input 
                       placeholder="e.g. +91 9876543210" 
@@ -2493,7 +2493,7 @@ export function AdminInternTasksView() {
                         const val = e.target.value;
                         setTaskEmailRecipients(prev => prev.map((x, i) => i === 0 ? { ...x, phone: val } : x));
                       }} 
-                      className={!taskEmailRecipients[0]?.phone ? "border-amber-400 focus:ring-amber-400" : ""}
+                      className={!taskEmailRecipients[0]?.phone ? "border-slate-300 focus:ring-amber-400" : ""}
                     />
                   </div>
                 </div>
@@ -2546,7 +2546,7 @@ export function AdminInternTasksView() {
                 </div>
               </div>
 
-              <div className="p-3 bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-xl text-blue-900 dark:text-blue-200 text-xs">
+              <div className="p-3 bg-slate-50 dark:bg-blue-950/20 border border-slate-200 dark:border-blue-900 rounded-xl text-slate-900 dark:text-blue-200 text-xs">
                 <strong>Corporate Template:</strong> Includes Vyntyra header, task milestone badge, mentor remarks box, and direct button linking to the Intern Dashboard.
               </div>
 
@@ -2559,7 +2559,7 @@ export function AdminInternTasksView() {
                     type="button"
                     variant="outline"
                     onClick={() => handleSendTaskWhatsAppSubmit()}
-                    className="text-teal-700 border-teal-300 hover:bg-teal-50 font-bold gap-1 text-xs"
+                    className="text-slate-900 border-slate-300 hover:bg-slate-50 font-bold gap-1 text-xs"
                   >
                     <MessageSquare className="h-3.5 w-3.5" /> Send via WhatsApp
                   </Button>
@@ -2568,7 +2568,7 @@ export function AdminInternTasksView() {
                   type="button"
                   disabled={isSendingTaskEmail || taskEmailRecipients.filter(r => r.selected).length === 0}
                   onClick={handleSendTaskEmailSubmit}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-1 text-xs"
+                  className="bg-slate-900 hover:bg-black text-white font-bold gap-1 text-xs"
                 >
                   {isSendingTaskEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                   {taskEmailRecipients.length > 1
@@ -2617,12 +2617,12 @@ export function AdminInternTasksView() {
 
       {/* Cohort Task Rollover & Reassignment Modal */}
       <Dialog open={rolloverModalOpen} onOpenChange={setRolloverModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-50 dark:bg-slate-900">
-          <DialogHeader className="p-6 bg-white dark:bg-slate-950 border-b shrink-0">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-50 dark:bg-slate-900 text-white">
+          <DialogHeader className="p-6 bg-white dark:bg-slate-950 border-b shrink-0 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  <RotateCcw className="h-5 w-5 text-emerald-600" />
+                  <RotateCcw className="h-5 w-5 text-slate-900" />
                   Cohort Task Rollover &amp; Reassignment Hub
                 </DialogTitle>
                 <DialogDescription className="text-xs text-slate-500 mt-1">
@@ -2630,10 +2630,10 @@ export function AdminInternTasksView() {
                 </DialogDescription>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`px-3 py-1 text-xs font-bold rounded-full ${rolloverStep === 1 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                <span className={`px-3 py-1 text-xs font-bold rounded-full ${rolloverStep === 1 ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : 'bg-slate-100 text-slate-600'}`}>
                   Step 1: Select Tasks ({selectedVerifiedTaskIds.length})
                 </span>
-                <span className={`px-3 py-1 text-xs font-bold rounded-full ${rolloverStep === 2 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                <span className={`px-3 py-1 text-xs font-bold rounded-full ${rolloverStep === 2 ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : 'bg-slate-100 text-slate-600'}`}>
                   Step 2: Destination &amp; Interns ({selectedTargetInternIds.length})
                 </span>
               </div>
@@ -2644,7 +2644,7 @@ export function AdminInternTasksView() {
             {rolloverStep === 1 ? (
               <div className="space-y-4">
                 {/* Search & Filter Bar */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-950 p-4 rounded-xl border shadow-xs">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-950 p-4 rounded-xl border shadow-xs text-white">
                   <div className="relative flex-1 w-full">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                     <Input
@@ -2659,7 +2659,7 @@ export function AdminInternTasksView() {
                       variant={onlyVerifiedFilter ? "default" : "outline"}
                       size="sm"
                       onClick={() => setOnlyVerifiedFilter(!onlyVerifiedFilter)}
-                      className={`text-xs font-bold ${onlyVerifiedFilter ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}
+                      className={`text-xs font-bold ${onlyVerifiedFilter ? 'bg-slate-900 hover:bg-black text-white' : ''}`}
                     >
                       <CheckCheck className="h-3.5 w-3.5 mr-1" /> Only Verified / Done
                     </Button>
@@ -2683,7 +2683,7 @@ export function AdminInternTasksView() {
                 {/* Verified Task Cards List */}
                 <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-1">
                   {filteredVerifiedTasks.length === 0 ? (
-                    <div className="text-center py-12 bg-white dark:bg-slate-950 rounded-xl border border-dashed text-slate-400 text-xs">
+                    <div className="text-center py-12 bg-white dark:bg-slate-950 rounded-xl border border-dashed text-slate-400 text-xs text-white">
                       No matching verified tasks found. Uncheck "Only Verified" or adjust search.
                     </div>
                   ) : (
@@ -2699,7 +2699,7 @@ export function AdminInternTasksView() {
                           }}
                           className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex items-start gap-3.5 ${
                             isSelected 
-                              ? "bg-emerald-50/80 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-700 shadow-xs" 
+                              ? "bg-slate-50 border-slate-300 dark:bg-emerald-950/30 dark:border-emerald-700 shadow-xs" 
                               : "bg-white dark:bg-slate-950 border-slate-200/80 hover:border-slate-300"
                           }`}
                         >
@@ -2710,14 +2710,14 @@ export function AdminInternTasksView() {
                                 prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id]
                               );
                             }}
-                            className="mt-1 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                            className="mt-1 data-[state=checked]:bg-slate-900 data-[state=checked]:border-emerald-600 text-white"
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2 flex-wrap">
                               <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
                                 {t.title}
                                 {t.is_verified && (
-                                  <Badge className="bg-emerald-100 text-emerald-800 text-[10px] font-bold border-0">
+                                  <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] font-bold border-0">
                                     Verified
                                   </Badge>
                                 )}
@@ -2726,7 +2726,7 @@ export function AdminInternTasksView() {
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase">
                                   {t.priority || "Medium"}
                                 </span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border-slate-300 font-mono">
                                   {t.credits || 10} Credits
                                 </span>
                               </div>
@@ -2750,9 +2750,9 @@ export function AdminInternTasksView() {
             ) : (
               <div className="space-y-6">
                 {/* Cohort Configuration */}
-                <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border shadow-xs space-y-4">
+                <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border shadow-xs space-y-4 text-white">
                   <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-emerald-600" /> Destination Cohort &amp; Timeline
+                    <Calendar className="h-4 w-4 text-slate-900" /> Destination Cohort &amp; Timeline
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
@@ -2801,11 +2801,11 @@ export function AdminInternTasksView() {
                 </div>
 
                 {/* Target Intern Selection */}
-                <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border shadow-xs space-y-4">
+                <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border shadow-xs space-y-4 text-white">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                     <div>
                       <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
-                        <Users className="h-4 w-4 text-emerald-600" /> Assign Directly to Enrolled Interns
+                        <Users className="h-4 w-4 text-slate-900" /> Assign Directly to Enrolled Interns
                       </h3>
                       <p className="text-xs text-slate-500 mt-0.5">Select specific interns or assign to the whole cohort.</p>
                     </div>
@@ -2840,7 +2840,7 @@ export function AdminInternTasksView() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[220px] overflow-y-auto pr-1">
                     {internsQ.isLoading ? (
                       <div className="col-span-2 text-center py-8 text-slate-400 text-xs flex items-center justify-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin text-emerald-600" /> Loading active interns...
+                        <Loader2 className="h-4 w-4 animate-spin text-slate-900" /> Loading active interns...
                       </div>
                     ) : filteredTargetInterns.length === 0 ? (
                       <div className="col-span-2 text-center py-8 text-slate-400 text-xs">
@@ -2859,7 +2859,7 @@ export function AdminInternTasksView() {
                             }}
                             className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${
                               isSelected
-                                ? "bg-emerald-50/80 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-700"
+                                ? "bg-slate-50 border-slate-300 dark:bg-emerald-950/30 dark:border-emerald-700"
                                 : "bg-slate-50 dark:bg-slate-900 border-slate-200/80 hover:bg-white"
                             }`}
                           >
@@ -2870,7 +2870,7 @@ export function AdminInternTasksView() {
                                   prev.includes(intern.id) ? prev.filter(id => id !== intern.id) : [...prev, intern.id]
                                 );
                               }}
-                              className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                              className="data-[state=checked]:bg-slate-900 data-[state=checked]:border-emerald-600 text-white"
                             />
                             <div className="flex-1 min-w-0">
                               <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
@@ -2888,9 +2888,9 @@ export function AdminInternTasksView() {
                 </div>
 
                 {/* Summary Box */}
-                <div className="p-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950/40 dark:via-teal-950/40 dark:to-cyan-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-900 dark:text-emerald-200 flex items-center justify-between">
+                <div className="p-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950/40 dark:via-teal-950/40 dark:to-cyan-950/40 border border-slate-200 dark:border-emerald-800 rounded-xl text-xs text-slate-900 dark:text-emerald-200 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <Sparkles className="h-4 w-4 text-slate-900 shrink-0" />
                     <span>
                       Will clone <strong>{selectedVerifiedTaskIds.length} verified task(s)</strong> and assign them to <strong>{selectedTargetInternIds.length} intern(s)</strong> in <strong>{targetCohort}</strong> (Total <strong>{selectedVerifiedTaskIds.length * (selectedTargetInternIds.length || 1)}</strong> fresh assignments).
                     </span>
@@ -2900,7 +2900,7 @@ export function AdminInternTasksView() {
             )}
           </div>
 
-          <DialogFooter className="p-4 bg-white dark:bg-slate-950 border-t shrink-0 flex items-center justify-between sm:justify-between w-full">
+          <DialogFooter className="p-4 bg-white dark:bg-slate-950 border-t shrink-0 flex items-center justify-between sm:justify-between w-full text-white">
             <div>
               {rolloverStep === 2 && (
                 <Button variant="outline" size="sm" onClick={() => setRolloverStep(1)} className="text-xs font-bold">
@@ -2917,7 +2917,7 @@ export function AdminInternTasksView() {
                   size="sm"
                   disabled={selectedVerifiedTaskIds.length === 0}
                   onClick={() => setRolloverStep(2)}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-md"
+                  className="bg-slate-900 hover:bg-black text-white font-bold text-xs gap-1.5 shadow-md"
                 >
                   Configure Cohort &amp; Assign Interns ({selectedVerifiedTaskIds.length}) →
                 </Button>
@@ -2926,7 +2926,7 @@ export function AdminInternTasksView() {
                   size="sm"
                   disabled={isRolloverLoading || selectedVerifiedTaskIds.length === 0}
                   onClick={handleExecuteRollover}
-                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs gap-1.5 shadow-md"
+                  className="bg-slate-900 text-white hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs gap-1.5 shadow-md"
                 >
                   {isRolloverLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
                   Execute Cohort Rollover &amp; Direct Assignment
@@ -2939,10 +2939,10 @@ export function AdminInternTasksView() {
 
       {/* ── Assign Stored Tasks to Interns Dialog ── */}
       <Dialog open={assignStoredModalOpen} onOpenChange={setAssignStoredModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-50 dark:bg-slate-900">
-          <DialogHeader className="p-6 bg-white dark:bg-slate-950 border-b shrink-0">
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-50 dark:bg-slate-900 text-white">
+          <DialogHeader className="p-6 bg-white dark:bg-slate-950 border-b shrink-0 text-white">
             <DialogTitle className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <Send className="h-5 w-5 text-emerald-600" />
+              <Send className="h-5 w-5 text-slate-900" />
               Assign Stored Tasks to Enrolled Interns
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500 mt-1">
@@ -2952,9 +2952,9 @@ export function AdminInternTasksView() {
 
           <div className="p-6 flex-1 overflow-y-auto space-y-6">
             {/* Timeline & Instructions */}
-            <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border shadow-xs space-y-4">
+            <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border shadow-xs space-y-4 text-white">
               <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-emerald-600" /> Assignment Timeline &amp; Priority
+                <Calendar className="h-4 w-4 text-slate-900" /> Assignment Timeline &amp; Priority
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -2994,11 +2994,11 @@ export function AdminInternTasksView() {
             </div>
 
             {/* Target Intern Selection */}
-            <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border shadow-xs space-y-4">
+            <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border shadow-xs space-y-4 text-white">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
-                    <Users className="h-4 w-4 text-emerald-600" /> Select Target Interns ({storedTargetInternIds.length} Selected)
+                    <Users className="h-4 w-4 text-slate-900" /> Select Target Interns ({storedTargetInternIds.length} Selected)
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">Select specific interns or assign to all.</p>
                 </div>
@@ -3035,7 +3035,7 @@ export function AdminInternTasksView() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[220px] overflow-y-auto pr-1">
                 {internsQ.isLoading ? (
                   <div className="col-span-2 text-center py-8 text-slate-400 text-xs flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-emerald-600" /> Loading active interns...
+                    <Loader2 className="h-4 w-4 animate-spin text-slate-900" /> Loading active interns...
                   </div>
                 ) : allActiveInterns.length === 0 ? (
                   <div className="col-span-2 text-center py-8 text-slate-400 text-xs">
@@ -3059,12 +3059,12 @@ export function AdminInternTasksView() {
                           }}
                           className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${
                             isSelected
-                              ? "bg-emerald-50/90 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-700 shadow-2xs font-semibold"
+                              ? "bg-slate-50 border-slate-300 dark:bg-emerald-950/40 dark:border-emerald-700 shadow-2xs font-semibold"
                               : "bg-slate-50 dark:bg-slate-900 border-slate-200/80 hover:bg-white"
                           }`}
                         >
                           <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 border transition-all ${
-                            isSelected ? "bg-emerald-600 border-emerald-600 text-white" : "border-slate-300 bg-white"
+                            isSelected ? "bg-slate-900 border-emerald-600 text-white" : "border-slate-300 bg-white"
                           }`}>
                             {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
                           </div>
@@ -3084,7 +3084,7 @@ export function AdminInternTasksView() {
             </div>
           </div>
 
-          <DialogFooter className="p-4 bg-white dark:bg-slate-950 border-t shrink-0 flex items-center justify-between w-full">
+          <DialogFooter className="p-4 bg-white dark:bg-slate-950 border-t shrink-0 flex items-center justify-between w-full text-white">
             <Button variant="outline" size="sm" onClick={() => setAssignStoredModalOpen(false)} className="text-xs cursor-pointer">
               Cancel
             </Button>
@@ -3092,7 +3092,7 @@ export function AdminInternTasksView() {
               size="sm"
               disabled={isAssigningStored || selectedStoredTaskIds.length === 0 || storedTargetInternIds.length === 0}
               onClick={handleAssignStoredTasksSubmit}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+              className="bg-slate-900 hover:bg-black text-white font-bold text-xs gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
             >
               {isAssigningStored ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
               Assign {selectedStoredTaskIds.length} Task(s) to {storedTargetInternIds.length} Intern(s)
@@ -3107,7 +3107,7 @@ export function AdminInternTasksView() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Award className="h-5 w-5 text-amber-600" />
+                <Award className="h-5 w-5 text-slate-900" />
                 Allocate / Edit Task Credits
               </DialogTitle>
               <DialogDescription>
@@ -3181,7 +3181,7 @@ export function AdminInternTasksView() {
                     setIsUpdatingCredits(false);
                   }
                 }}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                className="bg-slate-900 hover:bg-black text-white font-bold"
               >
                 {isUpdatingCredits ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save & Synchronize Points"}
               </Button>

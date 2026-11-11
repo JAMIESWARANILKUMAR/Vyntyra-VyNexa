@@ -79,7 +79,7 @@ export function AdminInternChatAuditView() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div className="h-12 w-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black shadow-xs">
-              <ShieldCheck className="h-6 w-6 text-emerald-400" />
+              <ShieldCheck className="h-6 w-6 text-slate-500" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -119,7 +119,7 @@ export function AdminInternChatAuditView() {
             <div className="text-2xl font-bold text-slate-900 mt-1">{data.activeDMs.length + data.activeChannels.length}</div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200/80">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
             <div className="text-[10px] font-bold uppercase tracking-wider text-rose-700">AI Blocked Violations</div>
             <div className="text-2xl font-bold text-rose-900 mt-1">{moderationLogs.length}</div>
           </div>
@@ -210,7 +210,7 @@ export function AdminInternChatAuditView() {
                               href={msg.file_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-blue-600 hover:underline flex items-center gap-1 text-[11px]"
+                              className="text-slate-900 hover:underline flex items-center gap-1 text-[11px]"
                             >
                               <span>View file</span>
                               <ExternalLink className="h-3 w-3" />
@@ -228,7 +228,7 @@ export function AdminInternChatAuditView() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteMessage(msg.id)}
-                          className="text-rose-600 hover:bg-rose-50 h-8 px-2.5 rounded-xl font-bold gap-1"
+                          className="text-rose-600 hover:bg-slate-50 h-8 px-2.5 rounded-xl font-bold gap-1"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           <span>Delete</span>
@@ -246,7 +246,7 @@ export function AdminInternChatAuditView() {
       {/* ─── TAB 2: AI MODERATION BLOCKED VIOLATIONS ─── */}
       {activeTab === "moderation" && (
         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-          <div className="p-4 bg-rose-50/50 border-b border-rose-100 flex items-center justify-between text-xs">
+          <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2 text-rose-800 font-bold">
               <AlertTriangle className="h-4 w-4 text-rose-600" />
               <span>Messages in this table were quarantined and prevented from reaching any recipient.</span>
@@ -278,16 +278,16 @@ export function AdminInternChatAuditView() {
                         <div className="font-bold text-slate-900">{log.sender_name}</div>
                         <div className="text-[10px] text-slate-400">{log.sender_email || "intern"}</div>
                       </td>
-                      <td className="px-5 py-3.5 max-w-xs font-mono text-[11px] text-rose-900 bg-rose-50/50 rounded-lg p-2 m-1">
+                      <td className="px-5 py-3.5 max-w-xs font-mono text-[11px] text-rose-900 bg-slate-50 rounded-lg p-2 m-1">
                         "{log.blocked_content}"
                       </td>
                       <td className="px-5 py-3.5">
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-slate-100 text-slate-800 border-slate-300 font-mono border border-slate-200">
                           {log.violation_type}
                         </span>
                       </td>
                       <td className="px-5 py-3.5">
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        <span className="text-[10px] font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
                           Blocked Before Delivery
                         </span>
                       </td>

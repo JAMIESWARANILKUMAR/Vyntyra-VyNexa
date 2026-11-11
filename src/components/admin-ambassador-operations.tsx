@@ -308,7 +308,7 @@ export function AdminAmbassadorOperations() {
       image_url: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=800&auto=format&fit=crop",
       desc: "",
       badge: "Dispatched After 1st Milestone",
-      badge_style: "border-amber-400/40 bg-amber-500/20 text-amber-300",
+      badge_style: "border-slate-300 bg-amber-500/20 text-amber-300",
       is_active: true,
       featured_in_gadgets: false,
     });
@@ -352,7 +352,7 @@ export function AdminAmbassadorOperations() {
       title: "",
       highlight: "Special Perk",
       desc: "",
-      badgeColor: "border-amber-500/40 bg-amber-500/10 text-amber-400",
+      badgeColor: "border-slate-400 bg-amber-500/10 text-slate-500",
       image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=800&auto=format&fit=crop",
       icon_name: "Gift",
     });
@@ -580,7 +580,7 @@ export function AdminAmbassadorOperations() {
           <div className="flex items-center gap-3">
             <div
               className={`w-2.5 h-2.5 rounded-full ${
-                settings.applications_enabled ? "bg-emerald-500" : "bg-slate-400"
+                settings.applications_enabled ? "bg-slate-900" : "bg-slate-400"
               }`}
             />
             <div>
@@ -640,7 +640,7 @@ export function AdminAmbassadorOperations() {
                   : "bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200"
               }`}
             >
-              <Icon className={`h-3.5 w-3.5 ${isActive ? "text-amber-400" : "text-slate-500"}`} />
+              <Icon className={`h-3.5 w-3.5 ${isActive ? "text-slate-500" : "text-slate-500"}`} />
               <span>{tab.label}</span>
               {tab.count !== undefined && (
                 <span
@@ -664,7 +664,7 @@ export function AdminAmbassadorOperations() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                  <Palette className="h-4 w-4 text-amber-500" /> Executive Color Palettes
+                  <Palette className="h-4 w-4 text-slate-600" /> Executive Color Palettes
                 </h3>
                 <p className="text-xs text-slate-500">
                   Select a designer palette or customize each individual color below.
@@ -685,7 +685,7 @@ export function AdminAmbassadorOperations() {
                 <button
                   key={pal.name}
                   onClick={() => applyPalette(pal.theme)}
-                  className="p-3 rounded-xl border border-slate-200 hover:border-amber-400 bg-slate-50 hover:bg-white text-left transition-all group"
+                  className="p-3 rounded-xl border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-white text-left transition-all group"
                 >
                   <div className="flex items-center gap-1.5 mb-2">
                     <span
@@ -705,7 +705,7 @@ export function AdminAmbassadorOperations() {
                       style={{ backgroundColor: pal.theme.glow_primary }}
                     />
                   </div>
-                  <div className="text-xs font-bold text-slate-800 group-hover:text-amber-600">
+                  <div className="text-xs font-bold text-slate-800 group-hover:text-slate-900">
                     {pal.name}
                   </div>
                 </button>
@@ -1263,7 +1263,7 @@ export function AdminAmbassadorOperations() {
             {settings.pillars_section.pillars.map((pillar) => (
               <div
                 key={pillar.id}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between hover:border-amber-400/50 transition-all"
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -1344,7 +1344,7 @@ export function AdminAmbassadorOperations() {
                   </div>
 
                   <div className="p-4 space-y-1.5">
-                    <div className="text-[11px] font-mono text-amber-600 font-bold uppercase tracking-wider truncate">
+                    <div className="text-[11px] font-mono text-slate-900 font-bold uppercase tracking-wider truncate">
                       {item.subtitle}
                     </div>
                     <h4 className="font-bold text-sm text-slate-900 leading-snug line-clamp-1">
@@ -1403,8 +1403,8 @@ export function AdminAmbassadorOperations() {
           {/* Section Overview Card */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 text-[11px] font-mono font-bold uppercase mb-1.5">
-                <Trophy className="h-3 w-3 text-amber-500" /> Progression Milestones Engine
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-slate-400 text-slate-900 text-[11px] font-mono font-bold uppercase mb-1.5">
+                <Trophy className="h-3 w-3 text-slate-600" /> Progression Milestones Engine
               </div>
               <h3 className="text-lg font-bold text-slate-900">
                 Ambassador Progression Tiers &amp; E-Vouchers Studio
@@ -1429,7 +1429,7 @@ export function AdminAmbassadorOperations() {
                 onClick={openCreateTier}
                 className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-sm"
               >
-                <Plus className="h-3.5 w-3.5 mr-1 text-amber-400" />
+                <Plus className="h-3.5 w-3.5 mr-1 text-slate-500" />
                 Add New Tier
               </Button>
             </div>
@@ -1511,7 +1511,7 @@ export function AdminAmbassadorOperations() {
                     <tr
                       key={tier.id}
                       className={`hover:bg-slate-50/80 transition-colors ${
-                        tier.highlight ? "bg-amber-50/40" : ""
+                        tier.highlight ? "bg-slate-50" : ""
                       }`}
                     >
                       <td className="py-3.5 px-4 text-center font-mono text-slate-400">
@@ -1519,22 +1519,22 @@ export function AdminAmbassadorOperations() {
                       </td>
                       <td className="py-3.5 px-4 font-bold text-slate-900">
                         <div className="flex items-center gap-1.5">
-                          {tier.highlight && <Crown className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
+                          {tier.highlight && <Crown className="h-3.5 w-3.5 text-slate-600 shrink-0" />}
                           <span>{tier.category}</span>
                           {tier.highlight && (
-                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold uppercase">
+                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-800 border-slate-300 font-mono font-bold uppercase">
                               Apex
                             </span>
                           )}
                         </div>
                       </td>
                       <td className="py-3.5 px-4 text-center">
-                        <span className="inline-block px-2.5 py-1 rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-mono font-bold text-xs">
+                        <span className="inline-block px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-slate-900 font-mono font-bold text-xs">
                           {tier.points.toLocaleString()} pts
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-center">
-                        <span className="inline-block px-2 py-0.5 rounded font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 text-xs">
+                        <span className="inline-block px-2 py-0.5 rounded font-mono font-bold text-slate-900 bg-slate-50 border border-slate-200 text-xs">
                           ₹{tier.voucher_amount ? tier.voucher_amount.toLocaleString() : "0"}
                         </span>
                         {tier.cumulative_amount !== undefined && (
@@ -1572,7 +1572,7 @@ export function AdminAmbassadorOperations() {
                           <button
                             type="button"
                             onClick={() => openEditTier(tier)}
-                            className="p-1 rounded text-slate-600 hover:text-blue-600"
+                            className="p-1 rounded text-slate-600 hover:text-slate-900"
                             title="Edit Tier"
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -1884,7 +1884,7 @@ export function AdminAmbassadorOperations() {
                 <p className="text-xs text-slate-500">Enable or pause pre-registration submissions.</p>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`text-xs font-bold ${settings.applications_enabled ? "text-emerald-600" : "text-rose-600"}`}>
+                <span className={`text-xs font-bold ${settings.applications_enabled ? "text-slate-900" : "text-rose-600"}`}>
                   {settings.applications_enabled ? "ACCEPTING" : "PAUSED"}
                 </span>
                 <Switch
@@ -1895,7 +1895,7 @@ export function AdminAmbassadorOperations() {
             </div>
 
             {!settings.applications_enabled && (
-              <div className="p-4 rounded-xl border border-rose-200 bg-rose-50 space-y-2">
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                 <label className="text-xs font-bold text-rose-800">Custom Paused Notice</label>
                 <Textarea
                   rows={2}
@@ -2070,28 +2070,28 @@ export function AdminAmbassadorOperations() {
           {/* Popup Preview Card */}
           <div className="lg:col-span-5">
             <div className="rounded-2xl border border-slate-800 bg-[#070b14] p-5 text-white shadow-xl space-y-4">
-              <div className="flex items-center justify-between text-xs font-mono text-amber-400">
+              <div className="flex items-center justify-between text-xs font-mono text-slate-500">
                 <span>POPUP PREVIEW</span>
-                <Badge variant="outline" className="border-amber-400/40 text-amber-300">
+                <Badge variant="outline" className="border-slate-300 text-amber-300">
                   {settings.popup.badge}
                 </Badge>
               </div>
 
-              <div className="p-4 rounded-xl border border-amber-500/30 bg-slate-900/80 space-y-2">
+              <div className="p-4 rounded-xl border border-slate-400 bg-slate-900/80 space-y-2 text-white">
                 <div className="text-sm font-bold text-white">{settings.popup.title}</div>
-                <div className="text-xs text-amber-400 font-mono">{settings.popup.subtitle}</div>
+                <div className="text-xs text-slate-500 font-mono">{settings.popup.subtitle}</div>
                 <p className="text-xs text-slate-300 leading-relaxed pt-1">
                   {settings.popup.announcement_message}
                 </p>
-                <div className="pt-2 border-t border-slate-800 text-[11px] text-emerald-400 font-semibold flex items-center gap-1.5">
-                  <Trophy className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-500 font-semibold flex items-center gap-1.5">
+                  <Trophy className="h-3.5 w-3.5 text-slate-500 shrink-0" />
                   <span>{settings.popup.rewards_text}</span>
                 </div>
               </div>
 
               <Button
                 onClick={() => setTestModalOpen(true)}
-                className="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl"
+                className="w-full bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-xl"
               >
                 Open Real Interactive Dialog &rarr;
               </Button>
@@ -2187,18 +2187,18 @@ export function AdminAmbassadorOperations() {
               <div className="space-y-2 p-3.5 rounded-xl border border-slate-200 bg-slate-50">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
-                    <ImageIcon className="h-4 w-4 text-amber-600" />
+                    <ImageIcon className="h-4 w-4 text-slate-900" />
                     <span>Product Photo</span>
                   </label>
                   {uploadingImage && (
-                    <span className="text-xs text-amber-600 flex items-center gap-1 font-semibold">
+                    <span className="text-xs text-slate-900 flex items-center gap-1 font-semibold">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" /> Uploading to Supabase...
                     </span>
                   )}
                 </div>
 
                 {editingProduct.image_url && (
-                  <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-slate-200 bg-slate-900">
+                  <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-slate-200 bg-slate-900 text-white">
                     <img
                       src={editingProduct.image_url}
                       alt="Preview"
@@ -2274,7 +2274,7 @@ export function AdminAmbassadorOperations() {
             <Button variant="outline" onClick={() => setProductModalOpen(false)} className="text-xs">
               Cancel
             </Button>
-            <Button onClick={handleSaveProduct} className="bg-amber-400 text-slate-950 font-bold text-xs">
+            <Button onClick={handleSaveProduct} className="bg-slate-900 hover:bg-black text-white font-bold text-xs">
               Update Product Draft
             </Button>
           </DialogFooter>
@@ -2336,7 +2336,7 @@ export function AdminAmbassadorOperations() {
             <Button variant="outline" onClick={() => setPillarModalOpen(false)} className="text-xs">
               Cancel
             </Button>
-            <Button onClick={handleSavePillar} className="bg-amber-400 text-slate-950 font-bold text-xs">
+            <Button onClick={handleSavePillar} className="bg-slate-900 hover:bg-black text-white font-bold text-xs">
               Save Pillar
             </Button>
           </DialogFooter>
@@ -2385,7 +2385,7 @@ export function AdminAmbassadorOperations() {
             <Button variant="outline" onClick={() => setFaqModalOpen(false)} className="text-xs">
               Cancel
             </Button>
-            <Button onClick={handleSaveFaq} className="bg-amber-400 text-slate-950 font-bold text-xs">
+            <Button onClick={handleSaveFaq} className="bg-slate-900 hover:bg-black text-white font-bold text-xs">
               Save FAQ
             </Button>
           </DialogFooter>
@@ -2397,7 +2397,7 @@ export function AdminAmbassadorOperations() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-amber-500" />
+              <Trophy className="h-4 w-4 text-slate-600" />
               {editingTier && currentTiers.some((t) => t.id === editingTier.id)
                 ? "Edit Progression Tier"
                 : "Add New Progression Tier"}
