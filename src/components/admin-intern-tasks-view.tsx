@@ -2014,6 +2014,327 @@ export function AdminInternTasksView() {
         </div>
       )}
 
+      {/* ─── Institutional Corporate Task Workspace & Inspection Modal ─── */}
+      <Dialog open={!!taskDetailModal} onOpenChange={(v) => !v && setTaskDetailModal(null)}>
+        <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto bg-white p-6 sm:p-8 rounded-2xl shadow-2xl border border-slate-200">
+          <DialogHeader className="border-b border-slate-100 pb-5">
+            <div className="flex items-center gap-2 flex-wrap mb-2.5">
+              <span className="h-6 px-2.5 rounded-md bg-slate-900 text-white font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-white" /> ISO/IEC 27001 AUDIT READY
+              </span>
+              {taskDetailModal?.status === "completed" || taskDetailModal?.is_verified ? (
+                <span className="h-6 px-2.5 rounded-md bg-slate-900 text-white font-mono text-[10px] font-bold uppercase inline-flex items-center gap-1">
+                  <Check className="h-3 w-3 text-white" /> Verified &amp; Completed
+                </span>
+              ) : taskDetailModal?.status === "submitted" || taskDetailModal?.deliverable_url ? (
+                <span className="h-6 px-2.5 rounded-md border border-slate-300 bg-slate-100 text-slate-800 font-mono text-[10px] font-bold uppercase inline-flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-slate-900" /> Deliverable Submitted
+                </span>
+              ) : taskDetailModal?.status === "in_progress" ? (
+                <span className="h-6 px-2.5 rounded-md border border-slate-200 bg-slate-100 text-slate-700 font-mono text-[10px] font-semibold uppercase">
+                  In Progress
+                </span>
+              ) : (
+                <span className="h-6 px-2.5 rounded-md border border-slate-200 bg-slate-50 text-slate-600 font-mono text-[10px] uppercase">
+                  Pending Start
+                </span>
+              )}
+
+              <span className="h-6 px-2 rounded-md border border-slate-200 bg-slate-50 text-slate-800 font-mono text-[10px] font-bold uppercase">
+                {taskDetailModal?.level || "Core Track"}
+              </span>
+
+              <span className="h-6 px-2 rounded-md border border-slate-200 bg-slate-50 text-slate-900 font-mono text-[10px] font-bold">
+                {taskDetailModal?.credits || 10} Credits
+              </span>
+
+              <span className={`h-6 px-2 rounded-md font-mono text-[10px] font-bold uppercase ${
+                taskDetailModal?.priority === "high" || taskDetailModal?.priority === "urgent"
+                  ? "bg-slate-900 text-white"
+                  : "border border-slate-200 bg-slate-50 text-slate-700"
+              }`}>
+                {taskDetailModal?.priority || "medium"} Priority
+              </span>
+            </div>
+
+            <DialogTitle className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-snug">
+              {taskDetailModal?.title}
+            </DialogTitle>
+
+            <DialogDescription className="text-xs text-slate-500 pt-2 flex flex-wrap items-center gap-4">
+              <span className="flex items-center gap-1.5 font-medium text-slate-700">
+                <User className="h-3.5 w-3.5 text-slate-400" />
+                Assigned Associate: <strong className="text-slate-900 font-bold">{taskDetailModal?.assigned_profile?.full_name || taskDetailModal?.assigned_profile?.email || "Intern Associate"}</strong>
+                {taskDetailModal?.assigned_profile?.intern_id && (
+                  <span className="font-mono text-slate-500">({taskDetailModal.assigned_profile.intern_id})</span>
+                )}
+              </span>
+              {taskDetailModal?.due_date && (
+                <span className="flex items-center gap-1 font-mono text-slate-600">
+                  <Clock className="h-3.5 w-3.5 text-slate-400" />
+                  Target Deadline: <strong className="text-slate-900">{taskDetailModal.due_date.split('T')[0]}</strong>
+                </span>
+              )}
+              {taskDetailModal?.team_name && (
+                <span className="flex items-center gap-1 text-slate-700 font-semibold font-mono">
+                  <Users className="h-3.5 w-3.5 text-slate-500" /> {taskDetailModal.team_name}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-5 space-y-6">
+            {/* 1. Milestone Scope & Requirements */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-slate-900" /> Milestone Scope &amp; Specifications
+              </h3>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 leading-relaxed max-h-80 overflow-y-auto">
+                <TaskRichDescription
+                  description={taskDetailModal?.description}
+                  teamMembers={taskDetailModal?.team_members}
+                  teamId={taskDetailModal?.team_id}
+                />
+              </div>
+            </div>
+
+            {/* 2. Attachments & Institutional Resources */}
+            {(taskDetailModal?.task_meet_link || taskDetailModal?.task_file_url || taskDetailModal?.project_requirements || taskDetailModal?.task_doc_url || taskDetailModal?.report_template_url || taskDetailModal?.ppt_template_url) && (
+              <div className="space-y-2">
+                <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                  <Layers className="h-3.5 w-3.5 text-slate-900" /> Attachments &amp; Resources
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {taskDetailModal?.task_meet_link && (
+                    <a
+                      href={taskDetailModal.task_meet_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-black transition-all shadow-xs"
+                    >
+                      <Video className="h-3.5 w-3.5 text-white" /> Join Meeting Link
+                    </a>
+                  )}
+                  {(taskDetailModal?.task_file_url || taskDetailModal?.project_requirements) && (
+                    <a
+                      href={taskDetailModal.task_file_url || taskDetailModal.project_requirements}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-800 text-xs font-semibold hover:bg-slate-50 transition-all shadow-2xs"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-slate-700" /> Project Requirements File
+                    </a>
+                  )}
+                  {taskDetailModal?.task_doc_url && (
+                    <a
+                      href={taskDetailModal.task_doc_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-800 text-xs font-semibold hover:bg-slate-50 transition-all shadow-2xs"
+                    >
+                      <BookOpen className="h-3.5 w-3.5 text-slate-700" /> Handbook Guide
+                    </a>
+                  )}
+                  {taskDetailModal?.report_template_url && (
+                    <a
+                      href={taskDetailModal.report_template_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-800 text-xs font-semibold hover:bg-slate-50 transition-all shadow-2xs"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-slate-700" /> Report Template
+                    </a>
+                  )}
+                  {taskDetailModal?.ppt_template_url && (
+                    <a
+                      href={taskDetailModal.ppt_template_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-800 text-xs font-semibold hover:bg-slate-50 transition-all shadow-2xs"
+                    >
+                      <Play className="h-3.5 w-3.5 text-slate-700" /> PPT Template
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 3. Deliverable Submissions & Live Inspector */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-slate-900" /> Deliverable Verification &amp; Preview
+              </h3>
+              {taskDetailModal?.deliverable_url ? (
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <span className="text-[11px] font-bold text-slate-700 block">Submitted Deliverable URL:</span>
+                      <a
+                        href={taskDetailModal.deliverable_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs font-mono font-bold text-slate-900 hover:underline break-all flex items-center gap-1"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                        {taskDetailModal.deliverable_url}
+                      </a>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => window.open(taskDetailModal.deliverable_url, "_blank")}
+                      className="h-8 text-xs font-semibold border-slate-300 text-slate-800 hover:bg-slate-100 rounded-lg shrink-0 cursor-pointer"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 mr-1" /> Open Externally
+                    </Button>
+                  </div>
+
+                  {taskDetailModal.submission_notes && (
+                    <div className="p-3 rounded-lg bg-white border border-slate-200 text-xs space-y-1">
+                      <span className="font-bold text-slate-700">Associate Submission Notes:</span>
+                      <p className="text-slate-600 italic leading-relaxed">
+                        "{taskDetailModal.submission_notes}"
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Iframe Preview */}
+                  <div className="w-full h-72 border border-slate-200 rounded-lg overflow-hidden bg-white shadow-inner">
+                    <iframe
+                      src={getPreviewUrl(taskDetailModal.deliverable_url)}
+                      className="w-full h-full border-0"
+                      title="Deliverable Preview"
+                      allow="autoplay"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="p-6 rounded-xl border border-dashed border-slate-200 bg-slate-50 text-center text-xs text-slate-500">
+                  No deliverable submitted yet. The associate is actively working on this milestone.
+                </div>
+              )}
+            </div>
+
+            {/* 4. Mentor Notes & Review Feedback */}
+            {(taskDetailModal?.mentor_report || taskDetailModal?.progress_notes) && (
+              <div className="p-3.5 rounded-xl bg-slate-100 border border-slate-200 text-xs space-y-1">
+                <span className="font-mono font-bold text-slate-900 uppercase text-[10px]">Current Mentor Remarks:</span>
+                <p className="text-slate-700 italic leading-relaxed">"{taskDetailModal.mentor_report || taskDetailModal.progress_notes}"</p>
+              </div>
+            )}
+
+            {/* 5. Extension Request */}
+            {taskDetailModal?.extension_status === "requested" && (
+              <div className="p-4 rounded-xl border border-slate-300 bg-slate-50 space-y-2">
+                <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5 font-mono">
+                  <Clock className="h-4 w-4 text-slate-900" /> Deadline Extension Requested
+                </div>
+                <p className="text-xs text-slate-700"><strong>Reason:</strong> "{taskDetailModal.extension_reason || 'No explanation provided'}"</p>
+                {taskDetailModal.extension_requested_date && (
+                  <p className="text-xs text-slate-500 font-mono">
+                    Requested Date: {new Date(taskDetailModal.extension_requested_date).toLocaleDateString()}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 pt-1">
+                  <Button
+                    size="sm"
+                    className="bg-slate-900 hover:bg-black text-white text-xs font-bold h-7 px-3 rounded-lg cursor-pointer"
+                    onClick={async () => {
+                      try {
+                        await doReviewDeadlineExtension({ data: { taskId: taskDetailModal.id, status: 'approved' } });
+                        toast.success("Deadline extension approved!");
+                        setTaskDetailModal(null);
+                        qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                      } catch (e) {
+                        toast.error("Failed to approve extension");
+                      }
+                    }}
+                  >
+                    Approve Extension
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-slate-300 text-rose-600 hover:bg-rose-50 text-xs font-bold h-7 px-3 rounded-lg cursor-pointer"
+                    onClick={async () => {
+                      try {
+                        await doReviewDeadlineExtension({ data: { taskId: taskDetailModal.id, status: 'rejected' } });
+                        toast.success("Deadline extension rejected!");
+                        setTaskDetailModal(null);
+                        qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
+                      } catch (e) {
+                        toast.error("Failed to reject extension");
+                      }
+                    }}
+                  >
+                    Reject Extension
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  handleUpdateStatus(taskDetailModal.id, "completed");
+                  setTaskDetailModal(null);
+                }}
+                className="bg-slate-900 text-white hover:bg-black font-semibold text-xs h-9 px-4 rounded-lg shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Check className="h-4 w-4 text-white" />
+                <span>Approve &amp; Complete (+{taskDetailModal?.credits || 10} Cr)</span>
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const cur = taskDetailModal;
+                  setTaskDetailModal(null);
+                  setSelectedTaskForReview(cur);
+                  setAdminRemarks(cur.progress_notes || "");
+                }}
+                className="border-slate-300 text-slate-800 hover:bg-slate-100 font-semibold text-xs h-9 px-3 rounded-lg flex items-center gap-1.5 cursor-pointer"
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-slate-700" />
+                <span>Grade / Review</span>
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const cur = taskDetailModal;
+                  setTaskDetailModal(null);
+                  openTaskEmailModal(cur);
+                }}
+                className="border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-xs h-9 px-3 rounded-lg flex items-center gap-1.5 cursor-pointer"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                <span>Email Associate</span>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setTaskDetailModal(null)}
+                className="text-slate-500 hover:text-slate-900 text-xs h-9 px-3 rounded-lg cursor-pointer"
+              >
+                Close
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Review Modal */}
       {selectedTaskForReview && (
         <Dialog open={!!selectedTaskForReview} onOpenChange={(v) => !v && setSelectedTaskForReview(null)}>
