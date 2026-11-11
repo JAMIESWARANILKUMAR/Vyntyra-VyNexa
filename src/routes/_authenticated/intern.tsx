@@ -11,7 +11,7 @@ import {
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
   Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, ArrowLeft, Zap, ChevronRight, X, Trophy, Flame, AlertCircle,
   Printer, Receipt, Tag, Building2, CheckCheck, Menu, Globe, RotateCcw, PanelLeftClose, PanelLeftOpen,
-  MessageSquare, Gift, Coins, Calendar
+  MessageSquare, Gift, Coins, Calendar, Eye
  } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -260,6 +260,7 @@ function CbtResultsSection() {
 
 function InternDashboard() {
   const qc = useQueryClient();
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "onboarding" | "lms" | "browser" | "kanban" | "standups" | "deliverables" | "ppo" | "tasks" | "meetings" | "resources" | "notes" | "feedback" | "attendance" | "announcements" | "leaves" | "support" | "refer" | "cbt" | "mock_interview" | "ambassador" | "chat">("overview");
   const [newNote, setNewNote] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -3285,7 +3286,29 @@ function InternDashboard() {
                               )}
                             </div>
 
-                            <TaskRichDescription description={task.description} teamMembers={task.team_members || task.team_member_names} teamId={task.team_id} />
+                            {/* Space-Saving Collapsible Preview & Fast Open */}
+                            <div className="flex items-center justify-between gap-3 pt-1">
+                              <p className="text-xs text-slate-500 line-clamp-1 flex-1 font-medium">
+                                {task.description ? task.description.replace(/[#*_`\[\]]/g, '').slice(0, 110) + '...' : 'Milestone specifications & deliverables ready.'}
+                              </p>
+                              <Button
+                                size="sm"
+                                onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                                className="bg-slate-900 hover:bg-black text-white text-xs font-bold h-8 px-3.5 rounded-xl gap-1.5 shadow-xs cursor-pointer shrink-0"
+                              >
+                                <Eye className="h-3.5 w-3.5 text-white" />
+                                {expandedTaskId === task.id ? "Close Details" : "Open Task Workspace"}
+                              </Button>
+                            </div>
+
+                            {expandedTaskId === task.id && (
+                              <div className="mt-3 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3 animate-in fade-in duration-200">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 font-mono">
+                                  Milestone Scope & Requirements
+                                </h4>
+                                <TaskRichDescription description={task.description} teamMembers={task.team_members || task.team_member_names} teamId={task.team_id} />
+                              </div>
+                            )}
 
                             {/* Action links row & Resources */}
                             <div className="mt-4 flex flex-wrap gap-2">

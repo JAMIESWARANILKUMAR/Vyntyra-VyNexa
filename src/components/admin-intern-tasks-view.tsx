@@ -135,6 +135,8 @@ export function AdminInternTasksView() {
   const [selectedTaskForReview, setSelectedTaskForReview] = useState<any>(null);
   const [adminRemarks, setAdminRemarks] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [taskDetailModal, setTaskDetailModal] = useState<any>(null);
+  const [viewDensity, setViewDensity] = useState<"compact" | "expanded">("compact");
 
   // Task Status Email & Multi-Recipient Notification State
   interface TaskEmailRecipient {
@@ -985,15 +987,37 @@ export function AdminInternTasksView() {
 
       {/* Bulk Actions & Select All */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-slate-900 border rounded-xl p-4 text-white">
-        <div className="flex items-center gap-3">
-          <Checkbox 
-            id="select-all" 
-            checked={filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length} 
-            onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-          />
-          <label htmlFor="select-all" className="text-sm font-medium cursor-pointer text-slate-700 dark:text-slate-300">
-            Select All <span className="text-slate-500">({selectedTaskIds.length} selected)</span>
-          </label>
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setViewDensity("compact")}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                viewDensity === "compact" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Compact (No Scroll)
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewDensity("expanded")}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                viewDensity === "expanded" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Expanded Full
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox 
+              id="select-all" 
+              checked={filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length} 
+              onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+            />
+            <label htmlFor="select-all" className="text-sm font-medium cursor-pointer text-slate-700 dark:text-slate-300">
+              Select All <span className="text-slate-500">({selectedTaskIds.length} selected)</span>
+            </label>
+          </div>
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
