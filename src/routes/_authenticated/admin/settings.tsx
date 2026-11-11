@@ -58,17 +58,27 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
   } catch (e) {}
   let navigate: any = null;
   try { navigate = Route.useNavigate(); } catch (e) {}
-  const [activeTab, setActiveTab] = useState<SettingsTab>(tab || "referrals");
+  const [activeTab, setActiveTab] = useState<SettingsTab>(tab || defaultTab || "referrals");
 
   useEffect(() => {
     if (tab && tab !== activeTab) {
       setActiveTab(tab);
+    } else if (defaultTab && defaultTab !== activeTab) {
+      setActiveTab(defaultTab);
     }
-  }, [tab]);
+  }, [tab, defaultTab]);
 
   const handleTabChange = (newTab: SettingsTab) => {
     setActiveTab(newTab);
-    try { if (navigate) navigate({ search: { tab: newTab } }); } catch (e) {}
+    if (!embedded) {
+      try { if (navigate) navigate({ search: { tab: newTab } }); } catch (e) {}
+    } else {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", newTab);
+        window.history.replaceState({}, "", url.toString());
+      } catch (e) {}
+    }
   };
 
   const qc = useQueryClient();
@@ -1007,7 +1017,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                   }`}
                 >
-                  <Icon className={`h-3.5 w-3.5 ${isActive ? "text-indigo-400" : "text-slate-400"}`} />
+                  <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
                   <span>{tabItem.label}</span>
                   {tabItem.count !== null && (
                     <span
@@ -1029,11 +1039,11 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
         
         {/* ─── TAB: REFERRAL CODES & DYNAMIC PRICING HUB ─── */}
         {activeTab === "referrals" && (
-          <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-indigo-100">
-          <div className="p-5 border-b bg-gradient-to-r from-indigo-50/80 via-white to-indigo-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-card border rounded-2xl shadow-sm overflow-hidden border-slate-200">
+          <div className="p-5 border-b bg-gradient-to-r bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-xs">
+                <div className="p-2 bg-slate-900 text-white rounded-xl shadow-xs">
                   <Tag className="h-5 w-5" />
                 </div>
                 <div>
@@ -1150,7 +1160,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
             {selectedReferralCodes.size > 0 && (
               <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 border border-indigo-500/40 rounded-2xl p-4 text-white shadow-xl flex flex-wrap items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="flex items-center gap-3">
-                  <div className="bg-indigo-500/30 text-indigo-300 px-3 py-1.5 rounded-xl border border-indigo-400/40 text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <div className="bg-slate-1000/30 text-indigo-300 px-3 py-1.5 rounded-xl border border-indigo-400/40 text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
                     <Tag className="h-3.5 w-3.5" />
                     {selectedReferralCodes.size} Selected {selectedReferralCodes.size === filteredReferralRules.length ? "(All Codes)" : ""}
                   </div>
@@ -1257,7 +1267,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                         const isCustom = rule.is_custom_rule;
                         const isSelected = selectedReferralCodes.has(rule.code);
                         return (
-                          <tr key={rule.code} className={`transition-colors ${isSelected ? "bg-indigo-50/90 font-medium" : "hover:bg-indigo-50/40"}`}>
+                          <tr key={rule.code} className={`transition-colors ${isSelected ? "bg-slate-100/90 font-medium" : "hover:bg-slate-100/40"}`}>
                             <td className="p-3.5 w-10 text-center">
                               <input 
                                 type="checkbox"
@@ -1267,7 +1277,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                               />
                             </td>
                             <td className="p-3.5 font-mono font-bold text-indigo-900 flex items-center gap-2">
-                              <span className={`px-2 py-0.5 rounded text-xs border ${isSelected ? "bg-indigo-600 text-white border-indigo-700" : "bg-indigo-50 text-indigo-700 border-indigo-200"}`}>
+                              <span className={`px-2 py-0.5 rounded text-xs border ${isSelected ? "bg-slate-900 text-white border-indigo-700" : "bg-slate-100 text-slate-900 border-slate-300"}`}>
                                 {rule.code}
                               </span>
                               {isCustom && (
@@ -1325,7 +1335,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-7 px-2 text-xs text-indigo-600 hover:bg-indigo-50 font-semibold"
+                                  className="h-7 px-2 text-xs text-indigo-600 hover:bg-slate-100 font-semibold"
                                   onClick={() => {
                                     setReferralForm({
                                       id: rule.id || "",
@@ -1373,13 +1383,13 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
           <div className="space-y-6">
             {/* Top Overview & Master Controls Banner */}
             <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-indigo-500/30 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-0 right-0 w-80 h-80 bg-slate-1000/10 rounded-full blur-3xl pointer-events-none" />
               <div className="relative z-10 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="p-2 bg-indigo-500/20 border border-indigo-400/30 rounded-xl text-indigo-300">
+                  <span className="p-2 bg-slate-1000/20 border border-indigo-400/30 rounded-xl text-indigo-300">
                     <ShieldCheck className="h-5 w-5" />
                   </span>
-                  <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-500/30 text-indigo-200 px-3 py-1 rounded-full border border-indigo-400/30">
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-slate-1000/30 text-indigo-200 px-3 py-1 rounded-full border border-indigo-400/30">
                     Portal Governance &amp; Live Control Hub
                   </span>
                 </div>
@@ -1409,7 +1419,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                   onClick={() => setModulePortalTab("intern")}
                   className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
                     modulePortalTab === "intern"
-                      ? "bg-indigo-600 text-white shadow-xs"
+                      ? "bg-slate-900 text-white shadow-xs"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
@@ -1513,7 +1523,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                         <Tag className="h-10 w-10 text-slate-300 mx-auto" />
                         <h4 className="font-bold text-slate-700">No {modulePortalTab} modules registered yet</h4>
                         <p className="text-xs text-slate-400">Click "Initialize / Repair Missing Defaults" above to seed all {modulePortalTab} portal controls.</p>
-                        <Button size="sm" onClick={handleInitialize} className="bg-indigo-600 text-white text-xs">Initialize Defaults</Button>
+                        <Button size="sm" onClick={handleInitialize} className="bg-slate-900 text-white text-xs">Initialize Defaults</Button>
                       </div>
                     );
                   }
@@ -1538,7 +1548,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                           <div className="space-y-1 flex-1">
                             <div className="flex items-center gap-2">
                               <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
-                                setting.is_enabled ? "bg-indigo-50 text-indigo-700 border border-indigo-200" : "bg-slate-200 text-slate-600"
+                                setting.is_enabled ? "bg-slate-100 text-slate-900 border border-slate-300" : "bg-slate-200 text-slate-600"
                               }`}>
                                 {meta.tag}
                               </span>
@@ -1882,7 +1892,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                             <td className="py-3 px-4">
                               {intern.referral_code_used ? (
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-mono font-bold text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded">
+                                  <span className="font-mono font-bold text-xs bg-slate-100 text-slate-900 border border-slate-300 px-2 py-0.5 rounded">
                                     {intern.referral_code_used}
                                   </span>
                                   <Button
@@ -1899,7 +1909,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="h-6 px-2 text-[10px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-200 gap-1"
+                                  className="h-6 px-2 text-[10px] font-bold text-slate-900 bg-slate-100 hover:bg-indigo-100 border-slate-300 gap-1"
                                   onClick={() => openAssignReferralModal(intern)}
                                 >
                                   <Plus className="h-2.5 w-2.5" /> Add Referral ID
@@ -1910,7 +1920,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                             <td className="py-3 px-4">
                               {assignedMentor ? (
                                 <div>
-                                  <span className="font-bold text-indigo-700 block">{assignedMentor.full_name}</span>
+                                  <span className="font-bold text-slate-900 block">{assignedMentor.full_name}</span>
                                   <span className="text-[10px] text-slate-400">{assignedMentor.email}</span>
                                 </div>
                               ) : intern.mentor_id ? (
@@ -2036,7 +2046,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                                   size="sm"
                                   variant="outline"
                                   title="Add or update referral code for this intern"
-                                  className="h-7 px-2 text-[10px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-200 gap-1"
+                                  className="h-7 px-2 text-[10px] font-bold text-slate-900 bg-slate-100 hover:bg-indigo-100 border-slate-300 gap-1"
                                   onClick={() => openAssignReferralModal(intern)}
                                 >
                                   <Tag className="h-3 w-3" /> Referral ID
@@ -2525,7 +2535,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b pb-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-indigo-600 text-white rounded-lg">
+                <div className="p-2 bg-slate-900 text-white rounded-lg">
                   <Tag className="h-4 w-4" />
                 </div>
                 <div>
@@ -2607,7 +2617,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 />
               </div>
 
-              <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+              <div className="p-3 bg-slate-100 border border-slate-200 rounded-xl">
                 <label className="flex items-start gap-2 cursor-pointer select-none">
                   <input 
                     type="checkbox" 
@@ -2668,12 +2678,12 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 </label>
                 <div className="max-h-24 overflow-y-auto p-2.5 bg-slate-50 border rounded-xl flex flex-wrap gap-1.5">
                   {Array.from(selectedReferralCodes).map((c) => (
-                    <span key={c} className="bg-indigo-100 text-indigo-800 border border-indigo-200 font-mono font-bold text-[11px] px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <span key={c} className="bg-indigo-100 text-slate-900 border border-slate-300 font-mono font-bold text-[11px] px-2 py-0.5 rounded-md flex items-center gap-1">
                       {c}
                       <button 
                         type="button" 
                         onClick={() => toggleSelectReferral(c)}
-                        className="text-indigo-400 hover:text-indigo-800 ml-0.5"
+                        className="text-indigo-400 hover:text-slate-900 ml-0.5"
                       >
                         ×
                       </button>
@@ -2747,7 +2757,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 </div>
               </div>
 
-              <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+              <div className="p-3 bg-slate-100 border border-slate-200 rounded-xl">
                 <label className="flex items-start gap-2 cursor-pointer select-none">
                   <input 
                     type="checkbox" 
@@ -3076,7 +3086,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200 space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-xs">
+                <div className="p-2 bg-slate-900 text-white rounded-xl shadow-xs">
                   <Tag className="h-5 w-5" />
                 </div>
                 <div>
@@ -3120,8 +3130,8 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                             onClick={() => setAssignReferralForm({ ...assignReferralForm, newReferralCode: rule.code })}
                             className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-colors ${
                               assignReferralForm.newReferralCode === rule.code
-                                ? "bg-indigo-600 text-white"
-                                : "bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50"
+                                ? "bg-slate-900 text-white"
+                                : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
                             }`}
                           >
                             {rule.code} (₹{rule.custom_exam_fee})
@@ -3133,7 +3143,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-xl border bg-indigo-50/50">
+              <div className="flex items-center justify-between p-3 rounded-xl border bg-slate-100/50">
                 <div className="space-y-0.5">
                   <div className="font-bold text-slate-800 text-xs">Apply Configured Referral Pricing</div>
                   <div className="text-[10px] text-slate-500">Automatically adjust intern's exam fee amount to the matched referral rule price.</div>

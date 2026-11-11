@@ -12,7 +12,7 @@ import {
   Play, Pause, Square, Search, ExternalLink, ShieldCheck, Download, Send, MessageCircle, Key,
   PartyPopper, LayoutDashboard, BrainCircuit, Layers, FolderOpen, Megaphone, DollarSign,
   CalendarPlus, Share2, Copy, Check, Pencil, Edit, Bell, Sparkles, Database
-, PanelLeftClose, PanelLeftOpen, Menu, X, ChevronRight, BookOpen, Settings2 } from "lucide-react";
+, PanelLeftClose, PanelLeftOpen, Menu, X, ChevronRight, BookOpen, Settings2, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { EnterpriseDatasetVaultView } from "@/components/enterprise-dataset-vault";
 import { AdminB2bPlaybook } from "@/components/admin-b2b-playbook";
@@ -89,15 +89,15 @@ export const Route = createFileRoute("/_authenticated/admin/operations")({
   component: OperationsDashboard,
 });
 
-function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
+function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number; color?: string }) {
   return (
-    <div className={`rounded-xl border bg-card p-4 flex items-center gap-4 shadow-sm`}>
-      <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${color}`}>
+    <div className="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-4 shadow-xs">
+      <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-slate-100 text-slate-900 border border-slate-200">
         {icon}
       </div>
       <div>
-        <div className="text-2xl font-bold text-primary">{value}</div>
-        <div className="text-xs text-muted-foreground uppercase tracking-wider">{label}</div>
+        <div className="text-2xl font-black text-slate-900 font-mono tracking-tight">{value}</div>
+        <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">{label}</div>
       </div>
     </div>
   );
@@ -1059,6 +1059,15 @@ function OperationsDashboard() {
         { id: "profile_approvals", label: "Profile Approvals", icon: UserCheck, count: null },
         { id: "support", label: "Support & Feedback", icon: LifeBuoy, count: (supportQueries || []).filter((q: any) => q.status === "open").length || null },
       ]
+    },
+    {
+      title: "Growth & Enterprise",
+      items: [
+        { id: "b2b-playbook", label: "B2B Sales Playbook", icon: BookOpen, count: null },
+        { id: "email-campaigns", label: "Email Campaigns", icon: Mail, count: null },
+        { id: "security", label: "Security & SOC2 Audit", icon: Shield, count: null },
+        { id: "settings", label: "Admin Settings", icon: Settings2, count: null },
+      ]
     }
   ];
 
@@ -1172,6 +1181,19 @@ function OperationsDashboard() {
                 <ArrowLeft className="h-3.5 w-3.5" />
                 <span>Return to Dashboard</span>
               </Link>
+              <button
+                type="button"
+                onClick={async () => {
+                  await qc.cancelQueries();
+                  qc.clear();
+                  await supabase.auth.signOut();
+                  window.location.href = "/auth/admin";
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Sign Out</span>
+              </button>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
@@ -1182,6 +1204,19 @@ function OperationsDashboard() {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Link>
+              <button
+                type="button"
+                onClick={async () => {
+                  await qc.cancelQueries();
+                  qc.clear();
+                  await supabase.auth.signOut();
+                  window.location.href = "/auth/admin";
+                }}
+                className="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                title="Sign Out"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
             </div>
           )}
         </div>
@@ -1279,6 +1314,19 @@ function OperationsDashboard() {
                   <ArrowLeft className="h-3.5 w-3.5" />
                   <span>Return to Dashboard</span>
                 </Link>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await qc.cancelQueries();
+                    qc.clear();
+                    await supabase.auth.signOut();
+                    window.location.href = "/auth/admin";
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 cursor-pointer"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  <span>Sign Out</span>
+                </button>
               </div>
             </motion.div>
           </div>
@@ -1574,15 +1622,19 @@ function OperationsDashboard() {
                   { id: "vyntyra-meet", title: "Vyntyra Meet", desc: "Enterprise-grade, E2EE secure video meeting rooms and controls.", icon: ShieldCheck, color: "text-blue-600 bg-blue-50 border-blue-200", badge: "Secure" },
                   { id: "support", title: "Helpdesk & Resolution Hub", desc: "Assign customer and intern support tickets to employee resolvers and approve syncs.", icon: LifeBuoy, color: "text-cyan-600 bg-cyan-50 border-cyan-200", badge: `${(supportQueries || []).filter((q: any) => q.status === "open").length} Open` },
                   { id: "profile_approvals", title: "Profile Change Approvals", desc: "Review and approve/reject sensitive profile updates (Email, Phone, Photo, Address) requested by interns and employees.", icon: UserCheck, color: "text-indigo-600 bg-indigo-50 border-indigo-200", badge: "Identity Approval" },
-                  { id: "ambassador", title: "Campus Ambassador Program Controls", desc: "Manage product photography, swags/gadgets catalog, toggle application entry (open/closed), and customize coming soon popup messages.", icon: Award, color: "text-amber-600 bg-amber-50 border-amber-200", badge: "Cohort 1.0" },
-                  { id: "dataset-vault", title: "Dataset Vault & CSV Extraction Hub", desc: "Extract CSV files, select what to store, manage master records across Companies, Colleges, Students, Interns & Employees with password-protected exports.", icon: Database, color: "text-blue-600 bg-blue-50 border-blue-200", badge: "Master Hub" },
+                  { id: "ambassador", title: "Campus Ambassador Program Controls", desc: "Manage product photography, swags/gadgets catalog, toggle application entry (open/closed), and customize coming soon popup messages.", icon: Award, color: "text-slate-900 bg-slate-100 border-slate-200", badge: "Cohort 1.0" },
+                  { id: "dataset-vault", title: "Dataset Vault & CSV Extraction Hub", desc: "Extract CSV files, select what to store, manage master records across Companies, Colleges, Students, Interns & Employees with password-protected exports.", icon: Database, color: "text-slate-900 bg-slate-100 border-slate-200", badge: "Master Hub" },
+                  { id: "b2b-playbook", title: "B2B Sales Playbook", desc: "Access high-converting outreach scripts, business pitch decks, target industry playbooks, and pipeline collateral.", icon: BookOpen, color: "text-slate-900 bg-slate-100 border-slate-200", badge: "Enterprise" },
+                  { id: "email-campaigns", title: "Email Campaigns & Automation Hub", desc: "Execute automated promotional email outreach, bulk campaigns, audience tracking, and conversion analytics.", icon: Mail, color: "text-slate-900 bg-slate-100 border-slate-200", badge: "Outreach" },
+                  { id: "security", title: "Security & SOC-2 Audit Controls", desc: "Manage administrative account credentials, enforce two-factor authentication (2FA/TOTP), and review access integrity.", icon: Shield, color: "text-slate-900 bg-slate-100 border-slate-200", badge: "Security" },
+                  { id: "settings", title: "Admin Settings & Platform Policies", desc: "Configure referral pricing engines, module switches, branding logos, signatures, and career domain catalogs.", icon: Settings2, color: "text-slate-900 bg-slate-100 border-slate-200", badge: "Config" },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
                     <button
                       key={item.id}
                       onClick={() => switchTab(item.id)}
-                      className="p-5 rounded-2xl bg-white border border-slate-200/90 hover:border-slate-300 hover:shadow-md transition-all text-left group flex flex-col justify-between space-y-3 cursor-pointer"
+                      className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-400 hover:shadow-md transition-all text-left group flex flex-col justify-between space-y-3 cursor-pointer"
                     >
                       <div className="flex items-start justify-between">
                         <div className={`p-2.5 rounded-xl border ${item.color}`}>
@@ -1977,7 +2029,7 @@ function OperationsDashboard() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Button onClick={() => setHolidayModalOpen(true)} className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2 text-xs h-9">
+                <Button onClick={() => setHolidayModalOpen(true)} className="bg-slate-900 hover:bg-black text-white font-bold gap-2 text-xs h-9 shadow-xs">
                   <Plus className="h-4 w-4" /> Add Official Holiday
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => holidaysQ.refetch()} className="gap-1.5 text-xs h-9">
@@ -1990,11 +2042,11 @@ function OperationsDashboard() {
               {/* Holidays List */}
               <div className="lg:col-span-2 space-y-4">
                 <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-                  <div className="px-5 py-4 border-b bg-amber-50/50 flex items-center justify-between">
-                    <div className="font-bold text-xs uppercase tracking-wider text-amber-900 flex items-center gap-2">
+                  <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between">
+                    <div className="font-bold text-xs uppercase tracking-wider text-slate-900 flex items-center gap-2">
                       <CalendarDays className="h-4 w-4 text-amber-600" /> Official Holidays & Observances
                     </div>
-                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900">
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-mono">
                       {(holidaysQ.data || []).length} Holidays
                     </span>
                   </div>
@@ -2007,7 +2059,7 @@ function OperationsDashboard() {
                         return (
                           <div key={h.id} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between gap-4">
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="h-10 w-10 rounded-xl bg-amber-100 border border-amber-300 text-amber-800 flex flex-col items-center justify-center shrink-0">
+                              <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex flex-col items-center justify-center shrink-0 font-mono">
                                 <span className="text-[9px] uppercase font-bold">{holidayDate.toLocaleString('default', { month: 'short' })}</span>
                                 <span className="text-sm font-extrabold leading-none">{holidayDate.getDate()}</span>
                               </div>
@@ -2676,7 +2728,7 @@ function OperationsDashboard() {
                         </div>
                         <div className="shrink-0">
                           {s.status !== 'approved' ? (
-                            <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={async () => {
+                            <Button size="sm" variant="outline" className="h-7 text-xs px-3 bg-slate-900 text-white hover:bg-black font-semibold rounded-lg" onClick={async () => {
                               await doUpdateStandupStatus({ data: { id: s.id, status: 'approved' } });
                               toast.success("Standup approved");
                               qc.invalidateQueries({ queryKey: ["admin-standups"] });
@@ -2912,7 +2964,7 @@ function OperationsDashboard() {
               <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
                 <div className="px-5 py-4 border-b flex items-center justify-between">
                   <h2 className="font-semibold text-sm flex items-center gap-2"><Clock className="h-4 w-4 text-rose-600" /> Leave Applications</h2>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-mono">
                     {(leavesQ.data || []).length} Requests
                   </span>
                 </div>
@@ -2930,9 +2982,9 @@ function OperationsDashboard() {
                               <span className="font-bold text-sm text-slate-900">{l.profiles?.full_name || l.user_id?.slice(0, 8)}</span>
                               <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700">{l.leave_type || "Leave"}</span>
                               <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                                l.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
-                                l.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                'bg-amber-100 text-amber-800'
+                                l.status === 'approved' ? 'bg-slate-900 text-white' :
+                                l.status === 'rejected' ? 'bg-slate-100 text-slate-500 border border-slate-200' :
+                                'bg-slate-100 text-slate-800 border border-slate-300'
                               }`}>
                                 {l.status}
                               </span>
@@ -2944,12 +2996,12 @@ function OperationsDashboard() {
                           </div>
                           {l.status === 'pending' && (
                             <div className="flex items-center gap-1 shrink-0">
-                              <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={async () => {
+                              <Button size="sm" variant="outline" className="h-7 text-xs px-3 bg-slate-900 text-white hover:bg-black font-semibold rounded-lg" onClick={async () => {
                                 await doUpdateLeaveStatus({ data: { id: l.id, status: 'approved' } });
                                 toast.success("Leave approved");
                                 qc.invalidateQueries({ queryKey: ["admin-leaves"] });
                               }}>Approve</Button>
-                              <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-red-600 border-red-200 hover:bg-red-50" onClick={async () => {
+                              <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold rounded-lg" onClick={async () => {
                                 await doUpdateLeaveStatus({ data: { id: l.id, status: 'rejected' } });
                                 toast.success("Leave rejected");
                                 qc.invalidateQueries({ queryKey: ["admin-leaves"] });
@@ -2989,7 +3041,7 @@ function OperationsDashboard() {
                         </div>
                         <div className="shrink-0">
                           {a.status !== 'provisioned' ? (
-                            <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={async () => {
+                            <Button size="sm" variant="outline" className="h-7 text-xs px-3 bg-slate-900 text-white hover:bg-black font-semibold rounded-lg" onClick={async () => {
                               await doUpdateAccessRequestStatus({ data: { id: a.id, status: 'provisioned' } });
                               toast.success("Access provisioned");
                               qc.invalidateQueries({ queryKey: ["admin-access-requests"] });
@@ -3028,7 +3080,7 @@ function OperationsDashboard() {
                   <h2 className="font-semibold text-sm flex items-center gap-2"><DollarSign className="h-4 w-4 text-emerald-600" /> Stipend & Compensation Payouts</h2>
                   <p className="text-xs text-slate-500">Track and approve team compensation batches.</p>
                 </div>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-mono">
                   {(payoutsQ.data || []).length} Records
                 </span>
               </div>
@@ -3043,11 +3095,11 @@ function OperationsDashboard() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-slate-900 text-sm">{p.profiles?.full_name || p.user_id?.slice(0, 8)}</span>
-                          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">₹{p.amount}</span>
+                          <span className="text-xs font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-300">₹{p.amount}</span>
                           <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                            p.status === 'paid' ? 'bg-emerald-100 text-emerald-800' :
-                            p.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                            'bg-amber-100 text-amber-800'
+                            p.status === 'paid' ? 'bg-slate-900 text-white' :
+                            p.status === 'approved' ? 'bg-slate-800 text-white' :
+                            'bg-slate-100 text-slate-800 border border-slate-300'
                           }`}>
                             {p.status}
                           </span>
@@ -3058,7 +3110,7 @@ function OperationsDashboard() {
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         {p.status !== 'paid' && (
-                          <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={async () => {
+                          <Button size="sm" variant="outline" className="h-7 text-xs px-3 bg-slate-900 text-white hover:bg-black font-semibold rounded-lg" onClick={async () => {
                             await doUpdatePayoutStatus({ data: { id: p.id, status: 'paid' } });
                             toast.success("Payout marked as paid");
                             qc.invalidateQueries({ queryKey: ["admin-payouts"] });
@@ -3078,7 +3130,7 @@ function OperationsDashboard() {
                   <h2 className="font-semibold text-sm flex items-center gap-2"><CreditCard className="h-4 w-4 text-emerald-600" /> Expense Claims & Reimbursements</h2>
                   <p className="text-xs text-slate-500">Review bills, travel allowances, and uploaded receipts.</p>
                 </div>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-mono">
                   {(expensesQ.data || []).length} Claims
                 </span>
               </div>
@@ -3124,7 +3176,7 @@ function OperationsDashboard() {
                               }}>Approve</Button>
                             )}
                             {exp.status !== 'paid' && (
-                              <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={async () => {
+                              <Button size="sm" variant="outline" className="h-7 text-xs px-3 bg-slate-900 text-white hover:bg-black font-semibold rounded-lg" onClick={async () => {
                                 try {
                                   await doUpdateExpenseStatus({ data: { id: exp.id, status: 'paid' } });
                                   toast.success("Expense marked as paid");
@@ -3133,7 +3185,7 @@ function OperationsDashboard() {
                               }}>Mark Paid</Button>
                             )}
                             {exp.status !== 'rejected' && (
-                              <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-red-600 border-red-200 hover:bg-red-50" onClick={async () => {
+                              <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold rounded-lg" onClick={async () => {
                                 try {
                                   await doUpdateExpenseStatus({ data: { id: exp.id, status: 'rejected' } });
                                   toast.success("Expense rejected");
@@ -3313,7 +3365,7 @@ function OperationsDashboard() {
                               }}>In Progress</Button>
                             )}
                             {tick.status !== 'resolved' && (
-                              <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={async () => {
+                              <Button size="sm" variant="outline" className="h-7 text-xs px-3 bg-slate-900 text-white hover:bg-black font-semibold rounded-lg" onClick={async () => {
                                 try {
                                   await doUpdateTicketStatus({ data: { id: tick.id, status: 'resolved' } });
                                   toast.success("Ticket resolved");
@@ -3439,6 +3491,34 @@ function OperationsDashboard() {
         {activeTab === "dataset-vault" && (
           <section id="dataset-vault-section">
             <EnterpriseDatasetVaultView isSuperAdmin={true} />
+          </section>
+        )}
+
+        {/* ─── TAB: B2B SALES PLAYBOOK ─── */}
+        {activeTab === "b2b-playbook" && (
+          <section id="b2b-playbook-section" className="space-y-4">
+            <AdminB2bPlaybook />
+          </section>
+        )}
+
+        {/* ─── TAB: EMAIL CAMPAIGNS ─── */}
+        {activeTab === "email-campaigns" && (
+          <section id="email-campaigns-section" className="space-y-4">
+            <EmailCampaignsPage embedded={true} />
+          </section>
+        )}
+
+        {/* ─── TAB: SECURITY & SOC2 AUDIT ─── */}
+        {activeTab === "security" && (
+          <section id="security-section" className="space-y-4">
+            <AdminSecurityPage embedded={true} />
+          </section>
+        )}
+
+        {/* ─── TAB: ADMIN SETTINGS & SUB-PANELS ─── */}
+        {(activeTab === "settings" || ["referrals", "intern_fees", "system_modules", "branding", "career_tracks", "noc_controls", "ai_voice"].includes(activeTab)) && (
+          <section id="settings-section" className="space-y-4">
+            <AdminSettingsPage embedded={true} defaultTab={activeTab === "settings" ? "referrals" : (activeTab as any)} />
           </section>
         )}
       </main>

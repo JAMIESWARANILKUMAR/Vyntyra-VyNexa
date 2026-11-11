@@ -155,7 +155,21 @@ export function AdminSecurityPage({ embedded = false }: { embedded?: boolean }) 
       </header>
       )}
 
-      <main className={embedded ? "w-full py-2" : "mx-auto max-w-5xl px-6 py-10"}>
+      <main className={embedded ? "w-full py-2 space-y-6" : "mx-auto max-w-5xl px-6 py-10 space-y-6"}>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="h-6 px-2.5 rounded-md bg-slate-900 text-white font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5">
+                <Shield className="h-3 w-3 text-white" /> ISO/IEC 27001 AUDIT READY
+              </span>
+              <span className="h-6 px-2.5 rounded-md border border-slate-200 bg-slate-50 text-slate-800 font-mono text-[10px] font-semibold uppercase">
+                SOC-2 TYPE II IDENTITY ASSURANCE
+              </span>
+            </div>
+            <h2 className="text-xl font-black text-slate-900 tracking-tight">Security &amp; Administrative Access Governance</h2>
+            <p className="text-xs text-slate-500">Enforce enterprise MFA credentials, cryptographic session keys, and root authority rotation.</p>
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           
           {/* Change Password Card */}
@@ -180,7 +194,7 @@ export function AdminSecurityPage({ embedded = false }: { embedded?: boolean }) 
                     minLength={6} 
                     value={passwordForm.newPassword} 
                     onChange={e => setPasswordForm({...passwordForm, newPassword: e.target.value})} 
-                    className="bg-slate-50 border-slate-100 rounded-xl focus:border-gold focus:ring-1 focus:ring-gold" 
+                    className="bg-slate-50 border-slate-100 rounded-xl focus:border-slate-900 focus:ring-1 focus:ring-slate-900" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -191,7 +205,7 @@ export function AdminSecurityPage({ embedded = false }: { embedded?: boolean }) 
                     minLength={6} 
                     value={passwordForm.confirmPassword} 
                     onChange={e => setPasswordForm({...passwordForm, confirmPassword: e.target.value})} 
-                    className="bg-slate-50 border-slate-100 rounded-xl focus:border-gold focus:ring-1 focus:ring-gold" 
+                    className="bg-slate-50 border-slate-100 rounded-xl focus:border-slate-900 focus:ring-1 focus:ring-slate-900" 
                   />
                 </div>
                 <Button type="submit" disabled={isChangingPassword} className="w-full bg-slate-950 hover:bg-slate-900 text-white rounded-xl h-11 border-0">
@@ -206,7 +220,7 @@ export function AdminSecurityPage({ embedded = false }: { embedded?: boolean }) 
           <div className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gold/10 text-gold">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-slate-100 text-slate-900 border border-slate-200">
                   <Shield className="h-5 w-5" />
                 </div>
                 <div>
@@ -218,13 +232,13 @@ export function AdminSecurityPage({ embedded = false }: { embedded?: boolean }) 
               <div className="mt-6">
                 {mfaStatus === "checking" ? (
                   <div className="text-sm text-slate-500 flex items-center gap-2 py-6 justify-center">
-                    <Loader2 className="h-4 w-4 animate-spin text-gold" /> Checking security status...
+                    <Loader2 className="h-4 w-4 animate-spin text-slate-900" /> Checking security status...
                   </div>
                 ) : mfaStatus === "enrolled" ? (
                   <div className="space-y-6">
-                    <div className="bg-emerald-50 text-emerald-700 p-6 rounded-2xl border border-emerald-100 flex flex-col gap-2">
+                    <div className="bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-xs flex flex-col gap-2">
                       <div className="font-semibold flex items-center gap-2 text-base">
-                        <CheckCircle2 className="h-5 w-5" /> 2FA is currently Active
+                        <CheckCircle2 className="h-5 w-5 text-white" /> 2FA is currently Active (ISO-27001 Verified)
                       </div>
                       <p className="text-xs font-light">Your Super Admin login is highly secured with a TOTP authenticator app verification check.</p>
                     </div>
@@ -253,7 +267,7 @@ export function AdminSecurityPage({ embedded = false }: { embedded?: boolean }) 
                           placeholder="e.g. 123456" 
                           value={mfaCode} 
                           onChange={e => setMfaCode(e.target.value)} 
-                          className="bg-slate-50 border-slate-100 rounded-xl text-center tracking-widest text-lg font-mono focus:border-gold focus:ring-1 focus:ring-gold" 
+                          className="bg-slate-50 border-slate-100 rounded-xl text-center tracking-widest text-lg font-mono focus:border-slate-900 focus:ring-1 focus:ring-slate-900" 
                         />
                       </div>
                       <div className="flex gap-3">
