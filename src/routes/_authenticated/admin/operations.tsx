@@ -64,6 +64,7 @@ import { VyntyraMeetAdmin } from "@/components/ui/vyntyra-meet-admin";
 import { CbtOperationsTab } from "@/components/admin-cbt-operations";
 import { AdminMockInterviewsOperationsView } from "@/components/admin-mock-interviews-operations";
 import { AdminAmbassadorOperations } from "@/components/admin-ambassador-operations";
+import { AdminCommunicationPromosView } from "@/components/admin-communication-promos-view";
 import { MonthlyCalendar } from "@/components/monthly-calendar";
 import { toast } from "sonner";
 import { TaskRichDescription } from "@/components/task-rich-description";
@@ -1922,98 +1923,26 @@ function OperationsDashboard() {
           </div>
         )}
 
-        {/* ─── TAB: ANNOUNCEMENTS & COMMUNICATION ─── */}
+        {/* ─── TAB: ANNOUNCEMENTS & COMMUNICATION PROMOS ─── */}
         {activeTab === "announcements" && (
-          <div className="space-y-6">
-            {/* Announcements */}
-            <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><Mail className="h-4 w-4 text-slate-600" /> Broadcast Announcements</h2>
-                  <p className="text-xs text-slate-500">Publish organization-wide or targeted role announcements.</p>
-                </div>
-                <Dialog open={announcementOpen} onOpenChange={setAnnouncementOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" className="gap-1.5 text-xs h-8 px-3"><Plus className="h-3.5 w-3.5" /> New Post</Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2"><Mail className="h-5 w-5 text-slate-600" /> Post Announcement</DialogTitle>
-                      <DialogDescription>This will be visible to the selected audience in their dashboards.</DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateAnnouncement} className="space-y-4 py-2">
-                      <div className="space-y-1.5">
-                        <Label>Title</Label>
-                        <Input required value={announcementForm.title} onChange={e => setAnnouncementForm({ ...announcementForm, title: e.target.value })} placeholder="e.g. Q3 All Hands Meeting" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>Message</Label>
-                        <Textarea required rows={4} value={announcementForm.body} onChange={e => setAnnouncementForm({ ...announcementForm, body: e.target.value })} placeholder="Write your announcement here..." />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>Target Audience</Label>
-                        <Select value={announcementForm.target_role} onValueChange={(v: any) => setAnnouncementForm({ ...announcementForm, target_role: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">Everyone (Employees + Interns)</SelectItem>
-                            <SelectItem value="employee">Employees Only</SelectItem>
-                            <SelectItem value="intern">Interns Only</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <DialogFooter>
-                        <Button type="button" variant="ghost" onClick={() => setAnnouncementOpen(false)}>Cancel</Button>
-                        <Button type="submit">Post Announcement</Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              <div className="divide-y max-h-[380px] overflow-y-auto">
-                {announcementsQ.isLoading ? (
-                  <div className="p-8 flex items-center justify-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
-                ) : announcementsQ.isError ? (
-                  <ErrorState message="Could not load announcements." onRetry={() => announcementsQ.refetch()} />
-                ) : (announcementsQ.data || []).length === 0 ? (
-                  <EmptyState icon={<Mail className="h-6 w-6" />} message="No announcements yet. Post one above!" />
-                ) : (
-                  (announcementsQ.data as any[]).map((a: any) => (
-                    <div key={a.id} className="p-4 hover:bg-slate-50 transition-colors">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-sm truncate">{a.title}</h4>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${a.target_role === "all" ? "bg-slate-100 text-slate-600" : a.target_role === "employee" ? "bg-slate-100 text-slate-800 border-slate-300 font-mono" : "bg-slate-100 text-slate-800 border-slate-300 font-mono"}`}>
-                              {a.target_role === "all" ? "Everyone" : a.target_role}
-                            </span>
-                            <span className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{a.body}</p>
-                        </div>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/50 hover:text-destructive hover:bg-destructive/10 shrink-0">
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Announcement?</AlertDialogTitle>
-                              <AlertDialogDescription>This will remove the announcement from all dashboards immediately.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteAnnouncement(a.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </section>
-          </div>
+          <AdminCommunicationPromosView
+            announcementsQ={announcementsQ}
+            kudosQ={kudosQ}
+            emailLogsQ={emailLogsQ}
+            smsLogsQ={smsLogsQ}
+            resourcesQ={resourcesQ}
+            teamQ={teamQ}
+            doCreateAnnouncement={doCreateAnnouncement}
+            doDeleteAnnouncement={doDeleteAnnouncement}
+            doCreateResource={doCreateResource}
+            doDeleteResource={doDeleteResource}
+            doGetUploadUrl={doGetUploadUrl}
+            doSendPromotionalEmail={doSendPromotionalEmail}
+            doDeleteAutomatedEmailLog={doDeleteAutomatedEmailLog}
+            doSendSms={doSendSms}
+            doDeleteSmsLog={doDeleteSmsLog}
+            qc={qc}
+          />
         )}
 
         {/* ─── TAB: HOLIDAYS & CALENDAR ─── */}
@@ -2743,205 +2672,6 @@ function OperationsDashboard() {
                 </div>
               </section>
             </div>
-          </div>
-        )}
-
-        {/* ─── TAB: ANNOUNCEMENTS & COMMUNICATION ADDITIONS ─── */}
-        {activeTab === "announcements" && (
-          <div className="space-y-6">
-            {/* Peer Kudos Feed */}
-            <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><Award className="h-4 w-4 text-slate-600" /> Peer Kudos & Appreciation Feed</h2>
-                  <p className="text-xs text-slate-500">Live shoutouts, badges, and recognition from teammates.</p>
-                </div>
-              </div>
-              <div className="divide-y max-h-[300px] overflow-y-auto">
-                {kudosQ.isLoading ? (
-                  <div className="p-8 flex items-center justify-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading kudos feed...</div>
-                ) : (kudosQ.data || []).length === 0 ? (
-                  <EmptyState icon={<Award className="h-6 w-6" />} message="No peer kudos sent yet." />
-                ) : (
-                  (kudosQ.data as any[]).map((kud: any) => (
-                    <div key={kud.id} className="p-4 hover:bg-slate-50 transition-colors flex items-start gap-3">
-                      <div className="h-8 w-8 rounded-full bg-slate-100 text-slate-800 border-slate-300 font-mono flex items-center justify-center shrink-0 font-bold text-xs">
-                        <Award className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-slate-900 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">{kud.badge}</span>
-                          <span className="text-xs text-slate-400">• {new Date(kud.created_at).toLocaleDateString()}</span>
-                        </div>
-                        <p className="text-xs text-slate-700 font-light mt-1.5 italic">"{kud.message}"</p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </section>
-
-            {/* Email Automation Hub */}
-            <EmailAutomationHub 
-              emailLogsQ={emailLogsQ} 
-              doSendPromotionalEmail={doSendPromotionalEmail} 
-              doDeleteAutomatedEmailLog={doDeleteAutomatedEmailLog} 
-              qc={qc} 
-            />
-
-            {/* SMS Gateway Automation Engine */}
-            <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-6">
-              <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
-                <div>
-                  <h2 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-slate-900" /> Multi-Provider Free SMS Gateway Hub
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Send candidate interview updates, selection alerts, and emergency notifications using free SMS gateways.
-                  </p>
-                </div>
-                <span className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-xs font-bold px-3 py-1 rounded-full">
-                  500 Total SMS / month
-                </span>
-              </div>
-
-              <SmsGatewayHub
-                smsLogsQ={smsLogsQ}
-                doSendSms={doSendSms}
-                doDeleteSmsLog={doDeleteSmsLog}
-                qc={qc}
-              />
-            </section>
-
-            {/* Resources Library */}
-            <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-sm flex items-center gap-2"><FileText className="h-4 w-4 text-pink-500" /> Training & Handbook Resources Library</h2>
-                  <p className="text-xs text-slate-500">Upload documentation, onboarding guidelines, guides, and templates.</p>
-                </div>
-                <Dialog open={resourceOpen} onOpenChange={setResourceOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" variant="outline" className="gap-1.5 text-xs h-8 px-3"><Plus className="h-3.5 w-3.5" /> Add Resource</Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-pink-500" /> Upload Resource</DialogTitle>
-                      <DialogDescription>Share documents or links with your team or an individual person.</DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateResource} className="space-y-4 py-2">
-                      <div className="space-y-1.5">
-                        <Label>Title</Label>
-                        <Input required value={resourceForm.title} onChange={e => setResourceForm({ ...resourceForm, title: e.target.value })} placeholder="e.g. Employee Handbook / Onboarding Specs" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>Description <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                        <Textarea rows={2} value={resourceForm.description} onChange={e => setResourceForm({ ...resourceForm, description: e.target.value })} placeholder="Brief description..." />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <Label>Type</Label>
-                          <Select value={resourceForm.type} onValueChange={(v: any) => setResourceForm({ ...resourceForm, type: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="document">Document</SelectItem>
-                              <SelectItem value="video">Video</SelectItem>
-                              <SelectItem value="link">Link</SelectItem>
-                              <SelectItem value="template">Template</SelectItem>
-                              <SelectItem value="guide">Guide</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label>Target Audience</Label>
-                          <Select value={resourceForm.target_role} onValueChange={(v: any) => setResourceForm({ ...resourceForm, target_role: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Everyone</SelectItem>
-                              <SelectItem value="employee">Employees Only</SelectItem>
-                              <SelectItem value="intern">Interns Only</SelectItem>
-                              <SelectItem value="individual">Specific Person (Individual)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      {resourceForm.target_role === "individual" && (
-                        <div className="space-y-1.5">
-                          <Label>Select Team Member</Label>
-                          <Select value={resourceForm.target_user_id} onValueChange={(v) => setResourceForm({ ...resourceForm, target_user_id: v })}>
-                            <SelectTrigger><SelectValue placeholder="Choose Person..." /></SelectTrigger>
-                            <SelectContent>
-                              {(teamQ.data || []).filter((m: any) => Boolean(m?.id)).map((m: any) => (
-                                <SelectItem key={m.id} value={String(m.id)}>
-                                  {m.full_name || m.email} ({m.role || "Member"})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                      <div className="space-y-1.5">
-                        <Label>File</Label>
-                        <Input type="file" required onChange={e => setResourceFile(e.target.files?.[0] || null)} />
-                      </div>
-                      <DialogFooter>
-                        <Button type="button" variant="ghost" onClick={() => setResourceOpen(false)} disabled={isUploading}>Cancel</Button>
-                        <Button type="submit" disabled={!resourceFile || isUploading}>
-                          {isUploading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Uploading...</> : "Upload"}
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              <div className="divide-y max-h-[380px] overflow-y-auto">
-                {resourcesQ.isLoading ? (
-                  <div className="p-8 flex items-center justify-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Loading resources...</div>
-                ) : resourcesQ.isError ? (
-                  <ErrorState message="Could not load resources." onRetry={() => resourcesQ.refetch()} />
-                ) : (resourcesQ.data || []).length === 0 ? (
-                  <EmptyState icon={<FileText className="h-6 w-6" />} message="No resources uploaded." />
-                ) : (
-                  (resourcesQ.data as any[]).map((r: any) => (
-                    <div key={r.id} className="p-4 hover:bg-slate-50 transition-colors">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-sm truncate">{r.title}</h4>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${r.target_role === "all" ? "bg-slate-100 text-slate-600" : r.target_role === "employee" ? "bg-slate-100 text-slate-800 border-slate-300 font-mono" : "bg-slate-100 text-slate-800 border-slate-300 font-mono"}`}>
-                              {r.target_role === "all" ? "Everyone" : r.target_role}
-                            </span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded font-medium capitalize bg-gray-100 text-gray-700">{r.type}</span>
-                            <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
-                          </div>
-                          {r.description && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{r.description}</p>}
-                          <a href={r.url} target="_blank" rel="noreferrer" className="text-xs text-pink-600 hover:underline mt-2 flex items-center gap-1">
-                            <UploadCloud className="h-3 w-3" /> Download / View
-                          </a>
-                        </div>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/50 hover:text-destructive hover:bg-destructive/10 shrink-0">
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Resource?</AlertDialogTitle>
-                              <AlertDialogDescription>This will remove the resource from all dashboards.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteResource(r.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </section>
           </div>
         )}
 
