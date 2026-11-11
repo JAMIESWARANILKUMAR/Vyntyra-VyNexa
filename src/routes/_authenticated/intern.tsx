@@ -1639,6 +1639,132 @@ function InternDashboard() {
               </div>
             </div>
 
+            {/* ─── INTERN PROFILE CARD ─── */}
+            <div className="rounded-3xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+              {/* Card header */}
+              <div className="bg-slate-50/50 px-6 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-5 border-b border-slate-200/80">
+                <div className="flex items-center gap-5 min-w-0">
+                  <div className="relative shrink-0 group">
+                    <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 rounded-2xl ring-2 ring-slate-300 shadow-xl text-2xl" />
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl cursor-pointer text-white">
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Upload</span>
+                      <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.webp" onChange={handleImageUpload} />
+                    </label>
+                    <span className="absolute -bottom-1 -right-1 bg-slate-900 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-white shadow-md">INTERN</span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">{profile?.full_name || displayName}</div>
+                    <div className="text-slate-900 text-xs font-mono font-black mt-0.5 flex items-center gap-2">
+                      <span>{profile?.intern_id || "VYN-INT-PRO"}</span>
+                      <span className="h-1 w-1 rounded-full bg-slate-300" />
+                      <span className="text-slate-600 font-sans font-medium">{profile?.department || "Associate Intern"}</span>
+                    </div>
+                    <div className="text-slate-500 text-xs mt-1 truncate">{email}</div>
+                  </div>
+                </div>
+
+                {mentor && (
+                  <div className="shrink-0 text-left sm:text-right bg-slate-50 rounded-2xl p-3.5 border border-slate-200/80 backdrop-blur-md w-full sm:w-auto shadow-xs">
+                    <div className="text-[10px] text-slate-600 font-black uppercase tracking-wider mb-0.5 flex items-center sm:justify-end gap-1.5">
+                      <Sparkles className="h-3 w-3" /> Assigned Mentor
+                    </div>
+                    <div className="text-sm font-extrabold text-slate-900">{mentor.full_name}</div>
+                    <div className="text-xs text-slate-600">{mentor.department || mentor.position || "Technical Lead"}</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Details grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 p-0 text-xs bg-white/80">
+                {[
+                  { icon: <Mail className="h-4 w-4 text-slate-700" />, label: "Email", value: email },
+                  { icon: <Phone className="h-4 w-4 text-slate-700" />, label: "Contact", value: profile?.phone || "—" },
+                  { icon: <MapPin className="h-4 w-4 text-slate-700" />, label: "Address", value: profile?.address || "—" },
+                  { icon: <Briefcase className="h-4 w-4 text-slate-700" />, label: "Domain", value: profile?.department || "—" },
+                  { icon: <CalendarDays className="h-4 w-4 text-slate-700" />, label: "Internship Start", value: profile?.start_date ? new Date(profile.start_date).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "—" },
+                  {
+                    icon: <Clock className="h-4 w-4 text-slate-700" />,
+                    label: "End Date / Remaining",
+                    value: profile?.end_date
+                      ? (() => {
+                          const end = new Date(profile.end_date);
+                          const remaining = Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                          return `${end.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} · ${remaining > 0 ? `${remaining} days left` : "Completed"}`;
+                        })()
+                      : "—",
+                  },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3.5 px-6 py-4 hover:bg-slate-50 transition-colors">
+                    <div className="h-9 w-9 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">{item.icon}</div>
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">{item.label}</div>
+                      <div className="text-sm font-black text-slate-900 mt-0.5 break-words">{item.value}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Document downloads */}
+              <div className="border-t border-slate-200/80 px-6 py-4 bg-white flex flex-wrap gap-3 items-center justify-between shadow-inner">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-900 mr-1">Your Documents:</span>
+                  {docsQ.isLoading ? (
+                    <span className="text-xs text-slate-900 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin text-slate-700" /> Loading...</span>
+                  ) : (
+                    <>
+                      <a
+                        href={docsQ.data?.offerLetterUrl || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                          docsQ.data?.offerLetterUrl
+                            ? "bg-slate-900 hover:bg-slate-800 text-white font-bold border border-slate-900 shadow-xs"
+                            : "bg-slate-100/60 text-slate-400 border border-slate-200 cursor-not-allowed pointer-events-none"
+                        }`}
+                        onClick={(e) => { if (!docsQ.data?.offerLetterUrl) e.preventDefault(); }}
+                      >
+                        <FileText className="h-3.5 w-3.5 text-white" />
+                        Download Offer Letter
+                      </a>
+                      {docsQ.data?.nocDownloadEnabled && (
+                        <a
+                          href={docsQ.data?.nocUrl || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                            docsQ.data?.nocUrl
+                              ? "bg-slate-900 hover:bg-slate-800 text-white font-bold"
+                              : "bg-slate-100/60 text-slate-400 border border-slate-200 cursor-not-allowed pointer-events-none"
+                          }`}
+                          onClick={(e) => { if (!docsQ.data?.nocUrl) e.preventDefault(); }}
+                        >
+                          <Award className="h-3.5 w-3.5 text-white" />
+                          Download NOC Certificate
+                          {!docsQ.data?.nocUrl && <span className="ml-1 opacity-70">(Not Ready)</span>}
+                        </a>
+                      )}
+
+                      {profile?.exam_fee_paid && (
+                        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-slate-100 text-slate-900 border border-slate-200 shadow-xs">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-slate-700" />
+                          <span>Fee Paid · Ref: <strong className="font-mono text-slate-900">{profile.payment_reference_no || `TXN-${(profile.id || "").slice(0, 6).toUpperCase()}`}</strong> ({profile.payment_mode || "Online"})</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => docsQ.refetch()}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-slate-900 hover:text-slate-700 transition-colors cursor-pointer"
+                  title="Refresh document links"
+                >
+                  <RefreshCw className="h-3 w-3 text-slate-700" />
+                  Refresh
+                </button>
+              </div>
+            </div>
+
             {/* ─── 4-COLUMN STAT CARDS ROW (Exact match with reference layout) ─── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Card 1: Pending Tasks */}
@@ -1878,132 +2004,6 @@ function InternDashboard() {
               </div>
             </div>
 
-
-            {/* ─── INTERN PROFILE CARD ─── */}
-            <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl backdrop-blur-xl overflow-hidden">
-              {/* Card header */}
-              <div className="bg-gradient-to-r from-slate-50 via-white to-white px-6 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-5 border-b border-slate-200/80">
-                <div className="flex items-center gap-5 min-w-0">
-                  <div className="relative shrink-0 group">
-                    <ProfileAvatar url={profile?.avatar_url} name={displayName} className="h-20 w-20 rounded-2xl ring-2 ring-slate-300 shadow-xl text-2xl" />
-                    <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl cursor-pointer text-white">
-                      <span className="text-[10px] font-bold uppercase tracking-wider">Upload</span>
-                      <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.webp" onChange={handleImageUpload} />
-                    </label>
-                    <span className="absolute -bottom-1 -right-1 bg-slate-900 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-white shadow-md">INTERN</span>
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">{profile?.full_name || displayName}</div>
-                    <div className="text-slate-900 text-xs font-mono font-black mt-0.5 flex items-center gap-2">
-                      <span>{profile?.intern_id || "VYN-INT-PRO"}</span>
-                      <span className="h-1 w-1 rounded-full bg-slate-300" />
-                      <span className="text-slate-600 font-sans font-medium">{profile?.department || "Associate Intern"}</span>
-                    </div>
-                    <div className="text-slate-500 text-xs mt-1 truncate">{email}</div>
-                  </div>
-                </div>
-
-                {mentor && (
-                  <div className="shrink-0 text-left sm:text-right bg-slate-50 rounded-2xl p-3.5 border border-slate-200/80 backdrop-blur-md w-full sm:w-auto shadow-xs">
-                    <div className="text-[10px] text-slate-600 font-black uppercase tracking-wider mb-0.5 flex items-center sm:justify-end gap-1.5">
-                      <Sparkles className="h-3 w-3" /> Assigned Mentor
-                    </div>
-                    <div className="text-sm font-extrabold text-slate-900">{mentor.full_name}</div>
-                    <div className="text-xs text-slate-600">{mentor.department || mentor.position || "Technical Lead"}</div>
-                  </div>
-                )}
-              </div>
-
-              {/* Details grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 p-0 text-xs bg-white/80">
-                {[
-                  { icon: <Mail className="h-4 w-4 text-slate-700" />, label: "Email", value: email },
-                  { icon: <Phone className="h-4 w-4 text-slate-700" />, label: "Contact", value: profile?.phone || "—" },
-                  { icon: <MapPin className="h-4 w-4 text-rose-600" />, label: "Address", value: profile?.address || "—" },
-                  { icon: <Briefcase className="h-4 w-4 text-slate-700" />, label: "Domain", value: profile?.department || "—" },
-                  { icon: <CalendarDays className="h-4 w-4 text-slate-700" />, label: "Internship Start", value: profile?.start_date ? new Date(profile.start_date).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "—" },
-                  {
-                    icon: <Clock className="h-4 w-4 text-slate-700" />,
-                    label: "End Date / Remaining",
-                    value: profile?.end_date
-                      ? (() => {
-                          const end = new Date(profile.end_date);
-                          const remaining = Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                          return `${end.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} · ${remaining > 0 ? `${remaining} days left` : "Completed"}`;
-                        })()
-                      : "—",
-                  },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3.5 px-6 py-4 hover:bg-slate-50 transition-colors">
-                    <div className="h-9 w-9 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">{item.icon}</div>
-                    <div className="min-w-0">
-                      <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">{item.label}</div>
-                      <div className="text-sm font-black text-slate-900 mt-0.5 break-words">{item.value}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Document downloads */}
-              <div className="border-t border-slate-200/80 px-6 py-4 bg-gradient-to-r from-white via-white to-white flex flex-wrap gap-3 items-center justify-between shadow-inner">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-900 mr-1">Your Documents:</span>
-                  {docsQ.isLoading ? (
-                    <span className="text-xs text-slate-900 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin text-slate-700" /> Loading...</span>
-                  ) : (
-                    <>
-                      <a
-                        href={docsQ.data?.offerLetterUrl || "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                          docsQ.data?.offerLetterUrl
-                            ? "bg-slate-900 hover:bg-slate-800 text-white font-bold border border-slate-900 shadow-xs"
-                            : "bg-slate-100/60 text-slate-400 border border-slate-200 cursor-not-allowed pointer-events-none"
-                        }`}
-                        onClick={(e) => { if (!docsQ.data?.offerLetterUrl) e.preventDefault(); }}
-                      >
-                        <FileText className="h-3.5 w-3.5 text-white" />
-                        Download Offer Letter
-                      </a>
-                      {docsQ.data?.nocDownloadEnabled && (
-                        <a
-                          href={docsQ.data?.nocUrl || "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                            docsQ.data?.nocUrl
-                              ? "bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-700 hover:to-emerald-700 text-white shadow-md shadow-slate-900/10"
-                              : "bg-slate-100/60 text-slate-400 border border-slate-200 cursor-not-allowed pointer-events-none"
-                          }`}
-                          onClick={(e) => { if (!docsQ.data?.nocUrl) e.preventDefault(); }}
-                        >
-                          <Award className="h-3.5 w-3.5 text-white" />
-                          Download NOC Certificate
-                          {!docsQ.data?.nocUrl && <span className="ml-1 opacity-70">(Not Ready)</span>}
-                        </a>
-                      )}
-
-                      {profile?.exam_fee_paid && (
-                        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-slate-100 text-slate-900 border border-slate-200 shadow-xs">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-slate-700" />
-                          <span>Fee Paid · Ref: <strong className="font-mono text-slate-900">{profile.payment_reference_no || `TXN-${(profile.id || "").slice(0, 6).toUpperCase()}`}</strong> ({profile.payment_mode || "Online"})</span>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-
-                <button
-                  onClick={() => docsQ.refetch()}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-slate-900 hover:text-slate-700 transition-colors cursor-pointer"
-                  title="Refresh document links"
-                >
-                  <RefreshCw className="h-3 w-3 text-slate-700" />
-                  Refresh
-                </button>
-              </div>
-            </div>
 
             {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
             {/* ─── QUICK ACCESS: TASKS & ASSIGNMENTS HUB BANNER ─── */}
