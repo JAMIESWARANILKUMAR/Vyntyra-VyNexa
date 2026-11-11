@@ -10,7 +10,8 @@ import {
   Play, FolderOpen, ExternalLink, RefreshCw, Phone, MapPin, Award,
   ShieldCheck, Download, Upload, Send, Sparkles, Check, HelpCircle,
   Layers, Target, Compass, BookMarked, MessageCircle, FileCheck, DollarSign, Briefcase, Code2, Cpu, Users, Shield, Lock, Unlock, CreditCard, ArrowRight, ArrowLeft, Zap, ChevronRight, X, Trophy, Flame, AlertCircle,
-  Printer, Receipt, Tag, Building2, CheckCheck, Menu, Globe, RotateCcw, PanelLeftClose, PanelLeftOpen
+  Printer, Receipt, Tag, Building2, CheckCheck, Menu, Globe, RotateCcw, PanelLeftClose, PanelLeftOpen,
+  MessageSquare, Gift, Coins, Calendar
  } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
