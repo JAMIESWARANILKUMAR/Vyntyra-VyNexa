@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { InternTaskAssignmentModal } from "@/components/intern-task-assignment-modal";
 import {
   ClipboardList, Search, Plus, CheckCircle2, Clock, AlertTriangle, ExternalLink,
-  Trash2, Sparkles, Filter, FileText, Check, RotateCcw, User, Eye, Download, Bell,
+  Trash2, Sparkles, Filter, FileText, Check, RotateCcw, User, Eye, Download, Bell, List, LayoutGrid, Building2, Shield, ShieldCheck,
   Mail, MessageSquare, Loader2, Send, Users, Video, BookOpen, Play
 } from "lucide-react";
 import { sendTaskNotification } from "@/lib/notifications.functions";
@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ManageTeamModal } from "@/components/manage-team-modal";
+import { SmartAvatar } from "@/components/SmartAvatar";
 
 export function AdminInternTasksView() {
   const qc = useQueryClient();
@@ -137,6 +138,7 @@ export function AdminInternTasksView() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [taskDetailModal, setTaskDetailModal] = useState<any>(null);
   const [viewDensity, setViewDensity] = useState<"compact" | "expanded">("compact");
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
   // Task Status Email & Multi-Recipient Notification State
   interface TaskEmailRecipient {
@@ -814,955 +816,743 @@ export function AdminInternTasksView() {
   });
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden space-y-6">
-      {/* ── Top View Navigation Tabs ── */}
-      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl w-full sm:w-fit border shadow-xs text-white">
-        <button
-          type="button"
-          onClick={() => setActiveViewTab("active")}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-            activeViewTab === "active"
-              ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-          }`}
-        >
-          <ClipboardList className="h-4 w-4" />
-          <span className="hidden sm:inline">Active Assigned Tasks</span>
-          <span className="sm:hidden">Active</span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "active" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}>
-            {activeAssignedTasks.length}
-          </span>
-        </button>
+    <div className="space-y-6">
+      {/* ─── Institutional Header & ISO Regulatory Banner (Directory & Users Grade) ─── */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="h-7 px-2.5 rounded-md bg-slate-900 text-white font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-white" /> ISO/IEC 27001 AUDIT READY
+              </span>
+              <span className="h-7 px-2.5 rounded-md border border-slate-200 bg-slate-50 text-slate-800 font-mono text-[10px] font-semibold tracking-wider uppercase flex items-center gap-1.5">
+                <ClipboardList className="h-3.5 w-3.5 text-slate-700" /> SPRINT DELIVERABLES &amp; LMS
+              </span>
+              <span className="h-7 px-2.5 rounded-md border border-slate-200 bg-slate-50 text-slate-800 font-mono text-[10px] font-semibold flex items-center gap-1.5">
+                {tasks.length} REGISTERED MILESTONES
+              </span>
+            </div>
+            <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900">
+              Institutional Tasks &amp; LMS Milestone Governance
+            </h1>
+            <p className="text-xs text-slate-600 max-w-3xl leading-relaxed">
+              Enterprise sprint milestone tracking, deliverable verification queues, mentor evaluations, and auditable credit distribution for internship associates.
+            </p>
+          </div>
 
-        <button
-          type="button"
-          onClick={() => setActiveViewTab("submissions")}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer h-auto ${activeViewTab === "submissions" ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
-        >
-          <CheckCheck className="h-4 w-4 text-rose-600" />
-          <span className="hidden sm:inline">Pending Submissions</span>
-          <span className="sm:hidden">Submissions</span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "submissions" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}>
-            {pendingSubmissions.length}
-          </span>
-        </button>
+          <div className="flex flex-wrap items-center gap-2 self-start md:self-center shrink-0">
+            <Button
+              type="button"
+              onClick={() => setAssignModalOpen(true)}
+              className="bg-slate-900 text-white hover:bg-black font-semibold text-xs h-9 px-4 rounded-lg shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+            >
+              <Plus className="h-4 w-4 text-white" />
+              <span>Assign Tasks (CSV / Manual)</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={async () => {
+                const completedIds = activeAssignedTasks
+                  .filter(t => t.status === 'completed' || t.is_verified)
+                  .map(t => t.id);
+                if (completedIds.length === 0) {
+                  return toast.info("No completed tasks found in active list to move.");
+                }
+                await handleMoveToStoredBank(completedIds);
+              }}
+              className="border-slate-300 text-slate-800 hover:bg-slate-100 font-semibold text-xs h-9 px-3 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <FolderArchive className="h-3.5 w-3.5 text-slate-700" />
+              <span>Move to Stored Bank</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] })}
+              className="border-slate-300 text-slate-800 hover:bg-slate-100 font-semibold text-xs h-9 px-3 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${tasksQ.isLoading ? "animate-spin" : ""}`} />
+              <span>Sync Milestones</span>
+            </Button>
+          </div>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => setActiveViewTab("submissions")}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer h-auto ${activeViewTab === "submissions" ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
-        >
-          <CheckCircle2 className="h-4 w-4 text-slate-900" />
-          <span className="hidden sm:inline">Reviewed & Completed</span>
-          <span className="sm:hidden">Reviewed</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveViewTab("stored_bank")}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeViewTab === "stored_bank" ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
-        >
-          <FolderArchive className="h-4 w-4 text-slate-900" />
-          <span className="hidden sm:inline">Stored Task Bank</span>
-          <span className="sm:hidden">Task Bank</span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeViewTab === "stored_bank" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}>
-            {storedBankTasks.length}
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveViewTab("intern_points")}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeViewTab === "intern_points" ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
-        >
-          <Award className="h-4 w-4 text-slate-900" />
-          <span className="hidden sm:inline">Intern Progress & Points</span>
-          <span className="sm:hidden">Points</span>
-        </button>
-      </div>
-
-      {activeViewTab === "active" && (
-        <div className="space-y-6 w-full max-w-full">
-          {/* Header Banner & Stat Cards */}
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white dark:bg-slate-950 p-5 sm:p-6 rounded-2xl border shadow-sm text-white">
-            <div className="min-w-0 flex-1">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <ClipboardList className="h-6 w-6 text-slate-900 shrink-0" /> Active Intern Tasks &amp; Progress Tracker
-              </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Monitor and verify live intern milestone submissions. Move completed or reusable tasks directly to the Stored Bank for future cohorts with 1 click.
+        {/* ─── Metric Cards Grid (Matching Directory & Users) ─── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100">
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-2">
+            <div className="flex items-center justify-between text-slate-600">
+              <span className="text-[10px] font-mono uppercase tracking-wider font-bold">
+                Total Tracked Tasks
+              </span>
+              <ClipboardList className="h-4 w-4 text-slate-900" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+                {tasks.length}
+              </div>
+              <p className="text-[11px] text-slate-600 mt-0.5">
+                Active sprint deliverables &amp; projects
               </p>
             </div>
+          </div>
 
-            <div className="flex flex-wrap items-center gap-2 shrink-0 w-full lg:w-auto">
-              <Button
-                onClick={async () => {
-                  const completedIds = activeAssignedTasks
-                    .filter(t => t.status === 'completed' || t.is_verified)
-                    .map(t => t.id);
-                  if (completedIds.length === 0) {
-                    return toast.info("No completed tasks found in active list to move. You can also select specific tasks and click 'Move to Stored Bank'.");
-                  }
-                  await handleMoveToStoredBank(completedIds);
-                }}
-                className="bg-slate-900 hover:bg-black text-white font-bold shadow-xs gap-2 cursor-pointer text-xs h-9"
-                title="Immediately moves all completed tasks to the Stored Task Bank for future cohorts without needing to assign them first"
-              >
-                <FolderArchive className="h-4 w-4" /> Move Completed Tasks to Stored Bank (For Future)
-              </Button>
-              <Button
-                onClick={() => setClearAllModalOpen(true)}
-                variant="destructive"
-                className="font-semibold shadow-md shrink-0 text-xs h-9 cursor-pointer"
-              >
-                <Trash2 className="h-4 w-4 mr-1.5" /> Clear All Tasks
-              </Button>
-              <Button
-                onClick={() => setAssignModalOpen(true)}
-                className="bg-slate-900 hover:bg-black text-white font-semibold shadow-xs shrink-0 text-xs h-9 cursor-pointer"
-              >
-                <Plus className="h-4 w-4 mr-1.5" /> Assign Tasks (CSV / Manual)
-              </Button>
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-2">
+            <div className="flex items-center justify-between text-slate-600">
+              <span className="text-[10px] font-mono uppercase tracking-wider font-bold">
+                In Progress Milestones
+              </span>
+              <Clock className="h-4 w-4 text-slate-900" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+                {inProgressCount}
+              </div>
+              <p className="text-[11px] text-slate-600 mt-0.5">
+                Live engineering milestones being coded
+              </p>
             </div>
           </div>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border bg-white dark:bg-slate-950 shadow-sm text-white">
-          <div className="text-xs font-semibold text-slate-500">Total Intern Tasks</div>
-          <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1">{totalCount}</div>
-        </div>
-        <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs">
-          <div className="text-xs font-semibold text-slate-600">In Progress</div>
-          <div className="text-2xl font-black text-slate-900 font-mono mt-1">{inProgressCount}</div>
-        </div>
-        <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs">
-          <div className="text-xs font-semibold text-slate-600">Submitted / Under Review</div>
-          <div className="text-2xl font-black text-slate-900 font-mono mt-1">{submittedCount}</div>
-        </div>
-        <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs">
-          <div className="text-xs font-semibold text-slate-600">Completed</div>
-          <div className="text-2xl font-black text-slate-900 font-mono mt-1">{completedCount}</div>
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-2">
+            <div className="flex items-center justify-between text-slate-600">
+              <span className="text-[10px] font-mono uppercase tracking-wider font-bold">
+                Pending Reviews
+              </span>
+              <Sparkles className="h-4 w-4 text-slate-900" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+                {pendingSubmissions.length}
+              </div>
+              <p className="text-[11px] text-slate-600 mt-0.5">
+                Deliverables awaiting mentor verification
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-2">
+            <div className="flex items-center justify-between text-slate-600">
+              <span className="text-[10px] font-mono uppercase tracking-wider font-bold">
+                Verified &amp; Completed
+              </span>
+              <CheckCircle2 className="h-4 w-4 text-slate-900" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+                {completedCount}
+              </div>
+              <p className="text-[11px] text-slate-600 mt-0.5">
+                Completed deliverables archived
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-950 p-4 rounded-xl border text-white">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <Input
-            placeholder="Search by intern name, title..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 text-xs"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-36 text-xs">
-              <SelectValue placeholder="All Statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="submitted">Submitted</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-            <SelectTrigger className="w-32 text-xs">
-              <SelectValue placeholder="All Priorities" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Priorities</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Bulk Actions & Select All */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-slate-900 border rounded-xl p-4 text-white">
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-2xs">
+      {/* ─── Filter & Command Rail (Matching Directory & Users) ─── */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Main View Tabs */}
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold self-start flex-wrap">
             <button
               type="button"
-              onClick={() => setViewDensity("compact")}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                viewDensity === "compact" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+              onClick={() => setActiveViewTab("active")}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeViewTab === "active"
+                  ? "bg-slate-900 text-white shadow-xs font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
-              Compact (No Scroll)
+              <ClipboardList className="h-3.5 w-3.5" />
+              <span>Active Tasks ({activeAssignedTasks.length})</span>
             </button>
             <button
               type="button"
-              onClick={() => setViewDensity("expanded")}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                viewDensity === "expanded" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+              onClick={() => setActiveViewTab("submissions")}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeViewTab === "submissions"
+                  ? "bg-slate-900 text-white shadow-xs font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
-              Expanded Full
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Pending Submissions ({pendingSubmissions.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveViewTab("reviewed")}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeViewTab === "reviewed"
+                  ? "bg-slate-900 text-white shadow-xs font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+              }`}
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span>Reviewed ({reviewedTasks.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveViewTab("stored_bank")}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeViewTab === "stored_bank"
+                  ? "bg-slate-900 text-white shadow-xs font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+              }`}
+            >
+              <FolderArchive className="h-3.5 w-3.5" />
+              <span>Stored Bank ({storedBankTasks.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveViewTab("intern_points")}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeViewTab === "intern_points"
+                  ? "bg-slate-900 text-white shadow-xs font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+              }`}
+            >
+              <Award className="h-3.5 w-3.5" />
+              <span>Points Matrix</span>
             </button>
           </div>
-          <div className="flex items-center gap-2">
-            <Checkbox 
-              id="select-all" 
-              checked={filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length} 
-              onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-            />
-            <label htmlFor="select-all" className="text-sm font-medium cursor-pointer text-slate-700 dark:text-slate-300">
-              Select All <span className="text-slate-500">({selectedTaskIds.length} selected)</span>
-            </label>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2 flex-wrap">
-          {selectedTaskIds.length > 0 && (
-              <>
-                <div className="flex items-center gap-1.5 mr-2 border-r pr-3 border-slate-300">
-                  <Input type="date" value={bulkDueDate} onChange={(e) => setBulkDueDate(e.target.value)} className="h-8 text-xs w-[130px]" />
-                  <Button size="sm" onClick={handleBulkUpdateDueDate} className="h-8 text-xs font-semibold bg-slate-900 hover:bg-black text-white shadow-xs cursor-pointer">
-                    Update Deadline
-                  </Button>
-                </div>
-              <Button 
-                size="sm" 
-                onClick={() => handleMoveToStoredBank(selectedTaskIds)} 
-                className="h-8 text-xs font-bold bg-slate-900 hover:bg-black text-white shadow-xs gap-1.5 cursor-pointer"
-                title="Unassign selected tasks from current interns and preserve in Stored Bank for future cohorts"
+
+          {/* Search Box & View Mode Toggle (Table / Cards) */}
+          <div className="flex items-center gap-2 w-full lg:w-auto">
+            <div className="relative flex-1 lg:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Search milestone title, associate, ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 text-xs border-slate-200 bg-slate-50 focus:bg-white rounded-lg font-medium"
+              />
+            </div>
+
+            <div className="flex items-center p-1 rounded-lg border border-slate-200 bg-slate-50 shrink-0">
+              <button
+                type="button"
+                onClick={() => setViewMode("table")}
+                title="Data Table View"
+                className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                  viewMode === "table"
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
               >
-                <FolderArchive className="h-3.5 w-3.5" /> Move to Stored Bank ({selectedTaskIds.length})
-              </Button>
-              <Button size="sm" variant="destructive" onClick={handleBulkDelete} className="h-8 text-xs font-semibold cursor-pointer">
-                <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete Selected
-              </Button>
-            </>
-          )}
-          <Button size="sm" variant="outline" onClick={handleExtractAll} className="h-8 text-xs font-semibold bg-white dark:bg-slate-950 cursor-pointer text-white">
-            <Download className="h-3.5 w-3.5 mr-1.5 text-slate-900" /> Extract {selectedTaskIds.length > 0 ? "Selected" : "All"}
-          </Button>
+                <List className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("cards")}
+                title="Card Grid View"
+                className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                  viewMode === "cards"
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Secondary Filters & Bulk Actions */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Status Filter */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold">
+                Status:
+              </span>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-8 text-xs border-slate-200 bg-slate-50 w-36 rounded-lg font-medium">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="pending">Pending Start</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="submitted">Submitted</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Priority Filter */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold">
+                Priority:
+              </span>
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="h-8 text-xs border-slate-200 bg-slate-50 w-32 rounded-lg font-medium">
+                  <SelectValue placeholder="All Priorities" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priorities</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Select All */}
+            <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+              <Checkbox 
+                id="select-all" 
+                checked={filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length} 
+                onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+              />
+              <label htmlFor="select-all" className="text-xs font-semibold cursor-pointer text-slate-700">
+                Select All <span className="text-slate-400 font-mono">({selectedTaskIds.length})</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Bulk Action Buttons */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {selectedTaskIds.length > 0 && (
+              <>
+                <Input type="date" value={bulkDueDate} onChange={(e) => setBulkDueDate(e.target.value)} className="h-8 text-xs w-[125px] rounded-lg" />
+                <Button size="sm" onClick={handleBulkUpdateDueDate} className="h-8 text-xs font-semibold bg-slate-900 hover:bg-black text-white rounded-lg shadow-xs cursor-pointer">
+                  Update Due Date
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={() => handleMoveToStoredBank(selectedTaskIds)} 
+                  className="h-8 text-xs font-semibold bg-slate-900 hover:bg-black text-white rounded-lg shadow-xs gap-1 cursor-pointer"
+                >
+                  <FolderArchive className="h-3.5 w-3.5" /> Move to Bank ({selectedTaskIds.length})
+                </Button>
+                <Button size="sm" variant="destructive" onClick={handleBulkDelete} className="h-8 text-xs font-semibold rounded-lg cursor-pointer">
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                </Button>
+              </>
+            )}
+            <Button size="sm" variant="outline" onClick={handleExtractAll} className="h-8 text-xs font-semibold border-slate-300 text-slate-800 hover:bg-slate-100 rounded-lg cursor-pointer">
+              <Download className="h-3.5 w-3.5 mr-1 text-slate-700" /> Export CSV
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setClearAllModalOpen(true)} className="h-8 text-xs font-semibold border-slate-300 text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer">
+              <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear All
+            </Button>
+          </div>
         </div>
       </div>
 
+      {/* ─── MAIN CONTENT VIEW (Active / Submissions / Reviewed / Stored / Points) ─── */}
+      {activeViewTab === "active" && (
+        viewMode === "table" ? (
+          /* ─── High-Density Table View ─── */
+          <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-100/70 border-b border-slate-200 text-[10px] uppercase font-mono font-bold tracking-wider text-slate-700">
+                    <th className="px-4 py-3 w-10">
+                      <Checkbox 
+                        checked={filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length} 
+                        onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                      />
+                    </th>
+                    <th className="px-5 py-3">Milestone Title &amp; Track</th>
+                    <th className="px-5 py-3">Assigned Associate</th>
+                    <th className="px-5 py-3">Target Deadline</th>
+                    <th className="px-5 py-3">Credits &amp; Priority</th>
+                    <th className="px-5 py-3">Deliverable Status</th>
+                    <th className="px-5 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                  {filteredTasks.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-5 py-12 text-center text-slate-400">
+                        No sprint tasks match criteria. Click <strong>Assign Tasks</strong> to provision new milestones.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredTasks.map((t) => {
+                      const internProfile = t.assigned_profile;
+                      const internName = internProfile?.full_name || internProfile?.email || "Assigned Associate";
+                      const isCompleted = t.status === "completed" || t.is_verified;
+                      const isSubmitted = t.status === "submitted" || Boolean(t.deliverable_url);
 
+                      return (
+                        <tr 
+                          key={t.id}
+                          onClick={() => setTaskDetailModal(t)}
+                          className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                        >
+                          <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
+                            <Checkbox 
+                              checked={selectedTaskIds.includes(t.id)} 
+                              onCheckedChange={(checked) => handleToggleSelect(t.id, checked as boolean)}
+                            />
+                          </td>
 
-      {/* Intern Tasks Progress Table */}
-      <div className="rounded-xl border bg-white dark:bg-slate-950 shadow-sm overflow-hidden divide-y text-white">
-        {groupedTaskEntries.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 text-xs">
-            No intern tasks found matching criteria. Click <strong className="text-slate-900">Assign Tasks</strong> to start!
+                          <td className="px-5 py-3.5">
+                            <div className="min-w-0">
+                              <div className="font-bold text-slate-900 group-hover:underline flex items-center gap-2">
+                                <span>{t.title}</span>
+                                {t.team_name && (
+                                  <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300">
+                                    {t.team_name}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5 font-mono">
+                                <span className="uppercase font-semibold">{t.level || "Core Track"}</span>
+                                {t.task_meet_link && (
+                                  <a 
+                                    href={t.task_meet_link} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    onClick={(e) => e.stopPropagation()} 
+                                    className="text-slate-900 underline font-bold flex items-center gap-1"
+                                  >
+                                    <Video className="h-3 w-3" /> Meet Link
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="px-5 py-3.5">
+                            <div className="flex items-center gap-2.5">
+                              <SmartAvatar
+                                src={internProfile?.avatar_url}
+                                alt={internName}
+                                fallbackInitials={(internName || "?")[0]}
+                                className="h-7 w-7 rounded-full border border-slate-200 shrink-0"
+                              />
+                              <div className="min-w-0">
+                                <div className="font-bold text-slate-900 truncate max-w-[170px]">
+                                  {internName}
+                                </div>
+                                <div className="text-[10px] text-slate-400 font-mono truncate">
+                                  {internProfile?.intern_id || internProfile?.email || "—"}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="px-5 py-3.5 font-mono text-xs text-slate-800">
+                            {t.due_date ? (
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3.5 w-3.5 text-slate-400" />
+                                {t.due_date.split('T')[0]}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400">—</span>
+                            )}
+                          </td>
+
+                          <td className="px-5 py-3.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-mono text-xs font-bold text-slate-900">
+                                {t.credits || 10} Cr
+                              </span>
+                              <span className={`text-[9px] uppercase font-mono font-bold px-1.5 py-0.5 rounded ${
+                                t.priority === "high" || t.priority === "urgent"
+                                  ? "bg-slate-900 text-white"
+                                  : "bg-slate-100 text-slate-700 border border-slate-300"
+                              }`}>
+                                {t.priority || "med"}
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="px-5 py-3.5">
+                            {isCompleted ? (
+                              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white inline-flex items-center gap-1">
+                                <Check className="h-3 w-3 text-white" /> Verified
+                              </span>
+                            ) : isSubmitted ? (
+                              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-300 inline-flex items-center gap-1">
+                                <Sparkles className="h-3 w-3 text-slate-900" /> Under Review
+                              </span>
+                            ) : t.status === "in_progress" ? (
+                              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                In Progress
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-mono text-slate-400">
+                                Pending Start
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="px-5 py-3.5 text-right space-x-1" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => setTaskDetailModal(t)}
+                              className="h-8 px-2.5 text-xs font-semibold bg-slate-900 text-white hover:bg-black rounded-lg gap-1.5 cursor-pointer shadow-xs"
+                            >
+                              <Eye className="h-3.5 w-3.5 text-white" /> Open Task
+                            </Button>
+                            {!isCompleted && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUpdateStatus(t.id, "completed")}
+                                className="h-8 px-2 text-xs font-semibold border-slate-200 text-slate-900 hover:bg-slate-100 rounded-lg cursor-pointer"
+                                title="Approve Milestone"
+                              >
+                                <Check className="h-3.5 w-3.5 text-slate-900" />
+                              </Button>
+                            )}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedTaskForReview(t);
+                                setAdminRemarks(t.progress_notes || "");
+                              }}
+                              className="h-8 px-2 text-xs font-semibold border-slate-200 text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer"
+                              title="Review Deliverable"
+                            >
+                              <RotateCcw className="h-3.5 w-3.5 text-slate-600" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteTask(t.id)}
+                              className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                              title="Delete Task"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
-          groupedTaskEntries.map((group) => {
-            const rep = group[0];
-            const isTeam = Boolean(
-              rep.team_id || 
-              rep.assignment_mode === "team" || 
-              rep.team_name ||
-              (Array.isArray(rep.team_member_names) && rep.team_member_names.length > 1) ||
-              (rep.description && (rep.description.includes("[👥 Team:") || rep.description.includes("[TeamId:"))) ||
-              group.some((t: any) => 
-                t.team_id || 
-                t.assignment_mode === "team" || 
-                t.team_name ||
-                (Array.isArray(t.team_member_names) && t.team_member_names.length > 1) ||
-                (t.description && (t.description.includes("[👥 Team:") || t.description.includes("[TeamId:")))
-              )
-            );
-            const isBatch = !isTeam && group.length > 1;
-            const groupKey = rep.team_id 
-              ? `team-${rep.team_id}` 
-              : isTeam 
-                ? `team-${(rep.title || 'Untitled').trim().toLowerCase()}`
-                : `${rep.title}-${rep.created_at}`;
-            const isExpanded = expandedGroups.includes(groupKey);
-
-            const renderTask = (t: any) => {
-              const internProfile = t.assigned_profile;
-              const internName = internProfile?.full_name || internProfile?.email || "Assigned Intern";
-              const taskFile = t.project_requirements || t.task_file_url;
-              const submissionFile = t.deliverable_url;
-              return (
-                <div key={t.id} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0 text-white">
-                  {/* Left: Bulk Checkbox & Intern & Task Info */}
-                  <div className="flex items-start gap-3 flex-1 min-w-0 w-full">
-                    <div className="mt-1 shrink-0">
-                      <Checkbox 
-                        checked={selectedTaskIds.includes(t.id)} 
-                        onCheckedChange={(checked) => handleToggleSelect(t.id, checked as boolean)}
-                      />
-                    </div>
-
-                    {/* Intern & Task Info */}
-                    <div className="space-y-1.5 flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-bold text-sm text-slate-900 dark:text-slate-100 break-words">{t.title}</span>
-
-                        {/* Status Badge */}
-                        {t.status === "completed" && (
-                          <Badge className="bg-slate-900 text-white font-mono border-slate-900 text-[10px]">
-                            <CheckCircle2 className="h-3 w-3 mr-1" /> Completed
-                          </Badge>
-                        )}
-                        {(t.status === "submitted" || submissionFile) && t.status !== "completed" && (
-                          <Badge className="bg-slate-100 text-slate-800 font-mono border-slate-300 text-[10px]">
-                            <Sparkles className="h-3 w-3 mr-1" /> Submitted
-                          </Badge>
-                        )}
-                        {t.status === "in_progress" && (
-                          <Badge className="bg-slate-50 text-slate-700 font-mono border-slate-200 text-[10px]">
-                            <Clock className="h-3 w-3 mr-1" /> In Progress
-                          </Badge>
-                        )}
-                        {t.status === "pending" && (
-                          <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-[10px]">
-                            Pending Start
-                          </Badge>
-                        )}
-
-                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-600">
-                          Priority: {t.priority || "medium"}
-                        </Badge>
-
-                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-900 bg-slate-50 border-slate-200">
-                          Level: {t.level || "Beginner"}
-                        </Badge>
-
-                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-900 bg-slate-50 border-slate-200 flex items-center gap-0.5">
-                          <CreditCard className="h-3 w-3 text-slate-900" /> {t.credits || 10} Credits
-                        </Badge>
-
-                        {(t.team_name || t.team_id || t.assignment_mode === "team") ? (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] flex items-center gap-1">
-                              <Users className="h-3 w-3 text-slate-900" /> {t.team_name || `Collaborative Team (${t.team_size || 2})`}
-                            </Badge>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-5 text-[10px] px-2 bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-300 font-mono font-semibold flex items-center gap-1 shadow-none"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setManageTeamTask(t);
-                                setIsManageTeamOpen(true);
-                              }}
-                              title="Add or remove team members"
-                            >
-                              <Users className="h-2.5 w-2.5" /> Edit Team
-                            </Button>
-                          </div>
-                        ) : t.assigned_to ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-5 text-[10px] px-2 bg-slate-50 hover:bg-slate-50 text-slate-600 hover:text-slate-900 border-slate-200 hover:border-slate-200 flex items-center gap-1 font-medium shadow-none"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setManageTeamTask(t);
-                              setIsManageTeamOpen(true);
-                            }}
-                            title="Add more interns to turn this into a collaborative team task"
-                          >
-                            <Users className="h-2.5 w-2.5" /> + Add to Team
-                          </Button>
-                        ) : null}
-                      </div>
-
-                      {t.description && (
-                        <TaskRichDescription description={t.description} teamMembers={t.team_members || t.team_member_names} />
-                      )}
-
-                      <div className="flex items-center gap-3 sm:gap-4 text-[11px] text-slate-500 flex-wrap pt-1">
-                        <span className="flex items-center gap-1 font-semibold text-slate-800 dark:text-slate-200">
-                          <User className="h-3.5 w-3.5 text-slate-600 shrink-0" /> {internName} {internProfile?.intern_id ? `(${internProfile.intern_id})` : ""}
-                        </span>
-
-                        {t.due_date && (
-                          <span>Deadline: <strong className="text-slate-700 dark:text-slate-300">{t.due_date}</strong></span>
-                        )}
-
-                        {taskFile && (
-                          <button
-                            onClick={() => setPreviewTask({...t, _previewUrl: taskFile})}
-                            className="text-slate-900 hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
-                          >
-                            <FileText className="h-3.5 w-3.5" /> View Task File
-                          </button>
-                        )}
-
-                        {t.task_meet_link && (
-                          <a
-                            href={t.task_meet_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-slate-900 hover:underline inline-flex items-center gap-1 font-bold bg-slate-50 px-2 py-0.5 rounded border border-slate-200"
-                          >
-                            <Video className="h-3.5 w-3.5 text-slate-900" /> Meet Link
-                          </a>
-                        )}
-                      </div>
-
-                      {/* Mentor Feedback / Progress notes */}
-                      {(t.mentor_report || t.progress_notes) && (
-                        <div className="mt-2 p-2.5 rounded-lg bg-slate-50 dark:bg-indigo-950/20 border border-slate-200 text-xs">
-                          <span className="font-semibold text-slate-900 font-mono">Admin/Mentor Notes:</span>{" "}
-                          <p className="text-slate-600 dark:text-slate-300 italic inline">
-                            "{t.mentor_report || t.progress_notes}"
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Deadline Extension Review block */}
-                      {t.extension_status === "requested" && (
-                        <div className="mt-2 p-3 rounded-lg bg-slate-50 dark:bg-amber-950/20 border border-slate-200 text-xs space-y-1.5">
-                          <div className="font-bold text-slate-900 font-mono flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5 text-slate-900" /> Intern Requested Deadline Extension:
-                          </div>
-                          <div className="text-slate-700 dark:text-slate-200">
-                            <strong>Reason:</strong> "{t.extension_reason || 'No explanation provided.'}"
-                          </div>
-                          <div className="text-slate-500 text-[11px]">
-                            <strong>Requested New Date:</strong> {t.extension_requested_date ? new Date(t.extension_requested_date).toLocaleDateString() : ""}
-                          </div>
-                          <div className="flex items-center gap-2 mt-1.5">
-                            <Button 
-                              size="sm"
-                              className="bg-slate-900 hover:bg-black text-white font-bold h-6 px-2 text-[10px]"
-                              onClick={async () => {
-                                try {
-                                  await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'approved' } });
-                                  toast.success("Deadline extension approved!");
-                                  qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
-                                } catch (e) {
-                                  toast.error("Failed to approve extension");
-                                }
-                              }}
-                            >
-                              Approve
-                            </Button>
-                            <Button 
-                              size="sm"
-                              variant="outline"
-                              className="border-slate-300 text-rose-600 hover:bg-slate-50 font-bold h-6 px-2 text-[10px]"
-                              onClick={async () => {
-                                try {
-                                  await doReviewDeadlineExtension({ data: { taskId: t.id, status: 'rejected' } });
-                                  toast.success("Deadline extension rejected!");
-                                  qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
-                                } catch (e) {
-                                  toast.error("Failed to reject extension");
-                                }
-                              }}
-                            >
-                              Reject
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Admin Quick Actions */}
-                  <div className="flex items-center gap-1.5 flex-wrap w-full xl:w-auto xl:shrink-0 justify-start xl:justify-end pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-100 dark:border-slate-800">
-                    {t.mentor_verification_status === "mentor_verified" && t.status !== "completed" ? (
-                      <Button
-                        size="sm"
-                        className="h-8 text-xs font-bold bg-slate-900 hover:bg-black text-white gap-1 shadow-xs cursor-pointer"
-                        onClick={async () => {
-                          try {
-                            const pts = t.mentor_recommended_credits || t.credits || 10;
-                            await doAdminFinalize({ data: { taskId: t.id, awardedCredits: pts } });
-                            toast.success(`Task finalized as Completed! Awarded +${pts} Credits to intern.`);
-                            qc.invalidateQueries({ queryKey: ["admin-intern-tasks"] });
-                          } catch (err: any) {
-                            toast.error("Failed to finalize task: " + err.message);
-                          }
-                        }}
-                      >
-                        <Award className="h-3.5 w-3.5 text-amber-300" /> Approve &amp; Award +{t.mentor_recommended_credits || t.credits || 10}
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs font-bold bg-slate-900 text-white hover:bg-black cursor-pointer"
-                        onClick={() => handleUpdateStatus(t.id, "completed")}
-                      >
-                        <Check className="h-3.5 w-3.5 mr-1" /> Approve
-                      </Button>
-                    )}
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs text-slate-900 border-slate-200 hover:bg-slate-50 cursor-pointer"
-                      onClick={() => {
-                        setSelectedTaskForReview(t);
-                        setAdminRemarks(t.progress_notes || "");
-                      }}
-                    >
-                      <RotateCcw className="h-3.5 w-3.5 mr-1" /> Review
-                    </Button>
-
-                    {editingDeadlineTaskId === t.id ? (
-                      <div className="flex items-center gap-1">
-                        <Input type="date" autoFocus value={inlineDueDate} onChange={e => setInlineDueDate(e.target.value)} className="h-8 text-xs w-[130px]" />
-                        <Button size="sm" className="h-8 bg-slate-900 hover:bg-black text-white px-2 cursor-pointer" onClick={() => handleInlineDeadlineUpdate(t.id)}>Save</Button>
-                        <Button size="sm" variant="ghost" className="h-8 px-2 cursor-pointer" onClick={() => setEditingDeadlineTaskId(null)}>Cancel</Button>
-                      </div>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs font-bold text-slate-700 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1.5 shadow-2xs cursor-pointer"
-                        onClick={() => {
-                          setEditingDeadlineTaskId(t.id);
-                          setInlineDueDate(t.due_date ? t.due_date.split('T')[0] : "");
-                        }}
-                        title="Modify Task Deadline"
-                      >
-                        <Calendar className="h-3.5 w-3.5" /> Deadline
-                      </Button>
-                    )}
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs font-bold text-slate-900 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1.5 shadow-2xs cursor-pointer"
-                      onClick={() => openTaskEmailModal(t)}
-                      title="Send tailored Task Status email to this intern"
-                    >
-                      <Mail className="h-3.5 w-3.5" /> Email
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs font-bold text-slate-900 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1.5 shadow-2xs cursor-pointer"
-                      onClick={() => openTaskEmailModal(t)}
-                      title="Open formatted WhatsApp task status"
-                    >
-                      <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs font-bold text-slate-900 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1 shadow-2xs cursor-pointer"
-                      onClick={() => handleMoveToStoredBank([t.id])}
-                      title="Move task to Stored Bank (Unassigns from current intern and saves for future cohorts)"
-                    >
-                      <FolderArchive className="h-3.5 w-3.5 text-slate-900" /> Store for Future
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 cursor-pointer"
-                      onClick={() => handleDeleteTask(t.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            };
-
-            if (isTeam) {
-              const allGroupIds = group.map(t => t.id);
-              const isGroupAllSelected = allGroupIds.every(id => selectedTaskIds.includes(id));
-              const taskFile = rep.project_requirements || rep.task_file_url;
-              const allCompleted = group.every(t => t.status === "completed" || t.is_verified);
-              const anySubmitted = group.some(t => t.status === "submitted" || t.deliverable_url);
-              const anyInProgress = group.some(t => t.status === "in_progress");
-              const teamStatus = allCompleted ? "completed" : anySubmitted ? "submitted" : anyInProgress ? "in_progress" : (rep.status || "pending");
-
-              return (
-                <div key={groupKey} className="p-4 sm:p-5 hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 w-full min-w-0 border-b last:border-0 bg-slate-50 text-white">
-                  {/* Left: Checkbox & Team Info */}
-                  <div className="flex items-start gap-3 flex-1 min-w-0 w-full">
-                    <div className="mt-1 shrink-0">
-                      <Checkbox 
-                        checked={isGroupAllSelected} 
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedTaskIds(prev => Array.from(new Set([...prev, ...allGroupIds])));
-                          } else {
-                            setSelectedTaskIds(prev => prev.filter(id => !allGroupIds.includes(id)));
-                          }
-                        }}
-                      />
-                    </div>
-
-                    <div className="space-y-2 flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-bold text-sm text-slate-900 dark:text-slate-100 break-words">{rep.title}</span>
-
-                        {/* Status Badge */}
-                        {teamStatus === "completed" && (
-                          <Badge className="bg-slate-900 text-white font-mono border-slate-900 text-[10px]">
-                            <CheckCircle2 className="h-3 w-3 mr-1" /> All Completed
-                          </Badge>
-                        )}
-                        {teamStatus === "submitted" && (
-                          <Badge className="bg-slate-100 text-slate-800 font-mono border-slate-300 text-[10px]">
-                            <Sparkles className="h-3 w-3 mr-1" /> Submissions Received
-                          </Badge>
-                        )}
-                        {teamStatus === "in_progress" && (
-                          <Badge className="bg-slate-50 text-slate-700 font-mono border-slate-200 text-[10px]">
-                            <Clock className="h-3 w-3 mr-1" /> In Progress
-                          </Badge>
-                        )}
-                        {teamStatus === "pending" && (
-                          <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-[10px]">
-                            Pending Start
-                          </Badge>
-                        )}
-
-                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-600">
-                          Priority: {rep.priority || "medium"}
-                        </Badge>
-
-                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-900 bg-slate-50 border-slate-200">
-                          Level: {rep.level || "Beginner"}
-                        </Badge>
-
-                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-slate-900 bg-slate-50 border-slate-200 flex items-center gap-0.5">
-                          <CreditCard className="h-3 w-3 text-slate-900" /> {rep.credits || 10} Credits
-                        </Badge>
-
-                        {/* Team Badge & Manage Team Button */}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px] flex items-center gap-1 font-semibold">
-                            <Users className="h-3 w-3 text-slate-900" /> {rep.team_name || `Collaborative Team (${group.length})`}
-                          </Badge>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-5 text-[10px] px-2 bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-300 font-mono font-bold flex items-center gap-1 shadow-2xs cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setManageTeamTask(rep);
-                              setIsManageTeamOpen(true);
-                            }}
-                            title="Add or remove team members"
-                          >
-                            <Users className="h-2.5 w-2.5" /> Edit Team
-                          </Button>
-                        </div>
-                      </div>
-
-                      {rep.description && (
-                        <TaskRichDescription 
-                          description={rep.description} 
-                          teamMembers={group.map((t: any) => t.assigned_profile || { full_name: t.assigned_name || t.title })}
-                          teamId={rep.team_id}
-                        />
-                      )}
-
-                      {/* Team Members List Row */}
-                      <div className="flex items-center gap-2 flex-wrap pt-1">
-                        <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
-                          <Users className="h-3 w-3 text-slate-900" /> Team Members:
-                        </span>
-                        {group.map((t: any) => {
-                          const p = t.assigned_profile;
-                          const internName = p?.full_name || p?.email || "Assigned Intern";
-                          return (
-                            <div 
-                              key={t.id} 
-                              className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md px-2 py-0.5 text-xs text-slate-800 dark:text-slate-200"
-                            >
-                              <User className="h-3 w-3 text-slate-900 shrink-0" />
-                              <span className="font-semibold">{internName}</span>
-                              {p?.intern_id && <span className="text-[10px] text-slate-400">({p.intern_id})</span>}
-                              {t.status === "completed" && (
-                                <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[9px] px-1 py-0 h-4 font-bold">Completed</Badge>
-                              )}
-                              {(t.status === "submitted" || t.deliverable_url) && t.status !== "completed" && (
-                                <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[9px] px-1 py-0 h-4 font-bold">Submitted</Badge>
-                              )}
-                              {t.deliverable_url && (
-                                <a 
-                                  href={t.deliverable_url} 
-                                  target="_blank" 
-                                  rel="noreferrer" 
-                                  className="text-slate-900 hover:underline font-bold text-[10px]"
-                                  title="View submitted deliverable"
-                                >
-                                  [Deliverable]
-                                </a>
-                              )}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openTaskEmailModal(t);
-                                }}
-                                className="text-slate-900 hover:text-slate-900 ml-1 cursor-pointer transition-colors"
-                                title={`Send individual email/WhatsApp to ${internName}`}
-                              >
-                                <Mail className="h-3 w-3 inline" />
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Footer Details: Deadline, Task File, Meet Link */}
-                      <div className="flex items-center gap-3 sm:gap-4 text-[11px] text-slate-500 flex-wrap pt-1">
-                        {rep.due_date && (
-                          <span>Deadline: <strong className="text-slate-700 dark:text-slate-300">{rep.due_date}</strong></span>
-                        )}
-
-                        {taskFile && (
-                          <button
-                            onClick={() => setPreviewTask({...rep, _previewUrl: taskFile})}
-                            className="text-slate-900 hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
-                          >
-                            <FileText className="h-3.5 w-3.5" /> View Task File
-                          </button>
-                        )}
-
-                        {rep.task_meet_link && (
-                          <a
-                            href={rep.task_meet_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-slate-900 hover:underline inline-flex items-center gap-1 font-bold bg-slate-50 px-2 py-0.5 rounded border border-slate-200"
-                          >
-                            <Video className="h-3.5 w-3.5 text-slate-900" /> Meet Link
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right: Quick Actions */}
-                  <div className="flex items-center gap-1.5 flex-wrap w-full xl:w-auto xl:shrink-0 justify-start xl:justify-end pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-100 dark:border-slate-800">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs font-bold bg-slate-900 text-white hover:bg-black cursor-pointer"
-                      onClick={() => handleUpdateTeamStatus(allGroupIds, "completed")}
-                      title="Mark task completed for all team members"
-                    >
-                      <Check className="h-3.5 w-3.5 mr-1" /> Approve Team
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs text-slate-900 border-slate-200 hover:bg-slate-50 cursor-pointer"
-                      onClick={() => {
-                        setSelectedTaskForReview(rep);
-                        setAdminRemarks(rep.progress_notes || "");
-                      }}
-                    >
-                      <RotateCcw className="h-3.5 w-3.5 mr-1" /> Review
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs font-bold text-slate-900 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1.5 shadow-2xs cursor-pointer"
-                      onClick={() => openTaskEmailModal(rep, undefined, group)}
-                      title="Send tailored Task Status email to entire collaborative team"
-                    >
-                      <Mail className="h-3.5 w-3.5" /> Email
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs font-bold text-slate-900 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1.5 shadow-2xs cursor-pointer"
-                      onClick={() => openTaskEmailModal(rep, undefined, group)}
-                      title="Open formatted WhatsApp task status for team"
-                    >
-                      <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs font-bold text-slate-900 bg-slate-50 border-slate-200 hover:bg-slate-100 gap-1 shadow-2xs cursor-pointer"
-                      onClick={() => handleMoveToStoredBank(allGroupIds)}
-                      title="Move team task to Stored Bank for future cohorts"
-                    >
-                      <FolderArchive className="h-3.5 w-3.5 text-slate-900" /> Store for Future
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 cursor-pointer"
-                      onClick={() => handleDeleteTeamTask(allGroupIds, rep.title)}
-                      title="Delete this collaborative team task for all members"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            }
-
-            if (!isBatch) return renderTask(rep);
-
-            return (
-              <div key={groupKey} className="flex flex-col border-b last:border-0 border-slate-200 dark:border-slate-800">
-                <div 
-                  className="p-4 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-between cursor-pointer text-white" 
-                  onClick={() => toggleExpand(groupKey)}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                    <Badge variant="outline" className="w-fit bg-slate-100 text-slate-800 border-slate-300 font-mono flex items-center gap-1 px-2.5">
-                      <Sparkles className="h-3 w-3" /> Mass Assigned Batch
-                    </Badge>
-                    <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{rep.title}</span>
-                    <span className="text-xs text-slate-500 font-medium">({group.length} Interns Assigned)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50"
-                      onClick={(e) => { e.stopPropagation(); handleDeleteBatch(rep.title, rep.created_at); }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="h-8 text-xs font-semibold px-3">
-                      {isExpanded ? "Collapse" : "Expand"}
-                    </Button>
-                  </div>
-                </div>
-                
-                {isExpanded && (
-                  <div className="border-l-2 sm:border-l-4 border-slate-200 dark:border-indigo-800 ml-4 sm:ml-6 divide-y bg-white dark:bg-slate-950 text-white">
-                    {group.map((t: any) => renderTask(t))}
-                  </div>
-                )}
+          /* ─── Card Grid View ─── */
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredTasks.length === 0 ? (
+              <div className="col-span-full rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center text-slate-400">
+                No sprint tasks match criteria. Click <strong>Assign Tasks</strong> to provision new milestones.
               </div>
-            );
-          })
-        )}
-      </div>
-      </div>
+            ) : (
+              filteredTasks.map((t) => {
+                const internProfile = t.assigned_profile;
+                const internName = internProfile?.full_name || internProfile?.email || "Assigned Associate";
+                const isCompleted = t.status === "completed" || t.is_verified;
+                const isSubmitted = t.status === "submitted" || Boolean(t.deliverable_url);
+
+                return (
+                  <div
+                    key={t.id}
+                    onClick={() => setTaskDetailModal(t)}
+                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs hover:border-slate-400 transition-all flex flex-col justify-between space-y-4 cursor-pointer group"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <SmartAvatar
+                            src={internProfile?.avatar_url}
+                            alt={internName}
+                            fallbackInitials={(internName || "?")[0]}
+                            className="h-10 w-10 rounded-full border border-slate-200 shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <div className="font-bold text-slate-900 group-hover:underline truncate max-w-[180px]">
+                              {internName}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono truncate">
+                              {internProfile?.intern_id || internProfile?.email || "—"}
+                            </div>
+                          </div>
+                        </div>
+
+                        {isCompleted ? (
+                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white shrink-0">
+                            Verified
+                          </span>
+                        ) : isSubmitted ? (
+                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-300 shrink-0">
+                            Submitted
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+                            {t.status || "Pending"}
+                          </span>
+                        )}
+                      </div>
+
+                      <div>
+                        <h3 className="font-bold text-sm text-slate-900 leading-snug">
+                          {t.title}
+                        </h3>
+                        {t.description && (
+                          <p className="text-xs text-slate-500 line-clamp-2 mt-1">
+                            {t.description.replace(/[#*_\`\[\]]/g, '')}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        <span className="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                          {t.credits || 10} Credits
+                        </span>
+                        <span className="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                          {t.priority || "med"} Priority
+                        </span>
+                        {t.due_date && (
+                          <span className="text-[10px] font-mono text-slate-500 flex items-center gap-1">
+                            <Clock className="h-3 w-3" /> Due {t.due_date.split('T')[0]}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => setTaskDetailModal(t)}
+                        className="h-8 px-3 text-xs font-semibold bg-slate-900 text-white hover:bg-black rounded-lg gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <Eye className="h-3.5 w-3.5 text-white" /> Open Task
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {!isCompleted && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUpdateStatus(t.id, "completed")}
+                            className="h-8 px-2 text-xs font-semibold border-slate-200 text-slate-900 hover:bg-slate-100 rounded-lg cursor-pointer"
+                            title="Approve Milestone"
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedTaskForReview(t);
+                            setAdminRemarks(t.progress_notes || "");
+                          }}
+                          className="h-8 px-2 text-xs font-semibold border-slate-200 text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer"
+                          title="Review"
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )
       )}
 
-      {/* ── STORED TASK BANK / FUTURE REPOSITORY VIEW ── */}
-      
-      {/* PENDING SUBMISSIONS QUEUE VIEW */}
+      {/* ─── PENDING SUBMISSIONS VIEW ─── */}
       {activeViewTab === "submissions" && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-950 p-5 rounded-2xl border shadow-sm text-white">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold flex items-center gap-2"><CheckCheck className="h-5 w-5 text-rose-600" /> Pending Submissions Review Queue</h2>
-              <Input
-                placeholder="Search submissions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full sm:w-[250px] h-9 text-xs"
-              />
-            </div>
-            
-            <div className="space-y-3">
-              {filteredSubmissions.length === 0 ? (
-                <div className="p-8 text-center bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-200 text-white">
-                  <p className="text-slate-500 font-medium">No pending submissions to review. You're all caught up!</p>
-                </div>
-              ) : (
-                filteredSubmissions.map((t: any) => (
-                  <div key={t.id} className="p-4 bg-slate-50 hover:bg-slate-100 transition-colors rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div className="space-y-1.5 flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-sm">{t.title}</span>
-                        <Badge className="bg-slate-100 text-slate-800 border-slate-300 font-mono text-[10px]">Submitted</Badge>
-                      </div>
-                      <div className="text-xs text-slate-600 flex items-center gap-2">
-                        <User className="h-3 w-3" /> 
-                        <span className="font-medium">{t.assigned_profile?.full_name || "Unknown Intern"}</span>
-                        {t.assigned_profile?.email && <span>({t.assigned_profile.email})</span>}
-                      </div>
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between gap-4">
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-slate-900" /> Pending Submissions Review Queue
+            </h2>
+            <span className="text-xs font-mono text-slate-500 font-bold">{pendingSubmissions.length} PENDING AUDITS</span>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {pendingSubmissions.length === 0 ? (
+              <div className="p-12 text-center text-slate-400 text-xs">
+                No pending submissions in queue. All associate deliverables are up to date!
+              </div>
+            ) : (
+              pendingSubmissions.map((t) => (
+                <div key={t.id} className="p-4 hover:bg-slate-50/80 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-sm text-slate-900">{t.title}</span>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">
+                        Under Review
+                      </span>
                     </div>
-                    
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-300 font-mono h-8 text-xs cursor-pointer"
-                        onClick={() => {
-                          setSelectedTaskForReview(t);
-                          setAdminRemarks(t.progress_notes || "");
-                        }}
-                      >
-                        <Eye className="h-3.5 w-3.5 mr-1.5" /> View Deliverable & Grade
-                      </Button>
+                    <div className="text-xs text-slate-600 flex items-center gap-2">
+                      <User className="h-3 w-3 text-slate-400" />
+                      <span className="font-semibold">{t.assigned_profile?.full_name || "Associate"}</span>
+                      {t.assigned_profile?.intern_id && <span className="font-mono text-[10px] text-slate-400">({t.assigned_profile.intern_id})</span>}
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      onClick={() => setTaskDetailModal(t)}
+                      className="bg-slate-900 hover:bg-black text-white text-xs font-semibold h-8 px-3 rounded-lg gap-1.5 shadow-xs cursor-pointer"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-white" /> Inspect &amp; Grade
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
 
-      {activeViewTab === "submissions" && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-950 p-5 rounded-2xl border shadow-sm text-white">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-slate-900" /> Reviewed & Completed Tasks</h2>
-              <Input
-                placeholder="Search reviewed tasks..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full sm:w-[250px] h-9 text-xs"
-              />
-            </div>
-            
-            <div className="space-y-3">
-              {reviewedTasks.length === 0 ? (
-                <div className="p-8 text-center bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-200 text-white">
-                  <p className="text-slate-500 font-medium">No tasks have been reviewed yet.</p>
-                </div>
-              ) : (
-                reviewedTasks.filter(t => (t.title || "").toLowerCase().includes(searchQuery.toLowerCase())).map((t: any) => (
-                  <div key={t.id} className="p-4 bg-slate-50 hover:bg-slate-100 transition-colors rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div className="space-y-1.5 flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-sm">{t.title}</span>
-                        <Badge className={`text-[10px] ${t.status === 'completed' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : t.status === 'under_review' ? 'bg-slate-100 text-slate-800 border-slate-300 font-mono' : 'bg-slate-100 text-slate-800 border-slate-300 font-mono'}`}>
-                          {(t.status || "").replace("_", " ")}
-                        </Badge>
-                      </div>
-                      <div className="text-xs text-slate-600 flex items-center gap-2">
-                        <User className="h-3 w-3" /> 
-                        <span className="font-medium">{t.assigned_profile?.full_name || "Unknown Intern"}</span>
-                        {t.assigned_profile?.email && <span>({t.assigned_profile.email})</span>}
-                      </div>
+      {/* ─── REVIEWED & COMPLETED VIEW ─── */}
+      {activeViewTab === "reviewed" && (
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between gap-4">
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-slate-900" /> Reviewed &amp; Completed Milestones
+            </h2>
+            <span className="text-xs font-mono text-slate-500 font-bold">{reviewedTasks.length} ARCHIVED</span>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {reviewedTasks.length === 0 ? (
+              <div className="p-12 text-center text-slate-400 text-xs">
+                No reviewed tasks archived yet.
+              </div>
+            ) : (
+              reviewedTasks.map((t) => (
+                <div key={t.id} className="p-4 hover:bg-slate-50/80 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-sm text-slate-900">{t.title}</span>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">
+                        Verified
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-600">
+                        +{t.credits || 10} Credits Awarded
+                      </span>
                     </div>
-                    
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-300 font-mono h-8 text-xs cursor-pointer"
-                        onClick={() => {
-                          setSelectedTaskForReview(t);
-                          setAdminRemarks(t.progress_notes || t.admin_remarks || "");
-                        }}
-                      >
-                        <Eye className="h-3.5 w-3.5 mr-1.5" /> View Deliverable & Grade
-                      </Button>
+                    <div className="text-xs text-slate-600 flex items-center gap-2">
+                      <User className="h-3 w-3 text-slate-400" />
+                      <span className="font-semibold">{t.assigned_profile?.full_name || "Associate"}</span>
+                      {t.assigned_profile?.intern_id && <span className="font-mono text-[10px] text-slate-400">({t.assigned_profile.intern_id})</span>}
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      onClick={() => setTaskDetailModal(t)}
+                      className="bg-slate-900 hover:bg-black text-white text-xs font-semibold h-8 px-3 rounded-lg gap-1.5 shadow-xs cursor-pointer"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-white" /> View Workspace
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
