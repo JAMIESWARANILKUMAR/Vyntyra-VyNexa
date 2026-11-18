@@ -7377,10 +7377,20 @@ export const getDashboardSettings = createServerFn({ method: "GET" })
       console.warn("Could not query dashboard_settings table directly:", e);
     }
 
+    // Sort latest updated rows first so the most recent setting takes precedence
+    dbRows.sort((a, b) => {
+      const timeA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+      const timeB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+      return timeB - timeA;
+    });
+
     const rowMap = new Map<string, any>();
     for (const r of dbRows) {
       if (r?.portal_type && r?.module_name) {
-        rowMap.set(`${r.portal_type}_${r.module_name}`, r);
+        const key = `${r.portal_type}_${r.module_name}`;
+        if (!rowMap.has(key)) {
+          rowMap.set(key, r);
+        }
       }
     }
 
@@ -7468,32 +7478,46 @@ export const updateDashboardSetting = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const admin = getAdminClient();
     
-    // If a valid UUID id was passed
-    if (data.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.id)) {
-      const { error } = await admin
-        .from("dashboard_settings")
-        .update({ is_enabled: data.is_enabled, updated_at: new Date().toISOString() })
-        .eq("id", data.id);
-      if (!error) return { success: true };
-    }
-
-    // Otherwise update or insert by portal_type + module_name
+    // 1. Primary path: update or insert by portal_type + module_name
     if (data.portal_type && data.module_name) {
-      const { data: existing } = await admin
+      // First try upsert if unique constraint exists
+      try {
+        const { error: upsertErr } = await admin
+          .from("dashboard_settings")
+          .upsert(
+            {
+              portal_type: data.portal_type,
+              module_name: data.module_name,
+              is_enabled: data.is_enabled,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "portal_type,module_name" }
+          );
+
+        if (!upsertErr) return { success: true };
+      } catch (e) {
+        // Fallback to update / insert below
+      }
+
+      const { data: existing, error: selectErr } = await admin
         .from("dashboard_settings")
         .select("id")
         .eq("portal_type", data.portal_type)
         .eq("module_name", data.module_name);
 
+      if (selectErr) {
+        throw new Error(selectErr.message);
+      }
+
       if (existing && existing.length > 0) {
-        const { error } = await admin
+        const { error: updateErr } = await admin
           .from("dashboard_settings")
           .update({ is_enabled: data.is_enabled, updated_at: new Date().toISOString() })
           .eq("portal_type", data.portal_type)
           .eq("module_name", data.module_name);
-        if (error) throw new Error(error.message);
+        if (updateErr) throw new Error(updateErr.message);
       } else {
-        const { error } = await admin
+        const { error: insertErr } = await admin
           .from("dashboard_settings")
           .insert({
             portal_type: data.portal_type,
@@ -7501,8 +7525,19 @@ export const updateDashboardSetting = createServerFn({ method: "POST" })
             is_enabled: data.is_enabled,
             updated_at: new Date().toISOString(),
           });
-        if (error) throw new Error(error.message);
+        if (insertErr) throw new Error(insertErr.message);
       }
+      return { success: true };
+    }
+
+    // 2. Fallback if only valid UUID id was passed
+    if (data.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.id)) {
+      const { error } = await admin
+        .from("dashboard_settings")
+        .update({ is_enabled: data.is_enabled, updated_at: new Date().toISOString() })
+        .eq("id", data.id);
+      if (error) throw new Error(error.message);
+      return { success: true };
     }
 
     return { success: true };

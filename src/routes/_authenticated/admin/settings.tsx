@@ -149,6 +149,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
     sync_to_existing_interns: true,
   });
   const [modulePortalTab, setModulePortalTab] = useState<"intern" | "employee">("intern");
+  const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
   const [internFeeSearch, setInternFeeSearch] = useState("");
   const [internFeeFilter, setInternFeeFilter] = useState<"all" | "scheduled" | "unpaid" | "paid" | "exempted">("all");
   const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
@@ -762,12 +763,43 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
     mutationFn: async ({ id, portal_type, module_name, is_enabled }: { id?: string | null, portal_type: "intern" | "employee", module_name: string, is_enabled: boolean }) => {
       await doUpdateDashboardSetting({ data: { id: id || undefined, portal_type, module_name, is_enabled } });
     },
-    onSuccess: () => {
+    onMutate: async (newSetting) => {
+      await qc.cancelQueries({ queryKey: ["admin-dashboard-settings"] });
+      await qc.cancelQueries({ queryKey: ["dashboard-settings"] });
+
+      const prevAdmin = qc.getQueryData(["admin-dashboard-settings"]);
+      const prevClient = qc.getQueryData(["dashboard-settings"]);
+
+      qc.setQueryData(["admin-dashboard-settings"], (old: any[] = []) =>
+        old.map((item) =>
+          item.portal_type === newSetting.portal_type && item.module_name === newSetting.module_name
+            ? { ...item, is_enabled: newSetting.is_enabled }
+            : item
+        )
+      );
+
+      qc.setQueryData(["dashboard-settings"], (old: any[] = []) =>
+        old.map((item) =>
+          item.portal_type === newSetting.portal_type && item.module_name === newSetting.module_name
+            ? { ...item, is_enabled: newSetting.is_enabled }
+            : item
+        )
+      );
+
+      return { prevAdmin, prevClient };
+    },
+    onError: (err: any, _newSetting, context: any) => {
+      if (context?.prevAdmin) qc.setQueryData(["admin-dashboard-settings"], context.prevAdmin);
+      if (context?.prevClient) qc.setQueryData(["dashboard-settings"], context.prevClient);
+      toast.error(err.message || "Failed to update module permission");
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ["admin-dashboard-settings"] });
       qc.invalidateQueries({ queryKey: ["dashboard-settings"] });
+    },
+    onSuccess: () => {
       toast.success("Dashboard module setting updated!");
     },
-    onError: (e: any) => toast.error(e.message),
   });
 
   async function handleInitialize() {
@@ -786,13 +818,22 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
   }
 
   async function handleBulkTogglePortal(portalType: "intern" | "employee", isEnabled: boolean) {
+    // Optimistic update for instant UI feedback
+    qc.setQueryData(["admin-dashboard-settings"], (old: any[] = []) =>
+      old.map((item) => (item.portal_type === portalType ? { ...item, is_enabled: isEnabled } : item))
+    );
+    qc.setQueryData(["dashboard-settings"], (old: any[] = []) =>
+      old.map((item) => (item.portal_type === portalType ? { ...item, is_enabled: isEnabled } : item))
+    );
+
     try {
       await doBulkTogglePortalModules({ data: { portal_type: portalType, is_enabled: isEnabled } });
       toast.success(`${isEnabled ? "Enabled" : "Disabled"} all ${portalType === "intern" ? "Intern" : "Employee"} modules!`);
-      qc.invalidateQueries({ queryKey: ["admin-dashboard-settings"] });
-      qc.invalidateQueries({ queryKey: ["dashboard-settings"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to toggle portal modules.");
+    } finally {
+      qc.invalidateQueries({ queryKey: ["admin-dashboard-settings"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-settings"] });
     }
   }
 
@@ -1405,6 +1446,14 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
               <div className="relative z-10 flex flex-wrap items-center gap-2.5">
                 <Button 
                   size="sm"
+                  onClick={() => setIsSqlModalOpen(true)} 
+                  variant="outline" 
+                  className="bg-slate-900/90 hover:bg-slate-800 text-amber-300 border-amber-500/40 text-xs font-semibold h-9 rounded-xl gap-1.5 shadow-xs"
+                >
+                  <Database className="h-3.5 w-3.5 text-amber-400" /> Database SQL Schema
+                </Button>
+                <Button 
+                  size="sm"
                   onClick={handleInitialize} 
                   variant="outline" 
                   className="bg-slate-900/80 hover:bg-slate-800 text-slate-200 border-slate-700 text-xs font-semibold h-9 rounded-xl gap-1.5"
@@ -1604,7 +1653,270 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
           </div>
         )}
 
-        {/* ─── TAB: INTERN FEE SCHEDULES ─── */}
+        {/* Database SQL Schema Modal */}
+      <Dialog open={isSqlModalOpen} onOpenChange={setIsSqlModalOpen}>
+        <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
+              <Database className="h-5 w-5 text-amber-600" />
+              Supabase Database SQL Schema for Module Permissions
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Run this script once in your <strong>Supabase SQL Editor</strong> (Dashboard &gt; SQL Editor &gt; New Query) to ensure the <code>dashboard_settings</code> table, unique constraints, RLS policies, and module seeds exist in your database.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="relative flex-1 overflow-hidden rounded-xl border border-slate-800 bg-slate-950 p-4 text-xs font-mono text-slate-200 mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard.writeText(`-- =========================================================================
+-- COMPLETE PRODUCTION SQL SCHEMA FOR DASHBOARD & MODULE PERMISSIONS
+-- Run this script in the Supabase SQL Editor: Dashboard > SQL Editor > New Query
+-- =========================================================================
+
+-- 1. Create the dashboard_settings table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.dashboard_settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    portal_type TEXT NOT NULL CHECK (portal_type IN ('intern', 'employee')),
+    module_name TEXT NOT NULL,
+    is_enabled BOOLEAN NOT NULL DEFAULT true,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
+);
+
+-- 2. Add columns if table already existed without them
+ALTER TABLE public.dashboard_settings ADD COLUMN IF NOT EXISTS id UUID DEFAULT gen_random_uuid();
+ALTER TABLE public.dashboard_settings ADD COLUMN IF NOT EXISTS portal_type TEXT;
+ALTER TABLE public.dashboard_settings ADD COLUMN IF NOT EXISTS module_name TEXT;
+ALTER TABLE public.dashboard_settings ADD COLUMN IF NOT EXISTS is_enabled BOOLEAN DEFAULT true;
+ALTER TABLE public.dashboard_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+ALTER TABLE public.dashboard_settings ADD COLUMN IF NOT EXISTS updated_by UUID;
+
+-- 3. Clean up duplicates and ensure UNIQUE constraint on (portal_type, module_name)
+DO $
+BEGIN
+    DELETE FROM public.dashboard_settings a
+    USING public.dashboard_settings b
+    WHERE a.id < b.id 
+      AND a.portal_type = b.portal_type 
+      AND a.module_name = b.module_name;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'unique_portal_module'
+    ) THEN
+        ALTER TABLE public.dashboard_settings 
+        ADD CONSTRAINT unique_portal_module UNIQUE (portal_type, module_name);
+    END IF;
+END $;
+
+-- 4. Enable Row Level Security (RLS)
+ALTER TABLE public.dashboard_settings ENABLE ROW LEVEL SECURITY;
+
+-- 5. Drop old conflicting policies
+DROP POLICY IF EXISTS "Anyone can view dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Allow authenticated to view dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Allow public read dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Admins can insert dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Admins can update dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Admins can delete dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Allow admins to manage dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Allow management of dashboard settings" ON public.dashboard_settings;
+
+-- 6. Create robust policies
+CREATE POLICY "Allow public read dashboard settings"
+ON public.dashboard_settings FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow management of dashboard settings"
+ON public.dashboard_settings FOR ALL
+USING (true)
+WITH CHECK (true);
+
+-- 7. Grant permissions across roles
+GRANT ALL ON public.dashboard_settings TO service_role;
+GRANT ALL ON public.dashboard_settings TO authenticated;
+GRANT SELECT ON public.dashboard_settings TO anon;
+
+-- 8. Seed all Intern and Employee Portal Modules
+INSERT INTO public.dashboard_settings (portal_type, module_name, is_enabled) VALUES
+('intern', 'overview', true),
+('intern', 'tasks', true),
+('intern', 'kanban', true),
+('intern', 'deliverables', true),
+('intern', 'standups', true),
+('intern', 'attendance', true),
+('intern', 'meetings', true),
+('intern', 'resources', true),
+('intern', 'onboarding', true),
+('intern', 'lms', true),
+('intern', 'ppo', true),
+('intern', 'leaves', true),
+('intern', 'support', true),
+('intern', 'refer', true),
+('intern', 'cbt', true),
+('intern', 'mock_interview', true),
+('intern', 'ambassador', true),
+('intern', 'notes', true),
+('intern', 'feedback', true),
+('employee', 'tasks', true),
+('employee', 'attendance', true),
+('employee', 'leave', true),
+('employee', 'payouts', true),
+('employee', 'banking', true),
+('employee', 'support', true),
+('employee', 'resolver_support', true),
+('employee', 'meetings', true),
+('employee', 'interviews', true),
+('employee', 'my_interns', true),
+('employee', 'campaigns', true),
+('employee', 'dataset-vault', true),
+('employee', 'announcements', true),
+('employee', 'team', true),
+('employee', 'resources', true),
+('employee', 'locker', true),
+('employee', 'contact', true),
+('employee', 'security', true),
+('employee', 'refer', true)
+ON CONFLICT (portal_type, module_name) 
+DO UPDATE SET updated_at = now();`);
+                toast.success("SQL schema copied to clipboard!");
+              }}
+              className="absolute top-3 right-3 bg-slate-900 hover:bg-slate-800 text-white border-slate-700 text-xs h-8 px-3 rounded-lg gap-1.5 z-10"
+            >
+              <Copy className="h-3.5 w-3.5" /> Copy SQL
+            </Button>
+            <div className="overflow-y-auto max-h-[48vh] pr-2 scrollbar-thin">
+              <pre className="text-[11px] leading-relaxed text-emerald-400 whitespace-pre">
+{`-- =========================================================================
+-- COMPLETE PRODUCTION SQL SCHEMA FOR DASHBOARD & MODULE PERMISSIONS
+-- Run this script in the Supabase SQL Editor: Dashboard > SQL Editor > New Query
+-- =========================================================================
+
+-- 1. Create the dashboard_settings table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.dashboard_settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    portal_type TEXT NOT NULL CHECK (portal_type IN ('intern', 'employee')),
+    module_name TEXT NOT NULL,
+    is_enabled BOOLEAN NOT NULL DEFAULT true,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
+);
+
+-- 2. Add columns if table already existed without them
+ALTER TABLE public.dashboard_settings ADD COLUMN IF NOT EXISTS id UUID DEFAULT gen_random_uuid();
+ALTER TABLE public.dashboard_settings ADD COLUMN IF NOT EXISTS portal_type TEXT;
+ALTER TABLE public.dashboard_settings ADD COLUMN IF NOT EXISTS module_name TEXT;
+ALTER TABLE public.dashboard_settings ADD COLUMN IF NOT EXISTS is_enabled BOOLEAN DEFAULT true;
+ALTER TABLE public.dashboard_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+ALTER TABLE public.dashboard_settings ADD COLUMN IF NOT EXISTS updated_by UUID;
+
+-- 3. Clean up duplicates and ensure UNIQUE constraint on (portal_type, module_name)
+DO $
+BEGIN
+    DELETE FROM public.dashboard_settings a
+    USING public.dashboard_settings b
+    WHERE a.id < b.id 
+      AND a.portal_type = b.portal_type 
+      AND a.module_name = b.module_name;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'unique_portal_module'
+    ) THEN
+        ALTER TABLE public.dashboard_settings 
+        ADD CONSTRAINT unique_portal_module UNIQUE (portal_type, module_name);
+    END IF;
+END $;
+
+-- 4. Enable Row Level Security (RLS)
+ALTER TABLE public.dashboard_settings ENABLE ROW LEVEL SECURITY;
+
+-- 5. Drop old conflicting policies
+DROP POLICY IF EXISTS "Anyone can view dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Allow authenticated to view dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Allow public read dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Admins can insert dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Admins can update dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Admins can delete dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Allow admins to manage dashboard settings" ON public.dashboard_settings;
+DROP POLICY IF EXISTS "Allow management of dashboard settings" ON public.dashboard_settings;
+
+-- 6. Create robust policies
+CREATE POLICY "Allow public read dashboard settings"
+ON public.dashboard_settings FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow management of dashboard settings"
+ON public.dashboard_settings FOR ALL
+USING (true)
+WITH CHECK (true);
+
+-- 7. Grant permissions across roles
+GRANT ALL ON public.dashboard_settings TO service_role;
+GRANT ALL ON public.dashboard_settings TO authenticated;
+GRANT SELECT ON public.dashboard_settings TO anon;
+
+-- 8. Seed all Intern and Employee Portal Modules
+INSERT INTO public.dashboard_settings (portal_type, module_name, is_enabled) VALUES
+('intern', 'overview', true),
+('intern', 'tasks', true),
+('intern', 'kanban', true),
+('intern', 'deliverables', true),
+('intern', 'standups', true),
+('intern', 'attendance', true),
+('intern', 'meetings', true),
+('intern', 'resources', true),
+('intern', 'onboarding', true),
+('intern', 'lms', true),
+('intern', 'ppo', true),
+('intern', 'leaves', true),
+('intern', 'support', true),
+('intern', 'refer', true),
+('intern', 'cbt', true),
+('intern', 'mock_interview', true),
+('intern', 'ambassador', true),
+('intern', 'notes', true),
+('intern', 'feedback', true),
+('employee', 'tasks', true),
+('employee', 'attendance', true),
+('employee', 'leave', true),
+('employee', 'payouts', true),
+('employee', 'banking', true),
+('employee', 'support', true),
+('employee', 'resolver_support', true),
+('employee', 'meetings', true),
+('employee', 'interviews', true),
+('employee', 'my_interns', true),
+('employee', 'campaigns', true),
+('employee', 'dataset-vault', true),
+('employee', 'announcements', true),
+('employee', 'team', true),
+('employee', 'resources', true),
+('employee', 'locker', true),
+('employee', 'contact', true),
+('employee', 'security', true),
+('employee', 'refer', true)
+ON CONFLICT (portal_type, module_name) 
+DO UPDATE SET updated_at = now();`}
+              </pre>
+            </div>
+          </div>
+
+          <DialogFooter className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between sm:justify-between w-full">
+            <span className="text-xs text-slate-500">
+              After executing in Supabase, click <strong>"Initialize / Repair Missing Defaults"</strong>.
+            </span>
+            <Button size="sm" onClick={() => setIsSqlModalOpen(false)} className="bg-slate-900 text-white text-xs h-8 px-4 rounded-lg">
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── TAB: INTERN FEE SCHEDULES ─── */}
         {activeTab === "intern_fees" && (
           <div className="space-y-8">
             <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
