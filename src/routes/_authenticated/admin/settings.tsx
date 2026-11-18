@@ -8,8 +8,16 @@ import {
   RefreshCw, FileText, Tag, Percent, Plus, Search, Users, CheckCircle2, 
   Trash2, Edit3, TrendingUp, Sparkles, AlertCircle, DollarSign, Check,
   Mail, MessageSquare, Send, Award, Image, Upload, ExternalLink, Globe2,
-  CheckCheck, Layers, Download, Eye, EyeOff, FileCheck, Mic
+  CheckCheck, Layers, Download, Eye, EyeOff, FileCheck, Mic, Database, Copy
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

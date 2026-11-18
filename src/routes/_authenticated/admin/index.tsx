@@ -799,7 +799,7 @@ function AdminDashboard() {
                 </div>
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight text-white">
                   Hello,{" "}
-                  <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-200 bg-clip-text text-transparent drop-shadow-[0_2px_14px_rgba(251,191,36,0.35)]">
+                  <span className="text-amber-400 font-black tracking-tight drop-shadow-[0_2px_14px_rgba(251,191,36,0.5)]">
                     Super Admin
                   </span>
                 </h1>
