@@ -4002,21 +4002,68 @@ function UserProfileDialog({ user, open, onOpenChange, doUpdateProfile, doGetUpl
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Certificate</Label>
+          {/* Certificate Management Section */}
+          <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-800">
+                  <Award className="h-4 w-4" />
+                </span>
+                <div>
+                  <h4 className="font-bold text-xs text-slate-900">Official Internship Certificate</h4>
+                  <p className="text-[11px] text-slate-500">Manual Super Admin Upload &middot; Interns cannot generate certificates client-side</p>
+                </div>
+              </div>
+
+              {form.certificate_url ? (
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3 text-emerald-700" /> Active &amp; Ready
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3 text-amber-600" /> Not Uploaded (Shows "Contact Admin")
+                </span>
+              )}
+            </div>
+
             <div className="flex gap-2">
-              <Input value={form.certificate_url || ""} onChange={e => setForm({...form, certificate_url: e.target.value})} placeholder="https://example.com/certificate.pdf" />
+              <Input 
+                value={form.certificate_url || ""} 
+                onChange={e => setForm({...form, certificate_url: e.target.value})} 
+                placeholder="https://.../certificate.pdf (or click Upload)" 
+                className="text-xs bg-white font-mono"
+              />
               <div className="relative shrink-0">
-                <Button type="button" variant="outline" disabled={uploadingCertificate} className="w-[100px]">
-                  {uploadingCertificate ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload"}
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  disabled={uploadingCertificate} 
+                  className="bg-slate-900 text-white hover:bg-black font-bold text-xs h-9 px-3 rounded-lg gap-1.5 shadow-xs"
+                >
+                  {uploadingCertificate ? <Loader2 className="h-4 w-4 animate-spin" /> : <><UploadCloud className="h-4 w-4" /> Upload File</>}
                 </Button>
-                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="application/pdf,image/*" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "certificate"); }} />
+                <input 
+                  type="file" 
+                  className="absolute inset-0 opacity-0 cursor-pointer" 
+                  accept="application/pdf,image/*" 
+                  onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], "certificate"); }} 
+                />
               </div>
             </div>
+
             {form.certificate_url && (
-              <a href={form.certificate_url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
-                <FileText className="h-3 w-3" /> View Certificate
-              </a>
+              <div className="flex items-center justify-between pt-1 text-xs">
+                <a href={form.certificate_url} target="_blank" rel="noreferrer" className="text-slate-900 font-bold hover:underline flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 text-slate-700" /> View Current Certificate Document
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, certificate_url: "" })}
+                  className="text-rose-600 hover:text-rose-800 font-semibold text-[11px] flex items-center gap-1 cursor-pointer"
+                >
+                  <Trash2 className="h-3 w-3" /> Remove File
+                </button>
+              </div>
             )}
           </div>
 

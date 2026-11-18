@@ -1094,9 +1094,9 @@ function InternDashboard() {
     { id: "leaves",         label: `Leaves (${myLeaves.length})`, shortLabel: "Leaves", icon: CalendarDays, category: "Connect & Support", enabled: isModuleEnabled("leaves") },
     { id: "support",        label: `Support (${supportQueries.length})`, shortLabel: "Support", icon: HelpCircle, category: "Connect & Support", enabled: isModuleEnabled("support") },
     { id: "refer",          label: "Refer & Earn", shortLabel: "Refer", icon: DollarSign, category: "Connect & Support", enabled: isModuleEnabled("refer") },
-    { id: "cbt", label: "AI CBT Exams", shortLabel: "CBT", icon: BrainCircuit, category: "Connect & Support", enabled: true, isNew: true },
-    { id: "mock_interview", label: "AI Mock Interview", shortLabel: "AI Interview", icon: Sparkles, category: "Core Work", enabled: true, isNew: true },
-    { id: "ambassador", label: "Campus Ambassador", shortLabel: "Ambassador", icon: Award, category: "Connect & Support", enabled: true, isNew: true },
+    { id: "cbt", label: "AI CBT Exams", shortLabel: "CBT", icon: BrainCircuit, category: "Connect & Support", enabled: isModuleEnabled("cbt"), isNew: true },
+    { id: "mock_interview", label: "AI Mock Interview", shortLabel: "AI Interview", icon: Sparkles, category: "Core Work", enabled: isModuleEnabled("mock_interview"), isNew: true },
+    { id: "ambassador", label: "Campus Ambassador", shortLabel: "Ambassador", icon: Award, category: "Connect & Support", enabled: isModuleEnabled("ambassador"), isNew: true },
     { id: "notes",          label: "Notes", shortLabel: "Notes", icon: FileText, category: "Connect & Support", enabled: isModuleEnabled("notes") },
     { id: "feedback",       label: "Feedback", shortLabel: "Feedback", icon: MessageCircle, category: "Connect & Support", enabled: isModuleEnabled("feedback") },
     { id: "chat",           label: "Vyntyra Chat (Beta)", shortLabel: "Chat", icon: MessageSquare, category: "Connect & Support", isNew: true, enabled: true },
@@ -2856,11 +2856,11 @@ function InternDashboard() {
         {/* ─── PPO & CERTIFICATES ─── */}
         {activeTab === "ppo" && (
           <div className="space-y-6">
-            <div className="rounded-3xl border border border-slate-200/80 bg-white shadow-xs rounded-2xl p-6 sm:p-8 shadow-xl shadow-slate-900/5 backdrop-blur-xl">
+            <div className="rounded-3xl border border-slate-200/80 bg-white shadow-xs p-6 sm:p-8 shadow-xl shadow-slate-900/5 backdrop-blur-xl">
               <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2 mb-1.5">
-                <Sparkles className="h-5 w-5 text-slate-700" /> Pre-Employment Offer (PPO) &amp; Automated Certificates
+                <Sparkles className="h-5 w-5 text-slate-700" /> Pre-Employment Offer (PPO) &amp; Official Directorate Certificates
               </h2>
-              <p className="text-xs text-slate-600 font-medium mb-6">Track your PPO conversion metrics and download official verifiable internship certificates upon offboarding.</p>
+              <p className="text-xs text-slate-600 font-medium mb-6">Track your PPO conversion metrics and access your verified, Directorate-authorized internship certificate uploaded by the Super Admin.</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* PPO Status */}
@@ -2886,108 +2886,173 @@ function InternDashboard() {
                   const createdAt = profile?.created_at ? new Date(profile.created_at) : new Date();
                   const completionDateObj = profile?.end_date ? new Date(profile.end_date) : new Date(createdAt.getTime() + 60 * 24 * 60 * 60 * 1000);
                   const unlockDateObj = new Date(completionDateObj.getTime() - 1 * 24 * 60 * 60 * 1000);
-                  const isCredUnlocked = Date.now() >= unlockDateObj.getTime();
+                  const certificateUrl = profile?.certificate_url ? profile.certificate_url.trim() : null;
+                  const isCertUploaded = Boolean(certificateUrl && certificateUrl.length > 5);
 
                   return (
                     <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50 space-y-4 shadow-xs">
                       <div className="flex items-center justify-between">
                         <span className="font-black text-xs uppercase text-slate-900 tracking-wider flex items-center gap-1.5">
-                          <Award className="h-4 w-4 text-slate-700" /> Verifiable Credentials Engine
+                          <Award className="h-4 w-4 text-slate-700" /> Official Verified Credentials
                         </span>
-                        {isCredUnlocked ? (
-                          <span className="text-[10px] font-black text-slate-800 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                            <Unlock className="h-3 w-3" /> Unlocked for Download
+                        {isCertUploaded ? (
+                          <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3 text-emerald-700" /> Certificate Uploaded &amp; Ready
                           </span>
                         ) : (
-                          <span className="text-[10px] font-black text-slate-800 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
-                            <Lock className="h-3 w-3" /> Unlocks 1 Day Before Completion
+                          <span className="text-[10px] font-black text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3 text-amber-600" /> Awaiting Admin Upload
                           </span>
                         )}
                       </div>
 
-                      <div className="space-y-2.5">
-                        {[
-                          { name: "Internship Completion Certificate", code: "VY-INT-2026-88" },
-                          { name: "Letter of Recommendation (LOR)", code: "VY-LOR-2026-92" },
-                          { name: "Official Experience Certificate", code: "VY-EXP-2026-04" }
-                        ].map((c, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-200/80 text-xs shadow-xs hover:border-slate-200 transition-colors">
-                            <div className="flex items-center gap-2.5">
-                              {!isCredUnlocked ? (
-                                <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 relative">
-                                  <Lock className="h-4 w-4 text-slate-700 animate-bounce" />
-                                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-slate-500 rounded-full animate-ping" />
+                      {/* If certificate IS uploaded by Super Admin */}
+                      {isCertUploaded ? (
+                        <div className="space-y-3">
+                          <div className="p-4 rounded-xl bg-white border border-emerald-200 shadow-xs space-y-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
+                                  <FileText className="h-5 w-5 text-emerald-700" />
                                 </div>
-                              ) : (
-                                <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
-                                  <CheckCircle2 className="h-4.5 w-4.5 text-slate-700" />
+                                <div>
+                                  <h4 className="font-extrabold text-slate-900 text-sm">Official Internship Completion Certificate</h4>
+                                  <div className="text-[10px] font-mono text-slate-600 font-semibold mt-0.5">
+                                    {profile?.intern_id || "VY-INT-2026"} &middot; ISO 9001:2015 Verified &middot; Directorate Issued
+                                  </div>
                                 </div>
-                              )}
-                              <div>
-                                <div className="font-extrabold text-slate-900">{c.name}</div>
-                                <div className="text-[10px] font-mono text-slate-600 font-semibold">{c.code} &middot; ISO 9001:2015 Verified</div>
                               </div>
                             </div>
 
-                            {isCredUnlocked ? (
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="h-8 text-xs text-slate-800 border-slate-200 bg-slate-100 hover:bg-emerald-200 font-black cursor-pointer"
-                                onClick={async () => {
-                                  const loadingToast = toast.loading(`Generating ${c.name}...`);
-                                  try {
-                                    const internId = profile?.intern_id || c.code;
-                                    const verificationUrl = `https://portal.vyntyraconsultancyservices.in/verify?id=${internId}`;
-                                    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(verificationUrl)}`;
-                                    let qrCodeBase64: string | null = null;
-                                    try {
-                                      const qrRes = await fetch(qrApiUrl);
-                                      const qrBlob = await qrRes.blob();
-                                      qrCodeBase64 = await new Promise<string>((resolve) => {
-                                        const reader = new FileReader();
-                                        reader.onloadend = () => resolve(reader.result as string);
-                                        reader.readAsDataURL(qrBlob);
-                                      });
-                                    } catch (e) {}
+                            <p className="text-xs text-slate-600 leading-relaxed">
+                              Your official internship certificate has been uploaded and authorized by the Super Admin. You may download it or inspect the official document below.
+                            </p>
 
-                                    const { generateInternshipCertificatePdf } = await import("@/lib/certificateGenerator");
-                                    const startDateStr = profile?.created_at ? new Date(profile.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "12 Jun 2026";
-                                    const endDateStr = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-                                    const doc = generateInternshipCertificatePdf({
-                                      candidateName: profile?.full_name || profile?.email || "Candidate Name",
-                                      internId,
-                                      domainName: profile?.department || "Engineering & Technology",
-                                      subDomainName: profile?.position || "Full Stack Web Development",
-                                      startDate: startDateStr,
-                                      completionDate: endDateStr,
-                                      issueDate: endDateStr,
-                                      qrCodeBase64,
-                                    });
-                                    doc.save(`${c.name.replace(/\s+/g, "_")}_${(profile?.full_name || "Intern").replace(/\s+/g, "_")}.pdf`);
-                                    toast.dismiss(loadingToast);
-                                    toast.success(`${c.name} downloaded successfully!`);
-                                  } catch (err: any) {
-                                    toast.dismiss(loadingToast);
-                                    toast.error("Failed to generate certificate: " + err.message);
-                                  }
-                                }}
+                            <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                              <a 
+                                href={certificateUrl!} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                download 
+                                className="inline-flex"
                               >
-                                <Download className="h-3.5 w-3.5 mr-1" /> Download PDF
-                              </Button>
-                            ) : (
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                disabled
-                                className="h-8 text-xs text-slate-900 border-slate-200 bg-slate-100 cursor-not-allowed font-bold opacity-80"
+                                <Button 
+                                  size="sm" 
+                                  className="h-8 px-3.5 text-xs font-bold bg-slate-900 text-white hover:bg-black rounded-lg gap-1.5 shadow-xs cursor-pointer"
+                                >
+                                  <Download className="h-3.5 w-3.5" /> Download Certificate
+                                </Button>
+                              </a>
+
+                              <a 
+                                href={certificateUrl!} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="inline-flex"
                               >
-                                <Lock className="h-3.5 w-3.5 mr-1 text-slate-700" /> Locked
-                              </Button>
-                            )}
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="h-8 px-3 text-xs font-semibold border-slate-200 text-slate-700 hover:bg-slate-100 rounded-lg gap-1.5"
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5" /> View in Browser
+                                </Button>
+                              </a>
+                            </div>
                           </div>
-                        ))}
-                      </div>
+
+                          <div className="space-y-2">
+                            {[
+                              { name: "Letter of Recommendation (LOR)", code: "VY-LOR-2026-92" },
+                              { name: "Official Experience Certificate", code: "VY-EXP-2026-04" }
+                            ].map((c, idx) => (
+                              <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200/80 text-xs shadow-xs">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="h-7 w-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+                                    <CheckCircle2 className="h-4 w-4 text-slate-700" />
+                                  </div>
+                                  <div>
+                                    <div className="font-bold text-slate-900">{c.name}</div>
+                                    <div className="text-[10px] font-mono text-slate-500">{c.code} &middot; Included with Certificate Dossier</div>
+                                  </div>
+                                </div>
+                                <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                  Included
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        /* If certificate NOT uploaded yet: show clear Contact Admin message */
+                        <div className="space-y-3">
+                          <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-950 space-y-3 shadow-xs">
+                            <div className="flex items-center gap-2 font-black text-amber-900 text-sm">
+                              <AlertCircle className="h-4.5 w-4.5 text-amber-600 shrink-0" />
+                              <span>Official Certificate Not Uploaded Yet</span>
+                            </div>
+
+                            <p className="text-xs text-amber-900/90 leading-relaxed font-medium">
+                              Your official internship certificate has not yet been uploaded by the Super Admin. Certificates cannot be generated automatically and must be reviewed, authorized, and uploaded manually by the Directorate.
+                            </p>
+
+                            <div className="p-3 bg-white/90 rounded-xl border border-amber-200 text-xs space-y-2">
+                              <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                                <Mail className="h-3.5 w-3.5 text-amber-700" /> Please Contact the Administrator:
+                              </div>
+                              <p className="text-slate-600 text-[11px] leading-relaxed">
+                                If you have completed all your deliverables and your tenure has concluded, please contact the administrative office at <strong className="text-slate-900">internships@vyntyraconsultancyservices.in</strong> to request your certificate release.
+                              </p>
+
+                              <div className="flex flex-wrap items-center gap-2 pt-1">
+                                <a 
+                                  href={`mailto:internships@vyntyraconsultancyservices.in?subject=Certificate%20Upload%20Request%20-%20${encodeURIComponent(profile?.intern_id || displayName)}&body=Hello%20Admin%20Team,%0A%0AMy%20internship%20is%20completed.%20Could%20you%20please%20review%20my%20tasks%20and%20upload%20my%20official%20internship%20completion%20certificate%20to%20my%20portal%3F%0A%0AIntern%20ID:%20${encodeURIComponent(profile?.intern_id || 'N/A')}%0AName:%20${encodeURIComponent(displayName)}%0AEmail:%20${encodeURIComponent(email)}`}
+                                  className="inline-flex"
+                                >
+                                  <Button 
+                                    size="sm" 
+                                    className="bg-slate-900 hover:bg-black text-white text-xs font-bold h-8 rounded-lg gap-1.5 shadow-xs"
+                                  >
+                                    <Mail className="h-3.5 w-3.5" /> Email Admin
+                                  </Button>
+                                </a>
+
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => setActiveTab("support")} 
+                                  className="border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold h-8 rounded-lg gap-1.5"
+                                >
+                                  <HelpCircle className="h-3.5 w-3.5" /> Support Desk
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 opacity-60">
+                            {[
+                              { name: "Internship Completion Certificate", code: "VY-INT-2026-88" },
+                              { name: "Letter of Recommendation (LOR)", code: "VY-LOR-2026-92" },
+                              { name: "Official Experience Certificate", code: "VY-EXP-2026-04" }
+                            ].map((c, idx) => (
+                              <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200 text-xs shadow-xs">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="h-7 w-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+                                    <Lock className="h-3.5 w-3.5 text-slate-500" />
+                                  </div>
+                                  <div>
+                                    <div className="font-bold text-slate-700">{c.name}</div>
+                                    <div className="text-[10px] font-mono text-slate-400">{c.code} &middot; Awaiting Super Admin Upload</div>
+                                  </div>
+                                </div>
+                                <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                                  Not Uploaded
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Mandatory Final Certification Exam & Fee Guidelines Notice */}
                       <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 text-xs text-slate-800 space-y-2">
@@ -3003,7 +3068,7 @@ function InternDashboard() {
                           <div className="flex items-start gap-1.5">
                             <CreditCard className="h-3.5 w-3.5 text-slate-700 shrink-0 mt-0.5" />
                             <span>
-                              <strong>Exam Fee:</strong> <strong>{profile?.is_fee_exempted ? "FEE exemption provided by VYNTYRA" : `₹${profile?.exam_fee_amount} (Inclusive of all GST)`}</strong>
+                              <strong>Exam Fee:</strong> <strong>{profile?.is_fee_exempted ? "FEE exemption provided by VYNTYRA" : `₹${profile?.exam_fee_amount || 199} (Inclusive of all GST)`}</strong>
                               {!profile?.is_fee_exempted && " — Mandatory skilling & credential verification fee."}
                             </span>
                           </div>

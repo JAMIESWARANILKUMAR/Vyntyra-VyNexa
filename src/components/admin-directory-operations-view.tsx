@@ -491,6 +491,18 @@ export function AdminDirectoryOperationsView({
                             Urgent Alert
                           </span>
                         )}
+
+                        {member.certificate_url ? (
+                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1">
+                            <Check className="h-3 w-3 text-emerald-700" />
+                            Cert Uploaded
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3 text-amber-600" />
+                            Cert Missing
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -521,6 +533,24 @@ export function AdminDirectoryOperationsView({
                         <Key className="h-3.5 w-3.5 text-slate-600" />
                         <span className="hidden sm:inline">Pass</span>
                       </Button>
+
+                      {member.role === "intern" && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onSelectUser(member)}
+                          title={member.certificate_url ? "View or Replace Certificate" : "Upload Official Certificate"}
+                          className={`h-8 px-2 text-xs font-semibold rounded-lg gap-1 ${
+                            member.certificate_url 
+                              ? "border-emerald-200 text-emerald-800 bg-emerald-50/60 hover:bg-emerald-100" 
+                              : "border-amber-300 text-amber-900 bg-amber-50 hover:bg-amber-100"
+                          }`}
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">{member.certificate_url ? "Cert" : "Upload Cert"}</span>
+                        </Button>
+                      )}
 
                       {member.role === "intern" && !member.exam_fee_paid && !member.is_fee_exempted && (
                         <Button
@@ -715,6 +745,19 @@ export function AdminDirectoryOperationsView({
                           >
                             <Key className="h-3.5 w-3.5" />
                           </Button>
+                          {member.role === "intern" && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onSelectUser(member)}
+                              className={`h-7 px-2 text-xs font-semibold ${member.certificate_url ? "text-emerald-700 hover:bg-emerald-50" : "text-amber-800 hover:bg-amber-50"}`}
+                              title={member.certificate_url ? "Certificate Uploaded" : "Certificate Missing - Upload Now"}
+                            >
+                              <FileText className="h-3.5 w-3.5 mr-1" />
+                              {member.certificate_url ? "Cert" : "No Cert"}
+                            </Button>
+                          )}
                           <Button
                             type="button"
                             variant="ghost"

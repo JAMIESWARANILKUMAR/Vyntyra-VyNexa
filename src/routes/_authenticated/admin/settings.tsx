@@ -764,6 +764,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-dashboard-settings"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-settings"] });
       toast.success("Dashboard module setting updated!");
     },
     onError: (e: any) => toast.error(e.message),
@@ -775,6 +776,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
       if (res.count > 0) {
         toast.success(`Initialized ${res.count} default module settings!`);
         qc.invalidateQueries({ queryKey: ["admin-dashboard-settings"] });
+        qc.invalidateQueries({ queryKey: ["dashboard-settings"] });
       } else {
         toast.info("All modules are already initialized.");
       }
@@ -788,6 +790,7 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
       await doBulkTogglePortalModules({ data: { portal_type: portalType, is_enabled: isEnabled } });
       toast.success(`${isEnabled ? "Enabled" : "Disabled"} all ${portalType === "intern" ? "Intern" : "Employee"} modules!`);
       qc.invalidateQueries({ queryKey: ["admin-dashboard-settings"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-settings"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to toggle portal modules.");
     }
@@ -1502,19 +1505,29 @@ export function AdminSettingsPage({ embedded = false, defaultTab = "referrals" }
                     "refer": { title: "Refer & Earn Program", desc: "Personal referral codes, candidate tracking, commission payouts, and transparency matrix.", tag: "Earnings" },
                     "notes": { title: "Workspace Scratchpad", desc: "Personal workspace scratchpad, meeting notes, and knowledge bookmarks.", tag: "Tools" },
                     "feedback": { title: "Performance Reviews & Appraisal", desc: "Quarterly appraisal scores, mentor remarks, and leadership recommendations.", tag: "Evaluation" },
+                    "cbt": { title: "AI CBT Examination Hub", desc: "Proctored computer-based tests, timed exams, automated grading, and assessment analytics.", tag: "Testing" },
+                    "mock_interview": { title: "AI Mock Interview Suite", desc: "Interactive AI speech interviews, automated rubrics scoring, and feedback reports.", tag: "AI Suite" },
+                    "ambassador": { title: "Campus Ambassador Portal", desc: "Campus outreach tracking, tier badges, student referral metrics, and event perks.", tag: "Campus" },
 
                     // Employee
+                    "tasks": { title: "Tasks & Deliverables Management", desc: "Assigned workplace tasks, deliverables, and review workflows.", tag: "Work" },
+                    "attendance": { title: "Attendance & Timesheets", desc: "Clock-in records, punch times, and timesheet logs.", tag: "Compliance" },
                     "payouts": { title: "Salaries, Slips & Payouts", desc: "Monthly payroll slips, bonuses, and banking information.", tag: "Finance" },
+                    "banking": { title: "Banking, Compensation & Perks", desc: "Direct deposit banking, reimbursement claims, and executive perks.", tag: "Finance" },
+                    "support": { title: "Employee Support Tickets", desc: "Internal HR and IT support tickets and requests.", tag: "Support" },
                     "resolver_support": { title: "Query Resolver Operations", desc: "Review, assign, and resolve escalated intern queries.", tag: "Support" },
                     "interviews": { title: "Candidate Interviews & Scoring", desc: "Join assigned video interview calls and submit candidate evaluations.", tag: "Hiring" },
                     "my_interns": { title: "Assigned Interns Supervision", desc: "Supervise assigned cohort interns, review task submissions, and approve NOCs.", tag: "Mentorship" },
                     "announcements": { title: "Company Broadcast Notices", desc: "Publish and read organization-wide announcements.", tag: "Comms" },
                     "campaigns": { title: "Promotions & Bulk Outreach Hub", desc: "Dispatch bulk promotional email campaigns and internship invitations.", tag: "Outreach" },
+                    "dataset-vault": { title: "Enterprise Dataset Vault", desc: "Corporate datasets, security passcodes, and governance controls.", tag: "Data" },
                     "team": { title: "Team Directory & Peer Kudos", desc: "Organization directory, colleague contact info, and peer shoutout badges.", tag: "Culture" },
+                    "resources": { title: "Knowledge Assets & SOPs", desc: "Standard operating procedures, handbooks, and documentation.", tag: "Docs" },
                     "locker": { title: "Encrypted Credential Vault", desc: "Secure document locker and organizational asset storage.", tag: "Security" },
-                    "contact": { title: "Emergency Hotline & Contacts", desc: "Directory of key emergency contacts and leadership.", tag: "Directory" },
+                    "contact": { title: "Employee Self Service (ESS)", desc: "Personal employee profile, emergency contacts, and contact directory.", tag: "Directory" },
                     "security": { title: "Security & Audit Logs", desc: "Session security, 2FA credentials, and system audit history.", tag: "Security" },
                     "leave": { title: "Leave Management & Approvals", desc: "Apply for leaves and review subordinate leave applications.", tag: "HR" },
+                    "refer": { title: "Employee Referral Network", desc: "Candidate referral tracking, incentives, and commission payouts.", tag: "Referrals" },
                   };
 
                   if (portalSettings.length === 0) {

@@ -7352,13 +7352,13 @@ export const assignStoredTasksToInterns = createServerFn({ method: "POST" })
 export const INTERN_MODULE_LIST = [
   "overview", "tasks", "kanban", "deliverables", "standups", "attendance",
   "meetings", "resources", "onboarding", "lms", "ppo", "leaves", 
-  "support", "refer", "notes", "feedback"
+  "support", "refer", "cbt", "mock_interview", "ambassador", "notes", "feedback"
 ] as const;
 
 export const EMPLOYEE_MODULE_LIST = [
-  "tasks", "attendance", "leave", "payouts", "support", "resolver_support",
-  "meetings", "interviews", "my_interns", "announcements", "campaigns", "team", 
-  "resources", "locker", "contact", "security"
+  "tasks", "attendance", "leave", "payouts", "banking", "support", "resolver_support",
+  "meetings", "interviews", "my_interns", "campaigns", "dataset-vault", "announcements", 
+  "team", "resources", "locker", "contact", "security", "refer"
 ] as const;
 
 export const getDashboardSettings = createServerFn({ method: "GET" })
@@ -7369,8 +7369,7 @@ export const getDashboardSettings = createServerFn({ method: "GET" })
     try {
       const { data, error } = await admin
         .from("dashboard_settings")
-        .select("*")
-        .order("created_at", { ascending: true });
+        .select("*");
       if (!error && data) {
         dbRows = data;
       }
@@ -7484,14 +7483,14 @@ export const updateDashboardSetting = createServerFn({ method: "POST" })
         .from("dashboard_settings")
         .select("id")
         .eq("portal_type", data.portal_type)
-        .eq("module_name", data.module_name)
-        .maybeSingle();
+        .eq("module_name", data.module_name);
 
-      if (existing?.id) {
+      if (existing && existing.length > 0) {
         const { error } = await admin
           .from("dashboard_settings")
           .update({ is_enabled: data.is_enabled, updated_at: new Date().toISOString() })
-          .eq("id", existing.id);
+          .eq("portal_type", data.portal_type)
+          .eq("module_name", data.module_name);
         if (error) throw new Error(error.message);
       } else {
         const { error } = await admin
