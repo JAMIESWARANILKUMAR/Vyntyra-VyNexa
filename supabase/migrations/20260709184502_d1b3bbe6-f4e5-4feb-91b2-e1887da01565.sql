@@ -77,7 +77,7 @@ INSERT INTO public.status_email_templates (status, subject, html_body) VALUES
 '<p>Dear {{full_name}},</p><p>Thank you for your interest in <strong>{{role_applied}}</strong> at Vyntyra. After careful consideration, we have decided not to move forward with your application at this time.</p><p>We appreciate the time you invested and encourage you to apply for future opportunities that match your profile.</p><p>Warm regards,<br/>The Vyntyra Talent Team</p>'),
 ('hired', 'Welcome aboard — {{role_applied}}',
 '<p>Dear {{full_name}},</p><p>We are delighted to move forward with you for <strong>{{role_applied}}</strong>! Our HR team will contact you shortly with the offer details and onboarding information.</p><p>Warm regards,<br/>The Vyntyra Talent Team</p>')
-ON CONFLICT (status) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 -- 3. Applicant magic-link tokens (store only SHA-256 hash)
 CREATE TABLE IF NOT EXISTS public.applicant_access_tokens (
