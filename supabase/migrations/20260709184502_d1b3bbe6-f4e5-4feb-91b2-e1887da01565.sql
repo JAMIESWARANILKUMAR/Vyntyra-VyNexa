@@ -38,6 +38,11 @@ CREATE TABLE IF NOT EXISTS public.status_email_templates (
 
 ALTER TABLE public.status_email_templates ADD COLUMN IF NOT EXISTS status TEXT;
 ALTER TABLE public.status_email_templates ADD COLUMN IF NOT EXISTS id TEXT;
+DO $$ BEGIN
+  ALTER TABLE public.status_email_templates ALTER COLUMN id DROP NOT NULL;
+EXCEPTION
+  WHEN others THEN null;
+END $$;
 
 GRANT SELECT, INSERT, UPDATE ON public.status_email_templates TO authenticated;
 GRANT ALL ON public.status_email_templates TO service_role;
@@ -66,16 +71,16 @@ CREATE TRIGGER tg_status_templates_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
 
 -- Seed default templates
-INSERT INTO public.status_email_templates (status, subject, html_body) VALUES
-('new', 'Application received — Project VyNexa',
+INSERT INTO public.status_email_templates (id, status, subject, html_body) VALUES
+('new', 'new', 'Application received — Project VyNexa',
 '<p>Dear {{full_name}},</p><p>Thank you for applying for <strong>{{role_applied}}</strong>. Your application is now in our queue.</p><p>You can view the latest status of your application at any time using the secure link below.</p><p><a href="{{portal_link}}">Check application status</a></p><p>Warm regards,<br/>The Vyntyra Talent Team</p>'),
-('reviewing', 'Your application is under review — {{role_applied}}',
+('reviewing', 'reviewing', 'Your application is under review — {{role_applied}}',
 '<p>Dear {{full_name}},</p><p>Good news — our team has started reviewing your application for <strong>{{role_applied}}</strong>. We will get back to you shortly with next steps.</p><p><a href="{{portal_link}}">View status</a></p><p>Warm regards,<br/>The Vyntyra Talent Team</p>'),
-('shortlisted', 'You are shortlisted — {{role_applied}}',
+('shortlisted', 'shortlisted', 'You are shortlisted — {{role_applied}}',
 '<p>Dear {{full_name}},</p><p>Congratulations! You have been <strong>shortlisted</strong> for <strong>{{role_applied}}</strong>. Our team will reach out shortly to schedule the next round.</p><p><a href="{{portal_link}}">View status</a></p><p>Warm regards,<br/>The Vyntyra Talent Team</p>'),
-('rejected', 'Update on your application — {{role_applied}}',
+('rejected', 'rejected', 'Update on your application — {{role_applied}}',
 '<p>Dear {{full_name}},</p><p>Thank you for your interest in <strong>{{role_applied}}</strong> at Vyntyra. After careful consideration, we have decided not to move forward with your application at this time.</p><p>We appreciate the time you invested and encourage you to apply for future opportunities that match your profile.</p><p>Warm regards,<br/>The Vyntyra Talent Team</p>'),
-('hired', 'Welcome aboard — {{role_applied}}',
+('hired', 'hired', 'Welcome aboard — {{role_applied}}',
 '<p>Dear {{full_name}},</p><p>We are delighted to move forward with you for <strong>{{role_applied}}</strong>! Our HR team will contact you shortly with the offer details and onboarding information.</p><p>Warm regards,<br/>The Vyntyra Talent Team</p>')
 ON CONFLICT DO NOTHING;
 
