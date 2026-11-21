@@ -28,6 +28,11 @@ export default defineConfig({
       : []),
     nitro({
       preset: process.env.NITRO_PRESET || (isVercel ? "vercel" : (process.env.CF_PAGES ? "cloudflare-pages" : "cloudflare-module")),
+      vercel: {
+        functions: {
+          runtime: "nodejs22.x",
+        },
+      },
     }),
     viteReact(),
     {

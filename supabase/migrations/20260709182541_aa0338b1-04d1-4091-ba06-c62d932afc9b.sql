@@ -1,8 +1,11 @@
-
 -- Role system
-CREATE TYPE public.app_role AS ENUM ('admin', 'moderator', 'user');
+DO $$ BEGIN
+  CREATE TYPE public.app_role AS ENUM ('admin', 'moderator', 'user');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TABLE public.user_roles (
+CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   role app_role NOT NULL,
@@ -14,6 +17,7 @@ GRANT SELECT ON public.user_roles TO authenticated;
 GRANT ALL ON public.user_roles TO service_role;
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view their own roles" ON public.user_roles;
 CREATE POLICY "Users can view their own roles"
 ON public.user_roles FOR SELECT TO authenticated
 USING (user_id = auth.uid());
@@ -25,9 +29,13 @@ AS $$
 $$;
 
 -- Applications table
-CREATE TYPE public.application_status AS ENUM ('new', 'reviewing', 'shortlisted', 'rejected', 'hired');
+DO $$ BEGIN
+  CREATE TYPE public.application_status AS ENUM ('new', 'reviewing', 'shortlisted', 'rejected', 'hired');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TABLE public.applications (
+CREATE TABLE IF NOT EXISTS public.applications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   full_name TEXT NOT NULL,
   email TEXT NOT NULL,
@@ -54,18 +62,22 @@ GRANT INSERT ON public.applications TO anon;
 GRANT ALL ON public.applications TO service_role;
 ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can submit an application" ON public.applications;
 CREATE POLICY "Anyone can submit an application"
 ON public.applications FOR INSERT TO anon, authenticated
 WITH CHECK (agreement_accepted = true);
 
+DROP POLICY IF EXISTS "Admins can view all applications" ON public.applications;
 CREATE POLICY "Admins can view all applications"
 ON public.applications FOR SELECT TO authenticated
 USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can update applications" ON public.applications;
 CREATE POLICY "Admins can update applications"
 ON public.applications FOR UPDATE TO authenticated
 USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can delete applications" ON public.applications;
 CREATE POLICY "Admins can delete applications"
 ON public.applications FOR DELETE TO authenticated
 USING (public.has_role(auth.uid(), 'admin'));
@@ -74,15 +86,18 @@ CREATE OR REPLACE FUNCTION public.tg_set_updated_at()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
 BEGIN NEW.updated_at = now(); RETURN NEW; END; $$;
 
+DROP TRIGGER IF EXISTS applications_set_updated_at ON public.applications;
 CREATE TRIGGER applications_set_updated_at
 BEFORE UPDATE ON public.applications
 FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
 
 -- Storage policies for resumes bucket (bucket created via tool)
+DROP POLICY IF EXISTS "Anyone can upload a resume" ON storage.objects;
 CREATE POLICY "Anyone can upload a resume"
 ON storage.objects FOR INSERT TO anon, authenticated
 WITH CHECK (bucket_id = 'resumes');
 
+DROP POLICY IF EXISTS "Admins can read resumes" ON storage.objects;
 CREATE POLICY "Admins can read resumes"
 ON storage.objects FOR SELECT TO authenticated
 USING (bucket_id = 'resumes' AND public.has_role(auth.uid(), 'admin'));

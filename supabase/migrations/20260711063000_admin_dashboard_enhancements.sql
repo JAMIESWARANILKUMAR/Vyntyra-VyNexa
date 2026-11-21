@@ -11,7 +11,7 @@
 -- ============================================================
 -- 1. job_postings
 -- ============================================================
-CREATE TABLE public.job_postings (
+CREATE TABLE IF NOT EXISTS public.job_postings (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   title       TEXT        NOT NULL,
   department  TEXT        NOT NULL,
@@ -35,6 +35,7 @@ GRANT ALL ON public.job_postings TO service_role;
 ALTER TABLE public.job_postings ENABLE ROW LEVEL SECURITY;
 
 -- Public can read active postings
+DROP POLICY IF EXISTS "Public can read active job postings" ON public.job_postings;
 CREATE POLICY "Public can read active job postings"
   ON public.job_postings
   FOR SELECT
@@ -42,6 +43,7 @@ CREATE POLICY "Public can read active job postings"
   USING (is_active = true);
 
 -- Admins can insert
+DROP POLICY IF EXISTS "Admins can insert job postings" ON public.job_postings;
 CREATE POLICY "Admins can insert job postings"
   ON public.job_postings
   FOR INSERT
@@ -49,6 +51,7 @@ CREATE POLICY "Admins can insert job postings"
   WITH CHECK (public.has_role(auth.uid(), 'admin'::app_role));
 
 -- Admins can update
+DROP POLICY IF EXISTS "Admins can update job postings" ON public.job_postings;
 CREATE POLICY "Admins can update job postings"
   ON public.job_postings
   FOR UPDATE
@@ -57,6 +60,7 @@ CREATE POLICY "Admins can update job postings"
   WITH CHECK (public.has_role(auth.uid(), 'admin'::app_role));
 
 -- Admins can delete
+DROP POLICY IF EXISTS "Admins can delete job postings" ON public.job_postings;
 CREATE POLICY "Admins can delete job postings"
   ON public.job_postings
   FOR DELETE
@@ -64,6 +68,7 @@ CREATE POLICY "Admins can delete job postings"
   USING (public.has_role(auth.uid(), 'admin'::app_role));
 
 -- updated_at trigger (reuse existing function)
+DROP TRIGGER IF EXISTS set_job_postings_updated_at ON public.job_postings;
 CREATE TRIGGER set_job_postings_updated_at
   BEFORE UPDATE ON public.job_postings
   FOR EACH ROW
@@ -73,7 +78,7 @@ CREATE TRIGGER set_job_postings_updated_at
 -- ============================================================
 -- 2. admin_notifications
 -- ============================================================
-CREATE TABLE public.admin_notifications (
+CREATE TABLE IF NOT EXISTS public.admin_notifications (
   id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   type       TEXT        NOT NULL,
   title      TEXT        NOT NULL,
@@ -91,6 +96,7 @@ GRANT ALL ON public.admin_notifications TO service_role;
 ALTER TABLE public.admin_notifications ENABLE ROW LEVEL SECURITY;
 
 -- Admins can view all notifications
+DROP POLICY IF EXISTS "Admins can view all notifications" ON public.admin_notifications;
 CREATE POLICY "Admins can view all notifications"
   ON public.admin_notifications
   FOR SELECT
@@ -98,6 +104,7 @@ CREATE POLICY "Admins can view all notifications"
   USING (public.has_role(auth.uid(), 'admin'::app_role));
 
 -- Admins can update (mark read)
+DROP POLICY IF EXISTS "Admins can update notifications" ON public.admin_notifications;
 CREATE POLICY "Admins can update notifications"
   ON public.admin_notifications
   FOR UPDATE
@@ -106,6 +113,7 @@ CREATE POLICY "Admins can update notifications"
   WITH CHECK (public.has_role(auth.uid(), 'admin'::app_role));
 
 -- Admins can insert notifications
+DROP POLICY IF EXISTS "Admins can insert notifications" ON public.admin_notifications;
 CREATE POLICY "Admins can insert notifications"
   ON public.admin_notifications
   FOR INSERT
@@ -113,14 +121,14 @@ CREATE POLICY "Admins can insert notifications"
   WITH CHECK (public.has_role(auth.uid(), 'admin'::app_role));
 
 -- Index for fast reverse-chronological queries
-CREATE INDEX idx_admin_notifications_created_at
+CREATE INDEX IF NOT EXISTS idx_admin_notifications_created_at
   ON public.admin_notifications (created_at DESC);
 
 
 -- ============================================================
 -- 3. visitor_counts
 -- ============================================================
-CREATE TABLE public.visitor_counts (
+CREATE TABLE IF NOT EXISTS public.visitor_counts (
   page_key   TEXT        PRIMARY KEY,
   count      BIGINT      NOT NULL DEFAULT 0,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -134,6 +142,7 @@ GRANT ALL ON public.visitor_counts TO service_role;
 ALTER TABLE public.visitor_counts ENABLE ROW LEVEL SECURITY;
 
 -- Anyone can read
+DROP POLICY IF EXISTS "Anyone can read visitor counts" ON public.visitor_counts;
 CREATE POLICY "Anyone can read visitor counts"
   ON public.visitor_counts
   FOR SELECT
@@ -141,6 +150,7 @@ CREATE POLICY "Anyone can read visitor counts"
   USING (true);
 
 -- Anyone can upsert
+DROP POLICY IF EXISTS "Anyone can upsert visitor counts" ON public.visitor_counts;
 CREATE POLICY "Anyone can upsert visitor counts"
   ON public.visitor_counts
   FOR INSERT
@@ -148,6 +158,7 @@ CREATE POLICY "Anyone can upsert visitor counts"
   WITH CHECK (true);
 
 -- Anyone can update
+DROP POLICY IF EXISTS "Anyone can update visitor counts" ON public.visitor_counts;
 CREATE POLICY "Anyone can update visitor counts"
   ON public.visitor_counts
   FOR UPDATE
