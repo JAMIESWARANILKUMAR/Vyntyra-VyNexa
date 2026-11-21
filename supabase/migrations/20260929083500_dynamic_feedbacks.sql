@@ -20,13 +20,18 @@ CREATE TABLE IF NOT EXISTS public.feedback_responses (
 ALTER TABLE public.feedback_forms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.feedback_responses ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can view active forms" ON public.feedback_forms;
 CREATE POLICY "Anyone can view active forms" ON public.feedback_forms FOR SELECT USING (is_active = true OR EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')));
+DROP POLICY IF EXISTS "Admins can manage forms" ON public.feedback_forms;
 CREATE POLICY "Admins can manage forms" ON public.feedback_forms FOR ALL USING (
   EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin'))
 );
 
+DROP POLICY IF EXISTS "Users can insert their own responses" ON public.feedback_responses;
 CREATE POLICY "Users can insert their own responses" ON public.feedback_responses FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can view their own responses" ON public.feedback_responses;
 CREATE POLICY "Users can view their own responses" ON public.feedback_responses FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Admins can view all responses" ON public.feedback_responses;
 CREATE POLICY "Admins can view all responses" ON public.feedback_responses FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin'))
 );

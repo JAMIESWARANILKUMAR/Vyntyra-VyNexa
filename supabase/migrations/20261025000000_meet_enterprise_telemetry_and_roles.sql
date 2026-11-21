@@ -14,7 +14,9 @@ CREATE TABLE IF NOT EXISTS public.meet_roles (
 );
 
 ALTER TABLE public.meet_roles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "meet_roles viewable by all" ON public.meet_roles;
 CREATE POLICY "meet_roles viewable by all" ON public.meet_roles FOR SELECT USING (true);
+DROP POLICY IF EXISTS "meet_roles editable by authenticated" ON public.meet_roles;
 CREATE POLICY "meet_roles editable by authenticated" ON public.meet_roles FOR ALL TO authenticated USING (true);
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.meet_roles TO anon, authenticated, service_role;
 
@@ -34,8 +36,11 @@ CREATE TABLE IF NOT EXISTS public.meet_visitor_logs (
 );
 
 ALTER TABLE public.meet_visitor_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "meet_visitor_logs viewable by all" ON public.meet_visitor_logs;
 CREATE POLICY "meet_visitor_logs viewable by all" ON public.meet_visitor_logs FOR SELECT USING (true);
+DROP POLICY IF EXISTS "meet_visitor_logs insertable by all" ON public.meet_visitor_logs;
 CREATE POLICY "meet_visitor_logs insertable by all" ON public.meet_visitor_logs FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "meet_visitor_logs updatable by authenticated" ON public.meet_visitor_logs;
 CREATE POLICY "meet_visitor_logs updatable by authenticated" ON public.meet_visitor_logs FOR UPDATE USING (true);
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.meet_visitor_logs TO anon, authenticated, service_role;
 
@@ -61,7 +66,10 @@ CREATE TABLE IF NOT EXISTS public.meet_attendance_telemetry (
 );
 
 ALTER TABLE public.meet_attendance_telemetry ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "meet_attendance_telemetry viewable by all" ON public.meet_attendance_telemetry;
 CREATE POLICY "meet_attendance_telemetry viewable by all" ON public.meet_attendance_telemetry FOR SELECT USING (true);
+DROP POLICY IF EXISTS "meet_attendance_telemetry insertable by all" ON public.meet_attendance_telemetry;
 CREATE POLICY "meet_attendance_telemetry insertable by all" ON public.meet_attendance_telemetry FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "meet_attendance_telemetry updatable by all" ON public.meet_attendance_telemetry;
 CREATE POLICY "meet_attendance_telemetry updatable by all" ON public.meet_attendance_telemetry FOR UPDATE USING (true);
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.meet_attendance_telemetry TO anon, authenticated, service_role;

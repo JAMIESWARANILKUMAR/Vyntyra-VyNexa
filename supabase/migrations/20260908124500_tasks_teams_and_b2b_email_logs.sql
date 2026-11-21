@@ -65,10 +65,12 @@ ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
 DO $$ 
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_notifications' AND policyname = 'Users can view their own notifications') THEN
+    DROP POLICY IF EXISTS "Users can view their own notifications" ON public.user_notifications;
     CREATE POLICY "Users can view their own notifications" ON public.user_notifications 
       FOR SELECT USING (auth.uid() = user_id);
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_notifications' AND policyname = 'Admins can manage notifications') THEN
+    DROP POLICY IF EXISTS "Admins can manage notifications" ON public.user_notifications;
     CREATE POLICY "Admins can manage notifications" ON public.user_notifications 
       FOR ALL USING (
         EXISTS (
@@ -129,6 +131,7 @@ ALTER TABLE public.automated_emails_log ENABLE ROW LEVEL SECURITY;
 DO $$ 
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'automated_emails_log' AND policyname = 'Admins can view email logs') THEN
+    DROP POLICY IF EXISTS "Admins can view email logs" ON public.automated_emails_log;
     CREATE POLICY "Admins can view email logs" ON public.automated_emails_log 
       FOR SELECT USING (
         EXISTS (
@@ -138,6 +141,7 @@ BEGIN
       );
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'automated_emails_log' AND policyname = 'Admins can insert email logs') THEN
+    DROP POLICY IF EXISTS "Admins can insert email logs" ON public.automated_emails_log;
     CREATE POLICY "Admins can insert email logs" ON public.automated_emails_log 
       FOR INSERT WITH CHECK (
         EXISTS (

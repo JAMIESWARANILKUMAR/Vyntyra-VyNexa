@@ -21,7 +21,9 @@ CREATE TABLE IF NOT EXISTS public.lms_progress (
   UNIQUE(user_id, source, title)
 );
 ALTER TABLE public.lms_progress ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can read own LMS progress" ON public.lms_progress;
 CREATE POLICY "Users can read own LMS progress" ON public.lms_progress FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can write own LMS progress" ON public.lms_progress;
 CREATE POLICY "Users can write own LMS progress" ON public.lms_progress FOR ALL USING (auth.uid() = user_id);
 
 -- 3. Create User Notifications Table (for in-app alerts)
@@ -36,8 +38,11 @@ CREATE TABLE IF NOT EXISTS public.user_notifications (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own notifications" ON public.user_notifications;
 CREATE POLICY "Users can view own notifications" ON public.user_notifications FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own notifications" ON public.user_notifications;
 CREATE POLICY "Users can update own notifications" ON public.user_notifications FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "System insert notifications" ON public.user_notifications;
 CREATE POLICY "System insert notifications" ON public.user_notifications FOR INSERT WITH CHECK (true);
 
 -- 4. Create Support Queries Table
@@ -57,8 +62,13 @@ CREATE TABLE IF NOT EXISTS public.support_queries (
   updated_at          TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.support_queries ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Interns can read own support queries" ON public.support_queries;
 CREATE POLICY "Interns can read own support queries" ON public.support_queries FOR SELECT USING (auth.uid() = intern_id);
+DROP POLICY IF EXISTS "Interns can insert support queries" ON public.support_queries;
 CREATE POLICY "Interns can insert support queries" ON public.support_queries FOR INSERT WITH CHECK (auth.uid() = intern_id);
+DROP POLICY IF EXISTS "Employees can read assigned support queries" ON public.support_queries;
 CREATE POLICY "Employees can read assigned support queries" ON public.support_queries FOR SELECT USING (auth.uid() = assigned_employee_id OR auth.uid() = mentor_id);
+DROP POLICY IF EXISTS "Employees can update assigned support queries" ON public.support_queries;
 CREATE POLICY "Employees can update assigned support queries" ON public.support_queries FOR UPDATE USING (auth.uid() = assigned_employee_id OR auth.uid() = mentor_id);
+DROP POLICY IF EXISTS "Admins can view and edit all support queries" ON public.support_queries;
 CREATE POLICY "Admins can view and edit all support queries" ON public.support_queries FOR ALL TO authenticated USING (true);
