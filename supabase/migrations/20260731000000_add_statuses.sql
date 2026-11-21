@@ -8,9 +8,15 @@ ALTER TABLE public.application_status_events ALTER COLUMN from_status TYPE TEXT;
 ALTER TABLE public.application_status_events ALTER COLUMN to_status TYPE TEXT;
 
 -- For status_email_templates, we need to drop the primary key constraint, alter type, and recreate it
+ALTER TABLE public.status_email_templates ADD COLUMN IF NOT EXISTS status TEXT;
+ALTER TABLE public.status_email_templates ADD COLUMN IF NOT EXISTS id TEXT;
 ALTER TABLE public.status_email_templates DROP CONSTRAINT IF EXISTS status_email_templates_pkey;
 ALTER TABLE public.status_email_templates ALTER COLUMN status TYPE TEXT;
-ALTER TABLE public.status_email_templates ADD PRIMARY KEY (status);
+DO $$ BEGIN
+  ALTER TABLE public.status_email_templates ADD PRIMARY KEY (status);
+EXCEPTION
+  WHEN others THEN null;
+END $$;
 
 -- 3. Drop the enum type to clean up
 DROP TYPE IF EXISTS public.application_status;

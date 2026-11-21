@@ -36,6 +36,9 @@ CREATE TABLE IF NOT EXISTS public.status_email_templates (
   updated_by uuid REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
+ALTER TABLE public.status_email_templates ADD COLUMN IF NOT EXISTS status TEXT;
+ALTER TABLE public.status_email_templates ADD COLUMN IF NOT EXISTS id TEXT;
+
 GRANT SELECT, INSERT, UPDATE ON public.status_email_templates TO authenticated;
 GRANT ALL ON public.status_email_templates TO service_role;
 ALTER TABLE public.status_email_templates ENABLE ROW LEVEL SECURITY;
