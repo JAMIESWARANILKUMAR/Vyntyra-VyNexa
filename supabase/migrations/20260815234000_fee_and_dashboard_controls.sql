@@ -19,23 +19,27 @@ CREATE TABLE IF NOT EXISTS public.dashboard_settings (
 ALTER TABLE public.dashboard_settings ENABLE ROW LEVEL SECURITY;
 
 -- Everyone can read settings
+DROP POLICY IF EXISTS "Anyone can view dashboard settings" ON public.dashboard_settings;
 CREATE POLICY "Anyone can view dashboard settings"
 ON public.dashboard_settings FOR SELECT TO authenticated
 USING (true);
 
 -- Only admins can modify settings
+DROP POLICY IF EXISTS "Admins can insert dashboard settings" ON public.dashboard_settings;
 CREATE POLICY "Admins can insert dashboard settings"
 ON public.dashboard_settings FOR INSERT TO authenticated
-WITH CHECK (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
+WITH CHECK (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role::text = 'admin'));
 
+DROP POLICY IF EXISTS "Admins can update dashboard settings" ON public.dashboard_settings;
 CREATE POLICY "Admins can update dashboard settings"
 ON public.dashboard_settings FOR UPDATE TO authenticated
-USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'))
-WITH CHECK (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
+USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role::text = 'admin'))
+WITH CHECK (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role::text = 'admin'));
 
+DROP POLICY IF EXISTS "Admins can delete dashboard settings" ON public.dashboard_settings;
 CREATE POLICY "Admins can delete dashboard settings"
 ON public.dashboard_settings FOR DELETE TO authenticated
-USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
+USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role::text = 'admin'));
 
 -- Seed some default intern modules
 INSERT INTO public.dashboard_settings (portal_type, module_name, is_enabled) VALUES
@@ -43,4 +47,5 @@ INSERT INTO public.dashboard_settings (portal_type, module_name, is_enabled) VAL
 ('intern', 'kanban', true),
 ('intern', 'referrals', true),
 ('intern', 'meetings', true),
-('intern', 'deliverables', true);
+('intern', 'deliverables', true)
+ON CONFLICT DO NOTHING;

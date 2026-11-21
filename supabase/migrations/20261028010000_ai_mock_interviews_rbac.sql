@@ -59,6 +59,7 @@ $$;
 
 -- 5. Row Level Security Policies for Multi-Tier RBAC
 -- Super Admins and Admins can see/manage all sessions
+DROP POLICY IF EXISTS "Admins have full access to mock sessions" ON public.mock_sessions;
 CREATE POLICY "Admins have full access to mock sessions"
 ON public.mock_sessions
 FOR ALL
@@ -75,6 +76,7 @@ USING (
 );
 
 -- Mentors/Employees can see and update sessions assigned to them or created by them
+DROP POLICY IF EXISTS "Mentors can manage assigned mock sessions" ON public.mock_sessions;
 CREATE POLICY "Mentors can manage assigned mock sessions"
 ON public.mock_sessions
 FOR ALL
@@ -89,6 +91,7 @@ USING (
 );
 
 -- Candidates can view their own sessions
+DROP POLICY IF EXISTS "Candidates can view assigned mock sessions" ON public.mock_sessions;
 CREATE POLICY "Candidates can view assigned mock sessions"
 ON public.mock_sessions
 FOR SELECT

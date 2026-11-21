@@ -30,21 +30,25 @@ GRANT ALL ON public.application_projects TO service_role;
 
 ALTER TABLE public.application_projects ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can add projects during submission" ON public.application_projects;
 CREATE POLICY "Anyone can add projects during submission"
   ON public.application_projects FOR INSERT
   TO anon, authenticated
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Admins can view all projects" ON public.application_projects;
 CREATE POLICY "Admins can view all projects"
   ON public.application_projects FOR SELECT
   TO authenticated
   USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can update projects" ON public.application_projects;
 CREATE POLICY "Admins can update projects"
   ON public.application_projects FOR UPDATE
   TO authenticated
   USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can delete projects" ON public.application_projects;
 CREATE POLICY "Admins can delete projects"
   ON public.application_projects FOR DELETE
   TO authenticated

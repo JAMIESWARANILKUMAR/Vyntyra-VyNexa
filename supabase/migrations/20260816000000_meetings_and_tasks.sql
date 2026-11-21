@@ -28,19 +28,23 @@ ALTER TABLE public.meetings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.task_templates ENABLE ROW LEVEL SECURITY;
 
 -- Policies for meetings
+DROP POLICY IF EXISTS "Meetings are viewable by everyone" ON public.meetings;
 CREATE POLICY "Meetings are viewable by everyone" 
   ON public.meetings FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Meetings can be created/updated by admins" ON public.meetings;
 CREATE POLICY "Meetings can be created/updated by admins" 
   ON public.meetings FOR ALL USING (
-    (auth.uid() IN (SELECT user_id FROM public.user_roles WHERE role IN ('admin', 'super_admin')))
+    (auth.uid() IN (SELECT user_id FROM public.user_roles WHERE role::text IN ('admin', 'super_admin')))
   );
 
 -- Policies for task_templates
+DROP POLICY IF EXISTS "Task templates are viewable by everyone" ON public.task_templates;
 CREATE POLICY "Task templates are viewable by everyone" 
   ON public.task_templates FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Task templates can be managed by admins" ON public.task_templates;
 CREATE POLICY "Task templates can be managed by admins" 
   ON public.task_templates FOR ALL USING (
-    (auth.uid() IN (SELECT user_id FROM public.user_roles WHERE role IN ('admin', 'super_admin')))
+    (auth.uid() IN (SELECT user_id FROM public.user_roles WHERE role::text IN ('admin', 'super_admin')))
   );

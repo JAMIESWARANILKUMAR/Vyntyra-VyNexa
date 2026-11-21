@@ -17,16 +17,19 @@ CREATE TABLE IF NOT EXISTS public.meet_rooms (
 ALTER TABLE public.meet_rooms ENABLE ROW LEVEL SECURITY;
 
 -- Allow authenticated users to view active meetings
+DROP POLICY IF EXISTS "meet_rooms are viewable by authenticated users" ON public.meet_rooms;
 CREATE POLICY "meet_rooms are viewable by authenticated users"
   ON public.meet_rooms FOR SELECT
   USING (true);
 
 -- Allow authenticated users (hosts and admins) to insert meeting rooms
+DROP POLICY IF EXISTS "meet_rooms can be inserted by authenticated users" ON public.meet_rooms;
 CREATE POLICY "meet_rooms can be inserted by authenticated users"
   ON public.meet_rooms FOR INSERT
   WITH CHECK (true);
 
 -- Allow authenticated users to update meeting rooms (e.g., end meeting)
+DROP POLICY IF EXISTS "meet_rooms can be updated by authenticated users" ON public.meet_rooms;
 CREATE POLICY "meet_rooms can be updated by authenticated users"
   ON public.meet_rooms FOR UPDATE
   USING (true);

@@ -31,7 +31,7 @@ DO \$\$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'referral_pricing_rules' AND policyname = 'Allow admins to manage referral pricing rules') THEN
     CREATE POLICY "Allow admins to manage referral pricing rules"
     ON public.referral_pricing_rules FOR ALL TO authenticated
-    USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'))
-    WITH CHECK (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
+    USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role::text = 'admin'))
+    WITH CHECK (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role::text = 'admin'));
   END IF;
 END \$\$;

@@ -13,6 +13,7 @@ END; $$;
 
 REVOKE EXECUTE ON FUNCTION public.tg_auto_grant_admin() FROM PUBLIC, anon, authenticated;
 
+DROP TRIGGER IF EXISTS auto_grant_admin_on_signup ON auth.users;
 CREATE TRIGGER auto_grant_admin_on_signup
 AFTER INSERT ON auth.users
 FOR EACH ROW EXECUTE FUNCTION public.tg_auto_grant_admin();

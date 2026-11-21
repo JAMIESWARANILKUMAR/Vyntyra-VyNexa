@@ -70,22 +70,27 @@ ALTER TABLE public.mock_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.interview_transcripts ENABLE ROW LEVEL SECURITY;
 
 -- Allow public / candidate reading & writing for active mock sessions (with service role full access)
+DROP POLICY IF EXISTS "Public candidates can create mock sessions" ON public.mock_sessions;
 CREATE POLICY "Public candidates can create mock sessions" 
     ON public.mock_sessions FOR INSERT 
     WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Public candidates can view own mock sessions" ON public.mock_sessions;
 CREATE POLICY "Public candidates can view own mock sessions" 
     ON public.mock_sessions FOR SELECT 
     USING (true);
 
+DROP POLICY IF EXISTS "Public candidates can update own mock sessions" ON public.mock_sessions;
 CREATE POLICY "Public candidates can update own mock sessions" 
     ON public.mock_sessions FOR UPDATE 
     USING (true);
 
+DROP POLICY IF EXISTS "Public candidates can insert interview transcripts" ON public.interview_transcripts;
 CREATE POLICY "Public candidates can insert interview transcripts" 
     ON public.interview_transcripts FOR INSERT 
     WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Public candidates can view interview transcripts" ON public.interview_transcripts;
 CREATE POLICY "Public candidates can view interview transcripts" 
     ON public.interview_transcripts FOR SELECT 
     USING (true);
