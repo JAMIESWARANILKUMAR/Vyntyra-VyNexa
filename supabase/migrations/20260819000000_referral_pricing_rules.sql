@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.referral_pricing_rules (
 -- RLS policies
 ALTER TABLE public.referral_pricing_rules ENABLE ROW LEVEL SECURITY;
 
-DO \$\$ BEGIN
+DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'referral_pricing_rules' AND policyname = 'Allow authenticated to view referral pricing rules') THEN
     CREATE POLICY "Allow authenticated to view referral pricing rules"
     ON public.referral_pricing_rules FOR SELECT TO authenticated
@@ -34,4 +34,4 @@ DO \$\$ BEGIN
     USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role::text = 'admin'))
     WITH CHECK (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role::text = 'admin'));
   END IF;
-END \$\$;
+END $$;
