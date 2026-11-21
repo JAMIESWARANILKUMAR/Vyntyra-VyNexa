@@ -1,5 +1,4 @@
-
-CREATE TABLE public.site_settings (
+CREATE TABLE IF NOT EXISTS public.site_settings (
   key TEXT PRIMARY KEY,
   value JSONB NOT NULL DEFAULT '{}'::jsonb,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -12,14 +11,17 @@ GRANT ALL ON public.site_settings TO service_role;
 
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public can read site settings" ON public.site_settings;
 CREATE POLICY "Public can read site settings"
   ON public.site_settings FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Admins can insert site settings" ON public.site_settings;
 CREATE POLICY "Admins can insert site settings"
   ON public.site_settings FOR INSERT TO authenticated
   WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can update site settings" ON public.site_settings;
 CREATE POLICY "Admins can update site settings"
   ON public.site_settings FOR UPDATE TO authenticated
   USING (public.has_role(auth.uid(), 'admin'))

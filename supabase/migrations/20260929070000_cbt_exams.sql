@@ -1,6 +1,6 @@
 -- Create CBT Exam Tables
 
-CREATE TABLE public.cbt_exams (
+CREATE TABLE IF NOT EXISTS public.cbt_exams (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     description TEXT,
@@ -14,7 +14,7 @@ CREATE TABLE public.cbt_exams (
     intern_ids UUID[] DEFAULT '{}' -- array of intern IDs if allocated to individuals
 );
 
-CREATE TABLE public.cbt_questions (
+CREATE TABLE IF NOT EXISTS public.cbt_questions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     exam_id UUID REFERENCES public.cbt_exams(id) ON DELETE CASCADE,
     question_text TEXT NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE public.cbt_questions (
     order_index INTEGER DEFAULT 0
 );
 
-CREATE TABLE public.cbt_submissions (
+CREATE TABLE IF NOT EXISTS public.cbt_submissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     exam_id UUID REFERENCES public.cbt_exams(id) ON DELETE CASCADE,
     intern_id UUID REFERENCES auth.users(id),
@@ -37,7 +37,7 @@ CREATE TABLE public.cbt_submissions (
     malpractice_warnings INTEGER DEFAULT 0
 );
 
-CREATE TABLE public.cbt_answers (
+CREATE TABLE IF NOT EXISTS public.cbt_answers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     submission_id UUID REFERENCES public.cbt_submissions(id) ON DELETE CASCADE,
     question_id UUID REFERENCES public.cbt_questions(id) ON DELETE CASCADE,
@@ -48,7 +48,7 @@ CREATE TABLE public.cbt_answers (
     answered_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE public.cbt_malpractice_logs (
+CREATE TABLE IF NOT EXISTS public.cbt_malpractice_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     submission_id UUID REFERENCES public.cbt_submissions(id) ON DELETE CASCADE,
     infraction_type TEXT, -- e.g., 'tab_switch', 'face_not_detected'
@@ -64,11 +64,19 @@ ALTER TABLE public.cbt_answers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cbt_malpractice_logs ENABLE ROW LEVEL SECURITY;
 
 -- Expose to authenticated users (admin checks will be in RLS or server fns)
+DROP POLICY IF EXISTS "Allow all authenticated users to read exams" ON public.cbt_exams;
 CREATE POLICY "Allow all authenticated users to read exams" ON public.cbt_exams FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Allow all authenticated users to read questions" ON public.cbt_questions;
 CREATE POLICY "Allow all authenticated users to read questions" ON public.cbt_questions FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Allow interns to insert submissions" ON public.cbt_submissions;
 CREATE POLICY "Allow interns to insert submissions" ON public.cbt_submissions FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Allow interns to read their own submissions" ON public.cbt_submissions;
 CREATE POLICY "Allow interns to read their own submissions" ON public.cbt_submissions FOR SELECT USING (auth.uid() = intern_id);
+
+DROP POLICY IF EXISTS "Allow admins to read all submissions" ON public.cbt_submissions;
 CREATE POLICY "Allow admins to read all submissions" ON public.cbt_submissions FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND (role = 'super_admin' OR role = 'admin'))
 );
-
