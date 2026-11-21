@@ -129,10 +129,22 @@ CREATE INDEX IF NOT EXISTS idx_admin_notifications_created_at
 -- 3. visitor_counts
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.visitor_counts (
-  page_key   TEXT        PRIMARY KEY,
+  id         TEXT        PRIMARY KEY,
+  page_key   TEXT,
   count      BIGINT      NOT NULL DEFAULT 0,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE public.visitor_counts ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE public.visitor_counts ADD COLUMN IF NOT EXISTS page_key TEXT;
+
+DO $$ BEGIN
+  ALTER TABLE public.visitor_counts ALTER COLUMN id DROP NOT NULL;
+EXCEPTION WHEN others THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE public.visitor_counts ALTER COLUMN page_key DROP NOT NULL;
+EXCEPTION WHEN others THEN null; END $$;
 
 -- Grants
 GRANT SELECT, INSERT, UPDATE ON public.visitor_counts TO anon, authenticated;
@@ -166,8 +178,8 @@ CREATE POLICY "Anyone can update visitor counts"
   USING (true);
 
 -- Seed initial row
-INSERT INTO public.visitor_counts (page_key, count)
-VALUES ('home', 0)
+INSERT INTO public.visitor_counts (id, page_key, count)
+VALUES ('home', 'home', 0)
 ON CONFLICT DO NOTHING;
 
 
